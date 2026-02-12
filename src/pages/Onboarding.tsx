@@ -1,0 +1,374 @@
+import React, { useState } from 'react';
+import { Heart, ArrowRight, Check } from 'lucide-react';
+import { Button, Input, Textarea, Select, Card } from '../components/ui';
+
+type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
+
+export const Onboarding: React.FC = () => {
+  const [step, setStep] = useState<OnboardingStep>('choice');
+  const [formData, setFormData] = useState({
+    partnerNames: '',
+    weddingDate: '',
+    venueName: '',
+    venueLocation: '',
+    story: '',
+    ceremonyTime: '',
+    receptionTime: '',
+    rsvpDeadline: '',
+    registryLink: '',
+    theme: 'garden',
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleQuickSetup = () => {
+    setStep('quick-1');
+  };
+
+  const handleManualSetup = () => {
+    console.log('Navigate to manual builder');
+  };
+
+  const nextStep = () => {
+    if (step === 'quick-1') setStep('quick-2');
+    else if (step === 'quick-2') setStep('quick-3');
+    else if (step === 'quick-3') setStep('complete');
+  };
+
+  const renderChoice = () => (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold text-text-primary mb-4">
+          Let's create your wedding site
+        </h1>
+        <p className="text-lg text-text-secondary">
+          Choose how you'd like to get started
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card variant="bordered" padding="lg" className="hover:border-primary transition-colors cursor-pointer">
+          <div className="flex flex-col h-full">
+            <div className="flex-grow">
+              <h2 className="text-2xl font-semibold text-text-primary mb-4">
+                Quick Setup
+              </h2>
+              <p className="text-text-secondary mb-6">
+                Answer a few questions and we'll build your site for you. Publish in under 10 minutes.
+              </p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-text-secondary">Auto-populate all sections</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-text-secondary">Smart defaults based on your answers</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-text-secondary">Edit anything later</span>
+                </li>
+              </ul>
+            </div>
+            <Button variant="accent" size="lg" fullWidth onClick={handleQuickSetup}>
+              Start Quick Setup
+            </Button>
+          </div>
+        </Card>
+
+        <Card variant="bordered" padding="lg" className="hover:border-primary transition-colors cursor-pointer">
+          <div className="flex flex-col h-full">
+            <div className="flex-grow">
+              <h2 className="text-2xl font-semibold text-text-primary mb-4">
+                Manual Setup
+              </h2>
+              <p className="text-text-secondary mb-6">
+                Jump straight to the builder and customize everything from scratch. Full control.
+              </p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-text-secondary">Start with a blank canvas</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-text-secondary">Add and arrange sections manually</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-text-secondary">Complete creative freedom</span>
+                </li>
+              </ul>
+            </div>
+            <Button variant="outline" size="lg" fullWidth onClick={handleManualSetup}>
+              Go to Builder
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderQuickStep1 = () => (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex-1 h-2 bg-primary rounded-full" />
+          <div className="flex-1 h-2 bg-border rounded-full" />
+          <div className="flex-1 h-2 bg-border rounded-full" />
+        </div>
+        <p className="text-sm text-text-secondary">Step 1 of 3</p>
+      </div>
+
+      <h1 className="text-3xl font-bold text-text-primary mb-2">The basics</h1>
+      <p className="text-text-secondary mb-8">Tell us about your big day</p>
+
+      <Card variant="default" padding="lg">
+        <div className="space-y-6">
+          <Input
+            label="Partner names"
+            name="partnerNames"
+            placeholder="Alex & Jordan"
+            value={formData.partnerNames}
+            onChange={handleChange}
+            helperText="How you'd like to be referred to"
+            required
+          />
+
+          <Input
+            label="Wedding date"
+            type="date"
+            name="weddingDate"
+            value={formData.weddingDate}
+            onChange={handleChange}
+            required
+          />
+
+          <Input
+            label="Venue name"
+            name="venueName"
+            placeholder="The Garden Estate"
+            value={formData.venueName}
+            onChange={handleChange}
+            required
+          />
+
+          <Input
+            label="Venue location"
+            name="venueLocation"
+            placeholder="San Francisco, CA"
+            value={formData.venueLocation}
+            onChange={handleChange}
+            helperText="City and state"
+            required
+          />
+
+          <div className="flex justify-end pt-4">
+            <Button variant="accent" size="lg" onClick={nextStep}>
+              Continue
+              <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+
+  const renderQuickStep2 = () => (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex-1 h-2 bg-primary rounded-full" />
+          <div className="flex-1 h-2 bg-primary rounded-full" />
+          <div className="flex-1 h-2 bg-border rounded-full" />
+        </div>
+        <p className="text-sm text-text-secondary">Step 2 of 3</p>
+      </div>
+
+      <h1 className="text-3xl font-bold text-text-primary mb-2">Your story and schedule</h1>
+      <p className="text-text-secondary mb-8">Share what makes you two special</p>
+
+      <Card variant="default" padding="lg">
+        <div className="space-y-6">
+          <Textarea
+            label="Your story"
+            name="story"
+            placeholder="Tell guests how you met, your journey together, or what this day means to you..."
+            value={formData.story}
+            onChange={handleChange}
+            rows={5}
+            helperText="This will appear on your site's story section"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input
+              label="Ceremony time"
+              type="time"
+              name="ceremonyTime"
+              value={formData.ceremonyTime}
+              onChange={handleChange}
+              required
+            />
+
+            <Input
+              label="Reception time"
+              type="time"
+              name="receptionTime"
+              value={formData.receptionTime}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <Input
+            label="RSVP deadline"
+            type="date"
+            name="rsvpDeadline"
+            value={formData.rsvpDeadline}
+            onChange={handleChange}
+            helperText="When should guests RSVP by?"
+            required
+          />
+
+          <div className="flex justify-between pt-4">
+            <Button variant="ghost" size="lg" onClick={() => setStep('quick-1')}>
+              Back
+            </Button>
+            <Button variant="accent" size="lg" onClick={nextStep}>
+              Continue
+              <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+
+  const renderQuickStep3 = () => (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex-1 h-2 bg-primary rounded-full" />
+          <div className="flex-1 h-2 bg-primary rounded-full" />
+          <div className="flex-1 h-2 bg-primary rounded-full" />
+        </div>
+        <p className="text-sm text-text-secondary">Step 3 of 3</p>
+      </div>
+
+      <h1 className="text-3xl font-bold text-text-primary mb-2">Final touches</h1>
+      <p className="text-text-secondary mb-8">Pick a theme and add optional details</p>
+
+      <Card variant="default" padding="lg">
+        <div className="space-y-6">
+          <Select
+            label="Choose a theme"
+            name="theme"
+            value={formData.theme}
+            onChange={handleChange}
+            options={[
+              { value: 'garden', label: 'Garden Classic' },
+              { value: 'desert', label: 'Desert Sunset' },
+              { value: 'lavender', label: 'Lavender Fields' },
+              { value: 'coastal', label: 'Coastal Breeze' },
+              { value: 'rustic', label: 'Rustic Charm' },
+            ]}
+          />
+
+          <Input
+            label="Registry link"
+            type="url"
+            name="registryLink"
+            placeholder="https://registry.example.com/yournames"
+            value={formData.registryLink}
+            onChange={handleChange}
+            helperText="Optional: Link to your gift registry"
+          />
+
+          <div className="flex justify-between pt-4">
+            <Button variant="ghost" size="lg" onClick={() => setStep('quick-2')}>
+              Back
+            </Button>
+            <Button variant="accent" size="lg" onClick={nextStep}>
+              Create My Site
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+
+  const renderComplete = () => (
+    <div className="max-w-2xl mx-auto text-center">
+      <div className="inline-flex items-center justify-center w-20 h-20 bg-success-light rounded-full mb-6">
+        <Check className="w-10 h-10 text-success" aria-hidden="true" />
+      </div>
+
+      <h1 className="text-4xl font-bold text-text-primary mb-4">
+        Your site is ready!
+      </h1>
+      <p className="text-lg text-text-secondary mb-8">
+        We've created a beautiful wedding site based on your answers. You can preview, edit, and publish it now.
+      </p>
+
+      <Card variant="bordered" padding="lg" className="mb-8 text-left">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+            <div>
+              <p className="font-medium text-text-primary">All sections populated</p>
+              <p className="text-sm text-text-secondary">Hero, Story, Schedule, RSVP, and more</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+            <div>
+              <p className="font-medium text-text-primary">Theme applied</p>
+              <p className="text-sm text-text-secondary">{formData.theme} color palette and styling</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+            <div>
+              <p className="font-medium text-text-primary">Ready to customize</p>
+              <p className="text-sm text-text-secondary">Edit any section or add new content</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <Button variant="accent" size="lg">
+          Go to Dashboard
+        </Button>
+        <Button variant="outline" size="lg">
+          Preview Site
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-sage-50 to-champagne-50 p-4 py-12">
+      <div className="container-custom">
+        <div className="flex items-center justify-center mb-12">
+          <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
+          <span className="text-2xl font-semibold text-text-primary ml-2">Dayof</span>
+        </div>
+
+        {step === 'choice' && renderChoice()}
+        {step === 'quick-1' && renderQuickStep1()}
+        {step === 'quick-2' && renderQuickStep2()}
+        {step === 'quick-3' && renderQuickStep3()}
+        {step === 'complete' && renderComplete()}
+      </div>
+    </div>
+  );
+};

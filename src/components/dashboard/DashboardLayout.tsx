@@ -1,0 +1,135 @@
+import React, { useState } from 'react';
+import {
+  Heart,
+  LayoutDashboard,
+  Palette,
+  Users,
+  Image,
+  Gift,
+  Settings,
+  Menu,
+  X,
+  LogOut,
+} from 'lucide-react';
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  currentPage: string;
+}
+
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navItems = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'builder', label: 'Builder', icon: Palette },
+    { id: 'guests', label: 'Guests & RSVP', icon: Users },
+    { id: 'vault', label: 'Vault', icon: Image },
+    { id: 'registry', label: 'Registry', icon: Gift },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background flex">
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-border-subtle
+          transform transition-transform duration-200 ease-in-out
+          lg:translate-x-0 lg:static
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-6 border-b border-border-subtle">
+            <div className="flex items-center gap-2">
+              <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
+              <span className="text-xl font-semibold text-text-primary">Dayof</span>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 hover:bg-surface-subtle rounded-lg transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <nav className="flex-1 p-4 overflow-y-auto" aria-label="Dashboard navigation">
+            <ul className="space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentPage === item.id;
+                return (
+                  <li key={item.id}>
+                    <a
+                      href={`#${item.id}`}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-lg text-base
+                        transition-colors no-underline min-h-[44px]
+                        ${
+                          isActive
+                            ? 'bg-primary-light text-primary font-medium'
+                            : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
+                        }
+                      `}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          <div className="p-4 border-t border-border-subtle">
+            <button
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-base text-text-secondary hover:bg-surface-subtle hover:text-text-primary transition-colors w-full text-left min-h-[44px]"
+              onClick={() => console.log('Logout')}
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+              <span>Log out</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-stone-900/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="bg-surface border-b border-border-subtle px-4 lg:px-8 py-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 hover:bg-surface-subtle rounded-lg transition-colors min-h-[44px] min-w-[44px]"
+              aria-label="Open menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
+            <div className="flex items-center gap-4 ml-auto">
+              <a
+                href="#preview"
+                className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline"
+              >
+                Preview site
+              </a>
+              <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-semibold">
+                AJ
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">{children}</main>
+      </div>
+    </div>
+  );
+};
