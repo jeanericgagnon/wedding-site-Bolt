@@ -14,34 +14,34 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-surface border-b border-border-subtle backdrop-blur-sm">
+    <header className="sticky top-0 z-50 bg-surface-raised/95 border-b border-border-subtle backdrop-blur-md shadow-sm">
       <nav className="container-custom" aria-label="Main navigation">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
-            <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
-            <span className="text-xl font-semibold text-text-primary">Dayof</span>
+          <div className="flex items-center gap-2.5">
+            <Heart className="w-5 h-5 text-accent" aria-hidden="true" />
+            <span className="text-lg font-semibold text-text-primary tracking-tight">Dayof</span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-base text-text-secondary hover:text-text-primary transition-colors no-underline">
+          <div className="hidden md:flex items-center gap-7">
+            <a href="#features" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors no-underline">
               Features
             </a>
-            <a href="#templates" className="text-base text-text-secondary hover:text-text-primary transition-colors no-underline">
+            <a href="#templates" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors no-underline">
               Templates
             </a>
-            <a href="#pricing" className="text-base text-text-secondary hover:text-text-primary transition-colors no-underline">
+            <a href="#pricing" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors no-underline">
               Pricing
             </a>
-            <a href="#faq" className="text-base text-text-secondary hover:text-text-primary transition-colors no-underline">
+            <a href="#faq" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors no-underline">
               FAQ
             </a>
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="md">
+          <div className="hidden md:flex items-center gap-3">
+            <Button variant="ghost" size="sm">
               Login
             </Button>
-            <Button variant="accent" size="md">
+            <Button variant="accent" size="sm">
               Start Free
             </Button>
           </div>
@@ -52,26 +52,26 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border-subtle">
-            <div className="flex flex-col gap-4">
-              <a href="#features" className="text-base text-text-secondary hover:text-text-primary transition-colors py-2 no-underline">
+            <div className="flex flex-col gap-3">
+              <a href="#features" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors py-2 no-underline">
                 Features
               </a>
-              <a href="#templates" className="text-base text-text-secondary hover:text-text-primary transition-colors py-2 no-underline">
+              <a href="#templates" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors py-2 no-underline">
                 Templates
               </a>
-              <a href="#pricing" className="text-base text-text-secondary hover:text-text-primary transition-colors py-2 no-underline">
+              <a href="#pricing" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors py-2 no-underline">
                 Pricing
               </a>
-              <a href="#faq" className="text-base text-text-secondary hover:text-text-primary transition-colors py-2 no-underline">
+              <a href="#faq" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors py-2 no-underline">
                 FAQ
               </a>
-              <div className="flex flex-col gap-3 pt-4 border-t border-border-subtle">
+              <div className="flex flex-col gap-2 pt-3 mt-3 border-t border-border-subtle">
                 <Button variant="ghost" size="md" fullWidth>
                   Login
                 </Button>

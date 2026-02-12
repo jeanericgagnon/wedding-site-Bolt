@@ -18,7 +18,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-sm font-medium text-text-primary mb-2"
+            className="block text-sm font-medium text-text-primary mb-1.5"
           >
             {label}
           </label>
@@ -27,13 +27,14 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={`
-            w-full px-4 py-3 min-h-[44px] text-base
-            bg-surface border border-border rounded-lg
+            w-full px-3.5 py-2.5 min-h-[44px] text-base
+            bg-surface-raised border border-border rounded-lg
             text-text-primary
-            focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-            disabled:opacity-50 disabled:cursor-not-allowed
-            transition-colors cursor-pointer
-            ${error ? 'border-error focus:ring-error' : ''}
+            hover:border-border-strong
+            focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
+            disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border
+            transition-all duration-200 cursor-pointer
+            ${error ? 'border-error focus:ring-error/20 focus:border-error hover:border-error' : ''}
             ${className}
           `}
           aria-invalid={error ? 'true' : 'false'}
@@ -47,12 +48,12 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           ))}
         </select>
         {error && (
-          <p id={errorId} className="mt-2 text-sm text-error" role="alert">
+          <p id={errorId} className="mt-1.5 text-sm text-error font-medium" role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={helperId} className="mt-2 text-sm text-text-secondary">
+          <p id={helperId} className="mt-1.5 text-sm text-text-secondary">
             {helperText}
           </p>
         )}

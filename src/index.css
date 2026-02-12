@@ -25,19 +25,46 @@
     font-family: var(--font-family-base);
     line-height: var(--line-height-normal);
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold;
     line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+    color: var(--color-text-primary);
   }
 
-  h1 { font-size: var(--font-size-4xl); }
-  h2 { font-size: var(--font-size-3xl); }
-  h3 { font-size: var(--font-size-2xl); }
-  h4 { font-size: var(--font-size-xl); }
-  h5 { font-size: var(--font-size-lg); }
-  h6 { font-size: var(--font-size-base); }
+  h1 {
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-bold);
+  }
+  h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-bold);
+  }
+  h3 {
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+  }
+  h4 {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-semibold);
+  }
+  h5 {
+    font-size: var(--font-size-h5);
+    font-weight: var(--font-weight-medium);
+  }
+  h6 {
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-medium);
+  }
+
+  p {
+    line-height: var(--line-height-relaxed);
+    color: var(--color-text-primary);
+  }
 
   a {
     @apply text-primary underline-offset-4;
@@ -49,18 +76,24 @@
   }
 
   a:focus-visible {
-    @apply outline-2 outline-offset-2 outline-primary rounded-sm;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: 2px;
   }
 
   button:focus-visible,
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible {
-    @apply outline-2 outline-offset-2 outline-primary rounded;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
-  p {
-    line-height: var(--line-height-relaxed);
+  button:focus:not(:focus-visible),
+  input:focus:not(:focus-visible),
+  textarea:focus:not(:focus-visible),
+  select:focus:not(:focus-visible) {
+    outline: none;
   }
 }
 
