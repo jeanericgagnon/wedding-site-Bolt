@@ -1,18 +1,45 @@
 import React, { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { Button, Input, Card } from '../components/ui';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Signup: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    partnerNames: '',
+    couple_name_1: '',
+    couple_name_2: '',
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { signUp } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Signup attempt:', formData);
+    setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await signUp(formData.email, formData.password, {
+      couple_name_1: formData.couple_name_1,
+      couple_name_2: formData.couple_name_2,
+    });
+
+    if (error) {
+      setError(error.message || 'Failed to create account');
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,7 +50,7 @@ export const Signup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-sage-50 to-champagne-50 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-surface-subtle to-surface p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-6">
@@ -34,15 +61,29 @@ export const Signup: React.FC = () => {
           <p className="text-text-secondary">Start building your wedding site in minutes</p>
         </div>
 
-        <Card variant="default" padding="lg">
+        <Card variant="default" padding="lg" className="shadow-lg">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="p-3 rounded-lg bg-error-light border border-error/20 text-error text-sm">
+                {error}
+              </div>
+            )}
+
             <Input
-              label="Partner names"
-              name="partnerNames"
-              placeholder="Alex & Jordan"
-              value={formData.partnerNames}
+              label="First partner name"
+              name="couple_name_1"
+              placeholder="Alex"
+              value={formData.couple_name_1}
               onChange={handleChange}
-              helperText="How should we refer to you both?"
+              required
+            />
+
+            <Input
+              label="Second partner name"
+              name="couple_name_2"
+              placeholder="Jordan"
+              value={formData.couple_name_2}
+              onChange={handleChange}
               required
             />
 
@@ -77,8 +118,8 @@ export const Signup: React.FC = () => {
               required
             />
 
-            <Button type="submit" variant="accent" size="lg" fullWidth>
-              Create Account
+            <Button type="submit" variant="accent" size="lg" fullWidth disabled={loading}>
+              {loading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
 

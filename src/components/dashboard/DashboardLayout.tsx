@@ -11,6 +11,7 @@ import {
   X,
   LogOut,
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,19 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    window.location.hash = '#login';
+  };
+
+  const getUserInitials = () => {
+    if (user?.email) {
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    return 'U';
+  };
 
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -86,7 +100,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
           <div className="p-4 border-t border-border-subtle">
             <button
               className="flex items-center gap-3 px-4 py-3 rounded-lg text-base text-text-secondary hover:bg-surface-subtle hover:text-text-primary transition-colors w-full text-left min-h-[44px]"
-              onClick={() => console.log('Logout')}
+              onClick={handleLogout}
             >
               <LogOut className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
               <span>Log out</span>
@@ -122,7 +136,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 Preview site
               </a>
               <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-semibold">
-                AJ
+                {getUserInitials()}
               </div>
             </div>
           </div>

@@ -1,14 +1,26 @@
 import React, { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { Button, Input, Card } from '../components/ui';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password });
+    setError('');
+    setLoading(true);
+
+    const { error } = await signIn(email, password);
+
+    if (error) {
+      setError(error.message || 'Failed to sign in');
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,6 +37,12 @@ export const Login: React.FC = () => {
 
         <Card variant="default" padding="lg" className="shadow-lg">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="p-3 rounded-lg bg-error-light border border-error/20 text-error text-sm">
+                {error}
+              </div>
+            )}
+
             <Input
               label="Email"
               type="email"
@@ -57,8 +75,8 @@ export const Login: React.FC = () => {
             </div>
 
             <div className="pt-2">
-              <Button type="submit" variant="accent" size="lg" fullWidth className="shadow-md hover:shadow-lg">
-                Sign In
+              <Button type="submit" variant="accent" size="lg" fullWidth className="shadow-md hover:shadow-lg" disabled={loading}>
+                {loading ? 'Signing in...' : 'Sign In'}
               </Button>
             </div>
           </form>

@@ -1,24 +1,24 @@
 :root {
-  /* Locked Color Palette - Premium Trust-First */
+  /* Core Brand Foundation - Trust First */
 
   /* Core Brand */
-  --brand-primary: #7A8F73;
-  --brand-hover: #667B60;
-  --brand-soft: #E8EFE5;
+  --brand-primary: #2A5D67;
+  --brand-hover: #234B53;
+  --brand-soft: #E5EDEF;
 
   /* Neutrals */
-  --neutral-background: #FCFBF8;
-  --neutral-surface: #F4F1EB;
+  --neutral-background: #F6F3EE;
+  --neutral-surface: #FFFFFF;
   --neutral-card: #FFFFFF;
-  --neutral-border: #DDD6CA;
-  --neutral-text-primary: #26231F;
-  --neutral-text-secondary: #6B645B;
+  --neutral-border: #E0DCD5;
+  --neutral-text-primary: #2B2B2B;
+  --neutral-text-secondary: #5C5C5C;
   --neutral-text-inverse: #FFFFFF;
 
   /* Accents */
-  --accent-warm: #C97B5B;
-  --accent-gold: #C6A66A;
-  --accent-plum: #6F5D7E;
+  --accent-warm: #D7795D;
+  --accent-gold: #C89F56;
+  --accent-plum: #2A5D67;
 
   /* Semantic States */
   --state-success: #4F8A5B;
@@ -34,18 +34,18 @@
   --color-background: var(--neutral-background);
   --color-surface: var(--neutral-surface);
   --color-surface-raised: var(--neutral-card);
-  --color-surface-subtle: var(--brand-soft);
+  --color-surface-subtle: #F9F8F6;
 
   --color-primary: var(--brand-primary);
   --color-primary-hover: var(--brand-hover);
   --color-primary-light: var(--brand-soft);
 
   --color-accent: var(--accent-warm);
-  --color-accent-hover: #B06A4D;
-  --color-accent-light: #F8EDE8;
+  --color-accent-hover: #C2664A;
+  --color-accent-light: #FAF0ED;
 
   --color-secondary: var(--accent-gold);
-  --color-secondary-hover: #B39560;
+  --color-secondary-hover: #B38D47;
 
   --color-text-primary: var(--neutral-text-primary);
   --color-text-secondary: var(--neutral-text-secondary);
@@ -53,8 +53,8 @@
   --color-text-inverse: var(--neutral-text-inverse);
 
   --color-border: var(--neutral-border);
-  --color-border-subtle: #E8E3D8;
-  --color-border-strong: #CCC3B5;
+  --color-border-subtle: #EBE7E1;
+  --color-border-strong: #D0CBC3;
 
   --color-success: var(--state-success);
   --color-success-light: var(--state-success-light);
@@ -175,17 +175,17 @@
 /* Dark Mode Tokens (Ready for future implementation) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: #1A1816;
-    --color-surface: #252320;
-    --color-surface-raised: #2F2C28;
-    --color-surface-subtle: #353230;
+    --color-background: #1A1A1A;
+    --color-surface: #2B2B2B;
+    --color-surface-raised: #353535;
+    --color-surface-subtle: #404040;
 
-    --color-text-primary: #F4F1EB;
-    --color-text-secondary: #C4BFB6;
-    --color-text-tertiary: #978F85;
+    --color-text-primary: #F6F3EE;
+    --color-text-secondary: #C0BDB8;
+    --color-text-tertiary: #8F8B86;
 
-    --color-border: #3A3632;
-    --color-border-subtle: #302D2A;
-    --color-border-strong: #4A4642;
+    --color-border: #404040;
+    --color-border-subtle: #333333;
+    --color-border-strong: #4D4D4D;
   }
 }

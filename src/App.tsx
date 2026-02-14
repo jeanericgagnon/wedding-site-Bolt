@@ -10,6 +10,8 @@ import {
   DashboardVault,
   DashboardSettings,
 } from './pages/dashboard';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 type Route =
   | 'home'
@@ -23,8 +25,9 @@ type Route =
   | 'registry'
   | 'settings';
 
-function App() {
+const AppContent = () => {
   const [currentRoute, setCurrentRoute] = useState<Route>('home');
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -37,6 +40,14 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  useEffect(() => {
+    if (!loading && user) {
+      if (currentRoute === 'login' || currentRoute === 'signup') {
+        window.location.hash = '#overview';
+      }
+    }
+  }, [user, loading, currentRoute]);
+
   const renderRoute = () => {
     switch (currentRoute) {
       case 'home':
@@ -46,23 +57,55 @@ function App() {
       case 'signup':
         return <Signup />;
       case 'onboarding':
-        return <Onboarding />;
+        return (
+          <ProtectedRoute>
+            <Onboarding />
+          </ProtectedRoute>
+        );
       case 'overview':
-        return <DashboardOverview />;
+        return (
+          <ProtectedRoute>
+            <DashboardOverview />
+          </ProtectedRoute>
+        );
       case 'builder':
-        return <DashboardBuilder />;
+        return (
+          <ProtectedRoute>
+            <DashboardBuilder />
+          </ProtectedRoute>
+        );
       case 'guests':
-        return <DashboardGuests />;
+        return (
+          <ProtectedRoute>
+            <DashboardGuests />
+          </ProtectedRoute>
+        );
       case 'vault':
-        return <DashboardVault />;
+        return (
+          <ProtectedRoute>
+            <DashboardVault />
+          </ProtectedRoute>
+        );
       case 'settings':
-        return <DashboardSettings />;
+        return (
+          <ProtectedRoute>
+            <DashboardSettings />
+          </ProtectedRoute>
+        );
       default:
         return <Home />;
     }
   };
 
   return <div className="min-h-screen">{renderRoute()}</div>;
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }
 
 export default App;
