@@ -40,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     { label: 'Registry', id: 'registry' },
     { label: 'Travel', id: 'travel' },
     { label: 'Seating', id: 'seating' },
+    { label: 'Post-wedding', id: 'postwedding' },
     { label: 'Pricing', id: 'pricing' },
   ];
 
@@ -49,10 +50,10 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => scrollToSection('top')}>
             <Heart className="w-5 h-5 text-accent" aria-hidden="true" />
-            <span className="text-lg font-semibold text-text-primary tracking-tight">Dayof</span>
+            <span className="text-lg font-semibold text-text-primary tracking-tight">WeddingSite</span>
           </div>
 
-          <div className="hidden md:flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-4">
             {navItems.map((item) => (
               <button
                 key={item.id}

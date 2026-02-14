@@ -891,8 +891,84 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* L) PRICING */}
-      <section id="pricing" className="py-16 md:py-24 bg-surface-subtle">
+      {/* L) POST-WEDDING */}
+      <section id="postwedding" className="py-16 md:py-24 bg-surface-subtle">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+              After the big day
+            </h2>
+            <p className="text-lg text-text-secondary">
+              Your wedding site continues to work for you long after the celebration.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card variant="bordered" padding="lg">
+              <div className="flex flex-col gap-4">
+                <div className="p-3 bg-primary-light rounded-lg w-fit">
+                  <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary">Thank-you tracker</h3>
+                <p className="text-text-secondary">
+                  Track which thank-you notes you've sent and cross-reference with gifts received. Never miss a thank-you card.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => onTodo('View thank-you tracker')}>
+                  View tracker
+                </Button>
+              </div>
+            </Card>
+
+            <Card variant="bordered" padding="lg">
+              <div className="flex flex-col gap-4">
+                <div className="p-3 bg-accent-light rounded-lg w-fit">
+                  <Download className="w-6 h-6 text-accent" aria-hidden="true" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary">Gift export</h3>
+                <p className="text-text-secondary">
+                  Export your complete gift list with giver names, amounts, and notes. Perfect for tax records or future reference.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => onTodo('Export gift list')}>
+                  Export gifts
+                </Button>
+              </div>
+            </Card>
+
+            <Card variant="bordered" padding="lg">
+              <div className="flex flex-col gap-4">
+                <div className="p-3 bg-primary-light rounded-lg w-fit">
+                  <Image className="w-6 h-6 text-primary" aria-hidden="true" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary">Photo archive</h3>
+                <p className="text-text-secondary">
+                  Your photo vault stays active. Download all photos and videos anytime in the next 2 years. No rush, no pressure.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => onTodo('Download photo archive')}>
+                  Download archive
+                </Button>
+              </div>
+            </Card>
+
+            <Card variant="bordered" padding="lg">
+              <div className="flex flex-col gap-4">
+                <div className="p-3 bg-accent-light rounded-lg w-fit">
+                  <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary">Anniversary mode</h3>
+                <p className="text-text-secondary">
+                  Convert your wedding site into a simple anniversary page with photos and memories. Perfect for sharing on social media.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => onTodo('Enable anniversary mode')}>
+                  Convert site
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* M) PRICING */}
+      <section id="pricing" className="py-16 md:py-24">
         <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
@@ -1011,7 +1087,7 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* M) FINAL CTA */}
+      {/* N) FINAL CTA */}
       <section className="py-16 md:py-24 bg-gradient-to-br from-primary-light to-accent-light">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
