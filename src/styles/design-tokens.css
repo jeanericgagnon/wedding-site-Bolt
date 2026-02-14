@@ -175,17 +175,17 @@
 /* Dark Mode Tokens (Ready for future implementation) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background: #1A1A1A;
-    --color-surface: #2B2B2B;
-    --color-surface-raised: #353535;
-    --color-surface-subtle: #404040;
+    --color-background: #2B2B2B;
+    --color-surface: #1F4449;
+    --color-surface-raised: #2A5D67;
+    --color-surface-subtle: #234B53;
 
     --color-text-primary: #F6F3EE;
     --color-text-secondary: #C0BDB8;
     --color-text-tertiary: #8F8B86;
 
-    --color-border: #404040;
-    --color-border-subtle: #333333;
-    --color-border-strong: #4D4D4D;
+    --color-border: #2A5D67;
+    --color-border-subtle: #234B53;
+    --color-border-strong: #3A707A;
   }
 }

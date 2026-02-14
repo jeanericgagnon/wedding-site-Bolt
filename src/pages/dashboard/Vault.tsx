@@ -108,8 +108,8 @@ export const DashboardVault: React.FC = () => {
 
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-champagne-100 rounded-lg flex-shrink-0">
-                <Upload className="w-6 h-6 text-champagne-700" aria-hidden="true" />
+              <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: 'var(--color-secondary-hover)', opacity: 0.15 }}>
+                <Upload className="w-6 h-6" style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.contributors}</p>
@@ -120,8 +120,8 @@ export const DashboardVault: React.FC = () => {
 
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-plum-100 rounded-lg flex-shrink-0">
-                <Download className="w-6 h-6 text-plum-600" aria-hidden="true" />
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <Download className="w-6 h-6 text-primary" aria-hidden="true" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.totalSize}</p>
@@ -131,7 +131,7 @@ export const DashboardVault: React.FC = () => {
           </Card>
         </div>
 
-        <Card variant="bordered" padding="lg" className="bg-gradient-to-br from-sage-50 to-champagne-50">
+        <Card variant="bordered" padding="lg" className="bg-gradient-to-br from-primary-light to-accent-light">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             <div className="p-4 bg-surface rounded-lg">
               <QrCode className="w-12 h-12 text-primary" aria-hidden="true" />
@@ -220,11 +220,11 @@ export const DashboardVault: React.FC = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-stone-200">
-                        <Video className="w-12 h-12 text-stone-400" aria-hidden="true" />
+                      <div className="w-full h-full flex items-center justify-center bg-surface-subtle">
+                        <Video className="w-12 h-12 text-text-tertiary" aria-hidden="true" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                    <div className="absolute inset-0 bg-gradient-to-t from-text-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
                       <p className="text-white text-sm font-medium truncate">{item.uploadedBy}</p>
                       <p className="text-white/80 text-xs">{item.size}</p>
                     </div>
@@ -250,7 +250,7 @@ export const DashboardVault: React.FC = () => {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Video className="w-6 h-6 text-stone-400" aria-hidden="true" />
+                          <Video className="w-6 h-6 text-text-tertiary" aria-hidden="true" />
                         </div>
                       )}
                     </div>

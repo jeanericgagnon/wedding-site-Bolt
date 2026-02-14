@@ -41,8 +41,8 @@ export const DashboardOverview: React.FC = () => {
 
           <Card variant="bordered" padding="md">
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-champagne-100 rounded-lg">
-                <CheckCircle2 className="w-6 h-6 text-champagne-700" aria-hidden="true" />
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-secondary-hover)', opacity: 0.15 }}>
+                <CheckCircle2 className="w-6 h-6" style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
               </div>
             </div>
             <div>
@@ -54,8 +54,8 @@ export const DashboardOverview: React.FC = () => {
 
           <Card variant="bordered" padding="md">
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-plum-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-plum-600" aria-hidden="true" />
+              <div className="p-3 bg-primary-light rounded-lg">
+                <Calendar className="w-6 h-6 text-primary" aria-hidden="true" />
               </div>
             </div>
             <div>

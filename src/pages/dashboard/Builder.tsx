@@ -210,9 +210,9 @@ export const DashboardBuilder: React.FC = () => {
                     previewMode === 'mobile' ? 'w-[375px]' : 'w-full'
                   }`}
                 >
-                  <div className="bg-gradient-to-br from-sage-100 to-sage-200 p-12 text-center">
-                    <h1 className="text-4xl font-bold text-sage-800 mb-4">Alex & Jordan</h1>
-                    <p className="text-lg text-sage-700">June 15, 2026 • San Francisco, CA</p>
+                  <div className="bg-gradient-to-br from-primary-light to-accent-light p-12 text-center">
+                    <h1 className="text-4xl font-bold text-text-primary mb-4">Alex & Jordan</h1>
+                    <p className="text-lg text-text-secondary">June 15, 2026 • San Francisco, CA</p>
                   </div>
 
                   {selectedSection && (

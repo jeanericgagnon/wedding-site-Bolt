@@ -111,7 +111,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-stone-900/50 z-40 lg:hidden"
+          className="fixed inset-0 z-40 lg:hidden"
+          style={{ backgroundColor: 'rgba(42, 93, 103, 0.5)' }}
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
