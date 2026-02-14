@@ -1,6 +1,13 @@
 :root {
   /* Core Brand Foundation - Trust First */
 
+  /* Brand Color RGB Values (for Tailwind) */
+  --brand: 42 93 103;        /* Deep Teal #2A5D67 */
+  --brand-2: 200 159 86;     /* Burnt Gold #C89F56 */
+  --accent: 215 121 93;      /* Muted Coral #D7795D */
+  --paper: 246 243 238;      /* Soft Ivory #F6F3EE */
+  --ink: 34 34 34;           /* Charcoal */
+
   /* Core Brand */
   --brand-primary: #2A5D67;
   --brand-hover: #234B53;

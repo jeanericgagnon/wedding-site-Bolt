@@ -4,6 +4,11 @@ export default {
   theme: {
     extend: {
       colors: {
+        brand: 'rgb(var(--brand) / <alpha-value>)',
+        brand2: 'rgb(var(--brand-2) / <alpha-value>)',
+        accent: 'rgb(var(--accent) / <alpha-value>)',
+        paper: 'rgb(var(--paper) / <alpha-value>)',
+        ink: 'rgb(var(--ink) / <alpha-value>)',
         background: 'var(--color-background)',
         surface: 'var(--color-surface)',
         'surface-raised': 'var(--color-surface-raised)',
@@ -12,11 +17,6 @@ export default {
           DEFAULT: 'var(--color-primary)',
           hover: 'var(--color-primary-hover)',
           light: 'var(--color-primary-light)',
-        },
-        accent: {
-          DEFAULT: 'var(--color-accent)',
-          hover: 'var(--color-accent-hover)',
-          light: 'var(--color-accent-light)',
         },
         secondary: {
           DEFAULT: 'var(--color-secondary)',

@@ -55,7 +55,7 @@ const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: number) => void
           key={toast.id}
           className="bg-surface-raised border border-border shadow-lg rounded-lg p-4 min-w-[300px] animate-fade-in"
         >
-          <p className="text-sm text-text-primary">{toast.message}</p>
+          <p className="text-sm text-ink">{toast.message}</p>
         </div>
       ))}
     </div>
@@ -86,85 +86,109 @@ export const Home: React.FC = () => {
     }, 2000);
   };
 
+  const applyPalette = (palette: { name: string; brand: string; brand2: string; accent: string; paper: string; ink: string }) => {
+    const root = document.documentElement;
+    root.style.setProperty('--brand', palette.brand);
+    root.style.setProperty('--brand-2', palette.brand2);
+    root.style.setProperty('--accent', palette.accent);
+    root.style.setProperty('--paper', palette.paper);
+    root.style.setProperty('--ink', palette.ink);
+
+    const newToast: Toast = {
+      id: Date.now(),
+      message: `Applied ${palette.name} palette`,
+    };
+    setToasts((prev) => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+    }, 2000);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-paper text-ink">
       <Header />
       <ToastContainer toasts={toasts} onRemove={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
 
       {/* A) HERO */}
-      <section id="top" className="py-16 md:py-24 bg-gradient-to-b from-surface-subtle to-background">
+      <section id="top" className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary mb-6 text-balance">
-                A wedding site that doesn't break when it matters.
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-ink mb-6 text-balance">
+                A wedding site that <span className="text-brand">doesn't break</span> when it matters.
               </h1>
-              <p className="text-lg md:text-xl text-text-secondary mb-8 max-w-2xl">
+              <p className="text-lg md:text-xl text-ink/70 mb-8 max-w-2xl">
                 RSVP correctness, privacy-first defaults, and simple pricing—built for couples who want confidence, not chaos.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Button variant="accent" size="lg" onClick={handleStartFree}>
+                <button
+                  className="px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors"
+                  onClick={handleStartFree}
+                >
                   Start building your site
-                </Button>
-                <Button variant="outline" size="lg" onClick={() => onTodo('Preview demo')}>
+                </button>
+                <button
+                  className="px-6 py-3 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/10 transition-colors"
+                  onClick={() => onTodo('Preview demo')}
+                >
                   Preview demo
-                </Button>
+                </button>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Badge variant="secondary">Auto-renew OFF by default</Badge>
-                <Badge variant="secondary">Private by default</Badge>
-                <Badge variant="secondary">No hidden fees</Badge>
-                <Badge variant="secondary">Works for older guests</Badge>
+                <span className="px-3 py-1.5 bg-brand/10 text-brand text-sm font-medium rounded-full border border-brand/20">Auto-renew OFF by default</span>
+                <span className="px-3 py-1.5 bg-brand/10 text-brand text-sm font-medium rounded-full border border-brand/20">Private by default</span>
+                <span className="px-3 py-1.5 bg-accent/10 text-accent text-sm font-medium rounded-full border border-accent/20">No hidden fees</span>
+                <span className="px-3 py-1.5 bg-accent/10 text-accent text-sm font-medium rounded-full border border-accent/20">Works for older guests</span>
               </div>
             </div>
 
-            <Card variant="bordered" padding="lg" className="bg-surface">
-              <h3 className="text-lg font-semibold text-text-primary mb-4">Product snapshot</h3>
+            <div className="bg-white border border-brand/20 rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-ink mb-4">Product snapshot</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-3xl font-bold text-text-primary">186</p>
-                  <p className="text-sm text-text-secondary">Guests</p>
+                  <p className="text-3xl font-bold text-brand">186</p>
+                  <p className="text-sm text-ink/60">Guests</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-text-primary">92</p>
-                  <p className="text-sm text-text-secondary">Households</p>
+                  <p className="text-3xl font-bold text-brand">92</p>
+                  <p className="text-sm text-ink/60">Households</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-text-primary">71%</p>
-                  <p className="text-sm text-text-secondary">RSVP responded</p>
+                  <p className="text-3xl font-bold text-accent">71%</p>
+                  <p className="text-sm text-ink/60">RSVP responded</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-text-primary">4</p>
-                  <p className="text-sm text-text-secondary">Events</p>
+                  <p className="text-3xl font-bold text-brand2">4</p>
+                  <p className="text-sm text-ink/60">Events</p>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </section>
 
       {/* B) SOCIAL PROOF STRIP */}
-      <section className="py-8 bg-surface-subtle border-y border-border-subtle">
+      <section className="py-8 bg-white border-y border-brand/10">
         <div className="container-custom">
           <div className="flex flex-wrap items-center justify-center gap-8">
-            <div className="flex items-center gap-6 text-sm text-text-secondary">
+            <div className="flex items-center gap-6 text-sm text-ink/70">
               {['Emily & James', 'Sarah & Michael', 'Alex & Jordan', 'Taylor & Chris', 'Sam & Pat', 'Casey & Drew'].map((couple) => (
-                <div key={couple} className="px-4 py-2 bg-surface rounded-full border border-border-subtle">
+                <div key={couple} className="px-4 py-2 bg-paper rounded-full border border-brand/15">
                   {couple}
                 </div>
               ))}
             </div>
           </div>
-          <p className="text-center text-sm text-text-secondary mt-4">Trusted by couples who care about clarity.</p>
+          <p className="text-center text-sm text-ink/60 mt-4">Trusted by couples who care about clarity.</p>
         </div>
       </section>
 
       {/* C) PAIN → FIX GRID */}
-      <section id="product" className="py-16 md:py-24">
+      <section id="product" className="py-16 md:py-24 bg-paper">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-              Wedding sites fail in predictable ways. We engineered around them.
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              Wedding sites fail in <span className="text-brand">predictable ways</span>. We engineered around them.
             </h2>
           </div>
 
@@ -188,8 +212,8 @@ export const Home: React.FC = () => {
                   <div className="p-3 bg-primary-light rounded-lg w-fit">
                     <item.icon className="w-5 h-5 text-primary" aria-hidden="true" />
                   </div>
-                  <h3 className="text-lg font-semibold text-text-primary">{item.title}</h3>
-                  <p className="text-sm text-text-secondary">{item.desc}</p>
+                  <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
+                  <p className="text-sm text-ink/70">{item.desc}</p>
                   <Button variant="ghost" size="sm" onClick={() => onTodo(`Learn more: ${item.title}`)}>
                     See how it works <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
@@ -201,11 +225,11 @@ export const Home: React.FC = () => {
       </section>
 
       {/* D) FEATURE TABS */}
-      <section id="rsvp" className="py-16 md:py-24 bg-surface-subtle">
+      <section id="rsvp" className="py-16 md:py-24 bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-              Every feature built for trust and correctness
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              Every feature built for <span className="text-accent">trust and correctness</span>
             </h2>
           </div>
 
@@ -224,7 +248,7 @@ export const Home: React.FC = () => {
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'bg-primary text-white'
-                    : 'bg-surface text-text-secondary hover:text-text-primary border border-border'
+                    : 'bg-surface text-ink/70 hover:text-ink border border-border'
                 }`}
               >
                 {tab.label}
@@ -236,7 +260,7 @@ export const Home: React.FC = () => {
             <div>
               {activeTab === 'guests' && (
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-text-primary mb-4">Guests + Households</h3>
+                  <h3 className="text-2xl font-bold text-ink mb-4">Guests + Households</h3>
                   <ul className="space-y-3">
                     {[
                       'Import from CSV with intelligent mapping',
@@ -248,7 +272,7 @@ export const Home: React.FC = () => {
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                        <span className="text-text-secondary">{item}</span>
+                        <span className="text-ink/70">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -260,7 +284,7 @@ export const Home: React.FC = () => {
 
               {activeTab === 'rsvp' && (
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-text-primary mb-4">RSVP Engine</h3>
+                  <h3 className="text-2xl font-bold text-ink mb-4">RSVP Engine</h3>
                   <ul className="space-y-3">
                     {[
                       'Household-aware RSVP flow prevents confusion',
@@ -272,7 +296,7 @@ export const Home: React.FC = () => {
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                        <span className="text-text-secondary">{item}</span>
+                        <span className="text-ink/70">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -284,7 +308,7 @@ export const Home: React.FC = () => {
 
               {activeTab === 'messaging' && (
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-text-primary mb-4">Messaging</h3>
+                  <h3 className="text-2xl font-bold text-ink mb-4">Messaging</h3>
                   <ul className="space-y-3">
                     {[
                       'Email included with fair-use limits',
@@ -296,7 +320,7 @@ export const Home: React.FC = () => {
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                        <span className="text-text-secondary">{item}</span>
+                        <span className="text-ink/70">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -308,7 +332,7 @@ export const Home: React.FC = () => {
 
               {activeTab === 'travel' && (
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-text-primary mb-4">Travel + Itinerary</h3>
+                  <h3 className="text-2xl font-bold text-ink mb-4">Travel + Itinerary</h3>
                   <ul className="space-y-3">
                     {[
                       'Hotel room blocks with cutoff dates',
@@ -320,7 +344,7 @@ export const Home: React.FC = () => {
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                        <span className="text-text-secondary">{item}</span>
+                        <span className="text-ink/70">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -332,7 +356,7 @@ export const Home: React.FC = () => {
 
               {activeTab === 'registry' && (
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-text-primary mb-4">Registry</h3>
+                  <h3 className="text-2xl font-bold text-ink mb-4">Registry</h3>
                   <ul className="space-y-3">
                     {[
                       'Link to existing registries (Amazon, Target, etc.)',
@@ -344,7 +368,7 @@ export const Home: React.FC = () => {
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                        <span className="text-text-secondary">{item}</span>
+                        <span className="text-ink/70">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -356,7 +380,7 @@ export const Home: React.FC = () => {
 
               {activeTab === 'seating' && (
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-text-primary mb-4">Seating + Check-in</h3>
+                  <h3 className="text-2xl font-bold text-ink mb-4">Seating + Check-in</h3>
                   <ul className="space-y-3">
                     {[
                       'Visual seating chart builder',
@@ -368,7 +392,7 @@ export const Home: React.FC = () => {
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                        <span className="text-text-secondary">{item}</span>
+                        <span className="text-ink/70">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -379,10 +403,10 @@ export const Home: React.FC = () => {
               )}
             </div>
 
-            <Card variant="bordered" padding="none" className="aspect-video bg-surface-subtle flex items-center justify-center">
+            <Card variant="bordered" padding="none" className="aspect-video bg-white flex items-center justify-center">
               <div className="text-center p-8">
-                <BarChart className="w-16 h-16 text-text-tertiary mx-auto mb-4" />
-                <p className="text-text-secondary">Feature screenshot preview</p>
+                <BarChart className="w-16 h-16 text-ink/60 mx-auto mb-4" />
+                <p className="text-ink/70">Feature screenshot preview</p>
               </div>
             </Card>
           </div>
@@ -390,13 +414,13 @@ export const Home: React.FC = () => {
       </section>
 
       {/* E) RSVP DEMO */}
-      <section id="rsvp-demo" className="py-16 md:py-24">
+      <section id="rsvp-demo" className="py-16 md:py-24 bg-paper">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-              See how RSVP actually works
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              See how <span className="text-brand">RSVP actually works</span>
             </h2>
-            <p className="text-lg text-text-secondary">
+            <p className="text-lg text-ink/70">
               Multi-step, household-aware, with clear validation at each stage.
             </p>
           </div>
@@ -412,7 +436,7 @@ export const Home: React.FC = () => {
                           ? 'bg-primary text-white'
                           : step < rsvpStep
                           ? 'bg-success text-white'
-                          : 'bg-surface-subtle text-text-tertiary'
+                          : 'bg-white text-ink/60'
                       }`}
                     >
                       {step < rsvpStep ? <Check className="w-4 h-4" /> : step}
@@ -420,7 +444,7 @@ export const Home: React.FC = () => {
                     {step < 4 && (
                       <div
                         className={`w-12 h-0.5 mx-2 ${
-                          step < rsvpStep ? 'bg-success' : 'bg-surface-subtle'
+                          step < rsvpStep ? 'bg-success' : 'bg-white'
                         }`}
                       />
                     )}
@@ -430,13 +454,13 @@ export const Home: React.FC = () => {
 
               {rsvpStep === 1 && (
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-text-primary">Step 1: Household</h3>
-                  <p className="text-text-secondary">Who from your household is attending?</p>
+                  <h3 className="text-xl font-semibold text-ink">Step 1: Household</h3>
+                  <p className="text-ink/70">Who from your household is attending?</p>
                   <div className="space-y-2">
                     {['Alex Smith', 'Jordan Smith'].map((name) => (
-                      <label key={name} className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-surface-subtle">
+                      <label key={name} className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-white">
                         <input type="checkbox" className="w-4 h-4" defaultChecked />
-                        <span className="text-text-primary">{name}</span>
+                        <span className="text-ink">{name}</span>
                       </label>
                     ))}
                   </div>
@@ -448,13 +472,13 @@ export const Home: React.FC = () => {
 
               {rsvpStep === 2 && (
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-text-primary">Step 2: Events</h3>
-                  <p className="text-text-secondary">Which events will you attend?</p>
+                  <h3 className="text-xl font-semibold text-ink">Step 2: Events</h3>
+                  <p className="text-ink/70">Which events will you attend?</p>
                   <div className="space-y-2">
                     {['Welcome Reception (Fri, 6pm)', 'Wedding Ceremony (Sat, 3pm)', 'Reception Dinner (Sat, 6pm)'].map((event) => (
-                      <label key={event} className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-surface-subtle">
+                      <label key={event} className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-white">
                         <input type="checkbox" className="w-4 h-4" defaultChecked />
-                        <span className="text-text-primary">{event}</span>
+                        <span className="text-ink">{event}</span>
                       </label>
                     ))}
                   </div>
@@ -471,11 +495,11 @@ export const Home: React.FC = () => {
 
               {rsvpStep === 3 && (
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-text-primary">Step 3: Meal + Dietary</h3>
-                  <p className="text-text-secondary">Meal preferences for dinner reception:</p>
+                  <h3 className="text-xl font-semibold text-ink">Step 3: Meal + Dietary</h3>
+                  <p className="text-ink/70">Meal preferences for dinner reception:</p>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">Alex Smith</label>
+                      <label className="block text-sm font-medium text-ink mb-2">Alex Smith</label>
                       <select className="w-full p-2 border border-border rounded-lg bg-surface">
                         <option>Chicken</option>
                         <option>Beef</option>
@@ -483,7 +507,7 @@ export const Home: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">Jordan Smith</label>
+                      <label className="block text-sm font-medium text-ink mb-2">Jordan Smith</label>
                       <select className="w-full p-2 border border-border rounded-lg bg-surface">
                         <option>Chicken</option>
                         <option>Beef</option>
@@ -491,7 +515,7 @@ export const Home: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">Dietary restrictions (optional)</label>
+                      <label className="block text-sm font-medium text-ink mb-2">Dietary restrictions (optional)</label>
                       <textarea
                         className="w-full p-2 border border-border rounded-lg bg-surface"
                         rows={3}
@@ -512,11 +536,11 @@ export const Home: React.FC = () => {
 
               {rsvpStep === 4 && (
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-text-primary">Step 4: Confirm</h3>
-                  <div className="bg-surface-subtle p-4 rounded-lg space-y-2">
-                    <p className="text-sm text-text-secondary"><strong>Attending:</strong> Alex Smith, Jordan Smith</p>
-                    <p className="text-sm text-text-secondary"><strong>Events:</strong> All events</p>
-                    <p className="text-sm text-text-secondary"><strong>Meals:</strong> 2x Chicken</p>
+                  <h3 className="text-xl font-semibold text-ink">Step 4: Confirm</h3>
+                  <div className="bg-white p-4 rounded-lg space-y-2">
+                    <p className="text-sm text-ink/70"><strong>Attending:</strong> Alex Smith, Jordan Smith</p>
+                    <p className="text-sm text-ink/70"><strong>Events:</strong> All events</p>
+                    <p className="text-sm text-ink/70"><strong>Meals:</strong> 2x Chicken</p>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" fullWidth onClick={() => setRsvpStep(3)}>
@@ -537,10 +561,10 @@ export const Home: React.FC = () => {
       </section>
 
       {/* F) TEMPLATE GALLERY */}
-      <section id="templates" className="py-16 md:py-24 bg-surface-subtle">
+      <section id="templates" className="py-16 md:py-24 bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
               Beautiful templates for every style
             </h2>
           </div>
@@ -565,7 +589,7 @@ export const Home: React.FC = () => {
                   <Heart className="w-12 h-12 text-primary" />
                 </div>
                 <CardContent className="p-4">
-                  <h3 className="text-base font-semibold text-text-primary mb-2">{template.name}</h3>
+                  <h3 className="text-base font-semibold text-ink mb-2">{template.name}</h3>
                   <div className="flex gap-2 mb-3">
                     {template.tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
@@ -598,68 +622,71 @@ export const Home: React.FC = () => {
       </section>
 
       {/* G) COLORS / DESIGN SYSTEM */}
-      <section id="colors" className="py-16 md:py-24">
+      <section id="colors" className="py-16 md:py-24 bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-              Customize your color palette
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              Customize your <span className="text-accent">color palette</span>
             </h2>
-            <p className="text-lg text-text-secondary">
-              Choose a palette that matches your wedding style.
+            <p className="text-lg text-ink/70">
+              Choose a palette that matches your wedding style. Click to preview instantly.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { name: 'Modern Minimal', colors: ['#2A5D67', '#F6F3EE', '#C89F56', '#2B2B2B'] },
-              { name: 'Romantic Classic', colors: ['#D7795D', '#F6F3EE', '#C89F56', '#8B7355'] },
-              { name: 'Coastal', colors: ['#2A5D67', '#A3D5D3', '#F6F3EE', '#E8E4DD'] },
-              { name: 'Garden Party', colors: ['#8FAF91', '#F6F3EE', '#D7795D', '#C89F56'] },
-              { name: 'Modern Editorial', colors: ['#2B2B2B', '#F6F3EE', '#2A5D67', '#C89F56'] },
-              { name: 'Bold Contemporary', colors: ['#D7795D', '#2A5D67', '#C89F56', '#2B2B2B'] },
+              { name: 'Modern Minimal', brand: '17 17 17', brand2: '168 162 158', accent: '191 167 111', paper: '248 248 248', ink: '17 17 17', displayColors: ['#111111', '#A8A29E', '#BFA76F', '#F8F8F8'] },
+              { name: 'Romantic Classic', brand: '192 128 129', brand2: '231 203 169', accent: '244 194 194', paper: '251 246 240', ink: '43 43 43', displayColors: ['#C08081', '#E7CBA9', '#F4C2C2', '#FBF6F0'] },
+              { name: 'Coastal', brand: '31 60 136', brand2: '143 191 191', accent: '255 111 97', paper: '239 230 221', ink: '31 31 31', displayColors: ['#1F3C88', '#8FBFBF', '#FF6F61', '#EFE6DD'] },
+              { name: 'Garden Party', brand: '107 142 35', brand2: '156 175 136', accent: '196 106 62', paper: '250 249 246', ink: '43 43 43', displayColors: ['#6B8E23', '#9CAF88', '#C46A3E', '#FAF9F6'] },
+              { name: 'Modern Editorial', brand: '74 74 74', brand2: '191 167 111', accent: '139 125 123', paper: '248 248 248', ink: '34 34 34', displayColors: ['#4A4A4A', '#BFA76F', '#8B7D7B', '#F8F8F8'] },
+              { name: 'Bold Contemporary', brand: '4 106 56', brand2: '184 115 51', accent: '18 18 18', paper: '245 242 237', ink: '18 18 18', displayColors: ['#046A38', '#B87333', '#121212', '#F5F2ED'] },
             ].map((palette, idx) => (
-              <Card key={idx} variant="bordered" padding="md">
-                <h3 className="text-lg font-semibold text-text-primary mb-4">{palette.name}</h3>
+              <div key={idx} className="bg-white border border-brand/20 rounded-lg p-6 hover:border-brand/40 transition-colors">
+                <h3 className="text-lg font-semibold text-ink mb-4">{palette.name}</h3>
                 <div className="flex gap-2 mb-4">
-                  {palette.colors.map((color, i) => (
-                    <div key={i} className="flex-1 h-16 rounded-lg border border-border" style={{ backgroundColor: color }} />
+                  {palette.displayColors.map((color, i) => (
+                    <div key={i} className="flex-1 h-16 rounded-lg border border-ink/10 shadow-sm" style={{ backgroundColor: color }} />
                   ))}
                 </div>
-                <Button variant="outline" size="sm" fullWidth onClick={() => onTodo(`Apply ${palette.name} palette`)}>
+                <button
+                  className="w-full px-4 py-2 border-2 border-brand text-brand font-medium rounded-lg hover:bg-brand/10 transition-colors"
+                  onClick={() => applyPalette(palette)}
+                >
                   Apply palette
-                </Button>
-              </Card>
+                </button>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* H) MESSAGING */}
-      <section id="messaging" className="py-16 md:py-24 bg-surface-subtle">
+      <section id="messaging" className="py-16 md:py-24 bg-paper">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-              Stay in touch with your guests
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              Stay in touch with <span className="text-brand">your guests</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-2xl font-semibold text-text-primary mb-4">Email included (fair-use)</h3>
-              <p className="text-text-secondary mb-4">
+              <h3 className="text-2xl font-semibold text-ink mb-4">Email included (fair-use)</h3>
+              <p className="text-ink/70 mb-4">
                 Send updates, reminders, and thank-you messages to all your guests. Email is included with your plan, with fair-use limits.
               </p>
-              <h3 className="text-2xl font-semibold text-text-primary mb-4 mt-8">SMS credit-based by segment</h3>
-              <p className="text-text-secondary mb-4">
+              <h3 className="text-2xl font-semibold text-ink mb-4 mt-8">SMS credit-based by segment</h3>
+              <p className="text-ink/70 mb-4">
                 For urgent updates (venue changes, weather alerts), purchase SMS credits as needed. Segment by RSVP status or event.
               </p>
             </div>
 
             <Card variant="bordered" padding="lg">
-              <h3 className="text-lg font-semibold text-text-primary mb-4">Compose Message</h3>
+              <h3 className="text-lg font-semibold text-ink mb-4">Compose Message</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">To</label>
+                  <label className="block text-sm font-medium text-ink mb-2">To</label>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="primary">All guests</Badge>
                     <Badge variant="secondary">RSVP Yes</Badge>
@@ -667,7 +694,7 @@ export const Home: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">Subject</label>
+                  <label className="block text-sm font-medium text-ink mb-2">Subject</label>
                   <input
                     type="text"
                     className="w-full p-2 border border-border rounded-lg bg-surface"
@@ -675,7 +702,7 @@ export const Home: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">Message</label>
+                  <label className="block text-sm font-medium text-ink mb-2">Message</label>
                   <textarea
                     className="w-full p-2 border border-border rounded-lg bg-surface"
                     rows={4}
@@ -704,20 +731,20 @@ export const Home: React.FC = () => {
       <section id="registry" className="py-16 md:py-24">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
               Registry without the clutter
             </h2>
-            <p className="text-lg text-text-secondary">
+            <p className="text-lg text-ink/70">
               Link to your existing registries or bring your own affiliate links.
             </p>
           </div>
 
           <div className="max-w-2xl mx-auto">
             <Card variant="bordered" padding="lg" className="mb-6">
-              <h3 className="text-xl font-semibold text-text-primary mb-4">Add registry item</h3>
+              <h3 className="text-xl font-semibold text-ink mb-4">Add registry item</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">Registry URL</label>
+                  <label className="block text-sm font-medium text-ink mb-2">Registry URL</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -734,12 +761,12 @@ export const Home: React.FC = () => {
 
             <Card variant="bordered" padding="lg" className="mb-6">
               <div className="flex items-start gap-4">
-                <div className="w-20 h-20 bg-surface-subtle rounded-lg flex items-center justify-center">
-                  <Wallet className="w-8 h-8 text-text-tertiary" />
+                <div className="w-20 h-20 bg-white rounded-lg flex items-center justify-center">
+                  <Wallet className="w-8 h-8 text-ink/60" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-text-primary mb-2">Amazon Registry</h3>
-                  <p className="text-sm text-text-secondary mb-2">Kitchen & Home essentials</p>
+                  <h3 className="text-lg font-semibold text-ink mb-2">Amazon Registry</h3>
+                  <p className="text-sm text-ink/70 mb-2">Kitchen & Home essentials</p>
                   <Button variant="outline" size="sm" onClick={() => onTodo('View Amazon registry')}>
                     View registry
                   </Button>
@@ -751,8 +778,8 @@ export const Home: React.FC = () => {
               <div className="flex items-center gap-3">
                 <input type="checkbox" className="w-4 h-4" />
                 <div>
-                  <h4 className="text-sm font-semibold text-text-primary">BYOAL: Bring Your Own Affiliate Links</h4>
-                  <p className="text-xs text-text-secondary">Use your own affiliate links to earn commissions on registry purchases.</p>
+                  <h4 className="text-sm font-semibold text-ink">BYOAL: Bring Your Own Affiliate Links</h4>
+                  <p className="text-xs text-ink/70">Use your own affiliate links to earn commissions on registry purchases.</p>
                 </div>
               </div>
             </Card>
@@ -761,17 +788,17 @@ export const Home: React.FC = () => {
       </section>
 
       {/* J) TRAVEL + HOTEL */}
-      <section id="travel" className="py-16 md:py-24 bg-surface-subtle">
+      <section id="travel" className="py-16 md:py-24 bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
               Travel & hotel information
             </h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card variant="bordered" padding="lg">
-              <h3 className="text-xl font-semibold text-text-primary mb-6">Weekend Itinerary</h3>
+              <h3 className="text-xl font-semibold text-ink mb-6">Weekend Itinerary</h3>
               <div className="space-y-4">
                 {[
                   { time: 'Fri, 6:00 PM', event: 'Welcome Reception', location: 'Hotel Lobby' },
@@ -781,11 +808,11 @@ export const Home: React.FC = () => {
                 ].map((item, idx) => (
                   <div key={idx} className="flex gap-4 pb-4 border-b border-border last:border-0">
                     <div className="w-24 flex-shrink-0">
-                      <p className="text-sm font-medium text-text-primary">{item.time}</p>
+                      <p className="text-sm font-medium text-ink">{item.time}</p>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-text-primary">{item.event}</p>
-                      <p className="text-sm text-text-secondary">{item.location}</p>
+                      <p className="font-semibold text-ink">{item.event}</p>
+                      <p className="text-sm text-ink/70">{item.location}</p>
                     </div>
                   </div>
                 ))}
@@ -799,12 +826,12 @@ export const Home: React.FC = () => {
                     <Hotel className="w-6 h-6 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-text-primary mb-2">Grand Ocean Hotel</h3>
-                    <p className="text-sm text-text-secondary mb-3">
+                    <h3 className="text-lg font-semibold text-ink mb-2">Grand Ocean Hotel</h3>
+                    <p className="text-sm text-ink/70 mb-3">
                       We've reserved a block of rooms at a special rate. Book by May 15, 2026.
                     </p>
                     <Badge variant="secondary" className="mb-2">Code: SMITH2026</Badge>
-                    <p className="text-sm text-text-secondary mb-3">$149/night (regularly $229)</p>
+                    <p className="text-sm text-ink/70 mb-3">$149/night (regularly $229)</p>
                     <Button variant="outline" size="sm" onClick={() => onTodo('Book hotel room')}>
                       Book room
                     </Button>
@@ -813,7 +840,7 @@ export const Home: React.FC = () => {
               </Card>
 
               <Card variant="bordered" padding="lg">
-                <h3 className="text-lg font-semibold text-text-primary mb-4">Save these dates</h3>
+                <h3 className="text-lg font-semibold text-ink mb-4">Save these dates</h3>
                 <div className="space-y-2">
                   {['Welcome Reception', 'Wedding Ceremony', 'Reception Dinner'].map((event) => (
                     <Button key={event} variant="ghost" size="sm" fullWidth onClick={() => onTodo(`Add ${event} to calendar`)}>
@@ -832,16 +859,16 @@ export const Home: React.FC = () => {
       <section id="seating" className="py-16 md:py-24">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
               Seating & day-of check-in
             </h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card variant="bordered" padding="lg" className="aspect-square bg-surface-subtle flex items-center justify-center">
+            <Card variant="bordered" padding="lg" className="aspect-square bg-white flex items-center justify-center">
               <div className="text-center">
-                <ClipboardCheck className="w-16 h-16 text-text-tertiary mx-auto mb-4" />
-                <p className="text-text-secondary">Visual seating chart builder</p>
+                <ClipboardCheck className="w-16 h-16 text-ink/60 mx-auto mb-4" />
+                <p className="text-ink/70">Visual seating chart builder</p>
               </div>
             </Card>
 
@@ -866,8 +893,8 @@ export const Home: React.FC = () => {
               </div>
 
               <Card variant="bordered" padding="md">
-                <h3 className="text-base font-semibold text-text-primary mb-3">Day-of features</h3>
-                <ul className="space-y-2 text-sm text-text-secondary">
+                <h3 className="text-base font-semibold text-ink mb-3">Day-of features</h3>
+                <ul className="space-y-2 text-sm text-ink/70">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                     Track guest arrivals in real-time
@@ -892,13 +919,13 @@ export const Home: React.FC = () => {
       </section>
 
       {/* L) POST-WEDDING */}
-      <section id="postwedding" className="py-16 md:py-24 bg-surface-subtle">
+      <section id="postwedding" className="py-16 md:py-24 bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
               After the big day
             </h2>
-            <p className="text-lg text-text-secondary">
+            <p className="text-lg text-ink/70">
               Your wedding site continues to work for you long after the celebration.
             </p>
           </div>
@@ -909,8 +936,8 @@ export const Home: React.FC = () => {
                 <div className="p-3 bg-primary-light rounded-lg w-fit">
                   <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-semibold text-text-primary">Thank-you tracker</h3>
-                <p className="text-text-secondary">
+                <h3 className="text-xl font-semibold text-ink">Thank-you tracker</h3>
+                <p className="text-ink/70">
                   Track which thank-you notes you've sent and cross-reference with gifts received. Never miss a thank-you card.
                 </p>
                 <Button variant="outline" size="sm" onClick={() => onTodo('View thank-you tracker')}>
@@ -924,8 +951,8 @@ export const Home: React.FC = () => {
                 <div className="p-3 bg-accent-light rounded-lg w-fit">
                   <Download className="w-6 h-6 text-accent" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-semibold text-text-primary">Gift export</h3>
-                <p className="text-text-secondary">
+                <h3 className="text-xl font-semibold text-ink">Gift export</h3>
+                <p className="text-ink/70">
                   Export your complete gift list with giver names, amounts, and notes. Perfect for tax records or future reference.
                 </p>
                 <Button variant="outline" size="sm" onClick={() => onTodo('Export gift list')}>
@@ -939,8 +966,8 @@ export const Home: React.FC = () => {
                 <div className="p-3 bg-primary-light rounded-lg w-fit">
                   <Image className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-semibold text-text-primary">Photo archive</h3>
-                <p className="text-text-secondary">
+                <h3 className="text-xl font-semibold text-ink">Photo archive</h3>
+                <p className="text-ink/70">
                   Your photo vault stays active. Download all photos and videos anytime in the next 2 years. No rush, no pressure.
                 </p>
                 <Button variant="outline" size="sm" onClick={() => onTodo('Download photo archive')}>
@@ -954,8 +981,8 @@ export const Home: React.FC = () => {
                 <div className="p-3 bg-accent-light rounded-lg w-fit">
                   <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-semibold text-text-primary">Anniversary mode</h3>
-                <p className="text-text-secondary">
+                <h3 className="text-xl font-semibold text-ink">Anniversary mode</h3>
+                <p className="text-ink/70">
                   Convert your wedding site into a simple anniversary page with photos and memories. Perfect for sharing on social media.
                 </p>
                 <Button variant="outline" size="sm" onClick={() => onTodo('Enable anniversary mode')}>
@@ -968,26 +995,26 @@ export const Home: React.FC = () => {
       </section>
 
       {/* M) PRICING */}
-      <section id="pricing" className="py-16 md:py-24">
+      <section id="pricing" className="py-16 md:py-24 bg-paper">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-              Simple, honest pricing
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              Simple, <span className="text-brand">honest pricing</span>
             </h2>
-            <p className="text-lg text-text-secondary">
+            <p className="text-lg text-ink/70">
               One flat fee. No surprises. Auto-renew OFF by default.
             </p>
           </div>
 
           <div className="max-w-md mx-auto mb-12">
-            <Card variant="bordered" padding="lg" className="border-2 border-primary">
+            <div className="bg-white border-2 border-brand rounded-lg p-8 shadow-md">
               <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-text-primary mb-2">Complete Wedding Platform</h3>
+                <h3 className="text-2xl font-bold text-ink mb-2">Complete Wedding Platform</h3>
                 <div className="mb-4">
-                  <span className="text-5xl font-bold text-text-primary">$39</span>
-                  <span className="text-text-secondary"> / 2 years</span>
+                  <span className="text-5xl font-bold text-brand">$39</span>
+                  <span className="text-ink/70"> / 2 years</span>
                 </div>
-                <Badge variant="primary">Auto-renew: OFF by default</Badge>
+                <span className="inline-block px-4 py-2 bg-brand/10 text-brand text-sm font-semibold rounded-full border border-brand/20">Auto-renew: OFF by default</span>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -1005,28 +1032,34 @@ export const Home: React.FC = () => {
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                    <span className="text-text-secondary">{item}</span>
+                    <span className="text-ink/70">{item}</span>
                   </li>
                 ))}
               </ul>
 
               <div className="space-y-3">
-                <Button variant="accent" size="lg" fullWidth onClick={handleStartFree}>
+                <button
+                  className="w-full px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors"
+                  onClick={handleStartFree}
+                >
                   Start building your site
-                </Button>
-                <Button variant="outline" size="md" fullWidth onClick={() => onTodo('See what\'s included')}>
+                </button>
+                <button
+                  className="w-full px-6 py-2 border-2 border-brand text-brand font-medium rounded-lg hover:bg-brand/10 transition-colors"
+                  onClick={() => onTodo('See what\'s included')}
+                >
                   See what's included
-                </Button>
+                </button>
               </div>
 
-              <p className="text-xs text-text-tertiary text-center mt-4">
+              <p className="text-xs text-ink/60 text-center mt-4">
                 SMS credits available separately for urgent updates
               </p>
-            </Card>
+            </div>
           </div>
 
           <div className="max-w-3xl mx-auto">
-            <h3 className="text-2xl font-bold text-text-primary mb-6 text-center">Frequently asked questions</h3>
+            <h3 className="text-2xl font-bold text-ink mb-6 text-center">Frequently asked questions</h3>
             <div className="space-y-3">
               {[
                 {
@@ -1066,16 +1099,16 @@ export const Home: React.FC = () => {
                   key={idx}
                   variant="bordered"
                   padding="md"
-                  className="cursor-pointer hover:bg-surface-subtle transition-colors"
+                  className="cursor-pointer hover:bg-white transition-colors"
                   onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h4 className="text-base font-semibold text-text-primary mb-2">{faq.q}</h4>
-                      {expandedFaq === idx && <p className="text-sm text-text-secondary">{faq.a}</p>}
+                      <h4 className="text-base font-semibold text-ink mb-2">{faq.q}</h4>
+                      {expandedFaq === idx && <p className="text-sm text-ink/70">{faq.a}</p>}
                     </div>
                     <ChevronDown
-                      className={`w-5 h-5 text-text-tertiary flex-shrink-0 transition-transform ${
+                      className={`w-5 h-5 text-ink/60 flex-shrink-0 transition-transform ${
                         expandedFaq === idx ? 'rotate-180' : ''
                       }`}
                     />
@@ -1088,24 +1121,30 @@ export const Home: React.FC = () => {
       </section>
 
       {/* N) FINAL CTA */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-primary-light to-accent-light">
+      <section className="py-16 md:py-24 bg-gradient-to-br from-brand/10 to-accent/10">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-6">
-              Build it once. Trust it all the way to wedding week.
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-6">
+              Build it once. <span className="text-brand">Trust it all the way</span> to wedding week.
             </h2>
-            <p className="text-lg text-text-secondary mb-10">
+            <p className="text-lg text-ink/70 mb-10">
               No surprises. No hidden fees. No stress. Just a wedding site that works.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="accent" size="lg" onClick={handleStartFree}>
+              <button
+                className="inline-flex items-center justify-center px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors"
+                onClick={handleStartFree}
+              >
                 <Sparkles className="w-5 h-5 mr-2" />
                 Start Free Build
-              </Button>
-              <Button variant="outline" size="lg" onClick={() => onTodo('Preview full demo')}>
+              </button>
+              <button
+                className="inline-flex items-center justify-center px-6 py-3 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/10 transition-colors"
+                onClick={() => onTodo('Preview full demo')}
+              >
                 Preview Demo
                 <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              </button>
             </div>
           </div>
         </div>
