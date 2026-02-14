@@ -106,8 +106,8 @@ export const Home: React.FC = () => {
 
             <Card variant="bordered" padding="lg">
               <div className="flex flex-col items-start gap-4">
-                <div className="p-3 bg-champagne-100 rounded-lg">
-                  <Image className="w-6 h-6 text-champagne-700" aria-hidden="true" />
+                <div className="p-3 bg-secondary/10 rounded-lg">
+                  <Image className="w-6 h-6 text-secondary" aria-hidden="true" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-text-primary mb-2">
@@ -122,8 +122,8 @@ export const Home: React.FC = () => {
 
             <Card variant="bordered" padding="lg">
               <div className="flex flex-col items-start gap-4">
-                <div className="p-3 bg-plum-100 rounded-lg">
-                  <Sparkles className="w-6 h-6 text-plum-600" aria-hidden="true" />
+                <div className="p-3 bg-primary-light rounded-lg">
+                  <Sparkles className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-text-primary mb-2">
@@ -235,13 +235,13 @@ export const Home: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <Card variant="bordered" padding="none" className="overflow-hidden">
-              <div className="aspect-[4/3] bg-gradient-to-br from-sage-100 to-sage-200 flex items-center justify-center">
-                <Heart className="w-16 h-16 text-sage-600" aria-hidden="true" />
+              <div className="aspect-[4/3] bg-gradient-to-br from-primary-light to-primary/20 flex items-center justify-center">
+                <Heart className="w-16 h-16 text-primary" aria-hidden="true" />
               </div>
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-text-primary mb-2">Garden Classic</h3>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">Ocean Breeze</h3>
                 <p className="text-sm text-text-secondary mb-4">
-                  Timeless and elegant with soft greens and natural tones.
+                  Clean and sophisticated with calming teal tones.
                 </p>
                 <Button variant="outline" size="sm" fullWidth>
                   Preview
@@ -250,13 +250,13 @@ export const Home: React.FC = () => {
             </Card>
 
             <Card variant="bordered" padding="none" className="overflow-hidden">
-              <div className="aspect-[4/3] bg-gradient-to-br from-terracotta-100 to-terracotta-200 flex items-center justify-center">
-                <Heart className="w-16 h-16 text-terracotta-600" aria-hidden="true" />
+              <div className="aspect-[4/3] bg-gradient-to-br from-accent-light to-accent/20 flex items-center justify-center">
+                <Heart className="w-16 h-16 text-accent" aria-hidden="true" />
               </div>
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-text-primary mb-2">Desert Sunset</h3>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">Coral Sunset</h3>
                 <p className="text-sm text-text-secondary mb-4">
-                  Warm terracotta and golden hues for a romantic feel.
+                  Warm muted coral tones for a romantic feel.
                 </p>
                 <Button variant="outline" size="sm" fullWidth>
                   Preview
@@ -265,13 +265,13 @@ export const Home: React.FC = () => {
             </Card>
 
             <Card variant="bordered" padding="none" className="overflow-hidden">
-              <div className="aspect-[4/3] bg-gradient-to-br from-plum-100 to-plum-200 flex items-center justify-center">
-                <Heart className="w-16 h-16 text-plum-600" aria-hidden="true" />
+              <div className="aspect-[4/3] bg-gradient-to-br from-secondary/20 to-secondary/30 flex items-center justify-center">
+                <Heart className="w-16 h-16 text-secondary" aria-hidden="true" />
               </div>
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-text-primary mb-2">Lavender Fields</h3>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">Golden Hour</h3>
                 <p className="text-sm text-text-secondary mb-4">
-                  Soft plum and champagne for a gentle, sophisticated look.
+                  Elegant burnt gold for a timeless aesthetic.
                 </p>
                 <Button variant="outline" size="sm" fullWidth>
                   Preview
@@ -471,7 +471,7 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-gradient-to-br from-sage-50 to-champagne-50">
+      <section className="py-16 md:py-24 bg-gradient-to-br from-primary-light to-accent-light">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-6">
