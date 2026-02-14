@@ -33,7 +33,7 @@ export const Onboarding: React.FC = () => {
   };
 
   const handleManualSetup = () => {
-    console.log('Navigate to manual builder');
+    window.location.hash = '#overview';
   };
 
   const nextStep = () => {
@@ -345,10 +345,10 @@ export const Onboarding: React.FC = () => {
       </Card>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button variant="accent" size="lg">
+        <Button variant="accent" size="lg" onClick={() => window.location.hash = '#overview'}>
           Go to Dashboard
         </Button>
-        <Button variant="outline" size="lg">
+        <Button variant="outline" size="lg" onClick={() => window.location.hash = '#builder'}>
           Preview Site
         </Button>
       </div>
@@ -356,7 +356,7 @@ export const Onboarding: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sage-50 to-champagne-50 p-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-primary-light to-accent-light p-4 py-12">
       <div className="container-custom">
         <div className="flex items-center justify-center mb-12">
           <Heart className="w-8 h-8 text-accent" aria-hidden="true" />

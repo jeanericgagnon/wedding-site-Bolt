@@ -1,26 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Heart } from 'lucide-react';
-import { Button, Input, Card } from '../components/ui';
+import { Button, Card } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    const { error } = await signIn(email, password);
-
-    if (error) {
-      setError(error.message || 'Failed to sign in');
-      setLoading(false);
-    }
+  const handleDemoLogin = () => {
+    signIn();
+    window.location.hash = '#overview';
   };
 
   return (
@@ -36,70 +24,29 @@ export const Login: React.FC = () => {
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="p-3 rounded-lg bg-error-light border border-error/20 text-error text-sm">
-                {error}
-              </div>
-            )}
-
-            <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
-                />
-                <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors">Remember me</span>
-              </label>
-              <a href="#forgot" className="text-sm text-primary hover:text-primary-hover font-medium transition-colors">
-                Forgot password?
-              </a>
-            </div>
-
-            <div className="pt-2">
-              <Button type="submit" variant="accent" size="lg" fullWidth className="shadow-md hover:shadow-lg" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign In'}
+          <div className="space-y-5">
+            <div className="text-center py-4">
+              <p className="text-text-secondary mb-6">
+                Try the demo experience with sample wedding data
+              </p>
+              <Button variant="accent" size="lg" fullWidth className="shadow-md hover:shadow-lg" onClick={handleDemoLogin}>
+                View Demo Dashboard
               </Button>
             </div>
-          </form>
+          </div>
 
           <div className="mt-6 pt-6 border-t border-border-subtle text-center">
             <p className="text-sm text-text-secondary">
               Don't have an account?{' '}
-              <a href="#signup" className="text-primary hover:text-primary-hover font-semibold transition-colors">
-                Sign up
-              </a>
+              <button onClick={handleDemoLogin} className="text-primary hover:text-primary-hover font-semibold transition-colors">
+                Start Free
+              </button>
             </p>
           </div>
         </Card>
 
         <p className="text-center text-xs text-text-tertiary mt-6 leading-relaxed max-w-sm mx-auto">
-          By signing in, you agree to our{' '}
-          <a href="#terms" className="text-text-secondary hover:text-text-primary transition-colors underline underline-offset-2">
-            Terms of Service
-          </a>{' '}
-          and{' '}
-          <a href="#privacy" className="text-text-secondary hover:text-text-primary transition-colors underline underline-offset-2">
-            Privacy Policy
-          </a>
+          Demo mode with sample data for exploration
         </p>
       </div>
     </div>

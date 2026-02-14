@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
 import { Heart, Menu, X } from 'lucide-react';
 import { Button } from '../ui';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
   variant?: 'marketing' | 'dashboard';
 }
 
 export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
+  const { signIn } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleStartFree = () => {
+    signIn();
+    window.location.hash = '#overview';
+  };
+
+  const handleLogin = () => {
+    window.location.hash = '#login';
+  };
 
   if (variant === 'dashboard') {
     return null;
@@ -38,10 +49,10 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleLogin}>
               Login
             </Button>
-            <Button variant="accent" size="sm">
+            <Button variant="accent" size="sm" onClick={handleStartFree}>
               Start Free
             </Button>
           </div>
@@ -72,10 +83,10 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                 FAQ
               </a>
               <div className="flex flex-col gap-2 pt-3 mt-3 border-t border-border-subtle">
-                <Button variant="ghost" size="md" fullWidth>
+                <Button variant="ghost" size="md" fullWidth onClick={handleLogin}>
                   Login
                 </Button>
-                <Button variant="accent" size="md" fullWidth>
+                <Button variant="accent" size="md" fullWidth onClick={handleStartFree}>
                   Start Free
                 </Button>
               </div>

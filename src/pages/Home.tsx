@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { Header, Footer } from '../components/layout';
 import { Button, Card, CardContent, Badge } from '../components/ui';
 import {
@@ -17,6 +18,13 @@ import {
 } from 'lucide-react';
 
 export const Home: React.FC = () => {
+  const { signIn } = useAuth();
+
+  const handleStartFree = () => {
+    signIn();
+    window.location.hash = '#overview';
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -34,7 +42,7 @@ export const Home: React.FC = () => {
               Launch fast with beautiful templates, simple RSVP tools, and a private space for your memories.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button variant="accent" size="lg">
+              <Button variant="accent" size="lg" onClick={handleStartFree}>
                 Start Free
               </Button>
               <Button variant="outline" size="lg">
@@ -481,7 +489,7 @@ export const Home: React.FC = () => {
               Create your wedding site in minutes. No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="accent" size="lg">
+              <Button variant="accent" size="lg" onClick={handleStartFree}>
                 Start Free
               </Button>
               <Button variant="outline" size="lg">
