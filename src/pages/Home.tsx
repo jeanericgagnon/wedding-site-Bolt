@@ -1011,7 +1011,7 @@ export const Home: React.FC = () => {
               <div className="text-center mb-6">
                 <h3 className="text-2xl font-bold text-ink mb-2">Complete Wedding Platform</h3>
                 <div className="mb-4">
-                  <span className="text-5xl font-bold text-brand">$39</span>
+                  <span className="text-5xl font-bold text-brand">$50</span>
                   <span className="text-ink/70"> / 2 years</span>
                 </div>
                 <span className="inline-block px-4 py-2 bg-brand/10 text-brand text-sm font-semibold rounded-full border border-brand/20">Auto-renew: OFF by default</span>
