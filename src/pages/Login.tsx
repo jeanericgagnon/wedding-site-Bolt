@@ -13,6 +13,9 @@ export const Login: React.FC = () => {
     try {
       await signIn();
 
+      // Wait a bit for the auth state to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Check if user has access to demo wedding site
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
@@ -45,9 +48,9 @@ export const Login: React.FC = () => {
             }
           }
         }
-      }
 
-      navigate('/dashboard');
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Demo login error:', error);
     }
