@@ -48,7 +48,7 @@ export const Home: React.FC = () => {
                 Sign up
               </button>
               <Link
-                to="/product"
+                to="/login"
                 className="inline-flex items-center justify-center px-8 py-4 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               >
                 Preview demo
@@ -283,7 +283,7 @@ export const Home: React.FC = () => {
                   Sign up
                 </button>
                 <Link
-                  to="/product"
+                  to="/login"
                   className="block w-full px-6 py-3 text-center border-2 border-brand text-brand font-medium rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                   Preview demo
