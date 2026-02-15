@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({
           id: session.user.id,
           email: session.user.email || '',
-          name: 'Alex & Jordan',
+          name: session.user.user_metadata?.name || session.user.email || '',
         });
       }
       setLoading(false);
@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({
           id: session.user.id,
           email: session.user.email || '',
-          name: 'Alex & Jordan',
+          name: session.user.user_metadata?.name || session.user.email || '',
         });
       } else {
         setUser(null);

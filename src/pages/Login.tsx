@@ -1,34 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
-import { Button, Card } from '../components/ui';
-import { useAuth } from '../contexts/AuthContext';
+import { Button, Card, Input } from '../components/ui';
+import { supabase } from '../lib/supabase';
 
 export const Login: React.FC = () => {
-  const { signIn, user } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
 
-  React.useEffect(() => {
-    if (user) {
-      setIsLoading(false);
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+    setError('');
+  };
 
-  const handleDemoLogin = async () => {
-    if (isLoading) return;
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-    setIsLoading(true);
-    setError(null);
     try {
-      await signIn();
-      // Don't navigate here - let the useEffect handle it when user state updates
-    } catch (error: any) {
-      console.error('Demo login error:', error);
-      setError(error?.message || 'Failed to sign in. Please try again.');
-      setIsLoading(false);
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signInError) throw signInError;
+
+      navigate('/dashboard');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Failed to sign in. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,53 +49,63 @@ export const Login: React.FC = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
             <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-            <span className="text-2xl font-bold text-text-primary tracking-tight">WeddingSite</span>
+            <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
-          <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">Welcome back</h1>
+          <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back</h1>
           <p className="text-text-secondary">Sign in to manage your wedding site</p>
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
-          <div className="space-y-5">
-            <div className="text-center py-4">
-              <p className="text-text-secondary mb-6">
-                Try the demo experience with sample wedding data
-              </p>
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              )}
-              <Button
-                variant="accent"
-                size="lg"
-                fullWidth
-                className="shadow-md hover:shadow-lg"
-                onClick={handleDemoLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Loading...' : 'View Demo Dashboard'}
-              </Button>
-            </div>
-          </div>
+          <form onSubmit={handleLogin} className="space-y-5">
+            <Input
+              label="Email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="your@email.com"
+              required
+            />
 
-          <div className="mt-6 pt-6 border-t border-border-subtle text-center">
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              required
+            />
+
+            {error && (
+              <div className="p-3 bg-error-light text-error rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              variant="accent"
+              size="lg"
+              fullWidth
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
             <p className="text-sm text-text-secondary">
               Don't have an account?{' '}
               <button
-                onClick={handleDemoLogin}
-                disabled={isLoading}
-                className="text-primary hover:text-primary-hover font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => navigate('/signup')}
+                className="text-primary hover:text-primary-hover font-medium transition-colors"
               >
-                Start Free
+                Sign up
               </button>
             </p>
           </div>
         </Card>
-
-        <p className="text-center text-xs text-text-tertiary mt-6 leading-relaxed max-w-sm mx-auto">
-          Demo mode with sample data for exploration
-        </p>
       </div>
     </div>
   );
