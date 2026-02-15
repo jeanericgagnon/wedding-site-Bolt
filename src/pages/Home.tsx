@@ -439,8 +439,490 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* E) RSVP DEMO */}
-      <section id="rsvp-demo" className="py-16 md:py-24 bg-paper">
+      {/* E) FULL FEATURE LIST */}
+      <section id="full-features" className="py-16 md:py-24 bg-paper">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              Everything included <span className="text-brand">(and what's coming soon)</span>
+            </h2>
+            <p className="text-lg text-ink/70 max-w-3xl mx-auto">
+              A full-stack wedding site—built around RSVP correctness, privacy-first defaults, and calm logistics.
+            </p>
+            <div className="flex items-center justify-center gap-6 mt-6">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-success"></div>
+                <span className="text-sm text-ink/70">Included</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-ink/20"></div>
+                <span className="text-sm text-ink/70">Coming soon</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* A) Guests + Households */}
+            <Card variant="bordered" padding="lg">
+              <h3 className="text-xl font-bold text-ink mb-4">Guests + Households</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <Users className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Household grouping + merging</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <UserPlus className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Plus-one rules (named/unnamed)</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Lock className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Per-event invitation permissions</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Duplicate prevention + dedupe</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Upload className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Import CSV mapping + validation</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <FileText className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Audit trail</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+              </ul>
+            </Card>
+
+            {/* B) RSVP Engine */}
+            <Card variant="bordered" padding="lg">
+              <h3 className="text-xl font-bold text-ink mb-4">RSVP Engine</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Multi-event RSVP</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Utensils className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Meal choices + dietary/allergens</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <MessageSquare className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Custom questions</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Deadline enforcement + late override</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Confirmation screen + email/SMS</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Account recovery</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+              </ul>
+            </Card>
+
+            {/* C) Messaging */}
+            <Card variant="bordered" padding="lg">
+              <h3 className="text-xl font-bold text-ink mb-4">Messaging</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <Send className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Email broadcast</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Users className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Segmentation: non-responders, event-specific</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <MessageSquare className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">SMS credits by segment</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Bell className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Opt-out/consent compliance</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+              </ul>
+            </Card>
+
+            {/* D) Travel + Itinerary */}
+            <Card variant="bordered" padding="lg">
+              <h3 className="text-xl font-bold text-ink mb-4">Travel + Itinerary</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <Calendar className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Itinerary timeline</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Hotel className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Hotel room block module</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Download className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Add-to-calendar ICS</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Globe className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Timezone/DST-safe times</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+              </ul>
+            </Card>
+
+            {/* E) Registry */}
+            <Card variant="bordered" padding="lg">
+              <h3 className="text-xl font-bold text-ink mb-4">Registry</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <Wallet className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Universal URL add + metadata preview</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <DollarSign className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Cash fund links</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Zap className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">BYOAL (bring your own affiliate links) option</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+              </ul>
+            </Card>
+
+            {/* F) Seating + Check-in */}
+            <Card variant="bordered" padding="lg">
+              <h3 className="text-xl font-bold text-ink mb-4">Seating + Check-in</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <ClipboardCheck className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Seating chart builder</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Utensils className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Meal headcount export</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <QrCode className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Check-in mode + QR</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Offline fallback</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </li>
+              </ul>
+            </Card>
+
+            {/* G) Privacy + Trust */}
+            <Card variant="bordered" padding="lg" className="lg:col-span-2">
+              <h3 className="text-xl font-bold text-ink mb-4">Privacy + Trust</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                <div className="flex items-start gap-3">
+                  <Lock className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Private by default</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Globe className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-ink/80">Noindex control</span>
+                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Auto-renew off by default</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <DollarSign className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Clear pricing/no hidden fees</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <Button variant="outline" size="lg" onClick={() => onTodo('View roadmap')}>
+              <Calendar className="w-5 h-5 mr-2" />
+              See roadmap
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* F) WHY I BUILT THIS */}
+      <section id="why-built" className="py-16 md:py-24 bg-white">
+        <div className="container-custom">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              Why I built this
+            </h2>
+          </div>
+
+          <div className="max-w-3xl mx-auto">
+            <Card variant="bordered" padding="lg" className="bg-gradient-to-br from-brand/5 to-accent/5">
+              <div className="space-y-6">
+                <div className="prose prose-lg max-w-none">
+                  <p className="text-ink/80 leading-relaxed">
+                    Most wedding platforms are built for conversion, not trust. They hide renewal terms in fine print, enable public indexing by default, and bury the real costs until checkout. I wanted something different.
+                  </p>
+                  <p className="text-ink/80 leading-relaxed">
+                    This platform exists because your wedding logistics should be calm, not chaotic. Because your guest data deserves privacy by default. Because you shouldn't have to read the fine print to understand what you're paying for.
+                  </p>
+                </div>
+
+                <div className="border-t border-border pt-6">
+                  <h3 className="text-lg font-bold text-ink mb-4">Core principles</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3">
+                      <div className="p-2 bg-brand/10 rounded-lg mt-0.5">
+                        <Zap className="w-4 h-4 text-brand" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-ink">Correctness over cleverness</p>
+                        <p className="text-sm text-ink/70">RSVP logic that works, even in edge cases</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="p-2 bg-brand/10 rounded-lg mt-0.5">
+                        <Lock className="w-4 h-4 text-brand" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-ink">Privacy by default</p>
+                        <p className="text-sm text-ink/70">Your guest list isn't for sale or search engines</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="p-2 bg-accent/10 rounded-lg mt-0.5">
+                        <DollarSign className="w-4 h-4 text-accent" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-ink">Simple pricing, no surprises</p>
+                        <p className="text-sm text-ink/70">One flat fee, auto-renew off, clear terms</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <Button variant="outline" onClick={() => onTodo('Read the trust policy')}>
+                    Read the trust policy
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      const pricingSection = document.getElementById('pricing');
+                      pricingSection?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    See what's included
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* G) PRICING */}
+      <section id="pricing" className="py-16 md:py-24 bg-paper">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
+              Simple, <span className="text-brand">honest pricing</span>
+            </h2>
+            <p className="text-lg text-ink/70">
+              One flat fee. No surprises. Auto-renew OFF by default.
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto mb-12">
+            <div className="bg-white border-2 border-brand rounded-lg p-8 shadow-md">
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-ink mb-2">Complete Wedding Platform</h3>
+                <div className="mb-4">
+                  <span className="text-5xl font-bold text-brand">$39</span>
+                  <span className="text-ink/70"> / 2 years</span>
+                </div>
+                <span className="inline-block px-4 py-2 bg-brand/10 text-brand text-sm font-semibold rounded-full border border-brand/20">Auto-renew: OFF by default</span>
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                {[
+                  'Unlimited guests',
+                  'Email included (fair-use)',
+                  'SMS credits optional',
+                  'Multi-event RSVP',
+                  'Meal choices + dietary tracking',
+                  'Guest list management',
+                  'Itinerary timeline',
+                  'Private by default',
+                  'Mobile-friendly for all ages',
+                  'Data export anytime',
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                    <span className="text-ink/70">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="space-y-3">
+                <button
+                  className="w-full px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                  onClick={handleStartFree}
+                  disabled={isStarting}
+                  aria-label="Start building your wedding site"
+                >
+                  {isStarting ? 'Starting...' : 'Start free build'}
+                </button>
+                <button
+                  className="w-full px-6 py-2 border-2 border-brand text-brand font-medium rounded-lg hover:bg-brand/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                  onClick={() => onTodo('Preview demo')}
+                  aria-label="Preview a demo of the platform"
+                >
+                  Preview demo
+                </button>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-border space-y-2">
+                <p className="text-xs text-ink/60 text-center">
+                  Taxes may apply depending on location.
+                </p>
+                <p className="text-xs text-ink/60 text-center">
+                  After 2 years: renewal options shown in settings (coming soon).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-3xl mx-auto">
+            <h3 className="text-2xl font-bold text-ink mb-6 text-center">Frequently asked questions</h3>
+            <div className="space-y-3">
+              {[
+                {
+                  q: 'Why is auto-renew off by default?',
+                  a: 'We believe in transparency. Most couples only need the site for 2-3 years. We won\'t charge you again unless you explicitly choose to renew.',
+                },
+                {
+                  q: 'What about privacy and search engines?',
+                  a: 'Your site is private by default. It won\'t appear in search engines unless you explicitly enable public indexing.',
+                },
+                {
+                  q: 'How do SMS credits work?',
+                  a: 'Email is included. For urgent updates (venue changes, weather), you can purchase SMS credits. We charge $0.02/message with no markup.',
+                },
+                {
+                  q: 'Can I use my own domain?',
+                  a: 'Yes! Connect any domain you own (like smithwedding.com) or use our free subdomain.',
+                },
+                {
+                  q: 'What if I need a refund?',
+                  a: 'Full refund within 30 days, no questions asked. After that, pro-rated refund based on time remaining.',
+                },
+                {
+                  q: 'Can I export my data?',
+                  a: 'Yes. Export your guest list, RSVPs, photos, and all data anytime in standard formats (CSV, JSON, ZIP).',
+                },
+                {
+                  q: 'What happens after 2 years?',
+                  a: 'Your site stays read-only. You can download everything or renew for another 2 years. We send reminders 60 and 30 days before.',
+                },
+                {
+                  q: 'Do you sell my data or show ads?',
+                  a: 'Never. We make money from the $39 flat fee. Your wedding is not our ad platform.',
+                },
+              ].map((faq, idx) => (
+                <Card
+                  key={idx}
+                  variant="bordered"
+                  padding="md"
+                  className="cursor-pointer hover:bg-white transition-colors"
+                  onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedFaq(expandedFaq === idx ? null : idx);
+                    }
+                  }}
+                  aria-expanded={expandedFaq === idx}
+                  aria-label={faq.q}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h4 className="text-base font-semibold text-ink mb-2">{faq.q}</h4>
+                      {expandedFaq === idx && <p className="text-sm text-ink/70">{faq.a}</p>}
+                    </div>
+                    <ChevronDown
+                      className={`w-5 h-5 text-ink/60 flex-shrink-0 transition-transform ${
+                        expandedFaq === idx ? 'rotate-180' : ''
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* H) RSVP DEMO */}
+      <section id="rsvp-demo" className="py-16 md:py-24 bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
@@ -1034,134 +1516,6 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* M) PRICING */}
-      <section id="pricing" className="py-16 md:py-24 bg-paper">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
-              Simple, <span className="text-brand">honest pricing</span>
-            </h2>
-            <p className="text-lg text-ink/70">
-              One flat fee. No surprises. Auto-renew OFF by default.
-            </p>
-          </div>
-
-          <div className="max-w-md mx-auto mb-12">
-            <div className="bg-white border-2 border-brand rounded-lg p-8 shadow-md">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-ink mb-2">Complete Wedding Platform</h3>
-                <div className="mb-4">
-                  <span className="text-5xl font-bold text-brand">$50</span>
-                  <span className="text-ink/70"> / 2 years</span>
-                </div>
-                <span className="inline-block px-4 py-2 bg-brand/10 text-brand text-sm font-semibold rounded-full border border-brand/20">Auto-renew: OFF by default</span>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {[
-                  'Unlimited guests',
-                  'Beautiful wedding site with custom domain',
-                  'Complete RSVP system with meal tracking',
-                  'Email messaging included (fair-use)',
-                  'Photo & video vault (5GB)',
-                  'Guest list & household management',
-                  'Travel, registry, and seating tools',
-                  'Mobile-friendly for all guests',
-                  'No app required for guests',
-                  'Data export anytime',
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                    <span className="text-ink/70">{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="space-y-3">
-                <button
-                  className="w-full px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                  onClick={handleStartFree}
-                  disabled={isStarting}
-                  aria-label="Start building your wedding site"
-                >
-                  {isStarting ? 'Starting...' : 'Start free build'}
-                </button>
-                <button
-                  className="w-full px-6 py-2 border-2 border-brand text-brand font-medium rounded-lg hover:bg-brand/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                  onClick={() => onTodo('See what\'s included')}
-                  aria-label="See detailed pricing information"
-                >
-                  See what's included
-                </button>
-              </div>
-
-              <p className="text-xs text-ink/60 text-center mt-4">
-                SMS credits available separately for urgent updates
-              </p>
-            </div>
-          </div>
-
-          <div className="max-w-3xl mx-auto">
-            <h3 className="text-2xl font-bold text-ink mb-6 text-center">Frequently asked questions</h3>
-            <div className="space-y-3">
-              {[
-                {
-                  q: 'Why is auto-renew off by default?',
-                  a: 'We believe in transparency. Most couples only need the site for 2-3 years. We won\'t charge you again unless you explicitly choose to renew.',
-                },
-                {
-                  q: 'What about privacy and search engines?',
-                  a: 'Your site is private by default. It won\'t appear in search engines unless you explicitly enable public indexing.',
-                },
-                {
-                  q: 'How do SMS credits work?',
-                  a: 'Email is included. For urgent updates (venue changes, weather), you can purchase SMS credits. We charge $0.02/message with no markup.',
-                },
-                {
-                  q: 'Can I use my own domain?',
-                  a: 'Yes! Connect any domain you own (like smithwedding.com) or use our free subdomain.',
-                },
-                {
-                  q: 'What if I need a refund?',
-                  a: 'Full refund within 30 days, no questions asked. After that, pro-rated refund based on time remaining.',
-                },
-                {
-                  q: 'Can I export my data?',
-                  a: 'Yes. Export your guest list, RSVPs, photos, and all data anytime in standard formats (CSV, JSON, ZIP).',
-                },
-                {
-                  q: 'What happens after 2 years?',
-                  a: 'Your site stays read-only. You can download everything or renew for another 2 years. We send reminders 60 and 30 days before.',
-                },
-                {
-                  q: 'Do you sell my data or show ads?',
-                  a: 'Never. We make money from the $39 flat fee. Your wedding is not our ad platform.',
-                },
-              ].map((faq, idx) => (
-                <Card
-                  key={idx}
-                  variant="bordered"
-                  padding="md"
-                  className="cursor-pointer hover:bg-white transition-colors"
-                  onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h4 className="text-base font-semibold text-ink mb-2">{faq.q}</h4>
-                      {expandedFaq === idx && <p className="text-sm text-ink/70">{faq.a}</p>}
-                    </div>
-                    <ChevronDown
-                      className={`w-5 h-5 text-ink/60 flex-shrink-0 transition-transform ${
-                        expandedFaq === idx ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* N) FINAL CTA */}
       <section className="py-16 md:py-24 bg-gradient-to-br from-brand/10 to-accent/10">
