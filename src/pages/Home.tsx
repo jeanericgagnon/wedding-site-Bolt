@@ -11,9 +11,6 @@ import {
   Calendar,
   CheckCircle2,
   Shield,
-  Lock,
-  DollarSign,
-  Zap,
   Utensils,
   MessageSquare,
   Hotel,
@@ -107,62 +104,16 @@ export const Home: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8 shadow-sm mb-10">
-              <h3 className="text-2xl font-serif font-bold text-ink mb-6">Core principles</h3>
-              <div className="space-y-5">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-brand/10 rounded-xl">
-                    <Zap className="w-6 h-6 text-brand" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-lg text-ink mb-1">Correctness over cleverness</p>
-                    <p className="text-ink/70">RSVP logic that works, even in edge cases</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-brand/10 rounded-xl">
-                    <Lock className="w-6 h-6 text-brand" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-lg text-ink mb-1">Privacy by default</p>
-                    <p className="text-ink/70">Your guest list isn't for sale or search engines</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-accent/10 rounded-xl">
-                    <DollarSign className="w-6 h-6 text-accent" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-lg text-ink mb-1">Simple pricing, no surprises</p>
-                    <p className="text-ink/70">One flat fee, auto-renew off, clear terms</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div className="bg-accent/5 rounded-2xl p-8 border border-accent/20">
-              <h3 className="text-xl font-serif font-bold text-ink mb-4">Built for trust, not tricks</h3>
-              <ul className="space-y-2 text-ink/70">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Auto-renew OFF by default</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>2-year term included</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Privacy-first defaults</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Clear pricing before payment</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>No hidden fees</span>
-                </li>
+              <h3 className="text-2xl font-serif font-bold text-ink mb-3">Built for trust, not tricks</h3>
+              <p className="text-lg text-ink/80 mb-6">Wedding sites should not make money by stressing you out.</p>
+              <ul className="space-y-3 text-ink/70">
+                <li className="leading-relaxed">No upsells. No paid add ons to "unlock" the basics.</li>
+                <li className="leading-relaxed">No rigged registry order. No forced affiliate links.</li>
+                <li className="leading-relaxed">No QR codes or links that break unless you keep paying.</li>
+                <li className="leading-relaxed">No surprise renewals. Auto renew is off by default.</li>
+                <li className="leading-relaxed">No hidden fees. Clear pricing before you pay.</li>
+                <li className="leading-relaxed">Privacy first defaults, so your details are not accidentally public.</li>
               </ul>
             </div>
           </div>
