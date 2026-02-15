@@ -90,10 +90,19 @@ export const Home: React.FC = () => {
               />
               <div className="space-y-6">
                 <p className="text-lg text-ink/80 leading-relaxed">
-                  Most wedding platforms are built for conversion, not trust. They hide renewal terms in fine print, enable public indexing by default, and bury the real costs until checkout.
+                  I got engaged this year and tried to make a wedding website like most couples do.
                 </p>
                 <p className="text-lg text-ink/80 leading-relaxed">
-                  This platform exists because your wedding logistics should be calm, not chaotic. Because your guest data deserves privacy by default. Because you shouldn't have to read the fine print to understand what you're paying for.
+                  What I ran into was constant upsells. Basic features were locked behind confusing tiers, and simple tasks kept turning into checkout screens. It added stress at the exact moment I needed things to feel simple.
+                </p>
+                <p className="text-lg text-ink/80 leading-relaxed">
+                  So I built my own site and spent a lot of time getting it right.
+                </p>
+                <p className="text-lg text-ink/80 leading-relaxed">
+                  Then the QR code I was using stopped working. Guests couldn't access the site, and the only way to turn it back on was to pay $120 for three months.
+                </p>
+                <p className="text-lg text-ink/80 leading-relaxed">
+                  That experience is why this exists. A wedding site should be reliable, straightforward, and honest about pricing. No tricks. No surprise renewals. No stress tax.
                 </p>
               </div>
             </div>
