@@ -82,13 +82,20 @@ export const Home: React.FC = () => {
               Why I built this
             </h2>
 
-            <div className="space-y-6 mb-10">
-              <p className="text-lg text-ink/80 leading-relaxed">
-                Most wedding platforms are built for conversion, not trust. They hide renewal terms in fine print, enable public indexing by default, and bury the real costs until checkout.
-              </p>
-              <p className="text-lg text-ink/80 leading-relaxed">
-                This platform exists because your wedding logistics should be calm, not chaotic. Because your guest data deserves privacy by default. Because you shouldn't have to read the fine print to understand what you're paying for.
-              </p>
+            <div className="mb-10">
+              <img
+                src="/7641B308-4D92-48B2-8332-E6AB193A128D_1_105_c.jpeg"
+                alt="Proposal moment in a park overlooking the city"
+                className="w-full rounded-2xl shadow-lg mb-8"
+              />
+              <div className="space-y-6">
+                <p className="text-lg text-ink/80 leading-relaxed">
+                  Most wedding platforms are built for conversion, not trust. They hide renewal terms in fine print, enable public indexing by default, and bury the real costs until checkout.
+                </p>
+                <p className="text-lg text-ink/80 leading-relaxed">
+                  This platform exists because your wedding logistics should be calm, not chaotic. Because your guest data deserves privacy by default. Because you shouldn't have to read the fine print to understand what you're paying for.
+                </p>
+              </div>
             </div>
 
             <div className="bg-paper rounded-2xl p-8 shadow-sm mb-10">
