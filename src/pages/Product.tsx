@@ -291,9 +291,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="primary" onClick={() => onTodo('View guests in dashboard')}>
-                    View in dashboard
-                  </Button>
+                  <a href="/features/guests">
+                    <Button variant="primary">
+                      Learn more
+                    </Button>
+                  </a>
                 </div>
               )}
 
@@ -315,9 +317,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="primary" onClick={() => onTodo('View RSVP in dashboard')}>
-                    View in dashboard
-                  </Button>
+                  <a href="/features/rsvp">
+                    <Button variant="primary">
+                      Learn more
+                    </Button>
+                  </a>
                 </div>
               )}
 
@@ -339,9 +343,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="primary" onClick={() => onTodo('View messaging in dashboard')}>
-                    View in dashboard
-                  </Button>
+                  <a href="/features/messaging">
+                    <Button variant="primary">
+                      Learn more
+                    </Button>
+                  </a>
                 </div>
               )}
 
@@ -363,9 +369,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="primary" onClick={() => onTodo('View travel in dashboard')}>
-                    View in dashboard
-                  </Button>
+                  <a href="/features/travel">
+                    <Button variant="primary">
+                      Learn more
+                    </Button>
+                  </a>
                 </div>
               )}
 
@@ -387,9 +395,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="primary" onClick={() => onTodo('View registry in dashboard')}>
-                    View in dashboard
-                  </Button>
+                  <a href="/features/registry">
+                    <Button variant="primary">
+                      Learn more
+                    </Button>
+                  </a>
                 </div>
               )}
 
@@ -411,9 +421,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button variant="primary" onClick={() => onTodo('View seating in dashboard')}>
-                    View in dashboard
-                  </Button>
+                  <a href="/features/seating">
+                    <Button variant="primary">
+                      Learn more
+                    </Button>
+                  </a>
                 </div>
               )}
             </div>
