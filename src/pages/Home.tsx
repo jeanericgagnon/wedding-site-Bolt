@@ -131,7 +131,7 @@ export const Home: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             {/* Guests + Households */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <Link to="/features/guests" className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-brand/20">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Users className="w-6 h-6 text-brand" />
               </div>
@@ -144,10 +144,10 @@ export const Home: React.FC = () => {
                 <li>• Duplicate prevention</li>
                 <li>• Export for vendors</li>
               </ul>
-            </div>
+            </Link>
 
             {/* RSVP Engine */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <Link to="/features/rsvp" className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-brand/20">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <CheckCircle2 className="w-6 h-6 text-brand" />
               </div>
@@ -160,10 +160,10 @@ export const Home: React.FC = () => {
                 <li>• Deadline handling</li>
                 <li>• Real-time analytics</li>
               </ul>
-            </div>
+            </Link>
 
             {/* Messaging */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <Link to="/features/messaging" className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-brand/20">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
@@ -176,10 +176,10 @@ export const Home: React.FC = () => {
                 <li>• Open tracking</li>
                 <li>• Consent management</li>
               </ul>
-            </div>
+            </Link>
 
             {/* Travel + Itinerary */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <Link to="/features/travel" className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-brand/20">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Hotel className="w-6 h-6 text-brand" />
               </div>
@@ -192,10 +192,10 @@ export const Home: React.FC = () => {
                 <li>• Timezone support</li>
                 <li>• Travel FAQs</li>
               </ul>
-            </div>
+            </Link>
 
             {/* Registry */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <Link to="/features/registry" className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-brand/20">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Heart className="w-6 h-6 text-brand" />
               </div>
@@ -208,10 +208,10 @@ export const Home: React.FC = () => {
                 <li>• Auto-fetch details</li>
                 <li>• No sponsored clutter</li>
               </ul>
-            </div>
+            </Link>
 
             {/* Seating + Check-in */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm">
+            <Link to="/features/seating" className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-brand/20">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
@@ -224,7 +224,7 @@ export const Home: React.FC = () => {
                 <li>• Offline fallback</li>
                 <li>• Caterer export</li>
               </ul>
-            </div>
+            </Link>
           </div>
 
           <div className="text-center">

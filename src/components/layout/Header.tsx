@@ -50,12 +50,12 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
             setActiveSection(entry.target.id);
           }
         });
       },
-      { threshold: [0.5], rootMargin: '-80px 0px -60% 0px' }
+      { threshold: [0.3, 0.5, 0.7], rootMargin: '-100px 0px -50% 0px' }
     );
 
     const sections = ['top', 'why', 'features', 'pricing'];

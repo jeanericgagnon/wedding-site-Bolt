@@ -10,6 +10,14 @@ import {
   DashboardVault,
   DashboardSettings,
 } from './pages/dashboard';
+import {
+  GuestsFeature,
+  RSVPFeature,
+  MessagingFeature,
+  TravelFeature,
+  RegistryFeature,
+  SeatingFeature,
+} from './pages/features';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
@@ -19,6 +27,12 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />
+        <Route path="/features/guests" element={<GuestsFeature />} />
+        <Route path="/features/rsvp" element={<RSVPFeature />} />
+        <Route path="/features/messaging" element={<MessagingFeature />} />
+        <Route path="/features/travel" element={<TravelFeature />} />
+        <Route path="/features/registry" element={<RegistryFeature />} />
+        <Route path="/features/seating" element={<SeatingFeature />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route
