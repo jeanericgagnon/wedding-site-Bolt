@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Heart,
   LayoutDashboard,
@@ -21,10 +22,11 @@ interface DashboardLayoutProps {
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await signOut();
-    window.location.hash = '#login';
+    navigate('/login');
   };
 
   const getUserInitials = () => {
@@ -35,12 +37,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   };
 
   const navItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'builder', label: 'Builder', icon: Palette },
-    { id: 'guests', label: 'Guests & RSVP', icon: Users },
-    { id: 'vault', label: 'Vault', icon: Image },
-    { id: 'registry', label: 'Registry', icon: Gift },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/dashboard/overview' },
+    { id: 'builder', label: 'Builder', icon: Palette, path: '/dashboard/builder' },
+    { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
+    { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
+    { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
   ];
 
   return (
@@ -75,8 +77,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 const isActive = currentPage === item.id;
                 return (
                   <li key={item.id}>
-                    <a
-                      href={`#${item.id}`}
+                    <Link
+                      to={item.path}
                       className={`
                         flex items-center gap-3 px-4 py-3 rounded-lg text-base
                         transition-colors no-underline min-h-[44px]
@@ -90,7 +92,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                       <span>{item.label}</span>
-                    </a>
+                    </Link>
                   </li>
                 );
               })}

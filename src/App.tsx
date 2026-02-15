@@ -8,6 +8,7 @@ import {
   DashboardBuilder,
   DashboardGuests,
   DashboardVault,
+  DashboardRegistry,
   DashboardSettings,
 } from './pages/dashboard';
 import {
@@ -80,6 +81,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <DashboardVault />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/registry"
+          element={
+            <ProtectedRoute>
+              <DashboardRegistry />
             </ProtectedRoute>
           }
         />
