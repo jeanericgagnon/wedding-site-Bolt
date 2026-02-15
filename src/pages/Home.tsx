@@ -125,7 +125,7 @@ export const Home: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-ink mb-6">
-              Everything you need—without the bloat
+              Everything you need—nothing you don't
             </h2>
           </div>
 
