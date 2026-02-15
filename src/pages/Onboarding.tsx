@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 
 export const Onboarding: React.FC = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [formData, setFormData] = useState({
     partnerNames: '',
@@ -33,7 +35,7 @@ export const Onboarding: React.FC = () => {
   };
 
   const handleManualSetup = () => {
-    window.location.hash = '#overview';
+    navigate('/dashboard');
   };
 
   const nextStep = () => {
@@ -345,10 +347,10 @@ export const Onboarding: React.FC = () => {
       </Card>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button variant="accent" size="lg" onClick={() => window.location.hash = '#overview'}>
+        <Button variant="accent" size="lg" onClick={() => navigate('/dashboard')}>
           Go to Dashboard
         </Button>
-        <Button variant="outline" size="lg" onClick={() => window.location.hash = '#builder'}>
+        <Button variant="outline" size="lg" onClick={() => navigate('/dashboard/builder')}>
           Preview Site
         </Button>
       </div>
@@ -360,7 +362,7 @@ export const Onboarding: React.FC = () => {
       <div className="container-custom">
         <div className="flex items-center justify-center mb-12">
           <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-          <span className="text-2xl font-semibold text-text-primary ml-2">Dayof</span>
+          <span className="text-2xl font-semibold text-text-primary ml-2">WeddingSite</span>
         </div>
 
         {step === 'choice' && renderChoice()}

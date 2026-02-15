@@ -1,24 +1,26 @@
 import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button, Card } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Login: React.FC = () => {
   const { signIn } = useAuth();
+  const navigate = useNavigate();
 
   const handleDemoLogin = () => {
     signIn();
-    window.location.hash = '#overview';
+    navigate('/dashboard');
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-surface-subtle to-surface p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="#/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
+          <Link to="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
             <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-            <span className="text-2xl font-bold text-text-primary tracking-tight">Dayof</span>
-          </a>
+            <span className="text-2xl font-bold text-text-primary tracking-tight">WeddingSite</span>
+          </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">Welcome back</h1>
           <p className="text-text-secondary">Sign in to manage your wedding site</p>
         </div>
