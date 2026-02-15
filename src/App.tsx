@@ -3,6 +3,7 @@ import { Home, Product } from './pages';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
+import RSVP from './pages/RSVP';
 import {
   DashboardOverview,
   DashboardBuilder,
@@ -10,6 +11,7 @@ import {
   DashboardVault,
   DashboardRegistry,
   DashboardSettings,
+  DashboardMessages,
 } from './pages/dashboard';
 import {
   GuestsFeature,
@@ -28,6 +30,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />
+        <Route path="/rsvp" element={<RSVP />} />
         <Route path="/features/guests" element={<GuestsFeature />} />
         <Route path="/features/rsvp" element={<RSVPFeature />} />
         <Route path="/features/messaging" element={<MessagingFeature />} />
@@ -97,6 +100,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <DashboardSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/messages"
+          element={
+            <ProtectedRoute>
+              <DashboardMessages />
             </ProtectedRoute>
           }
         />
