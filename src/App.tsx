@@ -4,6 +4,7 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
 import RSVP from './pages/RSVP';
+import EventRSVP from './pages/EventRSVP';
 import {
   DashboardOverview,
   DashboardBuilder,
@@ -12,6 +13,7 @@ import {
   DashboardRegistry,
   DashboardSettings,
   DashboardMessages,
+  DashboardItinerary,
 } from './pages/dashboard';
 import {
   GuestsFeature,
@@ -31,6 +33,7 @@ const AppContent = () => {
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />
         <Route path="/rsvp" element={<RSVP />} />
+        <Route path="/events" element={<EventRSVP />} />
         <Route path="/features/guests" element={<GuestsFeature />} />
         <Route path="/features/rsvp" element={<RSVPFeature />} />
         <Route path="/features/messaging" element={<MessagingFeature />} />
@@ -76,6 +79,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <DashboardGuests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/itinerary"
+          element={
+            <ProtectedRoute>
+              <DashboardItinerary />
             </ProtectedRoute>
           }
         />

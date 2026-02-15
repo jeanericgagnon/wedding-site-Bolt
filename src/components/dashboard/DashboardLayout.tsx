@@ -12,6 +12,7 @@ import {
   X,
   LogOut,
   Mail,
+  Calendar,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -41,6 +42,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/dashboard/overview' },
     { id: 'builder', label: 'Builder', icon: Palette, path: '/dashboard/builder' },
     { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
+    { id: 'itinerary', label: 'Itinerary', icon: Calendar, path: '/dashboard/itinerary' },
     { id: 'messages', label: 'Messages', icon: Mail, path: '/dashboard/messages' },
     { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
     { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
