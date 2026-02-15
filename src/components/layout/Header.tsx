@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   };
 
   const handleViewDemo = () => {
-    navigate('/product');
+    navigate('/login');
   };
 
   const scrollToSection = (sectionId: string) => {
