@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState<OnboardingStep>('choice');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     partnerNames: '',
     weddingDate: '',
@@ -20,6 +24,24 @@ export const Onboarding: React.FC = () => {
     registryLink: '',
     theme: 'garden',
   });
+
+  useEffect(() => {
+    checkExistingSite();
+  }, [user]);
+
+  const checkExistingSite = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('wedding_sites')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data) {
+      navigate('/dashboard');
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -34,14 +56,63 @@ export const Onboarding: React.FC = () => {
     setStep('quick-1');
   };
 
-  const handleManualSetup = () => {
+  const createWeddingSite = async (data: any) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('wedding_sites')
+        .insert({
+          user_id: user.id,
+          couple_name_1: data.couple_name_1 || '',
+          couple_name_2: data.couple_name_2 || '',
+          wedding_date: data.wedding_date || null,
+          venue_name: data.venue_name || null,
+          venue_location: data.venue_location || null,
+          site_url: data.site_url || null,
+          rsvp_deadline: data.rsvp_deadline || null,
+        });
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error creating wedding site:', err);
+      alert('Failed to create wedding site. Please try again.');
+    }
+  };
+
+  const handleManualSetup = async () => {
+    setLoading(true);
+    await createWeddingSite({
+      couple_name_1: 'Partner 1',
+      couple_name_2: 'Partner 2',
+      site_url: user?.email?.split('@')[0] || 'my-wedding',
+    });
+    setLoading(false);
     navigate('/dashboard');
   };
 
-  const nextStep = () => {
-    if (step === 'quick-1') setStep('quick-2');
-    else if (step === 'quick-2') setStep('quick-3');
-    else if (step === 'quick-3') setStep('complete');
+  const nextStep = async () => {
+    if (step === 'quick-1') {
+      setStep('quick-2');
+    } else if (step === 'quick-2') {
+      setStep('quick-3');
+    } else if (step === 'quick-3') {
+      setLoading(true);
+
+      const names = formData.partnerNames.split('&').map(n => n.trim());
+      await createWeddingSite({
+        couple_name_1: names[0] || '',
+        couple_name_2: names[1] || names[0] || '',
+        wedding_date: formData.weddingDate || null,
+        venue_name: formData.venueName || null,
+        venue_location: formData.venueLocation || null,
+        site_url: user?.email?.split('@')[0] || 'my-wedding',
+        rsvp_deadline: formData.rsvpDeadline || null,
+      });
+
+      setLoading(false);
+      setStep('complete');
+    }
   };
 
   const renderChoice = () => (
@@ -80,7 +151,7 @@ export const Onboarding: React.FC = () => {
                 </li>
               </ul>
             </div>
-            <Button variant="accent" size="lg" fullWidth onClick={handleQuickSetup}>
+            <Button variant="accent" size="lg" fullWidth onClick={handleQuickSetup} disabled={loading}>
               Start Quick Setup
             </Button>
           </div>
@@ -110,8 +181,8 @@ export const Onboarding: React.FC = () => {
                 </li>
               </ul>
             </div>
-            <Button variant="outline" size="lg" fullWidth onClick={handleManualSetup}>
-              Go to Builder
+            <Button variant="outline" size="lg" fullWidth onClick={handleManualSetup} disabled={loading}>
+              {loading ? 'Setting up...' : 'Go to Builder'}
             </Button>
           </div>
         </Card>
@@ -298,8 +369,8 @@ export const Onboarding: React.FC = () => {
             <Button variant="ghost" size="lg" onClick={() => setStep('quick-2')}>
               Back
             </Button>
-            <Button variant="accent" size="lg" onClick={nextStep}>
-              Create My Site
+            <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
+              {loading ? 'Creating...' : 'Create My Site'}
             </Button>
           </div>
         </div>
