@@ -3,14 +3,54 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button, Card } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export const Login: React.FC = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const handleDemoLogin = async () => {
-    await signIn();
-    navigate('/dashboard');
+    try {
+      await signIn();
+
+      // Check if user has access to demo wedding site
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.user) {
+        const userId = session.session.user.id;
+
+        // Check if this user already has a wedding site
+        const { data: existingSite } = await supabase
+          .from('wedding_sites')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (!existingSite) {
+          // Check if the demo site is still available (not claimed by another user)
+          const { data: demoSite } = await supabase
+            .from('wedding_sites')
+            .select('id')
+            .eq('user_id', '00000000-0000-0000-0000-000000000001')
+            .maybeSingle();
+
+          if (demoSite) {
+            // Claim the demo wedding site for this user
+            const { error: updateError } = await supabase
+              .from('wedding_sites')
+              .update({ user_id: userId })
+              .eq('user_id', '00000000-0000-0000-0000-000000000001');
+
+            if (updateError) {
+              console.error('Error claiming demo site:', updateError);
+            }
+          }
+        }
+      }
+
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Demo login error:', error);
+    }
   };
 
   return (
