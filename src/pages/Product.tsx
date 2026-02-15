@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
 import { Button, Card, CardContent, Badge } from '../components/ui';
 import {
@@ -291,11 +292,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <a href="/features/guests">
+                  <Link to="/features/guests">
                     <Button variant="primary">
                       Learn more
                     </Button>
-                  </a>
+                  </Link>
                 </div>
               )}
 
@@ -317,11 +318,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <a href="/features/rsvp">
+                  <Link to="/features/rsvp">
                     <Button variant="primary">
                       Learn more
                     </Button>
-                  </a>
+                  </Link>
                 </div>
               )}
 
@@ -343,11 +344,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <a href="/features/messaging">
+                  <Link to="/features/messaging">
                     <Button variant="primary">
                       Learn more
                     </Button>
-                  </a>
+                  </Link>
                 </div>
               )}
 
@@ -369,11 +370,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <a href="/features/travel">
+                  <Link to="/features/travel">
                     <Button variant="primary">
                       Learn more
                     </Button>
-                  </a>
+                  </Link>
                 </div>
               )}
 
@@ -395,11 +396,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <a href="/features/registry">
+                  <Link to="/features/registry">
                     <Button variant="primary">
                       Learn more
                     </Button>
-                  </a>
+                  </Link>
                 </div>
               )}
 
@@ -421,11 +422,11 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <a href="/features/seating">
+                  <Link to="/features/seating">
                     <Button variant="primary">
                       Learn more
                     </Button>
-                  </a>
+                  </Link>
                 </div>
               )}
             </div>
