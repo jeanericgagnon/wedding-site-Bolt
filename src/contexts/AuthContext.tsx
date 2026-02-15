@@ -54,43 +54,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async () => {
-    try {
-      // Try to sign in first
-      const { data, error } = await supabase.auth.signInWithPassword({
+    // Try to sign in first
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: DEMO_EMAIL,
+      password: DEMO_PASSWORD,
+    });
+
+    if (error) {
+      // If sign in fails, try to sign up (for first time demo users)
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: DEMO_EMAIL,
         password: DEMO_PASSWORD,
+        options: {
+          data: {
+            name: 'Alex & Jordan',
+          },
+        },
       });
 
-      if (error) {
-        // If sign in fails, try to sign up (for first time demo users)
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: DEMO_EMAIL,
-          password: DEMO_PASSWORD,
-          options: {
-            data: {
-              name: 'Alex & Jordan',
-            },
-          },
-        });
+      if (signUpError) throw signUpError;
 
-        if (signUpError) throw signUpError;
-
-        if (signUpData.user) {
-          setUser({
-            id: signUpData.user.id,
-            email: signUpData.user.email || '',
-            name: 'Alex & Jordan',
-          });
-        }
-      } else if (data.user) {
+      if (signUpData.user) {
         setUser({
-          id: data.user.id,
-          email: data.user.email || '',
+          id: signUpData.user.id,
+          email: signUpData.user.email || '',
           name: 'Alex & Jordan',
         });
       }
-    } catch (err) {
-      console.error('Auth error:', err);
+    } else if (data.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email || '',
+        name: 'Alex & Jordan',
+      });
     }
   };
 

@@ -8,9 +8,11 @@ export const Login: React.FC = () => {
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (user) {
+      setIsLoading(false);
       navigate('/dashboard');
     }
   }, [user, navigate]);
@@ -19,11 +21,13 @@ export const Login: React.FC = () => {
     if (isLoading) return;
 
     setIsLoading(true);
+    setError(null);
     try {
       await signIn();
-      navigate('/dashboard');
-    } catch (error) {
+      // Don't navigate here - let the useEffect handle it when user state updates
+    } catch (error: any) {
       console.error('Demo login error:', error);
+      setError(error?.message || 'Failed to sign in. Please try again.');
       setIsLoading(false);
     }
   };
@@ -46,6 +50,11 @@ export const Login: React.FC = () => {
               <p className="text-text-secondary mb-6">
                 Try the demo experience with sample wedding data
               </p>
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
               <Button
                 variant="accent"
                 size="lg"
