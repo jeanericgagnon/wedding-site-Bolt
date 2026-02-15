@@ -179,20 +179,18 @@
   }
 }
 
-/* Dark Mode Tokens (Ready for future implementation) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #2B2B2B;
-    --color-surface: #1F4449;
-    --color-surface-raised: #2A5D67;
-    --color-surface-subtle: #234B53;
+/* Dark Mode Tokens (Opt-in with .dark class) */
+:root.dark {
+  --color-background: #2B2B2B;
+  --color-surface: #1F4449;
+  --color-surface-raised: #2A5D67;
+  --color-surface-subtle: #234B53;
 
-    --color-text-primary: #F6F3EE;
-    --color-text-secondary: #C0BDB8;
-    --color-text-tertiary: #8F8B86;
+  --color-text-primary: #F6F3EE;
+  --color-text-secondary: #C0BDB8;
+  --color-text-tertiary: #8F8B86;
 
-    --color-border: #2A5D67;
-    --color-border-subtle: #234B53;
-    --color-border-strong: #3A707A;
-  }
+  --color-border: #2A5D67;
+  --color-border-subtle: #234B53;
+  --color-border-strong: #3A707A;
 }

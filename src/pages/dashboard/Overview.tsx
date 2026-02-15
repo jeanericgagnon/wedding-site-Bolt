@@ -1,15 +1,89 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit } from 'lucide-react';
 
+interface Toast {
+  id: number;
+  message: string;
+}
+
+const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className="bg-surface-raised border border-border shadow-lg rounded-lg p-4 min-w-[300px]"
+        >
+          <p className="text-sm text-ink">{toast.message}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const DashboardOverview: React.FC = () => {
+  const [timeframe, setTimeframe] = useState<'7d' | '30d' | 'all'>('7d');
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const onTodo = (message: string) => {
+    console.log('TODO:', message);
+    const newToast: Toast = {
+      id: Date.now(),
+      message: `TODO: ${message}`,
+    };
+    setToasts((prev) => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+    }, 2000);
+  };
+
+  const handleTimeframeChange = (newTimeframe: '7d' | '30d' | 'all') => {
+    setTimeframe(newTimeframe);
+    onTodo(`Connect analytics timeframe: ${newTimeframe === '7d' ? '7 days' : newTimeframe === '30d' ? '30 days' : 'All time'}`);
+  };
+
   return (
     <DashboardLayout currentPage="overview">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back, Alex & Jordan</h1>
-          <p className="text-text-secondary">Here's what's happening with your wedding site</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back, Alex & Jordan</h1>
+            <p className="text-text-secondary">Here's what's happening with your wedding site</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                timeframe === '7d'
+                  ? 'bg-primary text-text-inverse'
+                  : 'bg-surface-subtle text-text-secondary hover:bg-surface'
+              }`}
+              onClick={() => handleTimeframeChange('7d')}
+            >
+              7 days
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                timeframe === '30d'
+                  ? 'bg-primary text-text-inverse'
+                  : 'bg-surface-subtle text-text-secondary hover:bg-surface'
+              }`}
+              onClick={() => handleTimeframeChange('30d')}
+            >
+              30 days
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                timeframe === 'all'
+                  ? 'bg-primary text-text-inverse'
+                  : 'bg-surface-subtle text-text-secondary hover:bg-surface'
+              }`}
+              onClick={() => handleTimeframeChange('all')}
+            >
+              All time
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -190,6 +264,8 @@ export const DashboardOverview: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      <ToastContainer toasts={toasts} />
     </DashboardLayout>
   );
 };

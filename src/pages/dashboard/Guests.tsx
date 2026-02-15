@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardContent, Button, Badge, Input } from '../../components/ui';
-import { Search, Download, UserPlus, Mail, Filter, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Search, Download, UserPlus, Mail, Filter, CheckCircle2, XCircle, Clock, X } from 'lucide-react';
 
 interface Guest {
   id: string;
@@ -14,9 +14,43 @@ interface Guest {
   rsvpDate?: string;
 }
 
+interface Toast {
+  id: number;
+  message: string;
+}
+
+const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: number) => void }> = ({ toasts }) => {
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className="bg-surface-raised border border-border shadow-lg rounded-lg p-4 min-w-[300px]"
+        >
+          <p className="text-sm text-ink">{toast.message}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const DashboardGuests: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending'>('all');
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const onTodo = (message: string) => {
+    console.log('TODO:', message);
+    const newToast: Toast = {
+      id: Date.now(),
+      message: `TODO: ${message}`,
+    };
+    setToasts((prev) => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+    }, 2000);
+  };
 
   const guests: Guest[] = [
     {
@@ -172,15 +206,15 @@ export const DashboardGuests: React.FC = () => {
                 />
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" size="md">
+                <Button variant="outline" size="md" onClick={() => setFilterDrawerOpen(true)}>
                   <Filter className="w-4 h-4 mr-2" aria-hidden="true" />
                   Filter
                 </Button>
-                <Button variant="outline" size="md">
+                <Button variant="outline" size="md" onClick={() => onTodo('Export guest list')}>
                   <Download className="w-4 h-4 mr-2" aria-hidden="true" />
                   Export
                 </Button>
-                <Button variant="primary" size="md">
+                <Button variant="primary" size="md" onClick={() => onTodo('Add new guest')}>
                   <UserPlus className="w-4 h-4 mr-2" aria-hidden="true" />
                   Add Guest
                 </Button>
@@ -287,6 +321,142 @@ export const DashboardGuests: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      <ToastContainer toasts={toasts} onRemove={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
+
+      {filterDrawerOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-ink/50 z-40 transition-opacity"
+            onClick={() => setFilterDrawerOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-surface shadow-xl z-50 overflow-y-auto">
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-text-primary">Filter Guests</h2>
+                <button
+                  onClick={() => setFilterDrawerOpen(false)}
+                  className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
+                  aria-label="Close filter panel"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Event
+                  </label>
+                  <select className="w-full p-2 border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option>All events</option>
+                    <option>Ceremony</option>
+                    <option>Reception</option>
+                    <option>Welcome Party</option>
+                    <option>Brunch</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Plus-one
+                  </label>
+                  <div className="flex gap-2">
+                    <button className="flex-1 px-4 py-2 bg-primary text-text-inverse rounded-lg text-sm font-medium">
+                      Any
+                    </button>
+                    <button className="flex-1 px-4 py-2 bg-surface-subtle text-text-secondary rounded-lg text-sm font-medium hover:bg-surface">
+                      Yes
+                    </button>
+                    <button className="flex-1 px-4 py-2 bg-surface-subtle text-text-secondary rounded-lg text-sm font-medium hover:bg-surface">
+                      No
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Meal choice
+                  </label>
+                  <select className="w-full p-2 border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option>Any</option>
+                    <option>Missing</option>
+                    <option>Chicken</option>
+                    <option>Fish</option>
+                    <option>Vegetarian</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" className="w-4 h-4 rounded" />
+                    <span className="text-sm text-text-primary">Has dietary restrictions</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    RSVP date range
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      className="p-2 border border-border rounded-lg bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="From"
+                    />
+                    <input
+                      type="date"
+                      className="p-2 border border-border rounded-lg bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="To"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Tags
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['VIP', 'Wedding Party', 'Family', 'Friends', 'Vendors'].map((tag) => (
+                      <button
+                        key={tag}
+                        className="px-3 py-1.5 bg-surface-subtle text-text-secondary rounded-lg text-sm hover:bg-primary hover:text-text-inverse transition-colors"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-border-subtle">
+                <Button
+                  variant="outline"
+                  size="md"
+                  fullWidth
+                  onClick={() => {
+                    setFilterDrawerOpen(false);
+                  }}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  onClick={() => {
+                    onTodo('Apply guest filters');
+                    setFilterDrawerOpen(false);
+                  }}
+                >
+                  Apply filters
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </DashboardLayout>
   );
 };

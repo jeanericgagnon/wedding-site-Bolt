@@ -67,11 +67,16 @@ export const Home: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [activeTab, setActiveTab] = useState<string>('guests');
   const [rsvpStep, setRsvpStep] = useState<number>(1);
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
+  const [isStarting, setIsStarting] = useState(false);
 
-  const handleStartFree = () => {
-    signIn();
-    window.location.hash = '#overview';
+  const handleStartFree = async () => {
+    setIsStarting(true);
+    setTimeout(() => {
+      signIn();
+      window.location.hash = '#overview';
+      setIsStarting(false);
+    }, 600);
   };
 
   const onTodo = (message: string) => {
@@ -104,6 +109,24 @@ export const Home: React.FC = () => {
     }, 2000);
   };
 
+  const resetPalette = () => {
+    const root = document.documentElement;
+    root.style.setProperty('--brand', '42 93 103');
+    root.style.setProperty('--brand-2', '200 159 86');
+    root.style.setProperty('--accent', '215 121 93');
+    root.style.setProperty('--paper', '246 243 238');
+    root.style.setProperty('--ink', '34 34 34');
+
+    const newToast: Toast = {
+      id: Date.now(),
+      message: 'Reset to default palette',
+    };
+    setToasts((prev) => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+    }, 2000);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink">
       <Header />
@@ -122,14 +145,17 @@ export const Home: React.FC = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <button
-                  className="px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors"
+                  className="px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   onClick={handleStartFree}
+                  disabled={isStarting}
+                  aria-label="Start building your wedding site"
                 >
-                  Start building your site
+                  {isStarting ? 'Starting...' : 'Start free build'}
                 </button>
                 <button
-                  className="px-6 py-3 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/10 transition-colors"
+                  className="px-6 py-3 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   onClick={() => onTodo('Preview demo')}
+                  aria-label="Preview a demo of the platform"
                 >
                   Preview demo
                 </button>
@@ -628,9 +654,16 @@ export const Home: React.FC = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4">
               Customize your <span className="text-accent">color palette</span>
             </h2>
-            <p className="text-lg text-ink/70">
+            <p className="text-lg text-ink/70 mb-4">
               Choose a palette that matches your wedding style. Click to preview instantly.
             </p>
+            <button
+              className="px-4 py-2 text-sm border border-brand/30 text-brand rounded-lg hover:bg-brand/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              onClick={resetPalette}
+              aria-label="Reset to default color palette"
+            >
+              Reset to default
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -646,12 +679,19 @@ export const Home: React.FC = () => {
                 <h3 className="text-lg font-semibold text-ink mb-4">{palette.name}</h3>
                 <div className="flex gap-2 mb-4">
                   {palette.displayColors.map((color, i) => (
-                    <div key={i} className="flex-1 h-16 rounded-lg border border-ink/10 shadow-sm" style={{ backgroundColor: color }} />
+                    <div
+                      key={i}
+                      className="flex-1 h-16 rounded-lg border border-ink/10 shadow-sm"
+                      style={{ backgroundColor: color }}
+                      role="img"
+                      aria-label={`Color ${i + 1} of ${palette.name} palette`}
+                    />
                   ))}
                 </div>
                 <button
-                  className="w-full px-4 py-2 border-2 border-brand text-brand font-medium rounded-lg hover:bg-brand/10 transition-colors"
+                  className="w-full px-4 py-2 border-2 border-brand text-brand font-medium rounded-lg hover:bg-brand/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   onClick={() => applyPalette(palette)}
+                  aria-label={`Apply ${palette.name} palette`}
                 >
                   Apply palette
                 </button>
@@ -1039,14 +1079,17 @@ export const Home: React.FC = () => {
 
               <div className="space-y-3">
                 <button
-                  className="w-full px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors"
+                  className="w-full px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   onClick={handleStartFree}
+                  disabled={isStarting}
+                  aria-label="Start building your wedding site"
                 >
-                  Start building your site
+                  {isStarting ? 'Starting...' : 'Start free build'}
                 </button>
                 <button
-                  className="w-full px-6 py-2 border-2 border-brand text-brand font-medium rounded-lg hover:bg-brand/10 transition-colors"
+                  className="w-full px-6 py-2 border-2 border-brand text-brand font-medium rounded-lg hover:bg-brand/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   onClick={() => onTodo('See what\'s included')}
+                  aria-label="See detailed pricing information"
                 >
                   See what's included
                 </button>
@@ -1132,18 +1175,21 @@ export const Home: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                className="inline-flex items-center justify-center px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors"
+                className="inline-flex items-center justify-center px-6 py-3 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 onClick={handleStartFree}
+                disabled={isStarting}
+                aria-label="Start building your wedding site"
               >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Start Free Build
+                <Sparkles className="w-5 h-5 mr-2" aria-hidden="true" />
+                {isStarting ? 'Starting...' : 'Start free build'}
               </button>
               <button
-                className="inline-flex items-center justify-center px-6 py-3 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/10 transition-colors"
+                className="inline-flex items-center justify-center px-6 py-3 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 onClick={() => onTodo('Preview full demo')}
+                aria-label="Preview a complete demo"
               >
-                Preview Demo
-                <ArrowRight className="w-5 h-5 ml-2" />
+                Preview demo
+                <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </button>
             </div>
           </div>

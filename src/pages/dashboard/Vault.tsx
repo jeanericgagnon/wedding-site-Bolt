@@ -12,8 +12,41 @@ interface MediaItem {
   size: string;
 }
 
+interface Toast {
+  id: number;
+  message: string;
+}
+
+const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className="bg-surface-raised border border-border shadow-lg rounded-lg p-4 min-w-[300px]"
+        >
+          <p className="text-sm text-ink">{toast.message}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const DashboardVault: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const onTodo = (message: string) => {
+    console.log('TODO:', message);
+    const newToast: Toast = {
+      id: Date.now(),
+      message: `TODO: ${message}`,
+    };
+    setToasts((prev) => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+    }, 2000);
+  };
 
   const mediaItems: MediaItem[] = [
     {
@@ -157,52 +190,114 @@ export const DashboardVault: React.FC = () => {
 
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between gap-4">
-              <div className="flex-1 max-w-md">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" aria-hidden="true" />
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Type</label>
+                  <div className="flex gap-2">
+                    <button
+                      className="flex-1 px-3 py-1.5 bg-primary text-text-inverse rounded text-sm font-medium"
+                      onClick={() => onTodo('Filter by: All types')}
+                    >
+                      All
+                    </button>
+                    <button
+                      className="flex-1 px-3 py-1.5 bg-surface-subtle text-text-secondary rounded text-sm hover:bg-surface"
+                      onClick={() => onTodo('Filter by: Photos only')}
+                    >
+                      Photos
+                    </button>
+                    <button
+                      className="flex-1 px-3 py-1.5 bg-surface-subtle text-text-secondary rounded text-sm hover:bg-surface"
+                      onClick={() => onTodo('Filter by: Videos only')}
+                    >
+                      Videos
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Uploaded by</label>
+                  <select
+                    className="w-full p-2 border border-border rounded-lg bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    onChange={(e) => onTodo(`Filter by uploader: ${e.target.value}`)}
+                  >
+                    <option>All uploaders</option>
+                    <option>Sarah Miller</option>
+                    <option>David Chen</option>
+                    <option>Jessica Park</option>
+                    <option>Emily Rodriguez</option>
+                    <option>Michael Thompson</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">From date</label>
                   <input
-                    type="search"
-                    placeholder="Search media..."
-                    className="w-full pl-10 pr-4 py-3 bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                    type="date"
+                    className="w-full p-2 border border-border rounded-lg bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    onChange={(e) => onTodo(`Filter from date: ${e.target.value}`)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">To date</label>
+                  <input
+                    type="date"
+                    className="w-full p-2 border border-border rounded-lg bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    onChange={(e) => onTodo(`Filter to date: ${e.target.value}`)}
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <div className="flex bg-surface-subtle rounded-lg p-1">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded transition-colors ${
-                      viewMode === 'grid'
-                        ? 'bg-surface text-primary'
-                        : 'text-text-tertiary hover:text-text-secondary'
-                    }`}
-                    aria-label="Grid view"
-                  >
-                    <Grid3x3 className="w-5 h-5" aria-hidden="true" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded transition-colors ${
-                      viewMode === 'list'
-                        ? 'bg-surface text-primary'
-                        : 'text-text-tertiary hover:text-text-secondary'
-                    }`}
-                    aria-label="List view"
-                  >
-                    <List className="w-5 h-5" aria-hidden="true" />
-                  </button>
+              <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <div className="flex-1 max-w-md">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" aria-hidden="true" />
+                    <input
+                      type="search"
+                      placeholder="Search by filename or uploader..."
+                      className="w-full pl-10 pr-4 py-3 bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                      onChange={(e) => onTodo(`Search media: ${e.target.value}`)}
+                    />
+                  </div>
                 </div>
 
-                <Button variant="outline" size="md">
-                  <Download className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Download All
-                </Button>
-                <Button variant="primary" size="md">
-                  <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Upload
-                </Button>
+                <div className="flex gap-3">
+                  <div className="flex bg-surface-subtle rounded-lg p-1">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded transition-colors ${
+                        viewMode === 'grid'
+                          ? 'bg-surface text-primary'
+                          : 'text-text-tertiary hover:text-text-secondary'
+                      }`}
+                      aria-label="Grid view"
+                    >
+                      <Grid3x3 className="w-5 h-5" aria-hidden="true" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 rounded transition-colors ${
+                        viewMode === 'list'
+                          ? 'bg-surface text-primary'
+                          : 'text-text-tertiary hover:text-text-secondary'
+                      }`}
+                      aria-label="List view"
+                    >
+                      <List className="w-5 h-5" aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <Button variant="outline" size="md" onClick={() => onTodo('Download all media')}>
+                    <Download className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Download All
+                  </Button>
+                  <Button variant="primary" size="md" onClick={() => onTodo('Upload media')}>
+                    <Upload className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Upload
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -275,6 +370,8 @@ export const DashboardVault: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      <ToastContainer toasts={toasts} />
     </DashboardLayout>
   );
 };

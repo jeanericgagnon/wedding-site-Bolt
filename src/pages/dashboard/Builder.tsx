@@ -9,22 +9,61 @@ interface Section {
   title: string;
   variant: string;
   visible: boolean;
+  category: 'content' | 'logistics' | 'engagement';
 }
+
+interface Toast {
+  id: number;
+  message: string;
+}
+
+const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className="bg-surface-raised border border-border shadow-lg rounded-lg p-4 min-w-[300px]"
+        >
+          <p className="text-sm text-ink">{toast.message}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export const DashboardBuilder: React.FC = () => {
   const [sections, setSections] = useState<Section[]>([
-    { id: '1', type: 'hero', title: 'Hero', variant: 'classic', visible: true },
-    { id: '2', type: 'story', title: 'Our Story', variant: 'centered', visible: true },
-    { id: '3', type: 'schedule', title: 'Schedule', variant: 'timeline', visible: true },
-    { id: '4', type: 'rsvp', title: 'RSVP', variant: 'form', visible: true },
-    { id: '5', type: 'travel', title: 'Travel & Accommodations', variant: 'cards', visible: true },
-    { id: '6', type: 'gallery', title: 'Gallery', variant: 'grid', visible: false },
-    { id: '7', type: 'faq', title: 'FAQ', variant: 'accordion', visible: true },
-    { id: '8', type: 'registry', title: 'Registry', variant: 'links', visible: true },
+    { id: '1', type: 'hero', title: 'Hero', variant: 'classic', visible: true, category: 'content' },
+    { id: '2', type: 'story', title: 'Our Story', variant: 'centered', visible: true, category: 'content' },
+    { id: '3', type: 'schedule', title: 'Schedule', variant: 'timeline', visible: true, category: 'logistics' },
+    { id: '4', type: 'rsvp', title: 'RSVP', variant: 'form', visible: true, category: 'engagement' },
+    { id: '5', type: 'travel', title: 'Travel & Accommodations', variant: 'cards', visible: true, category: 'logistics' },
+    { id: '6', type: 'gallery', title: 'Gallery', variant: 'grid', visible: false, category: 'content' },
+    { id: '7', type: 'faq', title: 'FAQ', variant: 'accordion', visible: true, category: 'content' },
+    { id: '8', type: 'registry', title: 'Registry', variant: 'links', visible: true, category: 'engagement' },
   ]);
 
   const [selectedSection, setSelectedSection] = useState<Section | null>(sections[0]);
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('desktop');
+  const [sectionFilter, setSectionFilter] = useState<'all' | 'content' | 'logistics' | 'engagement'>('all');
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const onTodo = (message: string) => {
+    console.log('TODO:', message);
+    const newToast: Toast = {
+      id: Date.now(),
+      message: `TODO: ${message}`,
+    };
+    setToasts((prev) => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+    }, 2000);
+  };
+
+  const filteredSections = sectionFilter === 'all'
+    ? sections
+    : sections.filter(s => s.category === sectionFilter);
 
   const variants = {
     hero: ['Classic', 'Minimal', 'Split'],
@@ -58,14 +97,31 @@ export const DashboardBuilder: React.FC = () => {
             <Card variant="bordered" padding="md">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-text-primary">Site Sections</h2>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => onTodo('Add new section')}>
                   <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                   Add
                 </Button>
               </div>
 
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-text-secondary mb-2">Filter sections</label>
+                <select
+                  className="w-full p-2 border border-border rounded-lg bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={sectionFilter}
+                  onChange={(e) => {
+                    setSectionFilter(e.target.value as 'all' | 'content' | 'logistics' | 'engagement');
+                    onTodo(`Filter builder sections: ${e.target.value}`);
+                  }}
+                >
+                  <option value="all">All sections</option>
+                  <option value="content">Content</option>
+                  <option value="logistics">Logistics</option>
+                  <option value="engagement">Engagement</option>
+                </select>
+              </div>
+
               <div className="space-y-2">
-                {sections.map((section, index) => (
+                {filteredSections.map((section, index) => (
                   <div
                     key={section.id}
                     className={`
@@ -161,13 +217,13 @@ export const DashboardBuilder: React.FC = () => {
                   </div>
 
                   <div className="pt-4 border-t border-border-subtle">
-                    <Button variant="primary" size="md" fullWidth>
+                    <Button variant="primary" size="md" fullWidth onClick={() => onTodo(`Edit ${selectedSection.title} content`)}>
                       <Edit className="w-4 h-4 mr-2" aria-hidden="true" />
                       Edit Content
                     </Button>
                   </div>
 
-                  <Button variant="ghost" size="md" fullWidth className="text-error hover:bg-error-light">
+                  <Button variant="ghost" size="md" fullWidth className="text-error hover:bg-error-light" onClick={() => onTodo(`Remove ${selectedSection.title} section`)}>
                     <Trash2 className="w-4 h-4 mr-2" aria-hidden="true" />
                     Remove Section
                   </Button>
@@ -236,10 +292,10 @@ export const DashboardBuilder: React.FC = () => {
               </div>
 
               <div className="flex justify-end gap-3 mt-4">
-                <Button variant="outline" size="md">
+                <Button variant="outline" size="md" onClick={() => onTodo('Save draft')}>
                   Save Draft
                 </Button>
-                <Button variant="accent" size="md">
+                <Button variant="accent" size="md" onClick={() => onTodo('Publish changes')}>
                   Publish Changes
                 </Button>
               </div>
@@ -247,6 +303,8 @@ export const DashboardBuilder: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ToastContainer toasts={toasts} />
     </DashboardLayout>
   );
 };
