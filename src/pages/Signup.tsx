@@ -8,8 +8,8 @@ export const Signup: React.FC = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
-  const handleStartDemo = () => {
-    signIn();
+  const handleStartDemo = async () => {
+    await signIn();
     navigate('/onboarding');
   };
 

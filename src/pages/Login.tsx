@@ -8,8 +8,8 @@ export const Login: React.FC = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
-  const handleDemoLogin = () => {
-    signIn();
+  const handleDemoLogin = async () => {
+    await signIn();
     navigate('/dashboard');
   };
 
