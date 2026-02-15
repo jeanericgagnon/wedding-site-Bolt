@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus } from 'lucide-react';
+import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui/Button';
@@ -218,6 +218,11 @@ export const DashboardItinerary: React.FC = () => {
     return `${displayHour}:${minutes} ${ampm}`;
   }
 
+  function getMapUrl(locationName: string, locationAddress: string) {
+    const query = encodeURIComponent(`${locationName} ${locationAddress}`.trim());
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
+  }
+
   if (loading) {
     return (
       <DashboardLayout currentPage="itinerary">
@@ -433,9 +438,26 @@ export const DashboardItinerary: React.FC = () => {
                     )}
 
                     {event.location_name && (
-                      <div className="flex items-center text-neutral-600">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        <span>{event.location_name}</span>
+                      <div className="flex items-center gap-2 text-neutral-600">
+                        <MapPin className="w-4 h-4 flex-shrink-0" />
+                        <div className="flex-1">
+                          <div>{event.location_name}</div>
+                          {event.location_address && (
+                            <div className="text-sm text-neutral-500">{event.location_address}</div>
+                          )}
+                        </div>
+                        {(event.location_name || event.location_address) && (
+                          <a
+                            href={getMapUrl(event.location_name || '', event.location_address || '')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-3 py-1 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            Map
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
                       </div>
                     )}
 

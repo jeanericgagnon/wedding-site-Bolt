@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
-import { Send, Mail, Users, Clock, CheckCircle } from 'lucide-react';
+import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -9,7 +9,9 @@ interface Message {
   id: string;
   subject: string;
   body: string;
-  sent_at: string;
+  sent_at: string | null;
+  scheduled_for: string | null;
+  status: string;
   channel: string;
   recipient_filter: any;
 }
@@ -23,18 +25,29 @@ interface Guest {
   name: string;
 }
 
+interface WeddingSite {
+  id: string;
+  couple_first_name: string | null;
+  couple_second_name: string | null;
+  couple_email: string | null;
+}
+
 export const DashboardMessages: React.FC = () => {
   const { user } = useAuth();
-  const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showEmailSetup, setShowEmailSetup] = useState(false);
 
   const [formData, setFormData] = useState({
     subject: '',
     body: '',
     audience: 'all',
+    scheduleType: 'now',
+    scheduleDate: '',
+    scheduleTime: '',
   });
 
   useEffect(() => {
@@ -42,35 +55,38 @@ export const DashboardMessages: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    if (weddingSiteId) {
+    if (weddingSite) {
       fetchMessages();
       fetchGuests();
     }
-  }, [weddingSiteId]);
+  }, [weddingSite]);
 
   const fetchWeddingSite = async () => {
     if (!user) return;
 
     const { data } = await supabase
       .from('wedding_sites')
-      .select('id')
+      .select('id, couple_first_name, couple_second_name, couple_email')
       .eq('user_id', user.id)
       .maybeSingle();
 
     if (data) {
-      setWeddingSiteId(data.id);
+      setWeddingSite(data);
+      if (!data.couple_email) {
+        setShowEmailSetup(true);
+      }
     }
   };
 
   const fetchMessages = async () => {
-    if (!weddingSiteId) return;
+    if (!weddingSite) return;
 
     try {
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('wedding_site_id', weddingSiteId)
-        .order('sent_at', { ascending: false });
+        .eq('wedding_site_id', weddingSite.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -83,14 +99,41 @@ export const DashboardMessages: React.FC = () => {
   };
 
   const fetchGuests = async () => {
-    if (!weddingSiteId) return;
+    if (!weddingSite) return;
 
     const { data } = await supabase
       .from('guests')
       .select('id, email, rsvp_status, first_name, last_name, name')
-      .eq('wedding_site_id', weddingSiteId);
+      .eq('wedding_site_id', weddingSite.id);
 
     setGuests(data || []);
+  };
+
+  const handleSetupEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!weddingSite) return;
+
+    const formEl = e.target as HTMLFormElement;
+    const firstName = (formEl.elements.namedItem('firstName') as HTMLInputElement).value;
+    const secondName = (formEl.elements.namedItem('secondName') as HTMLInputElement).value;
+
+    try {
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({
+          couple_first_name: firstName,
+          couple_second_name: secondName,
+        })
+        .eq('id', weddingSite.id);
+
+      if (error) throw error;
+
+      await fetchWeddingSite();
+      setShowEmailSetup(false);
+    } catch (err) {
+      console.error('Error setting up email:', err);
+      alert('Failed to setup email address');
+    }
   };
 
   const getRecipients = (audience: string): Guest[] => {
@@ -107,9 +150,9 @@ export const DashboardMessages: React.FC = () => {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent, saveAsDraft = false) => {
     e.preventDefault();
-    if (!weddingSiteId) return;
+    if (!weddingSite) return;
 
     setSending(true);
 
@@ -117,19 +160,35 @@ export const DashboardMessages: React.FC = () => {
       const recipients = getRecipients(formData.audience);
       const recipientCount = recipients.filter(g => g.email).length;
 
-      if (recipientCount === 0) {
+      if (recipientCount === 0 && !saveAsDraft) {
         alert('No recipients have email addresses. Please add email addresses to your guests.');
         setSending(false);
         return;
       }
 
+      let status = 'sent';
+      let scheduledFor = null;
+      let sentAt = null;
+
+      if (saveAsDraft) {
+        status = 'draft';
+      } else if (formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime) {
+        status = 'scheduled';
+        scheduledFor = `${formData.scheduleDate}T${formData.scheduleTime}:00`;
+      } else {
+        sentAt = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from('messages')
         .insert([{
-          wedding_site_id: weddingSiteId,
+          wedding_site_id: weddingSite.id,
           subject: formData.subject,
           body: formData.body,
           channel: 'email',
+          status,
+          scheduled_for: scheduledFor,
+          sent_at: sentAt,
           recipient_filter: {
             audience: formData.audience,
             recipient_count: recipientCount,
@@ -138,18 +197,27 @@ export const DashboardMessages: React.FC = () => {
 
       if (error) throw error;
 
-      alert(`Message logged successfully! Would be sent to ${recipientCount} guests.`);
+      const statusMessage = saveAsDraft
+        ? 'Message saved as draft'
+        : status === 'scheduled'
+        ? `Message scheduled for ${new Date(scheduledFor!).toLocaleString()}`
+        : `Message sent to ${recipientCount} guests`;
+
+      alert(statusMessage);
 
       setFormData({
         subject: '',
         body: '',
         audience: 'all',
+        scheduleType: 'now',
+        scheduleDate: '',
+        scheduleTime: '',
       });
 
       await fetchMessages();
     } catch (err) {
       console.error('Error sending message:', err);
-      alert('Failed to send message');
+      alert('Failed to process message');
     } finally {
       setSending(false);
     }
@@ -164,6 +232,27 @@ export const DashboardMessages: React.FC = () => {
 
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => g.email).length;
+
+  const getMinDateTime = () => {
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    return now.toISOString().slice(0, 16);
+  };
+
+  const getStatusBadge = (message: Message) => {
+    switch (message.status) {
+      case 'draft':
+        return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Draft</span>;
+      case 'scheduled':
+        return <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Scheduled</span>;
+      case 'sent':
+        return <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Sent</span>;
+      case 'failed':
+        return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">Failed</span>;
+      default:
+        return null;
+    }
+  };
 
   if (loading) {
     return (
@@ -183,11 +272,63 @@ export const DashboardMessages: React.FC = () => {
           <p className="text-gray-600">Send updates and reminders to your guests</p>
         </div>
 
+        {weddingSite?.couple_email && (
+          <Card variant="bordered" padding="lg">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-primary-100 rounded-lg">
+                <AtSign className="w-6 h-6 text-primary-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Your Wedding Email</p>
+                <p className="text-lg font-semibold text-gray-900">{weddingSite.couple_email}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Messages will appear to come from this address
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {showEmailSetup && (
+          <Card variant="bordered" padding="lg">
+            <h2 className="text-xl font-semibold mb-4">Setup Your Wedding Email</h2>
+            <p className="text-gray-600 mb-6">
+              Create a personalized email address for your wedding communications
+            </p>
+            <form onSubmit={handleSetupEmail} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">First Name</label>
+                  <Input
+                    name="firstName"
+                    placeholder="John"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Second Name</label>
+                  <Input
+                    name="secondName"
+                    placeholder="Jane"
+                    required
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-gray-500">
+                Your email will be: [firstname]-[secondname]@dayof.love
+              </p>
+              <Button type="submit" variant="primary">
+                Create Email Address
+              </Button>
+            </form>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Card variant="bordered" padding="lg">
               <h2 className="text-xl font-semibold mb-6">Compose Message</h2>
-              <form onSubmit={handleSendMessage} className="space-y-6">
+              <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Select Audience
@@ -238,34 +379,109 @@ export const DashboardMessages: React.FC = () => {
                   </p>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    When to Send
+                  </label>
+                  <div className="flex gap-4 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, scheduleType: 'now' })}
+                      className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                        formData.scheduleType === 'now'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Send Now
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, scheduleType: 'later' })}
+                      className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                        formData.scheduleType === 'later'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Schedule
+                    </button>
+                  </div>
+
+                  {formData.scheduleType === 'later' && (
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Date</label>
+                        <Input
+                          type="date"
+                          value={formData.scheduleDate}
+                          onChange={(e) => setFormData({ ...formData, scheduleDate: e.target.value })}
+                          min={new Date().toISOString().split('T')[0]}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Time</label>
+                        <Input
+                          type="time"
+                          value={formData.scheduleTime}
+                          onChange={(e) => setFormData({ ...formData, scheduleTime: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-3">
                     <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
                     <div className="text-sm">
                       <p className="font-medium text-blue-900">Email Preview</p>
                       <p className="text-blue-700 mt-1">
-                        This message will be sent to {recipientsWithEmail} guest{recipientsWithEmail !== 1 ? 's' : ''} via email
+                        {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
+                          ? `This message will be sent on ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()}`
+                          : `This message will be sent immediately to ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''}`}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  disabled={sending || recipientsWithEmail === 0}
-                >
-                  {sending ? (
-                    'Sending...'
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Send Message to {recipientsWithEmail} Guest{recipientsWithEmail !== 1 ? 's' : ''}
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    fullWidth
+                    disabled={sending || recipientsWithEmail === 0}
+                  >
+                    {sending ? (
+                      'Processing...'
+                    ) : (
+                      <>
+                        {formData.scheduleType === 'later' ? (
+                          <>
+                            <Calendar className="w-4 h-4 mr-2" />
+                            Schedule Message
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-2" />
+                            Send Now
+                          </>
+                        )}
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={(e: any) => handleSendMessage(e, true)}
+                    disabled={sending}
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Draft
+                  </Button>
+                </div>
               </form>
             </Card>
           </div>
@@ -299,7 +515,7 @@ export const DashboardMessages: React.FC = () => {
                     <Mail className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{messages.length}</p>
+                    <p className="text-2xl font-bold">{messages.filter(m => m.status === 'sent').length}</p>
                     <p className="text-sm text-gray-600">Messages Sent</p>
                   </div>
                 </div>
@@ -363,7 +579,7 @@ export const DashboardMessages: React.FC = () => {
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <Mail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No messages sent yet</p>
+              <p className="text-gray-500">No messages yet</p>
               <p className="text-sm text-gray-400 mt-1">Compose your first message above</p>
             </div>
           ) : (
@@ -374,10 +590,19 @@ export const DashboardMessages: React.FC = () => {
                   className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold">{message.subject}</h3>
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold">{message.subject}</h3>
+                      {getStatusBadge(message)}
+                    </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <Clock className="w-4 h-4" />
-                      {new Date(message.sent_at).toLocaleDateString()}
+                      {message.status === 'scheduled' && message.scheduled_for ? (
+                        <span>Scheduled: {new Date(message.scheduled_for).toLocaleString()}</span>
+                      ) : message.sent_at ? (
+                        new Date(message.sent_at).toLocaleDateString()
+                      ) : (
+                        'Draft'
+                      )}
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">{message.body}</p>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Check, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, Check, X, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -146,6 +146,11 @@ export default function EventRSVP() {
     return `${displayHour}:${minutes} ${ampm}`;
   }
 
+  function getMapUrl(locationName: string, locationAddress: string) {
+    const query = encodeURIComponent(`${locationName} ${locationAddress}`.trim());
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
+  }
+
   function openRsvpForm(invitation: EventInvitation) {
     setSelectedEvent(invitation.id);
     if (invitation.rsvp) {
@@ -286,9 +291,9 @@ export default function EventRSVP() {
                       )}
 
                       {invitation.event.location_name && (
-                        <div className="flex items-center text-neutral-600">
-                          <MapPin className="w-5 h-5 mr-2" />
-                          <div>
+                        <div className="flex items-center gap-3 text-neutral-600">
+                          <MapPin className="w-5 h-5 flex-shrink-0" />
+                          <div className="flex-1">
                             <div>{invitation.event.location_name}</div>
                             {invitation.event.location_address && (
                               <div className="text-sm text-neutral-500">
@@ -296,6 +301,18 @@ export default function EventRSVP() {
                               </div>
                             )}
                           </div>
+                          {(invitation.event.location_name || invitation.event.location_address) && (
+                            <a
+                              href={getMapUrl(invitation.event.location_name || '', invitation.event.location_address || '')}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 px-3 py-2 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors whitespace-nowrap"
+                            >
+                              <MapPin className="w-4 h-4" />
+                              View Map
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
                         </div>
                       )}
                     </div>
