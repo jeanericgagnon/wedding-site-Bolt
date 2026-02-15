@@ -1,67 +1,58 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-surface-subtle border-t border-border-subtle mt-auto">
+    <footer className="bg-white border-t border-brand/20 mt-auto">
       <div className="container-custom py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
-              <span className="text-xl font-semibold text-text-primary">Dayof</span>
+              <span className="text-xl font-serif font-semibold text-ink">WeddingSite</span>
             </div>
-            <p className="text-sm text-text-secondary">
+            <p className="text-sm text-ink/70">
               Your wedding site, done without the stress.
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-text-primary mb-4">Product</h4>
+            <h4 className="font-semibold text-ink mb-4">Product</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#features" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
-                  Features
-                </a>
+                <Link to="/product" className="text-sm text-ink/70 hover:text-ink transition-colors">
+                  Product Tour
+                </Link>
               </li>
               <li>
-                <a href="#templates" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
+                <Link to="/product#templates" className="text-sm text-ink/70 hover:text-ink transition-colors">
                   Templates
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#pricing" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
+                <Link to="/#pricing" className="text-sm text-ink/70 hover:text-ink transition-colors">
                   Pricing
-                </a>
-              </li>
-              <li>
-                <a href="#examples" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
-                  Examples
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold text-text-primary mb-4">Resources</h4>
+            <h4 className="font-semibold text-ink mb-4">Company</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#help" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
-                  Help Center
-                </a>
+                <Link to="/#why" className="text-sm text-ink/70 hover:text-ink transition-colors">
+                  Why We Built This
+                </Link>
               </li>
               <li>
-                <a href="#guides" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
-                  Guides
-                </a>
+                <span className="text-sm text-ink/40">
+                  Trust (coming soon)
+                </span>
               </li>
               <li>
-                <a href="#faq" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
-                  FAQ
-                </a>
-              </li>
-              <li>
-                <a href="#contact" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
+                <a href="mailto:hello@weddingsite.example" className="text-sm text-ink/70 hover:text-ink transition-colors">
                   Contact
                 </a>
               </li>
@@ -69,30 +60,25 @@ export const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold text-text-primary mb-4">Legal</h4>
+            <h4 className="font-semibold text-ink mb-4">Legal</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#privacy" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
-                  Privacy Policy
-                </a>
+                <span className="text-sm text-ink/40">
+                  Privacy Policy (coming soon)
+                </span>
               </li>
               <li>
-                <a href="#terms" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
-                  Terms of Service
-                </a>
-              </li>
-              <li>
-                <a href="#cookies" className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline">
-                  Cookie Policy
-                </a>
+                <span className="text-sm text-ink/40">
+                  Terms of Service (coming soon)
+                </span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border-subtle">
-          <p className="text-sm text-text-secondary text-center">
-            &copy; {new Date().getFullYear()} Dayof. Easy to set up, easy to manage, easy for guests.
+        <div className="mt-12 pt-8 border-t border-brand/20">
+          <p className="text-sm text-ink/70 text-center">
+            &copy; {new Date().getFullYear()} WeddingSite. Built for trust, not tricks.
           </p>
         </div>
       </div>

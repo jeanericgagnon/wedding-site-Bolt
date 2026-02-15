@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Heart, Menu, X } from 'lucide-react';
 import { Button } from '../ui';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,20 +10,29 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   const { signIn } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('top');
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const isHomePage = location.pathname === '/';
+
   const handleStartFree = () => {
     signIn();
-    window.location.hash = '#overview';
+    navigate('/dashboard');
   };
 
   const handleLogin = () => {
-    window.location.hash = '#login';
+    navigate('/login');
   };
 
   const scrollToSection = (sectionId: string) => {
+    if (!isHomePage) {
+      navigate('/' + '#' + sectionId);
+      return;
+    }
+
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -48,10 +58,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
       { threshold: [0.5], rootMargin: '-80px 0px -60% 0px' }
     );
 
-    const sections = [
-      'top', 'product', 'templates', 'rsvp', 'messaging',
-      'registry', 'travel', 'seating', 'postwedding', 'pricing'
-    ];
+    const sections = ['top', 'why', 'features', 'pricing'];
 
     sections.forEach((id) => {
       const element = document.getElementById(id);
@@ -68,22 +75,29 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
       });
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [variant]);
+  }, [variant, location.pathname]);
+
+  useEffect(() => {
+    if (location.hash) {
+      const sectionId = location.hash.slice(1);
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [location]);
 
   if (variant === 'dashboard') {
     return null;
   }
 
   const navItems = [
-    { label: 'Product', id: 'product' },
-    { label: 'Templates', id: 'templates' },
-    { label: 'RSVP', id: 'rsvp' },
-    { label: 'Messaging', id: 'messaging' },
-    { label: 'Registry', id: 'registry' },
-    { label: 'Travel', id: 'travel' },
-    { label: 'Seating', id: 'seating' },
-    { label: 'Post-wedding', id: 'postwedding' },
-    { label: 'Pricing', id: 'pricing' },
+    { label: 'Why', id: 'why', isAnchor: true },
+    { label: 'Features', id: 'features', isAnchor: true },
+    { label: 'Pricing', id: 'pricing', isAnchor: true },
+    { label: 'Product', id: 'product', isAnchor: false, route: '/product' },
   ];
 
   return (
@@ -94,30 +108,49 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     }`}>
       <nav className="container-custom" aria-label="Main navigation">
         <div className="flex items-center justify-between h-16">
-          <button
+          <Link
+            to="/"
             className="flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-lg p-1 -ml-1"
-            onClick={() => scrollToSection('top')}
             aria-label="WeddingSite home"
           >
             <Heart className="w-5 h-5 text-accent" aria-hidden="true" />
             <span className="text-lg font-semibold text-ink tracking-tight">WeddingSite</span>
-          </button>
+          </Link>
 
           <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className={`text-sm font-medium transition-colors px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                  activeSection === item.id
-                    ? 'text-brand bg-brand/10'
-                    : 'text-ink/70 hover:text-ink hover:bg-brand/5'
-                }`}
-                aria-current={activeSection === item.id ? 'location' : undefined}
-              >
-                {item.label}
-              </button>
-            ))}
+            {navItems.map((item) => {
+              if (item.isAnchor) {
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    className={`text-sm font-medium transition-colors px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      isHomePage && activeSection === item.id
+                        ? 'text-brand bg-brand/10'
+                        : 'text-ink/70 hover:text-ink hover:bg-brand/5'
+                    }`}
+                    aria-current={isHomePage && activeSection === item.id ? 'location' : undefined}
+                  >
+                    {item.label}
+                  </button>
+                );
+              } else {
+                return (
+                  <Link
+                    key={item.id}
+                    to={item.route || '/'}
+                    className={`text-sm font-medium transition-colors px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      location.pathname === item.route
+                        ? 'text-brand bg-brand/10'
+                        : 'text-ink/70 hover:text-ink hover:bg-brand/5'
+                    }`}
+                    aria-current={location.pathname === item.route ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+            })}
           </div>
 
           <div className="hidden md:flex items-center gap-3">
@@ -142,20 +175,40 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-brand/20">
             <div className="flex flex-col gap-2">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className={`text-sm font-medium transition-colors py-2 px-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                    activeSection === item.id
-                      ? 'text-brand bg-brand/10'
-                      : 'text-ink/70 hover:text-ink hover:bg-brand/5'
-                  }`}
-                  aria-current={activeSection === item.id ? 'location' : undefined}
-                >
-                  {item.label}
-                </button>
-              ))}
+              {navItems.map((item) => {
+                if (item.isAnchor) {
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => scrollToSection(item.id)}
+                      className={`text-sm font-medium transition-colors py-2 px-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                        isHomePage && activeSection === item.id
+                          ? 'text-brand bg-brand/10'
+                          : 'text-ink/70 hover:text-ink hover:bg-brand/5'
+                      }`}
+                      aria-current={isHomePage && activeSection === item.id ? 'location' : undefined}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                } else {
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.route || '/'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`text-sm font-medium transition-colors py-2 px-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                        location.pathname === item.route
+                          ? 'text-brand bg-brand/10'
+                          : 'text-ink/70 hover:text-ink hover:bg-brand/5'
+                      }`}
+                      aria-current={location.pathname === item.route ? 'page' : undefined}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+              })}
               <div className="flex flex-col gap-2 pt-3 mt-3 border-t border-brand/20">
                 <Button variant="ghost" size="md" fullWidth onClick={handleLogin}>
                   Login

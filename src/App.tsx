@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Home } from './pages/Home';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Home, Product } from './pages';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
@@ -13,97 +13,82 @@ import {
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
-type Route =
-  | 'home'
-  | 'login'
-  | 'signup'
-  | 'onboarding'
-  | 'overview'
-  | 'builder'
-  | 'guests'
-  | 'vault'
-  | 'registry'
-  | 'settings';
-
 const AppContent = () => {
-  const [currentRoute, setCurrentRoute] = useState<Route>('home');
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.slice(1) || 'home';
-      setCurrentRoute(hash as Route);
-    };
-
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  useEffect(() => {
-    if (!loading && user) {
-      if (currentRoute === 'login' || currentRoute === 'signup') {
-        window.location.hash = '#overview';
-      }
-    }
-  }, [user, loading, currentRoute]);
-
-  const renderRoute = () => {
-    switch (currentRoute) {
-      case 'home':
-        return <Home />;
-      case 'login':
-        return <Login />;
-      case 'signup':
-        return <Signup />;
-      case 'onboarding':
-        return (
-          <ProtectedRoute>
-            <Onboarding />
-          </ProtectedRoute>
-        );
-      case 'overview':
-        return (
-          <ProtectedRoute>
-            <DashboardOverview />
-          </ProtectedRoute>
-        );
-      case 'builder':
-        return (
-          <ProtectedRoute>
-            <DashboardBuilder />
-          </ProtectedRoute>
-        );
-      case 'guests':
-        return (
-          <ProtectedRoute>
-            <DashboardGuests />
-          </ProtectedRoute>
-        );
-      case 'vault':
-        return (
-          <ProtectedRoute>
-            <DashboardVault />
-          </ProtectedRoute>
-        );
-      case 'settings':
-        return (
-          <ProtectedRoute>
-            <DashboardSettings />
-          </ProtectedRoute>
-        );
-      default:
-        return <Home />;
-    }
-  };
-
-  return <div className="min-h-screen">{renderRoute()}</div>;
+  return (
+    <div className="min-h-screen">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/product" element={<Product />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/overview"
+          element={
+            <ProtectedRoute>
+              <DashboardOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/builder"
+          element={
+            <ProtectedRoute>
+              <DashboardBuilder />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/guests"
+          element={
+            <ProtectedRoute>
+              <DashboardGuests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/vault"
+          element={
+            <ProtectedRoute>
+              <DashboardVault />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/settings"
+          element={
+            <ProtectedRoute>
+              <DashboardSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
+  );
 };
 
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
     </AuthProvider>
   );
 }

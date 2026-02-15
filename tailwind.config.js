@@ -47,6 +47,7 @@ export default {
       fontFamily: {
         sans: ['var(--font-family-base)'],
         display: ['var(--font-family-display)'],
+        serif: ['Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
       },
       fontSize: {
         xs: 'var(--font-size-xs)',
