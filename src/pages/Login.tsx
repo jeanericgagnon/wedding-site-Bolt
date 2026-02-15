@@ -3,56 +3,28 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button, Card } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 
 export const Login: React.FC = () => {
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleDemoLogin = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
     try {
       await signIn();
-
-      // Wait a bit for the auth state to update
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Check if user has access to demo wedding site
-      const { data: session } = await supabase.auth.getSession();
-      if (session?.session?.user) {
-        const userId = session.session.user.id;
-
-        // Check if this user already has a wedding site
-        const { data: existingSite } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (!existingSite) {
-          // Check if the demo site is still available (not claimed by another user)
-          const { data: demoSite } = await supabase
-            .from('wedding_sites')
-            .select('id')
-            .eq('user_id', '00000000-0000-0000-0000-000000000001')
-            .maybeSingle();
-
-          if (demoSite) {
-            // Claim the demo wedding site for this user
-            const { error: updateError } = await supabase
-              .from('wedding_sites')
-              .update({ user_id: userId })
-              .eq('user_id', '00000000-0000-0000-0000-000000000001');
-
-            if (updateError) {
-              console.error('Error claiming demo site:', updateError);
-            }
-          }
-        }
-
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     } catch (error) {
       console.error('Demo login error:', error);
+      setIsLoading(false);
     }
   };
 
@@ -74,8 +46,15 @@ export const Login: React.FC = () => {
               <p className="text-text-secondary mb-6">
                 Try the demo experience with sample wedding data
               </p>
-              <Button variant="accent" size="lg" fullWidth className="shadow-md hover:shadow-lg" onClick={handleDemoLogin}>
-                View Demo Dashboard
+              <Button
+                variant="accent"
+                size="lg"
+                fullWidth
+                className="shadow-md hover:shadow-lg"
+                onClick={handleDemoLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Loading...' : 'View Demo Dashboard'}
               </Button>
             </div>
           </div>
@@ -83,7 +62,11 @@ export const Login: React.FC = () => {
           <div className="mt-6 pt-6 border-t border-border-subtle text-center">
             <p className="text-sm text-text-secondary">
               Don't have an account?{' '}
-              <button onClick={handleDemoLogin} className="text-primary hover:text-primary-hover font-semibold transition-colors">
+              <button
+                onClick={handleDemoLogin}
+                disabled={isLoading}
+                className="text-primary hover:text-primary-hover font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Start Free
               </button>
             </p>
