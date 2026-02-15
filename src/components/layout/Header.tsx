@@ -27,6 +27,10 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     navigate('/login');
   };
 
+  const handleViewDemo = () => {
+    navigate('/product');
+  };
+
   const scrollToSection = (sectionId: string) => {
     if (!isHomePage) {
       navigate('/' + '#' + sectionId);
@@ -157,6 +161,9 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
             <Button variant="ghost" size="sm" onClick={handleLogin}>
               Login
             </Button>
+            <Button variant="outline" size="sm" onClick={handleViewDemo}>
+              View demo
+            </Button>
             <Button variant="accent" size="sm" onClick={handleStartFree}>
               Start free build
             </Button>
@@ -212,6 +219,9 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
               <div className="flex flex-col gap-2 pt-3 mt-3 border-t border-brand/20">
                 <Button variant="ghost" size="md" fullWidth onClick={handleLogin}>
                   Login
+                </Button>
+                <Button variant="outline" size="md" fullWidth onClick={handleViewDemo}>
+                  View demo
                 </Button>
                 <Button variant="accent" size="md" fullWidth onClick={handleStartFree}>
                   Start free build
