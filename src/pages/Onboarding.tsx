@@ -66,6 +66,8 @@ export const Onboarding: React.FC = () => {
           user_id: user.id,
           couple_name_1: data.couple_name_1 || '',
           couple_name_2: data.couple_name_2 || '',
+          couple_first_name: data.couple_first_name || null,
+          couple_second_name: data.couple_second_name || null,
           wedding_date: data.wedding_date || null,
           venue_name: data.venue_name || null,
           venue_location: data.venue_location || null,
@@ -100,9 +102,14 @@ export const Onboarding: React.FC = () => {
       setLoading(true);
 
       const names = formData.partnerNames.split('&').map(n => n.trim());
+      const firstName = names[0] || '';
+      const secondName = names[1] || names[0] || '';
+
       await createWeddingSite({
-        couple_name_1: names[0] || '',
-        couple_name_2: names[1] || names[0] || '',
+        couple_name_1: firstName,
+        couple_name_2: secondName,
+        couple_first_name: firstName,
+        couple_second_name: secondName,
         wedding_date: formData.weddingDate || null,
         venue_name: formData.venueName || null,
         venue_location: formData.venueLocation || null,
@@ -378,44 +385,57 @@ export const Onboarding: React.FC = () => {
     </div>
   );
 
-  const renderComplete = () => (
-    <div className="max-w-2xl mx-auto text-center">
-      <div className="inline-flex items-center justify-center w-20 h-20 bg-success-light rounded-full mb-6">
-        <Check className="w-10 h-10 text-success" aria-hidden="true" />
-      </div>
+  const renderComplete = () => {
+    const names = formData.partnerNames.split('&').map(n => n.trim());
+    const firstName = names[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
+    const secondName = names[1]?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
+    const subdomain = `${firstName}and${secondName}.dayof.love`;
 
-      <h1 className="text-4xl font-bold text-text-primary mb-4">
-        Your site is ready!
-      </h1>
-      <p className="text-lg text-text-secondary mb-8">
-        We've created a beautiful wedding site based on your answers. You can preview, edit, and publish it now.
-      </p>
-
-      <Card variant="bordered" padding="lg" className="mb-8 text-left">
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
-            <div>
-              <p className="font-medium text-text-primary">All sections populated</p>
-              <p className="text-sm text-text-secondary">Hero, Story, Schedule, RSVP, and more</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
-            <div>
-              <p className="font-medium text-text-primary">Theme applied</p>
-              <p className="text-sm text-text-secondary">{formData.theme} color palette and styling</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
-            <div>
-              <p className="font-medium text-text-primary">Ready to customize</p>
-              <p className="text-sm text-text-secondary">Edit any section or add new content</p>
-            </div>
-          </div>
+    return (
+      <div className="max-w-2xl mx-auto text-center">
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-success-light rounded-full mb-6">
+          <Check className="w-10 h-10 text-success" aria-hidden="true" />
         </div>
-      </Card>
+
+        <h1 className="text-4xl font-bold text-text-primary mb-4">
+          Your site is ready!
+        </h1>
+        <p className="text-lg text-text-secondary mb-4">
+          We've created a beautiful wedding site based on your answers. You can preview, edit, and publish it now.
+        </p>
+
+        <Card variant="bordered" padding="lg" className="mb-8">
+          <div className="text-center">
+            <p className="text-sm text-text-secondary mb-2">Your wedding site will be available at:</p>
+            <p className="text-xl font-semibold text-primary break-all">{subdomain}</p>
+          </div>
+        </Card>
+
+        <Card variant="bordered" padding="lg" className="mb-8 text-left">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+              <div>
+                <p className="font-medium text-text-primary">All sections populated</p>
+                <p className="text-sm text-text-secondary">Hero, Story, Schedule, RSVP, and more</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+              <div>
+                <p className="font-medium text-text-primary">Theme applied</p>
+                <p className="text-sm text-text-secondary">{formData.theme} color palette and styling</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+              <div>
+                <p className="font-medium text-text-primary">Ready to customize</p>
+                <p className="text-sm text-text-secondary">Edit any section or add new content</p>
+              </div>
+            </div>
+          </div>
+        </Card>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button variant="accent" size="lg" onClick={() => navigate('/dashboard')}>
@@ -426,7 +446,8 @@ export const Onboarding: React.FC = () => {
         </Button>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-light to-accent-light p-4 py-12">

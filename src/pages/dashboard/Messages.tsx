@@ -39,7 +39,6 @@ export const DashboardMessages: React.FC = () => {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [showEmailSetup, setShowEmailSetup] = useState(false);
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -72,9 +71,6 @@ export const DashboardMessages: React.FC = () => {
 
     if (data) {
       setWeddingSite(data);
-      if (!data.couple_email) {
-        setShowEmailSetup(true);
-      }
     }
   };
 
@@ -107,33 +103,6 @@ export const DashboardMessages: React.FC = () => {
       .eq('wedding_site_id', weddingSite.id);
 
     setGuests(data || []);
-  };
-
-  const handleSetupEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!weddingSite) return;
-
-    const formEl = e.target as HTMLFormElement;
-    const firstName = (formEl.elements.namedItem('firstName') as HTMLInputElement).value;
-    const secondName = (formEl.elements.namedItem('secondName') as HTMLInputElement).value;
-
-    try {
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({
-          couple_first_name: firstName,
-          couple_second_name: secondName,
-        })
-        .eq('id', weddingSite.id);
-
-      if (error) throw error;
-
-      await fetchWeddingSite();
-      setShowEmailSetup(false);
-    } catch (err) {
-      console.error('Error setting up email:', err);
-      alert('Failed to setup email address');
-    }
   };
 
   const getRecipients = (audience: string): Guest[] => {
@@ -289,41 +258,6 @@ export const DashboardMessages: React.FC = () => {
           </Card>
         )}
 
-        {showEmailSetup && (
-          <Card variant="bordered" padding="lg">
-            <h2 className="text-xl font-semibold mb-4">Setup Your Wedding Email</h2>
-            <p className="text-gray-600 mb-6">
-              Create a personalized email address for your wedding communications
-            </p>
-            <form onSubmit={handleSetupEmail} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">First Name</label>
-                  <Input
-                    name="firstName"
-                    placeholder="John"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Second Name</label>
-                  <Input
-                    name="secondName"
-                    placeholder="Jane"
-                    required
-                  />
-                </div>
-              </div>
-              <p className="text-sm text-gray-500">
-                Your email will be: [firstname]-[secondname]@dayof.love
-              </p>
-              <Button type="submit" variant="primary">
-                Create Email Address
-              </Button>
-            </form>
-          </Card>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Card variant="bordered" padding="lg">
@@ -389,7 +323,7 @@ export const DashboardMessages: React.FC = () => {
                       onClick={() => setFormData({ ...formData, scheduleType: 'now' })}
                       className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
                         formData.scheduleType === 'now'
-                          ? 'bg-primary-600 text-white'
+                          ? 'bg-primary text-white hover:bg-primary-hover'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
@@ -400,7 +334,7 @@ export const DashboardMessages: React.FC = () => {
                       onClick={() => setFormData({ ...formData, scheduleType: 'later' })}
                       className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
                         formData.scheduleType === 'later'
-                          ? 'bg-primary-600 text-white'
+                          ? 'bg-primary text-white hover:bg-primary-hover'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
