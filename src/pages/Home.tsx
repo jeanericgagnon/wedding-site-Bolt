@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { Header, Footer } from '../components/layout';
-import { Button } from '../components/ui';
 import {
   Heart,
   Clock,
@@ -20,18 +18,11 @@ import {
 } from 'lucide-react';
 
 export const Home: React.FC = () => {
-  const { signIn } = useAuth();
   const navigate = useNavigate();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
-  const [isStarting, setIsStarting] = useState(false);
 
-  const handleStartFree = async () => {
-    setIsStarting(true);
-    setTimeout(() => {
-      signIn();
-      navigate('/dashboard');
-      setIsStarting(false);
-    }, 600);
+  const handleSignUp = async () => {
+    navigate('/signup');
   };
 
   return (
@@ -50,12 +41,11 @@ export const Home: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <button
-                className="px-8 py-4 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                onClick={handleStartFree}
-                disabled={isStarting}
-                aria-label="Start building your wedding site"
+                className="px-8 py-4 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                onClick={handleSignUp}
+                aria-label="Sign up for your wedding site"
               >
-                {isStarting ? 'Starting...' : 'Start free build'}
+                Sign up
               </button>
               <Link
                 to="/product"
@@ -286,12 +276,11 @@ export const Home: React.FC = () => {
 
               <div className="space-y-3">
                 <button
-                  className="w-full px-6 py-4 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-                  onClick={handleStartFree}
-                  disabled={isStarting}
-                  aria-label="Start building your wedding site"
+                  className="w-full px-6 py-4 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                  onClick={handleSignUp}
+                  aria-label="Sign up for your wedding site"
                 >
-                  {isStarting ? 'Starting...' : 'Start free build'}
+                  Sign up
                 </button>
                 <Link
                   to="/product"

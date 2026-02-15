@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Heart, Menu, X } from 'lucide-react';
 import { Button } from '../ui';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
   variant?: 'marketing' | 'dashboard';
 }
 
 export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
-  const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,9 +16,8 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
 
   const isHomePage = location.pathname === '/';
 
-  const handleStartFree = () => {
-    signIn();
-    navigate('/dashboard');
+  const handleSignUp = () => {
+    navigate('/signup');
   };
 
   const handleLogin = () => {
@@ -164,8 +161,8 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
             <Button variant="outline" size="sm" onClick={handleViewDemo}>
               View demo
             </Button>
-            <Button variant="accent" size="sm" onClick={handleStartFree}>
-              Start free build
+            <Button variant="accent" size="sm" onClick={handleSignUp}>
+              Sign up
             </Button>
           </div>
 
@@ -223,8 +220,8 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                 <Button variant="outline" size="md" fullWidth onClick={handleViewDemo}>
                   View demo
                 </Button>
-                <Button variant="accent" size="md" fullWidth onClick={handleStartFree}>
-                  Start free build
+                <Button variant="accent" size="md" fullWidth onClick={handleSignUp}>
+                  Sign up
                 </Button>
               </div>
             </div>
