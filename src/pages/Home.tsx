@@ -20,6 +20,7 @@ import {
   Lock,
   Bell,
   ChevronRight,
+  ChevronLeft,
   Zap,
   FileText,
   DollarSign,
@@ -69,6 +70,7 @@ export const Home: React.FC = () => {
   const [rsvpStep, setRsvpStep] = useState<number>(1);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [isStarting, setIsStarting] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   const handleStartFree = async () => {
     setIsStarting(true);
@@ -209,7 +211,7 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* C) PAIN → FIX GRID */}
+      {/* C) PAIN → FIX CAROUSEL */}
       <section id="product" className="py-16 md:py-24 bg-paper">
         <div className="container-custom">
           <div className="text-center mb-12">
@@ -218,34 +220,101 @@ export const Home: React.FC = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: Users, title: 'Household mapping errors', desc: 'Group guests properly from day one.' },
-              { icon: UserPlus, title: 'Plus-one logic breaks', desc: 'Control exactly who can bring a date.' },
-              { icon: Lock, title: 'Multi-event permission leakage', desc: 'Separate ceremony and reception guests cleanly.' },
-              { icon: Clock, title: 'RSVP deadline ambiguity', desc: 'Clear cutoffs with timezone handling.' },
-              { icon: AlertTriangle, title: 'Duplicate guest submissions', desc: 'Prevent accidental double RSVPs.' },
-              { icon: Shield, title: 'Privacy/indexing accidentally public', desc: 'Private by default, not opt-in.' },
-              { icon: Bell, title: 'SMS/email consent gaps', desc: 'Built-in compliance for messaging.' },
-              { icon: Globe, title: 'Timezone/DST mistakes', desc: 'Smart time handling across locations.' },
-              { icon: DollarSign, title: 'Registry link rot', desc: 'Maintain links that don\'t break.' },
-              { icon: Camera, title: 'Photo upload app friction', desc: 'No app required for guests.' },
-              { icon: FileText, title: 'CSV import mapping nightmares', desc: 'Intelligent column detection.' },
-              { icon: AlertTriangle, title: 'Account recovery close to wedding week', desc: 'Multiple recovery options built in.' },
-            ].map((item, idx) => (
-              <Card key={idx} variant="bordered" padding="md">
-                <div className="flex flex-col gap-3">
-                  <div className="p-3 bg-primary-light rounded-lg w-fit">
-                    <item.icon className="w-5 h-5 text-primary" aria-hidden="true" />
+          <div className="relative">
+            {(() => {
+              const items = [
+                { icon: Users, title: 'Household mapping errors', desc: 'Group guests properly from day one.' },
+                { icon: UserPlus, title: 'Plus-one logic breaks', desc: 'Control exactly who can bring a date.' },
+                { icon: Lock, title: 'Multi-event permission leakage', desc: 'Separate ceremony and reception guests cleanly.' },
+                { icon: Clock, title: 'RSVP deadline ambiguity', desc: 'Clear cutoffs with timezone handling.' },
+                { icon: AlertTriangle, title: 'Duplicate guest submissions', desc: 'Prevent accidental double RSVPs.' },
+                { icon: Shield, title: 'Privacy/indexing accidentally public', desc: 'Private by default, not opt-in.' },
+                { icon: Bell, title: 'SMS/email consent gaps', desc: 'Built-in compliance for messaging.' },
+                { icon: Globe, title: 'Timezone/DST mistakes', desc: 'Smart time handling across locations.' },
+                { icon: DollarSign, title: 'Registry link rot', desc: 'Maintain links that don\'t break.' },
+                { icon: Camera, title: 'Photo upload app friction', desc: 'No app required for guests.' },
+                { icon: FileText, title: 'CSV import mapping nightmares', desc: 'Intelligent column detection.' },
+                { icon: AlertTriangle, title: 'Account recovery close to wedding week', desc: 'Multiple recovery options built in.' },
+              ];
+
+              const totalItems = items.length;
+              const maxIndex = totalItems - 1;
+
+              const handlePrev = () => {
+                setCarouselIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
+              };
+
+              const handleNext = () => {
+                setCarouselIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+              };
+
+              return (
+                <>
+                  {/* Carousel container */}
+                  <div className="overflow-hidden px-12">
+                    <div
+                      className="flex transition-transform duration-500 ease-in-out gap-6"
+                      style={{
+                        transform: `translateX(-${carouselIndex * (100 / 3)}%)`,
+                      }}
+                    >
+                      {items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex-shrink-0 w-full md:w-1/2 lg:w-1/3 px-3"
+                        >
+                          <Card variant="bordered" padding="md" className="h-full">
+                            <div className="flex flex-col gap-3">
+                              <div className="p-3 bg-primary-light rounded-lg w-fit">
+                                <item.icon className="w-5 h-5 text-primary" aria-hidden="true" />
+                              </div>
+                              <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
+                              <p className="text-sm text-ink/70">{item.desc}</p>
+                              <Button variant="ghost" size="sm" onClick={() => onTodo(`Learn more: ${item.title}`)}>
+                                See how it works <ChevronRight className="w-4 h-4 ml-1" />
+                              </Button>
+                            </div>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
-                  <p className="text-sm text-ink/70">{item.desc}</p>
-                  <Button variant="ghost" size="sm" onClick={() => onTodo(`Learn more: ${item.title}`)}>
-                    See how it works <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
+
+                  {/* Navigation buttons */}
+                  <button
+                    onClick={handlePrev}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 p-3 bg-white border-2 border-brand text-brand rounded-full hover:bg-brand hover:text-paper transition-colors shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                    aria-label="Previous slide"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 p-3 bg-white border-2 border-brand text-brand rounded-full hover:bg-brand hover:text-paper transition-colors shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                    aria-label="Next slide"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                  {/* Dot indicators */}
+                  <div className="flex justify-center gap-2 mt-8">
+                    {items.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCarouselIndex(idx)}
+                        className={`w-2.5 h-2.5 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+                          idx === carouselIndex
+                            ? 'bg-brand w-8'
+                            : 'bg-brand/30 hover:bg-brand/50'
+                        }`}
+                        aria-label={`Go to slide ${idx + 1}`}
+                        aria-current={idx === carouselIndex ? 'true' : 'false'}
+                      />
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       </section>
