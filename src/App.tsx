@@ -9,6 +9,7 @@ import { QuickStart } from './pages/onboarding/QuickStart';
 import { GuidedSetup } from './pages/onboarding/GuidedSetup';
 import RSVP from './pages/RSVP';
 import EventRSVP from './pages/EventRSVP';
+import { SiteView } from './pages/SiteView';
 import {
   DashboardOverview,
   DashboardBuilder,
@@ -36,6 +37,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />
+        <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/rsvp" element={<RSVP />} />
         <Route path="/events" element={<EventRSVP />} />
         <Route path="/features/guests" element={<GuestsFeature />} />

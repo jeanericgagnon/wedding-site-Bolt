@@ -154,7 +154,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             <div className="flex items-center justify-between gap-4 max-w-6xl">
               <div className="flex-1">
                 <p className="font-semibold mb-1">You're viewing a demo</p>
-                <p className="text-sm text-white/90">Ready to create your own wedding site? Sign up now for just $39.</p>
+                <p className="text-sm text-white/90">Ready to create your own wedding site? Sign up now for just $49.</p>
               </div>
               <button
                 onClick={() => navigate('/signup')}

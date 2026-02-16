@@ -66,7 +66,7 @@ export const Home: React.FC = () => {
               </button>
             </div>
             <p className="text-sm text-ink/60">
-              $39 flat fee for 2 years • Auto-renew OFF by default • Private by default
+              $49 flat fee for 2 years • Auto-renew OFF by default • Private by default
             </p>
           </div>
         </div>
@@ -257,7 +257,7 @@ export const Home: React.FC = () => {
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-serif font-bold text-ink mb-4">Complete Wedding Platform</h3>
                 <div className="mb-4">
-                  <span className="text-6xl font-bold text-brand">$39</span>
+                  <span className="text-6xl font-bold text-brand">$49</span>
                   <span className="text-xl text-ink/70"> / 2 years</span>
                 </div>
                 <span className="inline-block px-4 py-2 bg-brand/10 text-brand text-sm font-semibold rounded-full">
@@ -346,7 +346,7 @@ export const Home: React.FC = () => {
                 },
                 {
                   q: 'Do you sell my data or show ads?',
-                  a: 'Never. We make money from the $39 flat fee. Your wedding is not our ad platform.',
+                  a: 'Never. We make money from the $49 flat fee. Your wedding is not our ad platform.',
                 },
               ].map((faq, idx) => (
                 <div

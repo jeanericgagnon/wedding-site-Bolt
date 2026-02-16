@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Sparkles, Zap, ArrowRight, ArrowLeft, Palette, Layout, Image } from 'lucide-react';
 import { Button, Card, Input } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
+import { generateSiteConfig } from '../../lib/siteGenerator';
 
 type Step = 'basics' | 'style';
 
@@ -65,10 +66,21 @@ export const QuickStart: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const siteConfig = generateSiteConfig({
+        couple_name_1: coupleNames.name1,
+        couple_name_2: coupleNames.name2,
+        wedding_date: formData.weddingDate || null,
+        wedding_location: formData.location || null,
+        template: formData.template,
+        color_scheme: formData.colorScheme,
+      });
+
       const updateData: any = {
         venue_date: formData.weddingDate || null,
         wedding_location: formData.location || null,
         planning_status: 'quick_start_complete',
+        template_id: siteConfig.template_id,
+        site_json: siteConfig,
       };
 
       const { error: updateError } = await supabase

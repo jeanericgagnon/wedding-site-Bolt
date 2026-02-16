@@ -1,310 +1,328 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, CardContent, Button, Badge } from '../../components/ui';
-import { GripVertical, Eye, Plus, Edit, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-
-interface Section {
-  id: string;
-  type: string;
-  title: string;
-  variant: string;
-  visible: boolean;
-  category: 'content' | 'logistics' | 'engagement';
-}
-
-interface Toast {
-  id: number;
-  message: string;
-}
-
-const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
-  return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className="bg-surface-raised border border-border shadow-lg rounded-lg p-4 min-w-[300px]"
-        >
-          <p className="text-sm text-ink">{toast.message}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
+import { Card, Button } from '../../components/ui';
+import { ChevronUp, ChevronDown, Eye, EyeOff, ExternalLink, Save } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import type { SiteConfig, SectionConfig } from '../../types/siteConfig';
 
 export const DashboardBuilder: React.FC = () => {
-  const [sections, setSections] = useState<Section[]>([
-    { id: '1', type: 'hero', title: 'Hero', variant: 'classic', visible: true, category: 'content' },
-    { id: '2', type: 'story', title: 'Our Story', variant: 'centered', visible: true, category: 'content' },
-    { id: '3', type: 'schedule', title: 'Schedule', variant: 'timeline', visible: true, category: 'logistics' },
-    { id: '4', type: 'rsvp', title: 'RSVP', variant: 'form', visible: true, category: 'engagement' },
-    { id: '5', type: 'travel', title: 'Travel & Accommodations', variant: 'cards', visible: true, category: 'logistics' },
-    { id: '6', type: 'gallery', title: 'Gallery', variant: 'grid', visible: false, category: 'content' },
-    { id: '7', type: 'faq', title: 'FAQ', variant: 'accordion', visible: true, category: 'content' },
-    { id: '8', type: 'registry', title: 'Registry', variant: 'links', visible: true, category: 'engagement' },
-  ]);
+  const [siteConfig, setSiteConfig] = useState<SiteConfig | null>(null);
+  const [sections, setSections] = useState<SectionConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [siteSlug, setSiteSlug] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [selectedSection, setSelectedSection] = useState<Section | null>(sections[0]);
-  const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('desktop');
-  const [sectionFilter, setSectionFilter] = useState<'all' | 'content' | 'logistics' | 'engagement'>('all');
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  useEffect(() => {
+    loadSiteConfig();
+  }, []);
 
-  const onTodo = (message: string) => {
-    console.log('TODO:', message);
-    const newToast: Toast = {
-      id: Date.now(),
-      message: `TODO: ${message}`,
-    };
-    setToasts((prev) => [...prev, newToast]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
-    }, 2000);
+  const loadSiteConfig = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error: fetchError } = await supabase
+        .from('wedding_sites')
+        .select('site_json, site_slug')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (data && data.site_json) {
+        setSiteConfig(data.site_json as SiteConfig);
+        setSections((data.site_json as SiteConfig).sections);
+        setSiteSlug(data.site_slug);
+      } else {
+        setError('No site configuration found. Please complete onboarding first.');
+      }
+    } catch (err: any) {
+      console.error('Error loading site config:', err);
+      setError(err.message || 'Failed to load site configuration');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredSections = sectionFilter === 'all'
-    ? sections
-    : sections.filter(s => s.category === sectionFilter);
+  const saveSiteConfig = async () => {
+    if (!siteConfig) return;
 
-  const variants = {
-    hero: ['Classic', 'Minimal', 'Split'],
-    story: ['Centered', 'Side by Side', 'Timeline'],
-    schedule: ['Timeline', 'Cards', 'Simple List'],
+    setSaving(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const updatedConfig: SiteConfig = {
+        ...siteConfig,
+        sections,
+        meta: {
+          ...siteConfig.meta,
+          updated_at_iso: new Date().toISOString(),
+        },
+      };
+
+      const { error: updateError } = await supabase
+        .from('wedding_sites')
+        .update({ site_json: updatedConfig })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      setSiteConfig(updatedConfig);
+      setSuccessMessage('Changes saved successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error saving site config:', err);
+      setError(err.message || 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleSection = (id: string) => {
+    setSections(sections.map(s =>
+      s.id === id ? { ...s, enabled: !s.enabled } : s
+    ));
   };
 
   const moveSection = (index: number, direction: 'up' | 'down') => {
     const newSections = [...sections];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
     if (targetIndex >= 0 && targetIndex < newSections.length) {
       [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
       setSections(newSections);
     }
   };
 
-  const toggleVisibility = (id: string) => {
-    setSections(sections.map(s => s.id === id ? { ...s, visible: !s.visible } : s));
+  const getSectionTitle = (type: string): string => {
+    const titles: Record<string, string> = {
+      hero: 'Hero / Welcome',
+      details: 'Wedding Details',
+      schedule: 'Schedule',
+      travel: 'Travel & Accommodations',
+      rsvp: 'RSVP',
+      registry: 'Registry',
+      faq: 'FAQ',
+      gallery: 'Photo Gallery',
+    };
+    return titles[type] || type;
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout currentPage="builder">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-text-secondary">Loading site configuration...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error && !siteConfig) {
+    return (
+      <DashboardLayout currentPage="builder">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <div className="bg-error-light text-error p-4 rounded-lg inline-block">
+              {error}
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout currentPage="builder">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">Website Builder</h1>
-          <p className="text-text-secondary">Customize your wedding site sections and layout</p>
+          <p className="text-text-secondary mb-4">
+            Manage sections on your wedding site. Toggle visibility and reorder sections.
+          </p>
+
+          <div className="flex gap-4">
+            {siteSlug && (
+              <a
+                href={`/site/${siteSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+                Preview Site
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-6">
-            <Card variant="bordered" padding="md">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-text-primary">Site Sections</h2>
-                <Button variant="ghost" size="sm" onClick={() => onTodo('Add new section')}>
-                  <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Add
+        {successMessage && (
+          <div className="mb-6 p-4 bg-success/10 border border-success text-success rounded-lg">
+            {successMessage}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 bg-error-light text-error rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <Card variant="default" padding="lg">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-text-primary">Site Sections</h2>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={saveSiteConfig}
+                  disabled={saving}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-xs font-medium text-text-secondary mb-2">Filter sections</label>
-                <select
-                  className="w-full p-2 border border-border rounded-lg bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={sectionFilter}
-                  onChange={(e) => {
-                    setSectionFilter(e.target.value as 'all' | 'content' | 'logistics' | 'engagement');
-                    onTodo(`Filter builder sections: ${e.target.value}`);
-                  }}
-                >
-                  <option value="all">All sections</option>
-                  <option value="content">Content</option>
-                  <option value="logistics">Logistics</option>
-                  <option value="engagement">Engagement</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                {filteredSections.map((section, index) => (
+              <div className="space-y-3">
+                {sections.map((section, index) => (
                   <div
                     key={section.id}
-                    className={`
-                      flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors
-                      ${selectedSection?.id === section.id
-                        ? 'bg-primary-light border-primary'
-                        : 'bg-surface border-border-subtle hover:border-border'
-                      }
-                    `}
-                    onClick={() => setSelectedSection(section)}
+                    className={`border rounded-lg p-4 transition-all ${
+                      section.enabled
+                        ? 'border-border bg-background'
+                        : 'border-border bg-surface-subtle opacity-60'
+                    }`}
                   >
-                    <button
-                      className="cursor-grab active:cursor-grabbing text-text-tertiary hover:text-text-secondary"
-                      aria-label="Drag to reorder"
-                    >
-                      <GripVertical className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => moveSection(index, 'up')}
+                            disabled={index === 0}
+                            className="p-1 hover:bg-surface-subtle rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move up"
+                          >
+                            <ChevronUp className="w-4 h-4 text-text-secondary" />
+                          </button>
+                          <button
+                            onClick={() => moveSection(index, 'down')}
+                            disabled={index === sections.length - 1}
+                            className="p-1 hover:bg-surface-subtle rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move down"
+                          >
+                            <ChevronDown className="w-4 h-4 text-text-secondary" />
+                          </button>
+                        </div>
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">{section.title}</p>
-                      <p className="text-xs text-text-secondary capitalize">{section.variant}</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleVisibility(section.id);
-                        }}
-                        className={`p-1 rounded transition-colors ${
-                          section.visible ? 'text-primary' : 'text-text-tertiary'
-                        }`}
-                        aria-label={section.visible ? 'Hide section' : 'Show section'}
-                      >
-                        <Eye className="w-4 h-4" aria-hidden="true" />
-                      </button>
-
-                      <div className="flex flex-col gap-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveSection(index, 'up');
-                          }}
-                          disabled={index === 0}
-                          className="p-0.5 rounded hover:bg-surface-subtle disabled:opacity-30 disabled:cursor-not-allowed"
-                          aria-label="Move up"
-                        >
-                          <ChevronUp className="w-3 h-3" aria-hidden="true" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveSection(index, 'down');
-                          }}
-                          disabled={index === sections.length - 1}
-                          className="p-0.5 rounded hover:bg-surface-subtle disabled:opacity-30 disabled:cursor-not-allowed"
-                          aria-label="Move down"
-                        >
-                          <ChevronDown className="w-3 h-3" aria-hidden="true" />
-                        </button>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-text-primary">
+                            {getSectionTitle(section.type)}
+                          </h3>
+                          <p className="text-sm text-text-secondary capitalize">
+                            {section.type}
+                          </p>
+                        </div>
                       </div>
+
+                      <button
+                        onClick={() => toggleSection(section.id)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          section.enabled
+                            ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                            : 'bg-surface-subtle text-text-secondary hover:bg-surface'
+                        }`}
+                        title={section.enabled ? 'Hide section' : 'Show section'}
+                      >
+                        {section.enabled ? (
+                          <Eye className="w-5 h-5" />
+                        ) : (
+                          <EyeOff className="w-5 h-5" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
+
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="text-sm text-text-secondary">
+                  Click the eye icon to show/hide sections. Use the arrows to reorder sections.
+                  Don't forget to save your changes!
+                </p>
+              </div>
             </Card>
-
-            {selectedSection && (
-              <Card variant="bordered" padding="md">
-                <h2 className="text-lg font-semibold text-text-primary mb-4">Section Settings</h2>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary mb-2">
-                      Section Variant
-                    </label>
-                    <div className="grid grid-cols-1 gap-2">
-                      {(variants[selectedSection.type as keyof typeof variants] || ['Default']).map((variant) => (
-                        <button
-                          key={variant}
-                          className={`
-                            px-4 py-3 rounded-lg border text-sm text-left transition-colors
-                            ${selectedSection.variant === variant.toLowerCase()
-                              ? 'bg-primary-light border-primary text-primary font-medium'
-                              : 'bg-surface border-border-subtle hover:border-border text-text-secondary'
-                            }
-                          `}
-                        >
-                          {variant}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-border-subtle">
-                    <Button variant="primary" size="md" fullWidth onClick={() => onTodo(`Edit ${selectedSection.title} content`)}>
-                      <Edit className="w-4 h-4 mr-2" aria-hidden="true" />
-                      Edit Content
-                    </Button>
-                  </div>
-
-                  <Button variant="ghost" size="md" fullWidth className="text-error hover:bg-error-light" onClick={() => onTodo(`Remove ${selectedSection.title} section`)}>
-                    <Trash2 className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Remove Section
-                  </Button>
-                </div>
-              </Card>
-            )}
           </div>
 
-          <div className="lg:col-span-2">
-            <Card variant="bordered" padding="md">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-text-primary">Live Preview</h2>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPreviewMode('mobile')}
-                    className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                      previewMode === 'mobile'
-                        ? 'bg-primary text-text-inverse'
-                        : 'text-text-secondary hover:bg-surface-subtle'
-                    }`}
-                  >
-                    Mobile
-                  </button>
-                  <button
-                    onClick={() => setPreviewMode('desktop')}
-                    className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                      previewMode === 'desktop'
-                        ? 'bg-primary text-text-inverse'
-                        : 'text-text-secondary hover:bg-surface-subtle'
-                    }`}
-                  >
-                    Desktop
-                  </button>
+          <div>
+            <Card variant="default" padding="lg">
+              <h2 className="text-xl font-semibold text-text-primary mb-4">
+                Template Information
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-text-secondary mb-1">Template</h3>
+                  <p className="text-text-primary capitalize">{siteConfig?.template_id}</p>
                 </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-text-secondary mb-1">Color Scheme</h3>
+                  <p className="text-text-primary capitalize">{siteConfig?.theme.preset}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-text-secondary mb-1">Enabled Sections</h3>
+                  <p className="text-text-primary">
+                    {sections.filter(s => s.enabled).length} of {sections.length}
+                  </p>
+                </div>
+
+                {siteSlug && (
+                  <div>
+                    <h3 className="text-sm font-medium text-text-secondary mb-1">Site URL</h3>
+                    <code className="text-sm text-primary bg-primary/5 px-2 py-1 rounded">
+                      /site/{siteSlug}
+                    </code>
+                  </div>
+                )}
               </div>
 
-              <div className="bg-background rounded-lg p-8 min-h-[600px] flex items-center justify-center">
-                <div
-                  className={`bg-surface rounded-lg shadow-lg overflow-hidden transition-all ${
-                    previewMode === 'mobile' ? 'w-[375px]' : 'w-full'
-                  }`}
-                >
-                  <div className="bg-gradient-to-br from-primary-light to-accent-light p-12 text-center">
-                    <h1 className="text-4xl font-bold text-text-primary mb-4">Alex & Jordan</h1>
-                    <p className="text-lg text-text-secondary">June 15, 2026 • San Francisco, CA</p>
-                  </div>
-
-                  {selectedSection && (
-                    <div className="p-8 border-t-4 border-primary">
-                      <Badge variant="primary" className="mb-4">Currently Editing</Badge>
-                      <h2 className="text-2xl font-bold text-text-primary mb-4">{selectedSection.title}</h2>
-                      <p className="text-text-secondary mb-4">
-                        This is a preview of your <span className="font-medium">{selectedSection.variant}</span> variant.
-                        Edit the content to see changes reflected here.
-                      </p>
-                      <div className="bg-surface-subtle rounded-lg p-6 text-center text-text-tertiary">
-                        Section preview content
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="p-6 bg-surface-subtle text-center">
-                    <p className="text-sm text-text-secondary">Additional sections appear below</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 mt-4">
-                <Button variant="outline" size="md" onClick={() => onTodo('Save draft')}>
-                  Save Draft
-                </Button>
-                <Button variant="accent" size="md" onClick={() => onTodo('Publish changes')}>
-                  Publish Changes
-                </Button>
+              <div className="mt-6 pt-6 border-t border-border">
+                <h3 className="text-sm font-medium text-text-primary mb-3">Coming Soon</h3>
+                <ul className="space-y-2 text-sm text-text-secondary">
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    Content editor for each section
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    Template switcher
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    Custom color themes
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    Photo uploads for gallery
+                  </li>
+                </ul>
               </div>
             </Card>
           </div>
         </div>
       </div>
-
-      <ToastContainer toasts={toasts} />
     </DashboardLayout>
   );
 };
