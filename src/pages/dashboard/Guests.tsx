@@ -4,6 +4,7 @@ import { Card, CardContent, Button, Badge, Input } from '../../components/ui';
 import { Search, Download, UserPlus, Mail, Filter, CheckCircle2, XCircle, Clock, X, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 
 interface Guest {
   id: string;
@@ -33,7 +34,7 @@ interface GuestWithRSVP extends Guest {
 }
 
 export const DashboardGuests: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [guests, setGuests] = useState<GuestWithRSVP[]>([]);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ export const DashboardGuests: React.FC = () => {
 
   useEffect(() => {
     fetchWeddingSite();
-  }, [user]);
+  }, [user, isDemoMode]);
 
   useEffect(() => {
     if (weddingSiteId) {
@@ -64,6 +65,11 @@ export const DashboardGuests: React.FC = () => {
 
   const fetchWeddingSite = async () => {
     if (!user) return;
+
+    if (isDemoMode) {
+      setWeddingSiteId(demoWeddingSite.id);
+      return;
+    }
 
     const { data, error } = await supabase
       .from('wedding_sites')
@@ -81,6 +87,20 @@ export const DashboardGuests: React.FC = () => {
 
     setLoading(true);
     try {
+      if (isDemoMode) {
+        const guestsWithRsvps = demoGuests.map(guest => ({
+          ...guest,
+          phone: null,
+          plus_one_allowed: false,
+          plus_one_name: null,
+          rsvp_received_at: guest.rsvp_status !== 'pending' ? new Date().toISOString() : null,
+          rsvp: demoRSVPs.find(r => r.guest_id === guest.id),
+        }));
+        setGuests(guestsWithRsvps);
+        setLoading(false);
+        return;
+      }
+
       const { data: guestsData, error: guestsError } = await supabase
         .from('guests')
         .select('*')

@@ -13,6 +13,8 @@ interface AuthContextType {
   loading: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  enterDemoMode: () => void;
+  isDemoMode: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,8 +25,22 @@ const DEMO_PASSWORD = 'demo-password-12345';
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
+    const demoMode = localStorage.getItem('demoMode') === 'true';
+
+    if (demoMode) {
+      setIsDemoMode(true);
+      setUser({
+        id: 'demo-user-id',
+        email: 'demo@dayof.love',
+        name: 'Alex & Jordan',
+      });
+      setLoading(false);
+      return;
+    }
+
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -91,8 +107,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    if (isDemoMode) {
+      localStorage.removeItem('demoMode');
+      setIsDemoMode(false);
+      setUser(null);
+    } else {
+      await supabase.auth.signOut();
+      setUser(null);
+    }
+  };
+
+  const enterDemoMode = () => {
+    localStorage.setItem('demoMode', 'true');
+    setIsDemoMode(true);
+    setUser({
+      id: 'demo-user-id',
+      email: 'demo@dayof.love',
+      name: 'Alex & Jordan',
+    });
   };
 
   const value = {
@@ -100,6 +132,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     signIn,
     signOut,
+    enterDemoMode,
+    isDemoMode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

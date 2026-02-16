@@ -20,25 +20,16 @@ import {
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { enterDemoMode } = useAuth();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
-  const [demoLoading, setDemoLoading] = useState(false);
 
   const handleSignUp = async () => {
     navigate('/signup');
   };
 
-  const handleDemoLogin = async () => {
-    setDemoLoading(true);
-    try {
-      await signIn();
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Demo login error:', err);
-      alert('Failed to load demo. Please try again.');
-    } finally {
-      setDemoLoading(false);
-    }
+  const handleDemoLogin = () => {
+    enterDemoMode();
+    navigate('/dashboard');
   };
 
   return (
@@ -65,10 +56,9 @@ export const Home: React.FC = () => {
               </button>
               <button
                 onClick={handleDemoLogin}
-                disabled={demoLoading}
-                className="inline-flex items-center justify-center px-8 py-4 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center px-8 py-4 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               >
-                {demoLoading ? 'Loading...' : 'Preview demo'}
+                Preview demo
               </button>
             </div>
             <p className="text-sm text-ink/60">
@@ -301,10 +291,9 @@ export const Home: React.FC = () => {
                 </button>
                 <button
                   onClick={handleDemoLogin}
-                  disabled={demoLoading}
-                  className="block w-full px-6 py-3 text-center border-2 border-brand text-brand font-medium rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="block w-full px-6 py-3 text-center border-2 border-brand text-brand font-medium rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
-                  {demoLoading ? 'Loading...' : 'Preview demo'}
+                  Preview demo
                 </button>
               </div>
 
