@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
-import { Button, Card, Input } from '../../components/ui';
+import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
@@ -34,6 +34,8 @@ export const WeddingStatus: React.FC = () => {
   const [error, setError] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<PlanningStatus | null>(null);
   const [details, setDetails] = useState<StatusDetails>({});
+  const [isDestinationWedding, setIsDestinationWedding] = useState(false);
+  const [venueCoordinates, setVenueCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   const statusOptions = [
     { id: 'not_engaged' as const, label: "We're not engaged yet" },
@@ -65,12 +67,22 @@ export const WeddingStatus: React.FC = () => {
         updateData.venue_address = details.venue_booked.venueAddress;
         updateData.venue_date = details.venue_booked.venueDate;
         updateData.expected_guest_count = parseInt(details.venue_booked.expectedGuestCount) || null;
+        updateData.is_destination_wedding = isDestinationWedding;
+        if (venueCoordinates) {
+          updateData.venue_latitude = venueCoordinates.lat;
+          updateData.venue_longitude = venueCoordinates.lng;
+        }
       } else if (selectedStatus === 'invitations_sent' && details.invitations_sent) {
         updateData.venue_name = details.invitations_sent.venueName;
         updateData.venue_address = details.invitations_sent.venueAddress;
         updateData.venue_date = details.invitations_sent.venueDate;
         updateData.expected_guest_count = parseInt(details.invitations_sent.expectedGuestCount) || null;
         updateData.invitations_sent_date = details.invitations_sent.invitationsSentDate;
+        updateData.is_destination_wedding = isDestinationWedding;
+        if (venueCoordinates) {
+          updateData.venue_latitude = venueCoordinates.lat;
+          updateData.venue_longitude = venueCoordinates.lng;
+        }
       }
 
       const { error: updateError } = await supabase
@@ -109,6 +121,19 @@ export const WeddingStatus: React.FC = () => {
         <div className="mt-6 p-6 bg-surface rounded-lg border border-border space-y-4">
           <h3 className="text-lg font-semibold text-text-primary mb-4">Venue Details</h3>
 
+          <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-lg">
+            <input
+              type="checkbox"
+              id="destination-wedding"
+              checked={isDestinationWedding}
+              onChange={(e) => setIsDestinationWedding(e.target.checked)}
+              className="w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary"
+            />
+            <label htmlFor="destination-wedding" className="text-sm font-medium text-text-primary cursor-pointer">
+              This is a destination wedding
+            </label>
+          </div>
+
           <Input
             label="Venue Name"
             value={details.venue_booked?.venueName || ''}
@@ -125,19 +150,24 @@ export const WeddingStatus: React.FC = () => {
             required
           />
 
-          <Input
+          <AddressInput
             label="Venue Address"
             value={details.venue_booked?.venueAddress || ''}
-            onChange={(e) => setDetails({
-              ...details,
-              venue_booked: {
-                venueName: details.venue_booked?.venueName || '',
-                venueAddress: e.target.value,
-                venueDate: details.venue_booked?.venueDate || '',
-                expectedGuestCount: details.venue_booked?.expectedGuestCount || ''
+            onChange={(address, coordinates) => {
+              setDetails({
+                ...details,
+                venue_booked: {
+                  venueName: details.venue_booked?.venueName || '',
+                  venueAddress: address,
+                  venueDate: details.venue_booked?.venueDate || '',
+                  expectedGuestCount: details.venue_booked?.expectedGuestCount || ''
+                }
+              });
+              if (coordinates) {
+                setVenueCoordinates(coordinates);
               }
-            })}
-            placeholder="123 Main St, City, State"
+            }}
+            placeholder="Start typing the venue address..."
             required
           />
 
@@ -182,6 +212,19 @@ export const WeddingStatus: React.FC = () => {
         <div className="mt-6 p-6 bg-surface rounded-lg border border-border space-y-4">
           <h3 className="text-lg font-semibold text-text-primary mb-4">Wedding Details</h3>
 
+          <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-lg">
+            <input
+              type="checkbox"
+              id="destination-wedding-invites"
+              checked={isDestinationWedding}
+              onChange={(e) => setIsDestinationWedding(e.target.checked)}
+              className="w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary"
+            />
+            <label htmlFor="destination-wedding-invites" className="text-sm font-medium text-text-primary cursor-pointer">
+              This is a destination wedding
+            </label>
+          </div>
+
           <Input
             label="Venue Name"
             value={details.invitations_sent?.venueName || ''}
@@ -199,20 +242,25 @@ export const WeddingStatus: React.FC = () => {
             required
           />
 
-          <Input
+          <AddressInput
             label="Venue Address"
             value={details.invitations_sent?.venueAddress || ''}
-            onChange={(e) => setDetails({
-              ...details,
-              invitations_sent: {
-                venueName: details.invitations_sent?.venueName || '',
-                venueAddress: e.target.value,
-                venueDate: details.invitations_sent?.venueDate || '',
-                expectedGuestCount: details.invitations_sent?.expectedGuestCount || '',
-                invitationsSentDate: details.invitations_sent?.invitationsSentDate || ''
+            onChange={(address, coordinates) => {
+              setDetails({
+                ...details,
+                invitations_sent: {
+                  venueName: details.invitations_sent?.venueName || '',
+                  venueAddress: address,
+                  venueDate: details.invitations_sent?.venueDate || '',
+                  expectedGuestCount: details.invitations_sent?.expectedGuestCount || '',
+                  invitationsSentDate: details.invitations_sent?.invitationsSentDate || ''
+                }
+              });
+              if (coordinates) {
+                setVenueCoordinates(coordinates);
               }
-            })}
-            placeholder="123 Main St, City, State"
+            }}
+            placeholder="Start typing the venue address..."
             required
           />
 
