@@ -5,6 +5,8 @@ import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
 import { WeddingStatus } from './pages/onboarding/WeddingStatus';
 import { Celebration } from './pages/onboarding/Celebration';
+import { QuickStart } from './pages/onboarding/QuickStart';
+import { GuidedSetup } from './pages/onboarding/GuidedSetup';
 import RSVP from './pages/RSVP';
 import EventRSVP from './pages/EventRSVP';
 import {
@@ -65,6 +67,22 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Celebration />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/onboarding/quick-start"
+          element={
+            <ProtectedRoute>
+              <QuickStart />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/onboarding/guided"
+          element={
+            <ProtectedRoute>
+              <GuidedSetup />
             </ProtectedRoute>
           }
         />

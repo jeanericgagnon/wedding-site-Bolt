@@ -34,11 +34,15 @@ export const Celebration: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleManualSetup = () => {
-    navigate('/onboarding');
+  const handleQuickStart = () => {
+    navigate('/onboarding/quick-start');
   };
 
-  const handleSetupLater = () => {
+  const handleGuidedSetup = () => {
+    navigate('/onboarding/guided');
+  };
+
+  const handleManualSetup = () => {
     navigate('/dashboard');
   };
 
@@ -46,7 +50,7 @@ export const Celebration: React.FC = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-light via-accent-light to-background p-4 relative overflow-hidden">
       {showConfetti && <ConfettiEffect />}
 
-      <div className="w-full max-w-3xl relative z-10">
+      <div className="w-full max-w-5xl relative z-10">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-24 h-24 bg-accent/20 rounded-full mb-6 animate-bounce">
             <Heart className="w-12 h-12 text-accent" fill="currentColor" aria-hidden="true" />
@@ -81,46 +85,47 @@ export const Celebration: React.FC = () => {
             </p>
           )}
 
-          <p className="text-lg text-text-secondary max-w-xl mx-auto">
-            Your account is all set up. Now, let's bring your wedding vision to life.
+          <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-2">
+            Your account is all set up. Choose how you'd like to build your wedding site:
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
           <Card
             variant="default"
             padding="lg"
             className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 border-transparent hover:border-accent"
-            onClick={handleManualSetup}
+            onClick={handleQuickStart}
           >
             <div className="flex flex-col h-full">
               <div className="flex-grow">
                 <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
                   <Sparkles className="w-6 h-6 text-accent" aria-hidden="true" />
                 </div>
-                <h2 className="text-2xl font-bold text-text-primary mb-3">
-                  Start Setup Now
+                <h2 className="text-xl font-bold text-text-primary mb-2">
+                  1-Minute Quick Start
                 </h2>
-                <p className="text-text-secondary mb-4">
-                  Walk through our guided setup to create your perfect wedding site. We'll help you add all the details your guests need.
+                <p className="text-xs text-accent font-medium mb-3">Minimum viable publish</p>
+                <p className="text-text-secondary text-sm mb-4">
+                  Answer 4 quick questions and get a complete site with all pages ready to share.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>Add your story and photos</span>
+                    <span>Names & date only</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>Set up your schedule and venue</span>
+                    <span>All pages created</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>Customize your site's look</span>
+                    <span>Fill details later</span>
                   </li>
                 </ul>
               </div>
               <Button variant="accent" size="lg" fullWidth>
-                Get Started
+                Quick Start
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>
@@ -130,31 +135,72 @@ export const Celebration: React.FC = () => {
             variant="default"
             padding="lg"
             className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 border-transparent hover:border-primary"
-            onClick={handleSetupLater}
+            onClick={handleGuidedSetup}
           >
             <div className="flex flex-col h-full">
               <div className="flex-grow">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                   <Heart className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
-                <h2 className="text-2xl font-bold text-text-primary mb-3">
-                  Setup Later
+                <h2 className="text-xl font-bold text-text-primary mb-2">
+                  Guided Setup
                 </h2>
-                <p className="text-text-secondary mb-4">
-                  Skip the setup for now and explore your dashboard. You can add details whenever you're ready.
+                <p className="text-xs text-primary font-medium mb-3">5-10 minutes, step-by-step</p>
+                <p className="text-text-secondary text-sm mb-4">
+                  Fill each section as you go. Skip what you don't need.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    <span>Explore all features at your own pace</span>
+                    <span>Question by question</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    <span>Come back to setup anytime</span>
+                    <span>See progress as you go</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    <span>Jump straight to what you need</span>
+                    <span>Skip optional parts</span>
+                  </li>
+                </ul>
+              </div>
+              <Button variant="primary" size="lg" fullWidth>
+                Start Guided Setup
+                <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+              </Button>
+            </div>
+          </Card>
+
+          <Card
+            variant="default"
+            padding="lg"
+            className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 border-transparent hover:border-border-hover"
+            onClick={handleManualSetup}
+          >
+            <div className="flex flex-col h-full">
+              <div className="flex-grow">
+                <div className="w-12 h-12 bg-surface-subtle rounded-lg flex items-center justify-center mb-4">
+                  <Calendar className="w-6 h-6 text-text-secondary" aria-hidden="true" />
+                </div>
+                <h2 className="text-xl font-bold text-text-primary mb-2">
+                  I'll Edit Manually
+                </h2>
+                <p className="text-xs text-text-secondary font-medium mb-3">For control freaks & planners</p>
+                <p className="text-text-secondary text-sm mb-4">
+                  Jump straight to your dashboard and build everything yourself.
+                </p>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center gap-2 text-sm text-text-secondary">
+                    <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
+                    <span>Full control from start</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-text-secondary">
+                    <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
+                    <span>No guided questions</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-text-secondary">
+                    <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
+                    <span>Direct to dashboard</span>
                   </li>
                 </ul>
               </div>
