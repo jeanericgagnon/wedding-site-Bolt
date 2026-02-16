@@ -15,6 +15,9 @@ Stores the presentation layer as `LayoutConfigV1`. Defines which sections appear
 #### `active_template_id` (text)
 The currently selected template ID (e.g., 'base', 'modern', 'editorial'). Used to know which template definition to use when rendering or regenerating layout.
 
+#### `site_slug` (text)
+The canonical URL slug for the wedding site (e.g., 'alex-and-jordan'). This is used in the public URL `/site/:slug`. Should be unique and URL-safe.
+
 ### Migration SQL
 
 ```sql

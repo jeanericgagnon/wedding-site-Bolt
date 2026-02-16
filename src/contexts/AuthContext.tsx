@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
 import type { User } from '@supabase/supabase-js';
 
 interface AuthUser {
@@ -54,6 +55,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async () => {
+    if (!DEMO_MODE) {
+      if (!SUPABASE_CONFIGURED) {
+        throw new Error('Supabase is not configured. Please set up your environment variables.');
+      }
+      throw new Error('Demo mode is not enabled. Please use regular sign in.');
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: DEMO_EMAIL,
       password: DEMO_PASSWORD,
@@ -65,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: DEMO_PASSWORD,
         options: {
           data: {
-            name: 'Alex & Jordan',
+            name: 'Alex & Jordan (Demo)',
           },
         },
       });
@@ -78,14 +86,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({
           id: signUpData.user.id,
           email: signUpData.user.email || '',
-          name: 'Alex & Jordan',
+          name: 'Alex & Jordan (Demo)',
         });
       }
     } else if (data.user) {
       setUser({
         id: data.user.id,
         email: data.user.email || '',
-        name: 'Alex & Jordan',
+        name: 'Alex & Jordan (Demo)',
       });
     }
   };

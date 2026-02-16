@@ -5,6 +5,7 @@ import { Button, Card, Input } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { fromOnboarding } from '../../lib/generateWeddingData';
 import { generateInitialLayout } from '../../lib/generateInitialLayout';
+import { generateWeddingSlug } from '../../lib/slugify';
 
 type Step = 'basics' | 'style';
 
@@ -91,6 +92,8 @@ export const QuickStart: React.FC = () => {
 
       const layoutConfig = generateInitialLayout(formData.template, weddingData);
 
+      const siteSlug = generateWeddingSlug(coupleNames.name1, coupleNames.name2);
+
       const updateData: any = {
         venue_date: formData.weddingDate || null,
         wedding_location: formData.location || null,
@@ -98,6 +101,9 @@ export const QuickStart: React.FC = () => {
         active_template_id: formData.template,
         wedding_data: weddingData,
         layout_config: layoutConfig,
+        site_slug: siteSlug,
+        couple_name_1: coupleNames.name1,
+        couple_name_2: coupleNames.name2,
       };
 
       const { error: updateError } = await supabase

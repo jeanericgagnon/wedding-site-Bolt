@@ -3,9 +3,10 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea, Select } from '../../components/ui';
 import { ExternalLink, Save, Edit, Layout as LayoutIcon, Eye, EyeOff, GripVertical } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { WeddingDataV1 } from '../../types/weddingData';
+import { WeddingDataV1, createEmptyWeddingData } from '../../types/weddingData';
 import { LayoutConfigV1, SectionInstance } from '../../types/layoutConfig';
 import { getSectionVariants } from '../../sections/sectionRegistry';
+import { generateInitialLayout } from '../../lib/generateInitialLayout';
 import {
   DndContext,
   closestCenter,
@@ -130,24 +131,76 @@ export const DashboardBuilder: React.FC = () => {
 
       const { data, error: fetchError } = await supabase
         .from('wedding_sites')
-        .select('wedding_data, layout_config, site_slug')
+        .select('wedding_data, layout_config, site_slug, couple_name_1, couple_name_2')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
 
-      if (data && data.wedding_data && data.layout_config) {
+      if (!data) {
+        setError('No wedding site found. Please complete onboarding first.');
+        return;
+      }
+
+      if (data.wedding_data && data.layout_config) {
         setWeddingData(data.wedding_data as WeddingDataV1);
         setLayoutConfig(data.layout_config as LayoutConfigV1);
         setSiteSlug(data.site_slug);
       } else {
-        setError('No wedding site found. Please complete onboarding first.');
+        setWeddingData(null);
+        setLayoutConfig(null);
+        setSiteSlug(data.site_slug);
       }
     } catch (err: any) {
       console.error('Error loading wedding site:', err);
       setError(err.message || 'Failed to load wedding site');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateDefaultConfigs = async () => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error: fetchError } = await supabase
+        .from('wedding_sites')
+        .select('couple_name_1, couple_name_2')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+      if (!data) throw new Error('Wedding site not found');
+
+      const newWeddingData = createEmptyWeddingData();
+      newWeddingData.couple.partner1Name = data.couple_name_1 || '';
+      newWeddingData.couple.partner2Name = data.couple_name_2 || '';
+
+      const newLayoutConfig = generateInitialLayout('base', newWeddingData);
+
+      const { error: updateError } = await supabase
+        .from('wedding_sites')
+        .update({
+          wedding_data: newWeddingData,
+          layout_config: newLayoutConfig,
+          active_template_id: 'base',
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      setWeddingData(newWeddingData);
+      setLayoutConfig(newLayoutConfig);
+      setSuccessMessage('Default layout generated successfully!');
+    } catch (err: any) {
+      console.error('Error generating default configs:', err);
+      setError(err.message || 'Failed to generate default configs');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -298,13 +351,27 @@ export const DashboardBuilder: React.FC = () => {
     );
   }
 
-  if (error && !weddingData) {
+  if (!weddingData || !layoutConfig) {
     return (
       <DashboardLayout>
         <Card>
-          <div className="p-8 text-center">
-            <p className="text-error mb-4">{error}</p>
-            <Button onClick={loadWeddingSite}>Retry</Button>
+          <div className="p-8 text-center max-w-md mx-auto">
+            <h2 className="text-2xl font-bold text-text-primary mb-4">
+              Site Not Initialized
+            </h2>
+            <p className="text-text-secondary mb-6">
+              {error || 'Your wedding site configuration is missing. Generate a default layout to get started.'}
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={generateDefaultConfigs} disabled={saving}>
+                {saving ? 'Generating...' : 'Generate Default Layout'}
+              </Button>
+              {error && (
+                <Button variant="outline" onClick={loadWeddingSite}>
+                  Retry
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
       </DashboardLayout>
