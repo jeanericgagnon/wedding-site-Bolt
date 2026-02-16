@@ -12,7 +12,6 @@ export const Signup: React.FC = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     secondName: '',
-    lastName: '',
     email: '',
     password: '',
   });
@@ -41,10 +40,9 @@ export const Signup: React.FC = () => {
 
       const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const lastName = formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const coupleEmail = `${firstName}-${secondName}@dayof.love`;
       const suffix = addSuffix ? 's' : '';
-      const subdomain = `${firstName}and${secondName}${lastName}${suffix}.dayof.love`;
+      const subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
 
       const { error: siteError } = await supabase
         .from('wedding_sites')
@@ -54,7 +52,6 @@ export const Signup: React.FC = () => {
           couple_name_2: formData.secondName,
           couple_first_name: formData.firstName,
           couple_second_name: formData.secondName,
-          couple_last_name: formData.lastName,
           couple_email: coupleEmail,
           site_url: subdomain,
         });
@@ -103,21 +100,12 @@ export const Signup: React.FC = () => {
               />
             </div>
 
-            <Input
-              label="Last Name"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              placeholder="Smith"
-              required
-            />
-
-            {formData.firstName && formData.secondName && formData.lastName && (
+            {formData.firstName && formData.secondName && (
               <div className="p-4 bg-surface-subtle rounded-lg space-y-3">
                 <div>
                   <p className="text-xs text-text-secondary mb-1">Your wedding site URL:</p>
                   <p className="text-sm font-medium text-primary">
-                    {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}and{formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}{formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '')}{addSuffix ? 's' : ''}.dayof.love
+                    {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}and{formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}{addSuffix ? 's' : ''}.dayof.love
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
