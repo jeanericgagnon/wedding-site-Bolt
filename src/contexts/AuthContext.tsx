@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
-  enterDemoMode: () => void;
+  enterDemoMode: () => Promise<void>;
   isDemoMode: boolean;
 }
 
@@ -117,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const enterDemoMode = () => {
+  const enterDemoMode = async () => {
     localStorage.setItem('demoMode', 'true');
     setIsDemoMode(true);
     setUser({
@@ -125,6 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: 'demo@dayof.love',
       name: 'Alex & Jordan',
     });
+    // Wait for state to update
+    await new Promise(resolve => setTimeout(resolve, 0));
   };
 
   const value = {

@@ -27,8 +27,8 @@ export const Home: React.FC = () => {
     navigate('/signup');
   };
 
-  const handleDemoLogin = () => {
-    enterDemoMode();
+  const handleDemoLogin = async () => {
+    await enterDemoMode();
     navigate('/dashboard');
   };
 
