@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
-import { Button, Card, Input, AddressInput, ProgressIndicator } from '../../components/ui';
+import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
@@ -324,15 +324,6 @@ export const WeddingStatus: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-surface-subtle to-surface p-4">
-      <div className="w-full max-w-3xl">
-        <ProgressIndicator
-          steps={[
-            { id: 1, label: 'Welcome', completed: true, current: false },
-            { id: 2, label: 'Wedding Details', completed: false, current: true },
-          ]}
-        />
-      </div>
-
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-6">
