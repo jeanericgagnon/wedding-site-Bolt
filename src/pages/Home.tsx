@@ -20,7 +20,7 @@ import {
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { enterDemoMode } = useAuth();
+  const { signIn } = useAuth();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
 
   const handleSignUp = async () => {
@@ -28,8 +28,12 @@ export const Home: React.FC = () => {
   };
 
   const handleDemoLogin = async () => {
-    await enterDemoMode();
-    navigate('/dashboard');
+    try {
+      await signIn();
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Demo login failed:', error);
+    }
   };
 
   return (

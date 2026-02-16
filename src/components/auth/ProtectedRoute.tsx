@@ -7,8 +7,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading, isDemoMode } = useAuth();
-  const isInDemoMode = isDemoMode || localStorage.getItem('demoMode') === 'true';
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -21,7 +20,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  if (!user && !isInDemoMode) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
