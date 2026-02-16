@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ArrowRight, ArrowLeft, Check, Sparkles } from 'lucide-react';
+import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Image } from 'lucide-react';
 import { Button, Card, Input, Textarea } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 
@@ -12,6 +12,9 @@ type Step =
   | 'rsvp'
   | 'registry'
   | 'faq'
+  | 'template'
+  | 'colors'
+  | 'photos'
   | 'complete';
 
 interface FormData {
@@ -28,6 +31,8 @@ interface FormData {
   mealOptions: string;
   registryLinks: string;
   customFaqs: string;
+  template: string;
+  colorScheme: string;
 }
 
 export const GuidedSetup: React.FC = () => {
@@ -50,9 +55,11 @@ export const GuidedSetup: React.FC = () => {
     mealOptions: '',
     registryLinks: '',
     customFaqs: '',
+    template: 'modern',
+    colorScheme: 'romantic',
   });
 
-  const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'registry', 'faq', 'complete'];
+  const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'registry', 'faq', 'template', 'colors', 'photos', 'complete'];
   const currentStepIndex = steps.indexOf(currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
@@ -217,6 +224,24 @@ export const GuidedSetup: React.FC = () => {
                   <div>
                     <p className="font-medium text-text-primary">FAQ</p>
                     <p className="text-sm text-text-secondary">Common questions answered</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-primary">7</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-text-primary">Template & Design</p>
+                    <p className="text-sm text-text-secondary">Choose your style and colors</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-primary">8</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-text-primary">Photos</p>
+                    <p className="text-sm text-text-secondary">Upload your favorite images</p>
                   </div>
                 </div>
               </div>
@@ -471,6 +496,156 @@ export const GuidedSetup: React.FC = () => {
               rows={4}
               helperText="You can edit all FAQs from your dashboard"
             />
+          </div>
+        );
+
+      case 'template':
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-text-primary mb-2">Choose a Template</h2>
+              <p className="text-text-secondary">Pick a design style (you can change this later)</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-3">
+                <Layout className="w-4 h-4 inline mr-2" aria-hidden="true" />
+                Select Template
+              </label>
+              <div className="grid grid-cols-3 gap-4">
+                {['Modern', 'Classic', 'Rustic'].map((template) => (
+                  <button
+                    key={template}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, template: template.toLowerCase() }))}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      formData.template === template.toLowerCase()
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="aspect-[3/4] bg-surface-subtle rounded mb-3 flex items-center justify-center">
+                      <span className="text-3xl">📄</span>
+                    </div>
+                    <p className="text-sm font-medium text-text-primary">{template}</p>
+                    <p className="text-xs text-text-secondary mt-1">
+                      {template === 'Modern' && 'Clean & minimal'}
+                      {template === 'Classic' && 'Timeless elegance'}
+                      {template === 'Rustic' && 'Warm & natural'}
+                    </p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-text-secondary mt-3">
+                Preview coming soon - you can customize your template from the dashboard
+              </p>
+            </div>
+          </div>
+        );
+
+      case 'colors':
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-text-primary mb-2">Pick Your Colors</h2>
+              <p className="text-text-secondary">Choose a color scheme that matches your vision</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-3">
+                <Palette className="w-4 h-4 inline mr-2" aria-hidden="true" />
+                Color Scheme
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { name: 'Romantic', colors: ['#FFE5E5', '#FF9999', '#FF6B6B'], description: 'Soft pinks & reds' },
+                  { name: 'Ocean', colors: ['#E0F7FA', '#4DD0E1', '#0097A7'], description: 'Blues & aquas' },
+                  { name: 'Garden', colors: ['#F1F8E9', '#AED581', '#689F38'], description: 'Fresh greens' },
+                  { name: 'Elegant', colors: ['#F5F5F5', '#9E9E9E', '#424242'], description: 'Classic neutrals' },
+                  { name: 'Sunset', colors: ['#FFF3E0', '#FFB74D', '#F57C00'], description: 'Warm oranges' },
+                  { name: 'Lavender', colors: ['#F3E5F5', '#BA68C8', '#7B1FA2'], description: 'Purple hues' },
+                ].map((scheme) => (
+                  <button
+                    key={scheme.name}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, colorScheme: scheme.name.toLowerCase() }))}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      formData.colorScheme === scheme.name.toLowerCase()
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex gap-2 mb-3">
+                      {scheme.colors.map((color, i) => (
+                        <div
+                          key={i}
+                          className="flex-1 h-10 rounded"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-sm font-medium text-text-primary">{scheme.name}</p>
+                    <p className="text-xs text-text-secondary mt-1">{scheme.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'photos':
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-text-primary mb-2">Add Your Photos</h2>
+              <p className="text-text-secondary">Upload engagement photos or other images (optional)</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-3">
+                <Image className="w-4 h-4 inline mr-2" aria-hidden="true" />
+                Upload Photos
+              </label>
+              <div className="border-2 border-dashed border-border rounded-lg p-12 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                <Image className="w-16 h-16 text-text-secondary mx-auto mb-4" aria-hidden="true" />
+                <p className="text-base font-medium text-text-primary mb-2">
+                  Click to upload photos
+                </p>
+                <p className="text-sm text-text-secondary mb-4">
+                  Add engagement photos, venue images, or other pictures
+                </p>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-lg">
+                  <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
+                  <p className="text-sm text-primary font-medium">
+                    Photo upload coming soon
+                  </p>
+                </div>
+                <p className="text-xs text-text-secondary mt-4">
+                  You can add and manage photos from your dashboard
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <h3 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
+                Tips for great photos:
+              </h3>
+              <ul className="space-y-1 text-sm text-text-secondary">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                  Use high-resolution images (at least 1920px wide)
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                  Choose photos that reflect your personality
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                  Mix candid and posed shots for variety
+                </li>
+              </ul>
+            </div>
           </div>
         );
 
