@@ -3,10 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
@@ -40,6 +43,21 @@ export const Login: React.FC = () => {
       setError(err.message || 'Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setDemoLoading(true);
+    setError('');
+
+    try {
+      await signIn();
+      navigate('/dashboard');
+    } catch (err: any) {
+      console.error('Demo login error:', err);
+      setError(err.message || 'Failed to access demo. Please try again.');
+    } finally {
+      setDemoLoading(false);
     }
   };
 
@@ -88,11 +106,30 @@ export const Login: React.FC = () => {
               variant="accent"
               size="lg"
               fullWidth
-              disabled={loading}
+              disabled={loading || demoLoading}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border-subtle"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-surface text-text-secondary">or</span>
+            </div>
+          </div>
+
+          <Button
+            variant="default"
+            size="lg"
+            fullWidth
+            onClick={handleDemoLogin}
+            disabled={loading || demoLoading}
+          >
+            {demoLoading ? 'Loading Demo...' : 'Try Demo'}
+          </Button>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-text-secondary">
