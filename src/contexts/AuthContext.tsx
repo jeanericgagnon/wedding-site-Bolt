@@ -60,10 +60,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (error) {
-      throw new Error('Failed to sign in to demo account. Please try again.');
-    }
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+        options: {
+          data: {
+            name: 'Alex & Jordan',
+          },
+        },
+      });
 
-    if (data.user) {
+      if (signUpError) {
+        throw new Error('Unable to access demo account. Please try again.');
+      }
+
+      if (signUpData.user) {
+        setUser({
+          id: signUpData.user.id,
+          email: signUpData.user.email || '',
+          name: 'Alex & Jordan',
+        });
+      }
+    } else if (data.user) {
       setUser({
         id: data.user.id,
         email: data.user.email || '',
