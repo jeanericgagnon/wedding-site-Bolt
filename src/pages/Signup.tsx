@@ -11,7 +11,9 @@ export const Signup: React.FC = () => {
   const [addSuffix, setAddSuffix] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
+    lastName: '',
     secondName: '',
+    secondLastName: '',
     email: '',
     password: '',
   });
@@ -52,6 +54,9 @@ export const Signup: React.FC = () => {
           couple_name_2: formData.secondName,
           couple_first_name: formData.firstName,
           couple_second_name: formData.secondName,
+          couple_last_name: formData.lastName && formData.secondLastName
+            ? `${formData.lastName} & ${formData.secondLastName}`
+            : formData.lastName || formData.secondLastName || '',
           couple_email: coupleEmail,
           site_url: subdomain,
         });
@@ -91,11 +96,30 @@ export const Signup: React.FC = () => {
                 required
               />
               <Input
-                label="Second Name"
+                label="Last Name"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                placeholder="Smith"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Partner's Name"
                 name="secondName"
                 value={formData.secondName}
                 onChange={handleChange}
                 placeholder="Jane"
+                required
+              />
+              <Input
+                label="Last Name"
+                name="secondLastName"
+                value={formData.secondLastName}
+                onChange={handleChange}
+                placeholder="Doe"
                 required
               />
             </div>
