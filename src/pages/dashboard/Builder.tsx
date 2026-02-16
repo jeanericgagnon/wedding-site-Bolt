@@ -436,7 +436,7 @@ export const DashboardBuilder: React.FC = () => {
           </button>
         </div>
 
-        {activeTab === 'guided' && weddingData && (
+        {activeTab === 'guided' && weddingData && weddingData.couple && (
           <div className="space-y-6">
             <Card>
               <div className="p-6">
@@ -446,7 +446,7 @@ export const DashboardBuilder: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <Input
                     label="Partner 1 Name"
-                    value={weddingData.couple.partner1Name}
+                    value={weddingData.couple.partner1Name || ''}
                     onChange={(e) =>
                       setWeddingData({
                         ...weddingData,
@@ -456,7 +456,7 @@ export const DashboardBuilder: React.FC = () => {
                   />
                   <Input
                     label="Partner 2 Name"
-                    value={weddingData.couple.partner2Name}
+                    value={weddingData.couple.partner2Name || ''}
                     onChange={(e) =>
                       setWeddingData({
                         ...weddingData,
@@ -490,11 +490,11 @@ export const DashboardBuilder: React.FC = () => {
                 <Input
                   type="date"
                   label="Date"
-                  value={weddingData.event.weddingDateISO || ''}
+                  value={weddingData.event?.weddingDateISO || ''}
                   onChange={(e) =>
                     setWeddingData({
                       ...weddingData,
-                      event: { ...weddingData.event, weddingDateISO: e.target.value },
+                      event: { ...(weddingData.event || {}), weddingDateISO: e.target.value },
                     })
                   }
                 />
