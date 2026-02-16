@@ -1,10 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock } from 'lucide-react';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { getAllTemplates } from '../../templates/registry';
+import { WeddingDataV1 } from '../../types/weddingData';
+import { LayoutConfigV1 } from '../../types/layoutConfig';
+import { regenerateLayout } from '../../lib/generateInitialLayout';
 
 export const DashboardSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'account' | 'site' | 'notifications' | 'billing'>('account');
+  const [currentTemplate, setCurrentTemplate] = useState<string>('base');
+  const [changingTemplate, setChangingTemplate] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
+  const [templateSuccess, setTemplateSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadCurrentTemplate();
+  }, []);
+
+  const loadCurrentTemplate = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('wedding_sites')
+        .select('active_template_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        setCurrentTemplate(data.active_template_id || 'base');
+      }
+    } catch (err) {
+      console.error('Error loading template:', err);
+    }
+  };
+
+  const handleTemplateChange = async (newTemplateId: string) => {
+    setChangingTemplate(true);
+    setTemplateError(null);
+    setTemplateSuccess(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error: fetchError } = await supabase
+        .from('wedding_sites')
+        .select('wedding_data, layout_config')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+      if (!data) throw new Error('Wedding site not found');
+
+      const weddingData = data.wedding_data as WeddingDataV1;
+      const currentLayout = data.layout_config as LayoutConfigV1;
+
+      const newLayout = regenerateLayout(newTemplateId, weddingData, currentLayout);
+
+      const { error: updateError } = await supabase
+        .from('wedding_sites')
+        .update({
+          active_template_id: newTemplateId,
+          layout_config: newLayout,
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      setCurrentTemplate(newTemplateId);
+      setTemplateSuccess('Template changed successfully! Your content has been preserved.');
+    } catch (err: any) {
+      console.error('Error changing template:', err);
+      setTemplateError(err.message || 'Failed to change template');
+    } finally {
+      setChangingTemplate(false);
+    }
+  };
 
   const tabs = [
     { id: 'account' as const, label: 'Account', icon: User },
@@ -175,6 +250,60 @@ export const DashboardSettings: React.FC = () => {
                       <Button variant="primary" size="md">
                         Save Privacy Settings
                       </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card variant="bordered" padding="lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Layout className="w-5 h-5" />
+                      Template
+                    </CardTitle>
+                    <CardDescription>Change your wedding site template while preserving your content</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {templateSuccess && (
+                      <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary text-sm">
+                        {templateSuccess}
+                      </div>
+                    )}
+                    {templateError && (
+                      <div className="p-3 bg-error-light border border-error rounded-lg text-error text-sm">
+                        {templateError}
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-3">
+                        Choose Template
+                      </label>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        {getAllTemplates().map((template) => (
+                          <button
+                            key={template.id}
+                            onClick={() => handleTemplateChange(template.id)}
+                            disabled={changingTemplate || currentTemplate === template.id}
+                            className={`p-4 rounded-lg border-2 transition-all text-left ${
+                              currentTemplate === template.id
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border hover:border-primary/50 hover:bg-surface-subtle'
+                            } ${changingTemplate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            <h3 className="font-semibold text-text-primary mb-1">
+                              {template.name}
+                              {currentTemplate === template.id && (
+                                <Badge variant="primary" className="ml-2">Active</Badge>
+                              )}
+                            </h3>
+                            <p className="text-sm text-text-secondary">
+                              {template.description}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-text-secondary mt-3">
+                        Your wedding information will be preserved when switching templates.
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

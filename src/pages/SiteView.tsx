@@ -2,25 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { validateSiteConfig } from '../lib/siteConfigValidate';
-import type { SiteConfig } from '../types/siteConfig';
-import {
-  HeroSection,
-  DetailsSection,
-  ScheduleSection,
-  TravelSection,
-  RegistrySection,
-  FaqSection,
-  RsvpSection,
-  GallerySection,
-} from '../components/site/sections';
+import { WeddingDataV1 } from '../types/weddingData';
+import { LayoutConfigV1 } from '../types/layoutConfig';
+import { getSectionComponent } from '../sections/sectionRegistry';
 
 export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [siteConfig, setSiteConfig] = useState<SiteConfig | null>(null);
+  const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
+  const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadSite = async () => {
@@ -33,7 +24,7 @@ export const SiteView: React.FC = () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('wedding_sites')
-          .select('id, site_json, couple_name_1, couple_name_2')
+          .select('id, wedding_data, layout_config, active_template_id')
           .eq('site_slug', slug)
           .maybeSingle();
 
@@ -45,23 +36,29 @@ export const SiteView: React.FC = () => {
           return;
         }
 
-        setWeddingSiteId(data.id);
-
-        if (!data.site_json) {
+        if (!data.wedding_data || !data.layout_config) {
           setError('This wedding site is still being set up. Check back soon!');
           setLoading(false);
           return;
         }
 
-        const validation = validateSiteConfig(data.site_json);
-        if (!validation.ok) {
-          console.error('Site config validation errors:', validation.errors);
-          setError('This wedding site has configuration errors. Please contact the couple.');
+        const wData = data.wedding_data as WeddingDataV1;
+        const lConfig = data.layout_config as LayoutConfigV1;
+
+        if (wData.version !== '1') {
+          setError('Unsupported site configuration version');
           setLoading(false);
           return;
         }
 
-        setSiteConfig(data.site_json as SiteConfig);
+        if (lConfig.version !== '1') {
+          setError('Unsupported layout configuration version');
+          setLoading(false);
+          return;
+        }
+
+        setWeddingData(wData);
+        setLayoutConfig(lConfig);
       } catch (err: any) {
         console.error('Error loading site:', err);
         setError('Failed to load wedding site');
@@ -84,53 +81,66 @@ export const SiteView: React.FC = () => {
     );
   }
 
-  if (error || !siteConfig) {
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="text-center max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full bg-surface border border-border rounded-lg p-8 text-center">
           <AlertCircle className="w-16 h-16 text-error mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-text-primary mb-2">
-            {error || 'Wedding site not found'}
-          </h1>
-          <p className="text-text-secondary">
-            Please check the URL and try again, or contact the couple for the correct link.
-          </p>
+          <h1 className="text-2xl font-bold text-text-primary mb-2">Oops!</h1>
+          <p className="text-text-secondary">{error}</p>
         </div>
       </div>
     );
   }
 
-  const renderSection = (section: SiteConfig['sections'][0]) => {
-    if (!section.enabled) return null;
+  if (!weddingData || !layoutConfig) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full bg-surface border border-border rounded-lg p-8 text-center">
+          <p className="text-text-secondary">No wedding site data found</p>
+        </div>
+      </div>
+    );
+  }
 
-    const content = siteConfig.content[section.props_key];
-    if (!content) return null;
+  const homePage = layoutConfig.pages.find(p => p.id === 'home') || layoutConfig.pages[0];
+  if (!homePage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full bg-surface border border-border rounded-lg p-8 text-center">
+          <p className="text-text-secondary">No page configuration found</p>
+        </div>
+      </div>
+    );
+  }
 
-    switch (section.type) {
-      case 'hero':
-        return <HeroSection key={section.id} content={content} />;
-      case 'details':
-        return <DetailsSection key={section.id} content={content} />;
-      case 'schedule':
-        return <ScheduleSection key={section.id} content={content} />;
-      case 'travel':
-        return <TravelSection key={section.id} content={content} />;
-      case 'registry':
-        return <RegistrySection key={section.id} content={content} />;
-      case 'faq':
-        return <FaqSection key={section.id} content={content} />;
-      case 'rsvp':
-        return <RsvpSection key={section.id} content={content} weddingSiteId={weddingSiteId || undefined} />;
-      case 'gallery':
-        return <GallerySection key={section.id} content={content} />;
-      default:
-        return null;
-    }
-  };
+  const enabledSections = homePage.sections.filter(section => section.enabled);
 
   return (
     <div className="min-h-screen bg-background">
-      {siteConfig.sections.map(renderSection)}
+      {enabledSections.map((sectionInstance) => {
+        try {
+          const SectionComponent = getSectionComponent(
+            sectionInstance.type,
+            sectionInstance.variant
+          );
+
+          return (
+            <SectionComponent
+              key={sectionInstance.id}
+              data={weddingData}
+              instance={sectionInstance}
+            />
+          );
+        } catch (err) {
+          console.error(`Error rendering section ${sectionInstance.type}:`, err);
+          return (
+            <div key={sectionInstance.id} className="py-8 px-4 bg-error-light text-error text-center">
+              <p>Error rendering {sectionInstance.type} section</p>
+            </div>
+          );
+        }
+      })}
     </div>
   );
 };

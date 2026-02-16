@@ -1,53 +1,158 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, Button } from '../../components/ui';
-import { ChevronUp, ChevronDown, Eye, EyeOff, ExternalLink, Save } from 'lucide-react';
+import { Card, Button, Input, Textarea, Select } from '../../components/ui';
+import { ExternalLink, Save, Edit, Layout as LayoutIcon, Eye, EyeOff, GripVertical } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import type { SiteConfig, SectionConfig } from '../../types/siteConfig';
+import { WeddingDataV1 } from '../../types/weddingData';
+import { LayoutConfigV1, SectionInstance } from '../../types/layoutConfig';
+import { getSectionVariants } from '../../sections/sectionRegistry';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+type BuilderTab = 'guided' | 'canvas';
+
+interface SortableSectionProps {
+  section: SectionInstance;
+  onToggle: (id: string) => void;
+  onVariantChange: (id: string, variant: string) => void;
+}
+
+function SortableSection({ section, onToggle, onVariantChange }: SortableSectionProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const variants = getSectionVariants(section.type);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-surface border border-border rounded-lg p-4 mb-3"
+    >
+      <div className="flex items-center gap-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary"
+        >
+          <GripVertical className="w-5 h-5" />
+        </button>
+
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-text-primary capitalize">
+              {section.type}
+            </h3>
+            <button
+              onClick={() => onToggle(section.id)}
+              className="text-sm"
+            >
+              {section.enabled ? (
+                <Eye className="w-5 h-5 text-primary" />
+              ) : (
+                <EyeOff className="w-5 h-5 text-text-secondary" />
+              )}
+            </button>
+          </div>
+
+          {variants.length > 1 && (
+            <div>
+              <label className="text-xs text-text-secondary">Variant:</label>
+              <select
+                value={section.variant}
+                onChange={(e) => onVariantChange(section.id, e.target.value)}
+                className="ml-2 text-sm border border-border rounded px-2 py-1 bg-surface"
+              >
+                {variants.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export const DashboardBuilder: React.FC = () => {
-  const [siteConfig, setSiteConfig] = useState<SiteConfig | null>(null);
-  const [sections, setSections] = useState<SectionConfig[]>([]);
+  const [activeTab, setActiveTab] = useState<BuilderTab>('guided');
+  const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
+  const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   useEffect(() => {
-    loadSiteConfig();
+    loadWeddingSite();
   }, []);
 
-  const loadSiteConfig = async () => {
+  const loadWeddingSite = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error: fetchError } = await supabase
         .from('wedding_sites')
-        .select('site_json, site_slug')
+        .select('wedding_data, layout_config, site_slug')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
 
-      if (data && data.site_json) {
-        setSiteConfig(data.site_json as SiteConfig);
-        setSections((data.site_json as SiteConfig).sections);
+      if (data && data.wedding_data && data.layout_config) {
+        setWeddingData(data.wedding_data as WeddingDataV1);
+        setLayoutConfig(data.layout_config as LayoutConfigV1);
         setSiteSlug(data.site_slug);
       } else {
-        setError('No site configuration found. Please complete onboarding first.');
+        setError('No wedding site found. Please complete onboarding first.');
       }
     } catch (err: any) {
-      console.error('Error loading site config:', err);
-      setError(err.message || 'Failed to load site configuration');
+      console.error('Error loading wedding site:', err);
+      setError(err.message || 'Failed to load wedding site');
     } finally {
       setLoading(false);
     }
   };
 
-  const saveSiteConfig = async () => {
-    if (!siteConfig) return;
+  const saveWeddingData = async () => {
+    if (!weddingData) return;
 
     setSaving(true);
     setError(null);
@@ -57,271 +162,336 @@ export const DashboardBuilder: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const updatedConfig: SiteConfig = {
-        ...siteConfig,
-        sections,
+      const updatedData = {
+        ...weddingData,
         meta: {
-          ...siteConfig.meta,
-          updated_at_iso: new Date().toISOString(),
+          ...weddingData.meta,
+          updatedAtISO: new Date().toISOString(),
         },
       };
 
       const { error: updateError } = await supabase
         .from('wedding_sites')
-        .update({ site_json: updatedConfig })
+        .update({ wedding_data: updatedData })
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 
-      setSiteConfig(updatedConfig);
-      setSuccessMessage('Changes saved successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setWeddingData(updatedData);
+      setSuccessMessage('Wedding information saved successfully!');
     } catch (err: any) {
-      console.error('Error saving site config:', err);
+      console.error('Error saving wedding data:', err);
       setError(err.message || 'Failed to save changes');
     } finally {
       setSaving(false);
     }
   };
 
-  const toggleSection = (id: string) => {
-    setSections(sections.map(s =>
-      s.id === id ? { ...s, enabled: !s.enabled } : s
-    ));
-  };
+  const saveLayoutConfig = async () => {
+    if (!layoutConfig) return;
 
-  const moveSection = (index: number, direction: 'up' | 'down') => {
-    const newSections = [...sections];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    setSaving(true);
+    setError(null);
+    setSuccessMessage(null);
 
-    if (targetIndex >= 0 && targetIndex < newSections.length) {
-      [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
-      setSections(newSections);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const updatedConfig = {
+        ...layoutConfig,
+        meta: {
+          ...layoutConfig.meta,
+          updatedAtISO: new Date().toISOString(),
+        },
+      };
+
+      const { error: updateError } = await supabase
+        .from('wedding_sites')
+        .update({ layout_config: updatedConfig })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      setLayoutConfig(updatedConfig);
+      setSuccessMessage('Layout saved successfully!');
+    } catch (err: any) {
+      console.error('Error saving layout:', err);
+      setError(err.message || 'Failed to save layout');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const getSectionTitle = (type: string): string => {
-    const titles: Record<string, string> = {
-      hero: 'Hero / Welcome',
-      details: 'Wedding Details',
-      schedule: 'Schedule',
-      travel: 'Travel & Accommodations',
-      rsvp: 'RSVP',
-      registry: 'Registry',
-      faq: 'FAQ',
-      gallery: 'Photo Gallery',
-    };
-    return titles[type] || type;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setLayoutConfig((prev) => {
+        if (!prev) return prev;
+
+        const homePage = prev.pages[0];
+        const oldIndex = homePage.sections.findIndex((s) => s.id === active.id);
+        const newIndex = homePage.sections.findIndex((s) => s.id === over.id);
+
+        const newSections = arrayMove(homePage.sections, oldIndex, newIndex);
+
+        return {
+          ...prev,
+          pages: [
+            {
+              ...homePage,
+              sections: newSections,
+            },
+          ],
+        };
+      });
+    }
+  };
+
+  const toggleSectionEnabled = (sectionId: string) => {
+    setLayoutConfig((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        pages: [
+          {
+            ...prev.pages[0],
+            sections: prev.pages[0].sections.map((s) =>
+              s.id === sectionId ? { ...s, enabled: !s.enabled } : s
+            ),
+          },
+        ],
+      };
+    });
+  };
+
+  const changeSectionVariant = (sectionId: string, variant: string) => {
+    setLayoutConfig((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        pages: [
+          {
+            ...prev.pages[0],
+            sections: prev.pages[0].sections.map((s) =>
+              s.id === sectionId ? { ...s, variant } : s
+            ),
+          },
+        ],
+      };
+    });
   };
 
   if (loading) {
     return (
-      <DashboardLayout currentPage="builder">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-text-secondary">Loading site configuration...</p>
+            <p className="text-text-secondary">Loading builder...</p>
           </div>
         </div>
       </DashboardLayout>
     );
   }
 
-  if (error && !siteConfig) {
+  if (error && !weddingData) {
     return (
-      <DashboardLayout currentPage="builder">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <div className="bg-error-light text-error p-4 rounded-lg inline-block">
-              {error}
-            </div>
+      <DashboardLayout>
+        <Card>
+          <div className="p-8 text-center">
+            <p className="text-error mb-4">{error}</p>
+            <Button onClick={loadWeddingSite}>Retry</Button>
           </div>
-        </div>
+        </Card>
       </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout currentPage="builder">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Website Builder</h1>
-          <p className="text-text-secondary mb-4">
-            Manage sections on your wedding site. Toggle visibility and reorder sections.
-          </p>
-
-          <div className="flex gap-4">
-            {siteSlug && (
-              <a
-                href={`/site/${siteSlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
-              >
-                <Eye className="w-4 h-4" />
-                Preview Site
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            )}
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-text-primary">Site Builder</h1>
+            <p className="text-text-secondary mt-1">
+              Customize your wedding website content and layout
+            </p>
           </div>
+          {siteSlug && (
+            <Button
+              variant="outline"
+              onClick={() => window.open(`/site/${siteSlug}`, '_blank')}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Preview Site
+            </Button>
+          )}
         </div>
 
         {successMessage && (
-          <div className="mb-6 p-4 bg-success/10 border border-success text-success rounded-lg">
+          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg text-primary">
             {successMessage}
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-error-light text-error rounded-lg">
+          <div className="mb-6 p-4 bg-error-light border border-error rounded-lg text-error">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div>
-            <Card variant="default" padding="lg">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-text-primary">Site Sections</h2>
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={saveSiteConfig}
-                  disabled={saving}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {sections.map((section, index) => (
-                  <div
-                    key={section.id}
-                    className={`border rounded-lg p-4 transition-all ${
-                      section.enabled
-                        ? 'border-border bg-background'
-                        : 'border-border bg-surface-subtle opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="flex flex-col gap-1">
-                          <button
-                            onClick={() => moveSection(index, 'up')}
-                            disabled={index === 0}
-                            className="p-1 hover:bg-surface-subtle rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                            title="Move up"
-                          >
-                            <ChevronUp className="w-4 h-4 text-text-secondary" />
-                          </button>
-                          <button
-                            onClick={() => moveSection(index, 'down')}
-                            disabled={index === sections.length - 1}
-                            className="p-1 hover:bg-surface-subtle rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                            title="Move down"
-                          >
-                            <ChevronDown className="w-4 h-4 text-text-secondary" />
-                          </button>
-                        </div>
-
-                        <div className="flex-1">
-                          <h3 className="font-medium text-text-primary">
-                            {getSectionTitle(section.type)}
-                          </h3>
-                          <p className="text-sm text-text-secondary capitalize">
-                            {section.type}
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => toggleSection(section.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          section.enabled
-                            ? 'bg-primary/10 text-primary hover:bg-primary/20'
-                            : 'bg-surface-subtle text-text-secondary hover:bg-surface'
-                        }`}
-                        title={section.enabled ? 'Hide section' : 'Show section'}
-                      >
-                        {section.enabled ? (
-                          <Eye className="w-5 h-5" />
-                        ) : (
-                          <EyeOff className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-border">
-                <p className="text-sm text-text-secondary">
-                  Click the eye icon to show/hide sections. Use the arrows to reorder sections.
-                  Don't forget to save your changes!
-                </p>
-              </div>
-            </Card>
-          </div>
-
-          <div>
-            <Card variant="default" padding="lg">
-              <h2 className="text-xl font-semibold text-text-primary mb-4">
-                Template Information
-              </h2>
-
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-text-secondary mb-1">Template</h3>
-                  <p className="text-text-primary capitalize">{siteConfig?.template_id}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-text-secondary mb-1">Color Scheme</h3>
-                  <p className="text-text-primary capitalize">{siteConfig?.theme.preset}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-text-secondary mb-1">Enabled Sections</h3>
-                  <p className="text-text-primary">
-                    {sections.filter(s => s.enabled).length} of {sections.length}
-                  </p>
-                </div>
-
-                {siteSlug && (
-                  <div>
-                    <h3 className="text-sm font-medium text-text-secondary mb-1">Site URL</h3>
-                    <code className="text-sm text-primary bg-primary/5 px-2 py-1 rounded">
-                      /site/{siteSlug}
-                    </code>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="text-sm font-medium text-text-primary mb-3">Coming Soon</h3>
-                <ul className="space-y-2 text-sm text-text-secondary">
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    Content editor for each section
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    Template switcher
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    Custom color themes
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    Photo uploads for gallery
-                  </li>
-                </ul>
-              </div>
-            </Card>
-          </div>
+        <div className="mb-6 flex gap-2 border-b border-border">
+          <button
+            onClick={() => setActiveTab('guided')}
+            className={`px-6 py-3 font-medium flex items-center gap-2 ${
+              activeTab === 'guided'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <Edit className="w-4 h-4" />
+            Guided
+          </button>
+          <button
+            onClick={() => setActiveTab('canvas')}
+            className={`px-6 py-3 font-medium flex items-center gap-2 ${
+              activeTab === 'canvas'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <LayoutIcon className="w-4 h-4" />
+            Canvas
+          </button>
         </div>
+
+        {activeTab === 'guided' && weddingData && (
+          <div className="space-y-6">
+            <Card>
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-text-primary mb-4">
+                  Couple Information
+                </h2>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Input
+                    label="Partner 1 Name"
+                    value={weddingData.couple.partner1Name}
+                    onChange={(e) =>
+                      setWeddingData({
+                        ...weddingData,
+                        couple: { ...weddingData.couple, partner1Name: e.target.value },
+                      })
+                    }
+                  />
+                  <Input
+                    label="Partner 2 Name"
+                    value={weddingData.couple.partner2Name}
+                    onChange={(e) =>
+                      setWeddingData({
+                        ...weddingData,
+                        couple: { ...weddingData.couple, partner2Name: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div className="mt-4">
+                  <Textarea
+                    label="Your Story"
+                    value={weddingData.couple.story || ''}
+                    onChange={(e) =>
+                      setWeddingData({
+                        ...weddingData,
+                        couple: { ...weddingData.couple, story: e.target.value },
+                      })
+                    }
+                    rows={6}
+                    placeholder="Tell your love story..."
+                  />
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-text-primary mb-4">
+                  Wedding Date
+                </h2>
+                <Input
+                  type="date"
+                  label="Date"
+                  value={weddingData.event.weddingDateISO || ''}
+                  onChange={(e) =>
+                    setWeddingData({
+                      ...weddingData,
+                      event: { ...weddingData.event, weddingDateISO: e.target.value },
+                    })
+                  }
+                />
+              </div>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button
+                variant="accent"
+                onClick={saveWeddingData}
+                disabled={saving}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'canvas' && layoutConfig && (
+          <div className="space-y-6">
+            <Card>
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-text-primary mb-4">
+                  Sections
+                </h2>
+                <p className="text-text-secondary text-sm mb-6">
+                  Drag to reorder, click eye icon to show/hide sections
+                </p>
+
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={layoutConfig.pages[0].sections.map((s) => s.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {layoutConfig.pages[0].sections.map((section) => (
+                      <SortableSection
+                        key={section.id}
+                        section={section}
+                        onToggle={toggleSectionEnabled}
+                        onVariantChange={changeSectionVariant}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button
+                variant="accent"
+                onClick={saveLayoutConfig}
+                disabled={saving}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? 'Saving...' : 'Save Layout'}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

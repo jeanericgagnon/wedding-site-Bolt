@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Image } from 'lucide-react';
 import { Button, Card, Input, Textarea } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
-import { generateSiteConfig } from '../../lib/siteGenerator';
+import { fromOnboarding } from '../../lib/generateWeddingData';
+import { generateInitialLayout } from '../../lib/generateInitialLayout';
 
 type Step =
   | 'welcome'
@@ -137,33 +138,34 @@ export const GuidedSetup: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const siteConfig = generateSiteConfig({
-        couple_name_1: coupleNames.name1,
-        couple_name_2: coupleNames.name2,
-        wedding_date: formData.weddingDate || null,
-        wedding_location: formData.city || null,
-        venue: formData.venue || null,
-        our_story: formData.ourStory || null,
-        ceremony_time: formData.ceremonyTime || null,
-        reception_time: formData.receptionTime || null,
-        attire: formData.attire || null,
-        hotel_recommendations: formData.hotelRecommendations || null,
-        parking: formData.parking || null,
-        rsvp_deadline: formData.rsvpDeadline || null,
-        meal_options: formData.mealOptions || null,
-        registry_links: formData.registryLinks || null,
-        custom_faqs: formData.customFaqs || null,
-        template: formData.template,
-        color_scheme: formData.colorScheme,
+      const weddingData = fromOnboarding({
+        partner1Name: coupleNames.name1,
+        partner2Name: coupleNames.name2,
+        weddingDate: formData.weddingDate || undefined,
+        venueName: formData.venue || undefined,
+        city: formData.city || undefined,
+        ourStory: formData.ourStory || undefined,
+        ceremonyTime: formData.ceremonyTime || undefined,
+        receptionTime: formData.receptionTime || undefined,
+        attire: formData.attire || undefined,
+        hotelRecommendations: formData.hotelRecommendations || undefined,
+        parking: formData.parking || undefined,
+        rsvpDeadline: formData.rsvpDeadline || undefined,
+        registryLinks: formData.registryLinks || undefined,
+        customFaqs: formData.customFaqs || undefined,
+        colorScheme: formData.colorScheme,
       });
+
+      const layoutConfig = generateInitialLayout(formData.template, weddingData);
 
       const updateData: any = {
         venue_date: formData.weddingDate || null,
         venue_name: formData.venue || null,
         wedding_location: formData.city || null,
         planning_status: 'guided_setup_complete',
-        template_id: siteConfig.template_id,
-        site_json: siteConfig,
+        active_template_id: formData.template,
+        wedding_data: weddingData,
+        layout_config: layoutConfig,
       };
 
       const { error: updateError } = await supabase
