@@ -11,10 +11,8 @@ type Step =
   | 'events'
   | 'travel'
   | 'rsvp'
-  | 'registry'
   | 'faq'
-  | 'template'
-  | 'colors'
+  | 'design'
   | 'photos'
   | 'complete';
 
@@ -60,7 +58,7 @@ export const GuidedSetup: React.FC = () => {
     colorScheme: 'romantic',
   });
 
-  const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'registry', 'faq', 'template', 'colors', 'photos', 'complete'];
+  const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'photos', 'complete'];
   const currentStepIndex = steps.indexOf(currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
@@ -93,9 +91,22 @@ export const GuidedSetup: React.FC = () => {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+
+    if (name === 'weddingDate' && value) {
+      const selectedDate = new Date(value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        setError('Wedding date must be in the future');
+        return;
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }));
     setError('');
   };
@@ -447,31 +458,6 @@ export const GuidedSetup: React.FC = () => {
           </div>
         );
 
-      case 'registry':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-text-primary mb-2">Registry</h2>
-              <p className="text-text-secondary">Where are you registered?</p>
-            </div>
-
-            <Textarea
-              label="Registry Links"
-              name="registryLinks"
-              value={formData.registryLinks}
-              onChange={handleChange}
-              placeholder="Add your registry links (one per line)&#10;e.g., https://amazon.com/registry/yourname&#10;https://target.com/registry/yourname"
-              rows={5}
-              helperText="Paste each registry link on a new line"
-            />
-
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <p className="text-sm text-text-secondary">
-                <span className="font-medium text-primary">Tip:</span> You can customize how your registry displays from your dashboard
-              </p>
-            </div>
-          </div>
-        );
 
       case 'faq':
         return (
@@ -522,18 +508,18 @@ export const GuidedSetup: React.FC = () => {
           </div>
         );
 
-      case 'template':
+      case 'design':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <h2 className="text-2xl font-bold text-text-primary mb-2">Choose a Template</h2>
-              <p className="text-text-secondary">Pick a design style (you can change this later)</p>
+              <h2 className="text-2xl font-bold text-text-primary mb-2">Design Your Site</h2>
+              <p className="text-text-secondary">Choose your template and colors</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-text-primary mb-3">
                 <Layout className="w-4 h-4 inline mr-2" aria-hidden="true" />
-                Select Template
+                Template Style
               </label>
               <div className="grid grid-cols-3 gap-4">
                 {['Modern', 'Classic', 'Rustic'].map((template) => (
@@ -560,24 +546,14 @@ export const GuidedSetup: React.FC = () => {
                 ))}
               </div>
               <p className="text-xs text-text-secondary mt-3">
-                Preview coming soon - you can customize your template from the dashboard
+                Live preview coming soon
               </p>
-            </div>
-          </div>
-        );
-
-      case 'colors':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-text-primary mb-2">Pick Your Colors</h2>
-              <p className="text-text-secondary">Choose a color scheme that matches your vision</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-text-primary mb-3">
                 <Palette className="w-4 h-4 inline mr-2" aria-hidden="true" />
-                Color Scheme
+                Color Palette
               </label>
               <div className="grid grid-cols-2 gap-4">
                 {[
@@ -587,6 +563,7 @@ export const GuidedSetup: React.FC = () => {
                   { name: 'Elegant', colors: ['#F5F5F5', '#9E9E9E', '#424242'], description: 'Classic neutrals' },
                   { name: 'Sunset', colors: ['#FFF3E0', '#FFB74D', '#F57C00'], description: 'Warm oranges' },
                   { name: 'Lavender', colors: ['#F3E5F5', '#BA68C8', '#7B1FA2'], description: 'Purple hues' },
+                  { name: 'Custom', colors: ['#FFFFFF', '#CCCCCC', '#333333'], description: 'Create your own' },
                 ].map((scheme) => (
                   <button
                     key={scheme.name}
@@ -612,6 +589,13 @@ export const GuidedSetup: React.FC = () => {
                   </button>
                 ))}
               </div>
+              {formData.colorScheme === 'custom' && (
+                <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <p className="text-sm text-text-secondary">
+                    <span className="font-medium text-primary">Custom palette:</span> You'll be able to choose your own colors from the builder after setup
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         );

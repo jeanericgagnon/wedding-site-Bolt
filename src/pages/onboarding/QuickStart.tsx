@@ -43,9 +43,22 @@ export const QuickStart: React.FC = () => {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    if (name === 'weddingDate' && value) {
+      const selectedDate = new Date(value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        setError('Wedding date must be in the future');
+        return;
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }));
     setError('');
   };
@@ -247,6 +260,7 @@ export const QuickStart: React.FC = () => {
             { name: 'Ocean', colors: ['#E0F7FA', '#4DD0E1', '#0097A7'] },
             { name: 'Garden', colors: ['#F1F8E9', '#AED581', '#689F38'] },
             { name: 'Elegant', colors: ['#F5F5F5', '#9E9E9E', '#424242'] },
+            { name: 'Custom', colors: ['#FFFFFF', '#CCCCCC', '#333333'] },
           ].map((scheme) => (
             <button
               key={scheme.name}
@@ -268,9 +282,17 @@ export const QuickStart: React.FC = () => {
                 ))}
               </div>
               <p className="text-sm font-medium text-text-primary">{scheme.name}</p>
+              {scheme.name === 'Custom' && (
+                <p className="text-xs text-text-secondary mt-1">Customize later</p>
+              )}
             </button>
           ))}
         </div>
+        {formData.colorScheme === 'custom' && (
+          <p className="text-xs text-accent mt-2 font-medium">
+            You can customize your color palette from the builder after completing setup
+          </p>
+        )}
       </div>
 
       <div>
