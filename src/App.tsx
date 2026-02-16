@@ -4,6 +4,7 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
 import { WeddingStatus } from './pages/onboarding/WeddingStatus';
+import { Celebration } from './pages/onboarding/Celebration';
 import RSVP from './pages/RSVP';
 import EventRSVP from './pages/EventRSVP';
 import {
@@ -56,6 +57,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <WeddingStatus />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/onboarding/celebration"
+          element={
+            <ProtectedRoute>
+              <Celebration />
             </ProtectedRoute>
           }
         />

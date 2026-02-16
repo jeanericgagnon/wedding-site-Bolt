@@ -92,7 +92,16 @@ export const WeddingStatus: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      navigate('/dashboard');
+      const weddingDate =
+        selectedStatus === 'venue_booked' ? details.venue_booked?.venueDate :
+        selectedStatus === 'invitations_sent' ? details.invitations_sent?.venueDate :
+        undefined;
+
+      navigate('/onboarding/celebration', {
+        state: {
+          weddingDate,
+        }
+      });
     } catch (err: any) {
       console.error('Status update error:', err);
       setError(err.message || 'Failed to update status. Please try again.');
