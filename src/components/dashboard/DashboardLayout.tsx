@@ -149,6 +149,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
           </div>
         </header>
 
+        {user?.email === 'demo@dayof.love' && (
+          <div className="bg-gradient-to-r from-accent to-accent-dark text-white px-4 lg:px-8 py-4">
+            <div className="flex items-center justify-between gap-4 max-w-6xl">
+              <div className="flex-1">
+                <p className="font-semibold mb-1">You're viewing a demo</p>
+                <p className="text-sm text-white/90">Ready to create your own wedding site? Sign up now for just $39.</p>
+              </div>
+              <button
+                onClick={() => navigate('/signup')}
+                className="px-6 py-2.5 bg-white text-accent font-semibold rounded-xl hover:bg-white/95 transition-all shadow-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-accent"
+              >
+                Sign Up
+              </button>
+            </div>
+          </div>
+        )}
+
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto">{children}</main>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Heart,
   Clock,
@@ -19,10 +20,25 @@ import {
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const handleSignUp = async () => {
     navigate('/signup');
+  };
+
+  const handleDemoLogin = async () => {
+    setDemoLoading(true);
+    try {
+      await signIn();
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Demo login error:', err);
+      alert('Failed to load demo. Please try again.');
+    } finally {
+      setDemoLoading(false);
+    }
   };
 
   return (
@@ -47,12 +63,13 @@ export const Home: React.FC = () => {
               >
                 Sign up
               </button>
-              <Link
-                to="/login"
-                className="inline-flex items-center justify-center px-8 py-4 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              <button
+                onClick={handleDemoLogin}
+                disabled={demoLoading}
+                className="inline-flex items-center justify-center px-8 py-4 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Preview demo
-              </Link>
+                {demoLoading ? 'Loading...' : 'Preview demo'}
+              </button>
             </div>
             <p className="text-sm text-ink/60">
               $39 flat fee for 2 years • Auto-renew OFF by default • Private by default
@@ -282,12 +299,13 @@ export const Home: React.FC = () => {
                 >
                   Sign up
                 </button>
-                <Link
-                  to="/login"
-                  className="block w-full px-6 py-3 text-center border-2 border-brand text-brand font-medium rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                <button
+                  onClick={handleDemoLogin}
+                  disabled={demoLoading}
+                  className="block w-full px-6 py-3 text-center border-2 border-brand text-brand font-medium rounded-2xl hover:bg-brand/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Preview demo
-                </Link>
+                  {demoLoading ? 'Loading...' : 'Preview demo'}
+                </button>
               </div>
 
               <div className="mt-6 pt-6 border-t border-border space-y-2">
