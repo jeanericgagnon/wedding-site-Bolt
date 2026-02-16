@@ -26,28 +26,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata?.name || session.user.email || '',
-        });
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || session.user.email || '',
+          });
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
+
+    initAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata?.name || session.user.email || '',
-        });
-      } else {
-        setUser(null);
-      }
+      (async () => {
+        if (session?.user) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || session.user.email || '',
+          });
+        } else {
+          setUser(null);
+        }
+      })();
     });
 
     return () => subscription.unsubscribe();
