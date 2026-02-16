@@ -8,9 +8,11 @@ export const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [addSuffix, setAddSuffix] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
     secondName: '',
+    lastName: '',
     email: '',
     password: '',
   });
@@ -39,8 +41,10 @@ export const Signup: React.FC = () => {
 
       const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const lastName = formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const coupleEmail = `${firstName}-${secondName}@dayof.love`;
-      const subdomain = `${firstName}and${secondName}.dayof.love`;
+      const suffix = addSuffix ? 's' : '';
+      const subdomain = `${firstName}and${secondName}${lastName}${suffix}.dayof.love`;
 
       const { error: siteError } = await supabase
         .from('wedding_sites')
@@ -50,6 +54,7 @@ export const Signup: React.FC = () => {
           couple_name_2: formData.secondName,
           couple_first_name: formData.firstName,
           couple_second_name: formData.secondName,
+          couple_last_name: formData.lastName,
           couple_email: coupleEmail,
           site_url: subdomain,
         });
@@ -85,7 +90,7 @@ export const Signup: React.FC = () => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                placeholder="Alex"
+                placeholder="John"
                 required
               />
               <Input
@@ -93,17 +98,49 @@ export const Signup: React.FC = () => {
                 name="secondName"
                 value={formData.secondName}
                 onChange={handleChange}
-                placeholder="Jordan"
+                placeholder="Jane"
                 required
               />
             </div>
 
-            {formData.firstName && formData.secondName && (
-              <div className="p-3 bg-surface-subtle rounded-lg">
-                <p className="text-xs text-text-secondary mb-1">Your wedding site will be:</p>
-                <p className="text-sm font-medium text-primary">
-                  {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}and{formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}.dayof.love
-                </p>
+            <Input
+              label="Last Name"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              placeholder="Smith"
+              required
+            />
+
+            {formData.firstName && formData.secondName && formData.lastName && (
+              <div className="p-4 bg-surface-subtle rounded-lg space-y-3">
+                <div>
+                  <p className="text-xs text-text-secondary mb-1">Your wedding site URL:</p>
+                  <p className="text-sm font-medium text-primary">
+                    {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}and{formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}{formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '')}{addSuffix ? 's' : ''}.dayof.love
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-xs text-text-secondary">Add 's' at the end:</label>
+                  <button
+                    type="button"
+                    onClick={() => setAddSuffix(!addSuffix)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                      addSuffix ? 'bg-primary' : 'bg-border'
+                    }`}
+                    role="switch"
+                    aria-checked={addSuffix}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        addSuffix ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-xs font-medium text-text-primary">
+                    {addSuffix ? 'johnandjanes' : 'johnandjane'}
+                  </span>
+                </div>
               </div>
             )}
 
