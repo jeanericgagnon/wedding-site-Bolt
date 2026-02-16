@@ -11,6 +11,8 @@ export const Signup: React.FC = () => {
   const [addSuffix, setAddSuffix] = useState(true);
   const [urlTaken, setUrlTaken] = useState(false);
   const [checkingUrl, setCheckingUrl] = useState(false);
+  const [customUrl, setCustomUrl] = useState('');
+  const [isCustomizing, setIsCustomizing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -30,6 +32,8 @@ export const Signup: React.FC = () => {
 
   useEffect(() => {
     const checkUrlAvailability = async () => {
+      if (isCustomizing) return;
+
       if (!formData.firstName || !formData.secondName) {
         setUrlTaken(false);
         return;
@@ -54,7 +58,29 @@ export const Signup: React.FC = () => {
 
     const debounceTimer = setTimeout(checkUrlAvailability, 500);
     return () => clearTimeout(debounceTimer);
-  }, [formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, addSuffix]);
+  }, [formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, addSuffix, isCustomizing]);
+
+  useEffect(() => {
+    const checkCustomUrlAvailability = async () => {
+      if (!isCustomizing || !customUrl) return;
+
+      setCheckingUrl(true);
+      const cleanUrl = customUrl.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const subdomain = `${cleanUrl}.dayof.love`;
+
+      const { data } = await supabase
+        .from('wedding_sites')
+        .select('site_url')
+        .eq('site_url', subdomain)
+        .maybeSingle();
+
+      setUrlTaken(!!data);
+      setCheckingUrl(false);
+    };
+
+    const debounceTimer = setTimeout(checkCustomUrlAvailability, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [customUrl, isCustomizing]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,27 +96,34 @@ export const Signup: React.FC = () => {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('No user returned from signup');
 
+      let subdomain: string;
+
+      if (isCustomizing && customUrl) {
+        const cleanUrl = customUrl.toLowerCase().replace(/[^a-z0-9]/g, '');
+        subdomain = `${cleanUrl}.dayof.love`;
+      } else {
+        const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const lastName = formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const secondLastName = formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const suffix = addSuffix ? 's' : '';
+
+        subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
+
+        const { data: existingUrl } = await supabase
+          .from('wedding_sites')
+          .select('site_url')
+          .eq('site_url', subdomain)
+          .maybeSingle();
+
+        if (existingUrl) {
+          subdomain = `${firstName}${lastName}and${secondName}${secondLastName}${suffix}.dayof.love`;
+        }
+      }
+
       const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const lastName = formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const secondLastName = formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const coupleEmail = `${firstName}-${secondName}@dayof.love`;
-      const suffix = addSuffix ? 's' : '';
-
-      // Try first names only first
-      let subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
-
-      // Check if URL is taken
-      const { data: existingUrl } = await supabase
-        .from('wedding_sites')
-        .select('site_url')
-        .eq('site_url', subdomain)
-        .maybeSingle();
-
-      // If taken, use first + last names
-      if (existingUrl) {
-        subdomain = `${firstName}${lastName}and${secondName}${secondLastName}${suffix}.dayof.love`;
-      }
 
       const { error: siteError } = await supabase
         .from('wedding_sites')
@@ -109,7 +142,7 @@ export const Signup: React.FC = () => {
 
       if (siteError) throw siteError;
 
-      navigate('/dashboard');
+      navigate('/onboarding/status');
     } catch (err: any) {
       console.error('Signup error:', err);
       setError(err.message || 'Failed to create account. Please try again.');
@@ -178,54 +211,115 @@ export const Signup: React.FC = () => {
                     <p className="text-sm text-text-secondary">Checking availability...</p>
                   ) : (
                     <>
-                      <p className="text-sm font-medium text-primary">
-                        {urlTaken && formData.lastName && formData.secondLastName ? (
-                          <>
-                            {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                            {formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                            and
-                            {formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                            {formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                            {addSuffix ? 's' : ''}.dayof.love
-                          </>
-                        ) : (
-                          <>
-                            {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                            and
-                            {formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                            {addSuffix ? 's' : ''}.dayof.love
-                          </>
-                        )}
-                      </p>
-                      {urlTaken && formData.lastName && formData.secondLastName && (
-                        <p className="text-xs text-warning mt-1">
-                          First names URL taken, using full names
+                      {isCustomizing ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={customUrl}
+                            onChange={(e) => setCustomUrl(e.target.value)}
+                            placeholder="yourcustomurl"
+                            className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                          />
+                          <span className="text-sm text-text-secondary">.dayof.love</span>
+                        </div>
+                      ) : (
+                        <p className="text-sm font-medium text-primary">
+                          {urlTaken && formData.lastName && formData.secondLastName ? (
+                            <>
+                              {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                              {formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                              and
+                              {formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                              {formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                              {addSuffix ? 's' : ''}.dayof.love
+                            </>
+                          ) : (
+                            <>
+                              {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                              and
+                              {formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                              {addSuffix ? 's' : ''}.dayof.love
+                            </>
+                          )}
+                        </p>
+                      )}
+
+                      {urlTaken && !isCustomizing && (
+                        <div className="mt-2 space-y-2">
+                          {formData.lastName && formData.secondLastName && (
+                            <p className="text-xs text-warning">
+                              First names URL taken, using full names
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCustomizing(true);
+                              const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                              const lastName = formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                              const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                              const secondLastName = formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                              const suffix = addSuffix ? 's' : '';
+                              setCustomUrl(`${firstName}${lastName}and${secondName}${secondLastName}${suffix}`);
+                            }}
+                            className="text-xs text-primary hover:text-primary/80 underline"
+                          >
+                            Customize URL
+                          </button>
+                        </div>
+                      )}
+
+                      {isCustomizing && urlTaken && (
+                        <p className="text-xs text-error mt-1">
+                          This URL is already taken
+                        </p>
+                      )}
+
+                      {isCustomizing && !urlTaken && customUrl && (
+                        <p className="text-xs text-success mt-1">
+                          This URL is available!
                         </p>
                       )}
                     </>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
-                  <label className="text-xs text-text-secondary">Add 's' at the end:</label>
+
+                {!isCustomizing && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs text-text-secondary">Add 's' at the end:</label>
+                    <button
+                      type="button"
+                      onClick={() => setAddSuffix(!addSuffix)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                        addSuffix ? 'bg-primary' : 'bg-border'
+                      }`}
+                      role="switch"
+                      aria-checked={addSuffix}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          addSuffix ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                    <span className="text-xs font-medium text-text-primary">
+                      {addSuffix ? 'johnandjanes' : 'johnandjane'}
+                    </span>
+                  </div>
+                )}
+
+                {isCustomizing && (
                   <button
                     type="button"
-                    onClick={() => setAddSuffix(!addSuffix)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                      addSuffix ? 'bg-primary' : 'bg-border'
-                    }`}
-                    role="switch"
-                    aria-checked={addSuffix}
+                    onClick={() => {
+                      setIsCustomizing(false);
+                      setCustomUrl('');
+                    }}
+                    className="text-xs text-text-secondary hover:text-text-primary"
                   >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        addSuffix ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
+                    ← Use auto-generated URL
                   </button>
-                  <span className="text-xs font-medium text-text-primary">
-                    {addSuffix ? 'johnandjanes' : 'johnandjane'}
-                  </span>
-                </div>
+                )}
               </div>
             )}
 

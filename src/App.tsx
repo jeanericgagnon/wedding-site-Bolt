@@ -3,6 +3,7 @@ import { Home, Product } from './pages';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
+import { WeddingStatus } from './pages/onboarding/WeddingStatus';
 import RSVP from './pages/RSVP';
 import EventRSVP from './pages/EventRSVP';
 import {
@@ -47,6 +48,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Onboarding />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/onboarding/status"
+          element={
+            <ProtectedRoute>
+              <WeddingStatus />
             </ProtectedRoute>
           }
         />

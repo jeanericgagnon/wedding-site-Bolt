@@ -30,6 +30,7 @@ export default {
           DEFAULT: 'var(--color-border)',
           subtle: 'var(--color-border-subtle)',
           strong: 'var(--color-border-strong)',
+          hover: 'var(--color-border-strong)',
         },
         success: {
           DEFAULT: 'var(--color-success)',
