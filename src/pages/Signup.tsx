@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
@@ -9,6 +9,8 @@ export const Signup: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [addSuffix, setAddSuffix] = useState(true);
+  const [urlTaken, setUrlTaken] = useState(false);
+  const [checkingUrl, setCheckingUrl] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -26,6 +28,34 @@ export const Signup: React.FC = () => {
     setError('');
   };
 
+  useEffect(() => {
+    const checkUrlAvailability = async () => {
+      if (!formData.firstName || !formData.secondName) {
+        setUrlTaken(false);
+        return;
+      }
+
+      setCheckingUrl(true);
+
+      const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const suffix = addSuffix ? 's' : '';
+      const subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
+
+      const { data } = await supabase
+        .from('wedding_sites')
+        .select('site_url')
+        .eq('site_url', subdomain)
+        .maybeSingle();
+
+      setUrlTaken(!!data);
+      setCheckingUrl(false);
+    };
+
+    const debounceTimer = setTimeout(checkUrlAvailability, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, addSuffix]);
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -42,9 +72,25 @@ export const Signup: React.FC = () => {
 
       const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const lastName = formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const secondLastName = formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const coupleEmail = `${firstName}-${secondName}@dayof.love`;
       const suffix = addSuffix ? 's' : '';
-      const subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
+
+      // Try first names only first
+      let subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
+
+      // Check if URL is taken
+      const { data: existingUrl } = await supabase
+        .from('wedding_sites')
+        .select('site_url')
+        .eq('site_url', subdomain)
+        .maybeSingle();
+
+      // If taken, use first + last names
+      if (existingUrl) {
+        subdomain = `${firstName}${lastName}and${secondName}${secondLastName}${suffix}.dayof.love`;
+      }
 
       const { error: siteError } = await supabase
         .from('wedding_sites')
@@ -128,9 +174,36 @@ export const Signup: React.FC = () => {
               <div className="p-4 bg-surface-subtle rounded-lg space-y-3">
                 <div>
                   <p className="text-xs text-text-secondary mb-1">Your wedding site URL:</p>
-                  <p className="text-sm font-medium text-primary">
-                    {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}and{formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}{addSuffix ? 's' : ''}.dayof.love
-                  </p>
+                  {checkingUrl ? (
+                    <p className="text-sm text-text-secondary">Checking availability...</p>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-primary">
+                        {urlTaken && formData.lastName && formData.secondLastName ? (
+                          <>
+                            {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                            {formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                            and
+                            {formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                            {formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                            {addSuffix ? 's' : ''}.dayof.love
+                          </>
+                        ) : (
+                          <>
+                            {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                            and
+                            {formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                            {addSuffix ? 's' : ''}.dayof.love
+                          </>
+                        )}
+                      </p>
+                      {urlTaken && formData.lastName && formData.secondLastName && (
+                        <p className="text-xs text-warning mt-1">
+                          First names URL taken, using full names
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <label className="text-xs text-text-secondary">Add 's' at the end:</label>
