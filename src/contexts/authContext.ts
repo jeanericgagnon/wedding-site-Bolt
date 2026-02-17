@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createContext, useContext } from 'react';
 
 export interface AuthUser {
   id: string;
@@ -17,3 +17,11 @@ export interface AuthContextType {
 export const DEMO_EMAIL = 'demo@dayof.love';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
