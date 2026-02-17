@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, CardContent, Button, Badge, Input } from '../../components/ui';
-import { Search, Download, UserPlus, Mail, Filter, CheckCircle2, XCircle, Clock, X, Upload } from 'lucide-react';
+import { Card, Button, Badge, Input } from '../../components/ui';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 
 interface Guest {
@@ -53,17 +53,7 @@ export const DashboardGuests: React.FC = () => {
     invited_to_reception: true,
   });
 
-  useEffect(() => {
-    fetchWeddingSite();
-  }, [user, isDemoMode]);
-
-  useEffect(() => {
-    if (weddingSiteId) {
-      fetchGuests();
-    }
-  }, [weddingSiteId]);
-
-  const fetchWeddingSite = async () => {
+  const fetchWeddingSite = useCallback(async () => {
     if (!user) return;
 
     if (isDemoMode) {
@@ -71,7 +61,7 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('wedding_sites')
       .select('id')
       .eq('user_id', user.id)
@@ -80,9 +70,9 @@ export const DashboardGuests: React.FC = () => {
     if (data) {
       setWeddingSiteId(data.id);
     }
-  };
+  }, [user, isDemoMode]);
 
-  const fetchGuests = async () => {
+  const fetchGuests = useCallback(async () => {
     if (!weddingSiteId) return;
 
     setLoading(true);
@@ -128,7 +118,17 @@ export const DashboardGuests: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [weddingSiteId, isDemoMode]);
+
+  useEffect(() => {
+    fetchWeddingSite();
+  }, [fetchWeddingSite]);
+
+  useEffect(() => {
+    if (weddingSiteId) {
+      fetchGuests();
+    }
+  }, [weddingSiteId, fetchGuests]);
 
   const generateInviteToken = () => {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -280,7 +280,7 @@ export const DashboardGuests: React.FC = () => {
         .filter(line => line.trim())
         .map(line => {
           const values = line.split(',').map(v => v.replace(/"/g, '').trim());
-          const guest: any = {
+          const guest: Record<string, unknown> = {
             wedding_site_id: weddingSiteId,
             rsvp_status: 'pending',
             invite_token: generateInviteToken(),
@@ -526,10 +526,10 @@ export const DashboardGuests: React.FC = () => {
                     onChange={importCSV}
                     className="hidden"
                   />
-                  <Button variant="outline" size="md" as="span">
+                  <span className="inline-flex items-center px-3 py-2 border border-border rounded-md text-sm font-medium text-text-primary hover:bg-surface-subtle cursor-pointer">
                     <Upload className="w-4 h-4 mr-2" />
                     Import CSV
-                  </Button>
+                  </span>
                 </label>
                 <Button variant="outline" size="md" onClick={exportCSV}>
                   <Download className="w-4 h-4 mr-2" />

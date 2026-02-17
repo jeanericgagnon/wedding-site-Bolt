@@ -1,24 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
-import type { User } from '@supabase/supabase-js';
+import { AuthContext, AuthUser, DEMO_EMAIL } from './authContext';
 
-interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-}
-
-interface AuthContextType {
-  user: AuthUser | null;
-  loading: boolean;
-  signIn: () => Promise<void>;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const DEMO_EMAIL = 'demo@dayof.love';
 const DEMO_PASSWORD = 'demo-password-12345';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -26,7 +10,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser({
@@ -38,7 +21,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser({
@@ -106,17 +88,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     user,
     loading,
+    isDemoMode: user?.email === DEMO_EMAIL,
     signIn,
     signOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

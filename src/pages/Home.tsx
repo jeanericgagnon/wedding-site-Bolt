@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import {
   Heart,
-  Clock,
   Users,
   Mail,
   Calendar,
   CheckCircle2,
-  Shield,
-  Utensils,
-  MessageSquare,
   Hotel,
   ChevronDown,
-  Sparkles,
   ArrowRight,
 } from 'lucide-react';
 

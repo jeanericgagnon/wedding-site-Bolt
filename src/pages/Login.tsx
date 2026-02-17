@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -38,9 +38,9 @@ export const Login: React.FC = () => {
       if (signInError) throw signInError;
 
       navigate('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to sign in. Please try again.');
+      setError((err as Error).message || 'Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -53,9 +53,9 @@ export const Login: React.FC = () => {
     try {
       await signIn();
       navigate('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Demo login error:', err);
-      setError(err.message || 'Failed to access demo. Please try again.');
+      setError((err as Error).message || 'Failed to access demo. Please try again.');
     } finally {
       setDemoLoading(false);
     }
@@ -122,7 +122,7 @@ export const Login: React.FC = () => {
           </div>
 
           <Button
-            variant="default"
+            variant="outline"
             size="lg"
             fullWidth
             onClick={handleDemoLogin}

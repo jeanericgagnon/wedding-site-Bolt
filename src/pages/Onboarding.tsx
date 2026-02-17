@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 
@@ -25,11 +25,7 @@ export const Onboarding: React.FC = () => {
     theme: 'garden',
   });
 
-  useEffect(() => {
-    checkExistingSite();
-  }, [user]);
-
-  const checkExistingSite = async () => {
+  const checkExistingSite = useCallback(async () => {
     if (!user) return;
 
     const { data } = await supabase
@@ -41,7 +37,11 @@ export const Onboarding: React.FC = () => {
     if (data) {
       navigate('/dashboard');
     }
-  };
+  }, [user, navigate]);
+
+  useEffect(() => {
+    checkExistingSite();
+  }, [checkExistingSite]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -56,7 +56,7 @@ export const Onboarding: React.FC = () => {
     setStep('quick-1');
   };
 
-  const createWeddingSite = async (data: any) => {
+  const createWeddingSite = async (data: Record<string, unknown>) => {
     if (!user) return;
 
     try {

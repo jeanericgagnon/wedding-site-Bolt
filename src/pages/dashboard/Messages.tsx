@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 interface Message {
   id: string;
@@ -13,7 +13,7 @@ interface Message {
   scheduled_for: string | null;
   status: string;
   channel: string;
-  recipient_filter: any;
+  recipient_filter: Record<string, unknown> | null;
 }
 
 interface Guest {
@@ -49,18 +49,7 @@ export const DashboardMessages: React.FC = () => {
     scheduleTime: '',
   });
 
-  useEffect(() => {
-    fetchWeddingSite();
-  }, [user]);
-
-  useEffect(() => {
-    if (weddingSite) {
-      fetchMessages();
-      fetchGuests();
-    }
-  }, [weddingSite]);
-
-  const fetchWeddingSite = async () => {
+  const fetchWeddingSite = useCallback(async () => {
     if (!user) return;
 
     const { data } = await supabase
@@ -72,9 +61,9 @@ export const DashboardMessages: React.FC = () => {
     if (data) {
       setWeddingSite(data);
     }
-  };
+  }, [user]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!weddingSite) return;
 
     try {
@@ -92,9 +81,9 @@ export const DashboardMessages: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [weddingSite]);
 
-  const fetchGuests = async () => {
+  const fetchGuests = useCallback(async () => {
     if (!weddingSite) return;
 
     const { data } = await supabase
@@ -103,7 +92,18 @@ export const DashboardMessages: React.FC = () => {
       .eq('wedding_site_id', weddingSite.id);
 
     setGuests(data || []);
-  };
+  }, [weddingSite]);
+
+  useEffect(() => {
+    fetchWeddingSite();
+  }, [fetchWeddingSite]);
+
+  useEffect(() => {
+    if (weddingSite) {
+      fetchMessages();
+      fetchGuests();
+    }
+  }, [weddingSite, fetchMessages, fetchGuests]);
 
   const getRecipients = (audience: string): Guest[] => {
     switch (audience) {
@@ -201,12 +201,6 @@ export const DashboardMessages: React.FC = () => {
 
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => g.email).length;
-
-  const getMinDateTime = () => {
-    const now = new Date();
-    now.setHours(now.getHours() + 1);
-    return now.toISOString().slice(0, 16);
-  };
 
   const getStatusBadge = (message: Message) => {
     switch (message.status) {
@@ -409,7 +403,7 @@ export const DashboardMessages: React.FC = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={(e: any) => handleSendMessage(e, true)}
+                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSendMessage(e, true)}
                     disabled={sending}
                   >
                     <Save className="w-4 h-4 mr-2" />
@@ -543,7 +537,7 @@ export const DashboardMessages: React.FC = () => {
                   <div className="flex items-center gap-4 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      {message.recipient_filter?.recipient_count || 0} recipients
+                      {(message.recipient_filter?.recipient_count as number) || 0} recipients
                     </span>
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
                       {message.channel}
