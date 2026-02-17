@@ -1,39 +1,46 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Home, Product } from './pages';
-import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
-import { Onboarding } from './pages/Onboarding';
-import { WeddingStatus } from './pages/onboarding/WeddingStatus';
-import { Celebration } from './pages/onboarding/Celebration';
-import { QuickStart } from './pages/onboarding/QuickStart';
-import { GuidedSetup } from './pages/onboarding/GuidedSetup';
-import RSVP from './pages/RSVP';
-import EventRSVP from './pages/EventRSVP';
-import { SiteView } from './pages/SiteView';
-import {
-  DashboardOverview,
-  DashboardBuilder,
-  DashboardGuests,
-  DashboardVault,
-  DashboardRegistry,
-  DashboardSettings,
-  DashboardMessages,
-  DashboardItinerary,
-} from './pages/dashboard';
-import {
-  GuestsFeature,
-  RSVPFeature,
-  MessagingFeature,
-  TravelFeature,
-  RegistryFeature,
-  SeatingFeature,
-} from './pages/features';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+
+const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
+const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
+const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const Signup = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
+const Onboarding = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })));
+const WeddingStatus = lazy(() => import('./pages/onboarding/WeddingStatus').then(m => ({ default: m.WeddingStatus })));
+const Celebration = lazy(() => import('./pages/onboarding/Celebration').then(m => ({ default: m.Celebration })));
+const QuickStart = lazy(() => import('./pages/onboarding/QuickStart').then(m => ({ default: m.QuickStart })));
+const GuidedSetup = lazy(() => import('./pages/onboarding/GuidedSetup').then(m => ({ default: m.GuidedSetup })));
+const RSVP = lazy(() => import('./pages/RSVP'));
+const EventRSVP = lazy(() => import('./pages/EventRSVP'));
+const SiteView = lazy(() => import('./pages/SiteView').then(m => ({ default: m.SiteView })));
+const DashboardOverview = lazy(() => import('./pages/dashboard/Overview').then(m => ({ default: m.DashboardOverview })));
+const DashboardBuilder = lazy(() => import('./pages/dashboard/Builder').then(m => ({ default: m.DashboardBuilder })));
+const DashboardGuests = lazy(() => import('./pages/dashboard/Guests').then(m => ({ default: m.DashboardGuests })));
+const DashboardVault = lazy(() => import('./pages/dashboard/Vault').then(m => ({ default: m.DashboardVault })));
+const DashboardRegistry = lazy(() => import('./pages/dashboard/Registry').then(m => ({ default: m.DashboardRegistry })));
+const DashboardSettings = lazy(() => import('./pages/dashboard/Settings').then(m => ({ default: m.DashboardSettings })));
+const DashboardMessages = lazy(() => import('./pages/dashboard/Messages').then(m => ({ default: m.DashboardMessages })));
+const DashboardItinerary = lazy(() => import('./pages/dashboard/Itinerary').then(m => ({ default: m.DashboardItinerary })));
+const SiteBuilder = lazy(() => import('./builder/BuilderPage').then(m => ({ default: m.BuilderPage })));
+const GuestsFeature = lazy(() => import('./pages/features/Guests').then(m => ({ default: m.GuestsFeature })));
+const RSVPFeature = lazy(() => import('./pages/features/RSVP').then(m => ({ default: m.RSVPFeature })));
+const MessagingFeature = lazy(() => import('./pages/features/Messaging').then(m => ({ default: m.MessagingFeature })));
+const TravelFeature = lazy(() => import('./pages/features/Travel').then(m => ({ default: m.TravelFeature })));
+const RegistryFeature = lazy(() => import('./pages/features/Registry').then(m => ({ default: m.RegistryFeature })));
+const SeatingFeature = lazy(() => import('./pages/features/Seating').then(m => ({ default: m.SeatingFeature })));
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const AppContent = () => {
   return (
     <div className="min-h-screen">
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />
@@ -160,8 +167,17 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/builder"
+          element={
+            <ProtectedRoute>
+              <SiteBuilder />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </div>
   );
 };
