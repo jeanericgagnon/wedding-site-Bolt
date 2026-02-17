@@ -94,7 +94,7 @@ export const QuickStart: React.FC = () => {
 
       const siteSlug = generateWeddingSlug(coupleNames.name1, coupleNames.name2);
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         venue_date: formData.weddingDate || null,
         wedding_location: formData.location || null,
         planning_status: 'quick_start_complete',
@@ -118,9 +118,9 @@ export const QuickStart: React.FC = () => {
           showWelcome: true,
         }
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Quick start error:', err);
-      setError(err.message || 'Failed to save. Please try again.');
+      setError((err as Error).message || 'Failed to save. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -237,26 +237,36 @@ export const QuickStart: React.FC = () => {
           <Layout className="w-4 h-4 inline mr-2" aria-hidden="true" />
           Template
         </label>
-        <div className="grid grid-cols-3 gap-3">
-          {['Modern', 'Classic', 'Rustic'].map((template) => (
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { id: 'modern', name: 'Modern', desc: 'Gallery-first, minimal' },
+            { id: 'classic', name: 'Classic', desc: 'Timeless, traditional' },
+            { id: 'editorial', name: 'Editorial', desc: 'Story-focused, elegant' },
+            { id: 'base', name: 'Base', desc: 'Clean & simple' },
+          ].map((tpl) => (
             <button
-              key={template}
+              key={tpl.id}
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, template: template.toLowerCase() }))}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                formData.template === template.toLowerCase()
+              onClick={() => setFormData(prev => ({ ...prev, template: tpl.id }))}
+              className={`p-4 rounded-xl border-2 text-left transition-all ${
+                formData.template === tpl.id
                   ? 'border-accent bg-accent/10'
                   : 'border-border hover:border-accent/50'
               }`}
             >
-              <div className="aspect-[3/4] bg-surface-subtle rounded mb-2 flex items-center justify-center">
-                <span className="text-2xl">📄</span>
+              <div className="aspect-[3/4] bg-surface-subtle rounded-lg mb-2 flex items-center justify-center overflow-hidden">
+                <div className="space-y-1.5 w-full px-3">
+                  <div className="h-2 bg-accent/20 rounded-full w-full" />
+                  <div className="h-1.5 bg-border rounded-full w-3/4" />
+                  <div className="h-4 bg-accent/10 rounded mt-1" />
+                  <div className="h-1.5 bg-border rounded-full w-full" />
+                </div>
               </div>
-              <p className="text-sm font-medium text-text-primary">{template}</p>
+              <p className="text-sm font-medium text-text-primary">{tpl.name}</p>
+              <p className="text-xs text-text-secondary mt-0.5">{tpl.desc}</p>
             </button>
           ))}
         </div>
-        <p className="text-xs text-text-secondary mt-2">Preview coming soon</p>
       </div>
 
       <div>

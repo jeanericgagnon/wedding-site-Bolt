@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
+import { ChevronDown } from 'lucide-react';
 
 interface Props {
   data: WeddingDataV1;
@@ -10,7 +11,6 @@ interface Props {
 export const FaqSection: React.FC<Props> = ({ data, instance }) => {
   const { faq } = data;
   const { settings, bindings } = instance;
-  
   const faqsToShow = bindings.faqIds && bindings.faqIds.length > 0
     ? faq.filter(f => bindings.faqIds!.includes(f.id))
     : faq;
@@ -20,9 +20,7 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle && (
-            <h2 className="text-4xl font-bold text-text-primary mb-8">
-              {settings.title || 'FAQ'}
-            </h2>
+            <h2 className="text-4xl font-bold text-text-primary mb-8">{settings.title || 'FAQ'}</h2>
           )}
           <p className="text-text-secondary">FAQ coming soon</p>
         </div>
@@ -34,19 +32,71 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
     <section className="py-16 px-4 bg-surface">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle && (
-          <h2 className="text-4xl font-bold text-text-primary text-center mb-12">
-            {settings.title || 'FAQ'}
-          </h2>
+          <h2 className="text-4xl font-bold text-text-primary text-center mb-12">{settings.title || 'FAQ'}</h2>
         )}
         <div className="space-y-8">
           {faqsToShow.map(item => (
             <div key={item.id} className="border-b border-border pb-6">
-              <h3 className="text-xl font-semibold text-text-primary mb-3">
-                {item.q}
-              </h3>
-              <p className="text-text-secondary whitespace-pre-wrap">
-                {item.a}
-              </p>
+              <h3 className="text-xl font-semibold text-text-primary mb-3">{item.q}</h3>
+              <p className="text-text-secondary whitespace-pre-wrap">{item.a}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
+  const { faq } = data;
+  const { settings, bindings } = instance;
+  const faqsToShow = bindings.faqIds && bindings.faqIds.length > 0
+    ? faq.filter(f => bindings.faqIds!.includes(f.id))
+    : faq;
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  if (faqsToShow.length === 0) {
+    return (
+      <section className="py-20 px-4 bg-surface-subtle">
+        <div className="max-w-3xl mx-auto text-center">
+          {settings.showTitle && (
+            <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'FAQ'}</h2>
+          )}
+          <p className="text-text-secondary">FAQ coming soon</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-20 px-4 bg-surface-subtle">
+      <div className="max-w-3xl mx-auto">
+        {settings.showTitle && (
+          <div className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Good to know</p>
+            <h2 className="text-4xl font-light text-text-primary">{settings.title || 'FAQ'}</h2>
+            <div className="w-10 h-px bg-primary mx-auto mt-6" />
+          </div>
+        )}
+        <div className="space-y-2">
+          {faqsToShow.map(item => (
+            <div key={item.id} className="border border-border rounded-xl overflow-hidden bg-surface">
+              <button
+                onClick={() => setOpenId(openId === item.id ? null : item.id)}
+                className="w-full flex items-center justify-between p-5 text-left hover:bg-surface-subtle transition-colors"
+                aria-expanded={openId === item.id}
+              >
+                <span className="font-medium text-text-primary pr-4">{item.q}</span>
+                <ChevronDown
+                  className={"w-5 h-5 text-primary flex-shrink-0 transition-transform duration-200 " + (openId === item.id ? "rotate-180" : "")}
+                  aria-hidden="true"
+                />
+              </button>
+              {openId === item.id && (
+                <div className="px-5 pb-5 text-text-secondary whitespace-pre-wrap border-t border-border pt-4">
+                  {item.a}
+                </div>
+              )}
             </div>
           ))}
         </div>

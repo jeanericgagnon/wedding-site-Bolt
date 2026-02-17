@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { SectionSettingsDrawer } from '../../components/dashboard/SectionSettingsDrawer';
 import { GuidedBuilderModules } from '../../components/dashboard/GuidedBuilderModules';
-import { Card, Button, Input, Textarea, Select } from '../../components/ui';
-import { ExternalLink, Save, Edit, Layout as LayoutIcon, Eye, EyeOff, GripVertical, Settings } from 'lucide-react';
+import { Card, Button } from '../../components/ui';
+import { ExternalLink, Save, Edit, Layout as LayoutIcon, Eye, EyeOff, GripVertical, Settings, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { WeddingDataV1, createEmptyWeddingData } from '../../types/weddingData';
 import { LayoutConfigV1, SectionInstance } from '../../types/layoutConfig';
 import { getSectionVariants } from '../../sections/sectionRegistry';
-import { generateInitialLayout } from '../../lib/generateInitialLayout';
+import { generateInitialLayout, regenerateLayout } from '../../lib/generateInitialLayout';
+import { getAllTemplates } from '../../templates/registry';
 import {
   DndContext,
   closestCenter,
@@ -63,26 +64,32 @@ function SortableSection({ section, onToggle, onVariantChange, onEdit }: Sortabl
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary"
+          aria-label="Drag to reorder"
         >
           <GripVertical className="w-5 h-5" />
         </button>
 
         <div className="flex-1">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-text-primary capitalize">
-              {section.settings.title || section.type}
-            </h3>
+            <div>
+              <h3 className="font-semibold text-text-primary capitalize">
+                {section.settings.title || section.type}
+              </h3>
+              <p className="text-xs text-text-secondary capitalize">{section.type} · {section.variant}</p>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onEdit(section.id)}
                 className="text-text-secondary hover:text-text-primary"
                 title="Edit section settings"
+                aria-label="Edit section settings"
               >
                 <Settings className="w-4 h-4" />
               </button>
               <button
                 onClick={() => onToggle(section.id)}
                 className="text-sm"
+                aria-label={section.enabled ? 'Hide section' : 'Show section'}
               >
                 {section.enabled ? (
                   <Eye className="w-5 h-5 text-primary" />
@@ -94,12 +101,12 @@ function SortableSection({ section, onToggle, onVariantChange, onEdit }: Sortabl
           </div>
 
           {variants.length > 1 && (
-            <div>
+            <div className="flex items-center gap-2">
               <label className="text-xs text-text-secondary">Variant:</label>
               <select
                 value={section.variant}
                 onChange={(e) => onVariantChange(section.id, e.target.value)}
-                className="ml-2 text-sm border border-border rounded px-2 py-1 bg-surface"
+                className="text-sm border border-border rounded px-2 py-1 bg-surface text-text-primary"
               >
                 {variants.map((v) => (
                   <option key={v} value={v}>
@@ -125,6 +132,7 @@ export const DashboardBuilder: React.FC = () => {
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [switchingTemplate, setSwitchingTemplate] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -164,9 +172,9 @@ export const DashboardBuilder: React.FC = () => {
         setLayoutConfig(null);
         setSiteSlug(data.site_slug);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading wedding site:', err);
-      setError(err.message || 'Failed to load wedding site');
+      setError((err as Error).message || 'Failed to load wedding site');
     } finally {
       setLoading(false);
     }
@@ -209,9 +217,9 @@ export const DashboardBuilder: React.FC = () => {
       setWeddingData(newWeddingData);
       setLayoutConfig(newLayoutConfig);
       setSuccessMessage('Default layout generated successfully!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error generating default configs:', err);
-      setError(err.message || 'Failed to generate default configs');
+      setError((err as Error).message || 'Failed to generate default configs');
     } finally {
       setSaving(false);
     }
@@ -245,9 +253,9 @@ export const DashboardBuilder: React.FC = () => {
 
       setWeddingData(updatedData);
       setSuccessMessage('Wedding information saved successfully!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving wedding data:', err);
-      setError(err.message || 'Failed to save changes');
+      setError((err as Error).message || 'Failed to save changes');
     } finally {
       setSaving(false);
     }
@@ -274,18 +282,59 @@ export const DashboardBuilder: React.FC = () => {
 
       const { error: updateError } = await supabase
         .from('wedding_sites')
-        .update({ layout_config: updatedConfig })
+        .update({ layout_config: updatedConfig, active_template_id: updatedConfig.templateId })
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 
       setLayoutConfig(updatedConfig);
       setSuccessMessage('Layout saved successfully!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving layout:', err);
-      setError(err.message || 'Failed to save layout');
+      setError((err as Error).message || 'Failed to save layout');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSwitchTemplate = async (newTemplateId: string) => {
+    if (!weddingData || !layoutConfig) return;
+    if (newTemplateId === layoutConfig.templateId) return;
+
+    setSwitchingTemplate(true);
+    setError(null);
+
+    try {
+      const newLayout = regenerateLayout(newTemplateId, weddingData, layoutConfig);
+      const newWeddingData = {
+        ...weddingData,
+        theme: {
+          ...weddingData.theme,
+        },
+      };
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error: updateError } = await supabase
+        .from('wedding_sites')
+        .update({
+          layout_config: newLayout,
+          active_template_id: newTemplateId,
+          wedding_data: newWeddingData,
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      setLayoutConfig(newLayout);
+      setWeddingData(newWeddingData);
+      setSuccessMessage('Template switched successfully! Your section settings were preserved.');
+    } catch (err: unknown) {
+      console.error('Error switching template:', err);
+      setError((err as Error).message || 'Failed to switch template');
+    } finally {
+      setSwitchingTemplate(false);
     }
   };
 
@@ -318,7 +367,6 @@ export const DashboardBuilder: React.FC = () => {
   const toggleSectionEnabled = (sectionId: string) => {
     setLayoutConfig((prev) => {
       if (!prev) return prev;
-
       return {
         ...prev,
         pages: [
@@ -336,7 +384,6 @@ export const DashboardBuilder: React.FC = () => {
   const changeSectionVariant = (sectionId: string, variant: string) => {
     setLayoutConfig((prev) => {
       if (!prev) return prev;
-
       return {
         ...prev,
         pages: [
@@ -354,7 +401,6 @@ export const DashboardBuilder: React.FC = () => {
   const updateSectionSettings = (sectionId: string, updates: Partial<SectionInstance>) => {
     setLayoutConfig((prev) => {
       if (!prev) return prev;
-
       return {
         ...prev,
         pages: [
@@ -371,7 +417,7 @@ export const DashboardBuilder: React.FC = () => {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout currentPage="builder">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -384,7 +430,7 @@ export const DashboardBuilder: React.FC = () => {
 
   if (!weddingData || !layoutConfig) {
     return (
-      <DashboardLayout>
+      <DashboardLayout currentPage="builder">
         <Card>
           <div className="p-8 text-center max-w-md mx-auto">
             <h2 className="text-2xl font-bold text-text-primary mb-4">
@@ -409,8 +455,10 @@ export const DashboardBuilder: React.FC = () => {
     );
   }
 
+  const templates = getAllTemplates();
+
   return (
-    <DashboardLayout>
+    <DashboardLayout currentPage="builder">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -422,7 +470,7 @@ export const DashboardBuilder: React.FC = () => {
           {siteSlug && (
             <Button
               variant="outline"
-              onClick={() => window.open(`/site/${siteSlug}`, '_blank')}
+              onClick={() => window.open('/site/' + siteSlug, '_blank')}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               Preview Site
@@ -445,22 +493,22 @@ export const DashboardBuilder: React.FC = () => {
         <div className="mb-6 flex gap-2 border-b border-border">
           <button
             onClick={() => setActiveTab('guided')}
-            className={`px-6 py-3 font-medium flex items-center gap-2 ${
+            className={"px-6 py-3 font-medium flex items-center gap-2 " + (
               activeTab === 'guided'
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-text-secondary hover:text-text-primary'
-            }`}
+            )}
           >
             <Edit className="w-4 h-4" />
             Guided
           </button>
           <button
             onClick={() => setActiveTab('canvas')}
-            className={`px-6 py-3 font-medium flex items-center gap-2 ${
+            className={"px-6 py-3 font-medium flex items-center gap-2 " + (
               activeTab === 'canvas'
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-text-secondary hover:text-text-primary'
-            }`}
+            )}
           >
             <LayoutIcon className="w-4 h-4" />
             Canvas
@@ -482,11 +530,57 @@ export const DashboardBuilder: React.FC = () => {
           <div className="space-y-6">
             <Card>
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-text-primary mb-4">
+                <h2 className="text-xl font-semibold text-text-primary mb-2">Template</h2>
+                <p className="text-text-secondary text-sm mb-5">
+                  Switch templates to change section order and variants. Your existing content and settings are preserved.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {templates.map(tpl => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => handleSwitchTemplate(tpl.id)}
+                      disabled={switchingTemplate}
+                      className={"p-4 rounded-xl border-2 text-left transition-all " + (
+                        layoutConfig.templateId === tpl.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/40 hover:bg-surface-subtle'
+                      )}
+                      aria-pressed={layoutConfig.templateId === tpl.id}
+                    >
+                      <div className="aspect-[3/4] rounded-lg bg-surface-subtle mb-3 flex items-center justify-center overflow-hidden">
+                        <div className="space-y-1.5 w-full px-3">
+                          <div className="h-2 bg-primary/20 rounded-full w-full" />
+                          <div className="h-1.5 bg-border rounded-full w-3/4" />
+                          <div className="h-1.5 bg-border rounded-full w-1/2" />
+                          <div className="h-6 bg-primary/10 rounded mt-2" />
+                          <div className="h-1.5 bg-border rounded-full w-full" />
+                          <div className="h-1.5 bg-border rounded-full w-5/6" />
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold text-text-primary">{tpl.name}</p>
+                      <p className="text-xs text-text-secondary mt-0.5 leading-snug">{tpl.description}</p>
+                      {layoutConfig.templateId === tpl.id && (
+                        <span className="inline-block mt-2 text-xs text-primary font-medium">Active</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {switchingTemplate && (
+                  <div className="flex items-center gap-2 mt-4 text-sm text-primary">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Switching template...
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            <Card>
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-text-primary mb-2">
                   Sections
                 </h2>
                 <p className="text-text-secondary text-sm mb-6">
-                  Drag to reorder, click eye icon to show/hide sections
+                  Drag to reorder, click eye icon to show/hide, change variant per section
                 </p>
 
                 <DndContext

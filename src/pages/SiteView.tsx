@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { WeddingDataV1 } from '../types/weddingData';
 import { LayoutConfigV1 } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
+import { applyThemePreset } from '../lib/themePresets';
 
 export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -57,9 +58,13 @@ export const SiteView: React.FC = () => {
           return;
         }
 
+        if (wData.theme?.preset) {
+          applyThemePreset(wData.theme.preset);
+        }
+
         setWeddingData(wData);
         setLayoutConfig(lConfig);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error loading site:', err);
         setError('Failed to load wedding site');
       } finally {
@@ -68,6 +73,18 @@ export const SiteView: React.FC = () => {
     };
 
     loadSite();
+
+    return () => {
+      const el = document.documentElement;
+      const resetProps = [
+        '--color-primary', '--color-primary-hover', '--color-primary-light',
+        '--color-accent', '--color-accent-hover', '--color-accent-light',
+        '--color-secondary', '--color-background', '--color-surface',
+        '--color-surface-subtle', '--color-border',
+        '--color-text-primary', '--color-text-secondary',
+      ];
+      resetProps.forEach(p => el.style.removeProperty(p));
+    };
   }, [slug]);
 
   if (loading) {
@@ -124,7 +141,6 @@ export const SiteView: React.FC = () => {
             sectionInstance.type,
             sectionInstance.variant
           );
-
           return (
             <SectionComponent
               key={sectionInstance.id}
@@ -133,7 +149,7 @@ export const SiteView: React.FC = () => {
             />
           );
         } catch (err) {
-          console.error(`Error rendering section ${sectionInstance.type}:`, err);
+          console.error("Error rendering section " + sectionInstance.type + ":", err);
           return (
             <div key={sectionInstance.id} className="py-8 px-4 bg-error-light text-error text-center">
               <p>Error rendering {sectionInstance.type} section</p>

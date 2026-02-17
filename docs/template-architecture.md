@@ -1,224 +1,211 @@
-# Template Architecture
-
-This document describes the template system architecture implemented in the wedding site application.
+# Template Authoring & Variant Architecture
 
 ## Overview
 
-The template system provides a flexible, data-driven approach to generating and managing wedding sites. It separates **canonical content** from **presentation layer**, enabling template switching while preserving user data.
+The template system is built on three layers:
 
-## Core Concepts
+1. **Template Registry** (`src/templates/registry.ts`) — defines which sections appear, in what order, with which variant, and with which default settings.
+2. **Section Registry** (`src/sections/sectionRegistry.tsx`) — maps section types to React components and registers all available variants.
+3. **Theme Presets** (`src/lib/themePresets.ts`) — maps preset IDs to CSS custom property overrides applied at the `:root` element.
 
-### 1. Canonical Data (`WeddingDataV1`)
+---
 
-Located in `src/types/weddingData.ts`, this is the single source of truth for wedding content:
+## Canonical Template IDs
 
-- **Couple Info**: Partner names, story, display name
-- **Event Details**: Wedding date, timezone
-- **Venues**: Array of venue objects with names, addresses, coordinates
-- **Schedule**: Timeline items with start/end times and venue references
-- **RSVP**: Settings and deadline
-- **Registry**: Gift registry links
-- **FAQ**: Questions and answers
-- **Theme**: Color scheme and tokens
-- **Media**: Hero image and gallery photos
-- **Metadata**: Creation and update timestamps
+| ID | Name | Theme Preset | Layout Focus |
+|----|------|-------------|--------------|
+| `base` | Base | romantic | All sections, standard order |
+| `modern` | Modern | elegant | Gallery-first, minimal |
+| `editorial` | Editorial | garden | Story-first, typographic |
+| `classic` | Classic | classic | Traditional, ceremony-order |
+| `rustic` | Rustic | *(alias for classic)* | Alias — resolves to classic |
 
-This data is **template-agnostic** - the same wedding data works with any template.
+### Aliases
 
-### 2. Layout Configuration (`LayoutConfigV1`)
+Aliases are declared in `TEMPLATE_REGISTRY` as duplicate keys pointing to canonical `TemplateDefinition` objects:
 
-Located in `src/types/layoutConfig.ts`, this defines how content is presented:
-
-- **Template ID**: Which template is active
-- **Pages**: Array of pages (currently just "home")
-- **Sections**: Ordered array of section instances with:
-  - **Type**: hero, story, venue, schedule, etc.
-  - **Variant**: "default" or future variants like "split", "cards"
-  - **Enabled**: Show/hide toggle
-  - **Bindings**: Which data items to display (e.g., which venues, schedule items)
-  - **Settings**: Title overrides, display options
-  - **Metadata**: Timestamps
-
-This layer is **regenerable** - you can switch templates and get a new layout while keeping all your wedding data.
-
-### 3. Template Registry
-
-Located in `src/templates/registry.ts`, defines available templates:
-
-- **Base**: Traditional layout with all sections
-- **Modern**: Gallery-first contemporary design
-- **Editorial**: Story-focused with elegant typography
-
-Each template defines:
-- Default section order
-- Default theme preset
-- Default section variants
-- Initial bindings and settings
-
-### 4. Section Registry
-
-Located in `src/sections/sectionRegistry.tsx`, maps section types to React components:
-
-- **Hero**: Welcome banner
-- **Story**: Couple's story
-- **Venue**: Location details
-- **Schedule**: Timeline of events
-- **Travel**: Accommodation info
-- **Registry**: Gift links
-- **RSVP**: Response form
-- **FAQ**: Questions and answers
-- **Gallery**: Photo gallery
-
-Each section component receives:
-- `data`: Full `WeddingDataV1` object
-- `instance`: Section configuration with bindings
-
-## Database Schema
-
-Columns in `wedding_sites` table:
-
-- `wedding_data` (jsonb): Complete WeddingDataV1 object
-- `layout_config` (jsonb): Complete LayoutConfigV1 object
-- `active_template_id` (text): Current template
-- `site_slug` (text, unique): Public URL identifier
-- Legacy columns preserved for backward compatibility
-
-## Data Flow
-
-```
-Onboarding → Generate Wedding Data → Generate Layout → Database
-                                                           ↓
-                                                   Builder (Edit)
-                                                     ↓         ↓
-                                            Edit Data    Edit Layout
-                                                     ↓         ↓
-                                                    Database
-                                                       ↓
-                                              Site Renderer → Public Site
+```ts
+export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
+  base: baseTemplate,
+  modern: modernTemplate,
+  editorial: editorialTemplate,
+  classic: classicTemplate,
+  rustic: classicTemplate, // alias
+};
 ```
 
-### Onboarding Flow
+`getAllTemplates()` returns only canonical templates (not aliases), so the UI shows 4 options.
 
-1. User completes Quick Start or Guided Setup
-2. `fromOnboarding()` creates WeddingDataV1 from form inputs
-3. `generateInitialLayout()` creates LayoutConfigV1 from template defaults
-4. Both saved to database with site_slug
-5. User redirected to dashboard
+---
 
-### Builder Flow (Two Modes)
+## Adding a New Template
 
-**Guided Mode:**
-- Edit canonical wedding data directly
-- Forms for couple info, dates, story, etc.
-- Updates saved to `wedding_data`
+1. Create a `TemplateDefinition` constant in `src/templates/registry.ts`:
 
-**Canvas Mode:**
-- Drag/drop to reorder sections
-- Toggle section visibility
-- Change section variants
-- Updates saved to `layout_config`
+```ts
+const myTemplate: TemplateDefinition = {
+  id: 'my-template',
+  name: 'My Template',
+  description: 'Short description for UI',
+  defaultThemePreset: 'elegant', // one of the keys in THEME_PRESETS
+  defaultLayout: {
+    sections: [
+      {
+        type: 'hero',
+        variant: 'fullbleed', // must match a key in SECTION_REGISTRY[type].variants
+        enabled: true,
+        bindings: {},
+        settings: { showTitle: true },
+      },
+      // ... more sections
+    ],
+  },
+};
+```
 
-### Template Switching
+2. Register it in `TEMPLATE_REGISTRY`:
 
-Located in Settings → Site Settings:
+```ts
+export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
+  // ...existing
+  'my-template': myTemplate,
+};
+```
 
-1. User selects new template
-2. `regenerateLayout()` creates new LayoutConfigV1 using:
-   - New template's defaults
-   - Existing wedding_data
-   - Preserved customizations (enabled state, order)
-3. Saves new layout_config and active_template_id
+3. Add it to `getAllTemplates()` return array.
 
-**Key Feature**: Wedding content is never lost during template changes.
+---
 
-### Public Site Rendering
+## Section Variants Architecture
 
-1. Request `/site/:slug`
-2. Load `wedding_data` and `layout_config` by slug
-3. Validate versions
-4. Render enabled sections in order using section registry
-5. Each section component reads from wedding_data using bindings
+Each section type can have multiple **variants** — alternate React component implementations with different visual styles.
 
-## Helper Functions
+### Variant Naming Conventions
 
-### Data Generation
+| Variant | Style |
+|---------|-------|
+| `default` | Standard baseline design |
+| `minimal` | Stripped back, whitespace-heavy |
+| `fullbleed` | Edge-to-edge imagery |
+| `card` | Card-based layout |
+| `grid` | Grid arrangement |
+| `timeline` | Vertical timeline |
+| `accordion` | Collapsible accordion |
+| `split` | Two-column split layout |
+| `masonry` | Masonry/column photo grid |
+| `inline` | Compact inline design |
+| `cards` | Multiple cards in a row |
 
-- `fromOnboarding()` (`src/lib/generateWeddingData.ts`)
-  - Converts form inputs to WeddingDataV1
-  - Creates venue and schedule objects
-  - Generates FAQs and registry links
+### Adding a New Variant
 
-- `generateInitialLayout()` (`src/lib/generateInitialLayout.ts`)
-  - Creates LayoutConfigV1 from template definition
-  - Sets up bindings to wedding data IDs
-  - Assigns default variants and settings
+1. Export a new component from the section file:
 
-- `regenerateLayout()` (`src/lib/generateInitialLayout.ts`)
-  - Preserves user customizations during template switch
-  - Maps sections by type to maintain order
-  - Keeps enabled state and settings
+```tsx
+// src/sections/components/HeroSection.tsx
+export const HeroMyVariant: React.FC<Props> = ({ data, instance }) => {
+  // ...
+};
+```
 
-### URL Generation
+2. Register it in `SECTION_REGISTRY` in `src/sections/sectionRegistry.tsx`:
 
-- `generateWeddingSlug()` (`src/lib/slugify.ts`)
-  - Creates URL-safe slug from couple names
-  - Format: "partner1-and-partner2"
-  - Fallback to timestamp if names invalid
+```ts
+hero: {
+  component: HeroSection,
+  variants: {
+    default: HeroSection,
+    minimal: HeroMinimal,
+    fullbleed: HeroFullbleed,
+    myvariant: HeroMyVariant, // new
+  },
+  supportedBindings: [],
+  supportedSettings: ['showTitle'],
+},
+```
 
-## Configuration
+3. Assign the variant in a template definition:
 
-### Pricing
+```ts
+{ type: 'hero', variant: 'myvariant', enabled: true, bindings: {}, settings: { showTitle: true } }
+```
 
-Unified at **$49 one-time** in `src/config/pricing.ts`
+### Variant Fallback Behavior
 
-### Demo Mode
+`getSectionComponent(type, variant)` falls back to the `component` (default) if the specified variant is not found. This ensures backward compatibility when variants are added or renamed.
 
-Located in `src/config/env.ts`:
+---
 
-- `DEMO_MODE`: Enable/disable demo functionality
-- `SUPABASE_CONFIGURED`: Check if Supabase is set up
+## Theme Preset Mapping
 
-Demo credentials only work when `VITE_DEMO_MODE=true` in environment.
+Theme presets are defined in `src/lib/themePresets.ts`. Each preset maps semantic token names to hex color values.
 
-## Adding New Templates
+### Tokens Available
 
-To add a template:
+| Token Name | CSS Variable |
+|------------|-------------|
+| `colorPrimary` | `--color-primary` |
+| `colorPrimaryHover` | `--color-primary-hover` |
+| `colorPrimaryLight` | `--color-primary-light` |
+| `colorAccent` | `--color-accent` |
+| `colorAccentHover` | `--color-accent-hover` |
+| `colorAccentLight` | `--color-accent-light` |
+| `colorSecondary` | `--color-secondary` |
+| `colorBackground` | `--color-background` |
+| `colorSurface` | `--color-surface` |
+| `colorSurfaceSubtle` | `--color-surface-subtle` |
+| `colorBorder` | `--color-border` |
+| `colorTextPrimary` | `--color-text-primary` |
+| `colorTextSecondary` | `--color-text-secondary` |
 
-1. Add to `TEMPLATE_REGISTRY` in `src/templates/registry.ts`:
-   ```typescript
-   const newTemplate: TemplateDefinition = {
-     id: 'my-template',
-     name: 'My Template',
-     description: 'A beautiful new layout',
-     defaultThemePreset: 'elegant',
-     defaultLayout: {
-       sections: [/* section configs */]
-     }
-   };
-   ```
+### Adding a New Theme Preset
 
-2. Define section order and variants
-3. No data model changes needed
-4. Users can switch to it in Settings
+```ts
+export const THEME_PRESETS: Record<string, ThemePreset> = {
+  // ...existing
+  winter: {
+    id: 'winter',
+    name: 'Winter',
+    description: 'Icy blues and crisp whites',
+    tokens: {
+      colorPrimary: '#5B8FA8',
+      colorPrimaryHover: '#4A7A91',
+      colorPrimaryLight: '#EBF3F8',
+      // ... fill all 13 tokens
+    },
+  },
+};
+```
 
-## Adding New Sections
+### How Themes are Applied
 
-To add a section type:
+On `SiteView`, after loading `WeddingDataV1`, `applyThemePreset(data.theme.preset)` is called to inject CSS variables on `document.documentElement`. The cleanup function in the `useEffect` removes the overrides when the component unmounts.
 
-1. Add type to `SectionType` in `src/types/layoutConfig.ts`
-2. Create component in `src/sections/components/`
-3. Register in `SECTION_REGISTRY` in `src/sections/sectionRegistry.tsx`
-4. Add to template default layouts
+---
 
-## Future Enhancements
+## Template Switching & Binding Preservation
 
-Supported by architecture:
+`regenerateLayout(newTemplateId, data, currentLayout)` in `src/lib/generateInitialLayout.ts` performs a **safe template switch**:
 
-- Section variants (e.g., hero layouts: "centered", "split", "full-image")
-- Rich text editor for story and FAQ
-- Photo uploads and galleries
-- Custom CSS per section
-- A/B testing of variants
-- Template preview before switching
-- Export/import wedding data
-- Collaboration features
+1. Generates a fresh layout from the new template.
+2. For each section in the new layout, looks up any existing section of the same **type** in the current layout.
+3. If found, preserves:
+   - `enabled` state (visible/hidden)
+   - `settings` (title, showTitle, subtitle, etc.) — new template defaults fill in any new settings keys
+   - `bindings` (venueIds, scheduleItemIds, etc.)
+4. New section types in the new template get fresh defaults.
+5. Section types removed from the new template are discarded.
+
+This ensures that:
+- Custom titles and visibility toggles survive template changes.
+- Data bindings are not reset.
+- The section order follows the new template's opinionated sequence.
+
+---
+
+## Compatibility Notes
+
+- `WeddingDataV1.version === '1'` — the only supported version; `SiteView` rejects anything else.
+- `LayoutConfigV1.version === '1'` — same constraint.
+- Variant `'default'` must always exist in every section's variant map; it is the fallback.
+- Template IDs stored in `layout_config.templateId` and `wedding_sites.active_template_id` must resolve in `TEMPLATE_REGISTRY` or fall back to `'base'`.
+- Alias template IDs (e.g., `'rustic'`) are valid in the DB but resolve to their canonical template at runtime.

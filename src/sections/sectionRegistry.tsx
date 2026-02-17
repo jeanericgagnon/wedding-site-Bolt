@@ -3,15 +3,15 @@ import { SectionType } from '../types/layoutConfig';
 import { WeddingDataV1 } from '../types/weddingData';
 import { SectionInstance } from '../types/layoutConfig';
 
-import { HeroSection } from './components/HeroSection';
-import { StorySection } from './components/StorySection';
-import { VenueSection } from './components/VenueSection';
-import { ScheduleSection } from './components/ScheduleSection';
-import { TravelSection } from './components/TravelSection';
-import { RegistrySection } from './components/RegistrySection';
-import { RsvpSection } from './components/RsvpSection';
-import { FaqSection } from './components/FaqSection';
-import { GallerySection } from './components/GallerySection';
+import { HeroSection, HeroMinimal, HeroFullbleed } from './components/HeroSection';
+import { StorySection, StoryCentered, StorySplit } from './components/StorySection';
+import { VenueSection, VenueCard } from './components/VenueSection';
+import { ScheduleSection, ScheduleTimeline } from './components/ScheduleSection';
+import { TravelSection, TravelCards } from './components/TravelSection';
+import { RegistrySection, RegistryGrid } from './components/RegistrySection';
+import { RsvpSection, RsvpInline } from './components/RsvpSection';
+import { FaqSection, FaqAccordion } from './components/FaqSection';
+import { GallerySection, GalleryMasonry } from './components/GallerySection';
 
 export interface SectionComponentProps {
   data: WeddingDataV1;
@@ -34,6 +34,8 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: HeroSection,
     variants: {
       default: HeroSection,
+      minimal: HeroMinimal,
+      fullbleed: HeroFullbleed,
     },
     supportedBindings: [],
     supportedSettings: ['showTitle'],
@@ -42,6 +44,8 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: StorySection,
     variants: {
       default: StorySection,
+      centered: StoryCentered,
+      split: StorySplit,
     },
     supportedBindings: [],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -50,6 +54,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: VenueSection,
     variants: {
       default: VenueSection,
+      card: VenueCard,
     },
     supportedBindings: ['venueIds'],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -58,6 +63,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: ScheduleSection,
     variants: {
       default: ScheduleSection,
+      timeline: ScheduleTimeline,
     },
     supportedBindings: ['scheduleItemIds'],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -66,6 +72,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: TravelSection,
     variants: {
       default: TravelSection,
+      cards: TravelCards,
     },
     supportedBindings: [],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -74,6 +81,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: RegistrySection,
     variants: {
       default: RegistrySection,
+      grid: RegistryGrid,
     },
     supportedBindings: ['linkIds'],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -82,6 +90,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: RsvpSection,
     variants: {
       default: RsvpSection,
+      inline: RsvpInline,
     },
     supportedBindings: [],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -90,6 +99,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: FaqSection,
     variants: {
       default: FaqSection,
+      accordion: FaqAccordion,
     },
     supportedBindings: ['faqIds'],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -98,6 +108,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     component: GallerySection,
     variants: {
       default: GallerySection,
+      masonry: GalleryMasonry,
     },
     supportedBindings: [],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -110,9 +121,8 @@ export function getSectionComponent(
 ): SectionComponent {
   const definition = SECTION_REGISTRY[type];
   if (!definition) {
-    throw new Error(`Unknown section type: ${type}`);
+    throw new Error('Unknown section type: ' + type);
   }
-
   return definition.variants[variant] || definition.component;
 }
 
