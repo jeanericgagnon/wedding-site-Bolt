@@ -105,7 +105,7 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
         <div className="relative">
           <div className="absolute left-[5.25rem] top-0 bottom-0 w-px bg-border" />
           <div className="space-y-10">
-            {itemsToShow.map((item, index) => {
+            {itemsToShow.map((item) => {
               const venue = item.venueId ? venues.find(v => v.id === item.venueId) : null;
               return (
                 <div key={item.id} className="flex gap-6 items-start">
@@ -114,7 +114,6 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
                   </div>
                   <div className="relative flex-shrink-0 mt-0.5">
                     <div className="w-3 h-3 rounded-full bg-primary ring-4 ring-surface-subtle" />
-                    {index < itemsToShow.length - 1 && <div className="absolute left-1/2 top-full w-px" />}
                   </div>
                   <div className="flex-1 pb-2">
                     <h3 className="font-semibold text-text-primary mb-1">{item.label}</h3>

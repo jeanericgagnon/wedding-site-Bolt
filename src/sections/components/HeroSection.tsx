@@ -9,15 +9,17 @@ interface Props {
 
 function formatDate(iso: string | undefined): string {
   if (!iso) return 'Date TBD';
-  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', {
+  const dateStr = iso.includes('T') ? iso : iso + 'T12:00:00';
+  return new Date(dateStr).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 }
 
-export const HeroSection: React.FC<Props> = ({ data }) => {
+export const HeroSection: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
+  const { settings } = instance;
   const displayName = couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
 
@@ -30,9 +32,11 @@ export const HeroSection: React.FC<Props> = ({ data }) => {
         </div>
       )}
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <p className="text-sm uppercase tracking-[0.25em] text-text-secondary mb-6 font-medium">
-          We are getting married
-        </p>
+        {settings.showTitle !== false && (
+          <p className="text-sm uppercase tracking-[0.25em] text-text-secondary mb-6 font-medium">
+            {settings.title || 'We are getting married'}
+          </p>
+        )}
         <h1 className="text-5xl md:text-7xl font-bold text-text-primary mb-6 leading-tight">
           {displayName}
         </h1>
@@ -43,8 +47,9 @@ export const HeroSection: React.FC<Props> = ({ data }) => {
   );
 };
 
-export const HeroMinimal: React.FC<Props> = ({ data }) => {
+export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
+  const { settings } = instance;
   const displayName = couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
   const hasImage = !!media.heroImageUrl;
@@ -59,6 +64,11 @@ export const HeroMinimal: React.FC<Props> = ({ data }) => {
       )}
       <div className="relative z-10 w-full px-8 md:px-16">
         <div className="max-w-6xl mx-auto">
+          {settings.showTitle !== false && (
+            <p className={"text-sm uppercase tracking-[0.25em] font-medium mb-3 " + (hasImage ? "text-white/70" : "text-text-secondary")}>
+              {settings.title || 'We are getting married'}
+            </p>
+          )}
           <h1
             className={"text-6xl md:text-8xl font-light tracking-tight mb-3 " + (hasImage ? "text-white" : "text-text-primary")}
           >
@@ -73,8 +83,9 @@ export const HeroMinimal: React.FC<Props> = ({ data }) => {
   );
 };
 
-export const HeroFullbleed: React.FC<Props> = ({ data }) => {
+export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
+  const { settings } = instance;
   const displayName = couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
 
@@ -93,11 +104,13 @@ export const HeroFullbleed: React.FC<Props> = ({ data }) => {
         <h1 className="text-6xl md:text-9xl font-light tracking-tight text-white leading-none mb-8">
           {displayName}
         </h1>
-        <div className="flex items-center justify-center gap-6">
-          <div className="h-px w-12 bg-white/50" />
-          <p className="text-sm tracking-widest text-white/70 uppercase font-medium">Join us</p>
-          <div className="h-px w-12 bg-white/50" />
-        </div>
+        {settings.showTitle !== false && (
+          <div className="flex items-center justify-center gap-6">
+            <div className="h-px w-12 bg-white/50" />
+            <p className="text-sm tracking-widest text-white/70 uppercase font-medium">{settings.title || 'Join us'}</p>
+            <div className="h-px w-12 bg-white/50" />
+          </div>
+        )}
       </div>
     </section>
   );

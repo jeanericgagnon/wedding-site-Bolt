@@ -125,7 +125,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
       case 'schedule':
         return weddingData.schedule.length > 0 ? 'complete' : 'incomplete';
       case 'travel':
-        return weddingData.venues.length > 0 ? 'complete' : 'incomplete';
+        return weddingData.venues.length > 0 || !!(weddingData.travel?.notes || weddingData.travel?.flightInfo || weddingData.travel?.hotelInfo) ? 'complete' : 'incomplete';
       case 'registry':
         return weddingData.registry.links.length > 0 ? 'complete' : 'incomplete';
       case 'faq':
@@ -160,7 +160,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
     });
   };
 
-  const updateVenue = (id: string, updates: any) => {
+  const updateVenue = (id: string, updates: Partial<WeddingDataV1['venues'][number]>) => {
     onChange({
       ...weddingData,
       venues: weddingData.venues.map((v) => (v.id === id ? { ...v, ...updates } : v)),
@@ -186,7 +186,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
     });
   };
 
-  const updateScheduleItem = (id: string, updates: any) => {
+  const updateScheduleItem = (id: string, updates: Partial<WeddingDataV1['schedule'][number]>) => {
     onChange({
       ...weddingData,
       schedule: weddingData.schedule.map((s) => (s.id === id ? { ...s, ...updates } : s)),
@@ -215,7 +215,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
     });
   };
 
-  const updateRegistryLink = (id: string, updates: any) => {
+  const updateRegistryLink = (id: string, updates: Partial<WeddingDataV1['registry']['links'][number]>) => {
     onChange({
       ...weddingData,
       registry: {
@@ -247,7 +247,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
     });
   };
 
-  const updateFaq = (id: string, updates: any) => {
+  const updateFaq = (id: string, updates: Partial<WeddingDataV1['faq'][number]>) => {
     onChange({
       ...weddingData,
       faq: weddingData.faq.map((f) => (f.id === id ? { ...f, ...updates } : f)),
@@ -276,7 +276,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
     });
   };
 
-  const updateGalleryImage = (id: string, updates: any) => {
+  const updateGalleryImage = (id: string, updates: Partial<WeddingDataV1['media']['gallery'][number]>) => {
     onChange({
       ...weddingData,
       media: {
@@ -464,8 +464,8 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                         <AddressInput
                           label="Address"
                           value={venue.address || ''}
-                          onChange={(address, placeId, lat, lng) =>
-                            updateVenue(venue.id, { address, placeId, lat, lng })
+                          onChange={(address, coordinates) =>
+                            updateVenue(venue.id, { address, lat: coordinates?.lat, lng: coordinates?.lng })
                           }
                           placeholder="Search for venue address"
                         />
@@ -617,23 +617,66 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'travel' && (
                 <div className="space-y-4">
                   <p className="text-sm text-text-secondary">
-                    Travel information is derived from your venue data. Add venues above to populate this section.
+                    Venue addresses are automatically shown. Add extra details below for your guests.
                   </p>
-                  {weddingData.venues.length === 0 && (
-                    <div className="p-4 bg-surface rounded-lg border border-border text-center">
-                      <p className="text-text-secondary">No venues added yet. Add a venue to enable travel information.</p>
-                    </div>
-                  )}
                   {weddingData.venues.length > 0 && (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {weddingData.venues.map((venue) => (
-                        <div key={venue.id} className="p-4 bg-background rounded-lg border border-border">
-                          <h4 className="font-medium text-text-primary mb-2">{venue.name || 'Unnamed Venue'}</h4>
-                          <p className="text-sm text-text-secondary">{venue.address}</p>
+                        <div key={venue.id} className="p-3 bg-background rounded-lg border border-border flex items-center gap-2">
+                          <span className="font-medium text-text-primary text-sm">{venue.name || 'Unnamed Venue'}</span>
+                          {venue.address && <span className="text-xs text-text-secondary truncate">{venue.address}</span>}
                         </div>
                       ))}
                     </div>
                   )}
+                  <Textarea
+                    label="General Travel Notes"
+                    value={weddingData.travel?.notes || ''}
+                    onChange={(e) =>
+                      onChange({
+                        ...weddingData,
+                        travel: { ...weddingData.travel, notes: e.target.value },
+                      })
+                    }
+                    rows={3}
+                    placeholder="General travel tips or notes for your guests..."
+                  />
+                  <Textarea
+                    label="Getting Here (Flights / Transport)"
+                    value={weddingData.travel?.flightInfo || ''}
+                    onChange={(e) =>
+                      onChange({
+                        ...weddingData,
+                        travel: { ...weddingData.travel, flightInfo: e.target.value },
+                      })
+                    }
+                    rows={3}
+                    placeholder="Nearest airports, train stations, or transport options..."
+                  />
+                  <Textarea
+                    label="Hotel Recommendations"
+                    value={weddingData.travel?.hotelInfo || ''}
+                    onChange={(e) =>
+                      onChange({
+                        ...weddingData,
+                        travel: { ...weddingData.travel, hotelInfo: e.target.value },
+                      })
+                    }
+                    rows={3}
+                    placeholder="Recommended hotels, room blocks, or Airbnb suggestions..."
+                  />
+                  <Textarea
+                    label="Parking Information"
+                    value={weddingData.travel?.parkingInfo || ''}
+                    onChange={(e) =>
+                      onChange({
+                        ...weddingData,
+                        travel: { ...weddingData.travel, parkingInfo: e.target.value },
+                      })
+                    }
+                    rows={2}
+                    placeholder="Parking instructions, lot locations, or valet info..."
+                  />
                 </div>
               )}
 

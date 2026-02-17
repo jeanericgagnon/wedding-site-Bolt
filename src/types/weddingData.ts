@@ -32,6 +32,12 @@ export interface WeddingDataV1 {
     enabled: boolean;
     deadlineISO?: string;
   };
+  travel: {
+    notes?: string;
+    parkingInfo?: string;
+    hotelInfo?: string;
+    flightInfo?: string;
+  };
   registry: {
     links: Array<{
       id: string;
@@ -77,6 +83,7 @@ export function createEmptyWeddingData(): WeddingDataV1 {
     rsvp: {
       enabled: true,
     },
+    travel: {},
     registry: {
       links: [],
     },
