@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { SectionSettingsDrawer } from '../../components/dashboard/SectionSettingsDrawer';
+import { GuidedBuilderModules } from '../../components/dashboard/GuidedBuilderModules';
 import { Card, Button, Input, Textarea, Select } from '../../components/ui';
-import { ExternalLink, Save, Edit, Layout as LayoutIcon, Eye, EyeOff, GripVertical } from 'lucide-react';
+import { ExternalLink, Save, Edit, Layout as LayoutIcon, Eye, EyeOff, GripVertical, Settings } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { WeddingDataV1, createEmptyWeddingData } from '../../types/weddingData';
 import { LayoutConfigV1, SectionInstance } from '../../types/layoutConfig';
@@ -31,9 +33,10 @@ interface SortableSectionProps {
   section: SectionInstance;
   onToggle: (id: string) => void;
   onVariantChange: (id: string, variant: string) => void;
+  onEdit: (id: string) => void;
 }
 
-function SortableSection({ section, onToggle, onVariantChange }: SortableSectionProps) {
+function SortableSection({ section, onToggle, onVariantChange, onEdit }: SortableSectionProps) {
   const {
     attributes,
     listeners,
@@ -67,18 +70,27 @@ function SortableSection({ section, onToggle, onVariantChange }: SortableSection
         <div className="flex-1">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-text-primary capitalize">
-              {section.type}
+              {section.settings.title || section.type}
             </h3>
-            <button
-              onClick={() => onToggle(section.id)}
-              className="text-sm"
-            >
-              {section.enabled ? (
-                <Eye className="w-5 h-5 text-primary" />
-              ) : (
-                <EyeOff className="w-5 h-5 text-text-secondary" />
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onEdit(section.id)}
+                className="text-text-secondary hover:text-text-primary"
+                title="Edit section settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onToggle(section.id)}
+                className="text-sm"
+              >
+                {section.enabled ? (
+                  <Eye className="w-5 h-5 text-primary" />
+                ) : (
+                  <EyeOff className="w-5 h-5 text-text-secondary" />
+                )}
+              </button>
+            </div>
           </div>
 
           {variants.length > 1 && (
@@ -112,6 +124,7 @@ export const DashboardBuilder: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -338,6 +351,24 @@ export const DashboardBuilder: React.FC = () => {
     });
   };
 
+  const updateSectionSettings = (sectionId: string, updates: Partial<SectionInstance>) => {
+    setLayoutConfig((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        pages: [
+          {
+            ...prev.pages[0],
+            sections: prev.pages[0].sections.map((s) =>
+              s.id === sectionId ? { ...s, ...updates } : s
+            ),
+          },
+        ],
+      };
+    });
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -437,81 +468,12 @@ export const DashboardBuilder: React.FC = () => {
         </div>
 
         {activeTab === 'guided' && weddingData && weddingData.couple && (
-          <div className="space-y-6">
-            <Card>
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-text-primary mb-4">
-                  Couple Information
-                </h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Input
-                    label="Partner 1 Name"
-                    value={weddingData.couple.partner1Name || ''}
-                    onChange={(e) =>
-                      setWeddingData({
-                        ...weddingData,
-                        couple: { ...weddingData.couple, partner1Name: e.target.value },
-                      })
-                    }
-                  />
-                  <Input
-                    label="Partner 2 Name"
-                    value={weddingData.couple.partner2Name || ''}
-                    onChange={(e) =>
-                      setWeddingData({
-                        ...weddingData,
-                        couple: { ...weddingData.couple, partner2Name: e.target.value },
-                      })
-                    }
-                  />
-                </div>
-                <div className="mt-4">
-                  <Textarea
-                    label="Your Story"
-                    value={weddingData.couple.story || ''}
-                    onChange={(e) =>
-                      setWeddingData({
-                        ...weddingData,
-                        couple: { ...weddingData.couple, story: e.target.value },
-                      })
-                    }
-                    rows={6}
-                    placeholder="Tell your love story..."
-                  />
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-text-primary mb-4">
-                  Wedding Date
-                </h2>
-                <Input
-                  type="date"
-                  label="Date"
-                  value={weddingData.event?.weddingDateISO || ''}
-                  onChange={(e) =>
-                    setWeddingData({
-                      ...weddingData,
-                      event: { ...(weddingData.event || {}), weddingDateISO: e.target.value },
-                    })
-                  }
-                />
-              </div>
-            </Card>
-
-            <div className="flex justify-end">
-              <Button
-                variant="accent"
-                onClick={saveWeddingData}
-                disabled={saving}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {saving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          </div>
+          <GuidedBuilderModules
+            weddingData={weddingData}
+            onChange={setWeddingData}
+            onSave={saveWeddingData}
+            saving={saving}
+          />
         )}
 
         {activeTab === 'canvas' && layoutConfig && (
@@ -540,6 +502,7 @@ export const DashboardBuilder: React.FC = () => {
                         section={section}
                         onToggle={toggleSectionEnabled}
                         onVariantChange={changeSectionVariant}
+                        onEdit={setEditingSectionId}
                       />
                     ))}
                   </SortableContext>
@@ -560,6 +523,16 @@ export const DashboardBuilder: React.FC = () => {
           </div>
         )}
       </div>
+
+      {weddingData && layoutConfig && editingSectionId && (
+        <SectionSettingsDrawer
+          section={layoutConfig.pages[0].sections.find((s) => s.id === editingSectionId)!}
+          weddingData={weddingData}
+          isOpen={!!editingSectionId}
+          onClose={() => setEditingSectionId(null)}
+          onUpdate={(updates) => updateSectionSettings(editingSectionId, updates)}
+        />
+      )}
     </DashboardLayout>
   );
 };
