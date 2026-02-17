@@ -8,11 +8,11 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className = '', variant = 'neutral', children, ...props }, ref) => {
     const variantStyles = {
       primary: 'bg-primary-light text-primary border-primary/20',
-      secondary: 'bg-accent-light text-accent border-accent/20',
+      secondary: 'bg-[#FAF0ED] text-accent border-accent/20',
       success: 'bg-success-light text-success border-success/20',
       warning: 'bg-warning-light text-warning border-warning/20',
       error: 'bg-error-light text-error border-error/20',
-      neutral: 'bg-surface text-text-secondary border-border',
+      neutral: 'bg-surface text-text-secondary border-border/50',
     };
 
     return (

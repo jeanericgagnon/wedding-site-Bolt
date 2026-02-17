@@ -8,14 +8,14 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'md', fullWidth = false, children, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none active:translate-y-[1px]';
+    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:shadow-none active:translate-y-[1px]';
 
     const variantStyles = {
-      primary: 'bg-primary text-text-inverse hover:bg-primary-hover shadow-sm hover:shadow-md',
-      secondary: 'bg-secondary text-text-inverse hover:bg-secondary-hover shadow-sm hover:shadow-md',
-      outline: 'border border-border-strong text-text-primary hover:bg-surface hover:border-border-strong',
-      ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle',
-      accent: 'bg-accent text-text-inverse hover:bg-accent-hover shadow-sm hover:shadow-md',
+      primary: 'bg-primary text-text-inverse hover:bg-primary-hover shadow-sm hover:shadow-md focus-visible:ring-primary/50',
+      secondary: 'bg-secondary text-text-inverse hover:bg-secondary-hover shadow-sm hover:shadow-md focus-visible:ring-secondary/50',
+      outline: 'border-2 border-border-strong text-text-primary hover:bg-surface hover:border-primary focus-visible:ring-primary/50',
+      ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface focus-visible:ring-primary/50',
+      accent: 'bg-accent text-text-inverse hover:bg-[#C2664A] shadow-sm hover:shadow-md focus-visible:ring-accent/50',
     };
 
     const sizeStyles = {
