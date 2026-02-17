@@ -467,10 +467,12 @@ export const DashboardBuilder: React.FC = () => {
           </button>
         </div>
 
-        {activeTab === 'guided' && weddingData && weddingData.couple && (
+        {activeTab === 'guided' && weddingData && layoutConfig && weddingData.couple && (
           <GuidedBuilderModules
             weddingData={weddingData}
+            layoutConfig={layoutConfig}
             onChange={setWeddingData}
+            onLayoutChange={setLayoutConfig}
             onSave={saveWeddingData}
             saving={saving}
           />

@@ -1,95 +1,138 @@
 import React, { useState } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
+import { LayoutConfigV1, SectionType } from '../../types/layoutConfig';
 import { Button, Input, Textarea, Card } from '../ui';
-import { Check, ChevronRight, Save, SkipForward, Plus, Trash2 } from 'lucide-react';
+import { Check, ChevronRight, Save, SkipForward, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { AddressInput } from '../ui/AddressInput';
 
-type ModuleId = 'basics' | 'story' | 'venues' | 'schedule' | 'registry' | 'faq' | 'media';
+type ModuleId = 'hero' | 'story' | 'venue' | 'schedule' | 'travel' | 'registry' | 'faq' | 'rsvp' | 'gallery';
 
 interface ModuleConfig {
   id: ModuleId;
   title: string;
   description: string;
-  icon: string;
+  sectionType: SectionType;
 }
 
 const modules: ModuleConfig[] = [
   {
-    id: 'basics',
-    title: 'Basics',
-    description: 'Couple names and wedding date',
-    icon: '👰',
+    id: 'hero',
+    title: 'Hero',
+    description: 'Main banner and wedding date',
+    sectionType: 'hero',
   },
   {
     id: 'story',
     title: 'Your Story',
     description: 'Share your love story',
-    icon: '💕',
+    sectionType: 'story',
   },
   {
-    id: 'venues',
+    id: 'venue',
     title: 'Venues',
     description: 'Ceremony and reception locations',
-    icon: '📍',
+    sectionType: 'venue',
   },
   {
     id: 'schedule',
     title: 'Schedule',
     description: 'Timeline of events',
-    icon: '📅',
+    sectionType: 'schedule',
+  },
+  {
+    id: 'travel',
+    title: 'Travel',
+    description: 'Directions and accommodations',
+    sectionType: 'travel',
   },
   {
     id: 'registry',
     title: 'Registry',
     description: 'Gift registry links',
-    icon: '🎁',
+    sectionType: 'registry',
   },
   {
     id: 'faq',
     title: 'FAQ',
     description: 'Common questions',
-    icon: '❓',
+    sectionType: 'faq',
   },
   {
-    id: 'media',
+    id: 'rsvp',
+    title: 'RSVP',
+    description: 'Guest response form',
+    sectionType: 'rsvp',
+  },
+  {
+    id: 'gallery',
     title: 'Photos',
-    description: 'Hero image and gallery',
-    icon: '📷',
+    description: 'Photo gallery',
+    sectionType: 'gallery',
   },
 ];
 
 interface GuidedBuilderModulesProps {
   weddingData: WeddingDataV1;
+  layoutConfig: LayoutConfigV1;
   onChange: (data: WeddingDataV1) => void;
+  onLayoutChange: (config: LayoutConfigV1) => void;
   onSave: () => void;
   saving: boolean;
 }
 
 export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
   weddingData,
+  layoutConfig,
   onChange,
+  onLayoutChange,
   onSave,
   saving,
 }) => {
-  const [activeModule, setActiveModule] = useState<ModuleId>('basics');
+  const [activeModule, setActiveModule] = useState<ModuleId>('hero');
+
+  const isSectionEnabled = (sectionType: SectionType): boolean => {
+    return layoutConfig.pages[0].sections.some(
+      (s) => s.type === sectionType && s.enabled
+    );
+  };
+
+  const toggleSection = (sectionType: SectionType) => {
+    const updatedSections = layoutConfig.pages[0].sections.map((s) =>
+      s.type === sectionType ? { ...s, enabled: !s.enabled } : s
+    );
+
+    onLayoutChange({
+      ...layoutConfig,
+      pages: [
+        {
+          ...layoutConfig.pages[0],
+          sections: updatedSections,
+        },
+      ],
+    });
+  };
 
   const getModuleStatus = (moduleId: ModuleId): 'complete' | 'incomplete' => {
     switch (moduleId) {
-      case 'basics':
+      case 'hero':
         return weddingData.couple.partner1Name && weddingData.couple.partner2Name && weddingData.event.weddingDateISO
           ? 'complete'
           : 'incomplete';
       case 'story':
         return weddingData.couple.story ? 'complete' : 'incomplete';
-      case 'venues':
+      case 'venue':
         return weddingData.venues.length > 0 ? 'complete' : 'incomplete';
       case 'schedule':
         return weddingData.schedule.length > 0 ? 'complete' : 'incomplete';
+      case 'travel':
+        return weddingData.venues.length > 0 ? 'complete' : 'incomplete';
       case 'registry':
         return weddingData.registry.links.length > 0 ? 'complete' : 'incomplete';
       case 'faq':
         return weddingData.faq.length > 0 ? 'complete' : 'incomplete';
-      case 'media':
+      case 'rsvp':
+        return weddingData.rsvp.enabled ? 'complete' : 'incomplete';
+      case 'gallery':
         return weddingData.media.heroImageUrl || weddingData.media.gallery.length > 0
           ? 'complete'
           : 'incomplete';
@@ -260,6 +303,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
         {modules.map((module) => {
           const status = getModuleStatus(module.id);
           const isActive = activeModule === module.id;
+          const isEnabled = isSectionEnabled(module.sectionType);
 
           return (
             <button
@@ -272,7 +316,19 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{module.icon}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSection(module.sectionType);
+                  }}
+                  className={`flex-shrink-0 ${isActive ? 'text-white' : ''}`}
+                >
+                  {isEnabled ? (
+                    <Eye className={`w-5 h-5 ${isActive ? 'text-white' : 'text-primary'}`} />
+                  ) : (
+                    <EyeOff className={`w-5 h-5 ${isActive ? 'text-white/60' : 'text-text-secondary'}`} />
+                  )}
+                </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h4 className={`font-medium ${isActive ? 'text-white' : 'text-text-primary'}`}>
@@ -310,7 +366,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
             </div>
 
             <div className="space-y-4">
-              {activeModule === 'basics' && (
+              {activeModule === 'hero' && (
                 <>
                   <Input
                     label="Partner 1 Name"
@@ -385,7 +441,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                 />
               )}
 
-              {activeModule === 'venues' && (
+              {activeModule === 'venue' && (
                 <div className="space-y-4">
                   {weddingData.venues.map((venue) => (
                     <div key={venue.id} className="p-4 bg-background rounded-lg border border-border">
@@ -558,7 +614,65 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                 </div>
               )}
 
-              {activeModule === 'media' && (
+              {activeModule === 'travel' && (
+                <div className="space-y-4">
+                  <p className="text-sm text-text-secondary">
+                    Travel information is derived from your venue data. Add venues above to populate this section.
+                  </p>
+                  {weddingData.venues.length === 0 && (
+                    <div className="p-4 bg-surface rounded-lg border border-border text-center">
+                      <p className="text-text-secondary">No venues added yet. Add a venue to enable travel information.</p>
+                    </div>
+                  )}
+                  {weddingData.venues.length > 0 && (
+                    <div className="space-y-3">
+                      {weddingData.venues.map((venue) => (
+                        <div key={venue.id} className="p-4 bg-background rounded-lg border border-border">
+                          <h4 className="font-medium text-text-primary mb-2">{venue.name || 'Unnamed Venue'}</h4>
+                          <p className="text-sm text-text-secondary">{venue.address}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeModule === 'rsvp' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+                    <div>
+                      <h4 className="font-medium text-text-primary">Enable RSVP</h4>
+                      <p className="text-sm text-text-secondary">Allow guests to respond to your invitation</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={weddingData.rsvp.enabled}
+                      onChange={(e) =>
+                        onChange({
+                          ...weddingData,
+                          rsvp: { ...weddingData.rsvp, enabled: e.target.checked },
+                        })
+                      }
+                      className="w-5 h-5"
+                    />
+                  </div>
+                  {weddingData.rsvp.enabled && (
+                    <Input
+                      type="date"
+                      label="RSVP Deadline (Optional)"
+                      value={weddingData.rsvp.deadlineISO || ''}
+                      onChange={(e) =>
+                        onChange({
+                          ...weddingData,
+                          rsvp: { ...weddingData.rsvp, deadlineISO: e.target.value },
+                        })
+                      }
+                    />
+                  )}
+                </div>
+              )}
+
+              {activeModule === 'gallery' && (
                 <div className="space-y-4">
                   <Input
                     label="Hero Image URL"
