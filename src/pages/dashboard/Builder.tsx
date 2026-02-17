@@ -152,7 +152,7 @@ export const DashboardBuilder: React.FC = () => {
 
       const { data, error: fetchError } = await supabase
         .from('wedding_sites')
-        .select('wedding_data, layout_config, site_slug, couple_name_1, couple_name_2')
+        .select('wedding_data, layout_config, site_slug, couple_name_1, couple_name_2, wedding_date, venue_name, venue_location, active_template_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -163,14 +163,18 @@ export const DashboardBuilder: React.FC = () => {
         return;
       }
 
-      if (data.wedding_data && data.layout_config) {
-        setWeddingData(data.wedding_data as WeddingDataV1);
-        setLayoutConfig(data.layout_config as LayoutConfigV1);
-        setSiteSlug(data.site_slug);
+      setSiteSlug(data.site_slug);
+
+      const wd = data.wedding_data as WeddingDataV1 | null;
+      const lc = data.layout_config as LayoutConfigV1 | null;
+      const isValidWeddingData = wd && wd.version === '1' && wd.couple;
+      const isValidLayoutConfig = lc && lc.version === '1' && Array.isArray(lc.pages);
+
+      if (isValidWeddingData && isValidLayoutConfig) {
+        setWeddingData(wd);
+        setLayoutConfig(lc);
       } else {
-        setWeddingData(null);
-        setLayoutConfig(null);
-        setSiteSlug(data.site_slug);
+        await seedAndSaveDefaults(user.id, data);
       }
     } catch (err: unknown) {
       console.error('Error loading wedding site:', err);
@@ -178,6 +182,57 @@ export const DashboardBuilder: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const seedAndSaveDefaults = async (
+    userId: string,
+    row: {
+      couple_name_1?: string | null;
+      couple_name_2?: string | null;
+      wedding_date?: string | null;
+      venue_name?: string | null;
+      venue_location?: string | null;
+      active_template_id?: string | null;
+    }
+  ) => {
+    const newWeddingData = createEmptyWeddingData();
+    newWeddingData.couple.partner1Name = row.couple_name_1 || '';
+    newWeddingData.couple.partner2Name = row.couple_name_2 || '';
+
+    if (row.wedding_date) {
+      newWeddingData.event.weddingDateISO = row.wedding_date;
+    }
+
+    if (row.venue_name || row.venue_location) {
+      newWeddingData.venues = [
+        {
+          id: `venue-${Date.now()}`,
+          name: row.venue_name || '',
+          address: row.venue_location || '',
+        },
+      ];
+    }
+
+    const templateId = row.active_template_id || 'base';
+    const newLayoutConfig = generateInitialLayout(templateId, newWeddingData);
+
+    const { error: updateError } = await supabase
+      .from('wedding_sites')
+      .update({
+        wedding_data: newWeddingData,
+        layout_config: newLayoutConfig,
+        active_template_id: templateId,
+      })
+      .eq('user_id', userId);
+
+    if (updateError) {
+      console.error('Failed to seed defaults:', updateError);
+      setError('Failed to initialize builder data. Please try refreshing.');
+      return;
+    }
+
+    setWeddingData(newWeddingData);
+    setLayoutConfig(newLayoutConfig);
   };
 
   const generateDefaultConfigs = async () => {
