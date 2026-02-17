@@ -123,6 +123,10 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
       enabled: true,
       deadlineISO: formData.rsvpDeadline,
     },
+    travel: {
+      parkingInfo: formData.parking,
+      hotelInfo: formData.hotelRecommendations,
+    },
     registry,
     faq,
     theme: {
