@@ -10,28 +10,28 @@ export const Footer: React.FC = () => {
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
-              <span className="text-xl font-serif font-semibold text-ink">WeddingSite</span>
+              <span className="text-[1.25rem] font-serif font-semibold text-ink leading-snug tracking-tight">WeddingSite</span>
             </div>
-            <p className="text-sm text-ink/70">
+            <p className="text-[0.875rem] text-ink/70 leading-normal">
               Your wedding site, done without the stress.
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-ink mb-4">Product</h4>
+            <h4 className="text-[0.875rem] font-semibold text-ink mb-4 leading-normal">Product</h4>
             <ul className="space-y-3">
               <li>
-                <Link to="/product" className="text-sm text-ink/70 hover:text-ink transition-colors">
+                <Link to="/product" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Product Tour
                 </Link>
               </li>
               <li>
-                <Link to="/product#templates" className="text-sm text-ink/70 hover:text-ink transition-colors">
+                <Link to="/product#templates" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Templates
                 </Link>
               </li>
               <li>
-                <Link to="/#pricing" className="text-sm text-ink/70 hover:text-ink transition-colors">
+                <Link to="/#pricing" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Pricing
                 </Link>
               </li>
@@ -39,20 +39,20 @@ export const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold text-ink mb-4">Company</h4>
+            <h4 className="text-[0.875rem] font-semibold text-ink mb-4 leading-normal">Company</h4>
             <ul className="space-y-3">
               <li>
-                <Link to="/#why" className="text-sm text-ink/70 hover:text-ink transition-colors">
+                <Link to="/#why" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Why We Built This
                 </Link>
               </li>
               <li>
-                <span className="text-sm text-ink/40">
+                <span className="text-[0.875rem] text-ink/40 leading-normal">
                   Trust (coming soon)
                 </span>
               </li>
               <li>
-                <a href="mailto:hello@weddingsite.example" className="text-sm text-ink/70 hover:text-ink transition-colors">
+                <a href="mailto:hello@weddingsite.example" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Contact
                 </a>
               </li>
@@ -60,15 +60,15 @@ export const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold text-ink mb-4">Legal</h4>
+            <h4 className="text-[0.875rem] font-semibold text-ink mb-4 leading-normal">Legal</h4>
             <ul className="space-y-3">
               <li>
-                <span className="text-sm text-ink/40">
+                <span className="text-[0.875rem] text-ink/40 leading-normal">
                   Privacy Policy (coming soon)
                 </span>
               </li>
               <li>
-                <span className="text-sm text-ink/40">
+                <span className="text-[0.875rem] text-ink/40 leading-normal">
                   Terms of Service (coming soon)
                 </span>
               </li>
@@ -77,7 +77,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="mt-12 pt-8 border-t border-brand/20">
-          <p className="text-sm text-ink/70 text-center">
+          <p className="text-[0.875rem] text-ink/70 text-center leading-normal">
             &copy; {new Date().getFullYear()} WeddingSite. Built for trust, not tricks.
           </p>
         </div>

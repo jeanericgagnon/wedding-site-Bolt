@@ -8,14 +8,14 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'md', fullWidth = false, children, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
+    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none active:translate-y-[1px]';
 
     const variantStyles = {
-      primary: 'bg-primary text-text-inverse hover:bg-primary-hover active:bg-brand-hover shadow-sm hover:shadow-md',
-      secondary: 'bg-secondary text-text-inverse hover:bg-secondary-hover active:bg-secondary-hover shadow-sm hover:shadow-md',
-      outline: 'border border-border-strong text-text-primary hover:bg-surface hover:border-border-strong active:bg-surface-subtle',
-      ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle active:bg-surface',
-      accent: 'bg-accent text-text-inverse hover:bg-accent-hover active:bg-accent-hover shadow-sm hover:shadow-md',
+      primary: 'bg-primary text-text-inverse hover:bg-primary-hover shadow-sm hover:shadow-md',
+      secondary: 'bg-secondary text-text-inverse hover:bg-secondary-hover shadow-sm hover:shadow-md',
+      outline: 'border border-border-strong text-text-primary hover:bg-surface hover:border-border-strong',
+      ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle',
+      accent: 'bg-accent text-text-inverse hover:bg-accent-hover shadow-sm hover:shadow-md',
     };
 
     const sizeStyles = {
