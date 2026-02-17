@@ -132,9 +132,12 @@ export function generateSiteConfig(data: OnboardingData): SiteConfig {
     photos: [],
   };
 
-  const sections = template.section_order.map((sectionDef, index) => ({
+  const sections: SiteConfig['sections'] = template.defaultLayout.sections.map((sectionDef, index) => ({
     id: `${sectionDef.type}-${index}`,
-    ...sectionDef,
+    type: sectionDef.type,
+    enabled: sectionDef.enabled,
+    props_key: sectionDef.type,
+    variant: sectionDef.variant,
   }));
 
   const config: SiteConfig = {
@@ -171,7 +174,7 @@ export function generateSiteConfig(data: OnboardingData): SiteConfig {
       gallery,
     },
     theme: {
-      preset: data.color_scheme || template.default_theme?.preset || 'romantic',
+      preset: data.color_scheme || template.defaultThemePreset || 'romantic',
     },
     meta: {
       created_at_iso: now,
@@ -199,7 +202,7 @@ function formatDate(isoDate: string): string {
 function parseHotelRecommendations(text: string): TravelContent['hotels'] {
   if (!text) return [];
   const lines = text.split('\n').filter(l => l.trim());
-  return lines.map((line, i) => ({
+  return lines.map((line) => ({
     name: line.trim(),
   }));
 }

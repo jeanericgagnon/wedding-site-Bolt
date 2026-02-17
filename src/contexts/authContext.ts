@@ -14,6 +14,6 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export const DEMO_EMAIL = 'demo@dayof.love';
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);

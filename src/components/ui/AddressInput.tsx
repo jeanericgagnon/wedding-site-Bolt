@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { MapPin } from 'lucide-react';
 
 interface AddressInputProps {
@@ -33,16 +33,11 @@ export const AddressInput: React.FC<AddressInputProps> = ({
       return;
     }
 
-    const loader = new Loader({
-      apiKey,
-      version: 'weekly',
-      libraries: ['places'],
-    });
-
-    loader.load().then(() => {
+    setOptions({ key: apiKey, v: 'weekly' });
+    importLibrary('places').then(() => {
       setIsLoaded(true);
-    }).catch((error) => {
-      console.error('Error loading Google Maps API:', error);
+    }).catch((err: unknown) => {
+      console.error('Error loading Google Maps API:', err);
     });
   }, []);
 

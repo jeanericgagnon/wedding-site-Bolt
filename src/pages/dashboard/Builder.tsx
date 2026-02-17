@@ -141,9 +141,8 @@ export const DashboardBuilder: React.FC = () => {
     })
   );
 
-  useEffect(() => {
-    loadWeddingSite();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadWeddingSite(); }, []);
 
   const loadWeddingSite = async () => {
     try {

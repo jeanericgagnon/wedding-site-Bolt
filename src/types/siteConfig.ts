@@ -24,7 +24,7 @@ export interface SiteConfig {
     enabled: boolean;
   };
   sections: SectionConfig[];
-  content: Record<string, any>;
+  content: Record<string, unknown>;
   theme: {
     preset?: string;
     tokens?: Record<string, string>;
@@ -37,7 +37,7 @@ export interface SiteConfig {
 
 export interface SectionConfig {
   id: string;
-  type: 'hero' | 'details' | 'schedule' | 'travel' | 'registry' | 'faq' | 'rsvp' | 'gallery';
+  type: 'hero' | 'story' | 'venue' | 'details' | 'schedule' | 'travel' | 'registry' | 'faq' | 'rsvp' | 'gallery';
   enabled: boolean;
   props_key: string;
   variant?: string;
