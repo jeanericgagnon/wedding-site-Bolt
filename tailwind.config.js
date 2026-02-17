@@ -6,7 +6,12 @@ export default {
       colors: {
         brand: 'rgb(var(--brand) / <alpha-value>)',
         brand2: 'rgb(var(--brand-2) / <alpha-value>)',
-        accent: 'rgb(var(--accent) / <alpha-value>)',
+        accent: {
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          hover: 'var(--color-accent-hover)',
+          light: 'var(--color-accent-light)',
+          dark: 'var(--color-accent-hover)',
+        },
         paper: 'rgb(var(--paper) / <alpha-value>)',
         ink: 'rgb(var(--ink) / <alpha-value>)',
         background: 'var(--color-background)',

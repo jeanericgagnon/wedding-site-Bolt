@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout } from 'lucide-react';
+import { BillingModal } from '../../components/billing/BillingModal';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -14,6 +15,8 @@ export const DashboardSettings: React.FC = () => {
   const [changingTemplate, setChangingTemplate] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [templateSuccess, setTemplateSuccess] = useState<string | null>(null);
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [protoPlan, setProtoPlan] = useState<'free' | 'pro'>('free');
 
   useEffect(() => {
     loadCurrentTemplate();
@@ -73,9 +76,9 @@ export const DashboardSettings: React.FC = () => {
 
       setCurrentTemplate(newTemplateId);
       setTemplateSuccess('Template changed successfully! Your content has been preserved.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error changing template:', err);
-      setTemplateError(err.message || 'Failed to change template');
+      setTemplateError((err as Error).message || 'Failed to change template');
     } finally {
       setChangingTemplate(false);
     }
@@ -375,6 +378,16 @@ export const DashboardSettings: React.FC = () => {
 
             {activeTab === 'billing' && (
               <>
+                {showBillingModal && (
+                  <BillingModal
+                    currentPlan={protoPlan}
+                    onClose={() => {
+                      setShowBillingModal(false);
+                      setProtoPlan('pro');
+                    }}
+                  />
+                )}
+
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -382,36 +395,63 @@ export const DashboardSettings: React.FC = () => {
                         <CardTitle>Current Plan</CardTitle>
                         <CardDescription>Manage your subscription</CardDescription>
                       </div>
-                      <Badge variant="primary">Essential</Badge>
+                      <Badge variant={protoPlan === 'pro' ? 'success' : 'neutral'}>
+                        {protoPlan === 'pro' ? 'Pro' : 'Free'}
+                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold text-text-primary">$49</span>
-                      <span className="text-text-secondary">one-time payment</span>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-text-secondary flex items-center gap-2">
-                        <Lock className="w-4 h-4" aria-hidden="true" />
-                        Unlimited guests and RSVPs
-                      </p>
-                      <p className="text-text-secondary flex items-center gap-2">
-                        <Lock className="w-4 h-4" aria-hidden="true" />
-                        Photo & video vault
-                      </p>
-                      <p className="text-text-secondary flex items-center gap-2">
-                        <Lock className="w-4 h-4" aria-hidden="true" />
-                        Custom domain support
-                      </p>
-                    </div>
-                    <div className="flex gap-3 pt-4">
-                      <Button variant="outline" size="md">
-                        View Plans
-                      </Button>
-                      <Button variant="accent" size="md">
-                        Upgrade to Premium
-                      </Button>
-                    </div>
+                    {protoPlan === 'pro' ? (
+                      <>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-4xl font-bold text-text-primary">$49</span>
+                          <span className="text-text-secondary">one-time</span>
+                        </div>
+                        <div className="space-y-2">
+                          {['Unlimited guests and RSVPs', 'Photo & video vault (5 GB)', 'Custom domain support', 'Priority support'].map(f => (
+                            <p key={f} className="text-text-secondary flex items-center gap-2">
+                              <Check className="w-4 h-4 text-success flex-shrink-0" aria-hidden="true" />
+                              {f}
+                            </p>
+                          ))}
+                        </div>
+                        <p className="text-xs text-text-tertiary p-3 bg-surface-subtle rounded-lg">
+                          Prototype mode — no real payment processed. Stripe integration is in test mode.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-4xl font-bold text-text-primary">$0</span>
+                          <span className="text-text-secondary">forever</span>
+                        </div>
+                        <div className="space-y-2">
+                          {['Up to 50 guests', 'Basic RSVP collection', 'Public wedding site'].map(f => (
+                            <p key={f} className="text-text-secondary flex items-center gap-2">
+                              <Check className="w-4 h-4 text-text-tertiary flex-shrink-0" aria-hidden="true" />
+                              {f}
+                            </p>
+                          ))}
+                          <p className="text-text-secondary flex items-center gap-2">
+                            <Lock className="w-4 h-4 text-text-tertiary flex-shrink-0" aria-hidden="true" />
+                            <span className="text-text-tertiary">Custom domain (Pro)</span>
+                          </p>
+                          <p className="text-text-secondary flex items-center gap-2">
+                            <Lock className="w-4 h-4 text-text-tertiary flex-shrink-0" aria-hidden="true" />
+                            <span className="text-text-tertiary">Unlimited guests (Pro)</span>
+                          </p>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                          <Button variant="outline" size="md" onClick={() => setShowBillingModal(true)}>
+                            View Plans
+                          </Button>
+                          <Button variant="accent" size="md" onClick={() => setShowBillingModal(true)}>
+                            <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
+                            Upgrade to Pro — $49
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -421,19 +461,23 @@ export const DashboardSettings: React.FC = () => {
                     <CardDescription>Your default payment method</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4 p-4 border border-border rounded-lg">
-                      <CreditCard className="w-6 h-6 text-text-secondary" aria-hidden="true" />
-                      <div className="flex-1">
-                        <p className="font-medium text-text-primary">Visa ending in 4242</p>
-                        <p className="text-sm text-text-secondary">Expires 12/2026</p>
+                    {protoPlan === 'pro' ? (
+                      <div className="flex items-center gap-4 p-4 border border-border rounded-lg">
+                        <CreditCard className="w-6 h-6 text-text-secondary" aria-hidden="true" />
+                        <div className="flex-1">
+                          <p className="font-medium text-text-primary">Visa ending in 4242</p>
+                          <p className="text-sm text-text-secondary">Expires 12/2026</p>
+                        </div>
+                        <Button variant="ghost" size="sm">Edit</Button>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
-                    </div>
-                    <Button variant="outline" size="md">
-                      Add Payment Method
-                    </Button>
+                    ) : (
+                      <div className="p-4 bg-surface-subtle rounded-lg text-center">
+                        <p className="text-sm text-text-secondary mb-3">No payment method on file</p>
+                        <Button variant="outline" size="sm" onClick={() => setShowBillingModal(true)}>
+                          Add Payment Method
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -443,20 +487,22 @@ export const DashboardSettings: React.FC = () => {
                     <CardDescription>View past invoices and receipts</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-                        <div>
-                          <p className="font-medium text-text-primary">Essential Plan</p>
-                          <p className="text-sm text-text-secondary">April 1, 2026</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-semibold text-text-primary">$49.00</span>
-                          <Button variant="ghost" size="sm">
-                            Receipt
-                          </Button>
+                    {protoPlan === 'pro' ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+                          <div>
+                            <p className="font-medium text-text-primary">Pro Plan</p>
+                            <p className="text-sm text-text-secondary">Today (test transaction)</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="font-semibold text-text-primary">$49.00</span>
+                            <Button variant="ghost" size="sm">Receipt</Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-text-secondary py-4 text-center">No billing history yet</p>
+                    )}
                   </CardContent>
                 </Card>
               </>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
@@ -355,18 +355,18 @@ export const DashboardGuests: React.FC = () => {
 
   const GuestFormModal = ({ onSubmit, onClose, title }: { onSubmit: (e: React.FormEvent) => void; onClose: () => void; title: string }) => (
     <>
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">{title}</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
+      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="guest-modal-title">
+        <div className="bg-surface rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto border border-border-subtle">
+          <div className="flex justify-between items-center mb-5">
+            <h2 id="guest-modal-title" className="text-xl font-semibold text-text-primary">{title}</h2>
+            <button onClick={onClose} className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-subtle rounded-lg transition-colors" aria-label="Close">
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">First Name *</label>
+              <label className="block text-sm font-medium text-text-primary mb-1">First Name *</label>
               <Input
                 value={formData.first_name}
                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
@@ -374,7 +374,7 @@ export const DashboardGuests: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Last Name *</label>
+              <label className="block text-sm font-medium text-text-primary mb-1">Last Name *</label>
               <Input
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
@@ -382,7 +382,7 @@ export const DashboardGuests: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label className="block text-sm font-medium text-text-primary mb-1">Email</label>
               <Input
                 type="email"
                 value={formData.email}
@@ -390,7 +390,7 @@ export const DashboardGuests: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Phone</label>
+              <label className="block text-sm font-medium text-text-primary mb-1">Phone</label>
               <Input
                 type="tel"
                 value={formData.phone}
@@ -405,7 +405,7 @@ export const DashboardGuests: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, plus_one_allowed: e.target.checked })}
                   className="rounded"
                 />
-                <span className="text-sm">Allow Plus One</span>
+                <span className="text-sm text-text-primary">Allow Plus One</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -414,7 +414,7 @@ export const DashboardGuests: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, invited_to_ceremony: e.target.checked })}
                   className="rounded"
                 />
-                <span className="text-sm">Invited to Ceremony</span>
+                <span className="text-sm text-text-primary">Invited to Ceremony</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -423,7 +423,7 @@ export const DashboardGuests: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, invited_to_reception: e.target.checked })}
                   className="rounded"
                 />
-                <span className="text-sm">Invited to Reception</span>
+                <span className="text-sm text-text-primary">Invited to Reception</span>
               </label>
             </div>
             <div className="flex gap-3 pt-4">
@@ -444,7 +444,10 @@ export const DashboardGuests: React.FC = () => {
     return (
       <DashboardLayout currentPage="guests">
         <div className="flex items-center justify-center h-64">
-          <p>Loading guests...</p>
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-text-secondary text-sm">Loading guests...</p>
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -461,48 +464,48 @@ export const DashboardGuests: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-success-light rounded-lg flex-shrink-0">
+                <CheckCircle2 className="w-6 h-6 text-success" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.confirmed}</p>
-                <p className="text-sm text-gray-600">Confirmed</p>
+                <p className="text-2xl font-bold text-text-primary">{stats.confirmed}</p>
+                <p className="text-sm text-text-secondary">Confirmed</p>
               </div>
             </div>
           </Card>
 
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-red-100 rounded-lg flex-shrink-0">
-                <XCircle className="w-6 h-6 text-red-600" />
+              <div className="p-3 bg-error-light rounded-lg flex-shrink-0">
+                <XCircle className="w-6 h-6 text-error" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.declined}</p>
-                <p className="text-sm text-gray-600">Declined</p>
+                <p className="text-2xl font-bold text-text-primary">{stats.declined}</p>
+                <p className="text-sm text-text-secondary">Declined</p>
               </div>
             </div>
           </Card>
 
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0">
-                <Clock className="w-6 h-6 text-yellow-600" />
+              <div className="p-3 bg-warning-light rounded-lg flex-shrink-0">
+                <Clock className="w-6 h-6 text-warning" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.pending}</p>
-                <p className="text-sm text-gray-600">Pending</p>
+                <p className="text-2xl font-bold text-text-primary">{stats.pending}</p>
+                <p className="text-sm text-text-secondary">Pending</p>
               </div>
             </div>
           </Card>
 
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0">
-                <CheckCircle2 className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <Users className="w-6 h-6 text-primary" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm text-gray-600">Total ({stats.rsvpRate}% responded)</p>
+                <p className="text-2xl font-bold text-text-primary">{stats.total}</p>
+                <p className="text-sm text-text-secondary">Total ({stats.rsvpRate}% responded)</p>
               </div>
             </div>
           </Card>
@@ -543,83 +546,61 @@ export const DashboardGuests: React.FC = () => {
             </div>
 
             <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setFilterStatus('all')}
-                className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                  filterStatus === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                All ({stats.total})
-              </button>
-              <button
-                onClick={() => setFilterStatus('confirmed')}
-                className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                  filterStatus === 'confirmed'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Confirmed ({stats.confirmed})
-              </button>
-              <button
-                onClick={() => setFilterStatus('declined')}
-                className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                  filterStatus === 'declined'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Declined ({stats.declined})
-              </button>
-              <button
-                onClick={() => setFilterStatus('pending')}
-                className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                  filterStatus === 'pending'
-                    ? 'bg-yellow-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Pending ({stats.pending})
-              </button>
+              {([
+                { id: 'all', label: `All (${stats.total})` },
+                { id: 'confirmed', label: `Confirmed (${stats.confirmed})` },
+                { id: 'declined', label: `Declined (${stats.declined})` },
+                { id: 'pending', label: `Pending (${stats.pending})` },
+              ] as const).map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setFilterStatus(id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    filterStatus === id
+                      ? 'bg-primary text-text-inverse'
+                      : 'bg-surface-subtle text-text-secondary hover:bg-surface hover:text-text-primary'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-surface-subtle border-b border-border">
                   <tr>
-                    <th className="text-left px-6 py-3 text-sm font-semibold">Guest</th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold">Status</th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold">Plus One</th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold">Meal Choice</th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold">Invite Code</th>
-                    <th className="text-right px-6 py-3 text-sm font-semibold">Actions</th>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary">Guest</th>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary">Status</th>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden md:table-cell">Plus One</th>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden lg:table-cell">Meal Choice</th>
+                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden xl:table-cell">Invite Code</th>
+                    <th className="text-right px-6 py-3 text-sm font-semibold text-text-secondary">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-border-subtle">
                   {filteredGuests.map((guest) => (
-                    <tr key={guest.id} className="hover:bg-gray-50">
+                    <tr key={guest.id} className="hover:bg-surface-subtle transition-colors">
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium">
+                          <p className="font-medium text-text-primary">
                             {guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}
                           </p>
-                          <p className="text-sm text-gray-500">{guest.email || '—'}</p>
+                          <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         {getStatusBadge(guest.rsvp_status)}
                       </td>
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="px-6 py-4 text-text-secondary hidden md:table-cell">
                         {guest.plus_one_allowed ? (guest.rsvp?.plus_one_name || 'Allowed') : 'No'}
                       </td>
-                      <td className="px-6 py-4 text-gray-600">
+                      <td className="px-6 py-4 text-text-secondary hidden lg:table-cell">
                         {guest.rsvp?.meal_choice || '—'}
                       </td>
-                      <td className="px-6 py-4">
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                          {guest.invite_token || '—'}
+                      <td className="px-6 py-4 hidden xl:table-cell">
+                        <code className="text-xs bg-surface-subtle px-2 py-1 rounded font-mono">
+                          {guest.invite_token?.slice(0, 12) || '—'}
                         </code>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -640,7 +621,11 @@ export const DashboardGuests: React.FC = () => {
 
             {filteredGuests.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-500">No guests found. Add your first guest to get started!</p>
+                <Users className="w-12 h-12 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
+                <p className="text-text-secondary font-medium mb-1">No guests found</p>
+                <p className="text-sm text-text-tertiary">
+                  {searchQuery ? 'Try a different search term' : 'Add your first guest to get started'}
+                </p>
               </div>
             )}
           </div>

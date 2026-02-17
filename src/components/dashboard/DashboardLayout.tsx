@@ -13,8 +13,10 @@ import {
   LogOut,
   Mail,
   Calendar,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { BillingModal } from '../billing/BillingModal';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -23,6 +25,7 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -135,10 +138,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               <Menu className="w-6 h-6" />
             </button>
 
-            <div className="flex items-center gap-4 ml-auto">
+            <div className="flex items-center gap-3 ml-auto">
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              >
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                Upgrade
+              </button>
               <a
                 href="#preview"
-                className="text-sm text-text-secondary hover:text-text-primary transition-colors no-underline"
+                className="hidden md:block text-sm text-text-secondary hover:text-text-primary transition-colors no-underline"
               >
                 Preview site
               </a>
@@ -168,6 +178,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto">{children}</main>
       </div>
+
+      {showUpgradeModal && (
+        <BillingModal onClose={() => setShowUpgradeModal(false)} />
+      )}
     </div>
   );
 };
