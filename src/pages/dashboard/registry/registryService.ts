@@ -85,11 +85,15 @@ export async function fetchUrlPreview(url: string): Promise<RegistryPreview> {
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
   const endpoint = `${supabaseUrl}/functions/v1/registry-preview`;
 
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? anonKey;
+
   const resp = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${anonKey}`,
+      Authorization: `Bearer ${token}`,
+      Apikey: anonKey,
     },
     body: JSON.stringify({ url }),
   });
