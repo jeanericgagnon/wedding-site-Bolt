@@ -15,7 +15,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-      apiVersion: "2023-10-16",
+      apiVersion: "2024-04-10",
     });
 
     const body = await req.text();
@@ -65,22 +65,91 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const { error: updateError } = await supabase
-        .from("wedding_sites")
-        .update({
-          payment_status: "active",
-          paid_at: new Date().toISOString(),
-          stripe_customer_id: session.customer as string | null,
-          stripe_checkout_session_id: session.id,
-        })
-        .eq("id", weddingSiteId)
-        .eq("user_id", supabaseUserId);
+      const paidAt = new Date().toISOString();
+      const expiresAt = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString();
 
-      if (updateError) {
-        return new Response(JSON.stringify({ error: updateError.message }), {
-          status: 500,
+      if (session.mode === "subscription") {
+        const { error: updateError } = await supabase
+          .from("wedding_sites")
+          .update({
+            payment_status: "active",
+            billing_type: "recurring",
+            paid_at: paidAt,
+            site_expires_at: null,
+            stripe_customer_id: session.customer as string | null,
+            stripe_checkout_session_id: session.id,
+            stripe_subscription_id: session.subscription as string | null,
+          })
+          .eq("id", weddingSiteId)
+          .eq("user_id", supabaseUserId);
+
+        if (updateError) {
+          return new Response(JSON.stringify({ error: updateError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        const { error: updateError } = await supabase
+          .from("wedding_sites")
+          .update({
+            payment_status: "active",
+            billing_type: "one_time",
+            paid_at: paidAt,
+            site_expires_at: expiresAt,
+            stripe_customer_id: session.customer as string | null,
+            stripe_checkout_session_id: session.id,
+          })
+          .eq("id", weddingSiteId)
+          .eq("user_id", supabaseUserId);
+
+        if (updateError) {
+          return new Response(JSON.stringify({ error: updateError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+
+    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const weddingSiteId = subscription.metadata?.wedding_site_id;
+
+      if (!weddingSiteId) {
+        return new Response(JSON.stringify({ received: true, skipped: "no wedding_site_id in subscription metadata" }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      if (event.type === "customer.subscription.deleted" || subscription.status === "canceled") {
+        const { data: site } = await supabase
+          .from("wedding_sites")
+          .select("paid_at")
+          .eq("id", weddingSiteId)
+          .maybeSingle();
+
+        const paidAt = site?.paid_at ? new Date(site.paid_at) : new Date();
+        const expiresAt = new Date(paidAt.getTime() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString();
+
+        await supabase
+          .from("wedding_sites")
+          .update({
+            billing_type: "one_time",
+            site_expires_at: expiresAt,
+            stripe_subscription_id: null,
+          })
+          .eq("id", weddingSiteId);
+      } else if (subscription.status === "active") {
+        await supabase
+          .from("wedding_sites")
+          .update({
+            billing_type: "recurring",
+            site_expires_at: null,
+            stripe_subscription_id: subscription.id,
+          })
+          .eq("id", weddingSiteId);
       }
     }
 

@@ -1,26 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { BillingModal } from '../../components/billing/BillingModal';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles } from 'lucide-react';
+import { Save, ExternalLink, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { LayoutConfigV1 } from '../../types/layoutConfig';
 import { regenerateLayout } from '../../lib/generateInitialLayout';
+import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
+import { useAuth } from '../../hooks/useAuth';
 
 export const DashboardSettings: React.FC = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'account' | 'site' | 'notifications' | 'billing'>('account');
   const [currentTemplate, setCurrentTemplate] = useState<string>('base');
   const [changingTemplate, setChangingTemplate] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [templateSuccess, setTemplateSuccess] = useState<string | null>(null);
-  const [showBillingModal, setShowBillingModal] = useState(false);
-  const [protoPlan, setProtoPlan] = useState<'free' | 'pro'>('free');
+  const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
   useEffect(() => {
     loadCurrentTemplate();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'billing' && user && !billingInfo) {
+      setBillingLoading(true);
+      fetchBillingInfo(user.id)
+        .then(info => setBillingInfo(info))
+        .catch(err => setBillingError(err.message))
+        .finally(() => setBillingLoading(false));
+    }
+  }, [activeTab, user]);
+
+  const handleSubscribe = async () => {
+    if (!billingInfo) return;
+    setSubscribeLoading(true);
+    setSubscribeError(null);
+    try {
+      const origin = window.location.origin;
+      const url = await createSubscriptionSession(
+        billingInfo.wedding_site_id,
+        `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        `${origin}/dashboard/settings?tab=billing&canceled=1`
+      );
+      window.location.href = url;
+    } catch (err) {
+      setSubscribeError(err instanceof Error ? err.message : 'Could not start subscription checkout.');
+      setSubscribeLoading(false);
+    }
+  };
 
   const loadCurrentTemplate = async () => {
     try {
@@ -378,133 +411,145 @@ export const DashboardSettings: React.FC = () => {
 
             {activeTab === 'billing' && (
               <>
-                {showBillingModal && (
-                  <BillingModal
-                    currentPlan={protoPlan}
-                    onClose={() => {
-                      setShowBillingModal(false);
-                      setProtoPlan('pro');
-                    }}
-                  />
+                {billingLoading && (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-text-secondary" />
+                  </div>
                 )}
 
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle>Current Plan</CardTitle>
-                        <CardDescription>Manage your subscription</CardDescription>
-                      </div>
-                      <Badge variant={protoPlan === 'pro' ? 'success' : 'neutral'}>
-                        {protoPlan === 'pro' ? 'Pro' : 'Free'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {protoPlan === 'pro' ? (
-                      <>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-4xl font-bold text-text-primary">$49</span>
-                          <span className="text-text-secondary">one-time</span>
-                        </div>
-                        <div className="space-y-2">
-                          {['Unlimited guests and RSVPs', 'Photo & video vault (5 GB)', 'Custom domain support', 'Priority support'].map(f => (
-                            <p key={f} className="text-text-secondary flex items-center gap-2">
-                              <Check className="w-4 h-4 text-success flex-shrink-0" aria-hidden="true" />
-                              {f}
-                            </p>
-                          ))}
-                        </div>
-                        <p className="text-xs text-text-tertiary p-3 bg-surface-subtle rounded-lg">
-                          Prototype mode — no real payment processed. Stripe integration is in test mode.
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-4xl font-bold text-text-primary">$0</span>
-                          <span className="text-text-secondary">forever</span>
-                        </div>
-                        <div className="space-y-2">
-                          {['Up to 50 guests', 'Basic RSVP collection', 'Public wedding site'].map(f => (
-                            <p key={f} className="text-text-secondary flex items-center gap-2">
-                              <Check className="w-4 h-4 text-text-tertiary flex-shrink-0" aria-hidden="true" />
-                              {f}
-                            </p>
-                          ))}
-                          <p className="text-text-secondary flex items-center gap-2">
-                            <Lock className="w-4 h-4 text-text-tertiary flex-shrink-0" aria-hidden="true" />
-                            <span className="text-text-tertiary">Custom domain (Pro)</span>
-                          </p>
-                          <p className="text-text-secondary flex items-center gap-2">
-                            <Lock className="w-4 h-4 text-text-tertiary flex-shrink-0" aria-hidden="true" />
-                            <span className="text-text-tertiary">Unlimited guests (Pro)</span>
-                          </p>
-                        </div>
-                        <div className="flex gap-3 pt-2">
-                          <Button variant="outline" size="md" onClick={() => setShowBillingModal(true)}>
-                            View Plans
-                          </Button>
-                          <Button variant="accent" size="md" onClick={() => setShowBillingModal(true)}>
-                            <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
-                            Upgrade to Pro — $49
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+                {billingError && (
+                  <div className="flex items-start gap-2 p-4 bg-error-light border border-error/20 rounded-lg text-error text-sm">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>{billingError}</span>
+                  </div>
+                )}
 
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <CardTitle>Payment Method</CardTitle>
-                    <CardDescription>Your default payment method</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {protoPlan === 'pro' ? (
-                      <div className="flex items-center gap-4 p-4 border border-border rounded-lg">
-                        <CreditCard className="w-6 h-6 text-text-secondary" aria-hidden="true" />
-                        <div className="flex-1">
-                          <p className="font-medium text-text-primary">Visa ending in 4242</p>
-                          <p className="text-sm text-text-secondary">Expires 12/2026</p>
-                        </div>
-                        <Button variant="ghost" size="sm">Edit</Button>
-                      </div>
-                    ) : (
-                      <div className="p-4 bg-surface-subtle rounded-lg text-center">
-                        <p className="text-sm text-text-secondary mb-3">No payment method on file</p>
-                        <Button variant="outline" size="sm" onClick={() => setShowBillingModal(true)}>
-                          Add Payment Method
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <CardTitle>Billing History</CardTitle>
-                    <CardDescription>View past invoices and receipts</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {protoPlan === 'pro' ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+                {!billingLoading && billingInfo && (
+                  <>
+                    <Card variant="bordered" padding="lg">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-text-primary">Pro Plan</p>
-                            <p className="text-sm text-text-secondary">Today (test transaction)</p>
+                            <CardTitle>Site Access</CardTitle>
+                            <CardDescription>Your current plan and access period</CardDescription>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-semibold text-text-primary">$49.00</span>
-                            <Button variant="ghost" size="sm">Receipt</Button>
-                          </div>
+                          <Badge variant={billingInfo.billing_type === 'recurring' ? 'success' : 'primary'}>
+                            {billingInfo.billing_type === 'recurring' ? 'Annual Plan' : '2-Year Access'}
+                          </Badge>
                         </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-text-secondary py-4 text-center">No billing history yet</p>
+                      </CardHeader>
+                      <CardContent className="space-y-5">
+                        {billingInfo.billing_type === 'one_time' ? (
+                          <>
+                            <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-xl border border-border">
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <Calendar className="w-5 h-5 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-text-primary">One-time purchase — 2 years access</p>
+                                {billingInfo.site_expires_at && (() => {
+                                  const days = daysUntilExpiry(billingInfo.site_expires_at);
+                                  const expDate = new Date(billingInfo.site_expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                                  const isExpiringSoon = days !== null && days <= 90;
+                                  return (
+                                    <p className={`text-sm mt-0.5 ${isExpiringSoon ? 'text-warning font-medium' : 'text-text-secondary'}`}>
+                                      {isExpiringSoon && days !== null && days > 0
+                                        ? `Expires in ${days} days — ${expDate}`
+                                        : days !== null && days <= 0
+                                          ? 'Site access has expired'
+                                          : `Active until ${expDate}`}
+                                    </p>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+
+                            <div className="border border-border rounded-xl overflow-hidden">
+                              <div className="px-5 py-4 bg-gradient-to-r from-primary/5 to-accent/5 border-b border-border">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Repeat className="w-4 h-4 text-accent" />
+                                  <p className="font-semibold text-text-primary">Switch to Annual Billing</p>
+                                </div>
+                                <p className="text-sm text-text-secondary">Never worry about renewals — your site stays live as long as you're subscribed.</p>
+                              </div>
+                              <div className="px-5 py-4 space-y-3">
+                                <div className="space-y-2">
+                                  {['Automatic annual renewal', 'Site stays live indefinitely', 'Cancel anytime', 'Same price as a 1-year renewal'].map(f => (
+                                    <p key={f} className="flex items-center gap-2 text-sm text-text-secondary">
+                                      <Check className="w-4 h-4 text-success flex-shrink-0" />
+                                      {f}
+                                    </p>
+                                  ))}
+                                </div>
+
+                                {subscribeError && (
+                                  <div className="flex items-start gap-2 p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">
+                                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                    <span>{subscribeError}</span>
+                                  </div>
+                                )}
+
+                                <Button
+                                  variant="accent"
+                                  size="md"
+                                  onClick={handleSubscribe}
+                                  disabled={subscribeLoading}
+                                >
+                                  {subscribeLoading ? (
+                                    <>
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      Redirecting...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Sparkles className="w-4 h-4 mr-2" />
+                                      Switch to Annual Billing
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-xl border border-border">
+                            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
+                              <Repeat className="w-5 h-5 text-success" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-text-primary">Annual subscription — site stays live</p>
+                              <p className="text-sm text-text-secondary mt-0.5">Your site renews automatically each year. Cancel anytime from your Stripe customer portal.</p>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {billingInfo.paid_at && (
+                      <Card variant="bordered" padding="lg">
+                        <CardHeader>
+                          <CardTitle>Billing History</CardTitle>
+                          <CardDescription>Your payment records</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+                            <div>
+                              <p className="font-medium text-text-primary">
+                                {billingInfo.billing_type === 'recurring' ? 'Annual Plan' : 'DayOf.Love — 2-Year Access'}
+                              </p>
+                              <p className="text-sm text-text-secondary">
+                                {new Date(billingInfo.paid_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge variant="success">Paid</Badge>
+                              <span className="font-semibold text-text-primary">$49.00</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     )}
-                  </CardContent>
-                </Card>
+                  </>
+                )}
               </>
             )}
           </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { fetchPaymentStatus } from '../../lib/stripeService';
+import { fetchBillingInfo, isSiteExpired, type BillingInfo } from '../../lib/stripeService';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,19 +11,19 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPaymentGate = false }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const [paymentStatus, setPaymentStatus] = useState<'payment_required' | 'active' | 'canceled' | null | 'loading'>('loading');
+  const [billingInfo, setBillingInfo] = useState<BillingInfo | null | 'loading'>('loading');
 
   useEffect(() => {
     if (!user) {
-      setPaymentStatus(null);
+      setBillingInfo(null);
       return;
     }
-    fetchPaymentStatus(user.id)
-      .then(status => setPaymentStatus(status))
-      .catch(() => setPaymentStatus('active'));
+    fetchBillingInfo(user.id)
+      .then(info => setBillingInfo(info))
+      .catch(() => setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' }));
   }, [user]);
 
-  if (loading || paymentStatus === 'loading') {
+  if (loading || billingInfo === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -38,10 +38,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
     return <Navigate to="/login" replace />;
   }
 
-  if (!skipPaymentGate && paymentStatus === 'payment_required') {
+  if (!skipPaymentGate) {
     const isPaymentRoute = location.pathname.startsWith('/payment');
-    if (!isPaymentRoute) {
+
+    if (billingInfo?.payment_status === 'payment_required' && !isPaymentRoute) {
       return <Navigate to="/payment-required" replace />;
+    }
+
+    if (
+      billingInfo?.payment_status === 'active' &&
+      billingInfo.billing_type === 'one_time' &&
+      isSiteExpired(billingInfo.site_expires_at) &&
+      !isPaymentRoute
+    ) {
+      return <Navigate to="/payment-required?reason=expired" replace />;
     }
   }
 

@@ -67,7 +67,9 @@ export const PaymentRequired: React.FC = () => {
     }
   };
 
-  const isCanceled = new URLSearchParams(window.location.search).get('canceled') === '1';
+  const searchParams = new URLSearchParams(window.location.search);
+  const isCanceled = searchParams.get('canceled') === '1';
+  const isExpired = searchParams.get('reason') === 'expired';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-surface-subtle to-surface flex items-center justify-center p-4">
@@ -76,8 +78,14 @@ export const PaymentRequired: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-accent/10 rounded-2xl mb-4">
             <Heart className="w-8 h-8 text-accent" />
           </div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Complete Your Purchase</h1>
-          <p className="text-text-secondary">One-time payment — yours forever, no subscriptions.</p>
+          <h1 className="text-3xl font-bold text-text-primary mb-2">
+            {isExpired ? 'Your Site Has Expired' : 'Complete Your Purchase'}
+          </h1>
+          <p className="text-text-secondary">
+            {isExpired
+              ? 'Your 2-year access has ended. Renew below or switch to annual billing.'
+              : 'One-time payment — 2 years of access, no subscriptions required.'}
+          </p>
         </div>
 
         <div className="bg-surface rounded-2xl shadow-lg border border-border overflow-hidden">
@@ -103,6 +111,13 @@ export const PaymentRequired: React.FC = () => {
                 </li>
               ))}
             </ul>
+
+            {isExpired && !error && !isCanceled && (
+              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20 mb-4">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Your 2-year access period ended. Renew for another 2 years, or switch to annual billing in settings after renewing.</span>
+              </div>
+            )}
 
             {isCanceled && !error && (
               <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20 mb-4">
