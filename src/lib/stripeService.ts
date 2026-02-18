@@ -8,12 +8,8 @@ export class SessionExpiredError extends Error {
 }
 
 export async function requireSession() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    throw new SessionExpiredError();
-  }
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session?.access_token) {
     throw new SessionExpiredError();
   }
   return session;
