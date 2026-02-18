@@ -10,12 +10,14 @@ import { BuilderProject } from '../types/builder/project';
 import { BuilderSectionInstance } from '../types/builder/section';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { safeJsonParse } from '../lib/jsonUtils';
+import { SiteViewContext } from '../contexts/SiteViewContext';
 
 export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
+  const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +43,8 @@ export const SiteView: React.FC = () => {
           setLoading(false);
           return;
         }
+
+        setWeddingSiteId(data.id as string);
 
         const siteJson = safeJsonParse<BuilderProject | null>(
           data.published_json ?? data.site_json,
@@ -123,11 +127,13 @@ export const SiteView: React.FC = () => {
 
   if (builderSections && weddingData) {
     return (
-      <div className="min-h-screen bg-background">
-        {builderSections.map(section => (
-          <SectionRenderer key={section.id} section={section} weddingData={weddingData} isPreview />
-        ))}
-      </div>
+      <SiteViewContext.Provider value={{ weddingSiteId }}>
+        <div className="min-h-screen bg-background">
+          {builderSections.map(section => (
+            <SectionRenderer key={section.id} section={section} weddingData={weddingData} isPreview />
+          ))}
+        </div>
+      </SiteViewContext.Provider>
     );
   }
 
@@ -155,29 +161,31 @@ export const SiteView: React.FC = () => {
   const enabledSections = homePage.sections.filter(section => section.enabled);
 
   return (
-    <div className="min-h-screen bg-background">
-      {enabledSections.map((sectionInstance) => {
-        try {
-          const SectionComponent = getSectionComponent(
-            sectionInstance.type,
-            sectionInstance.variant
-          );
-          return (
-            <SectionComponent
-              key={sectionInstance.id}
-              data={weddingData}
-              instance={sectionInstance}
-            />
-          );
-        } catch (err) {
-          console.error("Error rendering section " + sectionInstance.type + ":", err);
-          return (
-            <div key={sectionInstance.id} className="py-8 px-4 bg-error-light text-error text-center">
-              <p>Error rendering {sectionInstance.type} section</p>
-            </div>
-          );
-        }
-      })}
-    </div>
+    <SiteViewContext.Provider value={{ weddingSiteId }}>
+      <div className="min-h-screen bg-background">
+        {enabledSections.map((sectionInstance) => {
+          try {
+            const SectionComponent = getSectionComponent(
+              sectionInstance.type,
+              sectionInstance.variant
+            );
+            return (
+              <SectionComponent
+                key={sectionInstance.id}
+                data={weddingData}
+                instance={sectionInstance}
+              />
+            );
+          } catch (err) {
+            console.error("Error rendering section " + sectionInstance.type + ":", err);
+            return (
+              <div key={sectionInstance.id} className="py-8 px-4 bg-error-light text-error text-center">
+                <p>Error rendering {sectionInstance.type} section</p>
+              </div>
+            );
+          }
+        })}
+      </div>
+    </SiteViewContext.Provider>
   );
 };
