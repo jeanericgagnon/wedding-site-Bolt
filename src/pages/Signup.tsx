@@ -158,12 +158,25 @@ export const Signup: React.FC = () => {
           email: formData.email,
           password: formData.password,
         });
-        if (signInError) throw new Error('Account created! Please sign in to continue.');
+
+        if (signInError) {
+          const isEmailNotConfirmed =
+            signInError.message.toLowerCase().includes('email not confirmed') ||
+            signInError.message.toLowerCase().includes('email_not_confirmed');
+
+          if (isEmailNotConfirmed) {
+            throw new Error(
+              'Account created! Check your email to confirm your address, then sign in to complete payment.'
+            );
+          }
+          throw new Error('Account created! Please sign in to continue.');
+        }
+
         session = signInData.session;
       }
 
       if (!session?.access_token) {
-        throw new Error('Account created! Please sign in to continue.');
+        throw new Error('Account created! Check your email to confirm your address, then sign in to complete payment.');
       }
 
       navigate('/payment-required');
@@ -390,7 +403,11 @@ export const Signup: React.FC = () => {
             />
 
             {error && (
-              <div className="p-3 bg-error-light text-error rounded-lg text-sm">
+              <div className={`p-3 rounded-lg text-sm ${
+                error.startsWith('Account created!')
+                  ? 'bg-success/10 text-success border border-success/20'
+                  : 'bg-error-light text-error'
+              }`}>
                 {error}
               </div>
             )}
