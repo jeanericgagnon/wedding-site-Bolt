@@ -28,18 +28,26 @@ export async function createCheckoutSession(
   });
 
   if (error) {
-    const anyError = error as { message?: string; status?: number; context?: { status?: number } };
-    const msg = anyError.message ?? '';
+    const anyError = error as { message?: string; status?: number; context?: { status?: number; responseText?: string } };
     const status = anyError.status ?? anyError.context?.status ?? 0;
-    if (status === 401 || msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('missing authorization')) {
+    if (status === 401) {
       throw new SessionExpiredError();
+    }
+    let msg = anyError.message ?? '';
+    if (!msg && anyError.context?.responseText) {
+      try {
+        const parsed = JSON.parse(anyError.context.responseText);
+        msg = parsed.error ?? parsed.message ?? '';
+      } catch {
+        msg = anyError.context.responseText;
+      }
     }
     throw new Error(msg || 'Could not start checkout. Please try again.');
   }
 
   if (data && (data as { error?: string }).error) {
     const serverMsg = (data as { error: string }).error;
-    if (serverMsg.toLowerCase().includes('unauthorized') || serverMsg.toLowerCase().includes('missing authorization')) {
+    if (serverMsg.toLowerCase().includes('unauthorized')) {
       throw new SessionExpiredError();
     }
     throw new Error(serverMsg);
