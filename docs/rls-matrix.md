@@ -1,6 +1,6 @@
 # RLS Policy Matrix
 
-Last verified: 2026-02-18
+Last verified: 2026-02-18 (release gate pass)
 
 All 16 public tables have RLS enabled. Policies are PERMISSIVE unless stated otherwise.
 

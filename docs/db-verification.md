@@ -1,6 +1,6 @@
 # Database Verification Report
 
-Last verified: 2026-02-18
+Last verified: 2026-02-18 (release gate pass)
 
 ---
 
@@ -148,3 +148,24 @@ Chronological summary of significant schema changes:
 | `add_production_hardening_indexes_and_rls` | Added performance indexes |
 | `add_universal_registry_system` | Added canonical_url, merchant, purchase_status columns; increment_registry_purchase RPC |
 | `fix_overly_permissive_rls_policies` | Fixed event_rsvps UPDATE and rsvps SELECT policies |
+
+## Release Gate Audit (2026-02-18)
+
+### Frontend Changes Verified
+
+| Area | Change | Status |
+|------|--------|--------|
+| Auth context | Two-file split (`authContext.ts` interfaces + `AuthContext.tsx` provider) confirmed intentional, no collision | ✅ Verified |
+| Stale imports | `AlertCircle` unused import removed from `Guests.tsx` | ✅ Fixed |
+| Typecheck | 0 errors (`tsc --noEmit`) | ✅ Pass |
+| Build | Clean (`vite build`) | ✅ Pass |
+| Tests | 126/126 passing | ✅ Pass |
+| `SiteView.tsx` | `is_published` is sole gate — no draft fallback possible | ✅ Verified |
+| `publishProject` | Atomically snapshots `site_json → published_json` on every publish | ✅ Verified |
+| Builder undo/redo | LOAD_PROJECT creates baseline history entry; undo blocked at `currentIndex <= 0` | ✅ Verified |
+| Builder autosave | Race condition guard: `isDirty && !isSaving` before trigger | ✅ Verified |
+| Template apply | `preserveContentAcrossTemplate` merges settings/bindings by section type | ✅ Verified |
+| Registry public purchase | Uses `increment_registry_purchase` RPC (row-locked, quantity-capped) | ✅ Verified |
+| `hide_when_purchased` | `visibleItems` filter in public `RegistryItemsDisplay` | ✅ Verified |
+| Messages delivery | Honest "Queued" toast + delivery summary box with background processing note | ✅ Verified |
+| Vault | Zero interactive controls; clean "Coming Soon" page | ✅ Verified |
