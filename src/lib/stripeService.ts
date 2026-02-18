@@ -22,42 +22,34 @@ export async function createCheckoutSession(
 ): Promise<string> {
   const session = await requireSession();
 
-  const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
-    body: { wedding_site_id: weddingSiteId, success_url: successUrl, cancel_url: cancelUrl },
-    headers: { Authorization: `Bearer ${session.access_token}` },
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+  const res = await fetch(`${supabaseUrl}/functions/v1/stripe-create-checkout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': supabaseAnonKey,
+    },
+    body: JSON.stringify({
+      wedding_site_id: weddingSiteId,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    }),
   });
 
-  if (error) {
-    const anyError = error as { message?: string; status?: number; context?: { status?: number; responseText?: string } };
-    const status = anyError.status ?? anyError.context?.status ?? 0;
-    if (status === 401) {
-      throw new SessionExpiredError();
-    }
-    let msg = anyError.message ?? '';
-    if (!msg && anyError.context?.responseText) {
-      try {
-        const parsed = JSON.parse(anyError.context.responseText);
-        msg = parsed.error ?? parsed.message ?? '';
-      } catch {
-        msg = anyError.context.responseText;
-      }
-    }
-    throw new Error(msg || 'Could not start checkout. Please try again.');
+  const json = await res.json().catch(() => ({})) as { url?: string; error?: string };
+
+  if (!res.ok) {
+    if (res.status === 401) throw new SessionExpiredError();
+    throw new Error(json.error || `Server error (${res.status})`);
   }
 
-  if (data && (data as { error?: string }).error) {
-    const serverMsg = (data as { error: string }).error;
-    if (serverMsg.toLowerCase().includes('unauthorized')) {
-      throw new SessionExpiredError();
-    }
-    throw new Error(serverMsg);
-  }
+  if (json.error) throw new Error(json.error);
+  if (!json.url) throw new Error('No checkout URL returned. Please try again.');
 
-  if (!data?.url) {
-    throw new Error('No checkout URL returned. Please try again.');
-  }
-
-  return data.url as string;
+  return json.url;
 }
 
 export async function fetchPaymentStatus(userId: string): Promise<'payment_required' | 'active' | 'canceled' | null> {
