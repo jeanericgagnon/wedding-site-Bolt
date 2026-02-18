@@ -30,6 +30,8 @@ const MessagingFeature = lazy(() => import('./pages/features/Messaging').then(m 
 const TravelFeature = lazy(() => import('./pages/features/Travel').then(m => ({ default: m.TravelFeature })));
 const RegistryFeature = lazy(() => import('./pages/features/Registry').then(m => ({ default: m.RegistryFeature })));
 const SeatingFeature = lazy(() => import('./pages/features/Seating').then(m => ({ default: m.SeatingFeature })));
+const PaymentRequired = lazy(() => import('./pages/PaymentRequired').then(m => ({ default: m.PaymentRequired })));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ default: m.PaymentSuccess })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -55,6 +57,22 @@ const AppContent = () => {
         <Route path="/features/seating" element={<SeatingFeature />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/payment-required"
+          element={
+            <ProtectedRoute skipPaymentGate>
+              <PaymentRequired />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment/success"
+          element={
+            <ProtectedRoute skipPaymentGate>
+              <PaymentSuccess />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/onboarding"
           element={

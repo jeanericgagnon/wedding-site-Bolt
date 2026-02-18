@@ -151,7 +151,7 @@ export const Signup: React.FC = () => {
 
       if (siteError) throw siteError;
 
-      navigate('/onboarding/status');
+      navigate('/payment-required');
     } catch (err: unknown) {
       console.error('Signup error:', err);
       setError((err as Error).message || 'Failed to create account. Please try again.');
