@@ -96,6 +96,7 @@ Deno.serve(async (req: Request) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "payment",
+      payment_method_types: ["card"],
       line_items: [{ price: Deno.env.get("STRIPE_PRICE_ID")!, quantity: 1 }],
       success_url,
       cancel_url,
