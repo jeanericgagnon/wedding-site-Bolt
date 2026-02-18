@@ -105,12 +105,21 @@ export const builderProjectService = {
   async publishProject(_projectId: string, weddingSiteId: string): Promise<{ publishedAt: string; version: number }> {
     const publishedAt = new Date().toISOString();
 
+    const { data: current, error: fetchError } = await supabase
+      .from('wedding_sites')
+      .select('site_json')
+      .eq('id', weddingSiteId)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+
     const { error } = await supabase
       .from('wedding_sites')
       .update({
         is_published: true,
         published_at: publishedAt,
         updated_at: publishedAt,
+        published_json: current?.site_json ?? null,
       })
       .eq('id', weddingSiteId);
 

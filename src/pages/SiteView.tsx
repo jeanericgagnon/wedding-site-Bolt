@@ -30,7 +30,7 @@ export const SiteView: React.FC = () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_data, layout_config, site_json, active_template_id')
+          .select('id, wedding_data, layout_config, site_json, published_json, active_template_id')
           .eq('site_slug', slug)
           .maybeSingle();
 
@@ -42,7 +42,10 @@ export const SiteView: React.FC = () => {
           return;
         }
 
-        const siteJson = safeJsonParse<BuilderProject | null>(data.site_json, null);
+        const siteJson = safeJsonParse<BuilderProject | null>(
+          data.published_json ?? data.site_json,
+          null
+        );
 
         if (siteJson && siteJson.pages?.length > 0) {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];

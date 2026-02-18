@@ -99,27 +99,56 @@ export const mediaRepository = {
   },
 };
 
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : '';
+}
+
+function maybeStr(v: unknown): string | undefined {
+  return typeof v === 'string' ? v : undefined;
+}
+
+function maybeNum(v: unknown): number | undefined {
+  return typeof v === 'number' ? v : undefined;
+}
+
+function strArray(v: unknown): string[] {
+  return Array.isArray(v) ? (v as unknown[]).filter((x): x is string => typeof x === 'string') : [];
+}
+
 function mapRowToAsset(row: Record<string, unknown>): BuilderMediaAsset {
+  const validAssetTypes: BuilderMediaAsset['assetType'][] = ['image', 'video', 'document'];
+  const validStatuses: BuilderMediaAsset['status'][] = ['ready', 'uploading', 'error'];
+
+  const rawAssetType = str(row.asset_type);
+  const assetType: BuilderMediaAsset['assetType'] = validAssetTypes.includes(rawAssetType as BuilderMediaAsset['assetType'])
+    ? (rawAssetType as BuilderMediaAsset['assetType'])
+    : 'image';
+
+  const rawStatus = str(row.status);
+  const status: BuilderMediaAsset['status'] = validStatuses.includes(rawStatus as BuilderMediaAsset['status'])
+    ? (rawStatus as BuilderMediaAsset['status'])
+    : 'ready';
+
   return {
-    id: row.id as string,
-    weddingId: row.wedding_site_id as string,
-    filename: row.filename as string,
-    originalFilename: row.original_filename as string,
-    mimeType: row.mime_type as string,
-    assetType: row.asset_type as BuilderMediaAsset['assetType'],
-    status: row.status as BuilderMediaAsset['status'],
-    url: row.url as string,
-    thumbnailUrl: row.thumbnail_url as string | undefined,
-    width: row.width as number | undefined,
-    height: row.height as number | undefined,
-    sizeBytes: row.size_bytes as number,
-    altText: row.alt_text as string | undefined,
-    caption: row.caption as string | undefined,
-    tags: (row.tags as string[]) ?? [],
-    attachedSectionIds: (row.attached_section_ids as string[]) ?? [],
+    id: str(row.id),
+    weddingId: str(row.wedding_site_id),
+    filename: str(row.filename),
+    originalFilename: str(row.original_filename),
+    mimeType: str(row.mime_type),
+    assetType,
+    status,
+    url: str(row.url),
+    thumbnailUrl: maybeStr(row.thumbnail_url),
+    width: maybeNum(row.width),
+    height: maybeNum(row.height),
+    sizeBytes: typeof row.size_bytes === 'number' ? row.size_bytes : 0,
+    altText: maybeStr(row.alt_text),
+    caption: maybeStr(row.caption),
+    tags: strArray(row.tags),
+    attachedSectionIds: strArray(row.attached_section_ids),
     meta: {
-      uploadedAtISO: row.uploaded_at as string,
-      updatedAtISO: row.updated_at as string,
+      uploadedAtISO: str(row.uploaded_at),
+      updatedAtISO: str(row.updated_at),
     },
   };
 }

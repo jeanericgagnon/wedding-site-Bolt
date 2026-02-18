@@ -50,9 +50,9 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   useEffect(() => {
     const weddingId = initialProject.weddingId;
     if (!weddingId) return;
-    mediaService.listAssets(weddingId).then(assets => {
-      dispatch(builderActions.setMediaAssets(assets));
-    }).catch(() => {});
+    mediaService.listAssets(weddingId)
+      .then(assets => { dispatch(builderActions.setMediaAssets(assets)); })
+      .catch(() => { dispatch(builderActions.setError('Could not load media library. Your uploads may not appear.')); });
   }, [initialProject.weddingId]);
 
   const handleSave = useCallback(async () => {
