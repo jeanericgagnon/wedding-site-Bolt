@@ -45,15 +45,14 @@ export const DashboardVault: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const onTodo = (message: string) => {
-    console.log('TODO:', message);
     const newToast: Toast = {
       id: Date.now(),
-      message: `TODO: ${message}`,
+      message,
     };
     setToasts((prev) => [...prev, newToast]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
-    }, 2000);
+    }, 3000);
   };
 
 
@@ -114,11 +113,21 @@ export const DashboardVault: React.FC = () => {
   return (
     <DashboardLayout currentPage="vault">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
-          <p className="text-text-secondary">
-            Time capsule messages and videos from your guests, unlocked on future anniversaries
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-text-primary">Anniversary Vaults</h1>
+              <span className="px-2.5 py-1 text-xs font-semibold bg-accent-light text-accent border border-accent/20 rounded-full">
+                Preview
+              </span>
+            </div>
+            <p className="text-text-secondary">
+              Time capsule messages and videos from your guests, unlocked on future anniversaries
+            </p>
+            <p className="text-sm text-text-tertiary mt-1">
+              This feature is in preview. Guest collection and vault unlocking will be live before your wedding day.
+            </p>
+          </div>
         </div>
 
         <Card variant="bordered" padding="lg" className="bg-gradient-to-br from-primary-light to-accent-light">
@@ -133,13 +142,15 @@ export const DashboardVault: React.FC = () => {
               <p className="text-text-secondary mb-4">
                 Let guests scan this QR code to record heartfelt messages and videos for your future anniversaries. No app or account required.
               </p>
-              <div className="flex gap-3">
-                <Button variant="primary" size="md" onClick={() => onTodo('View QR Code for vault contributions')}>
+              <div className="flex gap-3 flex-wrap">
+                <Button variant="primary" size="md" onClick={() => onTodo('QR code generation is coming soon — you will be able to share this with guests at your wedding')}>
                   View QR Code
+                  <span className="ml-2 text-[10px] font-semibold opacity-70">Coming Soon</span>
                 </Button>
-                <Button variant="outline" size="md" onClick={() => onTodo('Send invitation emails')}>
+                <Button variant="outline" size="md" onClick={() => onTodo('Email invitations to vault will be available before your wedding day')}>
                   <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
                   Send Invites
+                  <span className="ml-2 text-[10px] font-semibold opacity-70">Coming Soon</span>
                 </Button>
               </div>
             </div>
@@ -242,11 +253,11 @@ export const DashboardVault: React.FC = () => {
                               {item.type}
                             </Badge>
                             <Button
-                              variant="primary"
+                              variant="outline"
                               size="sm"
-                              onClick={() => onTodo(`View ${item.type} from ${item.uploadedBy}`)}
+                              onClick={() => onTodo(`Viewing vault ${item.type} content will be available when this feature launches`)}
                             >
-                              View
+                              Coming Soon
                             </Button>
                           </div>
                         ))}

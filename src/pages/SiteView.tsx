@@ -18,6 +18,7 @@ export const SiteView: React.FC = () => {
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [isComingSoon, setIsComingSoon] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +33,7 @@ export const SiteView: React.FC = () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_data, layout_config, site_json, published_json, active_template_id')
+          .select('id, wedding_data, layout_config, site_json, published_json, active_template_id, is_published')
           .eq('site_slug', slug)
           .maybeSingle();
 
@@ -45,6 +46,15 @@ export const SiteView: React.FC = () => {
         }
 
         setWeddingSiteId(data.id as string);
+
+        const hasPublished = !!(data.published_json);
+        const isPublished = !!(data.is_published);
+
+        if (!hasPublished && !isPublished) {
+          setIsComingSoon(true);
+          setLoading(false);
+          return;
+        }
 
         const siteJson = safeJsonParse<BuilderProject | null>(
           data.published_json ?? data.site_json,
@@ -79,8 +89,7 @@ export const SiteView: React.FC = () => {
           setWeddingData(wData);
           setLayoutConfig(lConfig);
         }
-      } catch (err: unknown) {
-        console.error('Error loading site:', err);
+      } catch {
         setError('Failed to load wedding site');
       } finally {
         setLoading(false);
@@ -108,6 +117,20 @@ export const SiteView: React.FC = () => {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-text-secondary">Loading wedding site...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isComingSoon) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full bg-surface border border-border rounded-2xl p-10 text-center space-y-4">
+          <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center mx-auto">
+            <span className="text-3xl">💍</span>
+          </div>
+          <h1 className="text-2xl font-light text-text-primary">Coming Soon</h1>
+          <p className="text-text-secondary">This wedding site is still being prepared. Check back soon!</p>
         </div>
       </div>
     );
@@ -176,8 +199,7 @@ export const SiteView: React.FC = () => {
                 instance={sectionInstance}
               />
             );
-          } catch (err) {
-            console.error("Error rendering section " + sectionInstance.type + ":", err);
+          } catch {
             return (
               <div key={sectionInstance.id} className="py-8 px-4 bg-error-light text-error text-center">
                 <p>Error rendering {sectionInstance.type} section</p>

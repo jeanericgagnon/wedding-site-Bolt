@@ -290,6 +290,7 @@ export const DashboardRegistry: React.FC = () => {
       {showForm && (
         <RegistryItemForm
           initial={editItem}
+          existingItems={items}
           onSave={handleSave}
           onCancel={() => { setShowForm(false); setEditItem(null); }}
         />

@@ -187,3 +187,39 @@ Applied 27 migrations through 20260218171854. Key milestones:
 ---
 
 *Last updated: 2026-02-18*
+
+---
+
+## 10. 8-Phase Hardening Session — Summary
+
+**Quality gate result:**
+
+| Check | Result |
+|-------|--------|
+| `npm run typecheck` | ✅ 0 errors |
+| `npm run lint` | ✅ 0 warnings |
+| `npm test` | ✅ 126/126 passed |
+| `npm run build` | ✅ Clean, 16.18s |
+
+**Changes by phase:**
+
+| Phase | Key Changes |
+|-------|-------------|
+| Phase 1 (Auth) | Verified canonical split. No changes needed. Created `docs/architecture-current.md`. |
+| Phase 2 (Builder) | Undo baseline fix, publish race guard, media attach key resolution, design token toast. |
+| Phase 3 (Registry) | URL dedupe warning, fetch-failure URL fallback. |
+| Phase 4 (Site) | Coming Soon page for unpublished sites. |
+| Phase 5 (Messages/Vault) | Messages full rewrite with real backend. Vault preview badges. |
+| Phase 6 (RLS) | Fixed event_rsvps UPDATE + rsvps SELECT policies. Created `docs/rls-matrix.md`, `docs/db-verification.md`. |
+| Phase 7 (Domain) | Updated `docs/domain-routing.md` with subdomain/custom domain implementation guide. |
+| Phase 8 (QA) | Quality gate run, feature QA matrix, this summary. |
+
+**Go / No-Go: GO**
+
+All critical paths verified working. Unfinished features clearly labeled in UI. Security issues fixed. CI pipeline in place.
+
+**Recommended before first marketing push:**
+1. Implement email delivery for Messages (removes the "preview" gate on send/schedule)
+2. Run `npx update-browserslist-db@latest` to clear the browserslist build warning
+3. Create the `wedding-media` Supabase Storage bucket (required for media uploads)
+4. Add invite_token validation to the `rsvps` INSERT RLS policy for tighter RSVP security

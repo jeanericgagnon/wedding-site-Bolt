@@ -47,14 +47,22 @@ function updatePageSections(
 
 export function builderReducer(state: BuilderState, action: BuilderAction): BuilderState {
   switch (action.type) {
-    case 'LOAD_PROJECT':
+    case 'LOAD_PROJECT': {
+      const baselineHistory = pushHistory(
+        state.history,
+        action.payload,
+        'Initial state',
+        'ADD_SECTION'
+      );
       return {
         ...state,
         project: action.payload,
         activePageId: action.payload.pages[0]?.id ?? null,
         isDirty: false,
         error: null,
+        history: baselineHistory,
       };
+    }
 
     case 'SET_WEDDING_DATA':
       return { ...state, weddingData: action.payload };

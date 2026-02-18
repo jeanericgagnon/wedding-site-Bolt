@@ -6,6 +6,17 @@ import { BuilderMediaAsset } from '../../types/builder/media';
 import { BUILDER_SUPPORTED_IMAGE_TYPES, BUILDER_MAX_FILE_SIZE_MB } from '../constants/builderCapabilities';
 import { mediaService } from '../services/mediaService';
 import { generateBuilderId } from '../../types/builder/project';
+import { getSectionManifest } from '../registry/sectionManifests';
+
+function resolveImageSettingKey(sectionType: string): string {
+  try {
+    const manifest = getSectionManifest(sectionType as Parameters<typeof getSectionManifest>[0]);
+    const imageField = manifest.settingsSchema.fields.find(f => f.type === 'image');
+    return imageField?.key ?? 'imageUrl';
+  } catch {
+    return 'imageUrl';
+  }
+}
 
 export const MediaLibraryPanel: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
@@ -20,8 +31,9 @@ export const MediaLibraryPanel: React.FC = () => {
     const activePage = state.project?.pages.find(p => p.id === pageId);
     const section = activePage?.sections.find(s => s.id === sectionId);
     if (!section) return;
+    const imageKey = resolveImageSettingKey(section.type);
     dispatch(builderActions.updateSection(pageId, sectionId, {
-      settings: { ...section.settings, imageUrl: asset.url },
+      settings: { ...section.settings, [imageKey]: asset.url },
     }));
     dispatch(builderActions.closeMediaLibrary());
   };

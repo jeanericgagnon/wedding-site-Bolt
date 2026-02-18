@@ -31,10 +31,14 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 }) => {
   const [state, dispatch] = useReducer(builderReducer, {
     ...initialBuilderState,
-    project: initialProject,
     weddingData: initialWeddingData ?? null,
-    activePageId: initialProject.pages[0]?.id ?? null,
   });
+
+  useEffect(() => {
+    dispatch({ type: 'LOAD_PROJECT', payload: initialProject });
+  // intentionally fires once on mount — LOAD_PROJECT is idempotent and sets baseline history
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activePage = useMemo(() => selectActivePage(state), [state]);
   const selectedSection = useMemo(() => selectSelectedSection(state), [state]);
@@ -71,6 +75,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const handlePublish = useCallback(async () => {
     const currentState = stateRef.current;
     if (!currentState.project || !onPublish) return;
+    if (currentState.isSaving || currentState.isPublishing) return;
     if (currentState.isDirty) {
       await handleSave();
     }
@@ -156,9 +161,13 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         </div>
 
         {state.error && (
-          <div className="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-2 z-50">
-            <span>{state.error}</span>
-            <button onClick={() => dispatch(builderActions.setError(null))} className="ml-2 font-bold text-lg leading-none">
+          <div className="fixed bottom-4 right-4 bg-error text-text-inverse px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-2 z-50 max-w-sm">
+            <span className="flex-1">{state.error}</span>
+            <button
+              onClick={() => dispatch(builderActions.setError(null))}
+              className="ml-2 font-bold text-lg leading-none opacity-80 hover:opacity-100"
+              aria-label="Dismiss error"
+            >
               ×
             </button>
           </div>

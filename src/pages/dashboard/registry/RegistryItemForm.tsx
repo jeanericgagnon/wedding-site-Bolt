@@ -7,6 +7,7 @@ import type { RegistryItem, RegistryItemDraft, RegistryPreview } from './registr
 
 interface Props {
   initial?: RegistryItem | null;
+  existingItems?: RegistryItem[];
   onSave: (draft: RegistryItemDraft) => Promise<void>;
   onCancel: () => void;
 }
@@ -25,7 +26,7 @@ function itemToDraft(item: RegistryItem): RegistryItemDraft {
   };
 }
 
-export const RegistryItemForm: React.FC<Props> = ({ initial, onSave, onCancel }) => {
+export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [], onSave, onCancel }) => {
   const [draft, setDraft] = useState<RegistryItemDraft>(() =>
     initial ? itemToDraft(initial) : {
       item_name: '',
@@ -44,6 +45,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, onSave, onCancel })
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchDone, setFetchDone] = useState(false);
+  const [dedupeWarning, setDedupeWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -61,12 +63,25 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, onSave, onCancel })
     setFetching(true);
     setFetchError(null);
     setFetchDone(false);
+    setDedupeWarning(null);
     try {
       const preview: RegistryPreview = await fetchUrlPreview(normalized);
       if (preview.error && !preview.title) {
         setFetchError(`Could not extract details: ${preview.error}. You can still fill in the form manually.`);
       } else {
         setFetchDone(true);
+      }
+      const canonicalToCheck = preview.canonical_url ?? normalized;
+      const titleToCheck = preview.title?.toLowerCase().trim();
+      const duplicate = existingItems.find(item =>
+        item.id !== initial?.id && (
+          (item.canonical_url && item.canonical_url === canonicalToCheck) ||
+          (item.item_url && item.item_url === canonicalToCheck) ||
+          (titleToCheck && item.item_name.toLowerCase().trim() === titleToCheck)
+        )
+      );
+      if (duplicate) {
+        setDedupeWarning(`"${duplicate.item_name}" may already be in your registry. You can still add it if it's a different item.`);
       }
       setDraft(prev => ({
         ...prev,
@@ -79,6 +94,10 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, onSave, onCancel })
       }));
     } catch (err: unknown) {
       setFetchError(err instanceof Error ? err.message : 'Fetch failed. You can still fill in the form manually.');
+      setDraft(prev => ({
+        ...prev,
+        item_url: prev.item_url || normalized,
+      }));
     } finally {
       setFetching(false);
     }
@@ -161,6 +180,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, onSave, onCancel })
                 <div className="flex items-center gap-2 p-3 bg-success-light rounded-lg text-sm text-success border border-success/20">
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                   <span>Details fetched — review and edit below before saving.</span>
+                </div>
+              )}
+              {dedupeWarning && (
+                <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{dedupeWarning}</span>
                 </div>
               )}
             </div>
