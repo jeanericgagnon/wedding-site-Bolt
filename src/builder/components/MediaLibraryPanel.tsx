@@ -90,16 +90,21 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(async (files: FileList) => {
+    if (!weddingId) {
+      setUploadErrors(['Upload unavailable: wedding project not loaded yet.']);
+      return;
+    }
+
     const maxBytes = BUILDER_MAX_FILE_SIZE_MB * 1024 * 1024;
     const errors: string[] = [];
 
     const valid = Array.from(files).filter(f => {
       if (!BUILDER_SUPPORTED_IMAGE_TYPES.includes(f.type)) {
-        errors.push(`${f.name}: unsupported file type`);
+        errors.push(`${f.name}: unsupported type (${f.type || 'unknown'}). Use JPEG, PNG, or WebP.`);
         return false;
       }
       if (f.size > maxBytes) {
-        errors.push(`${f.name}: exceeds ${BUILDER_MAX_FILE_SIZE_MB}MB limit`);
+        errors.push(`${f.name}: file too large (${(f.size / 1024 / 1024).toFixed(1)}MB). Limit is ${BUILDER_MAX_FILE_SIZE_MB}MB.`);
         return false;
       }
       return true;
@@ -129,10 +134,14 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
         );
         dispatch(builderActions.addMediaAsset(asset));
         dispatch({ type: 'REMOVE_FROM_UPLOAD_QUEUE', payload: tempId });
-      } catch {
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message
+          : typeof (err as { message?: string })?.message === 'string' ? (err as { message: string }).message
+          : 'Upload failed. Please try again.';
         dispatch({
           type: 'UPDATE_UPLOAD_QUEUE',
-          payload: { assetId: tempId, filename: file.name, progress: 0, status: 'error', error: 'Upload failed' },
+          payload: { assetId: tempId, filename: file.name, progress: 0, status: 'error', error: message },
         });
       }
     }));
