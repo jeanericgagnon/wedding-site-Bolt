@@ -24,10 +24,11 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
-  await requireSession();
+  const session = await requireSession();
 
   const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
     body: { wedding_site_id: weddingSiteId, success_url: successUrl, cancel_url: cancelUrl },
+    headers: { Authorization: `Bearer ${session.access_token}` },
   });
 
   if (error) {
