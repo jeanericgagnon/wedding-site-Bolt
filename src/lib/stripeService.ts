@@ -9,19 +9,14 @@ export class SessionExpiredError extends Error {
 
 export async function requireSession() {
   const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session?.access_token) {
+  if (!error && session?.access_token) {
+    return session;
+  }
+  const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+  if (refreshError || !refreshed.session?.access_token) {
     throw new SessionExpiredError();
   }
-  const { error: userError } = await supabase.auth.getUser(session.access_token);
-  if (userError) {
-    await supabase.auth.refreshSession();
-    const { data: refreshed, error: refreshError } = await supabase.auth.getSession();
-    if (refreshError || !refreshed.session?.access_token) {
-      throw new SessionExpiredError();
-    }
-    return refreshed.session;
-  }
-  return session;
+  return refreshed.session;
 }
 
 export async function createCheckoutSession(

@@ -41,12 +41,7 @@ export const PaymentRequired: React.FC = () => {
       window.location.href = url;
     } catch (err) {
       if (err instanceof SessionExpiredError) {
-        if (!user) {
-          navigate('/login?reason=session_expired', { replace: true });
-          return;
-        }
-        setError('Your session may have expired. Please sign out and sign back in, then try again.');
-        setLoading(false);
+        navigate('/login?reason=session_expired', { replace: true });
         return;
       }
       setError(err instanceof Error ? err.message : 'Could not start checkout. Please try again.');
