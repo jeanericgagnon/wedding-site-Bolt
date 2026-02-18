@@ -15,7 +15,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-      apiVersion: "2024-04-10",
+      apiVersion: "2023-10-16",
     });
 
     const body = await req.text();
