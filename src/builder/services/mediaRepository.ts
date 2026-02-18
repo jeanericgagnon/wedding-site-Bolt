@@ -39,7 +39,7 @@ export const mediaRepository = {
     const { data, error } = await supabase
       .from('builder_media_assets')
       .select('*')
-      .eq('wedding_id', weddingId)
+      .eq('wedding_site_id', weddingId)
       .order('uploaded_at', { ascending: false });
 
     if (error) throw error;
@@ -50,7 +50,7 @@ export const mediaRepository = {
     const { data, error } = await supabase
       .from('builder_media_assets')
       .insert({
-        wedding_id: asset.weddingId,
+        wedding_site_id: asset.weddingId,
         filename: asset.filename,
         original_filename: asset.originalFilename,
         mime_type: asset.mimeType,
@@ -102,7 +102,7 @@ export const mediaRepository = {
 function mapRowToAsset(row: Record<string, unknown>): BuilderMediaAsset {
   return {
     id: row.id as string,
-    weddingId: row.wedding_id as string,
+    weddingId: row.wedding_site_id as string,
     filename: row.filename as string,
     originalFilename: row.original_filename as string,
     mimeType: row.mime_type as string,

@@ -13,6 +13,7 @@ interface BuilderSectionFrameProps {
   children?: React.ReactNode;
   isSelected: boolean;
   isHovered: boolean;
+  isPreview?: boolean;
 }
 
 export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
@@ -21,22 +22,24 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
   children,
   isSelected,
   isHovered,
+  isPreview,
 }) => {
   const { dispatch } = useBuilderContext();
   const manifest = getSectionManifest(section.type);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
-    disabled: section.locked,
+    disabled: section.locked || isPreview,
   });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
   };
 
   const handleSelect = (e: React.MouseEvent) => {
+    if (isPreview) return;
     e.stopPropagation();
     dispatch(builderActions.selectSection(section.id));
   };
@@ -46,6 +49,11 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     dispatch(builderActions.toggleSectionVisibility(pageId, section.id));
   };
 
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    dispatch(builderActions.duplicateSection(pageId, section.id));
+  };
+
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (section.locked || !manifest.capabilities.deletable) return;
@@ -53,7 +61,15 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     dispatch(builderActions.selectSection(null));
   };
 
-  const isHighlighted = isSelected || isHovered;
+  const isHighlighted = !isPreview && (isSelected || isHovered);
+
+  if (isPreview) {
+    return (
+      <div style={style} className={!section.enabled ? 'hidden' : ''}>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -67,7 +83,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
       onMouseLeave={() => dispatch(builderActions.hoverSection(null))}
     >
       {isHighlighted && (
-        <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-1.5 bg-rose-500 text-white text-xs font-medium">
+        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-1.5 bg-rose-500 text-white text-xs font-medium">
           <div className="flex items-center gap-2">
             {manifest.capabilities.draggable && !section.locked && (
               <button
@@ -75,6 +91,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
                 {...listeners}
                 className="cursor-grab active:cursor-grabbing p-0.5 hover:bg-rose-600 rounded"
                 onClick={e => e.stopPropagation()}
+                aria-label="Drag to reorder"
               >
                 <GripVertical size={12} />
               </button>
@@ -90,14 +107,16 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
               onClick={handleToggleVisibility}
               title={section.enabled ? 'Hide section' : 'Show section'}
               className="p-1 hover:bg-rose-600 rounded transition-colors"
+              aria-label={section.enabled ? 'Hide section' : 'Show section'}
             >
               {section.enabled ? <Eye size={12} /> : <EyeOff size={12} />}
             </button>
             {manifest.capabilities.duplicable && (
               <button
-                onClick={e => e.stopPropagation()}
+                onClick={handleDuplicate}
                 title="Duplicate section"
                 className="p-1 hover:bg-rose-600 rounded transition-colors"
+                aria-label="Duplicate section"
               >
                 <Copy size={12} />
               </button>
@@ -106,6 +125,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
               onClick={handleSelect}
               title="Section settings"
               className="p-1 hover:bg-rose-600 rounded transition-colors"
+              aria-label="Open section settings"
             >
               <Settings size={12} />
             </button>
@@ -114,6 +134,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
                 onClick={handleDelete}
                 title="Delete section"
                 className="p-1 hover:bg-red-700 rounded transition-colors"
+                aria-label="Delete section"
               >
                 <Trash2 size={12} />
               </button>
@@ -124,8 +145,8 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
 
       <div className={isHighlighted ? 'pt-7' : ''}>
         {children ?? (
-          <div className="h-24 bg-gray-50 flex items-center justify-center border-2 border-dashed border-gray-200">
-            <span className="text-sm text-gray-400">{manifest.label} section preview</span>
+          <div className="h-20 bg-gray-50 flex items-center justify-center border-2 border-dashed border-gray-200">
+            <span className="text-sm text-gray-400">{manifest.label}</span>
           </div>
         )}
       </div>

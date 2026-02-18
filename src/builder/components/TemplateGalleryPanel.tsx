@@ -1,10 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { X, Check, Sparkles, Loader2 } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getAllTemplatePacks } from '../constants/builderTemplatePacks';
 import { BuilderTemplateDefinition, TemplateMoodTag } from '../../types/builder/template';
 import { createBuilderSectionFromLibrary } from '../adapters/layoutAdapter';
+import { BuilderSectionInstance } from '../../types/builder/section';
+import { selectActivePage } from '../state/builderSelectors';
+
+function preserveContentAcrossTemplate(
+  existingSections: BuilderSectionInstance[],
+  newSections: BuilderSectionInstance[]
+): BuilderSectionInstance[] {
+  const existingByType = new Map<string, BuilderSectionInstance>();
+  for (const sec of existingSections) {
+    if (!existingByType.has(sec.type)) {
+      existingByType.set(sec.type, sec);
+    }
+  }
+  return newSections.map(newSec => {
+    const existing = existingByType.get(newSec.type);
+    if (!existing) return newSec;
+    return {
+      ...newSec,
+      settings: { ...newSec.settings, ...existing.settings },
+      bindings: { ...newSec.bindings, ...existing.bindings },
+      styleOverrides: { ...existing.styleOverrides },
+    };
+  });
+}
 
 const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -17,7 +41,11 @@ const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
   { id: 'floral', label: 'Floral' },
 ];
 
-export const TemplateGalleryPanel: React.FC = () => {
+interface TemplateGalleryPanelProps {
+  onSaveRequest?: () => void;
+}
+
+export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSaveRequest }) => {
   const { state, dispatch } = useBuilderContext();
   const [activeFilter, setActiveFilter] = useState<TemplateMoodTag | 'all'>('all');
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
@@ -29,26 +57,32 @@ export const TemplateGalleryPanel: React.FC = () => {
       ? templates
       : templates.filter(t => t.moodTags.includes(activeFilter));
 
-  const activePageId = state.activePageId;
   const currentTemplateId = state.project?.templateId;
+  const activePage = selectActivePage(state);
 
-  const handleApplyTemplate = async (template: BuilderTemplateDefinition) => {
-    if (!activePageId) return;
+  const handleApplyTemplate = useCallback(async (template: BuilderTemplateDefinition) => {
+    if (!activePage) return;
     setApplyingTemplateId(template.id);
 
     try {
-      const sections = template.sectionComposition.map((slot, idx) =>
+      const baseSections = template.sectionComposition.map((slot, idx) =>
         createBuilderSectionFromLibrary(slot.type, slot.variant, idx)
       );
 
-      dispatch(builderActions.applyTemplate(template.id, sections));
+      const mergedSections = preserveContentAcrossTemplate(activePage.sections, baseSections);
+
+      dispatch(builderActions.applyTemplate(template.id, mergedSections));
       dispatch(builderActions.applyTheme(template.defaultThemeId));
       dispatch(builderActions.closeTemplateGallery());
       setConfirmTemplate(null);
+
+      if (onSaveRequest) {
+        setTimeout(onSaveRequest, 100);
+      }
     } finally {
       setApplyingTemplateId(null);
     }
-  };
+  }, [activePage, dispatch, onSaveRequest]);
 
   if (!state.templateGalleryOpen) return null;
 
@@ -93,7 +127,6 @@ export const TemplateGalleryPanel: React.FC = () => {
                 template={template}
                 isCurrent={template.id === currentTemplateId}
                 isApplying={applyingTemplateId === template.id}
-                onPreview={() => setConfirmTemplate(template)}
                 onApply={() => setConfirmTemplate(template)}
               />
             ))}
@@ -117,7 +150,6 @@ interface TemplateCardProps {
   template: BuilderTemplateDefinition;
   isCurrent: boolean;
   isApplying: boolean;
-  onPreview: () => void;
   onApply: () => void;
 }
 

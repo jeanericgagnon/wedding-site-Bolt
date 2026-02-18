@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { WeddingDataV1 } from '../types/weddingData';
+import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
 import { LayoutConfigV1 } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
 import { applyThemePreset } from '../lib/themePresets';
+import { BuilderProject } from '../types/builder/project';
+import { BuilderSectionInstance } from '../types/builder/section';
+import { SectionRenderer } from '../builder/components/SectionRenderer';
+import { safeJsonParse } from '../lib/jsonUtils';
 
 export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
+  const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +30,7 @@ export const SiteView: React.FC = () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_data, layout_config, active_template_id')
+          .select('id, wedding_data, layout_config, site_json, active_template_id')
           .eq('site_slug', slug)
           .maybeSingle();
 
@@ -37,33 +42,36 @@ export const SiteView: React.FC = () => {
           return;
         }
 
-        if (!data.wedding_data || !data.layout_config) {
-          setError('This wedding site is still being set up. Check back soon!');
-          setLoading(false);
-          return;
+        const siteJson = safeJsonParse<BuilderProject | null>(data.site_json, null);
+
+        if (siteJson && siteJson.pages?.length > 0) {
+          const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
+          const sections = homePage.sections.filter(s => s.enabled);
+          const wData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
+
+          if (wData.theme?.preset) {
+            applyThemePreset(wData.theme.preset);
+          }
+
+          setBuilderSections(sections);
+          setWeddingData(wData);
+        } else {
+          const wData = safeJsonParse<WeddingDataV1 | null>(data.wedding_data, null);
+          const lConfig = safeJsonParse<LayoutConfigV1 | null>(data.layout_config, null);
+
+          if (!wData || !lConfig) {
+            setError('This wedding site is still being set up. Check back soon!');
+            setLoading(false);
+            return;
+          }
+
+          if (wData.theme?.preset) {
+            applyThemePreset(wData.theme.preset);
+          }
+
+          setWeddingData(wData);
+          setLayoutConfig(lConfig);
         }
-
-        const wData = data.wedding_data as WeddingDataV1;
-        const lConfig = data.layout_config as LayoutConfigV1;
-
-        if (wData.version !== '1') {
-          setError('Unsupported site configuration version');
-          setLoading(false);
-          return;
-        }
-
-        if (lConfig.version !== '1') {
-          setError('Unsupported layout configuration version');
-          setLoading(false);
-          return;
-        }
-
-        if (wData.theme?.preset) {
-          applyThemePreset(wData.theme.preset);
-        }
-
-        setWeddingData(wData);
-        setLayoutConfig(lConfig);
       } catch (err: unknown) {
         console.error('Error loading site:', err);
         setError('Failed to load wedding site');
@@ -106,6 +114,16 @@ export const SiteView: React.FC = () => {
           <h1 className="text-2xl font-bold text-text-primary mb-2">Oops!</h1>
           <p className="text-text-secondary">{error}</p>
         </div>
+      </div>
+    );
+  }
+
+  if (builderSections && weddingData) {
+    return (
+      <div className="min-h-screen bg-background">
+        {builderSections.map(section => (
+          <SectionRenderer key={section.id} section={section} weddingData={weddingData} isPreview />
+        ))}
       </div>
     );
   }

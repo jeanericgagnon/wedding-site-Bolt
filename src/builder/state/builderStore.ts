@@ -3,11 +3,13 @@ import { BuilderProject, BuilderPage } from '../../types/builder/project';
 import { BuilderSectionInstance, BuilderSectionType } from '../../types/builder/section';
 import { BuilderHistoryState, createEmptyHistoryState } from '../../types/builder/history';
 import { BuilderMediaAsset, MediaUploadProgress } from '../../types/builder/media';
+import { WeddingDataV1 } from '../../types/weddingData';
 
 export type BuilderMode = 'edit' | 'preview';
 
 export interface BuilderState {
   project: BuilderProject | null;
+  weddingData: WeddingDataV1 | null;
   activePageId: string | null;
   selectedSectionId: string | null;
   hoveredSectionId: string | null;
@@ -27,6 +29,7 @@ export interface BuilderState {
 
 export const initialBuilderState: BuilderState = {
   project: null,
+  weddingData: null,
   activePageId: null,
   selectedSectionId: null,
   hoveredSectionId: null,
@@ -64,6 +67,7 @@ export function useBuilderContext(): BuilderContextValue {
 
 export type BuilderAction =
   | { type: 'LOAD_PROJECT'; payload: BuilderProject }
+  | { type: 'SET_WEDDING_DATA'; payload: WeddingDataV1 }
   | { type: 'SET_ACTIVE_PAGE'; payload: string }
   | { type: 'SELECT_SECTION'; payload: string | null }
   | { type: 'HOVER_SECTION'; payload: string | null }
@@ -73,6 +77,7 @@ export type BuilderAction =
   | { type: 'REORDER_SECTIONS'; payload: { pageId: string; orderedIds: string[] } }
   | { type: 'UPDATE_SECTION'; payload: { pageId: string; sectionId: string; patch: Partial<BuilderSectionInstance> } }
   | { type: 'TOGGLE_SECTION_VISIBILITY'; payload: { pageId: string; sectionId: string } }
+  | { type: 'DUPLICATE_SECTION'; payload: { pageId: string; sectionId: string } }
   | { type: 'APPLY_TEMPLATE'; payload: { templateId: string; sections: BuilderSectionInstance[] } }
   | { type: 'APPLY_THEME'; payload: string }
   | { type: 'SET_SAVING'; payload: boolean }
@@ -89,4 +94,6 @@ export type BuilderAction =
   | { type: 'OPEN_MEDIA_LIBRARY'; payload?: string }
   | { type: 'CLOSE_MEDIA_LIBRARY' }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'ADD_SECTION_TYPE'; payload: { pageId: string; sectionType: BuilderSectionType; insertAfterIndex?: number } };
+  | { type: 'ADD_SECTION_TYPE'; payload: { pageId: string; sectionType: BuilderSectionType; insertAfterIndex?: number } }
+  | { type: 'UNDO' }
+  | { type: 'REDO' };

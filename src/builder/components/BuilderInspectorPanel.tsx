@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown, ImageIcon } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectSelectedSection, selectActivePage } from '../state/builderSelectors';
@@ -81,6 +81,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               field={field}
               value={selectedSection.settings[field.key] ?? field.defaultValue}
               onChange={val => handleUpdateSetting(field.key, val)}
+              sectionId={selectedSection.id}
             />
           ))}
         </InspectorSection>
@@ -99,8 +100,49 @@ export const BuilderInspectorPanel: React.FC = () => {
         )}
 
         <InspectorSection title="Style Overrides">
-          <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-            Style overrides are available in Phase 2
+          <div className="mb-3">
+            <label className="text-xs font-medium text-gray-500 block mb-1">Background Color</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={selectedSection.styleOverrides?.backgroundColor ?? '#ffffff'}
+                onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                  styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
+                }))}
+                className="w-8 h-8 rounded cursor-pointer border border-gray-200"
+              />
+              <input
+                type="text"
+                value={selectedSection.styleOverrides?.backgroundColor ?? ''}
+                onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                  styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
+                }))}
+                placeholder="e.g. #f9fafb"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
+              />
+            </div>
+          </div>
+          <div className="mb-3">
+            <label className="text-xs font-medium text-gray-500 block mb-1">Text Color</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={selectedSection.styleOverrides?.textColor ?? '#111827'}
+                onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                  styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
+                }))}
+                className="w-8 h-8 rounded cursor-pointer border border-gray-200"
+              />
+              <input
+                type="text"
+                value={selectedSection.styleOverrides?.textColor ?? ''}
+                onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                  styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
+                }))}
+                placeholder="e.g. #111827"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
+              />
+            </div>
           </div>
         </InspectorSection>
       </div>
@@ -119,9 +161,11 @@ interface InspectorFieldProps {
   field: BuilderSettingsField;
   value: string | boolean | number | undefined;
   onChange: (val: string | boolean | number) => void;
+  sectionId?: string;
 }
 
-const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange }) => {
+const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange, sectionId }) => {
+  const { dispatch } = useBuilderContext();
   switch (field.type) {
     case 'toggle':
       return (
@@ -171,12 +215,50 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange 
         </div>
       );
 
+    case 'color':
+      return (
+        <div className="mb-3">
+          <label className="text-xs font-medium text-gray-500 block mb-1">{field.label}</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={(value as string) ?? '#000000'}
+              onChange={e => onChange(e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer border border-gray-200"
+            />
+            <input
+              type="text"
+              value={(value as string) ?? ''}
+              onChange={e => onChange(e.target.value)}
+              placeholder={field.placeholder ?? 'e.g. #000000'}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
+            />
+          </div>
+        </div>
+      );
+
     case 'image':
       return (
         <div className="mb-3">
           <label className="text-xs font-medium text-gray-500 block mb-1">{field.label}</label>
-          <button className="w-full border-2 border-dashed border-gray-200 rounded-lg p-3 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-400 transition-colors">
-            Click to select image from media library
+          {value ? (
+            <div className="relative rounded-lg overflow-hidden border border-gray-200 aspect-video bg-gray-100 mb-2">
+              <img src={value as string} alt="" className="w-full h-full object-cover" />
+              <button
+                onClick={() => onChange('')}
+                className="absolute top-1 right-1 p-1 bg-white rounded shadow text-gray-500 hover:text-red-500 transition-colors"
+                aria-label="Remove image"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ) : null}
+          <button
+            onClick={() => dispatch(builderActions.openMediaLibrary(sectionId))}
+            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-lg p-3 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-400 transition-colors"
+          >
+            <ImageIcon size={14} />
+            {value ? 'Change image' : 'Select from media library'}
           </button>
         </div>
       );

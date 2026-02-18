@@ -2,9 +2,11 @@ import { BuilderAction } from './builderStore';
 import { BuilderSectionInstance, BuilderSectionType } from '../../types/builder/section';
 import { BuilderProject } from '../../types/builder/project';
 import { BuilderMediaAsset } from '../../types/builder/media';
+import { WeddingDataV1 } from '../../types/weddingData';
 
 export const builderActions = {
   loadProject: (project: BuilderProject): BuilderAction => ({ type: 'LOAD_PROJECT', payload: project }),
+  setWeddingData: (data: WeddingDataV1): BuilderAction => ({ type: 'SET_WEDDING_DATA', payload: data }),
   setActivePage: (pageId: string): BuilderAction => ({ type: 'SET_ACTIVE_PAGE', payload: pageId }),
   selectSection: (sectionId: string | null): BuilderAction => ({ type: 'SELECT_SECTION', payload: sectionId }),
   hoverSection: (sectionId: string | null): BuilderAction => ({ type: 'HOVER_SECTION', payload: sectionId }),
@@ -22,6 +24,11 @@ export const builderActions = {
 
   removeSection: (pageId: string, sectionId: string): BuilderAction => ({
     type: 'REMOVE_SECTION',
+    payload: { pageId, sectionId },
+  }),
+
+  duplicateSection: (pageId: string, sectionId: string): BuilderAction => ({
+    type: 'DUPLICATE_SECTION',
     payload: { pageId, sectionId },
   }),
 
@@ -46,6 +53,9 @@ export const builderActions = {
   }),
 
   applyTheme: (themeId: string): BuilderAction => ({ type: 'APPLY_THEME', payload: themeId }),
+
+  undo: (): BuilderAction => ({ type: 'UNDO' }),
+  redo: (): BuilderAction => ({ type: 'REDO' }),
 
   openTemplateGallery: (): BuilderAction => ({ type: 'OPEN_TEMPLATE_GALLERY' }),
   closeTemplateGallery: (): BuilderAction => ({ type: 'CLOSE_TEMPLATE_GALLERY' }),

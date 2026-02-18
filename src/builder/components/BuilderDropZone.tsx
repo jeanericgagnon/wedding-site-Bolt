@@ -4,12 +4,14 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { BuilderSectionFrame } from './BuilderSectionFrame';
+
 interface BuilderDropZoneProps {
   pageId: string;
   sections: BuilderSectionInstance[];
   selectedSectionId: string | null;
   hoveredSectionId: string | null;
   renderSection?: (section: BuilderSectionInstance) => React.ReactNode;
+  isPreview?: boolean;
 }
 
 export const BuilderDropZone: React.FC<BuilderDropZoneProps> = ({
@@ -18,13 +20,14 @@ export const BuilderDropZone: React.FC<BuilderDropZoneProps> = ({
   selectedSectionId,
   hoveredSectionId,
   renderSection,
+  isPreview,
 }) => {
   const { isOver, setNodeRef } = useDroppable({ id: `dropzone-${pageId}` });
 
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-full transition-colors ${isOver ? 'bg-rose-50' : ''}`}
+      className={`min-h-full transition-colors ${isOver ? 'bg-rose-50/30' : ''}`}
     >
       <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
         {sections.map(section => (
@@ -34,16 +37,17 @@ export const BuilderDropZone: React.FC<BuilderDropZoneProps> = ({
             pageId={pageId}
             isSelected={selectedSectionId === section.id}
             isHovered={hoveredSectionId === section.id}
+            isPreview={isPreview}
           >
             {renderSection?.(section)}
           </BuilderSectionFrame>
         ))}
       </SortableContext>
 
-      {sections.length === 0 && <BuilderEmptyDropState />}
+      {sections.length === 0 && !isPreview && <BuilderEmptyDropState />}
 
       {isOver && (
-        <div className="h-1 bg-rose-400 rounded-full mx-4 my-1 transition-all" />
+        <div className="h-0.5 bg-rose-400 rounded-full mx-4 my-1 transition-all" />
       )}
     </div>
   );

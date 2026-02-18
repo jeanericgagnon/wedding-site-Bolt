@@ -18,18 +18,17 @@ import {
   selectIsPreviewMode,
 } from '../state/builderSelectors';
 import { BuilderDropZone } from './BuilderDropZone';
+import { SectionRenderer } from './SectionRenderer';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { getSectionManifest } from '../registry/sectionManifests';
+import { createEmptyWeddingData } from '../../types/weddingData';
 
-interface BuilderCanvasProps {
-  renderSectionPreview?: (section: BuilderSectionInstance) => React.ReactNode;
-}
-
-export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ renderSectionPreview }) => {
+export const BuilderCanvas: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
   const activePage = selectActivePage(state);
   const sections = selectActivePageSections(state);
   const isPreview = selectIsPreviewMode(state);
+  const weddingData = state.weddingData ?? createEmptyWeddingData();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -55,6 +54,13 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ renderSectionPrevi
       dispatch(builderActions.reorderSections(activePage.id, reordered.map(s => s.id)));
     },
     [sections, activePage, dispatch]
+  );
+
+  const renderSection = useCallback(
+    (section: BuilderSectionInstance) => (
+      <SectionRenderer section={section} weddingData={weddingData} isPreview={isPreview} />
+    ),
+    [weddingData, isPreview]
   );
 
   const dragActiveSection = dragActiveId ? sections.find(s => s.id === dragActiveId) : null;
@@ -95,7 +101,8 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ renderSectionPrevi
             sections={sections}
             selectedSectionId={state.selectedSectionId}
             hoveredSectionId={state.hoveredSectionId}
-            renderSection={renderSectionPreview}
+            renderSection={renderSection}
+            isPreview={isPreview}
           />
         </div>
 

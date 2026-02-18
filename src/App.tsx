@@ -16,7 +16,6 @@ const RSVP = lazy(() => import('./pages/RSVP'));
 const EventRSVP = lazy(() => import('./pages/EventRSVP'));
 const SiteView = lazy(() => import('./pages/SiteView').then(m => ({ default: m.SiteView })));
 const DashboardOverview = lazy(() => import('./pages/dashboard/Overview').then(m => ({ default: m.DashboardOverview })));
-const DashboardBuilder = lazy(() => import('./pages/dashboard/Builder').then(m => ({ default: m.DashboardBuilder })));
 const DashboardGuests = lazy(() => import('./pages/dashboard/Guests').then(m => ({ default: m.DashboardGuests })));
 const DashboardVault = lazy(() => import('./pages/dashboard/Vault').then(m => ({ default: m.DashboardVault })));
 const DashboardRegistry = lazy(() => import('./pages/dashboard/Registry').then(m => ({ default: m.DashboardRegistry })));
@@ -115,7 +114,7 @@ const AppContent = () => {
           path="/dashboard/builder"
           element={
             <ProtectedRoute>
-              <DashboardBuilder />
+              <Navigate to="/builder" replace />
             </ProtectedRoute>
           }
         />

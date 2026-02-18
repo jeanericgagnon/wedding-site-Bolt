@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { BuilderShell } from './components/BuilderShell';
 import { builderProjectService } from './services/builderProjectService';
 import { publishService } from './services/publishService';
 import { BuilderProject } from '../types/builder/project';
+import { WeddingDataV1 } from '../types/weddingData';
+import { supabase } from '../lib/supabase';
 
 export const BuilderPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [project, setProject] = useState<BuilderProject | null>(null);
+  const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [weddingId, setWeddingId] = useState<string | null>(null);
   const [coupleName, setCoupleName] = useState<string>('');
 
   useEffect(() => {
@@ -24,24 +28,31 @@ export const BuilderPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const { supabase } = await import('../lib/supabase');
-      const { data: weddingData, error: weddingError } = await supabase
-        .from('weddings')
-        .select('id, partner1_name, partner2_name')
+      const { data: siteData, error: siteError } = await supabase
+        .from('wedding_sites')
+        .select('id, couple_name_1, couple_name_2')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (weddingError) throw weddingError;
-      if (!weddingData) {
-        setError('No wedding found. Please complete onboarding first.');
+      if (siteError) throw siteError;
+
+      if (!siteData) {
+        setError('no-site');
         return;
       }
 
-      setWeddingId(weddingData.id);
-      setCoupleName(`${weddingData.partner1_name} & ${weddingData.partner2_name}`);
+      const siteId = siteData.id as string;
+      const name1 = (siteData.couple_name_1 as string) ?? '';
+      const name2 = (siteData.couple_name_2 as string) ?? '';
+      setCoupleName(name1 && name2 ? `${name1} & ${name2}` : name1 || name2 || 'My Wedding');
 
-      const loadedProject = await builderProjectService.loadProject(weddingData.id);
+      const [loadedProject, loadedWeddingData] = await Promise.all([
+        builderProjectService.loadProject(siteId),
+        builderProjectService.loadWeddingData(siteId),
+      ]);
+
       setProject(loadedProject);
+      setWeddingData(loadedWeddingData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load builder');
     } finally {
@@ -54,7 +65,7 @@ export const BuilderPage: React.FC = () => {
   };
 
   const handlePublish = async (projectId: string) => {
-    if (!project || !weddingId) return;
+    if (!project) return;
     const result = await publishService.publish({ ...project, id: projectId });
     if (!result.success) throw new Error(result.error);
   };
@@ -70,21 +81,51 @@ export const BuilderPage: React.FC = () => {
     );
   }
 
+  if (error === 'no-site') {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-sm px-4">
+          <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">💍</span>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">No wedding site yet</h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Complete your wedding setup first to start building your site.
+          </p>
+          <button
+            onClick={() => navigate('/onboarding')}
+            className="inline-flex items-center px-5 py-2.5 bg-rose-600 text-white text-sm font-medium rounded-xl hover:bg-rose-700 transition-colors"
+          >
+            Start Setup
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-3 flex items-center gap-1.5 mx-auto text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (error || !project) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-sm">
+        <div className="text-center max-w-sm px-4">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle size={24} className="text-red-500" />
           </div>
           <h2 className="text-base font-semibold text-gray-800 mb-2">Builder unavailable</h2>
           <p className="text-sm text-gray-500 mb-4">{error ?? 'Unable to load project.'}</p>
-          <a
-            href="/dashboard"
-            className="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
           >
+            <ArrowLeft size={14} />
             Back to Dashboard
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -93,6 +134,7 @@ export const BuilderPage: React.FC = () => {
   return (
     <BuilderShell
       initialProject={project}
+      initialWeddingData={weddingData ?? undefined}
       projectName={coupleName}
       onSave={handleSave}
       onPublish={handlePublish}

@@ -1,16 +1,43 @@
 import { BuilderState, BuilderAction } from './builderStore';
-import { BuilderPage } from '../../types/builder/project';
+import { BuilderPage, BuilderProject, generateBuilderId } from '../../types/builder/project';
+import { BuilderHistoryEntry, BuilderHistoryState } from '../../types/builder/history';
 import { getDefaultSectionInstance } from '../registry/sectionManifests';
+
+function pushHistory(
+  history: BuilderHistoryState,
+  project: BuilderProject,
+  label: string,
+  actionType: BuilderHistoryEntry['actionType']
+): BuilderHistoryState {
+  const newEntry: BuilderHistoryEntry = {
+    id: generateBuilderId(),
+    actionType,
+    label,
+    snapshot: project,
+    timestamp: new Date().toISOString(),
+  };
+  const trimmed = history.entries.slice(0, history.currentIndex + 1);
+  const newEntries = [...trimmed, newEntry].slice(-history.maxEntries);
+  return {
+    ...history,
+    entries: newEntries,
+    currentIndex: newEntries.length - 1,
+  };
+}
 
 function updatePageSections(
   state: BuilderState,
   pageId: string,
-  updater: (page: BuilderPage) => BuilderPage
+  updater: (page: BuilderPage) => BuilderPage,
+  historyLabel: string,
+  historyAction: BuilderHistoryEntry['actionType']
 ): BuilderState {
   if (!state.project) return state;
+  const newHistory = pushHistory(state.history, state.project, historyLabel, historyAction);
   return {
     ...state,
     isDirty: true,
+    history: newHistory,
     project: {
       ...state.project,
       pages: state.project.pages.map(p => (p.id === pageId ? updater(p) : p)),
@@ -28,6 +55,9 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         isDirty: false,
         error: null,
       };
+
+    case 'SET_WEDDING_DATA':
+      return { ...state, weddingData: action.payload };
 
     case 'SET_ACTIVE_PAGE':
       return { ...state, activePageId: action.payload, selectedSectionId: null };
@@ -48,7 +78,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         const idx = insertAfterIndex !== undefined ? insertAfterIndex + 1 : sections.length;
         sections.splice(idx, 0, { ...section, orderIndex: idx });
         return { ...page, sections: sections.map((s, i) => ({ ...s, orderIndex: i })) };
-      });
+      }, `Add ${action.payload.section.type}`, 'ADD_SECTION');
 
     case 'ADD_SECTION_TYPE': {
       const { pageId, sectionType, insertAfterIndex } = action.payload;
@@ -59,7 +89,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         const sections = [...pg.sections];
         sections.splice(orderIndex, 0, { ...newSection, orderIndex });
         return { ...pg, sections: sections.map((s, i) => ({ ...s, orderIndex: i })) };
-      });
+      }, `Add ${sectionType}`, 'ADD_SECTION');
     }
 
     case 'REMOVE_SECTION':
@@ -68,7 +98,23 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         sections: page.sections
           .filter(s => s.id !== action.payload.sectionId)
           .map((s, i) => ({ ...s, orderIndex: i })),
-      }));
+      }), 'Remove section', 'REMOVE_SECTION');
+
+    case 'DUPLICATE_SECTION':
+      return updatePageSections(state, action.payload.pageId, page => {
+        const idx = page.sections.findIndex(s => s.id === action.payload.sectionId);
+        if (idx === -1) return page;
+        const original = page.sections[idx];
+        const now = new Date().toISOString();
+        const copy = {
+          ...original,
+          id: generateBuilderId(),
+          meta: { createdAtISO: now, updatedAtISO: now },
+        };
+        const sections = [...page.sections];
+        sections.splice(idx + 1, 0, copy);
+        return { ...page, sections: sections.map((s, i) => ({ ...s, orderIndex: i })) };
+      }, 'Duplicate section', 'ADD_SECTION');
 
     case 'REORDER_SECTIONS':
       return updatePageSections(state, action.payload.pageId, page => {
@@ -80,7 +126,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
           })
           .filter((s): s is NonNullable<typeof s> => s !== null);
         return { ...page, sections: reordered };
-      });
+      }, 'Reorder sections', 'REORDER_SECTIONS');
 
     case 'UPDATE_SECTION':
       return updatePageSections(state, action.payload.pageId, page => ({
@@ -90,7 +136,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
             ? { ...s, ...action.payload.patch, meta: { ...s.meta, updatedAtISO: new Date().toISOString() } }
             : s
         ),
-      }));
+      }), 'Edit section', 'UPDATE_SECTION_SETTINGS');
 
     case 'TOGGLE_SECTION_VISIBILITY':
       return updatePageSections(state, action.payload.pageId, page => ({
@@ -98,13 +144,15 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         sections: page.sections.map(s =>
           s.id === action.payload.sectionId ? { ...s, enabled: !s.enabled } : s
         ),
-      }));
+      }), 'Toggle visibility', 'TOGGLE_SECTION_VISIBILITY');
 
-    case 'APPLY_TEMPLATE':
+    case 'APPLY_TEMPLATE': {
       if (!state.project) return state;
+      const newHistory = pushHistory(state.history, state.project, `Apply template`, 'APPLY_TEMPLATE');
       return {
         ...state,
         isDirty: true,
+        history: newHistory,
         project: {
           ...state.project,
           templateId: action.payload.templateId,
@@ -113,14 +161,42 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
           ),
         },
       };
+    }
 
-    case 'APPLY_THEME':
+    case 'APPLY_THEME': {
       if (!state.project) return state;
+      const newHistory = pushHistory(state.history, state.project, `Apply theme`, 'APPLY_THEME');
       return {
         ...state,
         isDirty: true,
+        history: newHistory,
         project: { ...state.project, themeId: action.payload },
       };
+    }
+
+    case 'UNDO': {
+      const { history, project } = state;
+      if (!project || history.currentIndex <= 0) return state;
+      const prevEntry = history.entries[history.currentIndex - 1];
+      return {
+        ...state,
+        project: { ...prevEntry.snapshot, weddingId: project.weddingId },
+        history: { ...history, currentIndex: history.currentIndex - 1 },
+        isDirty: true,
+      };
+    }
+
+    case 'REDO': {
+      const { history, project } = state;
+      if (!project || history.currentIndex >= history.entries.length - 1) return state;
+      const nextEntry = history.entries[history.currentIndex + 1];
+      return {
+        ...state,
+        project: { ...nextEntry.snapshot, weddingId: project.weddingId },
+        history: { ...history, currentIndex: history.currentIndex + 1 },
+        isDirty: true,
+      };
+    }
 
     case 'SET_SAVING':
       return { ...state, isSaving: action.payload };

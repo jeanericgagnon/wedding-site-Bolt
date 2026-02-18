@@ -44,18 +44,20 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({ onSave, onPublish,
 
       <div className="flex items-center gap-1">
         <button
-          onClick={() => {}}
+          onClick={() => dispatch(builderActions.undo())}
           disabled={!undoRedo.canUndo}
           title={`Undo${undoRedo.undoLabel ? `: ${undoRedo.undoLabel}` : ''} (⌘Z)`}
           className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 transition-colors"
+          aria-label="Undo"
         >
           <Undo2 size={16} />
         </button>
         <button
-          onClick={() => {}}
+          onClick={() => dispatch(builderActions.redo())}
           disabled={!undoRedo.canRedo}
           title={`Redo${undoRedo.redoLabel ? `: ${undoRedo.redoLabel}` : ''} (⌘⇧Z)`}
           className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 transition-colors"
+          aria-label="Redo"
         >
           <Redo2 size={16} />
         </button>
@@ -93,9 +95,10 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({ onSave, onPublish,
           onClick={onSave}
           disabled={state.isSaving || !isDirty}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Save draft"
         >
           {state.isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Save
+          {state.isSaving ? 'Saving...' : 'Save'}
         </button>
 
         <button
