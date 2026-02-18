@@ -6,15 +6,12 @@ import {
   Heart,
   Clock,
   Users,
-  Image,
   Calendar,
   CheckCircle2,
   Globe,
   Shield,
-  Sparkles,
   Camera,
   Mail,
-  MapPin,
   AlertTriangle,
   UserPlus,
   Lock,
@@ -24,22 +21,17 @@ import {
   Zap,
   FileText,
   DollarSign,
-  Plane,
   Utensils,
   QrCode,
   Download,
   Upload,
   Check,
-  X,
-  ChevronDown,
   MessageSquare,
   Wallet,
   Hotel,
   ClipboardCheck,
   BarChart,
-  Palette,
   Send,
-  ArrowRight,
 } from 'lucide-react';
 
 interface Toast {
@@ -47,7 +39,7 @@ interface Toast {
   message: string;
 }
 
-const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: number) => void }> = ({ toasts, onRemove }) => {
+const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
       {toasts.map((toast) => (
@@ -119,7 +111,7 @@ export const Product: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink">
       <Header />
-      <ToastContainer toasts={toasts} onRemove={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
+      <ToastContainer toasts={toasts} />
 
       {/* HERO */}
       <section className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">

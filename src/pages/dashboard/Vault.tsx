@@ -43,7 +43,6 @@ const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
 
 export const DashboardVault: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [selectedVault, setSelectedVault] = useState<string | null>(null);
 
   const onTodo = (message: string) => {
     console.log('TODO:', message);
@@ -57,7 +56,6 @@ export const DashboardVault: React.FC = () => {
     }, 2000);
   };
 
-  const weddingDate = '2026-06-15';
 
   const vaults: AnniversaryVault[] = [
     {
@@ -187,7 +185,7 @@ export const DashboardVault: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <Badge variant={isUnlocked ? 'success' : 'default'} className="text-sm px-3 py-1">
+                    <Badge variant={isUnlocked ? 'success' : 'neutral'} className="text-sm px-3 py-1">
                       {isUnlocked ? 'Unlocked' : 'Locked'}
                     </Badge>
                   </div>

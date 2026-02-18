@@ -58,7 +58,7 @@ export const WeddingStatus: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         planning_status: selectedStatus,
       };
 
@@ -102,9 +102,9 @@ export const WeddingStatus: React.FC = () => {
           weddingDate,
         }
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Status update error:', err);
-      setError(err.message || 'Failed to update status. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to update status. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -61,6 +61,7 @@ export default function EventRSVP() {
       setError('No invitation token provided');
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   async function loadGuestAndEvents() {

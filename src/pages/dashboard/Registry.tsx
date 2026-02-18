@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, Button, Badge, Input } from '../../components/ui';
+import { Card, Button, Badge } from '../../components/ui';
 import { Gift, Plus, ExternalLink, DollarSign, CheckCircle2, Search } from 'lucide-react';
 
 interface RegistryItem {
@@ -194,7 +194,7 @@ export const DashboardRegistry: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {registryItems.map((item) => (
-                <Card key={item.id} variant="outlined" padding="none" className="overflow-hidden">
+                <Card key={item.id} variant="bordered" padding="none" className="overflow-hidden">
                   <div className="relative aspect-square">
                     <img
                       src={item.imageUrl}
@@ -222,7 +222,7 @@ export const DashboardRegistry: React.FC = () => {
                         )}
                       </div>
                     ) : (
-                      <Badge variant="default">Available</Badge>
+                      <Badge variant="neutral">Available</Badge>
                     )}
                     <div className="flex gap-2">
                       <Button

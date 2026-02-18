@@ -24,8 +24,10 @@ export interface SectionInstance {
     showTitle?: boolean;
     title?: string;
     subtitle?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   overrides?: Record<string, any>;
   locked?: boolean;
 }

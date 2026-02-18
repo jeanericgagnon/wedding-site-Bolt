@@ -99,24 +99,35 @@ export const demoEvents = [
   },
 ];
 
-export const demoRSVPs = demoGuests
-  .filter((g) => g.rsvp_status === 'confirmed')
-  .map((g) => ({
-    id: `rsvp-${g.id}`,
-    guest_id: g.id,
-    attending: true,
-    meal_choice: g.meal_preference,
-  }))
-  .concat(
-    demoGuests
-      .filter((g) => g.rsvp_status === 'declined')
-      .map((g) => ({
-        id: `rsvp-${g.id}`,
-        guest_id: g.id,
-        attending: false,
-        meal_choice: null,
-      }))
-  );
+export const demoRSVPs: Array<{
+  id: string;
+  guest_id: string;
+  attending: boolean;
+  meal_choice: string | null;
+  plus_one_name: string | null;
+  notes: string | null;
+}> = [
+  ...demoGuests
+    .filter((g) => g.rsvp_status === 'confirmed')
+    .map((g) => ({
+      id: `rsvp-${g.id}`,
+      guest_id: g.id,
+      attending: true,
+      meal_choice: g.meal_preference as string | null,
+      plus_one_name: null,
+      notes: null,
+    })),
+  ...demoGuests
+    .filter((g) => g.rsvp_status === 'declined')
+    .map((g) => ({
+      id: `rsvp-${g.id}`,
+      guest_id: g.id,
+      attending: false,
+      meal_choice: null,
+      plus_one_name: null,
+      notes: null,
+    })),
+];
 
 export const demoRegistryItems = [
   {

@@ -47,11 +47,12 @@ export default function RSVP() {
 
     try {
       // Try to find guest by invite token first
-      let { data: guestData, error: guestError } = await supabase
+      const { data: tokenResult, error: guestError } = await supabase
         .from('guests')
         .select('*')
         .eq('invite_token', searchValue)
         .maybeSingle();
+      let guestData = tokenResult;
 
       // If not found by token, search by name
       if (!guestData) {
@@ -230,10 +231,11 @@ export default function RSVP() {
                   value={formData.attending ? 'yes' : 'no'}
                   onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
                   required
-                >
-                  <option value="yes">Yes, I'll be there!</option>
-                  <option value="no">Sorry, I can't make it</option>
-                </Select>
+                  options={[
+                    { value: 'yes', label: "Yes, I'll be there!" },
+                    { value: 'no', label: "Sorry, I can't make it" },
+                  ]}
+                />
               </div>
 
               {formData.attending && (
@@ -255,14 +257,15 @@ export default function RSVP() {
                     <Select
                       value={formData.meal_choice}
                       onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
-                    >
-                      <option value="">Select a meal option</option>
-                      <option value="chicken">Chicken</option>
-                      <option value="beef">Beef</option>
-                      <option value="fish">Fish</option>
-                      <option value="vegetarian">Vegetarian</option>
-                      <option value="vegan">Vegan</option>
-                    </Select>
+                      options={[
+                        { value: '', label: 'Select a meal option' },
+                        { value: 'chicken', label: 'Chicken' },
+                        { value: 'beef', label: 'Beef' },
+                        { value: 'fish', label: 'Fish' },
+                        { value: 'vegetarian', label: 'Vegetarian' },
+                        { value: 'vegan', label: 'Vegan' },
+                      ]}
+                    />
                   </div>
 
                   {guest.plus_one_allowed && (

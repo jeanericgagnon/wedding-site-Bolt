@@ -21,6 +21,7 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSettingChange = (key: string, value: any) => {
     onUpdate({
       settings: {

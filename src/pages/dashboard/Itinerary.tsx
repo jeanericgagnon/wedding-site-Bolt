@@ -529,12 +529,14 @@ interface EventGuestManagerProps {
 }
 
 function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [allGuests, setAllGuests] = useState<any[]>([]);
   const [invitedGuestIds, setInvitedGuestIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadGuests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
   async function loadGuests() {

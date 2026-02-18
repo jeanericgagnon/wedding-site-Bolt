@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   FileText,
   Search,
-  Filter,
   Tags,
   ArrowRight,
 } from 'lucide-react';

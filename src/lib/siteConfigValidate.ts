@@ -1,10 +1,9 @@
-import type { SiteConfig, SectionConfig } from '../types/siteConfig';
-
 export interface ValidationResult {
   ok: boolean;
   errors: string[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateSiteConfig(obj: any): ValidationResult {
   const errors: string[] = [];
 
@@ -43,6 +42,7 @@ export function validateSiteConfig(obj: any): ValidationResult {
   if (!Array.isArray(obj.sections)) {
     errors.push('sections must be an array');
   } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     obj.sections.forEach((section: any, index: number) => {
       if (!section.id) errors.push(`Section ${index}: id is required`);
       if (!section.type) errors.push(`Section ${index}: type is required`);
