@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ToastProvider } from './components/ui/Toast';
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
@@ -184,9 +185,11 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

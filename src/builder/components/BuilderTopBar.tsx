@@ -10,6 +10,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  XCircle,
+  Clock,
 } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
@@ -19,14 +21,41 @@ interface BuilderTopBarProps {
   onSave: () => void;
   onPublish: () => void;
   projectName?: string;
+  saveError?: string | null;
+  publishError?: string | null;
 }
 
-export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({ onSave, onPublish, projectName }) => {
+function formatSavedAt(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'Saved just now';
+  if (diffMin === 1) return 'Saved 1 min ago';
+  if (diffMin < 60) return `Saved ${diffMin} min ago`;
+  return `Saved at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+function formatPublishedAt(iso: string): string {
+  const d = new Date(iso);
+  return `Live since ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
+  onSave,
+  onPublish,
+  projectName,
+  saveError,
+  publishError,
+}) => {
   const { state, dispatch } = useBuilderContext();
   const undoRedo = selectUndoRedo(state);
   const isPreview = selectIsPreviewMode(state);
   const publishStatus = selectPublishStatus(state);
   const isDirty = selectIsDirty(state);
+
+  const publishedAt = state.project?.lastPublishedAt ?? null;
+  const isPublished = publishStatus === 'published';
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3 z-50 sticky top-0">
@@ -66,16 +95,41 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({ onSave, onPublish,
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
-        {state.lastSavedAt && !isDirty && (
-          <span className="text-xs text-gray-400 flex items-center gap-1">
-            <CheckCircle2 size={12} className="text-green-500" />
-            Saved
+        {state.isSaving && (
+          <span className="text-xs text-gray-500 flex items-center gap-1.5">
+            <Loader2 size={12} className="animate-spin" />
+            Saving…
           </span>
         )}
-        {isDirty && !state.isSaving && (
-          <span className="text-xs text-amber-500 flex items-center gap-1">
+        {!state.isSaving && saveError && (
+          <span className="text-xs text-red-500 flex items-center gap-1.5" title={saveError}>
+            <XCircle size={12} />
+            Save failed
+          </span>
+        )}
+        {!state.isSaving && !saveError && state.lastSavedAt && !isDirty && (
+          <span className="text-xs text-gray-400 flex items-center gap-1.5" title={`Last saved: ${new Date(state.lastSavedAt).toLocaleString()}`}>
+            <CheckCircle2 size={12} className="text-green-500" />
+            {formatSavedAt(state.lastSavedAt)}
+          </span>
+        )}
+        {!state.isSaving && !saveError && isDirty && (
+          <span className="text-xs text-amber-500 flex items-center gap-1.5">
             <AlertCircle size={12} />
             Unsaved changes
+          </span>
+        )}
+
+        {isPublished && publishedAt && !state.isPublishing && !publishError && (
+          <span className="text-xs text-gray-400 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={`Published: ${new Date(publishedAt).toLocaleString()}`}>
+            <Clock size={11} />
+            {formatPublishedAt(publishedAt)}
+          </span>
+        )}
+        {publishError && !state.isPublishing && (
+          <span className="text-xs text-red-500 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={publishError}>
+            <XCircle size={12} />
+            Publish failed
           </span>
         )}
 
@@ -91,28 +145,42 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({ onSave, onPublish,
           {isPreview ? 'Exit Preview' : 'Preview'}
         </button>
 
-        <button
-          onClick={onSave}
-          disabled={state.isSaving || !isDirty}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Save draft"
-        >
-          {state.isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          {state.isSaving ? 'Saving...' : 'Save'}
-        </button>
-
-        <button
-          onClick={onPublish}
-          disabled={state.isPublishing}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {state.isPublishing ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Globe size={14} />
+        <div className="relative group">
+          <button
+            onClick={onSave}
+            disabled={state.isSaving || !isDirty}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Save draft"
+          >
+            {state.isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {state.isSaving ? 'Saving…' : 'Save'}
+          </button>
+          {!isDirty && !state.isSaving && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              No unsaved changes
+            </div>
           )}
-          {publishStatus === 'published' ? 'Re-publish' : 'Publish'}
-        </button>
+        </div>
+
+        <div className="relative group">
+          <button
+            onClick={onPublish}
+            disabled={state.isPublishing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {state.isPublishing ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Globe size={14} />
+            )}
+            {state.isPublishing ? 'Publishing…' : isPublished ? 'Re-publish' : 'Publish'}
+          </button>
+          <div className="absolute top-full right-0 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[200px] text-center">
+            {isPublished
+              ? 'Updates your live public site'
+              : 'Makes your site visible to guests'}
+          </div>
+        </div>
       </div>
     </header>
   );

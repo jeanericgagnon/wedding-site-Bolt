@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, Pencil, Trash2, GripVertical, Package } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2 } from 'lucide-react';
 import { Badge } from '../../../components/ui';
 import type { RegistryItem, PurchaseStatus } from './registryTypes';
 
@@ -11,10 +11,18 @@ interface Props {
 
 function statusBadge(status: PurchaseStatus, qty: number, needed: number) {
   if (status === 'purchased') {
-    return <Badge variant="success">Purchased</Badge>;
+    return (
+      <Badge variant="success">
+        Purchased{needed > 1 ? ` (${qty}/${needed})` : ''}
+      </Badge>
+    );
   }
   if (status === 'partial') {
-    return <Badge variant="warning">Partial ({qty}/{needed})</Badge>;
+    return (
+      <Badge variant="warning">
+        Partially purchased — {qty} of {needed} bought
+      </Badge>
+    );
   }
   return <Badge variant="neutral">Available</Badge>;
 }
@@ -47,14 +55,22 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete }) =>
           <img
             src={item.image_url}
             alt={item.item_name}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity ${item.purchase_status === 'purchased' ? 'opacity-40' : ''}`}
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = 'none';
             }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-10 h-10 text-text-tertiary" />
+            <Package className={`w-10 h-10 ${item.purchase_status === 'purchased' ? 'text-text-tertiary/40' : 'text-text-tertiary'}`} />
+          </div>
+        )}
+        {item.purchase_status === 'purchased' && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-success/90 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Purchased
+            </div>
           </div>
         )}
         <button

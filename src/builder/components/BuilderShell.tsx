@@ -1,4 +1,4 @@
-import React, { useReducer, useMemo, useEffect, useCallback, useRef } from 'react';
+import React, { useReducer, useMemo, useEffect, useCallback, useRef, useState } from 'react';
 import { BuilderContext, initialBuilderState } from '../state/builderStore';
 import { builderReducer } from '../state/builderReducer';
 import { builderActions } from '../state/builderActions';
@@ -48,6 +48,9 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     [state, dispatch, activePage, selectedSection]
   );
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -62,12 +65,14 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const handleSave = useCallback(async () => {
     const currentState = stateRef.current;
     if (!currentState.project || !onSave) return;
+    setSaveError(null);
     dispatch({ type: 'SET_SAVING', payload: true });
     try {
       await onSave(currentState.project);
       dispatch(builderActions.markSaved(new Date().toISOString()));
-    } catch {
-      dispatch(builderActions.setError('Failed to save. Please try again.'));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to save';
+      setSaveError(msg);
       dispatch({ type: 'SET_SAVING', payload: false });
     }
   }, [onSave]);
@@ -76,6 +81,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     const currentState = stateRef.current;
     if (!currentState.project || !onPublish) return;
     if (currentState.isSaving || currentState.isPublishing) return;
+    setPublishError(null);
     if (currentState.isDirty) {
       await handleSave();
     }
@@ -88,8 +94,9 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           new Date().toISOString()
         )
       );
-    } catch {
-      dispatch(builderActions.setError('Failed to publish. Please try again.'));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to publish';
+      setPublishError(msg);
       dispatch({ type: 'SET_PUBLISHING', payload: false });
     }
   }, [onPublish, handleSave]);
@@ -148,6 +155,8 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           onSave={handleSave}
           onPublish={handlePublish}
           projectName={projectName}
+          saveError={saveError}
+          publishError={publishError}
         />
 
         <div className="flex-1 flex overflow-hidden">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
-import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign } from 'lucide-react';
+import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -32,6 +32,31 @@ interface WeddingSite {
   couple_email: string | null;
 }
 
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
+const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
+  <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
+    {toasts.map(t => (
+      <div
+        key={t.id}
+        className={`px-4 py-3 rounded-xl shadow-lg text-sm font-medium border ${
+          t.type === 'error'
+            ? 'bg-error-light text-error border-error/20'
+            : t.type === 'info'
+            ? 'bg-primary-light text-primary border-primary/20'
+            : 'bg-success-light text-success border-success/20'
+        }`}
+      >
+        {t.message}
+      </div>
+    ))}
+  </div>
+);
+
 export const DashboardMessages: React.FC = () => {
   const { user } = useAuth();
   const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
@@ -39,6 +64,7 @@ export const DashboardMessages: React.FC = () => {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -48,6 +74,12 @@ export const DashboardMessages: React.FC = () => {
     scheduleDate: '',
     scheduleTime: '',
   });
+
+  function toast(message: string, type: Toast['type'] = 'success') {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }
 
   const fetchWeddingSite = useCallback(async () => {
     if (!user) return;
@@ -76,8 +108,8 @@ export const DashboardMessages: React.FC = () => {
       if (error) throw error;
 
       setMessages(data || []);
-    } catch (err) {
-      console.error('Error fetching messages:', err);
+    } catch {
+      toast('Failed to load message history', 'error');
     } finally {
       setLoading(false);
     }
@@ -130,7 +162,7 @@ export const DashboardMessages: React.FC = () => {
       const recipientCount = recipients.filter(g => g.email).length;
 
       if (recipientCount === 0 && !saveAsDraft) {
-        alert('No recipients have email addresses. Please add email addresses to your guests.');
+        toast('No recipients have email addresses. Add email addresses to your guests first.', 'error');
         setSending(false);
         return;
       }
@@ -166,13 +198,13 @@ export const DashboardMessages: React.FC = () => {
 
       if (error) throw error;
 
-      const statusMessage = saveAsDraft
-        ? 'Message saved as draft'
-        : status === 'scheduled'
-        ? `Message scheduled for ${new Date(scheduledFor!).toLocaleString()}`
-        : `Message sent to ${recipientCount} guests`;
-
-      alert(statusMessage);
+      if (saveAsDraft) {
+        toast('Saved as draft', 'info');
+      } else if (status === 'scheduled') {
+        toast(`Scheduled for ${new Date(scheduledFor!).toLocaleString()}`, 'info');
+      } else {
+        toast(`Queued for ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} — delivery within a few minutes`, 'success');
+      }
 
       setFormData({
         subject: '',
@@ -184,9 +216,8 @@ export const DashboardMessages: React.FC = () => {
       });
 
       await fetchMessages();
-    } catch (err) {
-      console.error('Error sending message:', err);
-      alert('Failed to process message');
+    } catch {
+      toast('Failed to process message. Please try again.', 'error');
     } finally {
       setSending(false);
     }
@@ -205,13 +236,13 @@ export const DashboardMessages: React.FC = () => {
   const getStatusBadge = (message: Message) => {
     switch (message.status) {
       case 'draft':
-        return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Draft</span>;
+        return <span className="px-2 py-1 bg-surface-subtle text-text-secondary rounded text-xs border border-border">Draft</span>;
       case 'scheduled':
-        return <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs">Scheduled</span>;
+        return <span className="px-2 py-1 bg-warning-light text-warning rounded text-xs border border-warning/20">Scheduled</span>;
       case 'sent':
-        return <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Sent</span>;
+        return <span className="px-2 py-1 bg-success-light text-success rounded text-xs border border-success/20">Sent</span>;
       case 'failed':
-        return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">Failed</span>;
+        return <span className="px-2 py-1 bg-error-light text-error rounded text-xs border border-error/20">Failed</span>;
       default:
         return null;
     }
@@ -221,7 +252,7 @@ export const DashboardMessages: React.FC = () => {
     return (
       <DashboardLayout currentPage="messages">
         <div className="flex items-center justify-center h-64">
-          <p>Loading messages...</p>
+          <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
       </DashboardLayout>
     );
@@ -231,20 +262,20 @@ export const DashboardMessages: React.FC = () => {
     <DashboardLayout currentPage="messages">
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Messages</h1>
-          <p className="text-gray-600">Send updates and reminders to your guests</p>
+          <h1 className="text-3xl font-bold text-text-primary mb-2">Messages</h1>
+          <p className="text-text-secondary">Send updates and reminders to your guests</p>
         </div>
 
         {weddingSite?.couple_email && (
           <Card variant="bordered" padding="lg">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary-100 rounded-lg">
-                <AtSign className="w-6 h-6 text-primary-600" />
+              <div className="p-3 bg-primary-light rounded-lg">
+                <AtSign className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Your Wedding Email</p>
-                <p className="text-lg font-semibold text-gray-900">{weddingSite.couple_email}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-sm text-text-secondary">Your Wedding Email</p>
+                <p className="text-lg font-semibold text-text-primary">{weddingSite.couple_email}</p>
+                <p className="text-xs text-text-tertiary mt-1">
                   Messages will appear to come from this address
                 </p>
               </div>
@@ -255,16 +286,16 @@ export const DashboardMessages: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Card variant="bordered" padding="lg">
-              <h2 className="text-xl font-semibold mb-6">Compose Message</h2>
+              <h2 className="text-xl font-semibold text-text-primary mb-6">Compose Message</h2>
               <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium text-text-primary mb-2">
                     Select Audience
                   </label>
                   <select
                     value={formData.audience}
                     onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-surface-subtle text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     {audienceOptions.map(option => (
                       <option key={option.value} value={option.value}>
@@ -273,15 +304,15 @@ export const DashboardMessages: React.FC = () => {
                     ))}
                   </select>
                   {recipientsWithEmail < (selectedAudience?.count || 0) && (
-                    <p className="text-sm text-amber-600 mt-1">
+                    <p className="text-sm text-warning mt-1">
                       {recipientsWithEmail} of {selectedAudience?.count} guests have email addresses
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Subject *
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Subject <span className="text-error">*</span>
                   </label>
                   <Input
                     value={formData.subject}
@@ -292,8 +323,8 @@ export const DashboardMessages: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Message *
+                  <label className="block text-sm font-medium text-text-primary mb-2">
+                    Message <span className="text-error">*</span>
                   </label>
                   <Textarea
                     value={formData.body}
@@ -302,13 +333,13 @@ export const DashboardMessages: React.FC = () => {
                     rows={8}
                     required
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-text-tertiary mt-1">
                     Tip: Include important details like date, time, location, or dress code
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium text-text-primary mb-2">
                     When to Send
                   </label>
                   <div className="flex gap-4 mb-4">
@@ -317,8 +348,8 @@ export const DashboardMessages: React.FC = () => {
                       onClick={() => setFormData({ ...formData, scheduleType: 'now' })}
                       className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
                         formData.scheduleType === 'now'
-                          ? 'bg-primary text-white hover:bg-primary-hover'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-primary text-text-inverse hover:bg-primary-hover'
+                          : 'bg-surface-subtle text-text-secondary hover:bg-surface border border-border'
                       }`}
                     >
                       Send Now
@@ -328,8 +359,8 @@ export const DashboardMessages: React.FC = () => {
                       onClick={() => setFormData({ ...formData, scheduleType: 'later' })}
                       className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
                         formData.scheduleType === 'later'
-                          ? 'bg-primary text-white hover:bg-primary-hover'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-primary text-text-inverse hover:bg-primary-hover'
+                          : 'bg-surface-subtle text-text-secondary hover:bg-surface border border-border'
                       }`}
                     >
                       Schedule
@@ -337,9 +368,9 @@ export const DashboardMessages: React.FC = () => {
                   </div>
 
                   {formData.scheduleType === 'later' && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Date</label>
+                        <label className="block text-sm font-medium text-text-primary mb-2">Date</label>
                         <Input
                           type="date"
                           value={formData.scheduleDate}
@@ -349,7 +380,7 @@ export const DashboardMessages: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Time</label>
+                        <label className="block text-sm font-medium text-text-primary mb-2">Time</label>
                         <Input
                           type="time"
                           value={formData.scheduleTime}
@@ -361,19 +392,30 @@ export const DashboardMessages: React.FC = () => {
                   )}
                 </div>
 
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="p-4 bg-primary-light border border-primary/20 rounded-lg">
                   <div className="flex items-start gap-3">
-                    <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <Mail className="w-5 h-5 text-primary mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-medium text-blue-900">Email Preview</p>
-                      <p className="text-blue-700 mt-1">
+                      <p className="font-medium text-text-primary">Delivery summary</p>
+                      <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
-                          ? `This message will be sent on ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()}`
-                          : `This message will be sent immediately to ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''}`}
+                          ? `Queued for ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()}`
+                          : `Will be queued immediately for ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''} with email addresses`}
+                      </p>
+                      <p className="text-text-tertiary mt-2 text-xs">
+                        Emails are processed in the background and typically deliver within a few minutes.
+                        Only guests with email addresses will receive this message.
                       </p>
                     </div>
                   </div>
                 </div>
+
+                {recipientsWithEmail === 0 && !sending && formData.audience !== '' && (
+                  <div className="flex items-center gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    No guests in this audience have email addresses. Add emails to guests before sending.
+                  </div>
+                )}
 
                 <div className="flex gap-3">
                   <Button
@@ -416,42 +458,42 @@ export const DashboardMessages: React.FC = () => {
 
           <div className="lg:col-span-1">
             <Card variant="bordered" padding="lg">
-              <h2 className="text-lg font-semibold mb-4">Quick Stats</h2>
+              <h2 className="text-lg font-semibold text-text-primary mb-4">Quick Stats</h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Users className="w-5 h-5 text-blue-600" />
+                  <div className="p-2 bg-primary-light rounded-lg">
+                    <Users className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{guests.length}</p>
-                    <p className="text-sm text-gray-600">Total Guests</p>
+                    <p className="text-2xl font-bold text-text-primary">{guests.length}</p>
+                    <p className="text-sm text-text-secondary">Total Guests</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div className="p-2 bg-success-light rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-bold text-text-primary">
                       {guests.filter(g => g.email).length}
                     </p>
-                    <p className="text-sm text-gray-600">With Email</p>
+                    <p className="text-sm text-text-secondary">With Email</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Mail className="w-5 h-5 text-purple-600" />
+                  <div className="p-2 bg-accent-light rounded-lg">
+                    <Mail className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{messages.filter(m => m.status === 'sent').length}</p>
-                    <p className="text-sm text-gray-600">Messages Sent</p>
+                    <p className="text-2xl font-bold text-text-primary">{messages.filter(m => m.status === 'sent').length}</p>
+                    <p className="text-sm text-text-secondary">Messages Sent</p>
                   </div>
                 </div>
               </div>
             </Card>
 
             <Card variant="bordered" padding="lg" className="mt-6">
-              <h2 className="text-lg font-semibold mb-4">Message Templates</h2>
+              <h2 className="text-lg font-semibold text-text-primary mb-4">Message Templates</h2>
               <div className="space-y-2">
                 <button
                   type="button"
@@ -460,7 +502,7 @@ export const DashboardMessages: React.FC = () => {
                     subject: 'Save the Date!',
                     body: 'We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.',
                   })}
-                  className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm bg-surface-subtle hover:bg-surface-raised rounded-lg transition-colors text-text-primary border border-transparent hover:border-border"
                 >
                   Save the Date
                 </button>
@@ -471,7 +513,7 @@ export const DashboardMessages: React.FC = () => {
                     subject: 'RSVP Reminder',
                     body: 'We hope you can join us for our special day! Please RSVP by [DATE] so we can finalize our guest count. Visit [RSVP LINK] to respond.',
                   })}
-                  className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm bg-surface-subtle hover:bg-surface-raised rounded-lg transition-colors text-text-primary border border-transparent hover:border-border"
                 >
                   RSVP Reminder
                 </button>
@@ -482,7 +524,7 @@ export const DashboardMessages: React.FC = () => {
                     subject: 'Wedding Week Details',
                     body: 'The big day is almost here! Here are some important details for the wedding week: [ADD DETAILS]',
                   })}
-                  className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm bg-surface-subtle hover:bg-surface-raised rounded-lg transition-colors text-text-primary border border-transparent hover:border-border"
                 >
                   Week-Of Details
                 </button>
@@ -493,7 +535,7 @@ export const DashboardMessages: React.FC = () => {
                     subject: 'Thank You!',
                     body: 'Thank you so much for celebrating our special day with us! Your presence meant the world to us. We are grateful for your love and support.',
                   })}
-                  className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm bg-surface-subtle hover:bg-surface-raised rounded-lg transition-colors text-text-primary border border-transparent hover:border-border"
                 >
                   Thank You
                 </button>
@@ -503,26 +545,26 @@ export const DashboardMessages: React.FC = () => {
         </div>
 
         <Card variant="bordered" padding="lg">
-          <h2 className="text-xl font-semibold mb-6">Message History</h2>
+          <h2 className="text-xl font-semibold text-text-primary mb-6">Message History</h2>
           {messages.length === 0 ? (
             <div className="text-center py-12">
-              <Mail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No messages yet</p>
-              <p className="text-sm text-gray-400 mt-1">Compose your first message above</p>
+              <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
+              <p className="text-text-secondary">No messages yet</p>
+              <p className="text-sm text-text-tertiary mt-1">Compose your first message above</p>
             </div>
           ) : (
             <div className="space-y-4">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  className="border border-border rounded-lg p-4 hover:bg-surface-subtle transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <h3 className="font-semibold">{message.subject}</h3>
+                      <h3 className="font-semibold text-text-primary">{message.subject}</h3>
                       {getStatusBadge(message)}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2 text-sm text-text-tertiary">
                       <Clock className="w-4 h-4" />
                       {message.status === 'scheduled' && message.scheduled_for ? (
                         <span>Scheduled: {new Date(message.scheduled_for).toLocaleString()}</span>
@@ -533,13 +575,13 @@ export const DashboardMessages: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{message.body}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <p className="text-sm text-text-secondary mb-3 line-clamp-2">{message.body}</p>
+                  <div className="flex items-center gap-4 text-xs text-text-tertiary">
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
                       {(message.recipient_filter?.recipient_count as number) || 0} recipients
                     </span>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                    <span className="px-2 py-1 bg-primary-light text-primary rounded border border-primary/20">
                       {message.channel}
                     </span>
                   </div>
@@ -549,6 +591,8 @@ export const DashboardMessages: React.FC = () => {
           )}
         </Card>
       </div>
+
+      <ToastList toasts={toasts} />
     </DashboardLayout>
   );
 };

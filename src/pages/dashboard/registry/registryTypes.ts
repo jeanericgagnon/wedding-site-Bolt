@@ -24,6 +24,8 @@ export interface RegistryItem {
   updated_at: string;
 }
 
+export type MetadataConfidence = 'full' | 'partial' | 'manual';
+
 export interface RegistryPreview {
   title: string | null;
   price_label: string | null;
@@ -32,6 +34,16 @@ export interface RegistryPreview {
   merchant: string | null;
   canonical_url: string | null;
   error: string | null;
+  confidence?: MetadataConfidence;
+}
+
+export function computeConfidence(preview: RegistryPreview): MetadataConfidence {
+  const fields = [preview.title, preview.price_label ?? preview.price_amount, preview.image_url, preview.merchant];
+  const filled = fields.filter(Boolean).length;
+  if (preview.error) return 'manual';
+  if (filled >= 3) return 'full';
+  if (filled >= 1) return 'partial';
+  return 'manual';
 }
 
 export interface RegistryItemDraft {

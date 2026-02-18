@@ -1,115 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, Button, Badge } from '../../components/ui';
-import { Lock, Unlock, MessageSquare, Video, QrCode, Calendar, Users, Mail } from 'lucide-react';
-
-interface VaultItem {
-  id: string;
-  type: 'message' | 'video';
-  uploadedBy: string;
-  uploadDate: string;
-}
-
-interface AnniversaryVault {
-  id: string;
-  year: number;
-  unlockDate: string;
-  status: 'locked' | 'unlocked';
-  items: VaultItem[];
-  totalMessages: number;
-  totalVideos: number;
-  contributors: number;
-}
-
-interface Toast {
-  id: number;
-  message: string;
-}
-
-const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
-  return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className="bg-surface-raised border border-border shadow-lg rounded-lg p-4 min-w-[300px]"
-        >
-          <p className="text-sm text-ink">{toast.message}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
+import { Card } from '../../components/ui';
+import { Lock, MessageSquare, Video, QrCode, Calendar, Users, Sparkles } from 'lucide-react';
 
 export const DashboardVault: React.FC = () => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const onTodo = (message: string) => {
-    const newToast: Toast = {
-      id: Date.now(),
-      message,
-    };
-    setToasts((prev) => [...prev, newToast]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
-    }, 3000);
-  };
-
-
-  const vaults: AnniversaryVault[] = [
-    {
-      id: '1',
-      year: 1,
-      unlockDate: '2027-06-15',
-      status: 'locked',
-      items: [
-        { id: '1', type: 'message', uploadedBy: 'Sarah Miller', uploadDate: '2026-06-16' },
-        { id: '2', type: 'video', uploadedBy: 'David Chen', uploadDate: '2026-06-17' },
-        { id: '3', type: 'message', uploadedBy: 'Emily Rodriguez', uploadDate: '2026-06-18' },
-        { id: '4', type: 'message', uploadedBy: 'Jessica Park', uploadDate: '2026-06-20' },
-        { id: '5', type: 'video', uploadedBy: 'Michael Thompson', uploadDate: '2026-06-21' },
-      ],
-      totalMessages: 3,
-      totalVideos: 2,
-      contributors: 5,
-    },
-    {
-      id: '5',
-      year: 5,
-      unlockDate: '2031-06-15',
-      status: 'locked',
-      items: [
-        { id: '6', type: 'message', uploadedBy: 'Sarah Miller', uploadDate: '2026-06-16' },
-        { id: '7', type: 'video', uploadedBy: 'David Chen', uploadDate: '2026-06-17' },
-        { id: '8', type: 'message', uploadedBy: 'Emily Rodriguez', uploadDate: '2026-06-18' },
-      ],
-      totalMessages: 2,
-      totalVideos: 1,
-      contributors: 3,
-    },
-    {
-      id: '10',
-      year: 10,
-      unlockDate: '2036-06-15',
-      status: 'locked',
-      items: [
-        { id: '9', type: 'message', uploadedBy: 'Sarah Miller', uploadDate: '2026-06-16' },
-        { id: '10', type: 'message', uploadedBy: 'David Chen', uploadDate: '2026-06-17' },
-      ],
-      totalMessages: 2,
-      totalVideos: 0,
-      contributors: 2,
-    },
-  ];
-
-  const getDaysUntilUnlock = (unlockDate: string) => {
-    const today = new Date();
-    const unlock = new Date(unlockDate);
-    const diffTime = unlock.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
   return (
     <DashboardLayout currentPage="vault">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -118,175 +12,112 @@ export const DashboardVault: React.FC = () => {
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-text-primary">Anniversary Vaults</h1>
               <span className="px-2.5 py-1 text-xs font-semibold bg-accent-light text-accent border border-accent/20 rounded-full">
-                Preview
+                Coming Soon
               </span>
             </div>
             <p className="text-text-secondary">
               Time capsule messages and videos from your guests, unlocked on future anniversaries
-            </p>
-            <p className="text-sm text-text-tertiary mt-1">
-              This feature is in preview. Guest collection and vault unlocking will be live before your wedding day.
             </p>
           </div>
         </div>
 
         <Card variant="bordered" padding="lg" className="bg-gradient-to-br from-primary-light to-accent-light">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            <div className="p-4 bg-surface rounded-lg">
+            <div className="p-4 bg-surface rounded-lg flex-shrink-0">
               <QrCode className="w-12 h-12 text-primary" aria-hidden="true" />
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-semibold text-text-primary mb-2">
-                Share with your guests
-              </h3>
-              <p className="text-text-secondary mb-4">
-                Let guests scan this QR code to record heartfelt messages and videos for your future anniversaries. No app or account required.
+              <h3 className="text-xl font-semibold text-text-primary mb-2">How it will work</h3>
+              <p className="text-text-secondary mb-2">
+                Share a QR code at your wedding — guests scan it to record heartfelt messages and short videos. No app or account required.
               </p>
-              <div className="flex gap-3 flex-wrap">
-                <Button variant="primary" size="md" onClick={() => onTodo('QR code generation is coming soon — you will be able to share this with guests at your wedding')}>
-                  View QR Code
-                  <span className="ml-2 text-[10px] font-semibold opacity-70">Coming Soon</span>
-                </Button>
-                <Button variant="outline" size="md" onClick={() => onTodo('Email invitations to vault will be available before your wedding day')}>
-                  <Mail className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Send Invites
-                  <span className="ml-2 text-[10px] font-semibold opacity-70">Coming Soon</span>
-                </Button>
-              </div>
+              <p className="text-text-secondary">
+                Each vault unlocks automatically on a future anniversary, so you and your partner can revisit them together.
+              </p>
             </div>
           </div>
         </Card>
 
-        <div className="space-y-6">
-          {vaults.map((vault) => {
-            const daysUntilUnlock = getDaysUntilUnlock(vault.unlockDate);
-            const isUnlocked = vault.status === 'unlocked';
-
-            return (
-              <Card key={vault.id} variant="bordered" padding="lg">
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`p-4 rounded-lg flex-shrink-0 ${
-                          isUnlocked ? 'bg-primary-light' : 'bg-surface-subtle'
-                        }`}
-                      >
-                        {isUnlocked ? (
-                          <Unlock className="w-8 h-8 text-primary" aria-hidden="true" />
-                        ) : (
-                          <Lock className="w-8 h-8 text-text-tertiary" aria-hidden="true" />
-                        )}
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-text-primary mb-1">
-                          {vault.year}{vault.year === 1 ? 'st' : vault.year === 5 ? 'th' : 'th'} Anniversary Vault
-                        </h2>
-                        <div className="flex items-center gap-2 text-text-secondary">
-                          <Calendar className="w-4 h-4" aria-hidden="true" />
-                          <span>
-                            {isUnlocked ? (
-                              <>Unlocked on {new Date(vault.unlockDate).toLocaleDateString()}</>
-                            ) : (
-                              <>
-                                Unlocks {new Date(vault.unlockDate).toLocaleDateString()} ({daysUntilUnlock} days)
-                              </>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant={isUnlocked ? 'success' : 'neutral'} className="text-sm px-3 py-1">
-                      {isUnlocked ? 'Unlocked' : 'Locked'}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-lg">
-                      <MessageSquare className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />
-                      <div>
-                        <p className="text-xl font-bold text-text-primary">{vault.totalMessages}</p>
-                        <p className="text-sm text-text-secondary">Messages</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-lg">
-                      <Video className="w-5 h-5 text-accent flex-shrink-0" aria-hidden="true" />
-                      <div>
-                        <p className="text-xl font-bold text-text-primary">{vault.totalVideos}</p>
-                        <p className="text-sm text-text-secondary">Videos</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-lg">
-                      <Users className="w-5 h-5" style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
-                      <div>
-                        <p className="text-xl font-bold text-text-primary">{vault.contributors}</p>
-                        <p className="text-sm text-text-secondary">Contributors</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {isUnlocked ? (
-                    <div className="space-y-3">
-                      <h3 className="font-semibold text-text-primary">Messages & Videos</h3>
-                      <div className="space-y-2">
-                        {vault.items.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-4 p-4 bg-surface hover:bg-surface-subtle rounded-lg transition-colors cursor-pointer border border-border-subtle"
-                          >
-                            <div className="w-12 h-12 rounded-lg bg-primary-light flex items-center justify-center flex-shrink-0">
-                              {item.type === 'message' ? (
-                                <MessageSquare className="w-6 h-6 text-primary" aria-hidden="true" />
-                              ) : (
-                                <Video className="w-6 h-6 text-primary" aria-hidden="true" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-text-primary truncate">
-                                {item.type === 'message' ? 'Message' : 'Video'} from {item.uploadedBy}
-                              </p>
-                              <p className="text-sm text-text-secondary">
-                                Recorded on {new Date(item.uploadDate).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <Badge variant={item.type === 'message' ? 'primary' : 'secondary'}>
-                              {item.type}
-                            </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onTodo(`Viewing vault ${item.type} content will be available when this feature launches`)}
-                            >
-                              Coming Soon
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-surface-subtle border-2 border-dashed border-border rounded-lg p-8 text-center">
-                      <Lock className="w-12 h-12 text-text-tertiary mx-auto mb-4" aria-hidden="true" />
-                      <h3 className="text-lg font-semibold text-text-primary mb-2">
-                        This vault is locked
-                      </h3>
-                      <p className="text-text-secondary mb-4">
-                        Content will be revealed on your {vault.year}
-                        {vault.year === 1 ? 'st' : vault.year === 5 ? 'th' : 'th'} anniversary.
-                        You have {vault.items.length} surprise{vault.items.length !== 1 ? 's' : ''} waiting!
-                      </p>
-                      <p className="text-sm text-text-tertiary">
-                        {daysUntilUnlock} days until unlock
-                      </p>
-                    </div>
-                  )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: QrCode,
+              title: 'Shareable QR Code',
+              description: 'Display at your reception for guests to contribute instantly.',
+            },
+            {
+              icon: Lock,
+              title: 'Time-locked Vaults',
+              description: 'Choose 1st, 5th, and 10th anniversary unlock dates.',
+            },
+            {
+              icon: Sparkles,
+              title: 'Messages & Videos',
+              description: 'Guests can write heartfelt notes or record short video messages.',
+            },
+          ].map(({ icon: Icon, title, description }) => (
+            <Card key={title} variant="bordered" padding="lg">
+              <div className="flex flex-col gap-3">
+                <div className="p-3 bg-surface-subtle rounded-lg w-fit">
+                  <Icon className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
-              </Card>
-            );
-          })}
+                <div>
+                  <h3 className="font-semibold text-text-primary mb-1">{title}</h3>
+                  <p className="text-sm text-text-secondary">{description}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <Card variant="bordered" padding="lg">
+          <div className="flex items-center gap-4 mb-6">
+            <Calendar className="w-6 h-6 text-text-secondary" aria-hidden="true" />
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary">Anniversary Vault Timeline</h2>
+              <p className="text-sm text-text-secondary">Three time capsule milestones will be created automatically</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {[
+              { year: 1 },
+              { year: 5 },
+              { year: 10 },
+            ].map(({ year }) => (
+              <div key={year} className="flex items-center gap-5 p-4 bg-surface-subtle rounded-xl border border-border-subtle">
+                <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center border border-border flex-shrink-0">
+                  <Lock className="w-5 h-5 text-text-tertiary" aria-hidden="true" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-text-primary">{year}{year === 1 ? 'st' : year === 5 ? 'th' : 'th'} Anniversary Vault</p>
+                  <p className="text-sm text-text-secondary">Unlocks {year} year{year !== 1 ? 's' : ''} after your wedding date</p>
+                </div>
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
+                    <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
+                    Messages
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
+                    <Video className="w-3.5 h-3.5" aria-hidden="true" />
+                    Videos
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
+                    <Users className="w-3.5 h-3.5" aria-hidden="true" />
+                    Contributors
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <div className="bg-primary-light border border-primary/20 rounded-xl p-6 text-center">
+          <p className="text-sm font-medium text-text-primary mb-1">This feature launches before your wedding day</p>
+          <p className="text-sm text-text-secondary">
+            Anniversary Vaults will be fully active and ready to share with your guests. No action needed from you right now.
+          </p>
         </div>
       </div>
-
-      <ToastContainer toasts={toasts} />
     </DashboardLayout>
   );
 };

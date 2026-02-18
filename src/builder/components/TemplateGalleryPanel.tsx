@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { X, Check, Sparkles, Loader2 } from 'lucide-react';
+import { X, Check, Sparkles, Loader2, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getAllTemplatePacks } from '../constants/builderTemplatePacks';
@@ -45,11 +45,18 @@ interface TemplateGalleryPanelProps {
   onSaveRequest?: () => void;
 }
 
+interface ApplyResult {
+  templateName: string;
+  newSections: string[];
+  preservedSections: string[];
+}
+
 export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSaveRequest }) => {
   const { state, dispatch } = useBuilderContext();
   const [activeFilter, setActiveFilter] = useState<TemplateMoodTag | 'all'>('all');
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
   const [confirmTemplate, setConfirmTemplate] = useState<BuilderTemplateDefinition | null>(null);
+  const [applyResult, setApplyResult] = useState<ApplyResult | null>(null);
 
   const templates = getAllTemplatePacks();
   const filtered =
@@ -65,16 +72,28 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     setApplyingTemplateId(template.id);
 
     try {
+      const existingTypes = new Set(activePage.sections.map(s => s.type));
       const baseSections = template.sectionComposition.map((slot, idx) =>
         createBuilderSectionFromLibrary(slot.type, slot.variant, idx)
       );
 
       const mergedSections = preserveContentAcrossTemplate(activePage.sections, baseSections);
 
+      const newSectionTypes = template.sectionComposition
+        .filter(slot => !existingTypes.has(slot.type))
+        .map(slot => slot.type.charAt(0).toUpperCase() + slot.type.slice(1));
+      const preservedTypes = template.sectionComposition
+        .filter(slot => existingTypes.has(slot.type))
+        .map(slot => slot.type.charAt(0).toUpperCase() + slot.type.slice(1));
+
       dispatch(builderActions.applyTemplate(template.id, mergedSections));
       dispatch(builderActions.applyTheme(template.defaultThemeId));
-      dispatch(builderActions.closeTemplateGallery());
       setConfirmTemplate(null);
+      setApplyResult({
+        templateName: template.displayName,
+        newSections: newSectionTypes,
+        preservedSections: preservedTypes,
+      });
 
       if (onSaveRequest) {
         setTimeout(onSaveRequest, 100);
@@ -84,7 +103,61 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     }
   }, [activePage, dispatch, onSaveRequest]);
 
-  if (!state.templateGalleryOpen) return null;
+  if (!state.templateGalleryOpen && !applyResult) return null;
+
+  if (applyResult) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/40" onClick={() => setApplyResult(null)} />
+        <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
+          <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-7 h-7 text-green-500" />
+          </div>
+          <h3 className="text-base font-semibold text-gray-900 mb-1">"{applyResult.templateName}" applied</h3>
+          <p className="text-sm text-gray-500 mb-5">Your site layout has been updated.</p>
+
+          {applyResult.preservedSections.length > 0 && (
+            <div className="mb-3 text-left bg-green-50 rounded-xl p-4">
+              <p className="text-xs font-semibold text-green-700 mb-2">Content preserved from before:</p>
+              <ul className="space-y-1">
+                {applyResult.preservedSections.map(s => (
+                  <li key={s} className="text-xs text-green-600 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {applyResult.newSections.length > 0 && (
+            <div className="mb-5 text-left bg-blue-50 rounded-xl p-4">
+              <p className="text-xs font-semibold text-blue-700 mb-2">New sections added:</p>
+              <ul className="space-y-1">
+                {applyResult.newSections.map(s => (
+                  <li key={s} className="text-xs text-blue-600 flex items-center gap-1.5">
+                    <RefreshCw className="w-3 h-3" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <p className="text-xs text-gray-400 mb-5">
+            You can undo this change with <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">⌘Z</kbd>
+          </p>
+
+          <button
+            onClick={() => setApplyResult(null)}
+            className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors"
+          >
+            Got it — continue editing
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -221,9 +294,21 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
   <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30">
     <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
       <h3 className="text-base font-semibold text-gray-900">Apply "{template.displayName}"?</h3>
-      <p className="text-sm text-gray-500 mt-2">
-        This will replace your current section layout. Your content and media will be preserved.
-      </p>
+      <div className="mt-3 space-y-2.5">
+        <div className="flex items-start gap-2.5 p-3 bg-green-50 rounded-xl">
+          <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-green-700">
+            <span className="font-semibold">Preserved:</span> All your text content, images, and media stay exactly as they are.
+          </div>
+        </div>
+        <div className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-xl">
+          <RefreshCw className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-amber-700">
+            <span className="font-semibold">Updated:</span> Section layout and visual theme will switch to match "{template.displayName}".
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 pl-1">You can undo this immediately with ⌘Z.</p>
+      </div>
       <div className="flex gap-3 mt-5">
         <button
           onClick={onCancel}
@@ -236,7 +321,7 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
           disabled={isApplying}
           className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors"
         >
-          {isApplying ? 'Applying...' : 'Apply Template'}
+          {isApplying ? 'Applying…' : 'Apply Template'}
         </button>
       </div>
     </div>

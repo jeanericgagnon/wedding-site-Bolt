@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../components/ui/Toast';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 
 interface Guest {
@@ -35,6 +36,7 @@ interface GuestWithRSVP extends Guest {
 
 export const DashboardGuests: React.FC = () => {
   const { user, isDemoMode } = useAuth();
+  const { toast } = useToast();
   const [guests, setGuests] = useState<GuestWithRSVP[]>([]);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -160,9 +162,10 @@ export const DashboardGuests: React.FC = () => {
       await fetchGuests();
       setShowAddModal(false);
       resetForm();
+      toast(`${formData.first_name} ${formData.last_name} added`, 'success');
     } catch (err) {
       console.error('Error adding guest:', err);
-      alert('Failed to add guest');
+      toast('Failed to add guest. Please try again.', 'error');
     }
   };
 
@@ -190,15 +193,25 @@ export const DashboardGuests: React.FC = () => {
       await fetchGuests();
       setEditingGuest(null);
       resetForm();
+      toast('Guest updated', 'success');
     } catch (err) {
       console.error('Error updating guest:', err);
-      alert('Failed to update guest');
+      toast('Failed to update guest. Please try again.', 'error');
     }
   };
 
-  const handleDeleteGuest = async (guestId: string) => {
-    if (!confirm('Are you sure you want to delete this guest?')) return;
+  const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+  const handleDeleteGuest = async (guestId: string) => {
+    if (confirmDeleteId !== guestId) {
+      setConfirmDeleteId(guestId);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+      return;
+    }
+
+    setDeletingGuestId(guestId);
+    setConfirmDeleteId(null);
     try {
       const { error } = await supabase
         .from('guests')
@@ -208,9 +221,12 @@ export const DashboardGuests: React.FC = () => {
       if (error) throw error;
 
       await fetchGuests();
+      toast('Guest removed', 'success');
     } catch (err) {
       console.error('Error deleting guest:', err);
-      alert('Failed to delete guest');
+      toast('Failed to remove guest. Please try again.', 'error');
+    } finally {
+      setDeletingGuestId(null);
     }
   };
 
@@ -310,10 +326,10 @@ export const DashboardGuests: React.FC = () => {
         if (error) throw error;
 
         await fetchGuests();
-        alert(`Successfully imported ${guestsToImport.length} guests`);
+        toast(`${guestsToImport.length} guest${guestsToImport.length !== 1 ? 's' : ''} imported successfully`, 'success');
       } catch (err) {
         console.error('Error importing guests:', err);
-        alert('Failed to import guests');
+        toast('Failed to import guests. Check the CSV format and try again.', 'error');
       }
     };
 
@@ -590,7 +606,14 @@ export const DashboardGuests: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {getStatusBadge(guest.rsvp_status)}
+                        <div className="flex flex-col gap-1">
+                          {getStatusBadge(guest.rsvp_status)}
+                          {guest.rsvp_received_at && guest.rsvp_status !== 'pending' && (
+                            <span className="text-xs text-text-tertiary">
+                              {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-text-secondary hidden md:table-cell">
                         {guest.plus_one_allowed ? (guest.rsvp?.plus_one_name || 'Allowed') : 'No'}
@@ -608,8 +631,18 @@ export const DashboardGuests: React.FC = () => {
                           <Button variant="ghost" size="sm" onClick={() => openEditModal(guest)}>
                             Edit
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteGuest(guest.id)}>
-                            Delete
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteGuest(guest.id)}
+                            disabled={deletingGuestId === guest.id}
+                            className={confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}
+                          >
+                            {deletingGuestId === guest.id
+                              ? 'Removing…'
+                              : confirmDeleteId === guest.id
+                              ? 'Confirm?'
+                              : 'Delete'}
                           </Button>
                         </div>
                       </td>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink } from 'lucide-react';
+import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui/Button';
@@ -198,6 +198,35 @@ export const DashboardItinerary: React.FC = () => {
       console.error('Error deleting event:', error);
       alert('Failed to delete event');
     }
+  }
+
+  function timeToMinutes(timeString: string | null): number | null {
+    if (!timeString) return null;
+    const [h, m] = timeString.split(':').map(Number);
+    return h * 60 + (m || 0);
+  }
+
+  function findConflicts(eventList: EventWithInvites[]): Set<string> {
+    const conflictIds = new Set<string>();
+    for (let i = 0; i < eventList.length; i++) {
+      for (let j = i + 1; j < eventList.length; j++) {
+        const a = eventList[i];
+        const b = eventList[j];
+        if (a.event_date !== b.event_date) continue;
+        const aStart = timeToMinutes(a.start_time);
+        const aEnd = timeToMinutes(a.end_time) ?? (aStart !== null ? aStart + 60 : null);
+        const bStart = timeToMinutes(b.start_time);
+        const bEnd = timeToMinutes(b.end_time) ?? (bStart !== null ? bStart + 60 : null);
+        if (aStart === null || bStart === null) continue;
+        const aE = aEnd ?? aStart + 60;
+        const bE = bEnd ?? bStart + 60;
+        if (aStart < bE && aE > bStart) {
+          conflictIds.add(a.id);
+          conflictIds.add(b.id);
+        }
+      }
+    }
+    return conflictIds;
   }
 
   function formatDate(dateString: string) {
@@ -406,17 +435,25 @@ export const DashboardItinerary: React.FC = () => {
         </Card>
       ) : (
         <div className="space-y-4">
-          {events.map((event) => (
-            <Card key={event.id} className="p-6 hover:shadow-lg transition-shadow">
+          {(() => {
+            const conflictIds = findConflicts(events);
+            return events.map((event) => (
+            <Card key={event.id} className={`p-6 hover:shadow-lg transition-shadow ${conflictIds.has(event.id) ? 'ring-2 ring-amber-300' : ''}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center gap-3 mb-3 flex-wrap">
                     <h3 className="text-xl font-semibold text-neutral-900">
                       {event.event_name}
                     </h3>
                     {!event.is_visible && (
                       <span className="px-2 py-1 text-xs font-medium bg-neutral-100 text-neutral-600 rounded">
                         Hidden
+                      </span>
+                    )}
+                    {conflictIds.has(event.id) && (
+                      <span className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded">
+                        <AlertTriangle className="w-3 h-3" />
+                        Time overlap with another event
                       </span>
                     )}
                   </div>
@@ -506,7 +543,8 @@ export const DashboardItinerary: React.FC = () => {
                 </div>
               </div>
             </Card>
-          ))}
+          ));
+          })()}
         </div>
       )}
 

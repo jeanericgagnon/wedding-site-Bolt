@@ -47,10 +47,9 @@ export const SiteView: React.FC = () => {
 
         setWeddingSiteId(data.id as string);
 
-        const hasPublished = !!(data.published_json);
         const isPublished = !!(data.is_published);
 
-        if (!hasPublished && !isPublished) {
+        if (!isPublished) {
           setIsComingSoon(true);
           setLoading(false);
           return;
@@ -127,10 +126,17 @@ export const SiteView: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="max-w-md w-full bg-surface border border-border rounded-2xl p-10 text-center space-y-4">
           <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center mx-auto">
-            <span className="text-3xl">💍</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-primary">
+              <path d="M12 2l1.8 3.8L18 7l-3 2.9.7 4.1L12 12l-3.7 2 .7-4.1L6 7l4.2-1.2z"/>
+            </svg>
           </div>
-          <h1 className="text-2xl font-light text-text-primary">Coming Soon</h1>
-          <p className="text-text-secondary">This wedding site is still being prepared. Check back soon!</p>
+          <h1 className="text-2xl font-light text-text-primary">Not published yet</h1>
+          <p className="text-text-secondary">
+            This wedding site is still being set up by the couple. Check back soon!
+          </p>
+          <p className="text-xs text-text-tertiary pt-2 border-t border-border">
+            If you're the couple — visit your dashboard and click "Publish" to make your site live.
+          </p>
         </div>
       </div>
     );

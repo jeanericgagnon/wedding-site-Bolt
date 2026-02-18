@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link2, Loader2, X, ImageOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Link2, Loader2, X, ImageOff, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { Button } from '../../../components/ui';
 import { fetchUrlPreview } from './registryService';
 import { normalizeUrl, isValidUrl } from '../../../lib/urlUtils';
-import type { RegistryItem, RegistryItemDraft, RegistryPreview } from './registryTypes';
+import type { RegistryItem, RegistryItemDraft, RegistryPreview, MetadataConfidence } from './registryTypes';
+import { computeConfidence } from './registryTypes';
 
 interface Props {
   initial?: RegistryItem | null;
@@ -45,6 +46,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchDone, setFetchDone] = useState(false);
+  const [fetchConfidence, setFetchConfidence] = useState<MetadataConfidence | null>(null);
   const [dedupeWarning, setDedupeWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -63,11 +65,18 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     setFetching(true);
     setFetchError(null);
     setFetchDone(false);
+    setFetchConfidence(null);
     setDedupeWarning(null);
     try {
       const preview: RegistryPreview = await fetchUrlPreview(normalized);
-      if (preview.error && !preview.title) {
-        setFetchError(`Could not extract details: ${preview.error}. You can still fill in the form manually.`);
+      const confidence = computeConfidence(preview);
+      setFetchConfidence(confidence);
+      if (confidence === 'manual') {
+        setFetchError(
+          preview.error
+            ? `This store blocks automated preview — some retailers (Amazon, Target, etc.) prevent this. Fill in the details below manually and save.`
+            : `No details could be extracted. Fill in the form manually below.`
+        );
       } else {
         setFetchDone(true);
       }
@@ -173,13 +182,24 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               {fetchError && (
                 <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>{fetchError}</span>
+                  <div className="flex-1">
+                    <span>{fetchError}</span>
+                    <p className="mt-1 text-xs opacity-80">
+                      The URL has been saved to the product link field. Just fill in the name, price, and store below.
+                    </p>
+                  </div>
                 </div>
               )}
-              {fetchDone && !fetchError && (
+              {fetchDone && !fetchError && fetchConfidence === 'full' && (
                 <div className="flex items-center gap-2 p-3 bg-success-light rounded-lg text-sm text-success border border-success/20">
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                  <span>Details fetched — review and edit below before saving.</span>
+                  <span>All details imported — review and save.</span>
+                </div>
+              )}
+              {fetchDone && !fetchError && fetchConfidence === 'partial' && (
+                <div className="flex items-start gap-2 p-3 bg-primary-light rounded-lg text-sm text-primary border border-primary/20">
+                  <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>Some details imported — a few fields may need filling in below.</span>
                 </div>
               )}
               {dedupeWarning && (
