@@ -12,6 +12,15 @@ export async function requireSession() {
   if (error || !session?.access_token) {
     throw new SessionExpiredError();
   }
+  const { error: userError } = await supabase.auth.getUser(session.access_token);
+  if (userError) {
+    await supabase.auth.refreshSession();
+    const { data: refreshed, error: refreshError } = await supabase.auth.getSession();
+    if (refreshError || !refreshed.session?.access_token) {
+      throw new SessionExpiredError();
+    }
+    return refreshed.session;
+  }
   return session;
 }
 
@@ -43,7 +52,8 @@ export async function createCheckoutSession(
 
   if (!res.ok) {
     if (res.status === 401) throw new SessionExpiredError();
-    throw new Error(json.error || `Server error (${res.status})`);
+    const msg = json.error || `Server error (${res.status})`;
+    throw new Error(msg);
   }
 
   if (json.error) throw new Error(json.error);
