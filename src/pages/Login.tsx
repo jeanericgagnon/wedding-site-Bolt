@@ -288,7 +288,7 @@ export const Login: React.FC = () => {
             <p className="text-sm text-text-secondary">
               Don't have an account?{' '}
               <Link to="/signup" className="text-primary hover:text-primary-hover font-medium transition-colors">
-                Sign up free
+                Get started — $49
               </Link>
             </p>
           </div>

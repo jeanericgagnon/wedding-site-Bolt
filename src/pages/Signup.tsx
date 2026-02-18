@@ -151,9 +151,19 @@ export const Signup: React.FC = () => {
 
       if (siteError) throw siteError;
 
-      const { data: { session: newSession } } = await supabase.auth.getSession();
-      if (!newSession?.access_token) {
-        throw new Error('Account created but session could not be established. Please sign in to continue.');
+      let session = authData.session;
+
+      if (!session?.access_token) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+        if (signInError) throw new Error('Account created! Please sign in to continue.');
+        session = signInData.session;
+      }
+
+      if (!session?.access_token) {
+        throw new Error('Account created! Please sign in to continue.');
       }
 
       navigate('/payment-required');
@@ -174,7 +184,7 @@ export const Signup: React.FC = () => {
             <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Create your account</h1>
-          <p className="text-text-secondary">Start building your wedding site in minutes</p>
+          <p className="text-text-secondary">One-time payment of $49 — yours forever</p>
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
