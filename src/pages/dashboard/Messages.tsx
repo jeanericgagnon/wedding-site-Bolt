@@ -201,9 +201,9 @@ export const DashboardMessages: React.FC = () => {
       if (saveAsDraft) {
         toast('Saved as draft', 'info');
       } else if (status === 'scheduled') {
-        toast(`Scheduled for ${new Date(scheduledFor!).toLocaleString()}`, 'info');
+        toast(`Message saved — scheduled for ${new Date(scheduledFor!).toLocaleString()}`, 'info');
       } else {
-        toast(`Queued for ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} — delivery within a few minutes`, 'success');
+        toast(`Message saved for ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}`, 'success');
       }
 
       setFormData({
@@ -262,8 +262,13 @@ export const DashboardMessages: React.FC = () => {
     <DashboardLayout currentPage="messages">
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Messages</h1>
-          <p className="text-text-secondary">Send updates and reminders to your guests</p>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold text-text-primary">Messages</h1>
+            <span className="px-2.5 py-1 text-xs font-semibold bg-warning-light text-warning border border-warning/20 rounded-full">
+              Email sending coming soon
+            </span>
+          </div>
+          <p className="text-text-secondary">Compose and save messages for your guests — email delivery activates soon</p>
         </div>
 
         {weddingSite?.couple_email && (
@@ -396,15 +401,15 @@ export const DashboardMessages: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <Mail className="w-5 h-5 text-primary mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-medium text-text-primary">Delivery summary</p>
+                      <p className="font-medium text-text-primary">Message log</p>
                       <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
-                          ? `Queued for ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()}`
-                          : `Will be queued immediately for ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''} with email addresses`}
+                          ? `Will be saved as scheduled for ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()}`
+                          : `Will be saved for ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''} with email addresses`}
                       </p>
                       <p className="text-text-tertiary mt-2 text-xs">
-                        Emails are processed in the background and typically deliver within a few minutes.
-                        Only guests with email addresses will receive this message.
+                        Messages are saved to your log. Email delivery to guests is coming soon — your messages will be ready when sending goes live.
+                        Only guests with email addresses will receive messages.
                       </p>
                     </div>
                   </div>

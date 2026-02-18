@@ -532,30 +532,28 @@ export const Product: React.FC = () => {
               <h3 className="text-xl font-bold text-ink mb-4">Messaging</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <Send className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-ink/80">Email broadcast</span>
-                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
-                  </div>
+                  <Send className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Email compose + audience segmentation</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Users className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
+                  <Users className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Segment by: attending, not responded, declined</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Schedule messages + draft saving</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Send className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
                   <div className="flex items-center gap-2">
-                    <span className="text-ink/80">Segmentation: non-responders, event-specific</span>
+                    <span className="text-ink/80">Email delivery to guests</span>
                     <Badge variant="secondary" className="text-xs">Coming soon</Badge>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <MessageSquare className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
                   <div className="flex items-center gap-2">
-                    <span className="text-ink/80">SMS credits by segment</span>
-                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Bell className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-ink/80">Opt-out/consent compliance</span>
+                    <span className="text-ink/80">SMS by segment</span>
                     <Badge variant="secondary" className="text-xs">Coming soon</Badge>
                   </div>
                 </li>
@@ -597,23 +595,21 @@ export const Product: React.FC = () => {
               <h3 className="text-xl font-bold text-ink mb-4">Registry</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <Wallet className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-ink/80">Universal URL add + metadata preview</span>
-                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
-                  </div>
+                  <Wallet className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Universal URL add — any store, domain-agnostic</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Zap className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Auto metadata preview (title, price, image)</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Purchase tracking with quantity + partial status</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <DollarSign className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
                   <div className="flex items-center gap-2">
                     <span className="text-ink/80">Cash fund links</span>
-                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Zap className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-ink/80">BYOAL (bring your own affiliate links) option</span>
                     <Badge variant="secondary" className="text-xs">Coming soon</Badge>
                   </div>
                 </li>
@@ -680,12 +676,6 @@ export const Product: React.FC = () => {
             </Card>
           </div>
 
-          <div className="text-center">
-            <Button variant="outline" size="lg" onClick={() => onTodo('View roadmap')}>
-              <Calendar className="w-5 h-5 mr-2" />
-              See roadmap
-            </Button>
-          </div>
         </div>
       </section>
 
