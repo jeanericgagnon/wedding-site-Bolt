@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Chrome, ArrowLeft, Mail } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Heart, Chrome, ArrowLeft, Mail, AlertCircle } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -9,14 +9,22 @@ type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signIn } = useAuth();
   const [view, setView] = useState<AuthView>('login');
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [formData, setFormData] = useState({ email: '', password: '' });
+
+  useEffect(() => {
+    if (searchParams.get('reason') === 'session_expired') {
+      setNotice('Your session expired. Please sign in again.');
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -179,6 +187,12 @@ export const Login: React.FC = () => {
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
+          {notice && (
+            <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20 mb-5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <span>{notice}</span>
+            </div>
+          )}
           <Button
             variant="outline"
             size="lg"

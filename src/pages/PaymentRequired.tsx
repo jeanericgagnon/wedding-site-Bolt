@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, CreditCard, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
-import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId } from '../lib/stripeService';
+import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
 
 const FEATURES = [
   'Your own wedding website with custom URL',
@@ -40,6 +40,10 @@ export const PaymentRequired: React.FC = () => {
       );
       window.location.href = url;
     } catch (err) {
+      if (err instanceof SessionExpiredError) {
+        navigate('/login?reason=session_expired', { replace: true });
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Could not start checkout. Please try again.');
       setLoading(false);
     }

@@ -151,6 +151,11 @@ export const Signup: React.FC = () => {
 
       if (siteError) throw siteError;
 
+      const { data: { session: newSession } } = await supabase.auth.getSession();
+      if (!newSession?.access_token) {
+        throw new Error('Account created but session could not be established. Please sign in to continue.');
+      }
+
       navigate('/payment-required');
     } catch (err: unknown) {
       console.error('Signup error:', err);
