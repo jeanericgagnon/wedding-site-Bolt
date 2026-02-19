@@ -201,6 +201,17 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
         </div>
       )}
 
+      {!isHighlighted && (
+        <button
+          onClick={handleToggleVisibility}
+          title="Hide section"
+          aria-label="Hide section"
+          className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-white/80 backdrop-blur-sm shadow-sm border border-gray-200 text-gray-500 hover:text-rose-500 hover:bg-white opacity-0 group-hover:opacity-100 transition-all duration-150"
+        >
+          <Eye size={13} />
+        </button>
+      )}
+
       <div className={isHighlighted ? 'pt-7' : ''}>
         {children ?? (
           <div className="h-20 bg-gray-50 flex items-center justify-center border-2 border-dashed border-gray-200">
