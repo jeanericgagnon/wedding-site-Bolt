@@ -7,7 +7,13 @@ export type SectionType =
   | 'registry'
   | 'faq'
   | 'rsvp'
-  | 'gallery';
+  | 'gallery'
+  | 'countdown'
+  | 'wedding-party'
+  | 'dress-code'
+  | 'accommodations'
+  | 'contact'
+  | 'footer-cta';
 
 export interface SectionInstance {
   id: string;

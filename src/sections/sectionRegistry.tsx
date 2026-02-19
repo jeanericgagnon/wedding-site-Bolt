@@ -12,6 +12,12 @@ import { RegistrySection, RegistryGrid } from './components/RegistrySection';
 import { RsvpSection, RsvpInline } from './components/RsvpSection';
 import { FaqSection, FaqAccordion } from './components/FaqSection';
 import { GallerySection, GalleryMasonry } from './components/GallerySection';
+import { CountdownSection, CountdownBanner } from './components/CountdownSection';
+import { WeddingPartySection, WeddingPartyGrid } from './components/WeddingPartySection';
+import { DressCodeSection, DressCodeBanner } from './components/DressCodeSection';
+import { AccommodationsSection, AccommodationsCards } from './components/AccommodationsSection';
+import { ContactSection, ContactMinimal } from './components/ContactSection';
+import { FooterCtaSection, FooterCtaMinimal } from './components/FooterCtaSection';
 
 export interface SectionComponentProps {
   data: WeddingDataV1;
@@ -112,6 +118,60 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     },
     supportedBindings: [],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
+  },
+  countdown: {
+    component: CountdownSection,
+    variants: {
+      default: CountdownSection,
+      banner: CountdownBanner,
+    },
+    supportedBindings: [],
+    supportedSettings: ['showTitle', 'title', 'eyebrow', 'message'],
+  },
+  'wedding-party': {
+    component: WeddingPartySection,
+    variants: {
+      default: WeddingPartySection,
+      grid: WeddingPartyGrid,
+    },
+    supportedBindings: [],
+    supportedSettings: ['showTitle', 'title', 'subtitle', 'eyebrow', 'bridalTitle', 'groomTitle'],
+  },
+  'dress-code': {
+    component: DressCodeSection,
+    variants: {
+      default: DressCodeSection,
+      banner: DressCodeBanner,
+    },
+    supportedBindings: [],
+    supportedSettings: ['showTitle', 'title', 'eyebrow', 'presetCode', 'dressCodeLabel', 'description', 'colorNote', 'additionalNote'],
+  },
+  accommodations: {
+    component: AccommodationsSection,
+    variants: {
+      default: AccommodationsSection,
+      cards: AccommodationsCards,
+    },
+    supportedBindings: [],
+    supportedSettings: ['showTitle', 'title', 'eyebrow', 'generalNote', 'hotels'],
+  },
+  contact: {
+    component: ContactSection,
+    variants: {
+      default: ContactSection,
+      minimal: ContactMinimal,
+    },
+    supportedBindings: [],
+    supportedSettings: ['showTitle', 'title', 'subtitle', 'eyebrow', 'introText', 'contacts', 'emailSubject', 'closingNote'],
+  },
+  'footer-cta': {
+    component: FooterCtaSection,
+    variants: {
+      default: FooterCtaSection,
+      minimal: FooterCtaMinimal,
+    },
+    supportedBindings: [],
+    supportedSettings: ['headline', 'subtext', 'buttonLabel', 'rsvpUrl', 'footerNote'],
   },
 };
 
