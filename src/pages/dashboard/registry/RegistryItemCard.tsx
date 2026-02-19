@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, ShoppingBag } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Badge } from '../../../components/ui';
 import type { RegistryItem, PurchaseStatus } from './registryTypes';
 
@@ -8,6 +8,7 @@ interface Props {
   onEdit: (item: RegistryItem) => void;
   onDelete: (id: string) => void;
   onMarkPurchased?: (item: RegistryItem, qty: number) => Promise<void>;
+  onRefetchMetadata?: (item: RegistryItem) => Promise<void>;
 }
 
 function statusBadge(status: PurchaseStatus, qty: number, needed: number) {
@@ -84,10 +85,11 @@ const PurchaseConfirmPanel: React.FC<PurchaseConfirmProps> = ({ item, onConfirm,
   );
 };
 
-export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMarkPurchased }) => {
+export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMarkPurchased, onRefetchMetadata }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
   const [purchaseBusy, setPurchaseBusy] = useState(false);
+  const [refetching, setRefetching] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const displayPrice = item.price_label
@@ -119,6 +121,16 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
       setShowPurchaseConfirm(false);
     } finally {
       setPurchaseBusy(false);
+    }
+  }
+
+  async function handleRefetch() {
+    if (!onRefetchMetadata || refetching) return;
+    setRefetching(true);
+    try {
+      await onRefetchMetadata(item);
+    } finally {
+      setRefetching(false);
     }
   }
 
@@ -204,7 +216,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           </button>
         )}
 
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-1 flex-wrap">
           {displayUrl && (
             <a
               href={displayUrl}
@@ -223,6 +235,21 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             <Pencil className="w-3.5 h-3.5" />
             Edit
           </button>
+          {onRefetchMetadata && item.item_url && (
+            <button
+              onClick={handleRefetch}
+              disabled={refetching}
+              title="Re-fetch product details from the store"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+            >
+              {refetching ? (
+                <span className="w-3.5 h-3.5 border-2 border-text-tertiary/30 border-t-primary rounded-full animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+              Refresh
+            </button>
+          )}
           <button
             onClick={handleDeleteClick}
             className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${

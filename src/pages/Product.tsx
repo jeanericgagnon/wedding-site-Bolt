@@ -32,7 +32,6 @@ import {
   ClipboardCheck,
   Send,
   Sparkles,
-  Star,
   Layers,
   Map,
 } from 'lucide-react';
@@ -852,14 +851,9 @@ export const Product: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                    {(tmpl.isNew || tmpl.isPremium) && (
-                      <div className="absolute top-2 right-2 flex gap-1 flex-col items-end">
-                        {tmpl.isNew && <Badge variant="accent" className="text-xs">New</Badge>}
-                        {tmpl.isPremium && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-0.5 rounded-full">
-                            <Star className="w-3 h-3 fill-current" /> Premium
-                          </span>
-                        )}
+                    {tmpl.isNew && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="accent" className="text-xs">New</Badge>
                       </div>
                     )}
                   </div>

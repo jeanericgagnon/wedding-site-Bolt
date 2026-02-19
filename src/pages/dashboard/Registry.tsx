@@ -9,6 +9,7 @@ import {
   updateRegistryItem,
   deleteRegistryItem,
   ownerMarkPurchased,
+  fetchUrlPreview,
 } from './registry/registryService';
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
@@ -146,6 +147,30 @@ export const DashboardRegistry: React.FC = () => {
       );
     } catch {
       toast('Failed to update purchase status', 'error');
+    }
+  }
+
+  async function handleRefetchMetadata(item: RegistryItem) {
+    const url = item.item_url ?? item.canonical_url;
+    if (!url) return;
+    try {
+      const preview = await fetchUrlPreview(url, true);
+      const fields: Partial<RegistryItem> = {};
+      if (preview.title && !item.item_name) fields.item_name = preview.title;
+      if (preview.price_label) fields.price_label = preview.price_label;
+      if (preview.price_amount != null) fields.price_amount = preview.price_amount;
+      if (preview.image_url) fields.image_url = preview.image_url;
+      if (preview.merchant ?? preview.brand) fields.merchant = (preview.merchant ?? preview.brand)!;
+      if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
+      if (Object.keys(fields).length > 0) {
+        const updated = await updateRegistryItem(item.id, fields);
+        setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+        toast('Product details refreshed');
+      } else {
+        toast('No new details found — details are up to date');
+      }
+    } catch {
+      toast('Failed to refresh product details', 'error');
     }
   }
 
@@ -297,6 +322,7 @@ export const DashboardRegistry: React.FC = () => {
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onMarkPurchased={handleMarkPurchased}
+                  onRefetchMetadata={handleRefetchMetadata}
                 />
               ))}
             </div>

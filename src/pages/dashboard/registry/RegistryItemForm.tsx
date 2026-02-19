@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Link2, Loader2, X, ImageOff, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { Link2, Loader2, X, ImageOff, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { Button } from '../../../components/ui';
 import { fetchUrlPreview } from './registryService';
 import { normalizeUrl, isValidUrl } from '../../../lib/urlUtils';
 import type { RegistryItem, RegistryItemDraft, RegistryPreview, MetadataConfidence } from './registryTypes';
-import { computeConfidence } from './registryTypes';
+import { computeConfidence, getBlockedMessage } from './registryTypes';
 
 interface Props {
   initial?: RegistryItem | null;
@@ -47,6 +47,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchDone, setFetchDone] = useState(false);
   const [fetchConfidence, setFetchConfidence] = useState<MetadataConfidence | null>(null);
+  const [lastPreview, setLastPreview] = useState<RegistryPreview | null>(null);
   const [dedupeWarning, setDedupeWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -55,9 +56,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     setDraft(prev => ({ ...prev, [key]: value }));
   }
 
-  async function handleFetch() {
-    if (!urlInput.trim()) return;
-    const normalized = normalizeUrl(urlInput.trim());
+  async function doFetch(urlToFetch: string, forceRefresh = false) {
+    const normalized = normalizeUrl(urlToFetch.trim());
     if (!isValidUrl(normalized)) {
       setFetchError('Please enter a valid URL (e.g. https://amazon.com/product)');
       return;
@@ -68,13 +68,17 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     setFetchConfidence(null);
     setDedupeWarning(null);
     try {
-      const preview: RegistryPreview = await fetchUrlPreview(normalized);
+      const preview: RegistryPreview = await fetchUrlPreview(normalized, forceRefresh);
+      setLastPreview(preview);
       const confidence = computeConfidence(preview);
       setFetchConfidence(confidence);
-      if (confidence === 'manual') {
+      const blockedMsg = getBlockedMessage(preview);
+      if (blockedMsg) {
+        setFetchError(blockedMsg);
+      } else if (confidence === 'manual') {
         setFetchError(
           preview.error
-            ? `This store blocks automated preview — some retailers (Amazon, Target, etc.) prevent this. Fill in the details below manually and save.`
+            ? `No details could be extracted from this URL. Fill in the form manually below.`
             : `No details could be extracted. Fill in the form manually below.`
         );
       } else {
@@ -97,9 +101,10 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         item_name: preview.title ?? prev.item_name,
         price_label: preview.price_label ?? prev.price_label,
         price_amount: preview.price_amount != null ? String(preview.price_amount) : prev.price_amount,
-        merchant: preview.merchant ?? prev.merchant,
+        merchant: preview.merchant ?? (preview.brand ?? null) ?? prev.merchant,
         item_url: preview.canonical_url ?? normalized,
         image_url: preview.image_url ?? prev.image_url,
+        notes: preview.description && !prev.notes ? preview.description : prev.notes,
       }));
     } catch (err: unknown) {
       setFetchError(err instanceof Error ? err.message : 'Fetch failed. You can still fill in the form manually.');
@@ -110,6 +115,17 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     } finally {
       setFetching(false);
     }
+  }
+
+  async function handleFetch() {
+    if (!urlInput.trim()) return;
+    await doFetch(urlInput);
+  }
+
+  async function handleRefetch() {
+    const urlToUse = urlInput.trim() || draft.item_url;
+    if (!urlToUse) return;
+    await doFetch(urlToUse, true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -146,24 +162,40 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* URL Import */}
-          {!isEdit && (
-            <div className="space-y-2">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
               <label className="block text-sm font-medium text-text-primary">
-                Import from URL
-                <span className="ml-2 text-xs text-text-tertiary font-normal">(any store, domain-agnostic)</span>
+                {isEdit ? 'Product URL' : 'Import from URL'}
+                <span className="ml-2 text-xs text-text-tertiary font-normal">(any store)</span>
               </label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-                  <input
-                    type="url"
-                    value={urlInput}
-                    onChange={e => setUrlInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleFetch(); } }}
-                    placeholder="https://amazon.com/product/… or any store URL"
-                    className="w-full pl-9 pr-3 py-2.5 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
+              {isEdit && draft.item_url && (
+                <button
+                  type="button"
+                  onClick={handleRefetch}
+                  disabled={fetching}
+                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                >
+                  {fetching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                  Re-fetch details
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={e => {
+                    setUrlInput(e.target.value);
+                    set('item_url', e.target.value);
+                  }}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleFetch(); } }}
+                  placeholder="https://amazon.com/product/… or any store URL"
+                  className="w-full pl-9 pr-3 py-2.5 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              {!isEdit && (
                 <Button
                   type="button"
                   variant="outline"
@@ -177,39 +209,41 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                     'Fetch details'
                   )}
                 </Button>
-              </div>
+              )}
+            </div>
 
-              {fetchError && (
-                <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <span>{fetchError}</span>
+            {fetchError && (
+              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <span>{fetchError}</span>
+                  {lastPreview?.fetch_status !== 'blocked' && (
                     <p className="mt-1 text-xs opacity-80">
                       The URL has been saved to the product link field. Just fill in the name, price, and store below.
                     </p>
-                  </div>
+                  )}
                 </div>
-              )}
-              {fetchDone && !fetchError && fetchConfidence === 'full' && (
-                <div className="flex items-center gap-2 p-3 bg-success-light rounded-lg text-sm text-success border border-success/20">
-                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                  <span>All details imported — review and save.</span>
-                </div>
-              )}
-              {fetchDone && !fetchError && fetchConfidence === 'partial' && (
-                <div className="flex items-start gap-2 p-3 bg-primary-light rounded-lg text-sm text-primary border border-primary/20">
-                  <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Some details imported — a few fields may need filling in below.</span>
-                </div>
-              )}
-              {dedupeWarning && (
-                <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>{dedupeWarning}</span>
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+            {fetchDone && !fetchError && fetchConfidence === 'full' && (
+              <div className="flex items-center gap-2 p-3 bg-success-light rounded-lg text-sm text-success border border-success/20">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <span>Auto-filled — all details imported. Review and save.</span>
+              </div>
+            )}
+            {fetchDone && !fetchError && fetchConfidence === 'partial' && (
+              <div className="flex items-start gap-2 p-3 bg-primary-light rounded-lg text-sm text-primary border border-primary/20">
+                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Please review — some details were imported but a few fields may need filling in below.</span>
+              </div>
+            )}
+            {dedupeWarning && (
+              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>{dedupeWarning}</span>
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 gap-4">
             {/* Image preview + URL */}
@@ -285,32 +319,18 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               </div>
             </div>
 
-            {/* Merchant + URL */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Store / Merchant
-                </label>
-                <input
-                  type="text"
-                  value={draft.merchant}
-                  onChange={e => set('merchant', e.target.value)}
-                  placeholder="e.g. Amazon, Target"
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Product URL
-                </label>
-                <input
-                  type="url"
-                  value={draft.item_url}
-                  onChange={e => set('item_url', e.target.value)}
-                  placeholder="https://…"
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+            {/* Merchant */}
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-1">
+                Store / Merchant
+              </label>
+              <input
+                type="text"
+                value={draft.merchant}
+                onChange={e => set('merchant', e.target.value)}
+                placeholder="e.g. Amazon, Target"
+                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
             </div>
 
             {/* Desired quantity */}

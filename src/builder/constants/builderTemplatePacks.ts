@@ -33,7 +33,6 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     suggestedFonts: { heading: 'Playfair Display', body: 'Inter' },
     spacingProfile: 'spacious',
     isNew: true,
-    isPremium: true,
   },
 
   'editorial-romance': {
@@ -65,7 +64,6 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     },
     suggestedFonts: { heading: 'Cormorant Garamond', body: 'Lato' },
     spacingProfile: 'spacious',
-    isPremium: true,
   },
 
   'timeless-classic': {
@@ -164,7 +162,6 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     suggestedFonts: { heading: 'Syne', body: 'Instrument Sans' },
     spacingProfile: 'spacious',
     isNew: true,
-    isPremium: true,
   },
 
   'photo-storytelling': {

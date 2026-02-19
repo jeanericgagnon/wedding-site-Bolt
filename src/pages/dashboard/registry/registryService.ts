@@ -80,7 +80,7 @@ export async function reorderRegistryItems(
   await Promise.all(updates);
 }
 
-export async function fetchUrlPreview(url: string): Promise<RegistryPreview> {
+export async function fetchUrlPreview(url: string, forceRefresh = false): Promise<RegistryPreview> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
   const endpoint = `${supabaseUrl}/functions/v1/registry-preview`;
@@ -95,7 +95,7 @@ export async function fetchUrlPreview(url: string): Promise<RegistryPreview> {
       Authorization: `Bearer ${token}`,
       Apikey: anonKey,
     },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url, force_refresh: forceRefresh }),
   });
 
   if (!resp.ok) {
