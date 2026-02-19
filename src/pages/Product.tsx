@@ -43,14 +43,23 @@ interface ToastMsg {
   message: string;
 }
 
-const TEMPLATE_THEME_COLORS: Record<string, string[]> = {
-  'modern-luxe':       ['#1C1917', '#C8A96E', '#FAF9F7', '#78716C'],
-  'editorial-romance': ['#2D2926', '#B08860', '#F8F5F1', '#8C7B6E'],
-  'timeless-classic':  ['#1A2B4A', '#C4983C', '#FDFBF6', '#6276A0'],
-  'destination-minimal':['#1E5F6F', '#4BAABC', '#F3F8FA', '#C8A96E'],
-  'bold-contemporary': ['#1C1917', '#C8A96E', '#FAF9F7', '#333333'],
-  'photo-storytelling':['#B5546A', '#D4956A', '#FDF7F4', '#C9A96E'],
-  'floral-garden':     ['#4E7C5F', '#C47A4A', '#F6F8F3', '#9DB89F'],
+interface TemplateTheme {
+  dark: string;
+  accent: string;
+  bg: string;
+  mid: string;
+  heroStyle: 'centered' | 'split' | 'bold';
+  sectionRows: Array<{ label: string; widths: number[] }>;
+}
+
+const TEMPLATE_THEMES: Record<string, TemplateTheme> = {
+  'modern-luxe':        { dark: '#1C1917', accent: '#C8A96E', bg: '#FAF9F7', mid: '#78716C', heroStyle: 'centered', sectionRows: [{ label: 'Our Story', widths: [100, 80, 60] }, { label: 'Gallery', widths: [33, 33, 33] }, { label: 'Schedule', widths: [100, 70, 85] }] },
+  'editorial-romance':  { dark: '#2D2926', accent: '#B08860', bg: '#F8F5F1', mid: '#8C7B6E', heroStyle: 'split',    sectionRows: [{ label: 'Our Story', widths: [90, 70, 80] }, { label: 'Photos', widths: [50, 25, 25] }, { label: 'RSVP', widths: [60, 40, 50] }] },
+  'timeless-classic':   { dark: '#1A2B4A', accent: '#C4983C', bg: '#FDFBF6', mid: '#6276A0', heroStyle: 'centered', sectionRows: [{ label: 'Ceremony', widths: [100, 75, 60] }, { label: 'Details', widths: [45, 55] }, { label: 'Registry', widths: [30, 30, 30] }] },
+  'destination-minimal':{ dark: '#1E5F6F', accent: '#4BAABC', bg: '#F3F8FA', mid: '#C8A96E', heroStyle: 'bold',     sectionRows: [{ label: 'Venue & Map', widths: [100, 65, 75] }, { label: 'Travel', widths: [50, 50] }, { label: 'Schedule', widths: [100, 80, 55] }] },
+  'bold-contemporary':  { dark: '#1C1917', accent: '#C8A96E', bg: '#FAF9F7', mid: '#333333', heroStyle: 'bold',     sectionRows: [{ label: 'Schedule', widths: [100, 60, 80] }, { label: 'Gallery', widths: [25, 50, 25] }, { label: 'Venue', widths: [55, 45] }] },
+  'photo-storytelling': { dark: '#B5546A', accent: '#D4956A', bg: '#FDF7F4', mid: '#C9A96E', heroStyle: 'split',    sectionRows: [{ label: 'Gallery', widths: [60, 40] }, { label: 'Story', widths: [100, 70, 60] }, { label: 'RSVP', widths: [45, 55] }] },
+  'floral-garden':      { dark: '#4E7C5F', accent: '#C47A4A', bg: '#F6F8F3', mid: '#9DB89F', heroStyle: 'centered', sectionRows: [{ label: 'Our Story', widths: [85, 65, 75] }, { label: 'Gallery', widths: [33, 34, 33] }, { label: 'Dress Code', widths: [60, 40, 50] }] },
 };
 
 const TEMPLATE_MOOD_LABELS: Record<string, string> = {
@@ -832,33 +841,123 @@ export const Product: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10">
             {templates.map(tmpl => {
-              const colors = TEMPLATE_THEME_COLORS[tmpl.id] ?? ['#1C1917', '#C8A96E', '#FAF9F7', '#78716C'];
+              const theme = TEMPLATE_THEMES[tmpl.id] ?? TEMPLATE_THEMES['modern-luxe'];
               return (
-                <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group hover:shadow-md transition-shadow">
-                  <div className="aspect-[3/4] relative overflow-hidden" style={{ backgroundColor: colors[2] }}>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: colors[0] }}>
-                        <Heart className="w-6 h-6" style={{ color: colors[1] }} />
+                <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group hover:shadow-lg transition-all hover:-translate-y-0.5">
+                  {/* Rich website mockup preview */}
+                  <div className="aspect-[3/4] relative overflow-hidden" style={{ backgroundColor: theme.bg }}>
+                    {/* Browser chrome */}
+                    <div className="flex items-center gap-1 px-2 py-1.5 border-b" style={{ backgroundColor: theme.dark, borderColor: theme.dark }}>
+                      <div className="w-1.5 h-1.5 rounded-full opacity-50" style={{ backgroundColor: theme.accent }} />
+                      <div className="w-1.5 h-1.5 rounded-full opacity-30" style={{ backgroundColor: theme.accent }} />
+                      <div className="w-1.5 h-1.5 rounded-full opacity-20" style={{ backgroundColor: theme.accent }} />
+                      <div className="flex-1 mx-2 h-1.5 rounded-full opacity-20" style={{ backgroundColor: theme.accent }} />
+                    </div>
+
+                    {/* Nav bar */}
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b" style={{ backgroundColor: theme.bg, borderColor: `${theme.dark}15` }}>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accent }} />
+                        <div className="h-1.5 rounded-full w-10" style={{ backgroundColor: theme.dark, opacity: 0.7 }} />
                       </div>
-                      <div className="text-center">
-                        <div className="h-2 rounded-full mb-2 mx-auto" style={{ backgroundColor: colors[0], width: '80px', opacity: 0.6 }} />
-                        <div className="h-1.5 rounded-full mb-1.5 mx-auto" style={{ backgroundColor: colors[0], width: '60px', opacity: 0.3 }} />
-                        <div className="h-1.5 rounded-full mx-auto" style={{ backgroundColor: colors[0], width: '70px', opacity: 0.3 }} />
-                      </div>
-                      <div className="flex gap-1.5 mt-2">
-                        {colors.map((c, i) => (
-                          <div key={i} className="w-5 h-5 rounded-full border border-white/20 shadow-sm" style={{ backgroundColor: c }} />
+                      <div className="flex gap-2">
+                        {[14, 12, 16, 10].map((w, i) => (
+                          <div key={i} className="h-1 rounded-full" style={{ backgroundColor: theme.dark, opacity: 0.3, width: `${w}px` }} />
                         ))}
                       </div>
                     </div>
+
+                    {/* Hero section */}
+                    {theme.heroStyle === 'centered' && (
+                      <div className="px-4 py-5 flex flex-col items-center gap-2 border-b" style={{ backgroundColor: theme.dark, borderColor: `${theme.accent}30` }}>
+                        <div className="h-1 rounded-full opacity-40 w-8" style={{ backgroundColor: theme.accent }} />
+                        <div className="h-3 rounded font-bold w-24 opacity-90" style={{ backgroundColor: theme.accent }} />
+                        <div className="h-1.5 rounded w-16 opacity-50" style={{ backgroundColor: theme.bg }} />
+                        <div className="h-1 rounded w-20 opacity-30" style={{ backgroundColor: theme.bg }} />
+                        <div className="mt-1 px-3 py-1 rounded" style={{ backgroundColor: theme.accent }}>
+                          <div className="h-1.5 w-8 rounded" style={{ backgroundColor: theme.dark }} />
+                        </div>
+                      </div>
+                    )}
+                    {theme.heroStyle === 'split' && (
+                      <div className="flex border-b" style={{ borderColor: `${theme.accent}20` }}>
+                        <div className="flex-1 px-3 py-4 flex flex-col gap-2 justify-center" style={{ backgroundColor: theme.bg }}>
+                          <div className="h-1 rounded w-8 opacity-40" style={{ backgroundColor: theme.accent }} />
+                          <div className="h-2.5 rounded w-16 opacity-80" style={{ backgroundColor: theme.dark }} />
+                          <div className="h-1 rounded w-14 opacity-40" style={{ backgroundColor: theme.dark }} />
+                          <div className="h-1 rounded w-12 opacity-30" style={{ backgroundColor: theme.dark }} />
+                          <div className="mt-1 px-2 py-1 rounded w-fit" style={{ backgroundColor: theme.accent }}>
+                            <div className="h-1.5 w-6 rounded" style={{ backgroundColor: theme.bg }} />
+                          </div>
+                        </div>
+                        <div className="flex-1" style={{ backgroundColor: `${theme.dark}25` }}>
+                          <div className="h-full w-full opacity-40" style={{ background: `linear-gradient(135deg, ${theme.accent}50, ${theme.dark}80)` }} />
+                        </div>
+                      </div>
+                    )}
+                    {theme.heroStyle === 'bold' && (
+                      <div className="px-3 py-4 border-b" style={{ backgroundColor: theme.dark, borderColor: `${theme.accent}30` }}>
+                        <div className="h-5 rounded w-28 mb-1.5 opacity-95" style={{ backgroundColor: theme.bg }} />
+                        <div className="h-1.5 rounded w-20 mb-2 opacity-50" style={{ backgroundColor: theme.accent }} />
+                        <div className="flex gap-1.5 items-center">
+                          <div className="px-2 py-0.5 rounded" style={{ backgroundColor: theme.accent }}>
+                            <div className="h-1.5 w-8 rounded" style={{ backgroundColor: theme.dark }} />
+                          </div>
+                          <div className="h-1 w-12 rounded opacity-30" style={{ backgroundColor: theme.bg }} />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Content sections */}
+                    <div className="px-3 py-2 space-y-3" style={{ backgroundColor: theme.bg }}>
+                      {theme.sectionRows.map((row, ri) => (
+                        <div key={ri}>
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <div className="h-1 w-1 rounded-full" style={{ backgroundColor: theme.accent }} />
+                            <div className="h-1 rounded w-8 opacity-50" style={{ backgroundColor: theme.dark }} />
+                          </div>
+                          <div className={`flex gap-1.5 ${row.widths.length === 1 ? 'flex-col' : ''}`}>
+                            {row.widths.map((w, wi) => (
+                              <div
+                                key={wi}
+                                className="rounded"
+                                style={{
+                                  backgroundColor: wi === 0 && row.widths.length > 2 ? `${theme.dark}12` : `${theme.dark}08`,
+                                  width: row.widths.length === 1 ? `${w}%` : undefined,
+                                  flex: row.widths.length > 1 ? w : undefined,
+                                  height: row.widths.length === 1 ? '6px' : '28px',
+                                  borderLeft: wi === 0 ? `2px solid ${theme.accent}` : undefined,
+                                  paddingLeft: wi === 0 ? '4px' : undefined,
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Footer strip */}
+                    <div className="absolute bottom-0 left-0 right-0 h-6 flex items-center justify-center gap-3 px-3" style={{ backgroundColor: theme.dark }}>
+                      {[20, 14, 18, 12].map((w, i) => (
+                        <div key={i} className="h-1 rounded-full opacity-30" style={{ backgroundColor: theme.accent, width: `${w}px` }} />
+                      ))}
+                    </div>
+
                     {tmpl.isNew && (
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-7 right-2">
                         <Badge variant="accent" className="text-xs">New</Badge>
                       </div>
                     )}
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="text-sm font-semibold text-text-primary mb-1.5">{tmpl.displayName}</h3>
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h3 className="text-sm font-semibold text-text-primary">{tmpl.displayName}</h3>
+                      <div className="flex gap-1 flex-shrink-0 mt-0.5">
+                        {[theme.dark, theme.accent, theme.bg].map((c, i) => (
+                          <div key={i} className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: c }} />
+                        ))}
+                      </div>
+                    </div>
                     <p className="text-xs text-text-tertiary mb-2 line-clamp-2 leading-relaxed">{tmpl.description}</p>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {tmpl.moodTags.slice(0, 2).map(tag => (
