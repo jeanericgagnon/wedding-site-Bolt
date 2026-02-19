@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat } from 'lucide-react';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -13,10 +13,45 @@ import { useAuth } from '../../hooks/useAuth';
 export const DashboardSettings: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'account' | 'site' | 'notifications' | 'billing'>('account');
+
+  const [coupleNames, setCoupleNames] = useState('');
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountSuccess, setAccountSuccess] = useState<string | null>(null);
+  const [accountError, setAccountError] = useState<string | null>(null);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const [siteSlug, setSiteSlug] = useState('');
+  const [slugSaving, setSlugSaving] = useState(false);
+  const [slugSuccess, setSlugSuccess] = useState<string | null>(null);
+  const [slugError, setSlugError] = useState<string | null>(null);
+  const [siteVisibility, setSiteVisibility] = useState('public');
+  const [visibilitySaving, setVisibilitySaving] = useState(false);
+  const [visibilitySuccess, setVisibilitySuccess] = useState<string | null>(null);
+  const [visibilityError, setVisibilityError] = useState<string | null>(null);
+  const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+
+  const [notifRsvp, setNotifRsvp] = useState(true);
+  const [notifPhotos, setNotifPhotos] = useState(true);
+  const [notifDigest, setNotifDigest] = useState(false);
+  const [notifUpdates, setNotifUpdates] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifSuccess, setNotifSuccess] = useState<string | null>(null);
+  const [notifError, setNotifError] = useState<string | null>(null);
+
   const [currentTemplate, setCurrentTemplate] = useState<string>('base');
   const [changingTemplate, setChangingTemplate] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [templateSuccess, setTemplateSuccess] = useState<string | null>(null);
+
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
@@ -24,8 +59,8 @@ export const DashboardSettings: React.FC = () => {
   const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCurrentTemplate();
-  }, []);
+    loadSiteData();
+  }, [user]);
 
   useEffect(() => {
     if (activeTab === 'billing' && user && !billingInfo) {
@@ -36,6 +71,156 @@ export const DashboardSettings: React.FC = () => {
         .finally(() => setBillingLoading(false));
     }
   }, [activeTab, user]);
+
+  const loadSiteData = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('wedding_sites')
+        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        setWeddingSiteId(data.id);
+        const name1 = data.couple_name_1 ?? '';
+        const name2 = data.couple_name_2 ?? '';
+        setCoupleNames(name1 && name2 ? `${name1} & ${name2}` : name1 || name2 || '');
+        setAccountEmail(user.email ?? '');
+        setCurrentTemplate(data.active_template_id || 'base');
+        setSiteSlug(data.site_slug ?? '');
+        setSiteVisibility(data.site_visibility ?? 'public');
+        const prefs = data.notification_prefs as Record<string, boolean> | null;
+        if (prefs) {
+          setNotifRsvp(prefs.rsvp ?? true);
+          setNotifPhotos(prefs.photos ?? true);
+          setNotifDigest(prefs.digest ?? false);
+          setNotifUpdates(prefs.updates ?? false);
+        }
+      } else {
+        setAccountEmail(user.email ?? '');
+      }
+    } catch {
+    }
+  };
+
+  const handleSaveAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!weddingSiteId) return;
+    setAccountSaving(true);
+    setAccountError(null);
+    setAccountSuccess(null);
+    try {
+      const parts = coupleNames.split('&').map(s => s.trim()).filter(Boolean);
+      const name1 = parts[0] ?? coupleNames.trim();
+      const name2 = parts[1] ?? '';
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ couple_name_1: name1, couple_name_2: name2 })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+      setAccountSuccess('Account information saved.');
+    } catch (err) {
+      setAccountError(err instanceof Error ? err.message : 'Failed to save changes.');
+    } finally {
+      setAccountSaving(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+    if (!newPassword) { setPasswordError('New password is required.'); return; }
+    if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match.'); return; }
+    if (newPassword.length < 8) { setPasswordError('Password must be at least 8 characters.'); return; }
+    setPasswordSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setPasswordSuccess('Password updated successfully.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Failed to update password.');
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const handleUpdateSlug = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!weddingSiteId) return;
+    setSlugSaving(true);
+    setSlugError(null);
+    setSlugSuccess(null);
+    try {
+      const cleaned = siteSlug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-').replace(/^-|-$/g, '');
+      if (!cleaned) { setSlugError('URL cannot be empty.'); setSlugSaving(false); return; }
+      const { data: existing } = await supabase
+        .from('wedding_sites')
+        .select('id')
+        .eq('site_slug', cleaned)
+        .maybeSingle();
+      if (existing && existing.id !== weddingSiteId) {
+        setSlugError('That URL is already taken. Please choose another.');
+        setSlugSaving(false);
+        return;
+      }
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ site_slug: cleaned })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+      setSiteSlug(cleaned);
+      setSlugSuccess('Site URL updated.');
+    } catch (err) {
+      setSlugError(err instanceof Error ? err.message : 'Failed to update URL.');
+    } finally {
+      setSlugSaving(false);
+    }
+  };
+
+  const handleSavePrivacy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!weddingSiteId) return;
+    setVisibilitySaving(true);
+    setVisibilityError(null);
+    setVisibilitySuccess(null);
+    try {
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ site_visibility: siteVisibility })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+      setVisibilitySuccess('Privacy settings saved.');
+    } catch (err) {
+      setVisibilityError(err instanceof Error ? err.message : 'Failed to save privacy settings.');
+    } finally {
+      setVisibilitySaving(false);
+    }
+  };
+
+  const handleSaveNotifications = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!weddingSiteId) return;
+    setNotifSaving(true);
+    setNotifError(null);
+    setNotifSuccess(null);
+    try {
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ notification_prefs: { rsvp: notifRsvp, photos: notifPhotos, digest: notifDigest, updates: notifUpdates } })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+      setNotifSuccess('Preferences saved.');
+    } catch (err) {
+      setNotifError(err instanceof Error ? err.message : 'Failed to save preferences.');
+    } finally {
+      setNotifSaving(false);
+    }
+  };
 
   const handleSubscribe = async () => {
     if (!billingInfo) return;
@@ -55,38 +240,16 @@ export const DashboardSettings: React.FC = () => {
     }
   };
 
-  const loadCurrentTemplate = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from('wedding_sites')
-        .select('active_template_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (data) {
-        setCurrentTemplate(data.active_template_id || 'base');
-      }
-    } catch (err) {
-      console.error('Error loading template:', err);
-    }
-  };
-
   const handleTemplateChange = async (newTemplateId: string) => {
+    if (!weddingSiteId) return;
     setChangingTemplate(true);
     setTemplateError(null);
     setTemplateSuccess(null);
-
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { data, error: fetchError } = await supabase
         .from('wedding_sites')
         .select('wedding_data, layout_config')
-        .eq('user_id', user.id)
+        .eq('id', weddingSiteId)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
@@ -94,23 +257,17 @@ export const DashboardSettings: React.FC = () => {
 
       const weddingData = data.wedding_data as WeddingDataV1;
       const currentLayout = data.layout_config as LayoutConfigV1;
-
       const newLayout = regenerateLayout(newTemplateId, weddingData, currentLayout);
 
       const { error: updateError } = await supabase
         .from('wedding_sites')
-        .update({
-          active_template_id: newTemplateId,
-          layout_config: newLayout,
-        })
-        .eq('user_id', user.id);
+        .update({ active_template_id: newTemplateId, layout_config: newLayout })
+        .eq('id', weddingSiteId);
 
       if (updateError) throw updateError;
-
       setCurrentTemplate(newTemplateId);
-      setTemplateSuccess('Template changed successfully! Your content has been preserved.');
+      setTemplateSuccess('Template changed successfully. Your content has been preserved.');
     } catch (err: unknown) {
-      console.error('Error changing template:', err);
       setTemplateError((err as Error).message || 'Failed to change template');
     } finally {
       setChangingTemplate(false);
@@ -165,22 +322,33 @@ export const DashboardSettings: React.FC = () => {
                     <CardTitle>Account Information</CardTitle>
                     <CardDescription>Update your account details</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Input
-                      label="Partner names"
-                      defaultValue="Alex & Jordan"
-                    />
-                    <Input
-                      label="Email"
-                      type="email"
-                      defaultValue="alex.jordan@example.com"
-                    />
-                    <div className="flex justify-end pt-4">
-                      <Button variant="primary" size="md">
-                        <Save className="w-4 h-4 mr-2" aria-hidden="true" />
-                        Save Changes
-                      </Button>
-                    </div>
+                  <CardContent>
+                    <form onSubmit={handleSaveAccount} className="space-y-4">
+                      {accountSuccess && (
+                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{accountSuccess}</div>
+                      )}
+                      {accountError && (
+                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{accountError}</div>
+                      )}
+                      <Input
+                        label="Partner names"
+                        value={coupleNames}
+                        onChange={e => setCoupleNames(e.target.value)}
+                        placeholder="e.g. Alex & Jordan"
+                        helperText="Separate names with &"
+                      />
+                      <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Email</label>
+                        <p className="text-sm text-text-secondary px-3 py-2 bg-surface-subtle border border-border rounded-lg">{accountEmail}</p>
+                        <p className="text-xs text-text-tertiary mt-1">Contact support to change your email address.</p>
+                      </div>
+                      <div className="flex justify-end pt-2">
+                        <Button variant="primary" size="md" type="submit" disabled={accountSaving}>
+                          {accountSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                          Save Changes
+                        </Button>
+                      </div>
+                    </form>
                   </CardContent>
                 </Card>
 
@@ -189,24 +357,54 @@ export const DashboardSettings: React.FC = () => {
                     <CardTitle>Password</CardTitle>
                     <CardDescription>Change your password</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Input
-                      label="Current password"
-                      type="password"
-                    />
-                    <Input
-                      label="New password"
-                      type="password"
-                    />
-                    <Input
-                      label="Confirm new password"
-                      type="password"
-                    />
-                    <div className="flex justify-end pt-4">
-                      <Button variant="primary" size="md">
-                        Update Password
-                      </Button>
-                    </div>
+                  <CardContent>
+                    <form onSubmit={handleUpdatePassword} className="space-y-4">
+                      {passwordSuccess && (
+                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{passwordSuccess}</div>
+                      )}
+                      {passwordError && (
+                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{passwordError}</div>
+                      )}
+                      <div className="relative">
+                        <Input
+                          label="New password"
+                          type={showNewPw ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={e => setNewPassword(e.target.value)}
+                          helperText="Minimum 8 characters"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPw(v => !v)}
+                          className="absolute right-3 top-8 text-text-tertiary hover:text-text-primary"
+                          aria-label={showNewPw ? 'Hide password' : 'Show password'}
+                        >
+                          {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          label="Confirm new password"
+                          type={showCurrentPw ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={e => setConfirmPassword(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPw(v => !v)}
+                          className="absolute right-3 top-8 text-text-tertiary hover:text-text-primary"
+                          aria-label={showCurrentPw ? 'Hide password' : 'Show password'}
+                        >
+                          {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="flex justify-end pt-2">
+                        <Button variant="primary" size="md" type="submit" disabled={passwordSaving}>
+                          {passwordSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
+                          Update Password
+                        </Button>
+                      </div>
+                    </form>
                   </CardContent>
                 </Card>
               </>
@@ -219,31 +417,49 @@ export const DashboardSettings: React.FC = () => {
                     <CardTitle>Site URL</CardTitle>
                     <CardDescription>Your wedding site address</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">
-                        Current URL
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <Input
-                          defaultValue="alexandjordan"
-                          className="flex-1"
-                        />
-                        <span className="text-text-secondary">.dayof.love</span>
+                  <CardContent>
+                    <form onSubmit={handleUpdateSlug} className="space-y-4">
+                      {slugSuccess && (
+                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{slugSuccess}</div>
+                      )}
+                      {slugError && (
+                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{slugError}</div>
+                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-text-primary mb-2">
+                          Current URL
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <Input
+                            value={siteSlug}
+                            onChange={e => setSiteSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                            className="flex-1"
+                            placeholder="yournames"
+                          />
+                          <span className="text-text-secondary flex-shrink-0">.dayof.love</span>
+                        </div>
+                        {siteSlug && (
+                          <p className="text-sm text-text-secondary mt-2">
+                            Your site is accessible at{' '}
+                            <a
+                              href={`https://${siteSlug}.dayof.love`}
+                              className="text-primary hover:text-primary-hover"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {siteSlug}.dayof.love
+                              <ExternalLink className="inline w-3 h-3 ml-1" aria-hidden="true" />
+                            </a>
+                          </p>
+                        )}
                       </div>
-                      <p className="text-sm text-text-secondary mt-2">
-                        Your site is accessible at{' '}
-                        <a href="https://alexandjordan.dayof.love" className="text-primary hover:text-primary-hover" target="_blank" rel="noopener noreferrer">
-                          alexandjordan.dayof.love
-                          <ExternalLink className="inline w-3 h-3 ml-1" aria-hidden="true" />
-                        </a>
-                      </p>
-                    </div>
-                    <div className="flex justify-end pt-4">
-                      <Button variant="primary" size="md">
-                        Update URL
-                      </Button>
-                    </div>
+                      <div className="flex justify-end pt-2">
+                        <Button variant="primary" size="md" type="submit" disabled={slugSaving}>
+                          {slugSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                          Update URL
+                        </Button>
+                      </div>
+                    </form>
                   </CardContent>
                 </Card>
 
@@ -253,17 +469,10 @@ export const DashboardSettings: React.FC = () => {
                     <CardDescription>Use your own domain name</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Badge variant="primary">Essential Plan Feature</Badge>
-                    <Input
-                      label="Custom domain"
-                      placeholder="yourdomain.com"
-                      helperText="Connect your own domain to your wedding site"
-                    />
-                    <div className="flex justify-end pt-4">
-                      <Button variant="outline" size="md">
-                        Connect Domain
-                      </Button>
-                    </div>
+                    <Badge variant="primary">Coming Soon</Badge>
+                    <p className="text-sm text-text-secondary">
+                      Custom domain support is in development. You will be able to connect your own domain once it launches.
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -272,21 +481,30 @@ export const DashboardSettings: React.FC = () => {
                     <CardTitle>Privacy Settings</CardTitle>
                     <CardDescription>Control who can view your site</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Select
-                      label="Site visibility"
-                      options={[
-                        { value: 'public', label: 'Public - Anyone with the link' },
-                        { value: 'password', label: 'Password protected' },
-                        { value: 'private', label: 'Private - Invite only' },
-                      ]}
-                      defaultValue="public"
-                    />
-                    <div className="flex justify-end pt-4">
-                      <Button variant="primary" size="md">
-                        Save Privacy Settings
-                      </Button>
-                    </div>
+                  <CardContent>
+                    <form onSubmit={handleSavePrivacy} className="space-y-4">
+                      {visibilitySuccess && (
+                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{visibilitySuccess}</div>
+                      )}
+                      {visibilityError && (
+                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{visibilityError}</div>
+                      )}
+                      <Select
+                        label="Site visibility"
+                        options={[
+                          { value: 'public', label: 'Public — Anyone with the link' },
+                          { value: 'private', label: 'Private — Invite only' },
+                        ]}
+                        value={siteVisibility}
+                        onChange={e => setSiteVisibility(e.target.value)}
+                      />
+                      <div className="flex justify-end pt-2">
+                        <Button variant="primary" size="md" type="submit" disabled={visibilitySaving}>
+                          {visibilitySaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                          Save Privacy Settings
+                        </Button>
+                      </div>
+                    </form>
                   </CardContent>
                 </Card>
 
@@ -352,59 +570,73 @@ export const DashboardSettings: React.FC = () => {
                   <CardTitle>Email Notifications</CardTitle>
                   <CardDescription>Choose what updates you want to receive</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-text-primary">New RSVPs</p>
-                      <p className="text-sm text-text-secondary">Get notified when guests respond</p>
-                    </div>
-                  </label>
+                <CardContent>
+                  <form onSubmit={handleSaveNotifications} className="space-y-4">
+                    {notifSuccess && (
+                      <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{notifSuccess}</div>
+                    )}
+                    {notifError && (
+                      <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{notifError}</div>
+                    )}
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifRsvp}
+                        onChange={e => setNotifRsvp(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-text-primary">New RSVPs</p>
+                        <p className="text-sm text-text-secondary">Get notified when guests respond</p>
+                      </div>
+                    </label>
 
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-text-primary">Photo uploads</p>
-                      <p className="text-sm text-text-secondary">Get notified when guests upload photos</p>
-                    </div>
-                  </label>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifPhotos}
+                        onChange={e => setNotifPhotos(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-text-primary">Photo uploads</p>
+                        <p className="text-sm text-text-secondary">Get notified when guests upload photos</p>
+                      </div>
+                    </label>
 
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-text-primary">Weekly digest</p>
-                      <p className="text-sm text-text-secondary">Summary of activity on your site</p>
-                    </div>
-                  </label>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifDigest}
+                        onChange={e => setNotifDigest(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-text-primary">Weekly digest</p>
+                        <p className="text-sm text-text-secondary">Summary of activity on your site</p>
+                      </div>
+                    </label>
 
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-text-primary">Product updates</p>
-                      <p className="text-sm text-text-secondary">New features and improvements</p>
-                    </div>
-                  </label>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifUpdates}
+                        onChange={e => setNotifUpdates(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-text-primary">Product updates</p>
+                        <p className="text-sm text-text-secondary">New features and improvements</p>
+                      </div>
+                    </label>
 
-                  <div className="flex justify-end pt-4">
-                    <Button variant="primary" size="md">
-                      <Save className="w-4 h-4 mr-2" aria-hidden="true" />
-                      Save Preferences
-                    </Button>
-                  </div>
+                    <div className="flex justify-end pt-2">
+                      <Button variant="primary" size="md" type="submit" disabled={notifSaving}>
+                        {notifSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                        Save Preferences
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             )}

@@ -61,7 +61,7 @@ export const DashboardItinerary: React.FC = () => {
         .from('wedding_sites')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!sites) return;
 
@@ -100,7 +100,7 @@ export const DashboardItinerary: React.FC = () => {
 
       setEvents(eventsWithCounts);
     } catch (error) {
-      console.error('Error loading events:', error);
+      void error;
     } finally {
       setLoading(false);
     }
@@ -177,8 +177,8 @@ export const DashboardItinerary: React.FC = () => {
       setShowEventForm(false);
       loadEvents();
     } catch (error) {
-      console.error('Error saving event:', error);
-      alert('Failed to save event');
+      void error;
+      alert('Failed to save event. Please try again.');
     }
   }
 
@@ -195,8 +195,8 @@ export const DashboardItinerary: React.FC = () => {
 
       loadEvents();
     } catch (error) {
-      console.error('Error deleting event:', error);
-      alert('Failed to delete event');
+      void error;
+      alert('Failed to delete event. Please try again.');
     }
   }
 

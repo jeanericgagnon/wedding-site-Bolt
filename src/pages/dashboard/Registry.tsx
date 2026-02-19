@@ -57,7 +57,7 @@ export const DashboardRegistry: React.FC = () => {
   function toast(message: string, type: 'success' | 'error' = 'success') {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
 
   const loadItems = useCallback(async (siteId: string) => {
@@ -97,10 +97,11 @@ export const DashboardRegistry: React.FC = () => {
   async function handleSave(draft: RegistryItemDraft) {
     if (!weddingSiteId) throw new Error('No wedding site found');
 
+    const parsedPrice = draft.price_amount ? parseFloat(draft.price_amount) : null;
     const fields: Partial<RegistryItem> = {
       item_name: draft.item_name.trim(),
       price_label: draft.price_label || null,
-      price_amount: draft.price_amount ? parseFloat(draft.price_amount) : null,
+      price_amount: parsedPrice !== null && !isNaN(parsedPrice) ? parsedPrice : null,
       merchant: draft.merchant || null,
       store_name: draft.merchant || null,
       item_url: draft.item_url || null,

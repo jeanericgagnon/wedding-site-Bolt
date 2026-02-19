@@ -141,7 +141,7 @@ export const DashboardGuests: React.FC = () => {
         setGuests(guestsWithRsvps);
       }
     } catch (err) {
-      console.error('Error fetching guests:', err);
+      void err;
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ export const DashboardGuests: React.FC = () => {
       resetForm();
       toast(`${formData.first_name} ${formData.last_name} added`, 'success');
     } catch (err) {
-      console.error('Error adding guest:', err);
+      void err;
       toast('Failed to add guest. Please try again.', 'error');
     }
   };
@@ -220,7 +220,7 @@ export const DashboardGuests: React.FC = () => {
       resetForm();
       toast('Guest updated', 'success');
     } catch (err) {
-      console.error('Error updating guest:', err);
+      void err;
       toast('Failed to update guest. Please try again.', 'error');
     }
   };
@@ -248,7 +248,7 @@ export const DashboardGuests: React.FC = () => {
       await fetchGuests();
       toast('Guest removed', 'success');
     } catch (err) {
-      console.error('Error deleting guest:', err);
+      void err;
       toast('Failed to remove guest. Please try again.', 'error');
     } finally {
       setDeletingGuestId(null);
@@ -271,7 +271,7 @@ export const DashboardGuests: React.FC = () => {
         ? `${guest.first_name} ${guest.last_name}`
         : guest.name;
 
-      const res = await sendWeddingInvitation({
+      await sendWeddingInvitation({
         guestEmail: guest.email,
         guestName,
         coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
@@ -283,18 +283,14 @@ export const DashboardGuests: React.FC = () => {
         inviteToken: guest.invite_token ?? null,
       });
 
-      if (res.ok) {
-        await supabase
-          .from('guests')
-          .update({ invitation_sent_at: new Date().toISOString() })
-          .eq('id', guest.id);
+      await supabase
+        .from('guests')
+        .update({ invitation_sent_at: new Date().toISOString() })
+        .eq('id', guest.id);
 
-        toast(`Invitation sent to ${guestName}`, 'success');
-      } else {
-        toast('Failed to send invitation. Please try again.', 'error');
-      }
+      toast(`Invitation sent to ${guestName}`, 'success');
     } catch (err) {
-      console.error('Error sending invitation:', err);
+      void err;
       toast('Failed to send invitation. Please try again.', 'error');
     } finally {
       setSendingInviteId(null);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Heart,
@@ -14,9 +14,11 @@ import {
   Mail,
   Calendar,
   Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
+import { supabase } from '../../lib/supabase';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,8 +28,21 @@ interface DashboardLayoutProps {
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('wedding_sites')
+      .select('site_slug')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.site_slug) setSiteSlug(data.site_slug);
+      });
+  }, [user]);
 
   const handleLogout = async () => {
     await signOut();
@@ -146,12 +161,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                 Upgrade
               </button>
-              <a
-                href="#preview"
-                className="hidden md:block text-sm text-text-secondary hover:text-text-primary transition-colors no-underline"
-              >
-                Preview site
-              </a>
+              {siteSlug ? (
+                <a
+                  href={`/site/${siteSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden md:flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors no-underline"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  Preview site
+                </a>
+              ) : (
+                <span className="hidden md:block text-sm text-text-tertiary">Preview site</span>
+              )}
               <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-semibold">
                 {getUserInitials()}
               </div>

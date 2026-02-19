@@ -298,10 +298,13 @@ const VaultCard: React.FC<VaultCardProps> = ({
           ))}
 
           {!config.isUnlocked && entries.length > 0 && (
-            <div className="p-4 bg-surface-subtle rounded-xl border border-dashed border-border text-center">
+            <div className="p-4 bg-surface-subtle rounded-xl border border-dashed border-border text-center space-y-1">
               <Lock className="w-5 h-5 text-text-tertiary mx-auto mb-1" />
-              <p className="text-sm text-text-secondary">
-                {entries.length} {entries.length === 1 ? 'entry' : 'entries'} sealed — opens {unlockLabel}
+              <p className="text-sm font-medium text-text-secondary">
+                {entries.length} {entries.length === 1 ? 'entry' : 'entries'} sealed
+              </p>
+              <p className="text-xs text-text-tertiary">
+                These messages are locked until {unlockLabel}. They will be revealed automatically on that date.
               </p>
             </div>
           )}
@@ -342,7 +345,7 @@ export const DashboardVault: React.FC = () => {
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
 
   const loadData = useCallback(async () => {
