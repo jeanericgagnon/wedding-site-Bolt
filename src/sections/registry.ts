@@ -27,14 +27,19 @@ import { footerCtaRsvpPushDefinition } from './variants/footerCta/rsvpPush';
 import { customSectionDefinition } from './variants/custom/customSection';
 import { quotesCarouselDefinition } from './variants/quotes/carousel';
 import { quotesGridDefinition } from './variants/quotes/grid';
+import { quotesFeaturedDefinition } from './variants/quotes/featured';
 import { menuTabsDefinition } from './variants/menu/tabs';
 import { menuCardDefinition } from './variants/menu/card';
+import { menuSimpleDefinition } from './variants/menu/simple';
 import { musicPlaylistDefinition } from './variants/music/playlist';
 import { musicSetlistDefinition } from './variants/music/setlist';
+import { musicCompactDefinition } from './variants/music/compact';
 import { directionsPinDefinition } from './variants/directions/pin';
 import { directionsSplitDefinition } from './variants/directions/split';
+import { directionsCardDefinition } from './variants/directions/card';
 import { videoFullDefinition } from './variants/video/full';
 import { videoCardDefinition } from './variants/video/card';
+import { videoInlineDefinition } from './variants/video/inline';
 
 type RegistryKey = string;
 
@@ -76,14 +81,19 @@ registerDefinition(footerCtaRsvpPushDefinition);
 registerDefinition(customSectionDefinition);
 registerDefinition(quotesCarouselDefinition);
 registerDefinition(quotesGridDefinition);
+registerDefinition(quotesFeaturedDefinition);
 registerDefinition(menuTabsDefinition);
 registerDefinition(menuCardDefinition);
+registerDefinition(menuSimpleDefinition);
 registerDefinition(musicPlaylistDefinition);
 registerDefinition(musicSetlistDefinition);
+registerDefinition(musicCompactDefinition);
 registerDefinition(directionsPinDefinition);
 registerDefinition(directionsSplitDefinition);
+registerDefinition(directionsCardDefinition);
 registerDefinition(videoFullDefinition);
 registerDefinition(videoCardDefinition);
+registerDefinition(videoInlineDefinition);
 
 export function getDefinition(type: string, variant: string): SectionDefinition | null {
   return SECTION_REGISTRY.get(makeKey(type, variant)) ?? null;

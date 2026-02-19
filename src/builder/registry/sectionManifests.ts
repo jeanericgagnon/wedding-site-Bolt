@@ -432,10 +432,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Quotes & Wishes',
     icon: 'Quote',
     defaultVariant: 'carousel',
-    supportedVariants: ['carousel', 'grid'],
+    supportedVariants: ['carousel', 'grid', 'featured'],
     variantMeta: [
       { id: 'carousel', label: 'Carousel', description: 'One quote at a time with auto-advance and dot navigation' },
       { id: 'grid', label: 'Grid', description: 'All quotes displayed in a beautiful card grid' },
+      { id: 'featured', label: 'Featured', description: 'Spotlight one featured quote with supporting quotes below' },
     ],
     capabilities: { ...defaultCapabilities },
     settingsSchema: {
@@ -458,10 +459,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Dining & Menu',
     icon: 'UtensilsCrossed',
     defaultVariant: 'tabs',
-    supportedVariants: ['tabs', 'card'],
+    supportedVariants: ['tabs', 'card', 'simple'],
     variantMeta: [
       { id: 'tabs', label: 'Course Tabs', description: 'Tab switcher for each course with itemized dishes' },
       { id: 'card', label: 'Menu Cards', description: 'Each course in its own elegant card' },
+      { id: 'simple', label: 'Simple List', description: 'Clean single-column menu list with numbered items' },
     ],
     capabilities: { ...defaultCapabilities },
     settingsSchema: {
@@ -481,10 +483,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Music & Playlist',
     icon: 'Music',
     defaultVariant: 'playlist',
-    supportedVariants: ['playlist', 'setlist'],
+    supportedVariants: ['playlist', 'setlist', 'compact'],
     variantMeta: [
       { id: 'playlist', label: 'Playlist', description: 'Tabbed playlists per moment with Spotify / Apple Music links' },
       { id: 'setlist', label: 'Special Songs', description: 'Highlight key songs for each special moment' },
+      { id: 'compact', label: 'Compact List', description: 'Clean numbered song list in a single card' },
     ],
     capabilities: { ...defaultCapabilities },
     settingsSchema: {
@@ -511,10 +514,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Directions & Map',
     icon: 'MapPin',
     defaultVariant: 'pin',
-    supportedVariants: ['pin', 'split'],
+    supportedVariants: ['pin', 'split', 'card'],
     variantMeta: [
       { id: 'pin', label: 'Pin & Details', description: 'Address and transport info alongside an embedded map' },
       { id: 'split', label: 'Split Screen', description: 'Full-height split layout with details and map side by side' },
+      { id: 'card', label: 'Map Card', description: 'All-in-one card with map, address, and directions' },
     ],
     capabilities: { ...defaultCapabilities },
     settingsSchema: {
@@ -540,10 +544,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Video',
     icon: 'Play',
     defaultVariant: 'full',
-    supportedVariants: ['full', 'card'],
+    supportedVariants: ['full', 'card', 'inline'],
     variantMeta: [
       { id: 'full', label: 'Full Width', description: 'Large cinematic video player centered on the page' },
       { id: 'card', label: 'Video Cards', description: 'Multiple video cards for save-the-dates and highlight reels' },
+      { id: 'inline', label: 'Inline', description: 'Side-by-side video and text content' },
     ],
     capabilities: { ...defaultCapabilities },
     settingsSchema: {
