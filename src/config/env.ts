@@ -1,4 +1,5 @@
-export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+const demoModeRaw = String(import.meta.env.VITE_DEMO_MODE ?? '').trim().toLowerCase();
+export const DEMO_MODE = demoModeRaw === 'true' || demoModeRaw === '1' || demoModeRaw === 'yes';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
