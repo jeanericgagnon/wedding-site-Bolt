@@ -62,6 +62,10 @@ export const DashboardGuests: React.FC = () => {
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
   const [householdBusy, setHouseholdBusy] = useState(false);
 
+  const [csvPreview, setCsvPreview] = useState<Record<string, unknown>[] | null>(null);
+  const [csvSkipped, setCsvSkipped] = useState<string[]>([]);
+  const [csvImporting, setCsvImporting] = useState(false);
+
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -420,7 +424,7 @@ export const DashboardGuests: React.FC = () => {
     if (!file || !weddingSiteId) return;
 
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
       const text = event.target?.result as string;
       const rawLines = text.split('\n');
       if (rawLines.length < 2) {
@@ -439,7 +443,7 @@ export const DashboardGuests: React.FC = () => {
 
       const dataLines = rawLines.slice(1).filter(line => line.trim());
       const skipped: string[] = [];
-      const guestsToImport: Record<string, unknown>[] = [];
+      const parsed: Record<string, unknown>[] = [];
 
       dataLines.forEach((line, idx) => {
         const values = line.split(',').map(v => v.replace(/"/g, '').trim());
@@ -468,39 +472,39 @@ export const DashboardGuests: React.FC = () => {
           return;
         }
 
-        guestsToImport.push(guest);
+        parsed.push(guest);
       });
 
-      if (guestsToImport.length === 0) {
+      if (parsed.length === 0) {
         toast('No valid guests found in the file. All rows were skipped.', 'error');
         return;
       }
 
-      try {
-        const { error } = await supabase
-          .from('guests')
-          .insert(guestsToImport);
-
-        if (error) throw error;
-
-        await fetchGuests();
-
-        if (skipped.length > 0) {
-          toast(
-            `${guestsToImport.length} imported, ${skipped.length} skipped (missing name)`,
-            'info'
-          );
-        } else {
-          toast(`${guestsToImport.length} guest${guestsToImport.length !== 1 ? 's' : ''} imported successfully`, 'success');
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Unknown error';
-        toast(`Import failed: ${msg}`, 'error');
-      }
+      setCsvPreview(parsed);
+      setCsvSkipped(skipped);
     };
 
     reader.readAsText(file);
     e.target.value = '';
+  };
+
+  const confirmCsvImport = async () => {
+    if (!csvPreview || !weddingSiteId) return;
+    setCsvImporting(true);
+    try {
+      const { error } = await supabase.from('guests').insert(csvPreview);
+      if (error) throw error;
+      await fetchGuests();
+      const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
+      toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
+      setCsvPreview(null);
+      setCsvSkipped([]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      toast(`Import failed: ${msg}`, 'error');
+    } finally {
+      setCsvImporting(false);
+    }
   };
 
   const filteredGuests = guests.filter((guest) => {
@@ -1015,6 +1019,74 @@ export const DashboardGuests: React.FC = () => {
           onSubmit={handleEditGuest}
           onClose={() => { setEditingGuest(null); resetForm(); }}
         />
+      )}
+
+      {csvPreview && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => !csvImporting && setCsvPreview(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b border-border-subtle">
+                <div>
+                  <h2 className="text-lg font-semibold text-text-primary">Review Import</h2>
+                  <p className="text-sm text-text-secondary mt-0.5">
+                    {csvPreview.length} guest{csvPreview.length !== 1 ? 's' : ''} ready to import
+                    {csvSkipped.length > 0 && ` · ${csvSkipped.length} row${csvSkipped.length !== 1 ? 's' : ''} skipped`}
+                  </p>
+                </div>
+                {!csvImporting && (
+                  <button onClick={() => setCsvPreview(null)} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
+                    <X className="w-5 h-5 text-text-secondary" />
+                  </button>
+                )}
+              </div>
+
+              <div className="overflow-y-auto flex-1 p-6">
+                {csvSkipped.length > 0 && (
+                  <div className="mb-4 p-3 bg-warning-light border border-warning/20 rounded-lg">
+                    <p className="text-xs font-medium text-warning mb-1">{csvSkipped.length} row{csvSkipped.length !== 1 ? 's' : ''} will be skipped (missing name)</p>
+                    <ul className="space-y-0.5">
+                      {csvSkipped.map((s, i) => <li key={i} className="text-xs text-warning/80">• {s}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="divide-y divide-border-subtle">
+                  {csvPreview.slice(0, 50).map((g, i) => (
+                    <div key={i} className="py-2.5 flex items-center gap-4">
+                      <div className="w-7 h-7 rounded-full bg-surface-subtle flex items-center justify-center text-xs font-medium text-text-secondary flex-shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          {String(g.first_name || '')} {String(g.last_name || '')}
+                        </p>
+                        {g.email && <p className="text-xs text-text-secondary truncate">{String(g.email)}</p>}
+                      </div>
+                      {g.plus_one_allowed && (
+                        <span className="text-xs px-2 py-0.5 bg-surface-subtle rounded-full text-text-secondary flex-shrink-0">+1</span>
+                      )}
+                    </div>
+                  ))}
+                  {csvPreview.length > 50 && (
+                    <p className="py-3 text-sm text-text-secondary text-center">
+                      …and {csvPreview.length - 50} more
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 p-6 border-t border-border-subtle">
+                <Button variant="outline" fullWidth onClick={() => setCsvPreview(null)} disabled={csvImporting}>
+                  Cancel
+                </Button>
+                <Button variant="primary" fullWidth onClick={confirmCsvImport} disabled={csvImporting}>
+                  {csvImporting ? 'Importing...' : `Import ${csvPreview.length} Guest${csvPreview.length !== 1 ? 's' : ''}`}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </DashboardLayout>
   );

@@ -4,7 +4,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { Card } from '../components/ui/Card';
-import { CheckCircle, Search, AlertCircle } from 'lucide-react';
+import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { sendRsvpNotification, sendRsvpConfirmation } from '../lib/emailService';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
@@ -53,11 +53,26 @@ interface SiteData {
   venueName: string | null;
 }
 
+function maskEmail(email: string | null): string {
+  if (!email) return '';
+  const [local, domain] = email.split('@');
+  if (!domain) return email;
+  const visible = local.length > 2 ? local.slice(0, 2) : local.slice(0, 1);
+  return `${visible}***@${domain}`;
+}
+
+function guestLabel(g: Guest): string {
+  if (g.first_name && g.last_name) return `${g.first_name} ${g.last_name}`;
+  return g.name || 'Guest';
+}
+
 export default function RSVP() {
-  const [step, setStep] = useState<'search' | 'form' | 'success'>('search');
+  const [step, setStep] = useState<'search' | 'pick' | 'form' | 'success'>('search');
   const [searchValue, setSearchValue] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
+  const [ambiguousGuests, setAmbiguousGuests] = useState<Guest[]>([]);
   const [existingRsvp, setExistingRsvp] = useState<ExistingRSVP | null>(null);
+  const [rsvpDeadline, setRsvpDeadline] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -76,28 +91,56 @@ export default function RSVP() {
     try {
       const { data, error: err } = await rsvpCall({ action: 'lookup', searchValue: searchValue.trim() });
       if (err) {
-        setError(err === 'Guest not found. Please check your name or invitation code.'
-          ? err
-          : 'An error occurred. Please try again.');
+        setError(err);
         return;
       }
 
-      const { guest: foundGuest, existingRsvp: foundRsvp } = data as { guest: Guest; existingRsvp: ExistingRSVP | null };
-      setGuest(foundGuest);
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
 
-      if (foundRsvp) {
-        setExistingRsvp(foundRsvp);
-        setFormData({
-          attending: foundRsvp.attending,
-          meal_choice: foundRsvp.meal_choice || '',
-          plus_one_name: foundRsvp.plus_one_name || '',
-          notes: foundRsvp.notes || '',
-        });
+      if (result.guests && result.guests.length > 1) {
+        setAmbiguousGuests(result.guests);
+        setRsvpDeadline(result.rsvpDeadline);
+        setStep('pick');
+        return;
       }
 
-      setStep('form');
+      const foundGuest = result.guest!;
+      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline);
     } catch {
       setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null) => {
+    setGuest(foundGuest);
+    setRsvpDeadline(deadline);
+    if (foundRsvp) {
+      setExistingRsvp(foundRsvp);
+      setFormData({
+        attending: foundRsvp.attending,
+        meal_choice: foundRsvp.meal_choice || '',
+        plus_one_name: foundRsvp.plus_one_name || '',
+        notes: foundRsvp.notes || '',
+      });
+    }
+    setStep('form');
+  };
+
+  const handlePickGuest = async (picked: Guest) => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data, error: err } = await rsvpCall({ action: 'lookup', searchValue: picked.invite_token ?? picked.id });
+      if (err || !data) {
+        selectGuest(picked, null, rsvpDeadline);
+        return;
+      }
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
+      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline);
+    } catch {
+      selectGuest(picked, null, rsvpDeadline);
     } finally {
       setLoading(false);
     }
@@ -176,6 +219,8 @@ export default function RSVP() {
       : guest.name
     : '';
 
+  const deadlinePassed = rsvpDeadline ? new Date(rsvpDeadline) < new Date() : false;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-amber-50">
       <div className="container mx-auto px-4 py-16 max-w-2xl">
@@ -198,6 +243,9 @@ export default function RSVP() {
                   placeholder="John Smith or ABC123"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Use the invitation code from your email for the fastest lookup
+                </p>
               </div>
 
               {error && (
@@ -219,6 +267,45 @@ export default function RSVP() {
           </Card>
         )}
 
+        {step === 'pick' && (
+          <Card className="p-8">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-serif mb-2">Multiple matches found</h1>
+              <p className="text-gray-600 text-sm">
+                We found {ambiguousGuests.length} guests with that name. Please select yourself below.
+              </p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              {ambiguousGuests.map((g) => (
+                <button
+                  key={g.id}
+                  onClick={() => handlePickGuest(g)}
+                  disabled={loading}
+                  className="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-rose-300 hover:bg-rose-50 transition-colors text-left group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-rose-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                    <User className="w-5 h-5 text-gray-500 group-hover:text-rose-500 transition-colors" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{guestLabel(g)}</p>
+                    {g.email && (
+                      <p className="text-sm text-gray-500">{maskEmail(g.email)}</p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => { setStep('search'); setError(''); setAmbiguousGuests([]); }}
+              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Search again
+            </button>
+          </Card>
+        )}
+
         {step === 'form' && guest && (
           <Card className="p-8">
             <div className="text-center mb-8">
@@ -229,6 +316,23 @@ export default function RSVP() {
                 </p>
               )}
             </div>
+
+            {deadlinePassed && !existingRsvp && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">RSVP deadline has passed</p>
+                  <p className="mt-0.5">The deadline was {new Date(rsvpDeadline!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Please contact the couple directly.</p>
+                </div>
+              </div>
+            )}
+
+            {deadlinePassed && existingRsvp && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                The RSVP deadline has passed, but you can still update your existing response.
+              </div>
+            )}
 
             {!guest.invite_token && (
               <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
@@ -326,7 +430,7 @@ export default function RSVP() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={loading || !guest.invite_token}
+                  disabled={loading || !guest.invite_token || (deadlinePassed && !existingRsvp)}
                   className="flex-1"
                 >
                   {loading ? 'Submitting...' : existingRsvp ? 'Update RSVP' : 'Submit RSVP'}
@@ -353,6 +457,8 @@ export default function RSVP() {
                 setSearchValue('');
                 setGuest(null);
                 setExistingRsvp(null);
+                setAmbiguousGuests([]);
+                setRsvpDeadline(null);
                 setFormData({ attending: true, meal_choice: '', plus_one_name: '', notes: '' });
               }}
             >

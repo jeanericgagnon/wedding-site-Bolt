@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Chrome } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { sendSignupWelcome } from '../lib/emailService';
@@ -8,7 +8,6 @@ import { sendSignupWelcome } from '../lib/emailService';
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [addSuffix, setAddSuffix] = useState(true);
   const [urlTaken, setUrlTaken] = useState(false);
@@ -31,14 +30,6 @@ export const Signup: React.FC = () => {
       [e.target.name]: e.target.value
     }));
     setError('');
-  };
-
-  const handleGooglePlaceholder = () => {
-    setGoogleLoading(true);
-    setTimeout(() => {
-      setGoogleLoading(false);
-      setError('Google sign-up is coming soon. Create an account with email/password to get started.');
-    }, 800);
   };
 
   useEffect(() => {
@@ -97,6 +88,12 @@ export const Signup: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      setLoading(false);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -215,27 +212,6 @@ export const Signup: React.FC = () => {
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
-          <Button
-            variant="outline"
-            size="lg"
-            fullWidth
-            onClick={handleGooglePlaceholder}
-            disabled={loading || googleLoading}
-            className="mb-5"
-          >
-            <Chrome className="w-5 h-5 mr-2" aria-hidden="true" />
-            {googleLoading ? 'Loading...' : 'Sign up with Google'}
-          </Button>
-
-          <div className="relative mb-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border-subtle" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-surface text-text-secondary">or continue with email</span>
-            </div>
-          </div>
-
           <form onSubmit={handleSignup} className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <Input
@@ -413,7 +389,7 @@ export const Signup: React.FC = () => {
               onChange={handleChange}
               placeholder="Create a password"
               required
-              helperText="Minimum 6 characters"
+              helperText="Minimum 8 characters"
             />
 
             <Input

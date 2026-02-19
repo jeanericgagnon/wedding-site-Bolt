@@ -61,13 +61,21 @@ Deno.serve(async (req: Request) => {
         .eq("invite_token", trimmed)
         .maybeSingle();
 
-      if (byToken) {
-        const { data: existingRsvp } = await adminClient
-          .from("rsvps")
-          .select("id, attending, meal_choice, plus_one_name, notes")
-          .eq("guest_id", byToken.id)
+      const fetchDeadline = async (siteId: string): Promise<string | null> => {
+        const { data } = await adminClient
+          .from("wedding_sites")
+          .select("rsvp_deadline")
+          .eq("id", siteId)
           .maybeSingle();
-        return json({ guest: byToken, existingRsvp });
+        return (data as { rsvp_deadline?: string | null } | null)?.rsvp_deadline ?? null;
+      };
+
+      if (byToken) {
+        const [existingRsvpResult, deadline] = await Promise.all([
+          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes").eq("guest_id", byToken.id).maybeSingle(),
+          fetchDeadline(byToken.wedding_site_id),
+        ]);
+        return json({ guest: byToken, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: deadline });
       }
 
       const lower = trimmed.toLowerCase();
@@ -75,20 +83,22 @@ Deno.serve(async (req: Request) => {
         .from("guests")
         .select("id, first_name, last_name, name, email, plus_one_allowed, invited_to_ceremony, invited_to_reception, invite_token, wedding_site_id")
         .or(`name.ilike.%${lower}%,first_name.ilike.%${lower}%,last_name.ilike.%${lower}%`)
-        .limit(5);
+        .limit(10);
 
       if (!byName || byName.length === 0) {
         return json({ error: "Guest not found. Please check your name or invitation code." }, 404);
       }
 
-      const guest = byName[0];
-      const { data: existingRsvp } = await adminClient
-        .from("rsvps")
-        .select("id, attending, meal_choice, plus_one_name, notes")
-        .eq("guest_id", guest.id)
-        .maybeSingle();
+      if (byName.length === 1) {
+        const guest = byName[0];
+        const [existingRsvpResult, deadline] = await Promise.all([
+          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes").eq("guest_id", guest.id).maybeSingle(),
+          fetchDeadline(guest.wedding_site_id),
+        ]);
+        return json({ guest, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: deadline });
+      }
 
-      return json({ guest, existingRsvp });
+      return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null });
     }
 
     if (payload.action === "submit") {

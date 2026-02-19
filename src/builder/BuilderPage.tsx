@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { BuilderShell } from './components/BuilderShell';
@@ -118,14 +118,23 @@ export const BuilderPage: React.FC = () => {
             <AlertCircle size={24} className="text-red-500" />
           </div>
           <h2 className="text-base font-semibold text-gray-800 mb-2">Builder unavailable</h2>
-          <p className="text-sm text-gray-500 mb-4">{error ?? 'Unable to load project.'}</p>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            <ArrowLeft size={14} />
-            Back to Dashboard
-          </button>
+          <p className="text-sm text-gray-500 mb-5">{error ?? 'Unable to load project.'}</p>
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => user && loadBuilderProject(user.id)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
+            >
+              <RefreshCw size={14} />
+              Try Again
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <ArrowLeft size={14} />
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     );
