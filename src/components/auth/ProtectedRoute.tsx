@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPaymentGate = false }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isDemoMode } = useAuth();
   const location = useLocation();
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null | 'loading'>('loading');
 
@@ -38,7 +38,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
     return <Navigate to="/login" replace />;
   }
 
-  if (!skipPaymentGate) {
+  if (!skipPaymentGate && !isDemoMode) {
     const isPaymentRoute = location.pathname.startsWith('/payment');
 
     if (billingInfo?.payment_status === 'payment_required' && !isPaymentRoute) {
