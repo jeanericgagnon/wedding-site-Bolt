@@ -24,7 +24,8 @@ export interface BuilderState {
   mediaLibraryOpen: boolean;
   themePanelOpen: boolean;
   mediaPickerTargetSectionId: string | null;
-  mediaPickerTargetField: 'settings' | 'sideImage' | null;
+  mediaPickerTargetField: 'settings' | 'sideImage' | 'customBlock' | null;
+  mediaPickerTargetBlockPath: { blockId: string; columnIndex?: number; columnBlockId?: string } | null;
   lastSavedAt: string | null;
   error: string | null;
 }
@@ -47,6 +48,7 @@ export const initialBuilderState: BuilderState = {
   themePanelOpen: false,
   mediaPickerTargetSectionId: null,
   mediaPickerTargetField: null,
+  mediaPickerTargetBlockPath: null,
   lastSavedAt: null,
   error: null,
 };
@@ -95,7 +97,8 @@ export type BuilderAction =
   | { type: 'REMOVE_FROM_UPLOAD_QUEUE'; payload: string }
   | { type: 'OPEN_TEMPLATE_GALLERY' }
   | { type: 'CLOSE_TEMPLATE_GALLERY' }
-  | { type: 'OPEN_MEDIA_LIBRARY'; payload?: { sectionId?: string; targetField?: 'settings' | 'sideImage' } }
+  | { type: 'OPEN_MEDIA_LIBRARY'; payload?: { sectionId?: string; targetField?: 'settings' | 'sideImage' | 'customBlock'; blockPath?: { blockId: string; columnIndex?: number; columnBlockId?: string } } }
+  | { type: 'UPDATE_CUSTOM_BLOCK'; payload: { pageId: string; sectionId: string; blockId: string; patch: Record<string, unknown>; columnIndex?: number; columnBlockId?: string } }
   | { type: 'CLOSE_MEDIA_LIBRARY' }
   | { type: 'OPEN_THEME_PANEL' }
   | { type: 'CLOSE_THEME_PANEL' }

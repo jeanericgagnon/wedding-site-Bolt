@@ -36,6 +36,9 @@ export const MediaLibraryPanel: React.FC = () => {
       dispatch(builderActions.updateSection(pageId, sectionId, {
         styleOverrides: { ...section.styleOverrides, sideImage: asset.url },
       }));
+    } else if (state.mediaPickerTargetField === 'customBlock' && state.mediaPickerTargetBlockPath) {
+      const { blockId, columnIndex, columnBlockId } = state.mediaPickerTargetBlockPath;
+      dispatch(builderActions.updateCustomBlock(pageId, sectionId, blockId, { imageUrl: asset.url }, columnIndex, columnBlockId));
     } else {
       const imageKey = resolveImageSettingKey(section.type);
       dispatch(builderActions.updateSection(pageId, sectionId, {

@@ -273,10 +273,41 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         mediaLibraryOpen: true,
         mediaPickerTargetSectionId: action.payload?.sectionId ?? null,
         mediaPickerTargetField: action.payload?.targetField ?? null,
+        mediaPickerTargetBlockPath: action.payload?.blockPath ?? null,
       };
 
     case 'CLOSE_MEDIA_LIBRARY':
-      return { ...state, mediaLibraryOpen: false, mediaPickerTargetSectionId: null, mediaPickerTargetField: null };
+      return {
+        ...state,
+        mediaLibraryOpen: false,
+        mediaPickerTargetSectionId: null,
+        mediaPickerTargetField: null,
+        mediaPickerTargetBlockPath: null,
+      };
+
+    case 'UPDATE_CUSTOM_BLOCK': {
+      const { pageId, sectionId, blockId, patch, columnIndex, columnBlockId } = action.payload;
+      return updatePageSections(state, pageId, page => ({
+        ...page,
+        sections: page.sections.map(sec => {
+          if (sec.id !== sectionId) return sec;
+          const blocks = (sec.settings.blocks ?? []) as Record<string, unknown>[];
+          const updatedBlocks = blocks.map(block => {
+            if (block.id !== blockId) return block;
+            if (columnIndex !== undefined && columnBlockId !== undefined) {
+              const cols = (block.columns ?? []) as Record<string, unknown>[][];
+              const updatedCols = cols.map((col, ci) => {
+                if (ci !== columnIndex) return col;
+                return col.map(cb => (cb.id === columnBlockId ? { ...cb, ...patch } : cb));
+              });
+              return { ...block, columns: updatedCols };
+            }
+            return { ...block, ...patch };
+          });
+          return { ...sec, settings: { ...sec.settings, blocks: updatedBlocks } };
+        }),
+      }), 'Edit custom block', 'UPDATE_SECTION');
+    }
 
     case 'OPEN_THEME_PANEL':
       return { ...state, themePanelOpen: true };

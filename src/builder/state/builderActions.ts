@@ -70,6 +70,24 @@ export const builderActions = {
     type: 'OPEN_MEDIA_LIBRARY',
     payload: { sectionId, targetField: 'sideImage' },
   }),
+  openCustomBlockImagePicker: (
+    sectionId: string,
+    blockPath: { blockId: string; columnIndex?: number; columnBlockId?: string }
+  ): BuilderAction => ({
+    type: 'OPEN_MEDIA_LIBRARY',
+    payload: { sectionId, targetField: 'customBlock', blockPath },
+  }),
+  updateCustomBlock: (
+    pageId: string,
+    sectionId: string,
+    blockId: string,
+    patch: Record<string, unknown>,
+    columnIndex?: number,
+    columnBlockId?: string
+  ): BuilderAction => ({
+    type: 'UPDATE_CUSTOM_BLOCK',
+    payload: { pageId, sectionId, blockId, patch, columnIndex, columnBlockId },
+  }),
   closeMediaLibrary: (): BuilderAction => ({ type: 'CLOSE_MEDIA_LIBRARY' }),
 
   openThemePanel: (): BuilderAction => ({ type: 'OPEN_THEME_PANEL' }),

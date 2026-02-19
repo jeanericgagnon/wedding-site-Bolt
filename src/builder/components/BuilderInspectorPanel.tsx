@@ -1,10 +1,11 @@
 import React, { useRef, useEffect } from 'react';
-import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database } from 'lucide-react';
+import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectSelectedSection, selectActivePage } from '../state/builderSelectors';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSettingsField } from '../../types/builder/section';
+import { CustomBlock } from '../../sections/variants/custom/skeletons';
 
 type InspectorTab = 'content' | 'style' | 'data';
 
@@ -134,7 +135,13 @@ export const BuilderInspectorPanel: React.FC = () => {
                 sectionId={selectedSection.id}
               />
             ))}
-            {manifest.settingsSchema.fields.length === 0 && (
+            {selectedSection.type === 'custom' && (
+              <CustomBlockImageEditor
+                sectionId={selectedSection.id}
+                blocks={(selectedSection.settings.blocks ?? []) as CustomBlock[]}
+              />
+            )}
+            {manifest.settingsSchema.fields.length === 0 && selectedSection.type !== 'custom' && (
               <p className="text-xs text-gray-400 text-center py-6">No editable content fields for this section.</p>
             )}
           </div>
@@ -515,6 +522,88 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
         </div>
       );
   }
+};
+
+type BlockPath = { blockId: string; columnIndex?: number; columnBlockId?: string };
+
+function collectImageBlocks(blocks: CustomBlock[]): Array<{ block: CustomBlock; path: BlockPath; label: string }> {
+  const results: Array<{ block: CustomBlock; path: BlockPath; label: string }> = [];
+  blocks.forEach((block) => {
+    if (block.type === 'image') {
+      results.push({ block, path: { blockId: block.id }, label: `Image ${results.length + 1}` });
+    }
+    if (block.type === 'columns' && block.columns) {
+      block.columns.forEach((col, ci) => {
+        col.forEach(cb => {
+          if (cb.type === 'image') {
+            results.push({
+              block: cb,
+              path: { blockId: block.id, columnIndex: ci, columnBlockId: cb.id },
+              label: `Image ${results.length + 1}`,
+            });
+          }
+        });
+      });
+    }
+  });
+  return results;
+}
+
+const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[] }> = ({ sectionId, blocks }) => {
+  const { state, dispatch } = useBuilderContext();
+  const imageBlocks = collectImageBlocks(blocks);
+
+  if (imageBlocks.length === 0) return null;
+
+  return (
+    <div className="pt-2">
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Images</p>
+      <div className="space-y-3">
+        {imageBlocks.map(({ block, path, label }) => (
+          <div key={`${path.blockId}-${path.columnBlockId ?? ''}`} className="space-y-1.5">
+            <p className="text-xs font-medium text-gray-600">{label}</p>
+            {block.imageUrl ? (
+              <div className="relative rounded-xl overflow-hidden border border-gray-200 aspect-video bg-gray-100 group">
+                <img src={block.imageUrl} alt={block.imageAlt ?? ''} className="w-full h-full object-cover" />
+                <button
+                  onClick={() => dispatch(builderActions.openCustomBlockImagePicker(sectionId, path))}
+                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-1.5"
+                >
+                  <Image size={13} />
+                  Change Image
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => dispatch(builderActions.openCustomBlockImagePicker(sectionId, path))}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-3 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+              >
+                <ImageIcon size={14} />
+                Choose image
+              </button>
+            )}
+            <input
+              type="text"
+              value={block.imageAlt ?? ''}
+              onChange={e => {
+                if (!state.activePageId) return;
+                dispatch(builderActions.updateCustomBlock(
+                  state.activePageId,
+                  sectionId,
+                  path.blockId,
+                  { imageAlt: e.target.value },
+                  path.columnIndex,
+                  path.columnBlockId
+                ));
+              }}
+              placeholder="Alt text (optional)"
+              className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 const SPACING_PRESETS = [
