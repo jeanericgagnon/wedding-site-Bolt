@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`;
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-wedding-email`;
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const { data: { session } } = await supabase.auth.getSession();
