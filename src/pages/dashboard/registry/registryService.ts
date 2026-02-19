@@ -85,22 +85,39 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
   const endpoint = `${supabaseUrl}/functions/v1/registry-preview`;
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token ?? anonKey;
+  // Get fresh session - this will automatically refresh if expired
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError || !session?.access_token) {
+    throw new Error('Session expired. Please refresh the page and try again.');
+  }
 
   const resp = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${session.access_token}`,
       Apikey: anonKey,
     },
     body: JSON.stringify({ url, force_refresh: forceRefresh }),
   });
 
   if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(text || `HTTP ${resp.status}`);
+    let errorMessage = `HTTP ${resp.status}`;
+    try {
+      const text = await resp.text();
+      const errorJson = JSON.parse(text);
+      errorMessage = errorJson.error || errorJson.message || text || errorMessage;
+    } catch {
+      // If parsing fails, use default error message
+    }
+
+    // If it's a 401, give clearer guidance
+    if (resp.status === 401) {
+      throw new Error('Session expired. Please refresh the page and sign in again, then try adding the item.');
+    }
+
+    throw new Error(errorMessage);
   }
 
   return resp.json() as Promise<RegistryPreview>;
