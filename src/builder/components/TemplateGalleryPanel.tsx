@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { X, Check, Sparkles, Loader2, CheckCircle2, RefreshCw } from 'lucide-react';
+import { X, Check, Sparkles, Loader2, CheckCircle2, RefreshCw, Crown, Zap } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getAllTemplatePacks } from '../constants/builderTemplatePacks';
@@ -53,187 +53,325 @@ interface ApplyResult {
   preservedSections: string[];
 }
 
+const ModernLuxePreview = () => (
+  <div className="absolute inset-0 flex flex-col bg-[#0C0A09] overflow-hidden">
+    <div className="relative flex-1">
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(160deg, #1C1917 0%, #0C0A09 60%, #1A1410 100%)',
+      }} />
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(ellipse at 70% 40%, rgba(200,169,110,0.12) 0%, transparent 60%)',
+      }} />
+      <div className="absolute top-5 left-5 right-5 flex justify-between items-start">
+        <div className="space-y-1">
+          <div className="h-px w-6 bg-[#C8A96E]" />
+          <div className="h-px w-4 bg-[#C8A96E]/40" />
+        </div>
+        <div className="text-[7px] text-[#C8A96E]/60 tracking-[0.4em] uppercase font-light">S&J</div>
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
+        <div className="text-[8px] text-[#C8A96E] tracking-[0.5em] uppercase font-light mb-3">A Private Celebration</div>
+        <div className="text-white font-serif text-[22px] leading-none tracking-tight mb-1">
+          Sarah
+          <span className="text-[#C8A96E] text-[14px] mx-1.5">&</span>
+          James
+        </div>
+        <div className="flex items-center gap-3 mt-3">
+          <div className="h-px w-8 bg-white/20" />
+          <div className="text-white/40 text-[7px] tracking-[0.3em] uppercase">14 June 2026</div>
+          <div className="h-px w-8 bg-white/20" />
+        </div>
+        <div className="text-white/25 text-[7px] tracking-wider mt-1.5">The Ritz · London</div>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 h-16 flex">
+        {[
+          { label: 'Our Story', w: 'flex-1' },
+          { label: 'Gallery', w: 'flex-1' },
+          { label: 'Schedule', w: 'flex-1' },
+          { label: 'RSVP', w: 'flex-1' },
+        ].map((s, i) => (
+          <div key={i} className={`${s.w} flex flex-col items-center justify-center border-t border-white/[0.06] gap-1`}>
+            <div className="w-4 h-4 rounded-full border border-[#C8A96E]/30 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#C8A96E]/40" />
+            </div>
+            <span className="text-[5.5px] text-white/25 uppercase tracking-wider">{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div className="h-1.5 bg-gradient-to-r from-transparent via-[#C8A96E]/60 to-transparent" />
+  </div>
+);
+
+const EditorialRomancePreview = () => (
+  <div className="absolute inset-0 flex flex-col bg-[#F5F2EE] overflow-hidden">
+    <div className="flex-1 relative">
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(135deg, #F0EBE3 0%, #F5F2EE 50%, #EDE8E2 100%)',
+      }} />
+      <div className="absolute top-0 right-0 w-24 h-24" style={{
+        background: 'radial-gradient(circle, rgba(176,136,96,0.08) 0%, transparent 70%)',
+      }} />
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
+        <div className="text-[7px] text-[#695E55]/50 tracking-[0.3em] uppercase">Est. 2026</div>
+        <div className="flex gap-1.5">
+          <div className="h-px w-5 bg-[#B08860]/30" />
+          <div className="h-px w-3 bg-[#B08860]/15" />
+        </div>
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+        <div className="text-[8px] tracking-[0.4em] uppercase mb-4 font-light" style={{ color: '#B08860' }}>
+          A Celebration of Love
+        </div>
+        <div className="relative">
+          <div className="font-serif text-[26px] leading-none" style={{ color: '#1C1714' }}>Emma</div>
+          <div className="text-[10px] my-1.5 tracking-[0.2em]" style={{ color: '#B08860' }}>——— and ———</div>
+          <div className="font-serif text-[26px] leading-none" style={{ color: '#1C1714' }}>Oliver</div>
+        </div>
+        <div className="mt-4 text-[7px] tracking-[0.3em] uppercase" style={{ color: '#695E55' }}>
+          September 2026
+        </div>
+        <div className="mt-1 text-[6.5px] tracking-wider" style={{ color: '#695E55' }}>
+          Villa Borghese · Rome
+        </div>
+      </div>
+    </div>
+    <div className="h-12 border-t border-[#DDD7CE]/60 grid grid-cols-4" style={{ background: '#FEFCFA' }}>
+      {['Story', 'Gallery', 'Venue', 'RSVP'].map(s => (
+        <div key={s} className="flex flex-col items-center justify-center gap-1 border-r border-[#DDD7CE]/40 last:border-0">
+          <div className="w-3 h-px bg-[#B08860]/40" />
+          <span className="text-[6px] uppercase tracking-wider" style={{ color: '#695E55' }}>{s}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const TimelessClassicPreview = () => (
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#FDFBF6' }}>
+    <div className="flex-1 flex flex-col items-center justify-center px-5 text-center relative">
+      <div className="absolute top-3 left-3 right-3 flex justify-between">
+        <div className="flex gap-1 opacity-30">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="w-0.5 h-3 rounded-full" style={{ background: '#C4983C' }} />
+          ))}
+        </div>
+        <div className="flex gap-1 opacity-30">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="w-0.5 h-3 rounded-full" style={{ background: '#C4983C' }} />
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, #C4983C)' }} />
+        <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#C4983C' }} />
+        <div className="h-px flex-1" style={{ background: 'linear-gradient(to left, transparent, #C4983C)' }} />
+      </div>
+      <div className="text-[7px] tracking-[0.5em] uppercase font-medium mb-3" style={{ color: '#C4983C' }}>
+        You are cordially invited to
+      </div>
+      <div className="font-serif text-[11px] mb-0.5" style={{ color: '#0A1624' }}>The Wedding of</div>
+      <div className="font-serif text-[20px] leading-tight" style={{ color: '#0A1624' }}>
+        Charlotte<br />&amp; William
+      </div>
+      <div className="flex items-center gap-3 my-4">
+        <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, transparent, #C4983C)' }} />
+        <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#C4983C' }} />
+        <div className="h-px flex-1" style={{ background: 'linear-gradient(to left, transparent, #C4983C)' }} />
+      </div>
+      <div className="text-[7px] tracking-[0.25em] uppercase mb-0.5" style={{ color: '#53647E' }}>
+        Saturday, 21st June 2026
+      </div>
+      <div className="text-[7px] tracking-wider" style={{ color: '#53647E' }}>
+        Grand Manor House · Cotswolds
+      </div>
+    </div>
+    <div className="h-9 border-t flex" style={{ background: '#F8F5EE', borderColor: '#D9D2C3' }}>
+      {['Our Story', 'Venue', 'Schedule', 'RSVP'].map((s, i) => (
+        <div key={s} className="flex-1 flex items-center justify-center border-r last:border-0" style={{ borderColor: '#D9D2C3' }}>
+          <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#53647E' }}>{s}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const DestinationMinimalPreview = () => (
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#F3F8FA' }}>
+    <div className="h-[55%] relative overflow-hidden">
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(180deg, #1E5F6F 0%, #2A7A8C 40%, #4BAABC 80%, #E6F6F9 100%)',
+      }} />
+      <div className="absolute inset-0 opacity-20" style={{
+        backgroundImage: 'radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(75,170,188,0.4) 0%, transparent 40%)',
+      }} />
+      <div className="absolute bottom-0 left-0 right-0 h-8" style={{
+        background: 'linear-gradient(180deg, transparent 0%, #F3F8FA 100%)',
+      }} />
+      <div className="absolute top-4 left-4">
+        <div className="text-[7px] text-white/70 tracking-[0.4em] uppercase mb-0.5">Destination</div>
+        <div className="text-white font-light text-[18px] leading-tight tracking-tight">
+          Mia &amp; Luca
+        </div>
+        <div className="text-white/50 text-[7px] tracking-widest mt-1">SANTORINI · JULY 2026</div>
+      </div>
+    </div>
+    <div className="flex-1 px-4 py-3 flex flex-col justify-center">
+      <div className="flex gap-2 mb-2.5">
+        <div className="flex-1 rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: '#E4EFF2' }}>
+          <div className="w-4 h-3 rounded-sm" style={{ background: '#4BAABC' }} />
+          <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#356270' }}>Venue</span>
+        </div>
+        <div className="flex-1 rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: '#E4EFF2' }}>
+          <div className="w-4 h-3 rounded-sm" style={{ background: '#1E5F6F' }} />
+          <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#356270' }}>Travel</span>
+        </div>
+        <div className="flex-1 rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: '#E4EFF2' }}>
+          <div className="w-4 h-3 rounded-sm" style={{ background: '#4BAABC' }} />
+          <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#356270' }}>Hotels</span>
+        </div>
+      </div>
+      <div className="rounded-lg h-5 flex items-center justify-center" style={{ background: '#1E5F6F' }}>
+        <span className="text-[6px] text-white uppercase tracking-wider">RSVP Now</span>
+      </div>
+    </div>
+  </div>
+);
+
+const BoldContemporaryPreview = () => (
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#0C0A09' }}>
+    <div className="flex-1 relative overflow-hidden">
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(135deg, #1C1917 0%, #0C0A09 100%)',
+      }} />
+      <div
+        className="absolute top-0 right-0 bottom-0 w-[55%]"
+        style={{
+          background: 'linear-gradient(135deg, #2C2520 0%, #1C1714 100%)',
+          clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0% 100%)',
+        }}
+      />
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(ellipse at 80% 30%, rgba(200,169,110,0.06) 0%, transparent 50%)',
+      }} />
+      <div className="absolute bottom-6 left-4 right-4">
+        <div className="text-[7px] tracking-[0.5em] uppercase mb-1.5" style={{ color: 'rgba(255,255,255,0.2)' }}>NYC · 2026</div>
+        <div className="font-black uppercase leading-none" style={{
+          color: '#FFFFFF',
+          fontSize: '28px',
+          letterSpacing: '-0.02em',
+          lineHeight: 1,
+        }}>
+          JADE<br />&amp; MAX
+        </div>
+        <div className="flex items-center gap-2 mt-2.5">
+          <div className="h-px flex-1" style={{ background: 'rgba(200,169,110,0.3)' }} />
+          <span className="text-[6px] uppercase tracking-[0.3em]" style={{ color: 'rgba(200,169,110,0.5)' }}>Brooklyn · September</span>
+        </div>
+      </div>
+    </div>
+    <div className="h-11 grid grid-cols-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      {['Sched.', 'Gallery', 'Venue', 'RSVP'].map(s => (
+        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#111110' }}>
+          <span className="text-[6px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.2)' }}>{s}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const PhotoStorytellingPreview = () => (
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#FDF7F4' }}>
+    <div className="flex-1 relative overflow-hidden">
+      <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0.5 p-0.5">
+        <div
+          className="col-span-2 row-span-2 rounded relative overflow-hidden"
+          style={{ background: 'linear-gradient(160deg, #D4B5A8 0%, #C4A092 100%)' }}
+        >
+          <div className="absolute inset-0 flex flex-col justify-end p-3">
+            <div className="rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(253,247,244,0.92)' }}>
+              <div className="font-serif text-[11px] leading-tight mb-0.5" style={{ color: '#2E1519' }}>
+                Ava &amp; Noah
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="h-px flex-1" style={{ background: '#B5546A', opacity: 0.3 }} />
+                <div className="text-[6px] tracking-wider" style={{ color: '#7A4E55' }}>Oct 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="rounded" style={{ background: 'linear-gradient(135deg, #E8C4A8 0%, #D4A88C 100%)' }} />
+        <div className="rounded" style={{ background: 'linear-gradient(135deg, #D4A0A8 0%, #C48490 100%)' }} />
+      </div>
+    </div>
+    <div className="h-11 border-t px-3 flex items-center gap-2" style={{ background: '#FFFFFF', borderColor: '#EDD8DA' }}>
+      <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FBF0F2' }} />
+      <div className="h-1.5 w-8 rounded-full" style={{ background: '#EDD8DA' }} />
+      <div className="rounded-full px-3 h-5 flex items-center justify-center" style={{ background: '#B5546A' }}>
+        <span className="text-[6px] text-white uppercase tracking-wider font-medium">RSVP</span>
+      </div>
+    </div>
+  </div>
+);
+
+const FloralGardenPreview = () => (
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#F6F8F3' }}>
+    <div className="flex-1 relative overflow-hidden">
+      <div
+        className="absolute -top-6 -left-6 w-24 h-24 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(78,124,95,0.2) 0%, transparent 70%)' }}
+      />
+      <div
+        className="absolute -top-4 -right-4 w-16 h-16 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(196,122,74,0.15) 0%, transparent 70%)' }}
+      />
+      <div
+        className="absolute -bottom-6 -left-4 w-20 h-20 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(78,124,95,0.15) 0%, transparent 70%)' }}
+      />
+      <div
+        className="absolute bottom-0 right-0 w-14 h-14 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(157,184,159,0.2) 0%, transparent 70%)' }}
+      />
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5">
+        <div className="flex items-center gap-1.5 mb-3">
+          <div className="text-[9px]" style={{ color: '#9DB89F' }}>✿</div>
+          <div className="text-[7px] tracking-[0.35em] uppercase font-light" style={{ color: '#4E7C5F' }}>Garden Wedding</div>
+          <div className="text-[9px]" style={{ color: '#9DB89F' }}>✿</div>
+        </div>
+        <div className="font-serif text-[22px] leading-tight" style={{ color: '#1A2E1E' }}>
+          Rose
+          <span className="text-[14px] mx-1.5" style={{ color: '#C47A4A' }}>&amp;</span>
+          Henry
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <div className="h-px w-5" style={{ background: '#D0DFCE' }} />
+          <div className="text-[7px] tracking-[0.3em] uppercase" style={{ color: '#4A6650' }}>May 2026</div>
+          <div className="h-px w-5" style={{ background: '#D0DFCE' }} />
+        </div>
+        <div className="text-[6.5px] tracking-wider mt-1" style={{ color: '#4A6650' }}>
+          The Walled Garden · Surrey
+        </div>
+      </div>
+    </div>
+    <div className="h-10 border-t grid grid-cols-4" style={{ background: '#EFF5EC', borderColor: '#D0DFCE' }}>
+      {['Story', 'Gallery', 'Venue', 'RSVP'].map(s => (
+        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#D0DFCE' }}>
+          <span className="text-[6px] uppercase tracking-wider" style={{ color: '#4E7C5F' }}>{s}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const TEMPLATE_PREVIEWS: Record<string, React.FC> = {
-  'modern-luxe': () => (
-    <div className="absolute inset-0 bg-zinc-900 flex flex-col">
-      <div className="flex-1 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-700 to-zinc-900 opacity-60" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <div className="w-16 h-0.5 bg-white/40 mb-3" />
-          <div className="text-white text-xs font-light tracking-[0.3em] uppercase mb-1">Sarah & James</div>
-          <div className="text-white text-lg font-serif leading-tight mb-1">Together Forever</div>
-          <div className="text-white/60 text-xs tracking-widest">JUNE 14, 2026</div>
-          <div className="w-16 h-0.5 bg-white/40 mt-3" />
-        </div>
-      </div>
-      <div className="h-16 bg-zinc-800 flex gap-px">
-        {['Hero', 'Story', 'Gallery', 'RSVP'].map(s => (
-          <div key={s} className="flex-1 bg-zinc-700/60 flex items-center justify-center">
-            <span className="text-white/40 text-[7px] uppercase tracking-wider">{s}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  ),
-
-  'editorial-romance': () => (
-    <div className="absolute inset-0 bg-stone-50 flex flex-col">
-      <div className="flex-1 relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-100/60 via-stone-100 to-amber-50/40" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
-          <div className="text-xs text-rose-400 tracking-[0.4em] uppercase mb-2">A Celebration of Love</div>
-          <div className="text-stone-800 text-xl font-serif text-center leading-snug mb-2">
-            Emma<br /><span className="text-rose-300 text-base">&amp;</span><br />Oliver
-          </div>
-          <div className="text-stone-400 text-[9px] tracking-widest uppercase">September · 2026</div>
-        </div>
-      </div>
-      <div className="h-12 border-t border-stone-200 grid grid-cols-4 divide-x divide-stone-200">
-        {['Story', 'Gallery', 'Venue', 'RSVP'].map(s => (
-          <div key={s} className="flex items-center justify-center">
-            <span className="text-stone-300 text-[7px] uppercase tracking-wider">{s}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  ),
-
-  'timeless-classic': () => (
-    <div className="absolute inset-0 bg-[#faf8f4] flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
-        <div className="w-12 h-px bg-[#c9a96e] mb-4" />
-        <div className="text-[#c9a96e] text-[9px] tracking-[0.4em] uppercase mb-3">You are cordially invited to</div>
-        <div className="text-[#2c2416] text-base font-serif leading-tight">
-          The Wedding of<br />
-          <span className="text-lg">Charlotte &amp; William</span>
-        </div>
-        <div className="w-12 h-px bg-[#c9a96e] my-4" />
-        <div className="text-[#8a7a60] text-[8px] tracking-widest uppercase">Saturday · 21st June · 2026</div>
-        <div className="text-[#8a7a60] text-[8px] tracking-wider mt-1">Grand Manor House, Cotswolds</div>
-      </div>
-      <div className="h-10 bg-[#f0ebe0] border-t border-[#e0d8c8] flex items-center justify-center gap-6">
-        {['Our Story', 'Venue', 'RSVP'].map(s => (
-          <span key={s} className="text-[#8a7a60] text-[7px] tracking-wider uppercase">{s}</span>
-        ))}
-      </div>
-    </div>
-  ),
-
-  'destination-minimal': () => (
-    <div className="absolute inset-0 bg-white flex flex-col">
-      <div className="flex-1 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-sky-100 to-white" />
-        <div className="absolute inset-0 flex flex-col items-start justify-center px-5">
-          <div className="text-sky-400 text-[8px] tracking-[0.3em] uppercase mb-2">Destination Wedding</div>
-          <div className="text-gray-900 text-lg font-light tracking-tight leading-tight mb-1">Mia &amp; Luca</div>
-          <div className="text-gray-400 text-[9px] tracking-widest mb-4">SANTORINI · JULY 2026</div>
-          <div className="flex gap-1">
-            <div className="h-1.5 w-8 bg-sky-300 rounded-full" />
-            <div className="h-1.5 w-4 bg-gray-200 rounded-full" />
-            <div className="h-1.5 w-6 bg-gray-200 rounded-full" />
-          </div>
-        </div>
-      </div>
-      <div className="h-14 border-t border-gray-100">
-        <div className="h-full flex">
-          <div className="w-1/3 border-r border-gray-100 flex flex-col items-center justify-center gap-1">
-            <div className="w-8 h-8 rounded bg-sky-50 flex items-center justify-center">
-              <div className="w-4 h-4 rounded-sm bg-sky-200" />
-            </div>
-            <span className="text-[6px] text-gray-300 uppercase tracking-wider">Venue</span>
-          </div>
-          <div className="w-1/3 border-r border-gray-100 flex flex-col items-center justify-center gap-1">
-            <div className="w-8 h-8 rounded bg-gray-50 flex items-center justify-center">
-              <div className="w-4 h-3 rounded-sm bg-gray-200" />
-            </div>
-            <span className="text-[6px] text-gray-300 uppercase tracking-wider">Travel</span>
-          </div>
-          <div className="w-1/3 flex flex-col items-center justify-center gap-1">
-            <div className="w-8 h-8 rounded bg-sky-50 flex items-center justify-center">
-              <div className="w-4 h-2 rounded-full bg-sky-300" />
-            </div>
-            <span className="text-[6px] text-gray-300 uppercase tracking-wider">RSVP</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  ),
-
-  'bold-contemporary': () => (
-    <div className="absolute inset-0 bg-neutral-950 flex flex-col">
-      <div className="flex-1 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-950" />
-        <div className="absolute top-0 right-0 w-2/3 h-full bg-neutral-800/40" style={{ clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 0% 100%)' }} />
-        <div className="absolute inset-0 flex flex-col justify-end px-4 pb-5">
-          <div className="text-white/30 text-[8px] tracking-[0.4em] uppercase mb-1">2026</div>
-          <div className="text-white text-2xl font-black tracking-tight leading-none uppercase">JADE<br />&amp; MAX</div>
-          <div className="flex items-center gap-2 mt-3">
-            <div className="h-px flex-1 bg-white/20" />
-            <div className="text-white/40 text-[7px] uppercase tracking-widest">New York City</div>
-          </div>
-        </div>
-      </div>
-      <div className="h-12 flex divide-x divide-neutral-800">
-        {['Schedule', 'Gallery', 'Venue', 'RSVP'].map(s => (
-          <div key={s} className="flex-1 flex items-center justify-center bg-neutral-900">
-            <span className="text-neutral-500 text-[7px] font-bold uppercase tracking-wider">{s}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  ),
-
-  'photo-storytelling': () => (
-    <div className="absolute inset-0 bg-stone-100 flex flex-col">
-      <div className="flex-1 relative overflow-hidden grid grid-cols-3 grid-rows-2 gap-0.5 p-0.5">
-        <div className="col-span-2 row-span-2 bg-gradient-to-br from-stone-300 to-stone-400 relative rounded-sm overflow-hidden">
-          <div className="absolute inset-0 flex flex-col items-start justify-end p-3">
-            <div className="bg-white/90 rounded px-2 py-1">
-              <div className="text-stone-800 text-[9px] font-serif">Ava &amp; Noah</div>
-              <div className="text-stone-400 text-[7px]">October 2026</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-amber-200 to-amber-300 rounded-sm" />
-        <div className="bg-gradient-to-br from-rose-200 to-rose-300 rounded-sm" />
-      </div>
-      <div className="h-10 bg-white border-t border-stone-200 flex items-center px-3 gap-3">
-        <div className="flex-1 h-1.5 bg-stone-100 rounded" />
-        <div className="h-1.5 w-8 bg-stone-100 rounded" />
-        <div className="w-12 h-5 rounded-full bg-stone-800 flex items-center justify-center">
-          <span className="text-white text-[6px] uppercase tracking-wider">RSVP</span>
-        </div>
-      </div>
-    </div>
-  ),
-
-  'floral-garden': () => (
-    <div className="absolute inset-0 bg-[#f4f7f0] flex flex-col">
-      <div className="flex-1 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-16 h-16 rounded-full bg-emerald-100/80 -translate-x-4 -translate-y-4" />
-        <div className="absolute top-0 right-0 w-12 h-12 rounded-full bg-rose-100/80 translate-x-3 -translate-y-3" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-emerald-100/60 -translate-x-5 translate-y-5" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <div className="text-emerald-500 text-[8px] tracking-[0.3em] uppercase mb-2">Garden Wedding</div>
-          <div className="text-stone-700 text-lg font-serif leading-tight">
-            Rose &amp; Henry
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <div className="text-emerald-300 text-base">✿</div>
-            <div className="text-stone-400 text-[8px] tracking-widest uppercase">May 2026</div>
-            <div className="text-emerald-300 text-base">✿</div>
-          </div>
-        </div>
-      </div>
-      <div className="h-12 border-t border-emerald-100 grid grid-cols-4 divide-x divide-emerald-100">
-        {['Story', 'Gallery', 'Venue', 'RSVP'].map(s => (
-          <div key={s} className="flex items-center justify-center">
-            <span className="text-emerald-300 text-[7px] uppercase tracking-wider">{s}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  ),
+  'modern-luxe': ModernLuxePreview,
+  'editorial-romance': EditorialRomancePreview,
+  'timeless-classic': TimelessClassicPreview,
+  'destination-minimal': DestinationMinimalPreview,
+  'bold-contemporary': BoldContemporaryPreview,
+  'photo-storytelling': PhotoStorytellingPreview,
+  'floral-garden': FloralGardenPreview,
 };
 
 function TemplatePreview({ templateId }: { templateId: string }) {
@@ -245,6 +383,26 @@ function TemplatePreview({ templateId }: { templateId: string }) {
     </div>
   );
 }
+
+const THEME_DOTS: Record<string, string[]> = {
+  'modern-luxe': ['#1C1917', '#C8A96E', '#FAF9F7'],
+  'editorial-romance': ['#2D2926', '#B08860', '#F8F5F1'],
+  'timeless-classic': ['#1A2B4A', '#C4983C', '#FDFBF6'],
+  'destination-minimal': ['#1E5F6F', '#4BAABC', '#F3F8FA'],
+  'bold-contemporary': ['#1C1917', '#C8A96E', '#FAF9F7'],
+  'photo-storytelling': ['#B5546A', '#D4956A', '#FDF7F4'],
+  'floral-garden': ['#4E7C5F', '#C47A4A', '#F6F8F3'],
+};
+
+const FONT_LABELS: Record<string, string> = {
+  'Playfair Display': 'Playfair',
+  'Cormorant Garamond': 'Cormorant',
+  'EB Garamond': 'Garamond',
+  'DM Serif Display': 'DM Serif',
+  'Syne': 'Syne',
+  'Libre Baskerville': 'Baskerville',
+  'Gilda Display': 'Gilda',
+};
 
 export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSaveRequest }) => {
   const { state, dispatch } = useBuilderContext();
@@ -309,7 +467,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             <CheckCircle2 className="w-7 h-7 text-green-500" />
           </div>
           <h3 className="text-base font-semibold text-gray-900 mb-1">"{applyResult.templateName}" applied</h3>
-          <p className="text-sm text-gray-500 mb-5">Your site layout has been updated.</p>
+          <p className="text-sm text-gray-500 mb-5">Your site layout and theme have been updated.</p>
 
           {applyResult.preservedSections.length > 0 && (
             <div className="mb-3 text-left bg-green-50 rounded-xl p-4">
@@ -340,7 +498,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           )}
 
           <p className="text-xs text-gray-400 mb-5">
-            You can undo this change with <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">⌘Z</kbd>
+            Undo instantly with <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 font-mono">⌘Z</kbd>
           </p>
 
           <button
@@ -356,12 +514,12 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      <div className="absolute inset-0 bg-black/50" onClick={() => dispatch(builderActions.closeTemplateGallery())} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => dispatch(builderActions.closeTemplateGallery())} />
       <div className="relative ml-auto w-full max-w-4xl bg-white h-full flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Template Gallery</h2>
-            <p className="text-sm text-gray-500">Choose a starting point for your wedding site</p>
+            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Template Gallery</h2>
+            <p className="text-sm text-gray-400 mt-0.5">Choose a visual identity for your wedding site</p>
           </div>
           <button
             onClick={() => dispatch(builderActions.closeTemplateGallery())}
@@ -371,15 +529,15 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </button>
         </div>
 
-        <div className="flex gap-2 px-6 py-3 border-b border-gray-100 overflow-x-auto">
+        <div className="flex gap-1.5 px-7 py-3 border-b border-gray-50 overflow-x-auto">
           {MOOD_FILTERS.map(f => (
             <button
               key={f.id}
               onClick={() => setActiveFilter(f.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeFilter === f.id
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
               }`}
             >
               {f.label}
@@ -387,8 +545,8 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="flex-1 overflow-y-auto p-7">
+          <div className="grid grid-cols-2 gap-5">
             {filtered.map(template => (
               <TemplateCard
                 key={template.id}
@@ -400,7 +558,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             ))}
           </div>
           {filtered.length === 0 && (
-            <div className="text-center py-16 text-gray-400 text-sm">
+            <div className="text-center py-20 text-gray-400 text-sm">
               No templates match this filter.
             </div>
           )}
@@ -426,70 +584,107 @@ interface TemplateCardProps {
   onApply: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isApplying, onApply }) => (
-  <div
-    className={`group rounded-xl overflow-hidden border-2 transition-all cursor-pointer shadow-sm hover:shadow-md ${
-      isCurrent ? 'border-rose-400 ring-1 ring-rose-300' : 'border-transparent hover:border-gray-200'
-    }`}
-    onClick={onApply}
-  >
-    <div className="aspect-[4/3] relative overflow-hidden bg-gray-100">
-      <TemplatePreview templateId={template.id} />
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isApplying, onApply }) => {
+  const [hovered, setHovered] = useState(false);
+  const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
+  const fontLabel = FONT_LABELS[template.suggestedFonts.heading] || template.suggestedFonts.heading;
 
-      {isCurrent && (
-        <div className="absolute top-3 right-3 bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
-          <Check size={12} />
-        </div>
-      )}
-      {template.isPremium && !template.isNew && (
-        <div className="absolute top-3 left-3 bg-amber-400 text-amber-900 rounded-full px-2 py-0.5 text-xs font-semibold flex items-center gap-1 shadow-sm">
-          <Sparkles size={10} />
-          Premium
-        </div>
-      )}
-      {template.isNew && (
-        <div className="absolute top-3 left-3 bg-blue-500 text-white rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm">
-          New
-        </div>
-      )}
+  return (
+    <div
+      className={`group rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
+        isCurrent
+          ? 'border-rose-400 shadow-lg shadow-rose-100/60'
+          : hovered
+          ? 'border-gray-300 shadow-lg shadow-gray-100/80'
+          : 'border-gray-100 shadow-sm'
+      }`}
+      onClick={onApply}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className="aspect-[4/3] relative overflow-hidden bg-gray-50">
+        <TemplatePreview templateId={template.id} />
 
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-    </div>
+        <div className={`absolute inset-0 transition-opacity duration-200 ${hovered && !isCurrent ? 'opacity-100' : 'opacity-0'}`}
+          style={{ background: 'rgba(0,0,0,0.15)' }}
+        />
 
-    <div className="p-4 bg-white">
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <h3 className="font-semibold text-gray-900 text-sm leading-tight">{template.displayName}</h3>
-        <div className="text-[10px] text-gray-400 shrink-0 mt-0.5">
-          {template.suggestedFonts.heading}
-        </div>
+        {isCurrent && (
+          <div className="absolute top-2.5 right-2.5 bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+            <Check size={11} />
+          </div>
+        )}
+        {template.isPremium && !template.isNew && (
+          <div className="absolute top-2.5 left-2.5 rounded-full px-2 py-0.5 text-[10px] font-semibold flex items-center gap-1 shadow-sm"
+            style={{ background: 'rgba(200,169,110,0.95)', color: '#2D1F00' }}>
+            <Crown size={8} />
+            Premium
+          </div>
+        )}
+        {template.isNew && (
+          <div className="absolute top-2.5 left-2.5 bg-blue-500 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm flex items-center gap-1">
+            <Zap size={8} />
+            New
+          </div>
+        )}
+
+        {hovered && !isCurrent && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-lg">
+              Apply Template
+            </div>
+          </div>
+        )}
       </div>
-      <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{template.description}</p>
-      <div className="flex gap-1 mt-2.5 flex-wrap">
-        {template.moodTags.slice(0, 3).map(tag => (
-          <span key={tag} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full capitalize">
-            {tag}
-          </span>
-        ))}
+
+      <div className="p-4 bg-white">
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <h3 className="font-semibold text-gray-900 text-sm leading-tight">{template.displayName}</h3>
+          <div className="flex items-center gap-1 mt-0.5 flex-shrink-0">
+            {dots.map((color, i) => (
+              <div key={i} className="w-2.5 h-2.5 rounded-full border border-white shadow-sm" style={{ background: color }} />
+            ))}
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed mb-3">{template.description}</p>
+
+        <div className="flex items-center justify-between">
+          <div className="flex gap-1 flex-wrap">
+            {template.moodTags.slice(0, 2).map(tag => (
+              <span key={tag} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full capitalize">
+                {tag}
+              </span>
+            ))}
+          </div>
+          <div className="text-[10px] text-gray-400 italic">{fontLabel}</div>
+        </div>
+
+        <button
+          onClick={e => { e.stopPropagation(); onApply(); }}
+          disabled={isApplying}
+          className={`mt-3 w-full py-2 rounded-xl text-xs font-semibold transition-all ${
+            isCurrent
+              ? 'bg-rose-50 text-rose-500 border border-rose-200/80'
+              : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
+          }`}
+        >
+          {isApplying ? (
+            <span className="flex items-center justify-center gap-1.5">
+              <Loader2 size={11} className="animate-spin" />
+              Applying…
+            </span>
+          ) : isCurrent ? (
+            <span className="flex items-center justify-center gap-1.5">
+              <Check size={11} />
+              Current Template
+            </span>
+          ) : 'Apply Template'}
+        </button>
       </div>
-      <button
-        onClick={e => { e.stopPropagation(); onApply(); }}
-        disabled={isApplying}
-        className={`mt-3 w-full py-2 rounded-lg text-xs font-medium transition-colors ${
-          isCurrent
-            ? 'bg-rose-50 text-rose-600 border border-rose-200'
-            : 'bg-gray-900 text-white hover:bg-gray-800 group-hover:bg-gray-800'
-        }`}
-      >
-        {isApplying ? (
-          <span className="flex items-center justify-center gap-1.5">
-            <Loader2 size={12} className="animate-spin" />
-            Applying...
-          </span>
-        ) : isCurrent ? 'Current Template' : 'Apply Template'}
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 interface TemplateConfirmModalProps {
   template: BuilderTemplateDefinition;
@@ -499,20 +694,30 @@ interface TemplateConfirmModalProps {
 }
 
 const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, isApplying, onConfirm, onCancel }) => (
-  <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30">
+  <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
     <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
-      <h3 className="text-base font-semibold text-gray-900">Apply "{template.displayName}"?</h3>
-      <div className="mt-3 space-y-2.5">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center flex-shrink-0">
+          <div className="w-5 h-5 rounded relative overflow-hidden">
+            <TemplatePreview templateId={template.id} />
+          </div>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Apply "{template.displayName}"?</h3>
+          <p className="text-xs text-gray-400 mt-0.5">This will update your site layout and theme.</p>
+        </div>
+      </div>
+      <div className="space-y-2">
         <div className="flex items-start gap-2.5 p-3 bg-green-50 rounded-xl">
           <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
           <div className="text-xs text-green-700">
-            <span className="font-semibold">Preserved:</span> All your text content, images, and media stay exactly as they are.
+            <span className="font-semibold">Preserved:</span> All text, images, and media stay exactly as they are.
           </div>
         </div>
         <div className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-xl">
           <RefreshCw className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
           <div className="text-xs text-amber-700">
-            <span className="font-semibold">Updated:</span> Section layout and visual theme will switch to match "{template.displayName}".
+            <span className="font-semibold">Updated:</span> Section layout and color theme will switch to "{template.displayName}".
           </div>
         </div>
         <p className="text-xs text-gray-400 pl-1">You can undo this immediately with ⌘Z.</p>
@@ -527,9 +732,14 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
         <button
           onClick={onConfirm}
           disabled={isApplying}
-          className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50 transition-colors"
+          className="flex-1 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
         >
-          {isApplying ? 'Applying…' : 'Apply Template'}
+          {isApplying ? (
+            <span className="flex items-center justify-center gap-1.5">
+              <Loader2 size={13} className="animate-spin" />
+              Applying…
+            </span>
+          ) : 'Apply Template'}
         </button>
       </div>
     </div>
