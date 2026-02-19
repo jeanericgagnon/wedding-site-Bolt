@@ -13,6 +13,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   content: 'Content',
   cta: 'Call to Action',
   details: 'Details',
+  stats: 'Stats',
+  numbers: 'Numbers',
 };
 
 const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: boolean }> = ({ skeleton, selected }) => {
@@ -28,6 +30,8 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
 
   const line = isDark ? 'bg-white/30' : 'bg-stone-300';
   const lineDark = isDark ? 'bg-white/15' : 'bg-stone-200';
+  const lineMid = isDark ? 'bg-white/20' : 'bg-stone-250';
+  const numColor = isDark ? 'text-white/80' : 'text-gray-700';
 
   const thumbnails: Record<string, React.ReactNode> = {
     blank: (
@@ -44,6 +48,23 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
         <div className={`w-24 h-1 rounded ${lineDark}`} />
         <div className={`w-12 h-1 rounded ${lineDark}`} />
         <div className={`w-10 h-5 rounded-full ${line} mt-1`} />
+      </div>
+    ),
+    'notice-banner': (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-3" style={{ backgroundColor: bg }}>
+        <div className="w-12 h-1.5 rounded-full border border-white/30" />
+        <div className="w-24 h-2 rounded bg-white/30" />
+        <div className="w-20 h-1 rounded bg-white/15" />
+      </div>
+    ),
+    'date-save': (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-3" style={{ backgroundColor: bg }}>
+        <div className={`w-16 h-1 rounded ${lineDark}`} />
+        <div className={`w-24 h-3 rounded ${line}`} />
+        <div className={`w-10 h-px ${isDark ? 'bg-white/20' : 'bg-stone-300'}`} />
+        <div className={`w-16 h-1.5 rounded ${lineMid ?? line}`} />
+        <div className={`w-20 h-1 rounded ${lineDark}`} />
+        <div className={`w-12 h-4 rounded-full ${line} mt-1`} />
       </div>
     ),
     'two-column': (
@@ -81,6 +102,14 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
         <div className={`w-12 h-5 rounded-full mt-1 ${isDark ? 'border border-white/40' : 'bg-stone-800'}`} />
       </div>
     ),
+    'cta-light': (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-3" style={{ backgroundColor: bg }}>
+        <div className="w-14 h-1.5 rounded-full border border-stone-300" />
+        <div className="w-20 h-2.5 rounded bg-stone-700" />
+        <div className="w-24 h-1 rounded bg-stone-200" />
+        <div className="w-14 h-5 rounded-full bg-stone-800 mt-1" />
+      </div>
+    ),
     'info-cards': (
       <div className="w-full h-full flex flex-col items-center p-3 gap-1.5" style={{ backgroundColor: bg }}>
         <div className={`w-16 h-2 rounded ${line} mb-1`} />
@@ -103,6 +132,29 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
         <div className={`w-20 h-1 rounded ${lineDark}`} />
       </div>
     ),
+    'pull-quote': (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-3" style={{ backgroundColor: bg }}>
+        <div className="text-[20px] font-serif leading-none" style={{ color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.15)' }}>"</div>
+        <div className={`w-24 h-1.5 rounded ${isDark ? 'bg-white/40' : 'bg-stone-400'}`} />
+        <div className={`w-20 h-1 rounded ${isDark ? 'bg-white/25' : 'bg-stone-300'}`} />
+        <div className={`w-16 h-1 rounded ${isDark ? 'bg-white/25' : 'bg-stone-300'}`} />
+        <div className={`w-12 h-1 rounded ${isDark ? 'bg-white/15' : 'bg-stone-200'} mt-1`} />
+      </div>
+    ),
+    'three-columns': (
+      <div className="w-full h-full flex flex-col items-center p-3 gap-1.5" style={{ backgroundColor: bg }}>
+        <div className={`w-16 h-2 rounded ${line} mb-1`} />
+        <div className="flex gap-1.5 w-full">
+          {[0,1,2].map(i => (
+            <div key={i} className="flex-1 flex flex-col gap-1 items-center">
+              <div className={`h-1.5 rounded w-full ${line}`} />
+              <div className={`h-1 rounded w-full ${lineDark}`} />
+              <div className={`h-1 rounded w-4/5 ${lineDark}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
     details: (
       <div className="w-full h-full flex flex-col items-center p-3 gap-1.5" style={{ backgroundColor: bg }}>
         <div className={`w-14 h-2 rounded ${line} mb-1`} />
@@ -111,6 +163,105 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
             <div key={i} className="flex flex-col gap-0.5 items-center">
               <div className={`h-1.5 w-10 rounded ${line}`} />
               <div className={`h-1 w-12 rounded ${lineDark}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    checklist: (
+      <div className="w-full h-full flex flex-col justify-center p-3 gap-1" style={{ backgroundColor: bg }}>
+        <div className={`w-20 h-2 rounded ${line} mb-1`} />
+        {[0,1,2,3].map(i => (
+          <div key={i} className="flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-sm ${line} flex-shrink-0`} />
+            <div className={`flex-1 h-1 rounded ${lineDark}`} />
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── STATS ── */
+    'stat-trio': (
+      <div className="w-full h-full flex flex-col items-center justify-center p-3 gap-1.5" style={{ backgroundColor: bg }}>
+        <div className={`w-16 h-1.5 rounded ${line} mb-1`} />
+        <div className="flex gap-2 w-full">
+          {[0,1,2].map(i => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+              <div className={`text-[14px] font-extrabold leading-none ${numColor}`}>{['8','150','1'][i]}</div>
+              <div className={`w-full h-1 rounded ${line}`} />
+              <div className={`w-3/4 h-0.5 rounded ${lineDark}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'stat-dark': (
+      <div className="w-full h-full flex flex-col items-center justify-center p-3 gap-1.5" style={{ backgroundColor: bg }}>
+        <div className="w-20 h-1 rounded bg-white/20 mb-0.5" />
+        <div className="w-24 h-2 rounded bg-white/35" />
+        <div className="flex gap-2 w-full mt-1">
+          {['2017','14','2025','∞'].map((n, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+              <div className={`text-[9px] font-extrabold leading-none text-white/70`}>{n}</div>
+              <div className="w-full h-0.5 rounded bg-white/15" />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'metric-split': (
+      <div className="w-full h-full flex items-center gap-3 p-3" style={{ backgroundColor: bg }}>
+        <div className="flex-1 flex flex-col items-center gap-0.5">
+          <div className={`text-[18px] font-extrabold leading-none ${numColor}`}>2,847</div>
+          <div className={`w-full h-1 rounded ${line}`} />
+        </div>
+        <div className="w-px h-10 bg-stone-200" />
+        <div className="flex-1 flex flex-col gap-1">
+          <div className={`h-1.5 rounded ${line}`} />
+          <div className={`h-1 rounded ${lineDark}`} />
+          <div className={`h-1 rounded ${lineDark}`} />
+          <div className={`w-8 h-3.5 rounded-full ${line} mt-0.5`} />
+        </div>
+      </div>
+    ),
+    'countdown-stats': (
+      <div className="w-full h-full flex flex-col items-center justify-center p-2.5 gap-1" style={{ backgroundColor: bg }}>
+        <div className="w-12 h-1.5 rounded-full border border-stone-200" />
+        <div className={`text-[16px] font-extrabold leading-none ${numColor}`}>47 Days</div>
+        <div className={`w-20 h-0.5 rounded ${lineDark}`} />
+        <div className={`w-6 h-px bg-stone-300 my-0.5`} />
+        <div className="flex gap-2 w-full">
+          {['150','5','1'].map(n => (
+            <div key={n} className="flex-1 flex flex-col items-center gap-0.5">
+              <div className={`text-[10px] font-extrabold leading-none ${numColor}`}>{n}</div>
+              <div className={`w-full h-0.5 rounded ${lineDark}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'numbers-grid': (
+      <div className="w-full h-full flex flex-col items-center p-3 gap-1.5" style={{ backgroundColor: bg }}>
+        <div className={`w-16 h-1.5 rounded ${line} mb-0.5`} />
+        <div className="grid grid-cols-2 gap-2 w-full">
+          {['8','23','3','1'].map((n, i) => (
+            <div key={i} className="flex flex-col items-center gap-0.5">
+              <div className={`text-[14px] font-extrabold leading-none ${numColor}`}>{n}</div>
+              <div className={`w-full h-1 rounded ${line}`} />
+              <div className={`w-3/4 h-0.5 rounded ${lineDark}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'year-timeline': (
+      <div className="w-full h-full flex flex-col items-center justify-center p-3 gap-1.5" style={{ backgroundColor: bg }}>
+        <div className={`w-16 h-1.5 rounded ${line} mb-1`} />
+        <div className="flex gap-1.5 w-full">
+          {['2017','2019','2023','2025'].map((y, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+              <div className={`text-[9px] font-extrabold leading-none ${numColor}`}>{y}</div>
+              <div className={`w-full h-0.5 rounded ${lineDark}`} />
             </div>
           ))}
         </div>
@@ -129,7 +280,7 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
   );
 };
 
-const CATEGORIES = ['blank', 'announcement', 'content', 'cta', 'details'] as const;
+const CATEGORIES = ['blank', 'stats', 'numbers', 'announcement', 'content', 'cta', 'details'] as const;
 
 export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSelect, onClose }) => {
   const [selected, setSelected] = useState<string>(CUSTOM_SKELETONS[0].id);

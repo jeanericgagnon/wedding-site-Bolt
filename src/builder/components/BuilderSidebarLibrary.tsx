@@ -557,14 +557,28 @@ const SectionTypePreview: React.FC<{ sectionType: string }> = ({ sectionType }) 
       </div>
     ),
     custom: (
-      <div className="w-full h-16 flex flex-col items-center justify-center gap-1.5 bg-amber-50">
-        <div className="flex gap-1">
-          {['H','P','B'].map(t => (
-            <div key={t} className="text-[7px] font-bold px-1.5 py-0.5 rounded bg-amber-200 text-amber-700">{t}</div>
-          ))}
+      <div className="w-full h-16 bg-amber-50 flex flex-col px-2.5 pt-2 pb-1.5 gap-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 rounded-sm bg-amber-400 w-14" />
+          <div className="h-1 rounded-sm bg-amber-200 flex-1" />
         </div>
-        <div className="text-[8px] text-amber-600 font-medium">Custom layout</div>
-        <div className="h-1 rounded-sm w-20 bg-amber-200" />
+        <div className="flex gap-1.5 flex-1">
+          <div className="flex-1 flex flex-col gap-1 border border-dashed border-amber-300 rounded p-1">
+            <div className="h-1 rounded-sm bg-amber-300 w-full" />
+            <div className="h-1 rounded-sm bg-amber-200 w-3/4" />
+            <div className="mt-auto h-2 rounded bg-amber-400 w-8" />
+          </div>
+          <div className="flex-1 flex flex-col gap-1 border border-dashed border-amber-300 rounded p-1">
+            <div className="h-2.5 rounded-sm bg-amber-200 w-full" />
+            <div className="h-1 rounded-sm bg-amber-200 w-full" />
+            <div className="h-1 rounded-sm bg-amber-200 w-2/3" />
+          </div>
+          <div className="flex-1 flex flex-col gap-1 border border-dashed border-amber-300 rounded p-1">
+            <div className="text-[9px] font-black text-amber-600 leading-none">42</div>
+            <div className="h-1 rounded-sm bg-amber-300 w-full" />
+            <div className="h-1 rounded-sm bg-amber-200 w-3/4" />
+          </div>
+        </div>
       </div>
     ),
   };
