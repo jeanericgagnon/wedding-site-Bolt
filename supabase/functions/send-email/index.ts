@@ -206,11 +206,28 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const payload: EmailPayload = await req.json();
+    let payload: EmailPayload;
+    try {
+      payload = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { type, to, data } = payload;
 
     if (!type || !to || !data) {
       return new Response(JSON.stringify({ error: "Missing required fields: type, to, data" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to.trim())) {
+      return new Response(JSON.stringify({ error: "Invalid recipient email address" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
