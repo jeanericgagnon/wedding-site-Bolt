@@ -105,6 +105,124 @@ describe('fetchUrlPreview', () => {
   });
 });
 
+describe('findDuplicateItem', () => {
+  const mockItem = (overrides: Partial<any>): any => ({
+    id: 'item-1',
+    item_name: 'Test Product',
+    item_url: 'https://example.com/product',
+    canonical_url: 'https://example.com/product',
+    ...overrides,
+  });
+
+  it('finds duplicate by canonical URL', () => {
+    const { findDuplicateItem } = require('./registryService');
+    const items = [
+      mockItem({ id: 'item-1', canonical_url: 'https://target.com/p/-/A-12345678' }),
+      mockItem({ id: 'item-2', canonical_url: 'https://amazon.com/dp/B07XYZ1234' }),
+    ];
+
+    const duplicate = findDuplicateItem(
+      'https://target.com/p/-/A-12345678',
+      'Different Title',
+      items
+    );
+
+    expect(duplicate).not.toBeNull();
+    expect(duplicate?.id).toBe('item-1');
+  });
+
+  it('finds duplicate by item URL when canonical is missing', () => {
+    const { findDuplicateItem } = require('./registryService');
+    const items = [
+      mockItem({
+        id: 'item-1',
+        item_url: 'https://example.com/product',
+        canonical_url: null,
+      }),
+    ];
+
+    const duplicate = findDuplicateItem(
+      'https://example.com/product',
+      'Test Product',
+      items
+    );
+
+    expect(duplicate).not.toBeNull();
+    expect(duplicate?.id).toBe('item-1');
+  });
+
+  it('finds duplicate by title when URLs differ', () => {
+    const { findDuplicateItem } = require('./registryService');
+    const items = [
+      mockItem({
+        id: 'item-1',
+        item_name: 'GreenPan Rio Advanced 8" Ceramic Nonstick Fry Pan',
+        item_url: 'https://target.com/p/product-a/-/A-12345678',
+      }),
+    ];
+
+    const duplicate = findDuplicateItem(
+      'https://different-store.com/product',
+      'GreenPan Rio Advanced 8" Ceramic Nonstick Fry Pan',
+      items
+    );
+
+    expect(duplicate).not.toBeNull();
+    expect(duplicate?.id).toBe('item-1');
+  });
+
+  it('excludes item by ID', () => {
+    const { findDuplicateItem } = require('./registryService');
+    const items = [
+      mockItem({ id: 'item-1', canonical_url: 'https://target.com/p/-/A-12345678' }),
+    ];
+
+    const duplicate = findDuplicateItem(
+      'https://target.com/p/-/A-12345678',
+      'Test Product',
+      items,
+      'item-1'
+    );
+
+    expect(duplicate).toBeNull();
+  });
+
+  it('returns null when no duplicate found', () => {
+    const { findDuplicateItem } = require('./registryService');
+    const items = [
+      mockItem({ id: 'item-1', canonical_url: 'https://target.com/p/-/A-12345678' }),
+    ];
+
+    const duplicate = findDuplicateItem(
+      'https://target.com/p/-/A-87654321',
+      'Different Product',
+      items
+    );
+
+    expect(duplicate).toBeNull();
+  });
+
+  it('handles case-insensitive matching', () => {
+    const { findDuplicateItem } = require('./registryService');
+    const items = [
+      mockItem({
+        id: 'item-1',
+        item_name: 'Test Product',
+        canonical_url: 'https://EXAMPLE.COM/Product',
+      }),
+    ];
+
+    const duplicate = findDuplicateItem(
+      'https://example.com/product',
+      'test product',
+      items
+    );
+
+    expect(duplicate).not.toBeNull();
+    expect(duplicate?.id).toBe('item-1');
+  });
+});
+
 describe('purchase status logic', () => {
   it('status is available when quantity_purchased is 0', () => {
     const item = { quantity_purchased: 0, quantity_needed: 2 };

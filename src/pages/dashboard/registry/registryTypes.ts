@@ -34,6 +34,7 @@ export interface RegistryPreview {
   price_amount: number | null;
   image_url: string | null;
   merchant: string | null;
+  store_name?: string | null;
   canonical_url: string | null;
   description: string | null;
   currency: string | null;
@@ -44,6 +45,8 @@ export interface RegistryPreview {
   source_method: SourceMethod;
   fetch_status: FetchStatus | null;
   error: string | null;
+  partial?: boolean;
+  missing_fields?: string[];
 }
 
 export function computeConfidence(preview: RegistryPreview): MetadataConfidence {

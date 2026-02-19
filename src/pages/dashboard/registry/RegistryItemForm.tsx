@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link2, Loader2, X, ImageOff, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { Button } from '../../../components/ui';
-import { fetchUrlPreview } from './registryService';
+import { fetchUrlPreview, findDuplicateItem } from './registryService';
 import { normalizeUrl, isValidUrl } from '../../../lib/urlUtils';
 import type { RegistryItem, RegistryItemDraft, RegistryPreview, MetadataConfidence } from './registryTypes';
 import { computeConfidence, getBlockedMessage } from './registryTypes';
@@ -73,8 +73,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       const confidence = computeConfidence(preview);
       setFetchConfidence(confidence);
       const blockedMsg = getBlockedMessage(preview);
+
       if (blockedMsg) {
         setFetchError(blockedMsg);
+      } else if (preview.partial && preview.missing_fields && preview.missing_fields.length > 0) {
+        const missing = preview.missing_fields.join(', ');
+        setFetchError(`We could only import part of this item (missing: ${missing}). Please confirm the details below.`);
       } else if (confidence === 'manual') {
         setFetchError(
           preview.error
@@ -85,14 +89,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         setFetchDone(true);
       }
       const canonicalToCheck = preview.canonical_url ?? normalized;
-      const titleToCheck = preview.title?.toLowerCase().trim();
-      const duplicate = existingItems.find(item =>
-        item.id !== initial?.id && (
-          (item.canonical_url && item.canonical_url === canonicalToCheck) ||
-          (item.item_url && item.item_url === canonicalToCheck) ||
-          (titleToCheck && item.item_name.toLowerCase().trim() === titleToCheck)
-        )
-      );
+      const duplicate = findDuplicateItem(canonicalToCheck, preview.title, existingItems, initial?.id);
       if (duplicate) {
         setDedupeWarning(`"${duplicate.item_name}" may already be in your registry. You can still add it if it's a different item.`);
       }
@@ -101,7 +98,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         item_name: preview.title ?? prev.item_name,
         price_label: preview.price_label ?? prev.price_label,
         price_amount: preview.price_amount != null ? String(preview.price_amount) : prev.price_amount,
-        merchant: preview.merchant ?? (preview.brand ?? null) ?? prev.merchant,
+        merchant: preview.store_name ?? preview.merchant ?? (preview.brand ?? null) ?? prev.merchant,
         item_url: preview.canonical_url ?? normalized,
         image_url: preview.image_url ?? prev.image_url,
         notes: preview.description && !prev.notes ? preview.description : prev.notes,

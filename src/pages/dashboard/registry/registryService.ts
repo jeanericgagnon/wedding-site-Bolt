@@ -182,3 +182,35 @@ export async function publicIncrementPurchase(
   if (error) throw new Error(error.message);
   return data as RegistryItem;
 }
+
+export function findDuplicateItem(
+  url: string,
+  title: string | null,
+  existingItems: RegistryItem[],
+  excludeId?: string
+): RegistryItem | null {
+  const normalizedUrl = url.toLowerCase().trim();
+  const normalizedTitle = title?.toLowerCase().trim();
+
+  for (const item of existingItems) {
+    if (excludeId && item.id === excludeId) continue;
+
+    const itemCanonical = item.canonical_url?.toLowerCase().trim();
+    const itemUrl = item.item_url?.toLowerCase().trim();
+    const itemTitle = item.item_name.toLowerCase().trim();
+
+    if (itemCanonical && itemCanonical === normalizedUrl) {
+      return item;
+    }
+
+    if (itemUrl && itemUrl === normalizedUrl) {
+      return item;
+    }
+
+    if (normalizedTitle && itemTitle === normalizedTitle) {
+      return item;
+    }
+  }
+
+  return null;
+}
