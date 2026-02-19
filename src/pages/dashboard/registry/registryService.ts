@@ -85,11 +85,18 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
   const endpoint = `${supabaseUrl}/functions/v1/registry-preview`;
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    console.error('Session error:', sessionError);
+    throw new Error('Authentication error. Please refresh the page and sign in again.');
+  }
 
   if (!session?.access_token) {
-    throw new Error('Please sign in to use this feature.');
+    throw new Error('No active session. Please sign in to use this feature.');
   }
+
+  console.log('Calling registry-preview with URL:', url);
 
   const resp = await fetch(endpoint, {
     method: 'POST',
@@ -101,24 +108,35 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
     body: JSON.stringify({ url, force_refresh: forceRefresh }),
   });
 
+  console.log('Registry-preview response status:', resp.status);
+
   if (!resp.ok) {
     let errorMessage = `HTTP ${resp.status}`;
+    let errorDetails = '';
     try {
       const text = await resp.text();
+      console.error('Registry-preview error response:', text);
       const errorJson = JSON.parse(text);
-      errorMessage = errorJson.error || errorJson.message || errorJson.details || text || errorMessage;
-    } catch {
-      // If parsing fails, use default error message
+      errorMessage = errorJson.error || errorJson.message || text || errorMessage;
+      errorDetails = errorJson.details || '';
+    } catch (e) {
+      console.error('Failed to parse error response:', e);
     }
 
     if (resp.status === 401) {
       throw new Error('Session expired. Please refresh the page and try again.');
     }
 
+    if (errorDetails) {
+      throw new Error(`${errorMessage}\n\nDetails: ${errorDetails}`);
+    }
+
     throw new Error(errorMessage);
   }
 
-  return resp.json() as Promise<RegistryPreview>;
+  const result = await resp.json() as RegistryPreview;
+  console.log('Registry-preview result:', result);
+  return result;
 }
 
 export async function publicFetchRegistryItems(weddingSiteId: string): Promise<RegistryItem[]> {
