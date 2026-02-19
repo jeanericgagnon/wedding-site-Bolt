@@ -152,14 +152,6 @@ export const Signup: React.FC = () => {
 
       if (siteError) throw siteError;
 
-      // Send welcome email (fire and forget)
-      sendSignupWelcome({
-        email: formData.email,
-        coupleName1: formData.firstName,
-        coupleName2: formData.secondName,
-        siteUrl: subdomain,
-      }).catch(console.error);
-
       let session = authData.session;
 
       if (!session?.access_token) {
@@ -187,6 +179,13 @@ export const Signup: React.FC = () => {
       if (!session?.access_token) {
         throw new Error('Account created! Check your email to confirm your address, then sign in to complete payment.');
       }
+
+      sendSignupWelcome({
+        email: formData.email,
+        coupleName1: formData.firstName,
+        coupleName2: formData.secondName,
+        siteUrl: subdomain,
+      }).catch(console.error);
 
       navigate('/payment-required');
     } catch (err: unknown) {
