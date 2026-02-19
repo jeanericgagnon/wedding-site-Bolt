@@ -48,14 +48,18 @@ export const Signup: React.FC = () => {
       const suffix = addSuffix ? 's' : '';
       const subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
 
-      const { data } = await supabase
-        .from('wedding_sites')
-        .select('site_url')
-        .eq('site_url', subdomain)
-        .maybeSingle();
-
-      setUrlTaken(!!data);
-      setCheckingUrl(false);
+      try {
+        const { data } = await supabase
+          .from('wedding_sites')
+          .select('site_url')
+          .eq('site_url', subdomain)
+          .maybeSingle();
+        setUrlTaken(!!data);
+      } catch {
+        setUrlTaken(false);
+      } finally {
+        setCheckingUrl(false);
+      }
     };
 
     const debounceTimer = setTimeout(checkUrlAvailability, 500);
@@ -70,14 +74,18 @@ export const Signup: React.FC = () => {
       const cleanUrl = customUrl.toLowerCase().replace(/[^a-z0-9]/g, '');
       const subdomain = `${cleanUrl}.dayof.love`;
 
-      const { data } = await supabase
-        .from('wedding_sites')
-        .select('site_url')
-        .eq('site_url', subdomain)
-        .maybeSingle();
-
-      setUrlTaken(!!data);
-      setCheckingUrl(false);
+      try {
+        const { data } = await supabase
+          .from('wedding_sites')
+          .select('site_url')
+          .eq('site_url', subdomain)
+          .maybeSingle();
+        setUrlTaken(!!data);
+      } catch {
+        setUrlTaken(false);
+      } finally {
+        setCheckingUrl(false);
+      }
     };
 
     const debounceTimer = setTimeout(checkCustomUrlAvailability, 500);

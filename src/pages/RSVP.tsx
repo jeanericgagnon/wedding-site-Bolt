@@ -32,6 +32,8 @@ interface Guest {
   last_name: string | null;
   name: string;
   email: string | null;
+  phone: string | null;
+  group_name: string | null;
   wedding_site_id: string;
   plus_one_allowed: boolean;
   invited_to_ceremony: boolean;
@@ -257,9 +259,17 @@ export default function RSVP() {
               </div>
 
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  {error}
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                  <ul className="pl-6 space-y-1 text-xs text-red-600 list-disc">
+                    <li>Make sure you're using the invitation link from your email</li>
+                    <li>Try searching by your first and last name</li>
+                    <li>Check the spelling matches what the couple has on file</li>
+                    <li>Contact the couple if you're still having trouble</li>
+                  </ul>
                 </div>
               )}
 
@@ -285,24 +295,38 @@ export default function RSVP() {
             </div>
 
             <div className="space-y-3 mb-6">
-              {ambiguousGuests.map((g) => (
-                <button
-                  key={g.id}
-                  onClick={() => handlePickGuest(g)}
-                  disabled={loading}
-                  className="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-rose-300 hover:bg-rose-50 transition-colors text-left group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-rose-100 flex items-center justify-center flex-shrink-0 transition-colors">
-                    <User className="w-5 h-5 text-gray-500 group-hover:text-rose-500 transition-colors" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{guestLabel(g)}</p>
-                    {g.email && (
-                      <p className="text-sm text-gray-500">{maskEmail(g.email)}</p>
-                    )}
-                  </div>
-                </button>
-              ))}
+              {ambiguousGuests.map((g) => {
+                const hints: string[] = [];
+                if (g.last_name) hints.push(g.last_name);
+                if (g.group_name) hints.push(g.group_name);
+                if (g.email) hints.push(maskEmail(g.email));
+                if (g.phone) hints.push(`ends in ${g.phone.slice(-4)}`);
+                const invitedTo = [
+                  g.invited_to_ceremony && 'Ceremony',
+                  g.invited_to_reception && 'Reception',
+                ].filter(Boolean).join(' + ');
+                return (
+                  <button
+                    key={g.id}
+                    onClick={() => handlePickGuest(g)}
+                    disabled={loading}
+                    className="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-rose-300 hover:bg-rose-50 transition-colors text-left group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-rose-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                      <User className="w-5 h-5 text-gray-500 group-hover:text-rose-500 transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900">{guestLabel(g)}</p>
+                      {hints.length > 0 && (
+                        <p className="text-sm text-gray-500 truncate">{hints.join(' · ')}</p>
+                      )}
+                      {invitedTo && (
+                        <p className="text-xs text-gray-400 mt-0.5">{invitedTo}</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             <button
@@ -343,9 +367,12 @@ export default function RSVP() {
             )}
 
             {!guest.invite_token && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                Your invitation is missing a secure token. Please use the RSVP link from your invitation email to submit your response.
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm space-y-1">
+                <div className="flex items-start gap-2 font-medium">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  Can't submit — missing invitation link
+                </div>
+                <p className="pl-6">To RSVP, open the invitation email you received and click the RSVP button. That link contains a secure code required to submit your response.</p>
               </div>
             )}
 

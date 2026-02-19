@@ -649,9 +649,9 @@ export const DashboardSettings: React.FC = () => {
                             <button
                               type="button"
                               onClick={handleRegenerateToken}
-                              className="text-xs text-error hover:underline"
+                              className="text-xs text-text-tertiary hover:text-text-secondary hover:underline"
                             >
-                              Invalidate and regenerate link
+                              Regenerate link (old link stops working)
                             </button>
                           )}
                         </div>

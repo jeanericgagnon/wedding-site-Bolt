@@ -14,7 +14,6 @@ export const Login: React.FC = () => {
   const [view, setView] = useState<AuthView>('login');
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [resetEmail, setResetEmail] = useState('');
@@ -63,11 +62,7 @@ export const Login: React.FC = () => {
   };
 
   const handleGooglePlaceholder = () => {
-    setGoogleLoading(true);
-    setTimeout(() => {
-      setGoogleLoading(false);
-      setError('Google sign-in is coming soon. Use email/password or the demo account to get started.');
-    }, 800);
+    setError('Google sign-in is not available yet. Use email and password or try the demo below.');
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -198,11 +193,11 @@ export const Login: React.FC = () => {
             size="lg"
             fullWidth
             onClick={handleGooglePlaceholder}
-            disabled={loading || demoLoading || googleLoading}
-            className="mb-5"
+            disabled={loading || demoLoading}
+            className="mb-5 opacity-60"
           >
             <Chrome className="w-5 h-5 mr-2" aria-hidden="true" />
-            {googleLoading ? 'Loading...' : 'Continue with Google'}
+            Continue with Google
           </Button>
 
           <div className="relative mb-5">
@@ -259,7 +254,7 @@ export const Login: React.FC = () => {
               variant="accent"
               size="lg"
               fullWidth
-              disabled={loading || demoLoading || googleLoading}
+              disabled={loading || demoLoading }
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
@@ -279,7 +274,7 @@ export const Login: React.FC = () => {
             size="lg"
             fullWidth
             onClick={handleDemoLogin}
-            disabled={loading || demoLoading || googleLoading}
+            disabled={loading || demoLoading }
           >
             {demoLoading ? 'Loading demo...' : 'Try Demo — no account needed'}
           </Button>

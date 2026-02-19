@@ -289,8 +289,6 @@ export const DashboardOverview: React.FC = () => {
                       <a
                         href={`/site/${stats.siteSlug}`}
                         className="text-primary hover:text-primary-hover flex items-center gap-2 text-sm font-medium"
-                        target="_blank"
-                        rel="noopener noreferrer"
                       >
                         {stats.siteSlug}.dayof.love
                         <ExternalLink className="w-4 h-4" aria-hidden="true" />
@@ -372,9 +370,12 @@ export const DashboardOverview: React.FC = () => {
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <Eye className="w-10 h-10 text-text-tertiary mb-3" />
                       <p className="text-sm text-text-secondary mb-1">No RSVPs yet</p>
-                      <p className="text-xs text-text-tertiary">
+                      <p className="text-xs text-text-tertiary mb-3">
                         RSVPs will appear here as guests respond
                       </p>
+                      <Link to="/dashboard/guests" className="text-xs text-primary hover:text-primary-hover font-medium transition-colors">
+                        Invite guests &rarr;
+                      </Link>
                     </div>
                   )}
                 </CardContent>

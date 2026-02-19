@@ -314,22 +314,15 @@ export const QuickStart: React.FC = () => {
         )}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-text-primary mb-3">
-          <Image className="w-4 h-4 inline mr-2" aria-hidden="true" />
-          Upload Photos (Optional)
-        </label>
-        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors cursor-pointer">
-          <Image className="w-12 h-12 text-text-secondary mx-auto mb-3" aria-hidden="true" />
-          <p className="text-sm font-medium text-text-primary mb-1">
-            Click to upload photos
-          </p>
-          <p className="text-xs text-text-secondary">
-            Add your engagement photos or other images
-          </p>
-          <p className="text-xs text-accent mt-3 font-medium">
-            You can add and manage photos from the Media section in your dashboard
-          </p>
+      <div className="p-4 bg-surface-subtle rounded-lg border border-border">
+        <div className="flex items-start gap-3">
+          <Image className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-medium text-text-primary mb-1">Photos</p>
+            <p className="text-xs text-text-secondary">
+              You can add and manage photos from the Media section in your dashboard after setup is complete.
+            </p>
+          </div>
         </div>
       </div>
 
