@@ -90,12 +90,54 @@ const classicTemplate: TemplateDefinition = {
   },
 };
 
+const boldContemporaryTemplate: TemplateDefinition = {
+  id: 'bold-contemporary',
+  name: 'Bold Contemporary',
+  description: 'High-contrast typography, asymmetric layouts, and a confident modern aesthetic',
+  defaultThemePreset: 'elegant',
+  defaultLayout: {
+    sections: [
+      { type: 'hero', variant: 'fullbleed', enabled: true, bindings: {}, settings: { showTitle: true } },
+      { type: 'schedule', variant: 'timeline', enabled: true, bindings: {}, settings: { showTitle: true, title: 'The Day' } },
+      { type: 'story', variant: 'split', enabled: true, bindings: {}, settings: { showTitle: true, title: 'How It Happened' } },
+      { type: 'gallery', variant: 'filmStrip', enabled: true, bindings: {}, settings: { showTitle: false } },
+      { type: 'venue', variant: 'splitMap', enabled: true, bindings: {}, settings: { showTitle: true, title: 'Where We Gather' } },
+      { type: 'registry', variant: 'featured', enabled: true, bindings: {}, settings: { showTitle: true, title: 'Registry' } },
+      { type: 'rsvp', variant: 'multiEvent', enabled: true, bindings: {}, settings: { showTitle: true, title: 'RSVP' } },
+      { type: 'travel', variant: 'hotelBlock', enabled: true, bindings: {}, settings: { showTitle: true, title: 'Where to Stay' } },
+      { type: 'faq', variant: 'accordion', enabled: true, bindings: {}, settings: { showTitle: true, title: 'Questions' } },
+    ],
+  },
+};
+
+const photoStorytellingTemplate: TemplateDefinition = {
+  id: 'photo-storytelling',
+  name: 'Photo Storytelling',
+  description: 'Photography-first design where every section leads with stunning imagery',
+  defaultThemePreset: 'romantic',
+  defaultLayout: {
+    sections: [
+      { type: 'hero', variant: 'fullbleed', enabled: true, bindings: {}, settings: { showTitle: true } },
+      { type: 'gallery', variant: 'masonry', enabled: true, bindings: {}, settings: { showTitle: false } },
+      { type: 'story', variant: 'centered', enabled: true, bindings: {}, settings: { showTitle: false } },
+      { type: 'venue', variant: 'mapFirst', enabled: true, bindings: {}, settings: { showTitle: true, title: 'The Venue' } },
+      { type: 'schedule', variant: 'agendaCards', enabled: true, bindings: {}, settings: { showTitle: true, title: 'Day of' } },
+      { type: 'gallery', variant: 'polaroid', enabled: false, bindings: {}, settings: { showTitle: true, title: 'More Memories' } },
+      { type: 'travel', variant: 'list', enabled: true, bindings: {}, settings: { showTitle: true, title: 'Getting There' } },
+      { type: 'rsvp', variant: 'inline', enabled: true, bindings: {}, settings: { showTitle: true, title: 'Will you join us?' } },
+      { type: 'registry', variant: 'cards', enabled: true, bindings: {}, settings: { showTitle: true, title: 'Registry' } },
+    ],
+  },
+};
+
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
   base: baseTemplate,
   modern: modernTemplate,
   editorial: editorialTemplate,
   classic: classicTemplate,
   rustic: classicTemplate,
+  'bold-contemporary': boldContemporaryTemplate,
+  'photo-storytelling': photoStorytellingTemplate,
 };
 
 export function getTemplate(templateId: string): TemplateDefinition {
@@ -103,5 +145,5 @@ export function getTemplate(templateId: string): TemplateDefinition {
 }
 
 export function getAllTemplates(): TemplateDefinition[] {
-  return [baseTemplate, modernTemplate, editorialTemplate, classicTemplate];
+  return [baseTemplate, modernTemplate, editorialTemplate, classicTemplate, boldContemporaryTemplate, photoStorytellingTemplate];
 }

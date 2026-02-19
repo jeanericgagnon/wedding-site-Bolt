@@ -9,7 +9,9 @@ export type TemplateMoodTag =
   | 'destination'
   | 'floral'
   | 'luxe'
-  | 'garden';
+  | 'garden'
+  | 'bold'
+  | 'photo';
 
 export interface TemplateSectionSlot {
   type: BuilderSectionType;
