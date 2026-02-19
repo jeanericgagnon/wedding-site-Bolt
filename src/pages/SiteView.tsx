@@ -9,8 +9,32 @@ import { applyThemePreset } from '../lib/themePresets';
 import { BuilderProject } from '../types/builder/project';
 import { BuilderSectionInstance } from '../types/builder/section';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
+import { PageRenderer } from '../render/PageRenderer';
 import { safeJsonParse } from '../lib/jsonUtils';
 import { SiteViewContext } from '../contexts/SiteViewContext';
+import { siteRepository } from '../data/siteRepository';
+
+const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string }> = ({ siteId, siteSlug }) => {
+  const [sections, setSections] = useState<import('../sections/schemas').PersistedSection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    siteRepository.fetchPublishedSections(siteId)
+      .then(setSections)
+      .catch(() => setSections([]))
+      .finally(() => setLoading(false));
+  }, [siteId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-stone-200 border-t-stone-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return <PageRenderer sections={sections} siteSlug={siteSlug} />;
+};
 
 export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -18,6 +42,7 @@ export const SiteView: React.FC = () => {
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [useNewRenderer, setUseNewRenderer] = useState(false);
   const [isComingSoon, setIsComingSoon] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +84,17 @@ export const SiteView: React.FC = () => {
           data.published_json ?? data.site_json,
           null
         );
+
+        const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
+
+        if (persistedSections.length > 0) {
+          setUseNewRenderer(true);
+          setBuilderSections(null);
+          setLayoutConfig(null);
+          setWeddingData(null);
+          setWeddingSiteId(data.id as string);
+          return;
+        }
 
         if (siteJson && siteJson.pages?.length > 0) {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
@@ -162,6 +198,14 @@ export const SiteView: React.FC = () => {
           <p className="text-text-secondary">{error}</p>
         </div>
       </div>
+    );
+  }
+
+  if (useNewRenderer && weddingSiteId) {
+    return (
+      <SiteViewContext.Provider value={{ weddingSiteId }}>
+        <PageRendererFromDB siteId={weddingSiteId} siteSlug={slug ?? ''} />
+      </SiteViewContext.Provider>
     );
   }
 

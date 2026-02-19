@@ -3,12 +3,14 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
+import { resolveAndParse } from '../../sections/registry';
 import { getSectionComponent } from '../../sections/sectionRegistry';
 
 interface SectionRendererProps {
   section: BuilderSectionInstance;
   weddingData: WeddingDataV1;
   isPreview?: boolean;
+  siteSlug?: string;
 }
 
 function toSectionInstance(section: BuilderSectionInstance): SectionInstance {
@@ -83,10 +85,34 @@ class SectionErrorBoundary extends React.Component<
   }
 }
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview }) => {
-  let Component;
+export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug }) => {
+  const resolved = resolveAndParse(
+    section.type,
+    section.variant,
+    section.settings as Record<string, unknown>
+  );
+
+  if (resolved) {
+    const { def, parsedData } = resolved;
+    const { Component } = def;
+
+    return (
+      <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
+        <div
+          style={{
+            backgroundColor: section.styleOverrides.backgroundColor ?? undefined,
+            color: section.styleOverrides.textColor ?? undefined,
+          }}
+        >
+          <Component data={parsedData as never} siteSlug={siteSlug} />
+        </div>
+      </SectionErrorBoundary>
+    );
+  }
+
+  let LegacyComponent;
   try {
-    Component = getSectionComponent(section.type, section.variant);
+    LegacyComponent = getSectionComponent(section.type, section.variant);
   } catch {
     if (isPreview) return null;
     return (
@@ -107,7 +133,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
           color: section.styleOverrides.textColor ?? undefined,
         }}
       >
-        <Component data={weddingData} instance={instance} />
+        <LegacyComponent data={weddingData} instance={instance} />
       </div>
     </SectionErrorBoundary>
   );
