@@ -409,6 +409,7 @@ interface EditVaultModalProps {
 const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose }) => {
   const [label, setLabel] = useState(config.label);
   const [durationYears, setDurationYears] = useState(config.duration_years);
+  const [labelManuallyEdited, setLabelManuallyEdited] = useState(false);
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -442,7 +443,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
               <input
                 type="text"
                 value={label}
-                onChange={e => setLabel(e.target.value)}
+                onChange={e => { setLabel(e.target.value); setLabelManuallyEdited(true); }}
                 placeholder="e.g. 1st Anniversary"
                 maxLength={60}
                 className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
@@ -455,7 +456,11 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
                 value={isCustom ? 'custom' : String(durationYears)}
                 onChange={e => {
                   if (e.target.value !== 'custom') {
-                    setDurationYears(Number(e.target.value));
+                    const newYears = Number(e.target.value);
+                    setDurationYears(newYears);
+                    if (!labelManuallyEdited) {
+                      setLabel(defaultVaultLabel(config.vault_index, newYears));
+                    }
                   } else {
                     setDurationYears(durationYears);
                   }
