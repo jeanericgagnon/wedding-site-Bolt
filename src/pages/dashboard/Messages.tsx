@@ -1,9 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
-import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft } from 'lucide-react';
+import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+
+const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
+
+async function triggerBulkSend(messageId: string): Promise<{ delivered: number; failed: number; total: number; status: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const res = await fetch(BULK_SEND_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messageId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(body?.error ?? `Send failed (${res.status})`);
+  }
+  return res.json();
+}
 
 interface Message {
   id: string;
@@ -16,6 +36,8 @@ interface Message {
   recipient_filter: Record<string, unknown> | null;
   audience_filter?: string | null;
   recipient_count?: number | null;
+  delivered_count?: number | null;
+  failed_count?: number | null;
 }
 
 interface Guest {
@@ -67,8 +89,12 @@ function getStatusBadge(message: Message) {
       return <span className="px-2 py-1 bg-warning-light text-warning rounded text-xs border border-warning/20">Scheduled</span>;
     case 'queued':
       return <span className="px-2 py-1 bg-primary-light text-primary rounded text-xs border border-primary/20">Queued</span>;
+    case 'sending':
+      return <span className="px-2 py-1 bg-primary-light text-primary rounded text-xs border border-primary/20 flex items-center gap-1"><Loader2 size={10} className="animate-spin" />Sending…</span>;
     case 'sent':
       return <span className="px-2 py-1 bg-success-light text-success rounded text-xs border border-success/20">Sent</span>;
+    case 'partial':
+      return <span className="px-2 py-1 bg-warning-light text-warning rounded text-xs border border-warning/20">Partial</span>;
     case 'failed':
       return <span className="px-2 py-1 bg-error-light text-error rounded text-xs border border-error/20">Failed</span>;
     default:
@@ -170,15 +196,33 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
           </div>
         </div>
 
+        {(message.delivered_count != null || message.failed_count != null) && (
+          <div className="px-6 py-3 border-t border-border flex-shrink-0 bg-surface-subtle">
+            <div className="flex gap-6 text-sm">
+              {message.delivered_count != null && message.delivered_count > 0 && (
+                <span className="flex items-center gap-1.5 text-success">
+                  <CheckCircle size={13} />
+                  {message.delivered_count} delivered
+                </span>
+              )}
+              {message.failed_count != null && message.failed_count > 0 && (
+                <span className="flex items-center gap-1.5 text-error">
+                  <AlertCircle size={13} />
+                  {message.failed_count} failed
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between px-6 py-4 border-t border-border flex-shrink-0">
-          {message.status === 'failed' ? (
+          {(message.status === 'failed' || message.status === 'partial') ? (
             <Button
               variant="primary"
               size="sm"
               onClick={() => { onRetry(message); onClose(); }}
             >
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Retry Send
+              {message.status === 'partial' ? 'Retry Failed' : 'Retry Send'}
             </Button>
           ) : (
             <span />
@@ -280,21 +324,13 @@ export const DashboardMessages: React.FC = () => {
         return;
       }
 
-      let status = 'queued';
-      let scheduledFor = null;
-      let sentAt = null;
+      const isScheduled = !saveAsDraft && formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime;
+      const isSendNow = !saveAsDraft && !isScheduled;
 
-      if (saveAsDraft) {
-        status = 'draft';
-      } else if (formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime) {
-        status = 'scheduled';
-        scheduledFor = `${formData.scheduleDate}T${formData.scheduleTime}:00`;
-      } else {
-        status = 'queued';
-        sentAt = new Date().toISOString();
-      }
+      const status = saveAsDraft ? 'draft' : isScheduled ? 'scheduled' : 'queued';
+      const scheduledFor = isScheduled ? `${formData.scheduleDate}T${formData.scheduleTime}:00` : null;
 
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('messages')
         .insert([{
           wedding_site_id: weddingSite.id,
@@ -303,25 +339,48 @@ export const DashboardMessages: React.FC = () => {
           channel: 'email',
           status,
           scheduled_for: scheduledFor,
-          sent_at: sentAt,
+          sent_at: null,
           audience_filter: formData.audience,
           recipient_count: recipientCount,
           recipient_filter: { audience: formData.audience, recipient_count: recipientCount },
-        }]);
+        }])
+        .select('id')
+        .single();
 
       if (error) throw error;
 
-      if (saveAsDraft) {
-        toast('Saved as draft', 'info');
-      } else if (status === 'scheduled') {
-        toast(`Scheduled for ${new Date(scheduledFor!).toLocaleString()} — will send to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}`, 'info');
-      } else {
-        toast(`Queued for ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} — will deliver when email sending goes live`, 'success');
-      }
-
       setShowRecipientPreview(false);
       setFormData({ subject: '', body: '', audience: 'all', scheduleType: 'now', scheduleDate: '', scheduleTime: '' });
-      await fetchMessages();
+
+      if (saveAsDraft) {
+        toast('Saved as draft', 'info');
+        await fetchMessages();
+        return;
+      }
+
+      if (isScheduled) {
+        toast(`Scheduled for ${new Date(scheduledFor!).toLocaleString()} — ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`, 'info');
+        await fetchMessages();
+        return;
+      }
+
+      if (isSendNow && inserted?.id) {
+        toast(`Sending to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}…`, 'info');
+        await fetchMessages();
+        try {
+          const result = await triggerBulkSend(inserted.id);
+          if (result.failed === 0) {
+            toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
+          } else if (result.delivered === 0) {
+            toast(`Delivery failed for all ${result.failed} recipient${result.failed !== 1 ? 's' : ''}. Check message history.`, 'error');
+          } else {
+            toast(`Sent to ${result.delivered}, failed for ${result.failed}. Check message history.`, 'info');
+          }
+        } catch (sendErr) {
+          toast(sendErr instanceof Error ? sendErr.message : 'Delivery failed. Check message history.', 'error');
+        }
+        await fetchMessages();
+      }
     } catch {
       toast('Failed to process message. Please try again.', 'error');
     } finally {
@@ -333,10 +392,21 @@ export const DashboardMessages: React.FC = () => {
     try {
       const { error } = await supabase
         .from('messages')
-        .update({ status: 'queued', sent_at: new Date().toISOString() })
+        .update({ status: 'queued', sent_at: null, failed_count: 0, delivered_count: 0 })
         .eq('id', message.id);
       if (error) throw error;
-      toast('Message re-queued for delivery', 'success');
+      toast('Retrying delivery…', 'info');
+      await fetchMessages();
+      try {
+        const result = await triggerBulkSend(message.id);
+        if (result.failed === 0) {
+          toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
+        } else {
+          toast(`Sent: ${result.delivered}, failed: ${result.failed}`, result.delivered === 0 ? 'error' : 'info');
+        }
+      } catch (sendErr) {
+        toast(sendErr instanceof Error ? sendErr.message : 'Delivery failed. Try again later.', 'error');
+      }
       await fetchMessages();
     } catch {
       toast('Failed to retry message', 'error');
@@ -369,11 +439,8 @@ export const DashboardMessages: React.FC = () => {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-bold text-text-primary">Messages</h1>
-            <span className="px-2.5 py-1 text-xs font-semibold bg-warning-light text-warning border border-warning/20 rounded-full">
-              Email sending coming soon
-            </span>
           </div>
-          <p className="text-text-secondary">Compose and save messages for your guests — email delivery activates soon</p>
+          <p className="text-text-secondary">Compose and send messages directly to your guests via email</p>
         </div>
 
         {weddingSite?.couple_email && (
@@ -535,11 +602,8 @@ export const DashboardMessages: React.FC = () => {
                       <p className="font-medium text-text-primary">What happens next</p>
                       <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
-                          ? `Scheduled for ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()} — will queue ${recipientsWithEmail} recipient${recipientsWithEmail !== 1 ? 's' : ''}`
-                          : `Will be queued for ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''} with email addresses`}
-                      </p>
-                      <p className="text-text-tertiary mt-2 text-xs">
-                        Email delivery to guests activates when your account is set up for sending. Queued messages will deliver automatically.
+                          ? `Scheduled for ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()} — ${recipientsWithEmail} recipient${recipientsWithEmail !== 1 ? 's' : ''}`
+                          : `Email will be sent immediately to ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''}`}
                       </p>
                     </div>
                   </div>

@@ -1,12 +1,28 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { Card } from '../components/ui/Card';
-import { CheckCircle, Search } from 'lucide-react';
+import { CheckCircle, Search, AlertCircle } from 'lucide-react';
 import { sendRsvpNotification, sendRsvpConfirmation } from '../lib/emailService';
+
+const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+async function rsvpCall(body: object): Promise<{ data?: unknown; error?: string }> {
+  const res = await fetch(RSVP_FN_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ANON_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) return { error: (json as { error?: string })?.error ?? `Error ${res.status}` };
+  return { data: json };
+}
 
 interface Guest {
   id: string;
@@ -18,6 +34,7 @@ interface Guest {
   plus_one_allowed: boolean;
   invited_to_ceremony: boolean;
   invited_to_reception: boolean;
+  invite_token: string | null;
 }
 
 interface ExistingRSVP {
@@ -26,6 +43,14 @@ interface ExistingRSVP {
   meal_choice: string | null;
   plus_one_name: string | null;
   notes: string | null;
+}
+
+interface SiteData {
+  coupleEmail: string | null;
+  coupleName1: string;
+  coupleName2: string;
+  weddingDate: string | null;
+  venueName: string | null;
 }
 
 export default function RSVP() {
@@ -49,59 +74,29 @@ export default function RSVP() {
     setError('');
 
     try {
-      // Try to find guest by invite token first
-      const { data: tokenResult, error: guestError } = await supabase
-        .from('guests')
-        .select('*')
-        .eq('invite_token', searchValue)
-        .maybeSingle();
-      let guestData = tokenResult;
-
-      // If not found by token, search by name
-      if (!guestData) {
-        const searchTerm = searchValue.toLowerCase();
-        const { data: allGuests, error: nameError } = await supabase
-          .from('guests')
-          .select('*')
-          .or(`name.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`);
-
-        if (nameError) throw nameError;
-
-        if (allGuests && allGuests.length > 0) {
-          guestData = allGuests[0];
-        }
-      }
-
-      if (guestError && guestError.code !== 'PGRST116') throw guestError;
-
-      if (!guestData) {
-        setError('Guest not found. Please check your name or invitation code.');
-        setLoading(false);
+      const { data, error: err } = await rsvpCall({ action: 'lookup', searchValue: searchValue.trim() });
+      if (err) {
+        setError(err === 'Guest not found. Please check your name or invitation code.'
+          ? err
+          : 'An error occurred. Please try again.');
         return;
       }
 
-      setGuest(guestData);
+      const { guest: foundGuest, existingRsvp: foundRsvp } = data as { guest: Guest; existingRsvp: ExistingRSVP | null };
+      setGuest(foundGuest);
 
-      // Check if RSVP already exists
-      const { data: rsvpData } = await supabase
-        .from('rsvps')
-        .select('*')
-        .eq('guest_id', guestData.id)
-        .maybeSingle();
-
-      if (rsvpData) {
-        setExistingRsvp(rsvpData);
+      if (foundRsvp) {
+        setExistingRsvp(foundRsvp);
         setFormData({
-          attending: rsvpData.attending,
-          meal_choice: rsvpData.meal_choice || '',
-          plus_one_name: rsvpData.plus_one_name || '',
-          notes: rsvpData.notes || '',
+          attending: foundRsvp.attending,
+          meal_choice: foundRsvp.meal_choice || '',
+          plus_one_name: foundRsvp.plus_one_name || '',
+          notes: foundRsvp.notes || '',
         });
       }
 
       setStep('form');
-    } catch (err) {
-      console.error('Error finding guest:', err);
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -116,84 +111,59 @@ export default function RSVP() {
     try {
       if (!guest) return;
 
-      const rsvpPayload = {
-        guest_id: guest.id,
-        attending: formData.attending,
-        meal_choice: formData.meal_choice || null,
-        plus_one_name: formData.plus_one_name || null,
-        notes: formData.notes || null,
-        responded_at: new Date().toISOString(),
-      };
-
-      if (existingRsvp) {
-        // Update existing RSVP
-        const { error: updateError } = await supabase
-          .from('rsvps')
-          .update(rsvpPayload)
-          .eq('id', existingRsvp.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new RSVP
-        const { error: insertError } = await supabase
-          .from('rsvps')
-          .insert([rsvpPayload]);
-
-        if (insertError) throw insertError;
+      if (!guest.invite_token) {
+        setError('Your invitation is missing a secure token. Please use the RSVP link from your invitation email.');
+        return;
       }
 
-      // Update guest record
-      await supabase
-        .from('guests')
-        .update({
-          rsvp_status: formData.attending ? 'confirmed' : 'declined',
-          rsvp_received_at: new Date().toISOString(),
-        })
-        .eq('id', guest.id);
+      const { data, error: err } = await rsvpCall({
+        action: 'submit',
+        guestId: guest.id,
+        inviteToken: guest.invite_token,
+        attending: formData.attending,
+        mealChoice: formData.meal_choice || null,
+        plusOneName: formData.plus_one_name || null,
+        notes: formData.notes || null,
+      });
 
-      // Fetch wedding site info for email
-      const { data: siteData } = await supabase
-        .from('wedding_sites')
-        .select('couple_email, couple_name_1, couple_name_2, wedding_date, venue_name')
-        .eq('id', guest.wedding_site_id)
-        .maybeSingle();
+      if (err) {
+        setError(err);
+        return;
+      }
 
-      if (siteData) {
-        const guestDisplayName = guest.first_name && guest.last_name
-          ? `${guest.first_name} ${guest.last_name}`
-          : guest.name;
+      const result = data as { success: boolean; siteData: SiteData | null; guestName: string; guestEmail: string | null };
 
-        // Notify couple
-        if (siteData.couple_email) {
+      if (result.siteData) {
+        const { siteData, guestName, guestEmail } = result;
+
+        if (siteData.coupleEmail) {
           sendRsvpNotification({
-            coupleEmail: siteData.couple_email,
-            guestName: guestDisplayName,
+            coupleEmail: siteData.coupleEmail,
+            guestName,
             attending: formData.attending,
             mealChoice: formData.meal_choice || null,
             plusOneName: formData.plus_one_name || null,
             notes: formData.notes || null,
-            coupleName1: siteData.couple_name_1,
-            coupleName2: siteData.couple_name_2,
+            coupleName1: siteData.coupleName1,
+            coupleName2: siteData.coupleName2,
           }).catch(console.error);
         }
 
-        // Confirm to guest if they have an email
-        if (guest.email) {
+        if (guestEmail) {
           sendRsvpConfirmation({
-            guestEmail: guest.email,
-            guestName: guestDisplayName,
+            guestEmail,
+            guestName,
             attending: formData.attending,
-            coupleName1: siteData.couple_name_1,
-            coupleName2: siteData.couple_name_2,
-            weddingDate: siteData.wedding_date ?? null,
-            venueName: siteData.venue_name ?? null,
+            coupleName1: siteData.coupleName1,
+            coupleName2: siteData.coupleName2,
+            weddingDate: siteData.weddingDate,
+            venueName: siteData.venueName,
           }).catch(console.error);
         }
       }
 
       setStep('success');
-    } catch (err) {
-      console.error('Error submitting RSVP:', err);
+    } catch {
       setError('Failed to submit RSVP. Please try again.');
     } finally {
       setLoading(false);
@@ -231,19 +201,14 @@ export default function RSVP() {
               </div>
 
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   {error}
                 </div>
               )}
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full"
-              >
-                {loading ? (
-                  'Searching...'
-                ) : (
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? 'Searching...' : (
                   <>
                     <Search className="w-4 h-4 mr-2" />
                     Find My Invitation
@@ -265,11 +230,16 @@ export default function RSVP() {
               )}
             </div>
 
+            {!guest.invite_token && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                Your invitation is missing a secure token. Please use the RSVP link from your invitation email to submit your response.
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Will you be attending?
-                </label>
+                <label className="block text-sm font-medium mb-2">Will you be attending?</label>
                 <Select
                   value={formData.attending ? 'yes' : 'no'}
                   onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
@@ -294,9 +264,7 @@ export default function RSVP() {
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Meal Choice
-                    </label>
+                    <label className="block text-sm font-medium mb-2">Meal Choice</label>
                     <Select
                       value={formData.meal_choice}
                       onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
@@ -322,9 +290,7 @@ export default function RSVP() {
                         onChange={(e) => setFormData({ ...formData, plus_one_name: e.target.value })}
                         placeholder="Guest's full name"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        You're welcome to bring a guest
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">You're welcome to bring a guest</p>
                     </div>
                   )}
                 </>
@@ -343,7 +309,8 @@ export default function RSVP() {
               </div>
 
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   {error}
                 </div>
               )}
@@ -352,14 +319,14 @@ export default function RSVP() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setStep('search')}
+                  onClick={() => { setStep('search'); setError(''); }}
                   className="flex-1"
                 >
                   Back
                 </Button>
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !guest.invite_token}
                   className="flex-1"
                 >
                   {loading ? 'Submitting...' : existingRsvp ? 'Update RSVP' : 'Submit RSVP'}
@@ -386,12 +353,7 @@ export default function RSVP() {
                 setSearchValue('');
                 setGuest(null);
                 setExistingRsvp(null);
-                setFormData({
-                  attending: true,
-                  meal_choice: '',
-                  plus_one_name: '',
-                  notes: '',
-                });
+                setFormData({ attending: true, meal_choice: '', plus_one_name: '', notes: '' });
               }}
             >
               Submit Another RSVP

@@ -74,7 +74,7 @@ export const MediaLibraryPanel: React.FC = () => {
             </h2>
             <p className="text-sm text-gray-500">
               {isPickerMode
-                ? 'Click an image to use it in this section'
+                ? 'Upload a new photo or click an existing one to use it'
                 : 'Upload and manage your wedding photos and assets'}
             </p>
           </div>
@@ -88,7 +88,7 @@ export const MediaLibraryPanel: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto flex flex-col">
-          {!isPickerMode && <UploadDropArea weddingId={state.project?.weddingId ?? ''} />}
+          <UploadDropArea weddingId={state.project?.weddingId ?? ''} />
           <AssetGrid
             assets={state.mediaAssets}
             uploadQueue={state.uploadQueue}

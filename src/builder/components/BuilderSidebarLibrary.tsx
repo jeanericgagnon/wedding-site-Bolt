@@ -113,9 +113,14 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
 
   const dragActiveSection = layerDragId ? sections.find(s => s.id === layerDragId) : null;
 
+  const sidebarExpanded = activeTab === 'sections';
+
   return (
     <>
-    <aside className="w-64 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+    <aside
+      className={`flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarExpanded ? 'w-96' : 'w-64'}`}
+      style={{ minWidth: sidebarExpanded ? '24rem' : '16rem' }}
+    >
       <div className="flex border-b border-gray-200">
         {([
           { id: 'layers', icon: Layers, label: 'Sections' },
@@ -202,8 +207,8 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
         )}
 
         {activeTab === 'sections' && !expandedManifest && (
-          <div className="p-3 space-y-1.5">
-            <div className="flex items-center gap-2 px-1 mb-2">
+          <div className="p-3">
+            <div className="flex items-center gap-2 px-1 mb-3">
               <button
                 onClick={() => setActiveTab('layers')}
                 className="p-1 -ml-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
@@ -214,34 +219,37 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Add Section
               </p>
+              <span className="ml-auto text-[10px] text-gray-300">{manifests.length} types</span>
             </div>
-            {manifests.map(manifest => {
-              const isCustom = manifest.type === 'custom';
-              return (
-                <button
-                  key={manifest.type}
-                  onClick={() => handleSectionClick(manifest)}
-                  className={`w-full text-left rounded-xl border transition-all duration-150 overflow-hidden group ${
-                    isCustom
-                      ? 'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50'
-                      : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-sm'
-                  }`}
-                >
-                  <div className="pointer-events-none">
-                    <SectionTypePreview sectionType={manifest.type} />
-                  </div>
-                  <div className={`flex items-center justify-between px-3 py-2 border-t ${isCustom ? 'border-amber-100' : 'border-gray-100'}`}>
-                    <div className="min-w-0">
-                      <p className={`text-xs font-semibold truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
-                      <p className="text-[10px] text-gray-400 truncate">
-                        {isCustom ? '8 skeleton layouts' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'style' : 'styles'}`}
-                      </p>
+            <div className="grid grid-cols-2 gap-2">
+              {manifests.map(manifest => {
+                const isCustom = manifest.type === 'custom';
+                return (
+                  <button
+                    key={manifest.type}
+                    onClick={() => handleSectionClick(manifest)}
+                    className={`w-full text-left rounded-xl border transition-all duration-150 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 ${
+                      isCustom
+                        ? 'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50'
+                        : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="pointer-events-none">
+                      <SectionTypePreview sectionType={manifest.type} />
                     </div>
-                    <ChevronRight size={13} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
-                  </div>
-                </button>
-              );
-            })}
+                    <div className={`flex items-center justify-between px-2.5 py-2 border-t ${isCustom ? 'border-amber-100' : 'border-gray-100'}`}>
+                      <div className="min-w-0">
+                        <p className={`text-[11px] font-semibold truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
+                        <p className="text-[9px] text-gray-400 truncate">
+                          {isCustom ? '8 skeletons' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'style' : 'styles'}`}
+                        </p>
+                      </div>
+                      <ChevronRight size={12} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -297,18 +305,20 @@ const VariantPicker: React.FC<VariantPickerProps> = ({ manifest, onBack, onSelec
         <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Choose a style</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2">
-        {manifest.variantMeta.map((variant: VariantMeta) => (
-          <VariantCard
-            key={variant.id}
-            variant={variant}
-            sectionType={manifest.type}
-            isDefault={variant.id === manifest.defaultVariant}
-            isHovered={hoveredVariant === variant.id}
-            onHover={setHoveredVariant}
-            onSelect={onSelect}
-          />
-        ))}
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
+        <div className="grid grid-cols-2 gap-2">
+          {manifest.variantMeta.map((variant: VariantMeta) => (
+            <VariantCard
+              key={variant.id}
+              variant={variant}
+              sectionType={manifest.type}
+              isDefault={variant.id === manifest.defaultVariant}
+              isHovered={hoveredVariant === variant.id}
+              onHover={setHoveredVariant}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -329,29 +339,27 @@ const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefau
       onMouseEnter={() => onHover(variant.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onSelect(variant.id)}
-      className={`w-full text-left rounded-xl border transition-all duration-150 overflow-hidden group ${
+      className={`w-full text-left rounded-xl border transition-all duration-150 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 ${
         isHovered
-          ? 'border-rose-400 shadow-sm'
+          ? 'border-rose-400 shadow-md'
           : 'border-gray-200 bg-white hover:border-rose-300'
       }`}
+      title={variant.description}
     >
       <VariantPreviewSwatch variantId={variant.id} sectionType={sectionType} isHovered={isHovered} />
 
-      <div className="px-3 py-2.5">
-        <div className="flex items-center justify-between mb-0.5">
-          <span className="text-xs font-semibold text-gray-700">{variant.label}</span>
-          <div className="flex items-center gap-1.5">
+      <div className="px-2.5 py-2">
+        <div className="flex items-start justify-between gap-1">
+          <div className="min-w-0">
+            <span className="text-[11px] font-semibold text-gray-700 block truncate">{variant.label}</span>
             {isDefault && (
-              <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-medium">
-                Default
-              </span>
+              <span className="text-[9px] text-gray-400 font-medium">Default</span>
             )}
-            <span className={`transition-opacity duration-150 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-              <Plus size={13} className="text-rose-500" />
-            </span>
           </div>
+          <span className={`flex-shrink-0 transition-opacity duration-150 mt-0.5 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+            <Plus size={12} className="text-rose-500" />
+          </span>
         </div>
-        <p className="text-xs text-gray-400 leading-relaxed">{variant.description}</p>
       </div>
     </button>
   );
