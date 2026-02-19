@@ -41,11 +41,12 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     capabilities: { ...defaultCapabilities, mediaAware: true, deletable: false },
     settingsSchema: {
       fields: [
-        { key: 'title', label: 'Headline', type: 'text', placeholder: 'Your names' },
-        { key: 'subtitle', label: 'Subheadline', type: 'text', placeholder: 'Wedding date & location' },
+        { key: 'headline', label: 'Headline (overrides couple names)', type: 'text', placeholder: 'Leave blank to use couple names' },
+        { key: 'subtitle', label: 'Subheadline', type: 'text', placeholder: 'Leave blank to use wedding date' },
+        { key: 'title', label: 'Eyebrow Text', type: 'text', placeholder: 'e.g. We are getting married' },
+        { key: 'showTitle', label: 'Show Eyebrow Text', type: 'toggle', defaultValue: true },
         { key: 'backgroundImage', label: 'Background Image', type: 'image' },
-        { key: 'overlayOpacity', label: 'Overlay Opacity', type: 'number', defaultValue: 40 },
-        { key: 'showCountdown', label: 'Show Countdown', type: 'toggle', defaultValue: true },
+        { key: 'overlayOpacity', label: 'Image Opacity (%)', type: 'number', defaultValue: 40 },
       ],
     },
     bindingsSchema: { slots: [] },

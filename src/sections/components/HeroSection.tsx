@@ -20,28 +20,32 @@ function formatDate(iso: string | undefined): string {
 export const HeroSection: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = (settings.headline as string) || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
+  const bgImage = (settings.backgroundImage as string) || media.heroImageUrl || '';
+  const opacity = typeof settings.overlayOpacity === 'number' ? settings.overlayOpacity / 100 : 0.3;
 
   return (
     <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-      {media.heroImageUrl && (
+      {bgImage && (
         <div className="absolute inset-0 z-0">
-          <img src={media.heroImageUrl} alt="Hero" className="w-full h-full object-cover opacity-30" />
+          <img src={bgImage} alt="Hero" className="w-full h-full object-cover" style={{ opacity }} />
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/40" />
         </div>
       )}
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         {settings.showTitle !== false && (
           <p className="text-sm uppercase tracking-[0.25em] text-text-secondary mb-6 font-medium">
-            {settings.title || 'We are getting married'}
+            {(settings.title as string) || 'We are getting married'}
           </p>
         )}
         <h1 className="text-5xl md:text-7xl font-bold text-text-primary mb-6 leading-tight">
           {displayName}
         </h1>
         <div className="w-16 h-px bg-primary mx-auto mb-6" />
-        <p className="text-xl md:text-2xl text-text-secondary">{date}</p>
+        <p className="text-xl md:text-2xl text-text-secondary">
+          {(settings.subtitle as string) || date}
+        </p>
       </div>
     </section>
   );
@@ -50,15 +54,16 @@ export const HeroSection: React.FC<Props> = ({ data, instance }) => {
 export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = (settings.headline as string) || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
-  const hasImage = !!media.heroImageUrl;
+  const bgImage = (settings.backgroundImage as string) || media.heroImageUrl || '';
+  const hasImage = !!bgImage;
 
   return (
     <section className="relative min-h-[70vh] flex items-end pb-16 bg-background">
       {hasImage && (
         <div className="absolute inset-0 z-0">
-          <img src={media.heroImageUrl} alt="Hero" className="w-full h-full object-cover" />
+          <img src={bgImage} alt="Hero" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
         </div>
       )}
@@ -66,16 +71,14 @@ export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
         <div className="max-w-6xl mx-auto">
           {settings.showTitle !== false && (
             <p className={"text-sm uppercase tracking-[0.25em] font-medium mb-3 " + (hasImage ? "text-white/70" : "text-text-secondary")}>
-              {settings.title || 'We are getting married'}
+              {(settings.title as string) || 'We are getting married'}
             </p>
           )}
-          <h1
-            className={"text-6xl md:text-8xl font-light tracking-tight mb-3 " + (hasImage ? "text-white" : "text-text-primary")}
-          >
+          <h1 className={"text-6xl md:text-8xl font-light tracking-tight mb-3 " + (hasImage ? "text-white" : "text-text-primary")}>
             {displayName}
           </h1>
           <p className={"text-lg md:text-xl font-light " + (hasImage ? "text-white/80" : "text-text-secondary")}>
-            {date}
+            {(settings.subtitle as string) || date}
           </p>
         </div>
       </div>
@@ -86,28 +89,33 @@ export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
 export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = (settings.headline as string) || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
+  const bgImage = (settings.backgroundImage as string) || media.heroImageUrl || '';
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden bg-neutral-900">
-      {media.heroImageUrl ? (
+      {bgImage ? (
         <div className="absolute inset-0 z-0">
-          <img src={media.heroImageUrl} alt="Hero" className="w-full h-full object-cover opacity-60" />
+          <img src={bgImage} alt="Hero" className="w-full h-full object-cover opacity-60" />
         </div>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-accent/60" />
       )}
       <div className="absolute inset-0 bg-black/30" />
       <div className="relative z-10 text-center px-4">
-        <p className="text-xs uppercase tracking-[0.4em] text-white/70 mb-8 font-medium">{date}</p>
+        <p className="text-xs uppercase tracking-[0.4em] text-white/70 mb-8 font-medium">
+          {(settings.subtitle as string) || date}
+        </p>
         <h1 className="text-6xl md:text-9xl font-light tracking-tight text-white leading-none mb-8">
           {displayName}
         </h1>
         {settings.showTitle !== false && (
           <div className="flex items-center justify-center gap-6">
             <div className="h-px w-12 bg-white/50" />
-            <p className="text-sm tracking-widest text-white/70 uppercase font-medium">{settings.title || 'Join us'}</p>
+            <p className="text-sm tracking-widest text-white/70 uppercase font-medium">
+              {(settings.title as string) || 'Join us'}
+            </p>
             <div className="h-px w-12 bg-white/50" />
           </div>
         )}

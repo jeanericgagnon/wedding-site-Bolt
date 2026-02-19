@@ -1,26 +1,33 @@
-import React from 'react';
-import { X, ChevronDown, ImageIcon, Eye, EyeOff } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectSelectedSection, selectActivePage } from '../state/builderSelectors';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSettingsField } from '../../types/builder/section';
 
+type InspectorTab = 'content' | 'style' | 'data';
+
 export const BuilderInspectorPanel: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
+  const [activeTab, setActiveTab] = React.useState<InspectorTab>('content');
   const selectedSection = selectSelectedSection(state);
   const activePage = selectActivePage(state);
+
+  useEffect(() => {
+    if (selectedSection) setActiveTab('content');
+  }, [selectedSection?.id]);
 
   if (!selectedSection || !activePage) {
     return (
       <aside className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div>
-            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-gray-400 text-lg">✦</span>
+            <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Pencil size={18} className="text-gray-300" />
             </div>
-            <p className="text-sm font-medium text-gray-500">Select a section</p>
-            <p className="text-xs text-gray-400 mt-1">Click any section on the canvas to inspect and edit it</p>
+            <p className="text-sm font-semibold text-gray-600 mb-1">No section selected</p>
+            <p className="text-xs text-gray-400 leading-relaxed">Click any section on the canvas to edit its content and style</p>
           </div>
         </div>
       </aside>
@@ -28,6 +35,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   }
 
   const manifest = getSectionManifest(selectedSection.type);
+  const hasBindings = manifest.capabilities.hasBindings && manifest.bindingsSchema.slots.length > 0;
 
   const handleUpdateSetting = (key: string, value: string | boolean | number) => {
     dispatch(
@@ -38,146 +46,181 @@ export const BuilderInspectorPanel: React.FC = () => {
   };
 
   const handleChangeVariant = (variant: string) => {
-    dispatch(
-      builderActions.updateSection(activePage.id, selectedSection.id, { variant })
-    );
+    dispatch(builderActions.updateSection(activePage.id, selectedSection.id, { variant }));
   };
 
   const handleToggleVisibility = () => {
     dispatch(builderActions.toggleSectionVisibility(activePage.id, selectedSection.id));
   };
 
+  const tabs: { id: InspectorTab; icon: React.FC<{ size?: number; className?: string }>; label: string; show: boolean }[] = [
+    { id: 'content', icon: Pencil, label: 'Content', show: manifest.settingsSchema.fields.length > 0 },
+    { id: 'style', icon: Palette, label: 'Style', show: true },
+    { id: 'data', icon: Database, label: 'Data', show: hasBindings },
+  ].filter(t => t.show);
+
   return (
     <aside className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-gray-800 truncate">{manifest.label}</h3>
             {!selectedSection.enabled && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded">Hidden</span>
+              <span className="text-[10px] font-medium px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-100">Hidden</span>
             )}
           </div>
-          <p className="text-xs text-gray-400">{selectedSection.type} section</p>
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button
-            onClick={handleToggleVisibility}
-            title={selectedSection.enabled ? 'Hide section' : 'Show section'}
-            className={`p-1.5 rounded transition-colors ${
-              selectedSection.enabled
-                ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                : 'text-rose-500 bg-rose-50 hover:bg-rose-100'
-            }`}
-          >
-            {selectedSection.enabled ? <Eye size={15} /> : <EyeOff size={15} />}
-          </button>
-          <button
-            onClick={() => dispatch(builderActions.selectSection(null))}
-            className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X size={15} />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        <InspectorSection title="Variant">
-          <div className="relative">
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-[10px] text-gray-400">Variant:</span>
             <select
               value={selectedSection.variant}
               onChange={e => handleChangeVariant(e.target.value)}
-              className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 pr-8 focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="text-[10px] text-gray-600 font-medium bg-transparent border-none outline-none cursor-pointer"
             >
               {manifest.supportedVariants.map(v => (
                 <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
               ))}
             </select>
-            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
-        </InspectorSection>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={handleToggleVisibility}
+            title={selectedSection.enabled ? 'Hide section' : 'Show section'}
+            className={`p-1.5 rounded-lg transition-colors ${
+              selectedSection.enabled
+                ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                : 'text-amber-500 bg-amber-50 hover:bg-amber-100'
+            }`}
+          >
+            {selectedSection.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
+          </button>
+          <button
+            onClick={() => dispatch(builderActions.selectSection(null))}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      </div>
 
-        <InspectorSection title="Settings">
-          {manifest.settingsSchema.fields.map(field => (
-            <InspectorField
-              key={field.key}
-              field={field}
-              value={selectedSection.settings[field.key] ?? field.defaultValue}
-              onChange={val => handleUpdateSetting(field.key, val)}
-              sectionId={selectedSection.id}
-            />
+      {tabs.length > 1 && (
+        <div className="flex border-b border-gray-100 px-4">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-colors mr-1 ${
+                activeTab === tab.id
+                  ? 'border-rose-500 text-rose-600'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <tab.icon size={12} />
+              {tab.label}
+            </button>
           ))}
-        </InspectorSection>
+        </div>
+      )}
 
-        {manifest.capabilities.hasBindings && manifest.bindingsSchema.slots.length > 0 && (
-          <InspectorSection title="Data Bindings">
-            {manifest.bindingsSchema.slots.map(slot => (
-              <div key={slot.key} className="mb-3">
-                <label className="text-xs font-medium text-gray-500 block mb-1">{slot.label}</label>
-                <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                  Auto-bound from {slot.dataSource} data
-                </div>
-              </div>
+      <div className="flex-1 overflow-y-auto">
+        {activeTab === 'content' && (
+          <div className="p-4 space-y-1">
+            {manifest.settingsSchema.fields.map(field => (
+              <InspectorField
+                key={field.key}
+                field={field}
+                value={selectedSection.settings[field.key] ?? field.defaultValue}
+                onChange={val => handleUpdateSetting(field.key, val)}
+                sectionId={selectedSection.id}
+              />
             ))}
-          </InspectorSection>
+            {manifest.settingsSchema.fields.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-6">No editable content fields for this section.</p>
+            )}
+          </div>
         )}
 
-        <InspectorSection title="Style Overrides">
-          <div className="mb-3">
-            <label className="text-xs font-medium text-gray-500 block mb-1">Background Color</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={selectedSection.styleOverrides?.backgroundColor ?? '#ffffff'}
-                onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                  styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
-                }))}
-                className="w-8 h-8 rounded cursor-pointer border border-gray-200"
-              />
-              <input
-                type="text"
-                value={selectedSection.styleOverrides?.backgroundColor ?? ''}
-                onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                  styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
-                }))}
-                placeholder="e.g. #f9fafb"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
-              />
+        {activeTab === 'style' && (
+          <div className="p-4 space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">Background Color</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={selectedSection.styleOverrides?.backgroundColor ?? '#ffffff'}
+                  onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                    styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
+                  }))}
+                  className="w-9 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5"
+                />
+                <input
+                  type="text"
+                  value={selectedSection.styleOverrides?.backgroundColor ?? ''}
+                  onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                    styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
+                  }))}
+                  placeholder="e.g. #f9fafb or transparent"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">Text Color</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={selectedSection.styleOverrides?.textColor ?? '#111827'}
+                  onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                    styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
+                  }))}
+                  className="w-9 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5"
+                />
+                <input
+                  type="text"
+                  value={selectedSection.styleOverrides?.textColor ?? ''}
+                  onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                    styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
+                  }))}
+                  placeholder="e.g. #111827"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">Layout Variant</label>
+              <div className="relative">
+                <select
+                  value={selectedSection.variant}
+                  onChange={e => handleChangeVariant(e.target.value)}
+                  className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 pr-8 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                >
+                  {manifest.variantMeta.map(v => (
+                    <option key={v.id} value={v.id}>{v.label} — {v.description}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
             </div>
           </div>
-          <div className="mb-3">
-            <label className="text-xs font-medium text-gray-500 block mb-1">Text Color</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={selectedSection.styleOverrides?.textColor ?? '#111827'}
-                onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                  styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
-                }))}
-                className="w-8 h-8 rounded cursor-pointer border border-gray-200"
-              />
-              <input
-                type="text"
-                value={selectedSection.styleOverrides?.textColor ?? ''}
-                onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                  styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
-                }))}
-                placeholder="e.g. #111827"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
-              />
-            </div>
+        )}
+
+        {activeTab === 'data' && hasBindings && (
+          <div className="p-4 space-y-3">
+            <p className="text-xs text-gray-400 leading-relaxed">
+              This section automatically pulls data from your wedding information. Manage the source data from the dashboard.
+            </p>
+            {manifest.bindingsSchema.slots.map(slot => (
+              <div key={slot.key} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-xs font-semibold text-gray-700 mb-0.5">{slot.label}</p>
+                <p className="text-xs text-gray-400">Auto-bound from <span className="font-medium text-gray-500">{slot.dataSource}</span> data</p>
+              </div>
+            ))}
           </div>
-        </InspectorSection>
+        )}
       </div>
     </aside>
   );
 };
-
-const InspectorSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="border-b border-gray-100 px-4 py-3">
-    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{title}</h4>
-    {children}
-  </div>
-);
 
 interface InspectorFieldProps {
   field: BuilderSettingsField;
@@ -188,45 +231,53 @@ interface InspectorFieldProps {
 
 const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange, sectionId }) => {
   const { dispatch } = useBuilderContext();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
+  }, [value]);
+
   switch (field.type) {
     case 'toggle':
       return (
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-sm text-gray-600">{field.label}</label>
+        <div className="flex items-center justify-between py-2">
+          <label className="text-sm text-gray-700 font-medium">{field.label}</label>
           <button
             onClick={() => onChange(!(value as boolean))}
-            className={`relative w-10 h-5 rounded-full transition-colors ${value ? 'bg-rose-500' : 'bg-gray-200'}`}
+            className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${value ? 'bg-rose-500' : 'bg-gray-200'}`}
           >
-            <span
-              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${value ? 'translate-x-5' : ''}`}
-            />
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${value ? 'translate-x-4' : ''}`} />
           </button>
         </div>
       );
 
     case 'textarea':
       return (
-        <div className="mb-3">
-          <label className="text-xs font-medium text-gray-500 block mb-1">{field.label}</label>
+        <div className="py-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
           <textarea
+            ref={textareaRef}
             value={(value as string) ?? ''}
             onChange={e => onChange(e.target.value)}
             placeholder={field.placeholder}
             rows={3}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none bg-gray-50 focus:bg-white transition-colors"
           />
         </div>
       );
 
     case 'select':
       return (
-        <div className="mb-3">
-          <label className="text-xs font-medium text-gray-500 block mb-1">{field.label}</label>
+        <div className="py-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
           <div className="relative">
             <select
               value={(value as string) ?? ''}
               onChange={e => onChange(e.target.value)}
-              className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 pr-8 focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="w-full appearance-none border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 text-gray-700 pr-8 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-colors"
             >
               {field.options?.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -239,21 +290,21 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
 
     case 'color':
       return (
-        <div className="mb-3">
-          <label className="text-xs font-medium text-gray-500 block mb-1">{field.label}</label>
+        <div className="py-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
           <div className="flex items-center gap-2">
             <input
               type="color"
               value={(value as string) ?? '#000000'}
               onChange={e => onChange(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer border border-gray-200"
+              className="w-9 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5"
             />
             <input
               type="text"
               value={(value as string) ?? ''}
               onChange={e => onChange(e.target.value)}
               placeholder={field.placeholder ?? 'e.g. #000000'}
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono bg-gray-50"
             />
           </div>
         </div>
@@ -261,53 +312,54 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
 
     case 'image':
       return (
-        <div className="mb-3">
-          <label className="text-xs font-medium text-gray-500 block mb-1">{field.label}</label>
+        <div className="py-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
           {value ? (
-            <div className="relative rounded-lg overflow-hidden border border-gray-200 aspect-video bg-gray-100 mb-2">
+            <div className="relative rounded-xl overflow-hidden border border-gray-200 aspect-video bg-gray-100 mb-2 group">
               <img src={value as string} alt="" className="w-full h-full object-cover" />
-              <button
-                onClick={() => onChange('')}
-                className="absolute top-1 right-1 p-1 bg-white rounded shadow text-gray-500 hover:text-red-500 transition-colors"
-                aria-label="Remove image"
-              >
-                <X size={12} />
-              </button>
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <button
+                  onClick={() => onChange('')}
+                  className="px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           ) : null}
           <button
             onClick={() => dispatch(builderActions.openMediaLibrary(sectionId))}
-            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-lg p-3 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-400 transition-colors"
+            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-3 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
           >
             <ImageIcon size={14} />
-            {value ? 'Change image' : 'Select from media library'}
+            {value ? 'Change image' : 'Choose from media library'}
           </button>
         </div>
       );
 
     case 'number':
       return (
-        <div className="mb-3">
-          <label className="text-xs font-medium text-gray-500 block mb-1">{field.label}</label>
+        <div className="py-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
           <input
             type="number"
             value={(value as number) ?? 0}
             onChange={e => onChange(Number(e.target.value))}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
           />
         </div>
       );
 
     default:
       return (
-        <div className="mb-3">
-          <label className="text-xs font-medium text-gray-500 block mb-1">{field.label}</label>
+        <div className="py-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
           <input
             type="text"
             value={(value as string) ?? ''}
             onChange={e => onChange(e.target.value)}
             placeholder={field.placeholder}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
           />
         </div>
       );
