@@ -67,11 +67,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setLocalDemoUser = () => {
-    setUser({
-      id: 'demo-local-user',
+    setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
+  };
+
+  const trySupabaseDemoSignIn = async () => {
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: DEMO_EMAIL,
-      name: 'Alex & Jordan (Demo)',
+      password: DEMO_PASSWORD,
     });
+    if (error || !data.user) return null;
+    return data.user;
   };
 
   const signIn = async () => {
@@ -87,56 +92,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const existingUser = await trySupabaseDemoSignIn();
+    if (existingUser) {
+      setUser({
+        id: existingUser.id,
+        email: existingUser.email || '',
+        name: existingUser.user_metadata?.name || 'Alex & Jordan (Demo)',
+      });
+      return;
+    }
+
+    const { error: signUpError } = await supabase.auth.signUp({
       email: DEMO_EMAIL,
       password: DEMO_PASSWORD,
+      options: { data: { name: 'Alex & Jordan (Demo)' } },
     });
 
-    if (error) {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: DEMO_EMAIL,
-        password: DEMO_PASSWORD,
-        options: {
-          data: {
-            name: 'Alex & Jordan (Demo)',
-          },
-        },
-      });
-
-      if (signUpError) {
-        // Keep demo UX working even when Supabase auth/email settings block auto-signup.
-        setLocalDemoUser();
-        return;
-      }
-
-      if (signUpData.user) {
-        // Try to establish a real session; if not possible, fall back to local demo session.
-        const retry = await supabase.auth.signInWithPassword({
-          email: DEMO_EMAIL,
-          password: DEMO_PASSWORD,
-        });
-        if (retry.data.user) {
-          setUser({
-            id: retry.data.user.id,
-            email: retry.data.user.email || '',
-            name: 'Alex & Jordan (Demo)',
-          });
-          return;
-        }
-
-        setLocalDemoUser();
-        return;
-      }
-
+    // If sign-up fails (email confirmations/rate-limits/settings), keep demo UX available.
+    if (signUpError) {
       setLocalDemoUser();
       return;
     }
 
-    if (data.user) {
+    const newUser = await trySupabaseDemoSignIn();
+    if (newUser) {
       setUser({
-        id: data.user.id,
-        email: data.user.email || '',
-        name: 'Alex & Jordan (Demo)',
+        id: newUser.id,
+        email: newUser.email || '',
+        name: newUser.user_metadata?.name || 'Alex & Jordan (Demo)',
       });
       return;
     }
