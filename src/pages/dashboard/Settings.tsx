@@ -34,6 +34,7 @@ export const DashboardSettings: React.FC = () => {
   const [slugSuccess, setSlugSuccess] = useState<string | null>(null);
   const [slugError, setSlugError] = useState<string | null>(null);
 
+  const [defaultLanguage, setDefaultLanguage] = useState<'en' | 'es'>('en');
   const [privacyMode, setPrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
   const [hideFromSearch, setHideFromSearch] = useState(false);
   const [sitePassword, setSitePassword] = useState('');
@@ -83,7 +84,7 @@ export const DashboardSettings: React.FC = () => {
     try {
       const { data } = await supabase
         .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token')
+        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token, default_language')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -98,6 +99,7 @@ export const DashboardSettings: React.FC = () => {
         setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
         setHideFromSearch(!!(data.hide_from_search));
         setGuestAccessToken((data.guest_access_token as string | null) ?? null);
+        setDefaultLanguage(((data.default_language as string) === 'es' ? 'es' : 'en'));
         const prefs = data.notification_prefs as Record<string, boolean> | null;
         if (prefs) {
           setNotifRsvp(prefs.rsvp ?? true);
@@ -200,6 +202,7 @@ export const DashboardSettings: React.FC = () => {
       const updates: Record<string, unknown> = {
         privacy_mode: privacyMode,
         hide_from_search: hideFromSearch,
+        default_language: defaultLanguage,
       };
 
       if (privacyMode === 'password_protected' && sitePassword) {
@@ -537,6 +540,36 @@ export const DashboardSettings: React.FC = () => {
                       {visibilityError && (
                         <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{visibilityError}</div>
                       )}
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-text-primary">Default site language</label>
+                        <p className="text-xs text-text-secondary">Sets the default language for your public wedding site and RSVP page.</p>
+                        <div className="flex gap-3">
+                          {([
+                            { value: 'en', label: 'English' },
+                            { value: 'es', label: 'Español' },
+                          ] as const).map(opt => (
+                            <label
+                              key={opt.value}
+                              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-colors ${
+                                defaultLanguage === opt.value
+                                  ? 'border-primary bg-primary/5'
+                                  : 'border-border hover:border-primary/40'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="default_language"
+                                value={opt.value}
+                                checked={defaultLanguage === opt.value}
+                                onChange={() => setDefaultLanguage(opt.value)}
+                                className="text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm font-medium text-text-primary">{opt.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
 
                       <div className="space-y-3">
                         {(

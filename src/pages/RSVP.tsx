@@ -8,7 +8,6 @@ import { Textarea } from '../components/ui/Textarea';
 import { Card } from '../components/ui/Card';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
-import { sendRsvpNotification, sendRsvpConfirmation } from '../lib/emailService';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -46,14 +45,6 @@ interface ExistingRSVP {
   meal_choice: string | null;
   plus_one_name: string | null;
   notes: string | null;
-}
-
-interface SiteData {
-  coupleEmail: string | null;
-  coupleName1: string;
-  coupleName2: string;
-  weddingDate: string | null;
-  venueName: string | null;
 }
 
 function maskEmail(email: string | null): string {
@@ -206,37 +197,6 @@ export default function RSVP() {
       if (err) {
         setError(err);
         return;
-      }
-
-      const result = data as { success: boolean; siteData: SiteData | null; guestName: string; guestEmail: string | null };
-
-      if (result.siteData) {
-        const { siteData, guestName, guestEmail } = result;
-
-        if (siteData.coupleEmail) {
-          sendRsvpNotification({
-            coupleEmail: siteData.coupleEmail,
-            guestName,
-            attending: formData.attending,
-            mealChoice: formData.meal_choice || null,
-            plusOneName: formData.plus_one_name || null,
-            notes: formData.notes || null,
-            coupleName1: siteData.coupleName1,
-            coupleName2: siteData.coupleName2,
-          }).catch(() => {});
-        }
-
-        if (guestEmail) {
-          sendRsvpConfirmation({
-            guestEmail,
-            guestName,
-            attending: formData.attending,
-            coupleName1: siteData.coupleName1,
-            coupleName2: siteData.coupleName2,
-            weddingDate: siteData.weddingDate,
-            venueName: siteData.venueName,
-          }).catch(() => {});
-        }
       }
 
       setStep('success');

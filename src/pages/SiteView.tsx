@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { supabase } from '../lib/supabase';
@@ -44,6 +45,7 @@ const PasswordGate: React.FC<{
   error: string | null;
   checking: boolean;
 }> = ({ onSubmit, error, checking }) => {
+  const { t } = useTranslation();
   const [pw, setPw] = useState('');
   const [showPw, setShowPw] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,8 +63,8 @@ const PasswordGate: React.FC<{
           <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock className="w-8 h-8 text-stone-200" />
           </div>
-          <h1 className="text-2xl font-light text-stone-800 mb-2">Private Wedding Site</h1>
-          <p className="text-stone-500 text-sm">Enter the password provided by the couple to view this site.</p>
+          <h1 className="text-2xl font-light text-stone-800 mb-2">{t('site.password_gate_title')}</h1>
+          <p className="text-stone-500 text-sm">{t('site.password_gate_subtitle')}</p>
         </div>
         <form
           onSubmit={e => { e.preventDefault(); onSubmit(pw); }}
@@ -75,14 +77,14 @@ const PasswordGate: React.FC<{
             </div>
           )}
           <div className="relative">
-            <label className="block text-sm font-medium text-stone-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-stone-700 mb-1">{t('site.password_label')}</label>
             <input
               ref={inputRef}
               type={showPw ? 'text' : 'password'}
               value={pw}
               onChange={e => setPw(e.target.value)}
               className="w-full px-3 py-2 pr-10 border border-stone-300 rounded-lg text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
-              placeholder="Enter site password"
+              placeholder={t('site.password_placeholder')}
               autoComplete="current-password"
             />
             <button
@@ -99,7 +101,7 @@ const PasswordGate: React.FC<{
             disabled={!pw || checking}
             className="w-full py-2.5 bg-stone-800 text-white rounded-lg font-medium hover:bg-stone-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {checking ? 'Checking…' : 'View Site'}
+            {checking ? t('site.password_checking') : t('site.password_submit')}
           </button>
         </form>
         <p className="text-center text-xs text-stone-400 mt-4">Powered by DayOf</p>
@@ -109,30 +111,69 @@ const PasswordGate: React.FC<{
   );
 };
 
-const InviteOnlyGate: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-stone-50 to-stone-100 px-4">
-    <div className="max-w-md w-full text-center space-y-6">
-      <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto">
-        <Lock className="w-8 h-8 text-stone-200" />
+const InviteOnlyGate: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-stone-50 to-stone-100 px-4">
+      <div className="flex justify-end p-4">
+        <LanguageSwitcher />
       </div>
-      <div>
-        <h1 className="text-2xl font-light text-stone-800 mb-2">Invite-only site</h1>
-        <p className="text-stone-500 leading-relaxed">
-          This wedding site is only accessible to invited guests. Please use the personal link from your invitation.
-        </p>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-stone-200" />
-        <span className="text-xs text-stone-400 px-2">dayof.love</span>
-        <div className="flex-1 h-px bg-stone-200" />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto">
+            <Lock className="w-8 h-8 text-stone-200" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-light text-stone-800 mb-2">{t('site.invite_only_title')}</h1>
+            <p className="text-stone-500 leading-relaxed">{t('site.invite_only_subtitle')}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-stone-200" />
+            <span className="text-xs text-stone-400 px-2">dayof.love</span>
+            <div className="flex-1 h-px bg-stone-200" />
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+const ComingSoonScreen: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-surface px-4">
+      <div className="flex justify-end w-full max-w-md absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="w-24 h-24 bg-primary/8 rounded-full flex items-center justify-center mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-primary/60">
+            <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 className="text-3xl font-light text-text-primary mb-3">{t('site.coming_soon_title')}</h1>
+          <p className="text-text-secondary leading-relaxed">{t('site.coming_soon_subtitle')}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-text-tertiary px-2">dayof.love</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+        <p className="text-xs text-text-tertiary">
+          Are you the couple?{' '}
+          <a href="/login" className="text-primary hover:underline">Sign in</a>
+          {' '}and click Publish in your builder.
+        </p>
+      </div>
+    </div>
+  );
+};
 
 export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
+  const { i18n } = useTranslation();
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
@@ -181,7 +222,7 @@ export const SiteView: React.FC = () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_data, layout_config, site_json, published_json, active_template_id, is_published, privacy_mode, site_password_hash, hide_from_search, guest_access_token')
+          .select('id, wedding_data, layout_config, site_json, published_json, active_template_id, is_published, privacy_mode, site_password_hash, hide_from_search, guest_access_token, default_language')
           .eq('site_slug', slug)
           .maybeSingle();
 
@@ -194,6 +235,12 @@ export const SiteView: React.FC = () => {
         }
 
         setWeddingSiteId(data.id as string);
+
+        const siteLang = (data.default_language as string) ?? 'en';
+        const userPref = localStorage.getItem('dayof_language');
+        if (!userPref && (siteLang === 'en' || siteLang === 'es')) {
+          i18n.changeLanguage(siteLang);
+        }
 
         const isPublished = !!(data.is_published);
 
@@ -326,33 +373,7 @@ export const SiteView: React.FC = () => {
 
   if (isComingSoon) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-surface px-4">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="relative">
-            <div className="w-24 h-24 bg-primary/8 rounded-full flex items-center justify-center mx-auto">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-primary/60">
-                <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
-              </svg>
-            </div>
-          </div>
-          <div>
-            <h1 className="text-3xl font-light text-text-primary mb-3">Coming soon</h1>
-            <p className="text-text-secondary leading-relaxed">
-              The couple is putting the final touches on their wedding site. Check back soon!
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-tertiary px-2">dayof.love</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-          <p className="text-xs text-text-tertiary">
-            Are you the couple?{' '}
-            <a href="/login" className="text-primary hover:underline">Sign in</a>
-            {' '}and click Publish in your builder.
-          </p>
-        </div>
-      </div>
+      <ComingSoonScreen />
     );
   }
 

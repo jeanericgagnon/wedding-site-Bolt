@@ -20,9 +20,22 @@ interface SubmitPayload {
   mealChoice?: string | null;
   plusOneName?: string | null;
   notes?: string | null;
+  website?: string;
+  hp_field?: string;
 }
 
 type Payload = LookupPayload | SubmitPayload;
+
+const RATE_LIMIT_WINDOW_MINUTES = 15;
+const RATE_LIMIT_MAX_ATTEMPTS = 10;
+
+async function hashIp(ip: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(ip + Deno.env.get("SUPABASE_URL"));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -102,10 +115,51 @@ Deno.serve(async (req: Request) => {
     }
 
     if (payload.action === "submit") {
-      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes } = payload;
+      const submitPayload = payload as SubmitPayload;
+
+      if (submitPayload.website || submitPayload.hp_field) {
+        return json({ success: true });
+      }
+
+      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes } = submitPayload;
 
       if (!guestId || !inviteToken) {
         return json({ error: "guestId and inviteToken are required" }, 400);
+      }
+
+      if (typeof attending !== "boolean") {
+        return json({ error: "Please indicate whether you will be attending." }, 400);
+      }
+
+      const clientIp =
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+        req.headers.get("x-real-ip") ??
+        "unknown";
+
+      const ipHash = await hashIp(clientIp);
+      const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
+
+      const { data: existingLimit } = await adminClient
+        .from("rsvp_rate_limit")
+        .select("id, attempts, last_attempt_at")
+        .eq("ip_hash", ipHash)
+        .gte("last_attempt_at", windowStart)
+        .maybeSingle();
+
+      if (existingLimit) {
+        if (existingLimit.attempts >= RATE_LIMIT_MAX_ATTEMPTS) {
+          return json({ error: "Too many requests. Please try again later." }, 429);
+        }
+        await adminClient
+          .from("rsvp_rate_limit")
+          .update({ attempts: existingLimit.attempts + 1, last_attempt_at: new Date().toISOString() })
+          .eq("id", existingLimit.id);
+      } else {
+        await adminClient.from("rsvp_rate_limit").insert({
+          ip_hash: ipHash,
+          guest_token: inviteToken.slice(0, 16),
+          attempts: 1,
+        });
       }
 
       const { data: guest, error: guestErr } = await adminClient
@@ -168,22 +222,72 @@ Deno.serve(async (req: Request) => {
         .eq("id", guest.wedding_site_id)
         .maybeSingle();
 
+      const guestName =
+        guest.first_name && guest.last_name
+          ? `${guest.first_name} ${guest.last_name}`
+          : guest.name;
+
+      if (guest.email && siteData) {
+        await adminClient.from("email_queue").insert({
+          site_id: guest.wedding_site_id,
+          guest_id: guest.id,
+          type: "rsvp_confirmation",
+          payload_json: {
+            to: guest.email,
+            guestName,
+            attending,
+            coupleName1: siteData.couple_name_1,
+            coupleName2: siteData.couple_name_2,
+            weddingDate: siteData.wedding_date,
+            venueName: siteData.venue_name,
+          },
+          status: "pending",
+        }).catch(() => {});
+      }
+
+      if (siteData?.couple_email) {
+        await adminClient.from("email_queue").insert({
+          site_id: guest.wedding_site_id,
+          guest_id: guest.id,
+          type: "rsvp_notification",
+          payload_json: {
+            to: siteData.couple_email,
+            guestName,
+            attending,
+            mealChoice: mealChoice ?? null,
+            plusOneName: plusOneName ?? null,
+            notes: notes ?? null,
+            coupleName1: siteData.couple_name_1,
+            coupleName2: siteData.couple_name_2,
+          },
+          status: "pending",
+        }).catch(() => {});
+      }
+
+      EdgeRuntime.waitUntil(
+        (async () => {
+          try {
+            await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/process-email-queue`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ trigger: "rsvp" }),
+              },
+            );
+          } catch {
+            // best-effort only
+          }
+        })(),
+      );
+
       return json({
         success: true,
-        siteData: siteData
-          ? {
-              coupleEmail: siteData.couple_email,
-              coupleName1: siteData.couple_name_1,
-              coupleName2: siteData.couple_name_2,
-              weddingDate: siteData.wedding_date,
-              venueName: siteData.venue_name,
-            }
-          : null,
-        guestName:
-          guest.first_name && guest.last_name
-            ? `${guest.first_name} ${guest.last_name}`
-            : guest.name,
-        guestEmail: guest.email,
+        guestName,
+        attending,
       });
     }
 
