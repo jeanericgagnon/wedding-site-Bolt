@@ -85,11 +85,11 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
   const endpoint = `${supabaseUrl}/functions/v1/registry-preview`;
 
-  // Get fresh session - this will automatically refresh if expired
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Refresh session to get a valid token
+  const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
 
   if (sessionError || !session?.access_token) {
-    throw new Error('Session expired. Please refresh the page and try again.');
+    throw new Error('Session expired. Please refresh the page and sign in again.');
   }
 
   const resp = await fetch(endpoint, {
