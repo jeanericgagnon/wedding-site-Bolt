@@ -202,7 +202,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
         )}
 
         {activeTab === 'sections' && !expandedManifest && (
-          <div className="p-3 space-y-1">
+          <div className="p-3 space-y-1.5">
             <div className="flex items-center gap-2 px-1 mb-2">
               <button
                 onClick={() => setActiveTab('layers')}
@@ -216,28 +216,29 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
               </p>
             </div>
             {manifests.map(manifest => {
-              const IconComp = manifest.type === 'custom' ? Sparkles : (SECTION_ICONS[manifest.icon] ?? Layout);
               const isCustom = manifest.type === 'custom';
               return (
                 <button
                   key={manifest.type}
                   onClick={() => handleSectionClick(manifest)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left group transition-colors ${
-                    isCustom ? 'hover:bg-amber-50 border border-dashed border-amber-200 bg-amber-50/50 mt-1' : 'hover:bg-gray-50'
+                  className={`w-full text-left rounded-xl border transition-all duration-150 overflow-hidden group ${
+                    isCustom
+                      ? 'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50'
+                      : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-sm'
                   }`}
                 >
-                  <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-                    isCustom ? 'bg-amber-100 group-hover:bg-amber-200' : 'bg-gray-100 group-hover:bg-rose-50'
-                  }`}>
-                    <IconComp size={15} className={isCustom ? 'text-amber-600' : 'text-gray-500 group-hover:text-rose-500 transition-colors'} />
+                  <div className="pointer-events-none">
+                    <SectionTypePreview sectionType={manifest.type} />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-medium truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {isCustom ? '8 skeleton layouts' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'style' : 'styles'}`}
-                    </p>
+                  <div className={`flex items-center justify-between px-3 py-2 border-t ${isCustom ? 'border-amber-100' : 'border-gray-100'}`}>
+                    <div className="min-w-0">
+                      <p className={`text-xs font-semibold truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
+                      <p className="text-[10px] text-gray-400 truncate">
+                        {isCustom ? '8 skeleton layouts' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'style' : 'styles'}`}
+                      </p>
+                    </div>
+                    <ChevronRight size={13} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
                   </div>
-                  <ChevronRight size={14} className="text-gray-300 flex-shrink-0 group-hover:text-gray-500 transition-colors" />
                 </button>
               );
             })}
@@ -354,6 +355,223 @@ const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefau
       </div>
     </button>
   );
+};
+
+const SectionTypePreview: React.FC<{ sectionType: string }> = ({ sectionType }) => {
+  const previews: Record<string, React.ReactNode> = {
+    hero: (
+      <div className="w-full h-16 relative flex flex-col items-center justify-center bg-slate-700">
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative flex flex-col items-center gap-1">
+          <div className="text-[7px] text-white/50 uppercase tracking-widest font-medium">We are getting married</div>
+          <div className="text-[13px] font-bold text-white">Sarah & James</div>
+          <div className="text-[7px] text-white/60">June 14, 2025 · New York</div>
+          <div className="mt-0.5 px-2.5 py-0.5 border border-white/40 rounded text-[7px] text-white/80 font-semibold">RSVP Now</div>
+        </div>
+      </div>
+    ),
+    story: (
+      <div className="w-full h-16 flex bg-gray-50">
+        <div className="flex-1 flex flex-col justify-center gap-1 px-3">
+          <div className="text-[7px] text-gray-400 uppercase tracking-widest">Our Story</div>
+          <div className="h-1 rounded-sm bg-gray-700 w-20" />
+          <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
+          <div className="h-0.5 rounded-sm bg-gray-300 w-4/5" />
+          <div className="h-0.5 rounded-sm bg-gray-300 w-3/5" />
+        </div>
+        <div className="w-2/5 bg-gray-300" />
+      </div>
+    ),
+    venue: (
+      <div className="w-full h-16 flex flex-col bg-white">
+        <div className="h-8 w-full relative bg-slate-200">
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px), repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px)' }} />
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full border-2 border-red-500 bg-red-400" />
+        </div>
+        <div className="flex-1 flex items-center gap-2 px-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" />
+          <div className="flex-1 h-1 rounded-sm bg-gray-200" />
+        </div>
+      </div>
+    ),
+    schedule: (
+      <div className="w-full h-16 flex flex-col justify-center px-3 gap-0 bg-gray-50">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest mb-1">Schedule</div>
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-start gap-1.5 py-0.5">
+            <div className="flex flex-col items-center flex-shrink-0">
+              <div className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-gray-700' : 'bg-gray-300'}`} />
+              {i < 2 && <div className="w-px h-2 bg-gray-200" />}
+            </div>
+            <div className="flex-1 flex items-center gap-1 pt-0.5">
+              <div className={`h-1 rounded-sm flex-1 ${i === 0 ? 'bg-gray-600' : 'bg-gray-200'}`} />
+              <div className="text-[6px] text-gray-400 font-mono">{['4pm','5pm','7pm'][i]}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+    travel: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Travel & Hotels</div>
+        {[0,1].map(i => (
+          <div key={i} className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" />
+            <div className="flex-1 h-1 rounded-sm bg-gray-200" />
+            <div className="w-8 h-3 rounded text-[6px] flex items-center justify-center font-semibold bg-gray-100 text-gray-500 border border-gray-200">BOOK</div>
+          </div>
+        ))}
+      </div>
+    ),
+    registry: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-50">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Registry</div>
+        {[0,1].map(i => (
+          <div key={i} className="h-5 rounded-lg flex items-center px-2 gap-2 bg-white border border-gray-200">
+            <div className="w-2.5 h-2.5 rounded-sm bg-gray-200 flex-shrink-0" />
+            <div className="flex-1 h-1 rounded-sm bg-gray-200" />
+            <div className="w-8 h-3 rounded text-[6px] flex items-center justify-center font-semibold bg-gray-700 text-white">View</div>
+          </div>
+        ))}
+      </div>
+    ),
+    faq: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">FAQ</div>
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-center justify-between px-1.5 py-0.5 rounded border border-gray-100 bg-gray-50">
+            <div className={`h-1.5 rounded-sm ${i === 0 ? 'w-20 bg-gray-600' : 'w-16 bg-gray-300'}`} />
+            <div className="text-[9px] font-bold text-gray-400">{i === 0 ? '−' : '+'}</div>
+          </div>
+        ))}
+      </div>
+    ),
+    rsvp: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-50">
+        <div className="h-4 rounded-md border border-gray-200 bg-white flex items-center px-2">
+          <div className="flex-1 h-0.5 rounded-sm bg-gray-200" />
+        </div>
+        <div className="flex gap-1">
+          <div className="flex-1 h-4 rounded-md border border-gray-200 bg-white flex items-center px-1.5 gap-1">
+            <div className="w-1 h-1 rounded-full bg-gray-300" />
+            <div className="text-[6px] text-gray-500 font-medium">Yes</div>
+          </div>
+          <div className="flex-1 h-4 rounded-md border border-gray-200 bg-white flex items-center px-1.5 gap-1">
+            <div className="w-1 h-1 rounded-full bg-gray-300" />
+            <div className="text-[6px] text-gray-400 font-medium">No</div>
+          </div>
+        </div>
+        <div className="h-4 rounded-md bg-gray-700 flex items-center justify-center">
+          <div className="text-[7px] text-white font-semibold">SEND RSVP</div>
+        </div>
+      </div>
+    ),
+    gallery: (
+      <div className="w-full h-16 flex items-start gap-0.5 px-1.5 pt-1.5 pb-1 bg-gray-50">
+        <div className="flex-1 flex flex-col gap-0.5">
+          <div className="h-7 rounded-sm bg-gray-300" />
+          <div className="h-4 rounded-sm bg-gray-200" />
+        </div>
+        <div className="flex-1 flex flex-col gap-0.5">
+          <div className="h-4 rounded-sm bg-gray-200" />
+          <div className="h-6 rounded-sm bg-gray-300" />
+        </div>
+        <div className="flex-1 flex flex-col gap-0.5">
+          <div className="h-5 rounded-sm bg-gray-300" />
+          <div className="h-5 rounded-sm bg-gray-200" />
+        </div>
+      </div>
+    ),
+    countdown: (
+      <div className="w-full h-16 flex flex-col items-center justify-center gap-1 bg-gray-50">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Counting down to</div>
+        <div className="flex items-end gap-1.5">
+          {[{n:'47',l:'Days'},{n:'12',l:'Hrs'},{n:'38',l:'Min'}].map(({n,l}) => (
+            <div key={l} className="flex flex-col items-center">
+              <div className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold bg-gray-800 text-white">{n}</div>
+              <div className="text-[5px] mt-0.5 text-gray-400 font-medium">{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'wedding-party': (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-2 bg-gray-50">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest text-center">Wedding Party</div>
+        <div className="flex justify-center gap-1.5">
+          {[0,1,2,3].map(i => (
+            <div key={i} className="flex flex-col items-center gap-0.5">
+              <div className={`w-6 h-6 rounded-full ${i < 2 ? 'bg-gray-300' : 'bg-gray-200'}`} />
+              <div className="w-5 h-0.5 rounded-sm bg-gray-200" />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'dress-code': (
+      <div className="w-full h-16 flex bg-gray-50">
+        <div className="w-1 h-full bg-gray-500" />
+        <div className="flex-1 flex flex-col justify-center gap-0.5 px-2">
+          <div className="text-[6px] text-gray-400 uppercase tracking-widest">What to wear</div>
+          <div className="text-[10px] font-bold text-gray-800">Black Tie</div>
+          <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
+          <div className="h-0.5 rounded-sm bg-gray-200 w-4/5" />
+        </div>
+        <div className="w-10 flex items-center justify-center pr-1">
+          <div className="w-7 h-8 rounded-sm bg-gray-200 border border-gray-300 flex items-end justify-center pb-0.5">
+            <div className="w-3.5 h-5 rounded-t-full bg-gray-300" />
+          </div>
+        </div>
+      </div>
+    ),
+    accommodations: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Accommodations</div>
+        {[0,1].map(i => (
+          <div key={i} className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-sm bg-gray-300 flex-shrink-0" />
+            <div className="flex-1 h-1 rounded-sm bg-gray-200" />
+            <div className="w-8 h-3 rounded text-[6px] flex items-center justify-center font-semibold bg-gray-100 text-gray-500 border border-gray-200">Book</div>
+          </div>
+        ))}
+      </div>
+    ),
+    contact: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Questions?</div>
+        <div className="flex gap-2">
+          {[0,1].map(i => (
+            <div key={i} className="flex-1 h-8 rounded-lg p-1.5 flex flex-col gap-0.5 bg-gray-50 border border-gray-100">
+              <div className="w-3 h-3 rounded-full bg-gray-200" />
+              <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'footer-cta': (
+      <div className="w-full h-16 flex flex-col items-center justify-center gap-1 bg-gray-800">
+        <div className="text-[7px] text-white/50">We hope to see you there</div>
+        <div className="text-[10px] font-bold text-white">Sarah & James</div>
+        <div className="px-3 py-0.5 border border-white/30 rounded-full text-[7px] text-white/70 font-semibold">RSVP Now</div>
+      </div>
+    ),
+    custom: (
+      <div className="w-full h-16 flex flex-col items-center justify-center gap-1.5 bg-amber-50">
+        <div className="flex gap-1">
+          {['H','P','B'].map(t => (
+            <div key={t} className="text-[7px] font-bold px-1.5 py-0.5 rounded bg-amber-200 text-amber-700">{t}</div>
+          ))}
+        </div>
+        <div className="text-[8px] text-amber-600 font-medium">Custom layout</div>
+        <div className="h-1 rounded-sm w-20 bg-amber-200" />
+      </div>
+    ),
+  };
+
+  const preview = previews[sectionType];
+  if (preview) return <>{preview}</>;
+  return <div className="w-full h-16 bg-gray-100" />;
 };
 
 const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; isHovered: boolean }> = ({ variantId, sectionType, isHovered }) => {
