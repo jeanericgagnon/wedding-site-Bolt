@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -22,6 +22,7 @@ interface Guest {
   invite_token: string | null;
   rsvp_status: string;
   rsvp_received_at: string | null;
+  household_id: string | null;
 }
 
 interface RSVP {
@@ -56,6 +57,10 @@ export const DashboardGuests: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
+
+  const [viewMode, setViewMode] = useState<'list' | 'households'>('list');
+  const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
+  const [householdBusy, setHouseholdBusy] = useState(false);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -295,6 +300,77 @@ export const DashboardGuests: React.FC = () => {
       setSendingInviteId(null);
     }
   };
+
+  async function handleMergeIntoHousehold() {
+    if (selectedGuestIds.size < 2 || !weddingSiteId || isDemoMode) return;
+    setHouseholdBusy(true);
+    try {
+      const ids = [...selectedGuestIds];
+      const householdId = ids[0];
+      const { error } = await supabase
+        .from('guests')
+        .update({ household_id: householdId })
+        .in('id', ids)
+        .eq('wedding_site_id', weddingSiteId);
+      if (error) throw error;
+      await fetchGuests();
+      setSelectedGuestIds(new Set());
+      toast(`${ids.length} guests merged into one household`, 'success');
+    } catch {
+      toast('Failed to merge guests', 'error');
+    } finally {
+      setHouseholdBusy(false);
+    }
+  }
+
+  async function handleSplitFromHousehold(guestId: string) {
+    if (!weddingSiteId || isDemoMode) return;
+    setHouseholdBusy(true);
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .update({ household_id: null })
+        .eq('id', guestId)
+        .eq('wedding_site_id', weddingSiteId);
+      if (error) throw error;
+      await fetchGuests();
+      toast('Guest removed from household', 'success');
+    } catch {
+      toast('Failed to remove from household', 'error');
+    } finally {
+      setHouseholdBusy(false);
+    }
+  }
+
+  async function handleReassignHousehold(guestId: string, newHouseholdId: string) {
+    if (!weddingSiteId || isDemoMode) return;
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .update({ household_id: newHouseholdId || null })
+        .eq('id', guestId)
+        .eq('wedding_site_id', weddingSiteId);
+      if (error) throw error;
+      await fetchGuests();
+      toast('Guest reassigned', 'success');
+    } catch {
+      toast('Failed to reassign guest', 'error');
+    }
+  }
+
+  const households = useMemo(() => {
+    const map = new Map<string, GuestWithRSVP[]>();
+    const ungrouped: GuestWithRSVP[] = [];
+    guests.forEach(g => {
+      if (g.household_id) {
+        const existing = map.get(g.household_id) ?? [];
+        map.set(g.household_id, [...existing, g]);
+      } else {
+        ungrouped.push(g);
+      }
+    });
+    return { grouped: [...map.entries()], ungrouped };
+  }, [guests]);
 
   const resetForm = () => {
     setFormData({
@@ -693,117 +769,242 @@ export const DashboardGuests: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-2 flex-wrap">
-              {([
-                { id: 'all', label: `All (${stats.total})` },
-                { id: 'confirmed', label: `Confirmed (${stats.confirmed})` },
-                { id: 'declined', label: `Declined (${stats.declined})` },
-                { id: 'pending', label: `Pending (${stats.pending})` },
-              ] as const).map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setFilterStatus(id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filterStatus === id
-                      ? 'bg-primary text-text-inverse'
-                      : 'bg-surface-subtle text-text-secondary hover:bg-surface hover:text-text-primary'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-surface-subtle border-b border-border">
-                  <tr>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary">Guest</th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary">Status</th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden md:table-cell">Plus One</th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden lg:table-cell">Meal Choice</th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden xl:table-cell">Invite Code</th>
-                    <th className="text-right px-6 py-3 text-sm font-semibold text-text-secondary">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-subtle">
-                  {filteredGuests.map((guest) => (
-                    <tr key={guest.id} className="hover:bg-surface-subtle transition-colors">
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="font-medium text-text-primary">
-                            {guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}
-                          </p>
-                          <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1">
-                          {getStatusBadge(guest.rsvp_status)}
-                          {guest.rsvp_received_at && guest.rsvp_status !== 'pending' && (
-                            <span className="text-xs text-text-tertiary">
-                              {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-text-secondary hidden md:table-cell">
-                        {guest.plus_one_allowed ? (guest.rsvp?.plus_one_name || 'Allowed') : 'No'}
-                      </td>
-                      <td className="px-6 py-4 text-text-secondary hidden lg:table-cell">
-                        {guest.rsvp?.meal_choice || '—'}
-                      </td>
-                      <td className="px-6 py-4 hidden xl:table-cell">
-                        <code className="text-xs bg-surface-subtle px-2 py-1 rounded font-mono">
-                          {guest.invite_token?.slice(0, 12) || '—'}
-                        </code>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          {guest.email && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSendInvitation(guest)}
-                              disabled={sendingInviteId === guest.id}
-                              title={guest.invite_token ? 'Send invitation email' : 'Send invitation'}
-                            >
-                              <Mail className="w-4 h-4 mr-1" />
-                              {sendingInviteId === guest.id ? 'Sending…' : 'Invite'}
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm" onClick={() => openEditModal(guest)}>
-                            Edit
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteGuest(guest.id)}
-                            disabled={deletingGuestId === guest.id}
-                            className={confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}
-                          >
-                            {deletingGuestId === guest.id
-                              ? 'Removing…'
-                              : confirmDeleteId === guest.id
-                              ? 'Confirm?'
-                              : 'Delete'}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredGuests.length === 0 && (
-              <div className="text-center py-12">
-                <Users className="w-12 h-12 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
-                <p className="text-text-secondary font-medium mb-1">No guests found</p>
-                <p className="text-sm text-text-tertiary">
-                  {searchQuery ? 'Try a different search term' : 'Add your first guest to get started'}
-                </p>
+            <div className="flex gap-2 flex-wrap items-center justify-between">
+              <div className="flex gap-2 flex-wrap">
+                {([
+                  { id: 'all', label: `All (${stats.total})` },
+                  { id: 'confirmed', label: `Confirmed (${stats.confirmed})` },
+                  { id: 'declined', label: `Declined (${stats.declined})` },
+                  { id: 'pending', label: `Pending (${stats.pending})` },
+                ] as const).map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => { setFilterStatus(id); setViewMode('list'); }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      filterStatus === id && viewMode === 'list'
+                        ? 'bg-primary text-text-inverse'
+                        : 'bg-surface-subtle text-text-secondary hover:bg-surface hover:text-text-primary'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
+              <button
+                onClick={() => setViewMode(v => v === 'households' ? 'list' : 'households')}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                  viewMode === 'households'
+                    ? 'bg-primary text-text-inverse border-primary'
+                    : 'text-text-secondary border-border hover:border-primary hover:text-primary'
+                }`}
+              >
+                <Home className="w-3.5 h-3.5" />
+                Households
+              </button>
+            </div>
+
+            {viewMode === 'households' ? (
+              <div className="space-y-4">
+                {selectedGuestIds.size >= 2 && (
+                  <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border border-primary/20 rounded-xl">
+                    <span className="text-sm font-medium text-primary">{selectedGuestIds.size} guests selected</span>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleMergeIntoHousehold}
+                      disabled={householdBusy || isDemoMode}
+                    >
+                      <Merge className="w-3.5 h-3.5 mr-1.5" />
+                      Merge into Household
+                    </Button>
+                  </div>
+                )}
+
+                {households.grouped.length === 0 && households.ungrouped.length === 0 && (
+                  <div className="text-center py-12">
+                    <Home className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
+                    <p className="text-text-secondary font-medium mb-1">No households yet</p>
+                    <p className="text-sm text-text-tertiary">Select guests from the list view to merge them into a household</p>
+                  </div>
+                )}
+
+                {households.grouped.map(([householdId, members]) => {
+                  const head = members.find(m => m.id === householdId) ?? members[0];
+                  const headName = head ? (head.first_name && head.last_name ? `${head.first_name} ${head.last_name}` : head.name) : 'Household';
+                  return (
+                    <div key={householdId} className="border border-border rounded-xl overflow-hidden">
+                      <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
+                        <div className="flex items-center gap-2">
+                          <Home className="w-4 h-4 text-text-tertiary" />
+                          <span className="font-semibold text-text-primary text-sm">{headName} household</span>
+                          <span className="text-xs text-text-tertiary">({members.length} guests)</span>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-border-subtle">
+                        {members.map(guest => {
+                          const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
+                          return (
+                            <div key={guest.id} className="flex items-center justify-between px-5 py-3">
+                              <div>
+                                <p className="text-sm font-medium text-text-primary">{name}</p>
+                                <p className="text-xs text-text-tertiary">{guest.email || 'No email'}</p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                {getStatusBadge(guest.rsvp_status)}
+                                <button
+                                  onClick={() => handleSplitFromHousehold(guest.id)}
+                                  disabled={householdBusy || isDemoMode}
+                                  title="Remove from household"
+                                  className="p-1.5 text-text-tertiary hover:text-error hover:bg-error-light rounded-lg transition-colors disabled:opacity-40"
+                                >
+                                  <Scissors className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {households.ungrouped.length > 0 && (
+                  <div className="border border-border rounded-xl overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-text-tertiary" />
+                        <span className="font-semibold text-text-primary text-sm">Ungrouped guests</span>
+                        <span className="text-xs text-text-tertiary">({households.ungrouped.length})</span>
+                      </div>
+                      <p className="text-xs text-text-tertiary">Select guests to merge into households</p>
+                    </div>
+                    <div className="divide-y divide-border-subtle">
+                      {households.ungrouped.map(guest => {
+                        const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
+                        const isSelected = selectedGuestIds.has(guest.id);
+                        return (
+                          <div
+                            key={guest.id}
+                            className={`flex items-center gap-3 px-5 py-3 transition-colors cursor-pointer ${isSelected ? 'bg-primary/5' : 'hover:bg-surface-subtle'}`}
+                            onClick={() => setSelectedGuestIds(prev => {
+                              const next = new Set(prev);
+                              isSelected ? next.delete(guest.id) : next.add(guest.id);
+                              return next;
+                            })}
+                          >
+                            <div className={`w-4 h-4 rounded border-2 flex-shrink-0 transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-border'}`}>
+                              {isSelected && (
+                                <svg viewBox="0 0 10 10" className="w-full h-full p-0.5 text-white" fill="none">
+                                  <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-text-primary">{name}</p>
+                              <p className="text-xs text-text-tertiary">{guest.email || 'No email'}</p>
+                            </div>
+                            {getStatusBadge(guest.rsvp_status)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-surface-subtle border-b border-border">
+                      <tr>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary">Guest</th>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary">Status</th>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden md:table-cell">Plus One</th>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden lg:table-cell">Meal Choice</th>
+                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden xl:table-cell">Invite Code</th>
+                        <th className="text-right px-6 py-3 text-sm font-semibold text-text-secondary">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border-subtle">
+                      {filteredGuests.map((guest) => (
+                        <tr key={guest.id} className="hover:bg-surface-subtle transition-colors">
+                          <td className="px-6 py-4">
+                            <div>
+                              <p className="font-medium text-text-primary">
+                                {guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}
+                              </p>
+                              <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              {getStatusBadge(guest.rsvp_status)}
+                              {guest.rsvp_received_at && guest.rsvp_status !== 'pending' && (
+                                <span className="text-xs text-text-tertiary">
+                                  {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-text-secondary hidden md:table-cell">
+                            {guest.plus_one_allowed ? (guest.rsvp?.plus_one_name || 'Allowed') : 'No'}
+                          </td>
+                          <td className="px-6 py-4 text-text-secondary hidden lg:table-cell">
+                            {guest.rsvp?.meal_choice || '—'}
+                          </td>
+                          <td className="px-6 py-4 hidden xl:table-cell">
+                            <code className="text-xs bg-surface-subtle px-2 py-1 rounded font-mono">
+                              {guest.invite_token?.slice(0, 12) || '—'}
+                            </code>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              {guest.email && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSendInvitation(guest)}
+                                  disabled={sendingInviteId === guest.id}
+                                  title={guest.invite_token ? 'Send invitation email' : 'Send invitation'}
+                                >
+                                  <Mail className="w-4 h-4 mr-1" />
+                                  {sendingInviteId === guest.id ? 'Sending…' : 'Invite'}
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="sm" onClick={() => openEditModal(guest)}>
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteGuest(guest.id)}
+                                disabled={deletingGuestId === guest.id}
+                                className={confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}
+                              >
+                                {deletingGuestId === guest.id
+                                  ? 'Removing…'
+                                  : confirmDeleteId === guest.id
+                                  ? 'Confirm?'
+                                  : 'Delete'}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {filteredGuests.length === 0 && (
+                  <div className="text-center py-12">
+                    <Users className="w-12 h-12 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
+                    <p className="text-text-secondary font-medium mb-1">No guests found</p>
+                    <p className="text-sm text-text-tertiary">
+                      {searchQuery ? 'Try a different search term' : 'Add your first guest to get started'}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </Card>

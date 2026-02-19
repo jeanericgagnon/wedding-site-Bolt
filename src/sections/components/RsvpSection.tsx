@@ -131,11 +131,16 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         disabled={submitting}
         className={
           dark
-            ? 'w-full py-3 rounded-lg bg-white text-primary font-semibold hover:bg-white/90 transition-colors disabled:opacity-50'
-            : 'w-full py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50'
+            ? 'w-full py-3.5 rounded-xl bg-white text-primary font-semibold text-base hover:bg-white/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed'
+            : 'w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-base hover:bg-primary-hover transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed'
         }
       >
-        {submitting ? 'Sending...' : 'Submit RSVP'}
+        {submitting ? (
+          <span className="flex items-center justify-center gap-2">
+            <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+            Sending…
+          </span>
+        ) : 'Submit RSVP'}
       </button>
     </form>
   );
@@ -154,26 +159,35 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
   }
 
   return (
-    <section className="py-16 px-4 bg-surface-subtle">
-      <div className="max-w-2xl mx-auto text-center">
+    <section className="py-20 px-4 bg-surface-subtle">
+      <div className="max-w-lg mx-auto text-center">
         {settings.showTitle && (
-          <h2 className="text-4xl font-bold text-text-primary mb-8">{settings.title || 'RSVP'}</h2>
+          <>
+            <p className="text-xs uppercase tracking-[0.3em] text-primary/80 mb-3 font-medium">Kindly reply</p>
+            <h2 className="text-4xl md:text-5xl font-light text-text-primary mb-4">{settings.title || 'RSVP'}</h2>
+          </>
         )}
         {deadline && (
-          <p className="text-text-secondary mb-8 flex items-center justify-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Please RSVP by {deadline}
-          </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/8 border border-primary/20 rounded-full text-sm font-medium text-primary mb-8">
+            <Calendar className="w-4 h-4" />
+            Kindly respond by {deadline}
+          </div>
         )}
+        {!deadline && <div className="mb-8" />}
         {submitted ? (
           <div className="rounded-2xl border border-border bg-surface p-8">
+            <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
             <p className="text-xl font-semibold text-text-primary mb-2">
               {attending ? "We'll see you there!" : "Sorry you can't make it"}
             </p>
             <p className="text-text-secondary text-sm">Your RSVP has been recorded. Thank you!</p>
           </div>
         ) : (
-          <div className="rounded-2xl border border-border bg-surface p-8">
+          <div className="rounded-2xl border border-border bg-surface p-8 shadow-sm">
             <RsvpForm onSuccess={handleSuccess} />
           </div>
         )}
