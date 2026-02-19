@@ -39,7 +39,7 @@ interface BuilderSidebarLibraryProps {
 
 export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ activePageId }) => {
   const { state, dispatch } = useBuilderContext();
-  const [activeTab, setActiveTab] = useState<SidebarTab>('sections');
+  const [activeTab, setActiveTab] = useState<SidebarTab>('layers');
   const [expandedType, setExpandedType] = useState<BuilderSectionType | null>(null);
   const manifests = getAllSectionManifests();
 
@@ -59,6 +59,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
     if (!activePageId) return;
     dispatch(builderActions.addSectionByType(activePageId, type, undefined, variant));
     setExpandedType(null);
+    setActiveTab('layers');
   }
 
   const sections = selectActivePageSections(state);
@@ -89,8 +90,8 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="flex border-b border-gray-200">
         {([
-          { id: 'sections', icon: Layout, label: 'Add' },
-          { id: 'layers', icon: Layers, label: 'Layers' },
+          { id: 'layers', icon: Layers, label: 'Sections' },
+          { id: 'sections', icon: Plus, label: 'Add' },
           { id: 'templates', icon: Palette, label: 'Templates' },
           { id: 'media', icon: FolderOpen, label: 'Media' },
         ] as const).map(tab => (
@@ -116,14 +117,30 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'layers' && (
           <div className="p-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">
-              Page Sections
-            </p>
+            <div className="flex items-center justify-between px-1 mb-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                {sections.length} {sections.length === 1 ? 'Section' : 'Sections'}
+              </p>
+              <button
+                onClick={() => { setActiveTab('sections'); setExpandedType(null); }}
+                className="flex items-center gap-1 text-xs text-rose-600 font-medium hover:text-rose-700 transition-colors"
+              >
+                <Plus size={12} />
+                Add
+              </button>
+            </div>
             {sections.length === 0 ? (
               <div className="text-center py-8 text-gray-400">
                 <Layers size={24} className="mx-auto mb-2 opacity-40" />
-                <p className="text-xs">No sections yet</p>
-                <p className="text-xs mt-1 text-gray-300">Switch to Add to get started</p>
+                <p className="text-xs font-medium text-gray-500">No sections yet</p>
+                <p className="text-xs mt-1 text-gray-300 mb-4">Start building your wedding site</p>
+                <button
+                  onClick={() => { setActiveTab('sections'); setExpandedType(null); }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 text-white text-xs font-medium rounded-lg hover:bg-rose-600 transition-colors"
+                >
+                  <Plus size={12} />
+                  Add your first section
+                </button>
               </div>
             ) : (
               <DndContext
@@ -158,9 +175,18 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
 
         {activeTab === 'sections' && !expandedManifest && (
           <div className="p-3 space-y-1">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">
-              Add Sections
-            </p>
+            <div className="flex items-center gap-2 px-1 mb-2">
+              <button
+                onClick={() => setActiveTab('layers')}
+                className="p-1 -ml-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Back to sections"
+              >
+                <ArrowLeft size={13} />
+              </button>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Add Section
+              </p>
+            </div>
             {manifests.map(manifest => {
               const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
               return (
