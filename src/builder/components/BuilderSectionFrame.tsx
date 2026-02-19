@@ -206,7 +206,8 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
           onClick={handleToggleVisibility}
           title="Hide section"
           aria-label="Hide section"
-          className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-white/80 backdrop-blur-sm shadow-sm border border-gray-200 text-gray-500 hover:text-rose-500 hover:bg-white opacity-0 group-hover:opacity-100 transition-all duration-150"
+          className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-white shadow-sm border border-gray-200 text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-colors"
+          style={{ pointerEvents: 'auto' }}
         >
           <Eye size={13} />
         </button>
