@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { DeleteSectionModal } from './DeleteSectionModal';
+import { SkeletonPickerModal } from './SkeletonPickerModal';
 import {
   Image, Heart, MapPin, Clock, Plane, Gift, HelpCircle, Mail, Images,
   Layout, Palette, FolderOpen, ChevronRight, ArrowLeft, Plus, LucideIcon,
-  Layers, Eye, EyeOff, Trash2, GripVertical,
+  Layers, Eye, EyeOff, Trash2, GripVertical, Sparkles,
 } from 'lucide-react';
 import {
   DndContext,
@@ -25,8 +26,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getAllSectionManifests, BuilderSectionDefinitionWithMeta, VariantMeta, getSectionManifest } from '../registry/sectionManifests';
-import { BuilderSectionType, BuilderSectionInstance } from '../../types/builder/section';
+import { BuilderSectionType, BuilderSectionInstance, createDefaultSectionInstance } from '../../types/builder/section';
 import { selectActivePageSections } from '../state/builderSelectors';
+import { CustomSectionSkeleton } from '../../sections/variants/custom/skeletons';
 
 type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
 
@@ -42,6 +44,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   const { state, dispatch } = useBuilderContext();
   const [activeTab, setActiveTab] = useState<SidebarTab>('layers');
   const [expandedType, setExpandedType] = useState<BuilderSectionType | null>(null);
+  const [showSkeletonPicker, setShowSkeletonPicker] = useState(false);
   const manifests = getAllSectionManifests();
 
   const expandedManifest = expandedType
@@ -49,6 +52,10 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
     : null;
 
   function handleSectionClick(manifest: BuilderSectionDefinitionWithMeta) {
+    if (manifest.type === 'custom') {
+      setShowSkeletonPicker(true);
+      return;
+    }
     if (manifest.variantMeta.length > 1) {
       setExpandedType(manifest.type);
     } else {
@@ -61,6 +68,25 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
     dispatch(builderActions.addSectionByType(activePageId, type, undefined, variant));
     setExpandedType(null);
     setActiveTab('layers');
+  }
+
+  function addCustomSection(skeleton: CustomSectionSkeleton) {
+    if (!activePageId) return;
+    const instance = createDefaultSectionInstance('custom', 'default', 0);
+    (instance as { settings: Record<string, unknown> }).settings = {
+      skeletonId: skeleton.id,
+      backgroundColor: skeleton.backgroundColor,
+      paddingSize: skeleton.paddingSize,
+      blocks: skeleton.blocks,
+    };
+    dispatch(builderActions.addSection(activePageId, instance));
+    setShowSkeletonPicker(false);
+    setActiveTab('layers');
+    setTimeout(() => {
+      const sectionEls = document.querySelectorAll('[data-section-id]');
+      const last = sectionEls[sectionEls.length - 1];
+      if (last) last.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
   }
 
   const sections = selectActivePageSections(state);
@@ -88,6 +114,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   const dragActiveSection = layerDragId ? sections.find(s => s.id === layerDragId) : null;
 
   return (
+    <>
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="flex border-b border-gray-200">
         {([
@@ -189,20 +216,25 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
               </p>
             </div>
             {manifests.map(manifest => {
-              const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
+              const IconComp = manifest.type === 'custom' ? Sparkles : (SECTION_ICONS[manifest.icon] ?? Layout);
+              const isCustom = manifest.type === 'custom';
               return (
                 <button
                   key={manifest.type}
                   onClick={() => handleSectionClick(manifest)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-gray-50 group transition-colors"
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left group transition-colors ${
+                    isCustom ? 'hover:bg-amber-50 border border-dashed border-amber-200 bg-amber-50/50 mt-1' : 'hover:bg-gray-50'
+                  }`}
                 >
-                  <div className="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center flex-shrink-0 group-hover:bg-rose-50 transition-colors">
-                    <IconComp size={15} className="text-gray-500 group-hover:text-rose-500 transition-colors" />
+                  <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
+                    isCustom ? 'bg-amber-100 group-hover:bg-amber-200' : 'bg-gray-100 group-hover:bg-rose-50'
+                  }`}>
+                    <IconComp size={15} className={isCustom ? 'text-amber-600' : 'text-gray-500 group-hover:text-rose-500 transition-colors'} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-700 truncate">{manifest.label}</p>
+                    <p className={`text-sm font-medium truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
                     <p className="text-xs text-gray-400 truncate">
-                      {manifest.variantMeta.length} {manifest.variantMeta.length === 1 ? 'style' : 'styles'}
+                      {isCustom ? '8 skeleton layouts' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'style' : 'styles'}`}
                     </p>
                   </div>
                   <ChevronRight size={14} className="text-gray-300 flex-shrink-0 group-hover:text-gray-500 transition-colors" />
@@ -221,6 +253,14 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
         )}
       </div>
     </aside>
+
+    {showSkeletonPicker && (
+      <SkeletonPickerModal
+        onSelect={addCustomSection}
+        onClose={() => setShowSkeletonPicker(false)}
+      />
+    )}
+  </>
   );
 };
 

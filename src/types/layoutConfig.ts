@@ -13,7 +13,8 @@ export type SectionType =
   | 'dress-code'
   | 'accommodations'
   | 'contact'
-  | 'footer-cta';
+  | 'footer-cta'
+  | 'custom';
 
 export interface SectionInstance {
   id: string;

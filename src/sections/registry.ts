@@ -24,6 +24,7 @@ import { dressCodeMoodBoardDefinition } from './variants/dressCode/moodBoard';
 import { accommodationsCardsDefinition } from './variants/accommodations/cards';
 import { contactFormDefinition } from './variants/contact/form';
 import { footerCtaRsvpPushDefinition } from './variants/footerCta/rsvpPush';
+import { customSectionDefinition } from './variants/custom/customSection';
 
 type RegistryKey = string;
 
@@ -62,6 +63,7 @@ registerDefinition(dressCodeMoodBoardDefinition);
 registerDefinition(accommodationsCardsDefinition);
 registerDefinition(contactFormDefinition);
 registerDefinition(footerCtaRsvpPushDefinition);
+registerDefinition(customSectionDefinition);
 
 export function getDefinition(type: string, variant: string): SectionDefinition | null {
   return SECTION_REGISTRY.get(makeKey(type, variant)) ?? null;

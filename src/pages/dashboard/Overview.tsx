@@ -95,7 +95,7 @@ export const DashboardOverview: React.FC = () => {
       const { data: guests, error: guestsErr } = await supabase
         .from('guests')
         .select('id, rsvp_status, rsvp_received_at, first_name, last_name, name')
-        .eq('user_id', user.id)
+        .eq('wedding_site_id', site?.id ?? '')
         .order('rsvp_received_at', { ascending: false });
 
       if (guestsErr) throw guestsErr;

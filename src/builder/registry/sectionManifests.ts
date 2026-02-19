@@ -404,6 +404,29 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     bindingsSchema: { slots: [] },
     previewImagePath: '/previews/footer-cta.jpg',
   },
+  custom: {
+    type: 'custom',
+    label: 'Custom Section',
+    icon: 'Layout',
+    defaultVariant: 'default',
+    supportedVariants: ['default'],
+    variantMeta: [
+      { id: 'default', label: 'Custom', description: 'Build your own section from a pre-made skeleton' },
+    ],
+    capabilities: { ...defaultCapabilities },
+    settingsSchema: {
+      fields: [
+        { key: 'backgroundColor', label: 'Background Color', type: 'color', defaultValue: '#ffffff' },
+        { key: 'paddingSize', label: 'Section Spacing', type: 'select', defaultValue: 'md', options: [
+          { label: 'Compact', value: 'sm' },
+          { label: 'Normal', value: 'md' },
+          { label: 'Spacious', value: 'lg' },
+        ]},
+      ],
+    },
+    bindingsSchema: { slots: [] },
+    previewImagePath: '/previews/custom.jpg',
+  },
 };
 
 export function getSectionManifest(type: BuilderSectionType): BuilderSectionDefinitionWithMeta {
