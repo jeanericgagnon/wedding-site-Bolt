@@ -431,6 +431,29 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; isHovered: boolean }> 
         </div>
       </div>
     ),
+    filmStrip: (
+      <div className={`w-full h-14 flex flex-col gap-1 p-2 transition-colors ${h ? 'bg-gray-800' : 'bg-gray-700'}`}>
+        <div className={`flex-1 rounded-sm ${h ? 'bg-rose-300/60' : 'bg-gray-500'}`} />
+        <div className="flex gap-1">
+          {[0,1,2,3,4].map(i => (
+            <div key={i} className={`flex-1 h-3 rounded-sm ${h ? 'bg-rose-200/50' : 'bg-gray-500'}`} />
+          ))}
+        </div>
+      </div>
+    ),
+    polaroid: (
+      <div className={`w-full h-14 flex items-center justify-center gap-2 transition-colors ${h ? 'bg-amber-50' : 'bg-stone-100'}`}>
+        {[-4, 2, -2].map((rot, i) => (
+          <div
+            key={i}
+            className="bg-white shadow-md flex-shrink-0"
+            style={{ transform: `rotate(${rot}deg)`, padding: '3px 3px 10px 3px', width: '28px' }}
+          >
+            <div className={`w-full aspect-square ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+          </div>
+        ))}
+      </div>
+    ),
   };
 
   const swatch = swatches[variantId];

@@ -225,22 +225,27 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     type: 'gallery',
     label: 'Photo Gallery',
     icon: 'Images',
-    defaultVariant: 'default',
-    supportedVariants: ['default', 'masonry'],
+    defaultVariant: 'masonry',
+    supportedVariants: ['masonry', 'grid', 'filmStrip', 'polaroid'],
     variantMeta: [
-      { id: 'default', label: 'Grid', description: 'Uniform grid of equal-sized photos' },
-      { id: 'masonry', label: 'Masonry', description: 'Pinterest-style varied height layout' },
+      { id: 'masonry', label: 'Masonry', description: 'Pinterest-style varied height layout with scroll animations' },
+      { id: 'grid', label: 'Grid', description: 'Uniform grid with aspect ratio control and entrance animations' },
+      { id: 'filmStrip', label: 'Film Strip', description: 'Large hero image with thumbnail filmstrip below' },
+      { id: 'polaroid', label: 'Polaroid', description: 'Scattered photo prints with a warm, vintage feel' },
     ],
     capabilities: { ...defaultCapabilities, mediaAware: true },
     settingsSchema: {
       fields: [
-        { key: 'showTitle', label: 'Show Title', type: 'toggle', defaultValue: true },
-        { key: 'title', label: 'Section Title', type: 'text', defaultValue: 'Gallery' },
-        { key: 'columns', label: 'Columns', type: 'select', defaultValue: '3', options: [
-          { label: '2 Columns', value: '2' },
-          { label: '3 Columns', value: '3' },
-          { label: '4 Columns', value: '4' },
+        { key: 'eyebrow', label: 'Eyebrow Text', type: 'text', defaultValue: 'Our moments' },
+        { key: 'headline', label: 'Section Title', type: 'text', defaultValue: 'Photos' },
+        { key: 'animation', label: 'Entrance Animation', type: 'select', defaultValue: 'fade', options: [
+          { label: 'None', value: 'none' },
+          { label: 'Fade In', value: 'fade' },
+          { label: 'Slide Up', value: 'slide-up' },
+          { label: 'Zoom', value: 'zoom' },
         ]},
+        { key: 'showCaptions', label: 'Show Captions', type: 'toggle', defaultValue: true },
+        { key: 'enableLightbox', label: 'Enable Lightbox', type: 'toggle', defaultValue: true },
       ],
     },
     bindingsSchema: {

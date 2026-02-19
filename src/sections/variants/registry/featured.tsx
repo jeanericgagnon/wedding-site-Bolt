@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { ExternalLink, Gift, Heart, ShoppingBag } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { useSiteView } from '../../../contexts/SiteViewContext';
+import { publicFetchRegistryItems } from '../../../pages/dashboard/registry/registryService';
+import { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
 
 const FeaturedGiftSchema = z.object({
   id: z.string(),
@@ -167,13 +170,42 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
   </a>
 );
 
+function registryItemToGift(item: RegistryItem): z.infer<typeof FeaturedGiftSchema> {
+  return {
+    id: item.id,
+    name: item.item_name,
+    store: item.store_name ?? item.merchant ?? '',
+    price: item.price_label ?? (item.price_amount != null ? `$${item.price_amount}` : ''),
+    description: item.description ?? item.notes ?? '',
+    image: item.image_url ?? '',
+    url: item.item_url ?? item.canonical_url ?? '',
+    category: '',
+    isPriority: item.priority === 'high',
+    isClaimed: item.purchase_status === 'purchased',
+  };
+}
+
 const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = ({ data }) => {
+  const { weddingSiteId } = useSiteView();
+  const [liveItems, setLiveItems] = useState<RegistryItem[] | null>(null);
+
+  useEffect(() => {
+    if (!weddingSiteId) return;
+    publicFetchRegistryItems(weddingSiteId)
+      .then(items => setLiveItems(items.filter(i => !i.hide_when_purchased || i.purchase_status !== 'purchased')))
+      .catch(() => setLiveItems(null));
+  }, [weddingSiteId]);
+
+  const displayGifts = liveItems
+    ? liveItems.map(registryItemToGift)
+    : data.featuredGifts;
+
   const colClass = data.layout === '3col'
     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
     : 'grid-cols-1 sm:grid-cols-2';
 
-  const heroGift = data.layout === 'hero' && data.featuredGifts[0];
-  const restGifts = data.layout === 'hero' ? data.featuredGifts.slice(1) : data.featuredGifts;
+  const heroGift = data.layout === 'hero' && displayGifts[0];
+  const restGifts = data.layout === 'hero' ? displayGifts.slice(1) : displayGifts;
 
   return (
     <section className="py-24 md:py-32 bg-white" id="registry">
@@ -190,7 +222,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
           )}
         </div>
 
-        {data.featuredGifts.length > 0 && (
+        {displayGifts.length > 0 && (
           <div className="mb-10">
             {heroGift && (
               <div className="mb-6">

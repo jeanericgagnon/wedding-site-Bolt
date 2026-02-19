@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { z } from 'zod';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 
 const GalleryImageSchema = z.object({
@@ -8,19 +8,20 @@ const GalleryImageSchema = z.object({
   url: z.string().default(''),
   alt: z.string().default(''),
   caption: z.string().default(''),
-  span: z.enum(['1', '2']).default('1'),
 });
 
-export const galleryMasonrySchema = z.object({
+export const galleryGridSchema = z.object({
   eyebrow: z.string().default('Our moments'),
   headline: z.string().default('Photos'),
   images: z.array(GalleryImageSchema).default([]),
-  showCaptions: z.boolean().default(true),
+  columns: z.enum(['2', '3', '4']).default('3'),
+  showCaptions: z.boolean().default(false),
   enableLightbox: z.boolean().default(true),
   animation: z.enum(['none', 'fade', 'slide-up', 'zoom']).default('fade'),
+  aspectRatio: z.enum(['square', 'landscape', 'portrait']).default('square'),
 });
 
-export type GalleryMasonryData = z.infer<typeof galleryMasonrySchema>;
+export type GalleryGridData = z.infer<typeof galleryGridSchema>;
 
 const SAMPLE_PHOTOS = [
   { url: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'Couple' },
@@ -28,25 +29,24 @@ const SAMPLE_PHOTOS = [
   { url: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'Flowers' },
   { url: 'https://images.pexels.com/photos/931177/pexels-photo-931177.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'Detail' },
   { url: 'https://images.pexels.com/photos/169198/pexels-photo-169198.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'Rings' },
-  { url: 'https://images.pexels.com/photos/2959192/pexels-photo-2959192.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'Couple portrait' },
+  { url: 'https://images.pexels.com/photos/2959192/pexels-photo-2959192.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'Portrait' },
+  { url: 'https://images.pexels.com/photos/1043902/pexels-photo-1043902.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'First dance' },
+  { url: 'https://images.pexels.com/photos/3812743/pexels-photo-3812743.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'Ceremony' },
+  { url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg?auto=compress&cs=tinysrgb&w=800', alt: 'Toast' },
 ];
 
-export const defaultGalleryMasonryData: GalleryMasonryData = {
+export const defaultGalleryGridData: GalleryGridData = {
   eyebrow: 'Our moments',
   headline: 'Photos',
-  showCaptions: true,
+  columns: '3',
+  showCaptions: false,
   enableLightbox: true,
   animation: 'fade',
-  images: SAMPLE_PHOTOS.map((p, i) => ({
-    id: String(i + 1),
-    url: p.url,
-    alt: p.alt,
-    caption: '',
-    span: (i === 0 || i === 4) ? '2' : '1',
-  })),
+  aspectRatio: 'square',
+  images: SAMPLE_PHOTOS.map((p, i) => ({ id: String(i + 1), url: p.url, alt: p.alt, caption: '' })),
 };
 
-function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.1) {
+function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.15) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
@@ -57,51 +57,60 @@ function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.1) 
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [ref, threshold]);
   return visible;
 }
 
-const MasonryCell: React.FC<{
-  image: GalleryMasonryData['images'][number];
+const ASPECT_CLASS: Record<string, string> = {
+  square: 'aspect-square',
+  landscape: 'aspect-[4/3]',
+  portrait: 'aspect-[3/4]',
+};
+
+const AnimatedImage: React.FC<{
+  image: GalleryGridData['images'][number];
   idx: number;
   animation: string;
+  aspectClass: string;
   showCaptions: boolean;
   enableLightbox: boolean;
   onOpen: (idx: number) => void;
-}> = ({ image, idx, animation, showCaptions, enableLightbox, onOpen }) => {
+}> = ({ image, idx, animation, aspectClass, showCaptions, enableLightbox, onOpen }) => {
   const ref = useRef<HTMLDivElement>(null);
   const visible = useIntersection(ref);
 
   const animStyle: React.CSSProperties = animation === 'none' ? {} : {
-    transitionDelay: `${(idx % 6) * 80}ms`,
-    transitionDuration: '650ms',
+    transitionDelay: `${(idx % 9) * 60}ms`,
+    transitionDuration: '600ms',
     transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
   };
 
-  const animClasses = animation === 'none' ? '' :
-    animation === 'fade' ? (visible ? 'opacity-100' : 'opacity-0') :
-    animation === 'slide-up' ? (visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8') :
-    animation === 'zoom' ? (visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95') : '';
+  const animClasses = {
+    none: '',
+    fade: visible ? 'opacity-100' : 'opacity-0',
+    'slide-up': visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8',
+    zoom: visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95',
+  }[animation] ?? '';
 
   return (
     <div
       ref={ref}
       onClick={() => enableLightbox && onOpen(idx)}
-      className={`relative group overflow-hidden rounded-xl bg-stone-200 transition-[opacity,transform] ${
-        image.span === '2' ? 'col-span-2' : ''
-      } ${enableLightbox ? 'cursor-pointer' : ''} ${animClasses}`}
+      className={`relative group overflow-hidden rounded-xl bg-stone-200 ${aspectClass} ${enableLightbox ? 'cursor-pointer' : ''} transition-[opacity,transform] ${animClasses}`}
       style={animStyle}
     >
       <img
         src={image.url}
         alt={image.alt}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
       {enableLightbox && (
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors duration-300 flex items-center justify-center">
+          <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
       )}
       {showCaptions && image.caption && (
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/50 to-transparent">
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent">
           <p className="text-white text-xs font-light">{image.caption}</p>
         </div>
       )}
@@ -109,8 +118,16 @@ const MasonryCell: React.FC<{
   );
 };
 
-const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ data }) => {
+const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data }) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const colClass = {
+    '2': 'grid-cols-2',
+    '3': 'grid-cols-2 md:grid-cols-3',
+    '4': 'grid-cols-2 md:grid-cols-4',
+  }[data.columns] ?? 'grid-cols-2 md:grid-cols-3';
+
+  const aspectClass = ASPECT_CLASS[data.aspectRatio] ?? 'aspect-square';
 
   const closeLightbox = () => setLightboxIndex(null);
   const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + data.images.length) % data.images.length);
@@ -118,35 +135,34 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
 
   useEffect(() => {
     if (lightboxIndex === null) return;
-    const h = (e: KeyboardEvent) => {
+    const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') prevImage();
       else if (e.key === 'ArrowRight') nextImage();
       else if (e.key === 'Escape') closeLightbox();
     };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [lightboxIndex]);
 
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="gallery">
+    <section className="py-24 md:py-32 bg-white" id="gallery">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
-              {data.eyebrow}
-            </p>
+            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
           )}
           <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
         {data.images.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 auto-rows-[240px] gap-3">
+          <div className={`grid ${colClass} gap-3`}>
             {data.images.map((image, idx) => (
-              <MasonryCell
+              <AnimatedImage
                 key={image.id}
                 image={image}
                 idx={idx}
                 animation={data.animation}
+                aspectClass={aspectClass}
                 showCaptions={data.showCaptions}
                 enableLightbox={data.enableLightbox}
                 onOpen={setLightboxIndex}
@@ -202,10 +218,10 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
   );
 };
 
-export const galleryMasonryDefinition: SectionDefinition<GalleryMasonryData> = {
+export const galleryGridDefinition: SectionDefinition<GalleryGridData> = {
   type: 'gallery',
-  variant: 'masonry',
-  schema: galleryMasonrySchema,
-  defaultData: defaultGalleryMasonryData,
-  Component: GalleryMasonry,
+  variant: 'grid',
+  schema: galleryGridSchema,
+  defaultData: defaultGalleryGridData,
+  Component: GalleryGrid,
 };
