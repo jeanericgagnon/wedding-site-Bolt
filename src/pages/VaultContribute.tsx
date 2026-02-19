@@ -10,31 +10,33 @@ interface SiteInfo {
   wedding_date: string | null;
 }
 
-const VAULT_LABELS: Record<string, { label: string; ordinal: string; description: string }> = {
-  '1': {
-    label: '1st Anniversary Vault',
-    ordinal: 'first',
-    description: 'Leave a message to be opened on the couple\'s first anniversary.',
-  },
-  '5': {
-    label: '5th Anniversary Vault',
-    ordinal: 'fifth',
-    description: 'Your words will be sealed until their fifth anniversary.',
-  },
-  '10': {
-    label: '10th Anniversary Vault',
-    ordinal: 'tenth',
-    description: 'A decade from now, they\'ll open this vault and read your message.',
-  },
-};
+interface VaultConfigInfo {
+  id: string;
+  label: string;
+  duration_years: number;
+  is_enabled: boolean;
+}
 
-type Step = 'form' | 'success' | 'error' | 'invalid';
+type Step = 'loading' | 'form' | 'success' | 'error' | 'invalid';
+
+function ordinalLabel(years: number): string {
+  if (years === 1) return 'first';
+  if (years === 2) return 'second';
+  if (years === 3) return 'third';
+  if (years === 5) return 'fifth';
+  if (years === 10) return 'tenth';
+  if (years === 15) return 'fifteenth';
+  if (years === 20) return 'twentieth';
+  if (years === 25) return 'twenty-fifth';
+  if (years === 50) return 'fiftieth';
+  return `${years}th`;
+}
 
 export const VaultContribute: React.FC = () => {
   const { siteSlug, year } = useParams<{ siteSlug: string; year: string }>();
   const [site, setSite] = useState<SiteInfo | null>(null);
-  const [loadingsite, setLoadingSite] = useState(true);
-  const [step, setStep] = useState<Step>('form');
+  const [vaultConfig, setVaultConfig] = useState<VaultConfigInfo | null>(null);
+  const [step, setStep] = useState<Step>('loading');
   const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
@@ -44,31 +46,45 @@ export const VaultContribute: React.FC = () => {
   });
   const [errors, setErrors] = useState<{ content?: string; author_name?: string }>({});
 
-  const vaultYear = parseInt(year ?? '1', 10) as 1 | 5 | 10;
-  const vaultInfo = VAULT_LABELS[String(vaultYear)];
+  const vaultYear = parseInt(year ?? '0', 10);
 
   useEffect(() => {
-    if (!siteSlug || !vaultInfo) {
+    if (!siteSlug || !vaultYear || isNaN(vaultYear)) {
       setStep('invalid');
-      setLoadingSite(false);
       return;
     }
-    loadSite();
-  }, [siteSlug]);
+    loadData();
+  }, [siteSlug, year]);
 
-  async function loadSite() {
-    const { data, error } = await supabase
+  async function loadData() {
+    const { data: siteData, error: siteError } = await supabase
       .from('wedding_sites')
       .select('id, couple_name_1, couple_name_2, wedding_date, is_published')
       .eq('site_slug', siteSlug)
       .maybeSingle();
 
-    if (error || !data || !(data as Record<string, unknown>).is_published) {
+    if (siteError || !siteData || !(siteData as Record<string, unknown>).is_published) {
       setStep('invalid');
-    } else {
-      setSite(data as SiteInfo);
+      return;
     }
-    setLoadingSite(false);
+
+    setSite(siteData as SiteInfo);
+
+    const { data: configData, error: configError } = await supabase
+      .from('vault_configs')
+      .select('id, label, duration_years, is_enabled')
+      .eq('wedding_site_id', (siteData as SiteInfo).id)
+      .eq('duration_years', vaultYear)
+      .eq('is_enabled', true)
+      .maybeSingle();
+
+    if (configError || !configData) {
+      setStep('invalid');
+      return;
+    }
+
+    setVaultConfig(configData as VaultConfigInfo);
+    setStep('form');
   }
 
   function validate(): boolean {
@@ -81,12 +97,13 @@ export const VaultContribute: React.FC = () => {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validate() || !site) return;
+    if (!validate() || !site || !vaultConfig) return;
     setSubmitting(true);
 
     const { error } = await supabase.from('vault_entries').insert({
       wedding_site_id: site.id,
-      vault_year: vaultYear,
+      vault_config_id: vaultConfig.id,
+      vault_year: vaultConfig.duration_years,
       title: form.title.trim() || null,
       content: form.content.trim(),
       author_name: form.author_name.trim(),
@@ -108,11 +125,17 @@ export const VaultContribute: React.FC = () => {
       : site.couple_name_1 ?? site.couple_name_2 ?? 'the couple'
     : '';
 
-  const unlockYear = site?.wedding_date
-    ? new Date(site.wedding_date).getFullYear() + vaultYear
+  const unlockYear = site?.wedding_date && vaultConfig
+    ? new Date(site.wedding_date).getFullYear() + vaultConfig.duration_years
     : null;
 
-  if (loadingsite) {
+  const ordinal = vaultConfig ? ordinalLabel(vaultConfig.duration_years) : '';
+  const vaultLabel = vaultConfig?.label || (vaultConfig ? `${vaultConfig.duration_years}-Year Anniversary Vault` : 'Anniversary Vault');
+  const description = vaultConfig
+    ? `Leave a message to be opened on the couple's ${ordinal} anniversary.`
+    : '';
+
+  if (step === 'loading') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center">
         <Loader2 className="w-7 h-7 animate-spin text-amber-700" />
@@ -143,7 +166,7 @@ export const VaultContribute: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold text-stone-800 mb-2">Message sealed</h1>
           <p className="text-stone-600 mb-1">
-            Your note has been tucked away in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {vaultInfo.ordinal} anniversary vault.
+            Your note has been tucked away in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {ordinal} anniversary vault.
           </p>
           {unlockYear && (
             <p className="text-stone-400 text-sm mt-2">
@@ -192,9 +215,9 @@ export const VaultContribute: React.FC = () => {
                 {coupleName}
               </p>
             )}
-            <h1 className="text-2xl font-bold text-stone-800">{vaultInfo.label}</h1>
+            <h1 className="text-2xl font-bold text-stone-800">{vaultLabel}</h1>
             <p className="text-stone-500 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-              {vaultInfo.description}
+              {description}
               {unlockYear && (
                 <> The vault opens in <strong className="text-stone-700">{unlockYear}</strong>.</>
               )}
@@ -242,7 +265,7 @@ export const VaultContribute: React.FC = () => {
                   value={form.content}
                   onChange={e => setForm({ ...form, content: e.target.value })}
                   rows={6}
-                  placeholder={`Write something heartfelt for ${coupleName || 'the couple'} to read on their ${vaultInfo.ordinal} anniversary…`}
+                  placeholder={`Write something heartfelt for ${coupleName || 'the couple'} to read on their ${ordinal} anniversary…`}
                   className={`w-full px-4 py-3 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none transition ${
                     errors.content ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   }`}
