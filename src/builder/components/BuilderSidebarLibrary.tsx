@@ -1,14 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Image, Heart, MapPin, Clock, Plane, Gift, HelpCircle, Mail, Images,
   Layout, Palette, FolderOpen, ChevronRight, ArrowLeft, Plus, LucideIcon,
+  Layers, Eye, EyeOff, Trash2, GripVertical,
 } from 'lucide-react';
+import {
+  DndContext,
+  DragEndEvent,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { getAllSectionManifests, BuilderSectionDefinitionWithMeta, VariantMeta } from '../registry/sectionManifests';
-import { BuilderSectionType } from '../../types/builder/section';
+import { getAllSectionManifests, BuilderSectionDefinitionWithMeta, VariantMeta, getSectionManifest } from '../registry/sectionManifests';
+import { BuilderSectionType, BuilderSectionInstance } from '../../types/builder/section';
+import { selectActivePageSections } from '../state/builderSelectors';
 
-type SidebarTab = 'sections' | 'templates' | 'media';
+type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
 
 const SECTION_ICONS: Record<string, LucideIcon> = {
   Image, Heart, MapPin, Clock, Plane, Gift, HelpCircle, Mail, Images,
@@ -42,11 +61,36 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
     setExpandedType(null);
   }
 
+  const sections = selectActivePageSections(state);
+  const [layerDragId, setLayerDragId] = useState<string | null>(null);
+
+  const layerSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
+
+  const handleLayerDragStart = useCallback((event: DragStartEvent) => {
+    setLayerDragId(event.active.id as string);
+  }, []);
+
+  const handleLayerDragEnd = useCallback((event: DragEndEvent) => {
+    setLayerDragId(null);
+    const { active, over } = event;
+    if (!over || active.id === over.id || !activePageId) return;
+    const oldIndex = sections.findIndex(s => s.id === active.id);
+    const newIndex = sections.findIndex(s => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(sections, oldIndex, newIndex);
+    dispatch(builderActions.reorderSections(activePageId, reordered.map(s => s.id)));
+  }, [sections, activePageId, dispatch]);
+
+  const dragActiveSection = layerDragId ? sections.find(s => s.id === layerDragId) : null;
+
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="flex border-b border-gray-200">
         {([
-          { id: 'sections', icon: Layout, label: 'Sections' },
+          { id: 'sections', icon: Layout, label: 'Add' },
+          { id: 'layers', icon: Layers, label: 'Layers' },
           { id: 'templates', icon: Palette, label: 'Templates' },
           { id: 'media', icon: FolderOpen, label: 'Media' },
         ] as const).map(tab => (
@@ -70,6 +114,48 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {activeTab === 'layers' && (
+          <div className="p-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">
+              Page Sections
+            </p>
+            {sections.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Layers size={24} className="mx-auto mb-2 opacity-40" />
+                <p className="text-xs">No sections yet</p>
+                <p className="text-xs mt-1 text-gray-300">Switch to Add to get started</p>
+              </div>
+            ) : (
+              <DndContext
+                sensors={layerSensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleLayerDragStart}
+                onDragEnd={handleLayerDragEnd}
+              >
+                <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-1">
+                    {sections.map((section, index) => (
+                      <SortableLayerItem
+                        key={section.id}
+                        section={section}
+                        index={index}
+                        pageId={activePageId}
+                        isSelected={state.selectedSectionId === section.id}
+                        isDragging={layerDragId === section.id}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+                <DragOverlay>
+                  {dragActiveSection && (
+                    <LayerItemOverlay section={dragActiveSection} />
+                  )}
+                </DragOverlay>
+              </DndContext>
+            )}
+          </div>
+        )}
+
         {activeTab === 'sections' && !expandedManifest && (
           <div className="p-3 space-y-1">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 mb-2">
@@ -323,4 +409,103 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; isHovered: boolean }> 
   const swatch = swatches[variantId];
   if (swatch) return <>{swatch}</>;
   return <div className={`w-full h-14 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-100'}`} />;
+};
+
+interface SortableLayerItemProps {
+  section: BuilderSectionInstance;
+  index: number;
+  pageId: string | null;
+  isSelected: boolean;
+  isDragging: boolean;
+}
+
+const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, pageId, isSelected, isDragging }) => {
+  const { dispatch } = useBuilderContext();
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  const manifest = getSectionManifest(section.type);
+  const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={() => dispatch(builderActions.selectSection(section.id))}
+      className={`flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer group transition-colors ${
+        isSelected
+          ? 'bg-rose-50 border border-rose-200'
+          : 'hover:bg-gray-50 border border-transparent'
+      }`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        onClick={e => e.stopPropagation()}
+        className="flex-shrink-0 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing p-0.5 -ml-0.5 transition-colors"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical size={14} />
+      </button>
+
+      <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+        isSelected ? 'bg-rose-100' : 'bg-gray-100 group-hover:bg-gray-200'
+      }`}>
+        <IconComp size={12} className={isSelected ? 'text-rose-500' : 'text-gray-500'} />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className={`text-xs font-medium truncate ${isSelected ? 'text-rose-700' : 'text-gray-700'}`}>
+          {manifest.label}
+        </p>
+        <p className="text-[10px] text-gray-400">#{index + 1}</p>
+      </div>
+
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            if (pageId) dispatch(builderActions.toggleSectionVisibility(pageId, section.id));
+          }}
+          title={section.enabled ? 'Hide' : 'Show'}
+          className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          {section.enabled ? <Eye size={12} /> : <EyeOff size={12} className="text-rose-400" />}
+        </button>
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            if (pageId) dispatch(builderActions.removeSection(pageId, section.id));
+          }}
+          title="Delete section"
+          className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+        >
+          <Trash2 size={12} />
+        </button>
+      </div>
+
+      {!section.enabled && (
+        <div className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" title="Hidden" />
+      )}
+    </div>
+  );
+};
+
+const LayerItemOverlay: React.FC<{ section: BuilderSectionInstance }> = ({ section }) => {
+  const manifest = getSectionManifest(section.type);
+  const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
+  return (
+    <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-white border border-rose-300 shadow-lg w-56 opacity-95">
+      <GripVertical size={14} className="text-gray-400 flex-shrink-0" />
+      <div className="w-6 h-6 rounded bg-rose-100 flex items-center justify-center flex-shrink-0">
+        <IconComp size={12} className="text-rose-500" />
+      </div>
+      <p className="text-xs font-medium text-gray-700 truncate">{manifest.label}</p>
+    </div>
+  );
 };
