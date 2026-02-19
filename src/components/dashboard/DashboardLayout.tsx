@@ -15,6 +15,8 @@ import {
   Calendar,
   Sparkles,
   ExternalLink,
+  ClipboardList,
+  Armchair,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
@@ -61,6 +63,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     { id: 'builder', label: 'Builder', icon: Palette, path: '/dashboard/builder' },
     { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
     { id: 'itinerary', label: 'Itinerary', icon: Calendar, path: '/dashboard/itinerary' },
+    { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
+    { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
     { id: 'messages', label: 'Messages', icon: Mail, path: '/dashboard/messages' },
     { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
     { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },

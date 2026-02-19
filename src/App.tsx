@@ -23,6 +23,8 @@ const DashboardRegistry = lazy(() => import('./pages/dashboard/Registry').then(m
 const DashboardSettings = lazy(() => import('./pages/dashboard/Settings').then(m => ({ default: m.DashboardSettings })));
 const DashboardMessages = lazy(() => import('./pages/dashboard/Messages').then(m => ({ default: m.DashboardMessages })));
 const DashboardItinerary = lazy(() => import('./pages/dashboard/Itinerary').then(m => ({ default: m.DashboardItinerary })));
+const DashboardPlanning = lazy(() => import('./pages/dashboard/Planning').then(m => ({ default: m.DashboardPlanning })));
+const DashboardSeating = lazy(() => import('./pages/dashboard/Seating').then(m => ({ default: m.DashboardSeating })));
 const SiteBuilder = lazy(() => import('./builder/BuilderPage').then(m => ({ default: m.BuilderPage })));
 const GuestsFeature = lazy(() => import('./pages/features/Guests').then(m => ({ default: m.GuestsFeature })));
 const RSVPFeature = lazy(() => import('./pages/features/RSVP').then(m => ({ default: m.RSVPFeature })));
@@ -152,6 +154,22 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <DashboardItinerary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/planning"
+          element={
+            <ProtectedRoute>
+              <DashboardPlanning />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/seating"
+          element={
+            <ProtectedRoute>
+              <DashboardSeating />
             </ProtectedRoute>
           }
         />

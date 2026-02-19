@@ -5,3 +5,5 @@ export * from './Registry';
 export * from './Settings';
 export * from './Messages';
 export * from './Itinerary';
+export * from './Planning';
+export * from './Seating';
