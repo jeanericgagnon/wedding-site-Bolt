@@ -1,271 +1,432 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
-import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit } from 'lucide-react';
+import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Loader2, AlertCircle, Clock } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
-interface Toast {
-  id: number;
-  message: string;
+interface OverviewStats {
+  totalGuests: number;
+  confirmedGuests: number;
+  declinedGuests: number;
+  pendingGuests: number;
+  daysUntilWedding: number | null;
+  weddingDate: string | null;
+  siteSlug: string | null;
+  siteUpdatedAt: string | null;
+  templateName: string | null;
+  recentRsvps: RecentRsvp[];
 }
 
-const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => {
-  return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className="bg-surface-raised border border-border shadow-lg rounded-lg p-4 min-w-[300px]"
-        >
-          <p className="text-sm text-ink">{toast.message}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
+interface RecentRsvp {
+  id: string;
+  guestName: string;
+  status: 'confirmed' | 'declined';
+  receivedAt: string;
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatWeddingDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function calcDaysUntil(dateStr: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+}
 
 export const DashboardOverview: React.FC = () => {
-  const [timeframe, setTimeframe] = useState<'7d' | '30d' | 'all'>('7d');
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [stats, setStats] = useState<OverviewStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const onTodo = (message: string) => {
-    console.log('TODO:', message);
-    const newToast: Toast = {
-      id: Date.now(),
-      message: `TODO: ${message}`,
-    };
-    setToasts((prev) => [...prev, newToast]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
-    }, 2000);
-  };
+  useEffect(() => {
+    if (!user) return;
+    loadStats();
+  }, [user]);
 
-  const handleTimeframeChange = (newTimeframe: '7d' | '30d' | 'all') => {
-    setTimeframe(newTimeframe);
-    onTodo(`Connect analytics timeframe: ${newTimeframe === '7d' ? '7 days' : newTimeframe === '30d' ? '30 days' : 'All time'}`);
-  };
+  async function loadStats() {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: site, error: siteErr } = await supabase
+        .from('wedding_sites')
+        .select('id, site_slug, updated_at, template_id, wedding_data')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (siteErr) throw siteErr;
+
+      let weddingDate: string | null = null;
+      let templateName: string | null = null;
+
+      if (site) {
+        const weddingData = site.wedding_data as Record<string, unknown> | null;
+        weddingDate = (weddingData?.weddingDate as string) ?? null;
+        templateName = site.template_id ?? null;
+      }
+
+      const { data: guests, error: guestsErr } = await supabase
+        .from('guests')
+        .select('id, rsvp_status, rsvp_received_at, first_name, last_name, name')
+        .eq('user_id', user.id)
+        .order('rsvp_received_at', { ascending: false });
+
+      if (guestsErr) throw guestsErr;
+
+      const allGuests = guests ?? [];
+      const confirmed = allGuests.filter((g) => g.rsvp_status === 'confirmed');
+      const declined = allGuests.filter((g) => g.rsvp_status === 'declined');
+      const pending = allGuests.filter((g) => g.rsvp_status === 'pending');
+
+      const recentRsvps: RecentRsvp[] = allGuests
+        .filter((g) => g.rsvp_status !== 'pending' && g.rsvp_received_at)
+        .slice(0, 5)
+        .map((g) => ({
+          id: g.id,
+          guestName: g.name || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || 'Guest',
+          status: g.rsvp_status as 'confirmed' | 'declined',
+          receivedAt: g.rsvp_received_at!,
+        }));
+
+      setStats({
+        totalGuests: allGuests.length,
+        confirmedGuests: confirmed.length,
+        declinedGuests: declined.length,
+        pendingGuests: pending.length,
+        daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
+        weddingDate,
+        siteSlug: site?.site_slug ?? null,
+        siteUpdatedAt: site?.updated_at ?? null,
+        templateName,
+        recentRsvps,
+      });
+    } catch (err) {
+      setError('Could not load overview data.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const responseRate =
+    stats && stats.totalGuests > 0
+      ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
+      : null;
 
   return (
     <DashboardLayout currentPage="overview">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back, Alex & Jordan</h1>
-            <p className="text-text-secondary">Here's what's happening with your wedding site</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                timeframe === '7d'
-                  ? 'bg-primary text-text-inverse'
-                  : 'bg-surface-subtle text-text-secondary hover:bg-surface'
-              }`}
-              onClick={() => handleTimeframeChange('7d')}
-            >
-              7 days
-            </button>
-            <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                timeframe === '30d'
-                  ? 'bg-primary text-text-inverse'
-                  : 'bg-surface-subtle text-text-secondary hover:bg-surface'
-              }`}
-              onClick={() => handleTimeframeChange('30d')}
-            >
-              30 days
-            </button>
-            <button
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                timeframe === 'all'
-                  ? 'bg-primary text-text-inverse'
-                  : 'bg-surface-subtle text-text-secondary hover:bg-surface'
-              }`}
-              onClick={() => handleTimeframeChange('all')}
-            >
-              All time
-            </button>
+            <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
+            <p className="text-text-secondary">Your wedding at a glance</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card variant="bordered" padding="md">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-primary-light rounded-lg">
-                <Eye className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary mb-1">247</p>
-              <p className="text-sm text-text-secondary">Site views</p>
-              <p className="text-xs text-success mt-2">+12% this week</p>
-            </div>
-          </Card>
+        {error && (
+          <div className="flex items-center gap-3 p-4 bg-error/10 border border-error/20 rounded-xl text-error text-sm">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+        )}
 
-          <Card variant="bordered" padding="md">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-accent-light rounded-lg">
-                <Users className="w-6 h-6 text-accent" aria-hidden="true" />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary mb-1">68 / 120</p>
-              <p className="text-sm text-text-secondary">RSVPs received</p>
-              <p className="text-xs text-text-tertiary mt-2">57% response rate</p>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-secondary-hover)', opacity: 0.15 }}>
-                <CheckCircle2 className="w-6 h-6" style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary mb-1">52</p>
-              <p className="text-sm text-text-secondary">Confirmed guests</p>
-              <p className="text-xs text-text-tertiary mt-2">16 declined</p>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-primary-light rounded-lg">
-                <Calendar className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary mb-1">42</p>
-              <p className="text-sm text-text-secondary">Days until wedding</p>
-              <p className="text-xs text-text-tertiary mt-2">June 15, 2026</p>
-            </div>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card variant="bordered" padding="lg">
-            <CardHeader>
-              <div className="flex items-center justify-between">
+        {loading ? (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card variant="bordered" padding="md">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-accent-light rounded-lg">
+                    <Users className="w-6 h-6 text-accent" aria-hidden="true" />
+                  </div>
+                </div>
                 <div>
-                  <CardTitle>Your wedding site</CardTitle>
-                  <CardDescription>Published and live</CardDescription>
+                  <p className="text-2xl font-bold text-text-primary mb-1">
+                    {stats ? `${stats.confirmedGuests} / ${stats.totalGuests}` : '—'}
+                  </p>
+                  <p className="text-sm text-text-secondary">RSVPs received</p>
+                  {responseRate !== null && (
+                    <p className="text-xs text-text-tertiary mt-2">{responseRate}% response rate</p>
+                  )}
+                  {stats?.totalGuests === 0 && (
+                    <p className="text-xs text-text-tertiary mt-2">Add guests to get started</p>
+                  )}
                 </div>
-                <Badge variant="success">Live</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-                <span className="text-text-secondary">Site URL</span>
-                <a
-                  href="https://alexandjordan.dayof.love"
-                  className="text-primary hover:text-primary-hover flex items-center gap-2 text-sm font-medium"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  alexandjordan.dayof.love
-                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                </a>
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-                <span className="text-text-secondary">Theme</span>
-                <span className="text-text-primary font-medium">Garden Classic</span>
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <span className="text-text-secondary">Last updated</span>
-                <span className="text-text-primary">2 hours ago</span>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button variant="accent" size="md" fullWidth>
-                  <ExternalLink className="w-5 h-5 mr-2" aria-hidden="true" />
-                  Preview Site
-                </Button>
-                <Button variant="outline" size="md" fullWidth>
-                  <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
-                  Edit
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </Card>
 
-          <Card variant="bordered" padding="lg">
-            <CardHeader>
-              <CardTitle>Recent activity</CardTitle>
-              <CardDescription>Latest actions on your site</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="w-2 h-2 bg-success rounded-full mt-2 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm text-text-primary font-medium">New RSVP received</p>
-                    <p className="text-xs text-text-secondary">Sarah Miller confirmed attendance</p>
-                    <p className="text-xs text-text-tertiary mt-1">2 hours ago</p>
+              <Card variant="bordered" padding="md">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-primary-light rounded-lg">
+                    <CheckCircle2 className="w-6 h-6 text-primary" aria-hidden="true" />
                   </div>
                 </div>
+                <div>
+                  <p className="text-2xl font-bold text-text-primary mb-1">
+                    {stats ? stats.confirmedGuests : '—'}
+                  </p>
+                  <p className="text-sm text-text-secondary">Confirmed guests</p>
+                  {stats && stats.declinedGuests > 0 && (
+                    <p className="text-xs text-text-tertiary mt-2">{stats.declinedGuests} declined</p>
+                  )}
+                  {stats && stats.pendingGuests > 0 && stats.declinedGuests === 0 && (
+                    <p className="text-xs text-text-tertiary mt-2">{stats.pendingGuests} pending</p>
+                  )}
+                </div>
+              </Card>
 
-                <div className="flex gap-4">
-                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm text-text-primary font-medium">Photo uploaded</p>
-                    <p className="text-xs text-text-secondary">Guest added 3 photos to vault</p>
-                    <p className="text-xs text-text-tertiary mt-1">5 hours ago</p>
+              <Card variant="bordered" padding="md">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-primary-light rounded-lg">
+                    <Clock className="w-6 h-6 text-primary" aria-hidden="true" />
                   </div>
                 </div>
+                <div>
+                  <p className="text-2xl font-bold text-text-primary mb-1">
+                    {stats?.pendingGuests ?? '—'}
+                  </p>
+                  <p className="text-sm text-text-secondary">Awaiting response</p>
+                  {stats && stats.totalGuests > 0 && (
+                    <p className="text-xs text-text-tertiary mt-2">
+                      of {stats.totalGuests} invited
+                    </p>
+                  )}
+                </div>
+              </Card>
 
-                <div className="flex gap-4">
-                  <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm text-text-primary font-medium">Site updated</p>
-                    <p className="text-xs text-text-secondary">You updated the Schedule section</p>
-                    <p className="text-xs text-text-tertiary mt-1">1 day ago</p>
+              <Card variant="bordered" padding="md">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 bg-primary-light rounded-lg">
+                    <Calendar className="w-6 h-6 text-primary" aria-hidden="true" />
                   </div>
                 </div>
-
-                <div className="flex gap-4">
-                  <div className="w-2 h-2 bg-success rounded-full mt-2 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm text-text-primary font-medium">New RSVP received</p>
-                    <p className="text-xs text-text-secondary">David Chen confirmed attendance</p>
-                    <p className="text-xs text-text-tertiary mt-1">1 day ago</p>
-                  </div>
+                <div>
+                  {stats?.daysUntilWedding !== null && stats?.daysUntilWedding !== undefined ? (
+                    <>
+                      <p className="text-2xl font-bold text-text-primary mb-1">
+                        {stats.daysUntilWedding > 0
+                          ? stats.daysUntilWedding
+                          : stats.daysUntilWedding === 0
+                          ? 'Today'
+                          : `+${Math.abs(stats.daysUntilWedding)}`}
+                      </p>
+                      <p className="text-sm text-text-secondary">
+                        {stats.daysUntilWedding > 0
+                          ? 'Days until wedding'
+                          : stats.daysUntilWedding === 0
+                          ? 'Wedding day!'
+                          : 'Days since wedding'}
+                      </p>
+                      {stats.weddingDate && (
+                        <p className="text-xs text-text-tertiary mt-2">
+                          {formatWeddingDate(stats.weddingDate)}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-text-primary mb-1">—</p>
+                      <p className="text-sm text-text-secondary">Days until wedding</p>
+                      <Link
+                        to="/dashboard/settings"
+                        className="text-xs text-primary hover:text-primary-hover mt-2 block"
+                      >
+                        Set your date
+                      </Link>
+                    </>
+                  )}
                 </div>
-
-                <div className="flex gap-4">
-                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm text-text-primary font-medium">Registry linked</p>
-                    <p className="text-xs text-text-secondary">You added a registry link</p>
-                    <p className="text-xs text-text-tertiary mt-1">3 days ago</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card variant="bordered" padding="lg">
-          <CardHeader>
-            <CardTitle>Quick actions</CardTitle>
-            <CardDescription>Common tasks to manage your wedding site</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button variant="outline" size="md" fullWidth>
-                View RSVPs
-              </Button>
-              <Button variant="outline" size="md" fullWidth>
-                Send Update
-              </Button>
-              <Button variant="outline" size="md" fullWidth>
-                Add Photos
-              </Button>
-              <Button variant="outline" size="md" fullWidth>
-                Edit Site
-              </Button>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      <ToastContainer toasts={toasts} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card variant="bordered" padding="lg">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Your wedding site</CardTitle>
+                      <CardDescription>
+                        {stats?.siteSlug ? 'Published and live' : 'Not yet published'}
+                      </CardDescription>
+                    </div>
+                    <Badge variant={stats?.siteSlug ? 'success' : 'secondary'}>
+                      {stats?.siteSlug ? 'Live' : 'Draft'}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {stats?.siteSlug ? (
+                    <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+                      <span className="text-text-secondary">Site URL</span>
+                      <a
+                        href={`/site/${stats.siteSlug}`}
+                        className="text-primary hover:text-primary-hover flex items-center gap-2 text-sm font-medium"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {stats.siteSlug}.dayof.love
+                        <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+                      <span className="text-text-secondary">Site URL</span>
+                      <span className="text-text-tertiary text-sm">Not set</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+                    <span className="text-text-secondary">Template</span>
+                    <span className="text-text-primary font-medium capitalize">
+                      {stats?.templateName?.replace(/-/g, ' ') ?? 'Default'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <span className="text-text-secondary">Last updated</span>
+                    <span className="text-text-primary">
+                      {stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}
+                    </span>
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    {stats?.siteSlug && (
+                      <Button
+                        variant="accent"
+                        size="md"
+                        fullWidth
+                        onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}
+                      >
+                        <ExternalLink className="w-5 h-5 mr-2" aria-hidden="true" />
+                        Preview Site
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="md"
+                      fullWidth
+                      onClick={() => navigate('/dashboard/builder')}
+                    >
+                      <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
+                      Edit Site
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card variant="bordered" padding="lg">
+                <CardHeader>
+                  <CardTitle>Recent RSVPs</CardTitle>
+                  <CardDescription>Latest responses from your guests</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {stats?.recentRsvps && stats.recentRsvps.length > 0 ? (
+                    <div className="space-y-4">
+                      {stats.recentRsvps.map((rsvp) => (
+                        <div key={rsvp.id} className="flex gap-4">
+                          <div
+                            className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                              rsvp.status === 'confirmed' ? 'bg-success' : 'bg-error'
+                            }`}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm text-text-primary font-medium">
+                              {rsvp.guestName}
+                            </p>
+                            <p className="text-xs text-text-secondary">
+                              {rsvp.status === 'confirmed' ? 'Confirmed attendance' : 'Declined'}
+                            </p>
+                            <p className="text-xs text-text-tertiary mt-1">
+                              {formatRelativeTime(rsvp.receivedAt)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <Eye className="w-10 h-10 text-text-tertiary mb-3" />
+                      <p className="text-sm text-text-secondary mb-1">No RSVPs yet</p>
+                      <p className="text-xs text-text-tertiary">
+                        RSVPs will appear here as guests respond
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card variant="bordered" padding="lg">
+              <CardHeader>
+                <CardTitle>Quick actions</CardTitle>
+                <CardDescription>Jump to key sections of your dashboard</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Button
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                    onClick={() => navigate('/dashboard/guests')}
+                  >
+                    Manage Guests
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                    onClick={() => navigate('/dashboard/messages')}
+                  >
+                    Send Message
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                    onClick={() => navigate('/dashboard/registry')}
+                  >
+                    Registry
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                    onClick={() => navigate('/dashboard/settings')}
+                  >
+                    Settings
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
     </DashboardLayout>
   );
 };

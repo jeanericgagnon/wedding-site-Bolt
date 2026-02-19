@@ -298,11 +298,10 @@ export const Product: React.FC = () => {
                   <ul className="space-y-3">
                     {[
                       'Household-aware RSVP flow prevents confusion',
-                      'Multi-event permissions with separate deadlines',
+                      'Multi-event permissions with separate access controls',
                       'Meal selection with dietary note collection',
                       'Plus-one acceptance with name capture',
-                      'Automatic reminder emails before deadlines',
-                      'Real-time analytics and export options',
+                      'Per-guest invite tokens for secure access',
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
@@ -323,12 +322,10 @@ export const Product: React.FC = () => {
                   <h3 className="text-2xl font-bold text-ink mb-4">Messaging</h3>
                   <ul className="space-y-3">
                     {[
-                      'Email included with fair-use limits',
-                      'SMS credits available for urgent updates',
+                      'Compose emails to your guest list',
                       'Segment by RSVP status, event, or household',
-                      'Schedule messages for optimal delivery',
-                      'Track open rates and engagement',
-                      'Consent management built-in',
+                      'Schedule messages and save drafts',
+                      'Send wedding invitations directly to guest emails',
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
@@ -349,12 +346,10 @@ export const Product: React.FC = () => {
                   <h3 className="text-2xl font-bold text-ink mb-4">Travel + Itinerary</h3>
                   <ul className="space-y-3">
                     {[
-                      'Hotel room blocks with cutoff dates',
-                      'Multi-day itinerary with timezone support',
-                      'Airport and transportation details',
-                      'Venue addresses with map integration',
-                      'Add-to-calendar buttons for each event',
-                      'Travel FAQs and local recommendations',
+                      'Multi-day itinerary timeline',
+                      'Venue addresses and directions',
+                      'Transportation and logistics notes',
+                      'Travel FAQs displayed on your site',
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
@@ -399,18 +394,17 @@ export const Product: React.FC = () => {
               {activeTab === 'seating' && (
                 <div className="space-y-4">
                   <h3 className="text-2xl font-bold text-ink mb-4">Seating + Check-in</h3>
+                  <p className="text-ink/70 mb-2">This module is in active development. Here's what's coming:</p>
                   <ul className="space-y-3">
                     {[
                       'Visual seating chart builder',
                       'Assign guests to tables with drag-and-drop',
                       'Export seating for caterer and venue',
-                      'Print place cards and table numbers',
                       'Day-of check-in mode for tracking arrivals',
-                      'Offline fallback mode for poor connectivity',
                     ].map((item, idx) => (
                       <li key={idx} className="flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                        <span className="text-ink/70">{item}</span>
+                        <Clock className="w-5 h-5 text-ink/30 mt-0.5 flex-shrink-0" />
+                        <span className="text-ink/60">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -544,11 +538,8 @@ export const Product: React.FC = () => {
                   <span className="text-ink/80">Schedule messages + draft saving</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Send className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-ink/80">Email delivery to guests</span>
-                    <Badge variant="secondary" className="text-xs">Coming soon</Badge>
-                  </div>
+                  <Send className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-ink/80">Email invitations to guests</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <MessageSquare className="w-5 h-5 text-ink/20 mt-0.5 flex-shrink-0" />
