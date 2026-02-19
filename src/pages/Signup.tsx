@@ -106,6 +106,34 @@ export const Signup: React.FC = () => {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('No user returned from signup');
 
+      let session = authData.session;
+
+      if (!session?.access_token) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (signInError) {
+          const isEmailNotConfirmed =
+            signInError.message.toLowerCase().includes('email not confirmed') ||
+            signInError.message.toLowerCase().includes('email_not_confirmed');
+
+          if (isEmailNotConfirmed) {
+            throw new Error(
+              'Account created! Check your email to confirm your address, then sign in.'
+            );
+          }
+          throw new Error('Account created! Please sign in to continue.');
+        }
+
+        session = signInData.session;
+      }
+
+      if (!session?.access_token) {
+        throw new Error('Account created! Check your email to confirm your address, then sign in.');
+      }
+
       let subdomain: string;
 
       if (isCustomizing && customUrl) {
@@ -151,34 +179,6 @@ export const Signup: React.FC = () => {
         });
 
       if (siteError) throw siteError;
-
-      let session = authData.session;
-
-      if (!session?.access_token) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (signInError) {
-          const isEmailNotConfirmed =
-            signInError.message.toLowerCase().includes('email not confirmed') ||
-            signInError.message.toLowerCase().includes('email_not_confirmed');
-
-          if (isEmailNotConfirmed) {
-            throw new Error(
-              'Account created! Check your email to confirm your address, then sign in to complete payment.'
-            );
-          }
-          throw new Error('Account created! Please sign in to continue.');
-        }
-
-        session = signInData.session;
-      }
-
-      if (!session?.access_token) {
-        throw new Error('Account created! Check your email to confirm your address, then sign in to complete payment.');
-      }
 
       sendSignupWelcome({
         email: formData.email,
