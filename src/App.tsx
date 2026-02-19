@@ -32,6 +32,7 @@ const RegistryFeature = lazy(() => import('./pages/features/Registry').then(m =>
 const SeatingFeature = lazy(() => import('./pages/features/Seating').then(m => ({ default: m.SeatingFeature })));
 const PaymentRequired = lazy(() => import('./pages/PaymentRequired').then(m => ({ default: m.PaymentRequired })));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ default: m.PaymentSuccess })));
+const VaultContribute = lazy(() => import('./pages/VaultContribute').then(m => ({ default: m.VaultContribute })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -47,6 +48,7 @@ const AppContent = () => {
         <Route path="/" element={<Home />} />
         <Route path="/product" element={<Product />} />
         <Route path="/site/:slug" element={<SiteView />} />
+        <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
         <Route path="/rsvp" element={<RSVP />} />
         <Route path="/events" element={<EventRSVP />} />
         <Route path="/features/guests" element={<GuestsFeature />} />

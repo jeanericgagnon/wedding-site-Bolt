@@ -23,9 +23,10 @@ export function fromExistingLayoutToBuilderProject(
     return builderPage;
   });
 
+  const now = new Date().toISOString();
   project.meta = {
-    createdAtISO: layout.meta.createdAtISO,
-    updatedAtISO: layout.meta.updatedAtISO,
+    createdAtISO: layout.meta?.createdAtISO ?? now,
+    updatedAtISO: layout.meta?.updatedAtISO ?? now,
   };
 
   return project;
@@ -43,7 +44,7 @@ export function fromBuilderProjectToExistingLayout(project: BuilderProject): Lay
         .map(fromBuilderSectionToSectionInstance),
     })),
     meta: {
-      createdAtISO: project.meta.createdAtISO,
+      createdAtISO: project.meta?.createdAtISO ?? new Date().toISOString(),
       updatedAtISO: new Date().toISOString(),
     },
   };

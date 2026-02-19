@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button } from '../../components/ui';
-import { Lock, Unlock, Plus, Trash2, ChevronDown, ChevronUp, Loader2, AlertCircle, Paperclip } from 'lucide-react';
+import { Lock, Unlock, Plus, Trash2, ChevronDown, ChevronUp, Loader2, AlertCircle, Paperclip, Link2, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -171,13 +171,29 @@ interface VaultCardProps {
   showForm: boolean;
   onSaveEntry: (entry: Omit<VaultEntry, 'id' | 'created_at'>) => Promise<void>;
   onCancelForm: () => void;
+  siteSlug: string | null;
 }
 
 const VaultCard: React.FC<VaultCardProps> = ({
-  config, entries, onAddEntry, onDeleteEntry, showForm, onSaveEntry, onCancelForm
+  config, entries, onAddEntry, onDeleteEntry, showForm, onSaveEntry, onCancelForm, siteSlug
 }) => {
   const [expanded, setExpanded] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  function getShareUrl(): string {
+    if (!siteSlug) return '';
+    return `${window.location.origin}/vault/${siteSlug}/${config.vault_year}`;
+  }
+
+  function handleCopyLink() {
+    const url = getShareUrl();
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   const unlockLabel = config.unlockDate
     ? config.unlockDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -204,6 +220,20 @@ const VaultCard: React.FC<VaultCardProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-text-tertiary">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
+          {siteSlug && (
+            <button
+              onClick={handleCopyLink}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                copied
+                  ? 'border-success/40 bg-success-light text-success'
+                  : 'border-border bg-surface-subtle text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'
+              }`}
+              title="Copy shareable link for guests"
+            >
+              {copied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
+              {copied ? 'Copied!' : 'Share link'}
+            </button>
+          )}
           <button
             onClick={() => setExpanded(!expanded)}
             className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary transition-colors"
@@ -303,6 +333,7 @@ export const DashboardVault: React.FC = () => {
   const { user } = useAuth();
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [weddingDate, setWeddingDate] = useState<Date | null>(null);
+  const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [entries, setEntries] = useState<VaultEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFormYear, setActiveFormYear] = useState<1 | 5 | 10 | null>(null);
@@ -320,7 +351,7 @@ export const DashboardVault: React.FC = () => {
     try {
       const { data: site } = await supabase
         .from('wedding_sites')
-        .select('id, wedding_date')
+        .select('id, wedding_date, site_slug')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -328,6 +359,9 @@ export const DashboardVault: React.FC = () => {
       setWeddingSiteId(site.id);
       if (site.wedding_date) {
         setWeddingDate(new Date(site.wedding_date));
+      }
+      if (site.site_slug) {
+        setSiteSlug(site.site_slug as string);
       }
 
       const { data: entryData, error } = await supabase
@@ -437,13 +471,14 @@ export const DashboardVault: React.FC = () => {
               showForm={activeFormYear === config.vault_year}
               onSaveEntry={handleSaveEntry}
               onCancelForm={() => setActiveFormYear(null)}
+              siteSlug={siteSlug}
             />
           ))}
         </div>
 
         <div className="p-5 bg-surface-subtle border border-border rounded-xl text-sm text-text-secondary">
           <p className="font-medium text-text-primary mb-1">How Vaults work</p>
-          <p>Add messages, notes, or links to any vault. Locked vaults hide their contents until the anniversary date. You can always add new entries at any time.</p>
+          <p>Add messages yourself or share the vault link with guests so they can drop in a note. Locked vaults hide their contents until the anniversary date. You can always add new entries at any time.</p>
         </div>
       </div>
 
