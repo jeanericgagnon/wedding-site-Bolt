@@ -202,15 +202,28 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
       )}
 
       {!isHighlighted && (
-        <button
-          onClick={handleToggleVisibility}
-          title="Hide section"
-          aria-label="Hide section"
-          className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-white shadow-sm border border-gray-200 text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-colors"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <Eye size={13} />
-        </button>
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+          {manifest.capabilities.draggable && !section.locked && (
+            <button
+              {...attributes}
+              {...listeners}
+              title="Drag to reorder"
+              aria-label="Drag to reorder"
+              className="p-1.5 rounded-md bg-white shadow-sm border border-gray-200 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing transition-colors"
+              onClick={e => e.stopPropagation()}
+            >
+              <GripVertical size={13} />
+            </button>
+          )}
+          <button
+            onClick={handleToggleVisibility}
+            title="Hide section"
+            aria-label="Hide section"
+            className="p-1.5 rounded-md bg-white shadow-sm border border-gray-200 text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-colors"
+          >
+            <Eye size={13} />
+          </button>
+        </div>
       )}
 
       <div className={isHighlighted ? 'pt-7' : ''}>
