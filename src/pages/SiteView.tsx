@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
 import { LayoutConfigV1 } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
-import { applyThemePreset } from '../lib/themePresets';
+import { applyThemePreset, applyThemeTokens } from '../lib/themePresets';
 import { BuilderProject } from '../types/builder/project';
 import { BuilderSectionInstance } from '../types/builder/section';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
@@ -101,7 +101,11 @@ export const SiteView: React.FC = () => {
           const sections = homePage.sections.filter(s => s.enabled);
           const wData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
 
-          if (wData.theme?.preset) {
+          if (siteJson.themeTokens) {
+            applyThemeTokens(siteJson.themeTokens);
+          } else if (siteJson.themeId) {
+            applyThemePreset(siteJson.themeId);
+          } else if (wData.theme?.preset) {
             applyThemePreset(wData.theme.preset);
           }
 
@@ -212,7 +216,7 @@ export const SiteView: React.FC = () => {
   if (builderSections && weddingData) {
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
-        <div className="min-h-screen bg-background">
+        <div className="builder-themed-canvas min-h-screen bg-background">
           {builderSections.map(section => (
             <SectionRenderer key={section.id} section={section} weddingData={weddingData} isPreview />
           ))}

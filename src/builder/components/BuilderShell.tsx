@@ -14,7 +14,7 @@ import { BuilderProject } from '../../types/builder/project';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { BUILDER_AUTOSAVE_INTERVAL_MS } from '../constants/builderCapabilities';
 import { mediaService } from '../services/mediaService';
-import { applyThemePreset } from '../../lib/themePresets';
+import { applyThemePreset, applyThemeTokens } from '../../lib/themePresets';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -38,16 +38,25 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   useEffect(() => {
     dispatch({ type: 'LOAD_PROJECT', payload: initialProject });
-    applyThemePreset(initialProject.themeId ?? 'romantic');
+    if (initialProject.themeTokens) {
+      applyThemeTokens(initialProject.themeTokens);
+    } else {
+      applyThemePreset(initialProject.themeId ?? 'romantic');
+    }
   // intentionally fires once on mount — LOAD_PROJECT is idempotent and sets baseline history
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (state.project?.themeId && state.project.themeId !== 'custom') {
-      applyThemePreset(state.project.themeId);
+    const themeId = state.project?.themeId;
+    const tokens = state.project?.themeTokens;
+    if (!themeId) return;
+    if (tokens) {
+      applyThemeTokens(tokens);
+    } else if (themeId !== 'custom') {
+      applyThemePreset(themeId);
     }
-  }, [state.project?.themeId]);
+  }, [state.project?.themeId, state.project?.themeTokens]);
 
   const activePage = useMemo(() => selectActivePage(state), [state]);
   const selectedSection = useMemo(() => selectSelectedSection(state), [state]);

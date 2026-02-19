@@ -100,6 +100,7 @@ export type BuilderAction =
   | { type: 'OPEN_THEME_PANEL' }
   | { type: 'CLOSE_THEME_PANEL' }
   | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'APPLY_THEME_TOKENS'; payload: { themeId: string; tokens: import('../../lib/themePresets').ThemeTokens } }
   | { type: 'ADD_SECTION_TYPE'; payload: { pageId: string; sectionType: BuilderSectionType; insertAfterIndex?: number; variant?: string } }
   | { type: 'UNDO' }
   | { type: 'REDO' };

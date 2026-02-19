@@ -1,4 +1,5 @@
 import { BuilderSectionInstance } from './section';
+import { ThemeTokens } from '../../lib/themePresets';
 
 export type PublishStatus = 'draft' | 'publishing' | 'published' | 'failed';
 
@@ -7,6 +8,7 @@ export interface BuilderProject {
   weddingId: string;
   templateId: string;
   themeId: string;
+  themeTokens?: ThemeTokens;
   pages: BuilderPage[];
   draftVersion: number;
   publishedVersion: number | null;

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -22,6 +22,10 @@ import { SectionRenderer } from './SectionRenderer';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { createEmptyWeddingData } from '../../types/weddingData';
+import { injectThemeStyle, removeThemeStyle } from '../../lib/themeInjector';
+
+const THEME_STYLE_ID = 'builder-canvas-theme';
+const CANVAS_SCOPE = '.builder-themed-canvas';
 
 export const BuilderCanvas: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
@@ -29,6 +33,16 @@ export const BuilderCanvas: React.FC = () => {
   const sections = selectActivePageSections(state);
   const isPreview = selectIsPreviewMode(state);
   const weddingData = state.weddingData ?? createEmptyWeddingData();
+  const themeTokens = state.project?.themeTokens;
+
+  useEffect(() => {
+    if (themeTokens) {
+      injectThemeStyle(themeTokens, THEME_STYLE_ID, CANVAS_SCOPE);
+    } else {
+      removeThemeStyle(THEME_STYLE_ID);
+    }
+    return () => removeThemeStyle(THEME_STYLE_ID);
+  }, [themeTokens]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -84,7 +98,7 @@ export const BuilderCanvas: React.FC = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className={`${isPreview ? '' : 'max-w-4xl mx-auto my-6 shadow-xl rounded-lg overflow-hidden'} bg-white min-h-full`}>
+        <div className={`builder-themed-canvas ${isPreview ? '' : 'max-w-4xl mx-auto my-6 shadow-xl rounded-lg overflow-hidden'} bg-white min-h-full`}>
           {!isPreview && (
             <div className="bg-gray-200 flex items-center gap-1.5 px-4 py-2.5">
               <div className="w-3 h-3 rounded-full bg-gray-400" />

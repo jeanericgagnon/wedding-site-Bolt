@@ -3,6 +3,7 @@ import { BuilderSectionInstance, BuilderSectionType } from '../../types/builder/
 import { BuilderProject } from '../../types/builder/project';
 import { BuilderMediaAsset } from '../../types/builder/media';
 import { WeddingDataV1 } from '../../types/weddingData';
+import { ThemeTokens } from '../../lib/themePresets';
 
 export const builderActions = {
   loadProject: (project: BuilderProject): BuilderAction => ({ type: 'LOAD_PROJECT', payload: project }),
@@ -53,6 +54,7 @@ export const builderActions = {
   }),
 
   applyTheme: (themeId: string): BuilderAction => ({ type: 'APPLY_THEME', payload: themeId }),
+  applyThemeTokens: (themeId: string, tokens: ThemeTokens): BuilderAction => ({ type: 'APPLY_THEME_TOKENS', payload: { themeId, tokens } }),
 
   undo: (): BuilderAction => ({ type: 'UNDO' }),
   redo: (): BuilderAction => ({ type: 'REDO' }),

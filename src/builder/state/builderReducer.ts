@@ -2,6 +2,7 @@ import { BuilderState, BuilderAction } from './builderStore';
 import { BuilderPage, BuilderProject, generateBuilderId } from '../../types/builder/project';
 import { BuilderHistoryEntry, BuilderHistoryState } from '../../types/builder/history';
 import { getDefaultSectionInstance } from '../registry/sectionManifests';
+import { getThemePreset } from '../../lib/themePresets';
 
 function pushHistory(
   history: BuilderHistoryState,
@@ -173,12 +174,24 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
 
     case 'APPLY_THEME': {
       if (!state.project) return state;
+      const preset = getThemePreset(action.payload);
       const newHistory = pushHistory(state.history, state.project, `Apply theme`, 'APPLY_THEME');
       return {
         ...state,
         isDirty: true,
         history: newHistory,
-        project: { ...state.project, themeId: action.payload },
+        project: { ...state.project, themeId: action.payload, themeTokens: preset.tokens },
+      };
+    }
+
+    case 'APPLY_THEME_TOKENS': {
+      if (!state.project) return state;
+      const newHistory = pushHistory(state.history, state.project, `Apply custom palette`, 'APPLY_THEME');
+      return {
+        ...state,
+        isDirty: true,
+        history: newHistory,
+        project: { ...state.project, themeId: action.payload.themeId, themeTokens: action.payload.tokens },
       };
     }
 

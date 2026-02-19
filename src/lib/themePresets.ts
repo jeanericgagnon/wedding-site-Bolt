@@ -152,9 +152,7 @@ export function getAllThemePresets(): ThemePreset[] {
   return Object.values(THEME_PRESETS);
 }
 
-export function applyThemePreset(presetId: string, el: HTMLElement = document.documentElement): void {
-  const preset = getThemePreset(presetId);
-  const { tokens } = preset;
+export function applyThemeTokens(tokens: ThemeTokens, el: HTMLElement = document.documentElement): void {
   el.style.setProperty('--color-primary', tokens.colorPrimary);
   el.style.setProperty('--color-primary-hover', tokens.colorPrimaryHover);
   el.style.setProperty('--color-primary-light', tokens.colorPrimaryLight);
@@ -168,4 +166,9 @@ export function applyThemePreset(presetId: string, el: HTMLElement = document.do
   el.style.setProperty('--color-border', tokens.colorBorder);
   el.style.setProperty('--color-text-primary', tokens.colorTextPrimary);
   el.style.setProperty('--color-text-secondary', tokens.colorTextSecondary);
+}
+
+export function applyThemePreset(presetId: string, el: HTMLElement = document.documentElement): void {
+  const preset = getThemePreset(presetId);
+  applyThemeTokens(preset.tokens, el);
 }

@@ -112,11 +112,13 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
   }, [isOpen, onClose]);
 
   const handleSelectPreset = (presetId: string) => {
-    dispatch(builderActions.applyTheme(presetId));
-    applyThemePreset(presetId);
-    setCustomApplied(false);
     const preset = presets.find(p => p.id === presetId);
-    if (preset) setCustomTokens(preset.tokens);
+    if (preset) {
+      dispatch(builderActions.applyThemeTokens(presetId, preset.tokens));
+      applyThemePreset(presetId);
+      setCustomTokens(preset.tokens);
+    }
+    setCustomApplied(false);
   };
 
   const handleCustomTokenChange = (key: keyof ThemeTokens, value: string) => {
@@ -144,7 +146,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
   };
 
   const handleApplyCustom = () => {
-    dispatch(builderActions.applyTheme('custom'));
+    dispatch(builderActions.applyThemeTokens('custom', customTokens));
     setCustomApplied(true);
   };
 
