@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
+import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { supabase } from '../lib/supabase';
 import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
 import { LayoutConfigV1 } from '../types/layoutConfig';
@@ -36,8 +37,102 @@ const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string }> = ({ si
   return <PageRenderer sections={sections} siteSlug={siteSlug} />;
 };
 
+type PrivacyGateState = 'loading' | 'open' | 'password_required' | 'invite_only' | 'unlocked';
+
+const PasswordGate: React.FC<{
+  onSubmit: (pw: string) => void;
+  error: string | null;
+  checking: boolean;
+}> = ({ onSubmit, error, checking }) => {
+  const [pw, setPw] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-stone-50 to-stone-100 px-4">
+      <div className="flex justify-end p-4">
+        <LanguageSwitcher />
+      </div>
+      <div className="flex-1 flex items-center justify-center">
+      <div className="max-w-sm w-full">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-stone-200" />
+          </div>
+          <h1 className="text-2xl font-light text-stone-800 mb-2">Private Wedding Site</h1>
+          <p className="text-stone-500 text-sm">Enter the password provided by the couple to view this site.</p>
+        </div>
+        <form
+          onSubmit={e => { e.preventDefault(); onSubmit(pw); }}
+          className="bg-white border border-stone-200 rounded-2xl shadow-sm p-6 space-y-4"
+        >
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+          <div className="relative">
+            <label className="block text-sm font-medium text-stone-700 mb-1">Password</label>
+            <input
+              ref={inputRef}
+              type={showPw ? 'text' : 'password'}
+              value={pw}
+              onChange={e => setPw(e.target.value)}
+              className="w-full px-3 py-2 pr-10 border border-stone-300 rounded-lg text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
+              placeholder="Enter site password"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(v => !v)}
+              className="absolute right-3 top-8 text-stone-400 hover:text-stone-600"
+              aria-label={showPw ? 'Hide password' : 'Show password'}
+            >
+              {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <button
+            type="submit"
+            disabled={!pw || checking}
+            className="w-full py-2.5 bg-stone-800 text-white rounded-lg font-medium hover:bg-stone-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {checking ? 'Checking…' : 'View Site'}
+          </button>
+        </form>
+        <p className="text-center text-xs text-stone-400 mt-4">Powered by DayOf</p>
+      </div>
+      </div>
+    </div>
+  );
+};
+
+const InviteOnlyGate: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-stone-50 to-stone-100 px-4">
+    <div className="max-w-md w-full text-center space-y-6">
+      <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto">
+        <Lock className="w-8 h-8 text-stone-200" />
+      </div>
+      <div>
+        <h1 className="text-2xl font-light text-stone-800 mb-2">Invite-only site</h1>
+        <p className="text-stone-500 leading-relaxed">
+          This wedding site is only accessible to invited guests. Please use the personal link from your invitation.
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-stone-200" />
+        <span className="text-xs text-stone-400 px-2">dayof.love</span>
+        <div className="flex-1 h-px bg-stone-200" />
+      </div>
+    </div>
+  </div>
+);
+
 export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
@@ -46,6 +141,34 @@ export const SiteView: React.FC = () => {
   const [isComingSoon, setIsComingSoon] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [privacyGate, setPrivacyGate] = useState<PrivacyGateState>('loading');
+  const [hideFromSearch, setHideFromSearch] = useState(false);
+  const [passwordGateError, setPasswordGateError] = useState<string | null>(null);
+  const [passwordGateChecking, setPasswordGateChecking] = useState(false);
+
+  const STORAGE_KEY = `dayof_pw_unlocked_${slug}`;
+
+  const handlePasswordSubmit = async (pw: string) => {
+    setPasswordGateChecking(true);
+    setPasswordGateError(null);
+    try {
+      const { data } = await supabase.rpc('check_site_password', {
+        p_slug: slug,
+        p_password: pw,
+      });
+      if (data === true) {
+        sessionStorage.setItem(STORAGE_KEY, '1');
+        setPrivacyGate('unlocked');
+      } else {
+        setPasswordGateError('Incorrect password. Please try again.');
+      }
+    } catch {
+      setPasswordGateError('Could not verify password. Please try again.');
+    } finally {
+      setPasswordGateChecking(false);
+    }
+  };
 
   useEffect(() => {
     const loadSite = async () => {
@@ -58,7 +181,7 @@ export const SiteView: React.FC = () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_data, layout_config, site_json, published_json, active_template_id, is_published')
+          .select('id, wedding_data, layout_config, site_json, published_json, active_template_id, is_published, privacy_mode, site_password_hash, hide_from_search, guest_access_token')
           .eq('site_slug', slug)
           .maybeSingle();
 
@@ -79,6 +202,36 @@ export const SiteView: React.FC = () => {
           setLoading(false);
           return;
         }
+
+        const privacyMode = (data.privacy_mode as string) ?? 'public';
+        const pwHash = (data.site_password_hash as string | null) ?? null;
+        const hideSearch = !!(data.hide_from_search);
+        const guestToken = (data.guest_access_token as string | null) ?? null;
+
+        setHideFromSearch(hideSearch);
+
+        if (privacyMode === 'password_protected' && pwHash) {
+          const alreadyUnlocked = sessionStorage.getItem(`dayof_pw_unlocked_${slug}`) === '1';
+          if (!alreadyUnlocked) {
+            setPrivacyGate('password_required');
+            setLoading(false);
+            return;
+          }
+        } else if (privacyMode === 'invite_only') {
+          const urlToken = searchParams.get('token');
+          const storedToken = sessionStorage.getItem(`dayof_invite_token_${slug}`);
+          const tokenToCheck = urlToken ?? storedToken;
+          if (!tokenToCheck || (guestToken && tokenToCheck !== guestToken)) {
+            setPrivacyGate('invite_only');
+            setLoading(false);
+            return;
+          }
+          if (urlToken) {
+            sessionStorage.setItem(`dayof_invite_token_${slug}`, urlToken);
+          }
+        }
+
+        setPrivacyGate('open');
 
         const siteJson = safeJsonParse<BuilderProject | null>(
           data.published_json ?? data.site_json,
@@ -148,7 +301,17 @@ export const SiteView: React.FC = () => {
       ];
       resetProps.forEach(p => el.style.removeProperty(p));
     };
-  }, [slug]);
+  }, [slug, searchParams]);
+
+  useEffect(() => {
+    if (!hideFromSearch) return;
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    meta.id = 'dayof-noindex';
+    document.head.appendChild(meta);
+    return () => { document.getElementById('dayof-noindex')?.remove(); };
+  }, [hideFromSearch]);
 
   if (loading) {
     return (
@@ -191,6 +354,20 @@ export const SiteView: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  if (privacyGate === 'password_required') {
+    return (
+      <PasswordGate
+        onSubmit={handlePasswordSubmit}
+        error={passwordGateError}
+        checking={passwordGateChecking}
+      />
+    );
+  }
+
+  if (privacyGate === 'invite_only') {
+    return <InviteOnlyGate />;
   }
 
   if (error) {

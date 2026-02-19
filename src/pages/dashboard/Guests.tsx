@@ -160,8 +160,10 @@ export const DashboardGuests: React.FC = () => {
     }
   }, [weddingSiteId, fetchGuests]);
 
-  const generateInviteToken = () => {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  const generateSecureToken = async (): Promise<string> => {
+    const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
+    if (error || !data) throw new Error('Failed to generate token');
+    return data as string;
   };
 
   const handleAddGuest = async (e: React.FormEvent) => {
@@ -169,6 +171,7 @@ export const DashboardGuests: React.FC = () => {
     if (!weddingSiteId) return;
 
     try {
+      const inviteToken = await generateSecureToken();
       const { error } = await supabase
         .from('guests')
         .insert([{
@@ -181,7 +184,7 @@ export const DashboardGuests: React.FC = () => {
           plus_one_allowed: formData.plus_one_allowed,
           invited_to_ceremony: formData.invited_to_ceremony,
           invited_to_reception: formData.invited_to_reception,
-          invite_token: generateInviteToken(),
+          invite_token: inviteToken,
           rsvp_status: 'pending',
         }]);
 
@@ -450,7 +453,6 @@ export const DashboardGuests: React.FC = () => {
         const guest: Record<string, unknown> = {
           wedding_site_id: weddingSiteId,
           rsvp_status: 'pending',
-          invite_token: generateInviteToken(),
           plus_one_allowed: false,
           invited_to_ceremony: true,
           invited_to_reception: true,
@@ -492,7 +494,10 @@ export const DashboardGuests: React.FC = () => {
     if (!csvPreview || !weddingSiteId) return;
     setCsvImporting(true);
     try {
-      const { error } = await supabase.from('guests').insert(csvPreview);
+      const guestsWithTokens = await Promise.all(
+        csvPreview.map(async g => ({ ...g, invite_token: await generateSecureToken() }))
+      );
+      const { error } = await supabase.from('guests').insert(guestsWithTokens);
       if (error) throw error;
       await fetchGuests();
       const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';

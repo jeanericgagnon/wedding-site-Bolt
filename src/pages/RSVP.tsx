@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { Card } from '../components/ui/Card';
+import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { sendRsvpNotification, sendRsvpConfirmation } from '../lib/emailService';
 
@@ -67,6 +70,8 @@ function guestLabel(g: Guest): string {
 }
 
 export default function RSVP() {
+  const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<'search' | 'pick' | 'form' | 'success'>('search');
   const [searchValue, setSearchValue] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
@@ -75,6 +80,7 @@ export default function RSVP() {
   const [rsvpDeadline, setRsvpDeadline] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -82,6 +88,34 @@ export default function RSVP() {
     plus_one_name: '',
     notes: '',
   });
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (!token) return;
+    setTokenAutoLoading(true);
+    setSearchValue(token);
+    rsvpCall({ action: 'lookup', searchValue: token })
+      .then(({ data, error: err }) => {
+        if (err || !data) {
+          setError(err ?? 'Invalid invitation link. Please search by name below.');
+          setTokenAutoLoading(false);
+          return;
+        }
+        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
+        if (result.guest) {
+          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline);
+        } else if (result.guests && result.guests.length > 1) {
+          setAmbiguousGuests(result.guests);
+          setRsvpDeadline(result.rsvpDeadline);
+          setStep('pick');
+        } else {
+          setError('Invitation not recognized. Please search by name below.');
+        }
+      })
+      .catch(() => setError('Failed to load invitation. Please search by name below.'))
+      .finally(() => setTokenAutoLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,26 +255,40 @@ export default function RSVP() {
 
   const deadlinePassed = rsvpDeadline ? new Date(rsvpDeadline) < new Date() : false;
 
+  if (tokenAutoLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-amber-50 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin mx-auto" />
+          <p className="text-gray-500 text-sm">Loading your invitation…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-amber-50">
-      <div className="container mx-auto px-4 py-16 max-w-2xl">
+      <div className="flex justify-end px-6 pt-4">
+        <LanguageSwitcher />
+      </div>
+      <div className="container mx-auto px-4 pb-16 max-w-2xl">
         {step === 'search' && (
           <Card className="p-8">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-serif mb-2">RSVP</h1>
-              <p className="text-gray-600">Please let us know if you can attend</p>
+              <h1 className="text-4xl font-serif mb-2">{t('rsvp.title')}</h1>
+              <p className="text-gray-600">{t('rsvp.subtitle')}</p>
             </div>
 
             <form onSubmit={handleSearch} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Enter your name or invitation code
+                  {t('rsvp.search_label')}
                 </label>
                 <Input
                   type="text"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  placeholder="John Smith or ABC123"
+                  placeholder={t('rsvp.search_placeholder')}
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1.5">

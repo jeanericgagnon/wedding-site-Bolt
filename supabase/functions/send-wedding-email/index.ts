@@ -141,10 +141,17 @@ function weddingInvitationHtml(data: Record<string, unknown>): string {
   const siteUrl = data.siteUrl as string | null;
   const inviteToken = data.inviteToken as string | null;
 
-  const rsvpUrl = siteUrl && inviteToken
-    ? `https://${siteUrl}/rsvp?token=${inviteToken}`
-    : siteUrl
-    ? `https://${siteUrl}/rsvp`
+  const normalizeSiteUrl = (raw: string): string => {
+    if (/^https?:\/\//i.test(raw)) return raw.replace(/\/$/, '');
+    if (raw.includes('.')) return `https://${raw}`;
+    return `https://${raw}.dayof.love`;
+  };
+
+  const baseUrl = siteUrl ? normalizeSiteUrl(siteUrl) : null;
+  const rsvpUrl = baseUrl && inviteToken
+    ? `${baseUrl}/rsvp?token=${inviteToken}`
+    : baseUrl
+    ? `${baseUrl}/rsvp`
     : null;
 
   return `
@@ -188,6 +195,8 @@ function weddingInvitationHtml(data: Record<string, unknown>): string {
 </html>`;
 }
 
+const OWNER_ONLY_TYPES = new Set(["wedding_invitation", "signup_welcome"]);
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -195,27 +204,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error("Auth failed:", authError?.message);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    const isServiceRole = token === serviceRoleKey;
 
     let payload: EmailPayload;
     try {
@@ -234,6 +225,28 @@ Deno.serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Owner-only types (invitations, welcome) require authenticated user or service role
+    if (OWNER_ONLY_TYPES.has(type) && !isServiceRole) {
+      if (!token) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: `Bearer ${token}` } } },
+      );
+      const { data: { user }, error: authError } = await userClient.auth.getUser();
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

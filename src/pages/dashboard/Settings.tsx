@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff } from 'lucide-react';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -33,7 +33,13 @@ export const DashboardSettings: React.FC = () => {
   const [slugSaving, setSlugSaving] = useState(false);
   const [slugSuccess, setSlugSuccess] = useState<string | null>(null);
   const [slugError, setSlugError] = useState<string | null>(null);
-  const [siteVisibility, setSiteVisibility] = useState('public');
+
+  const [privacyMode, setPrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
+  const [hideFromSearch, setHideFromSearch] = useState(false);
+  const [sitePassword, setSitePassword] = useState('');
+  const [showSitePassword, setShowSitePassword] = useState(false);
+  const [guestAccessToken, setGuestAccessToken] = useState<string | null>(null);
+  const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [visibilitySuccess, setVisibilitySuccess] = useState<string | null>(null);
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
@@ -77,7 +83,7 @@ export const DashboardSettings: React.FC = () => {
     try {
       const { data } = await supabase
         .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs')
+        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -89,7 +95,9 @@ export const DashboardSettings: React.FC = () => {
         setAccountEmail(user.email ?? '');
         setCurrentTemplate(data.active_template_id || 'base');
         setSiteSlug(data.site_slug ?? '');
-        setSiteVisibility(data.site_visibility ?? 'public');
+        setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
+        setHideFromSearch(!!(data.hide_from_search));
+        setGuestAccessToken((data.guest_access_token as string | null) ?? null);
         const prefs = data.notification_prefs as Record<string, boolean> | null;
         if (prefs) {
           setNotifRsvp(prefs.rsvp ?? true);
@@ -189,17 +197,57 @@ export const DashboardSettings: React.FC = () => {
     setVisibilityError(null);
     setVisibilitySuccess(null);
     try {
+      const updates: Record<string, unknown> = {
+        privacy_mode: privacyMode,
+        hide_from_search: hideFromSearch,
+      };
+
+      if (privacyMode === 'password_protected' && sitePassword) {
+        const { data: hashData, error: hashErr } = await supabase.rpc('hash_site_password', {
+          p_password: sitePassword,
+        });
+        if (hashErr) throw hashErr;
+        updates.site_password_hash = hashData as string;
+      }
+
+      if (privacyMode === 'invite_only' && !guestAccessToken) {
+        const { data: tokenData, error: tokenErr } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
+        if (tokenErr) throw tokenErr;
+        updates.guest_access_token = tokenData as string;
+        setGuestAccessToken(tokenData as string);
+      }
+
       const { error } = await supabase
         .from('wedding_sites')
-        .update({ site_visibility: siteVisibility })
+        .update(updates)
         .eq('id', weddingSiteId);
       if (error) throw error;
+      setSitePassword('');
       setVisibilitySuccess('Privacy settings saved.');
     } catch (err) {
       setVisibilityError(err instanceof Error ? err.message : 'Failed to save privacy settings.');
     } finally {
       setVisibilitySaving(false);
     }
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!weddingSiteId) return;
+    try {
+      const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
+      if (error) throw error;
+      await supabase.from('wedding_sites').update({ guest_access_token: data as string }).eq('id', weddingSiteId);
+      setGuestAccessToken(data as string);
+    } catch {
+    }
+  };
+
+  const copyInviteLink = async () => {
+    if (!guestAccessToken || !siteSlug) return;
+    const url = `${window.location.origin}/site/${siteSlug}?token=${guestAccessToken}`;
+    await navigator.clipboard.writeText(url);
+    setPrivacyCopied(true);
+    setTimeout(() => setPrivacyCopied(false), 2000);
   };
 
   const handleSaveNotifications = async (e: React.FormEvent) => {
@@ -482,22 +530,113 @@ export const DashboardSettings: React.FC = () => {
                     <CardDescription>Control who can view your site</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <form onSubmit={handleSavePrivacy} className="space-y-4">
+                    <form onSubmit={handleSavePrivacy} className="space-y-5">
                       {visibilitySuccess && (
                         <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{visibilitySuccess}</div>
                       )}
                       {visibilityError && (
                         <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{visibilityError}</div>
                       )}
-                      <Select
-                        label="Site visibility"
-                        options={[
-                          { value: 'public', label: 'Public — Anyone with the link' },
-                          { value: 'private', label: 'Private — Invite only' },
-                        ]}
-                        value={siteVisibility}
-                        onChange={e => setSiteVisibility(e.target.value)}
-                      />
+
+                      <div className="space-y-3">
+                        {(
+                          [
+                            { value: 'public', label: 'Public', desc: 'Anyone with the link can view your site' },
+                            { value: 'password_protected', label: 'Password protected', desc: 'Visitors must enter a password to view' },
+                            { value: 'invite_only', label: 'Invite-only', desc: 'Only guests with your private link can view' },
+                          ] as const
+                        ).map(opt => (
+                          <label
+                            key={opt.value}
+                            className={`flex items-start gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-colors ${
+                              privacyMode === opt.value
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/40'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="privacy_mode"
+                              value={opt.value}
+                              checked={privacyMode === opt.value}
+                              onChange={() => setPrivacyMode(opt.value)}
+                              className="mt-0.5 text-primary focus:ring-primary"
+                            />
+                            <div>
+                              <p className="font-medium text-text-primary text-sm">{opt.label}</p>
+                              <p className="text-xs text-text-secondary mt-0.5">{opt.desc}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+
+                      {privacyMode === 'password_protected' && (
+                        <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-3">
+                          <p className="text-sm font-medium text-text-primary">Site password</p>
+                          <p className="text-xs text-text-secondary">Guests will be prompted to enter this before viewing the site.</p>
+                          <div className="relative">
+                            <input
+                              type={showSitePassword ? 'text' : 'password'}
+                              value={sitePassword}
+                              onChange={e => setSitePassword(e.target.value)}
+                              placeholder="Set new password…"
+                              className="w-full px-3 py-2 pr-10 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary/40"
+                              autoComplete="new-password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowSitePassword(v => !v)}
+                              className="absolute right-3 top-2.5 text-text-tertiary hover:text-text-primary"
+                              aria-label={showSitePassword ? 'Hide' : 'Show'}
+                            >
+                              {showSitePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                          <p className="text-xs text-text-tertiary">Leave blank to keep the existing password.</p>
+                        </div>
+                      )}
+
+                      {privacyMode === 'invite_only' && (
+                        <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-3">
+                          <p className="text-sm font-medium text-text-primary">Private site link</p>
+                          <p className="text-xs text-text-secondary">Share this link with guests. Anyone without it will see a blocked page.</p>
+                          {guestAccessToken && siteSlug ? (
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 text-xs bg-background border border-border rounded-lg px-3 py-2 text-text-secondary truncate">
+                                {`${window.location.origin}/site/${siteSlug}?token=${guestAccessToken.slice(0, 12)}…`}
+                              </code>
+                              <Button type="button" variant="outline" size="sm" onClick={copyInviteLink}>
+                                {privacyCopied ? <CheckCheck className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-text-secondary">Save settings to generate the link.</p>
+                          )}
+                          {guestAccessToken && (
+                            <button
+                              type="button"
+                              onClick={handleRegenerateToken}
+                              className="text-xs text-error hover:underline"
+                            >
+                              Invalidate and regenerate link
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={hideFromSearch}
+                          onChange={e => setHideFromSearch(e.target.checked)}
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">Hide from search engines</p>
+                          <p className="text-xs text-text-secondary">Adds a noindex tag so your site won't appear in Google results.</p>
+                        </div>
+                      </label>
+
                       <div className="flex justify-end pt-2">
                         <Button variant="primary" size="md" type="submit" disabled={visibilitySaving}>
                           {visibilitySaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
