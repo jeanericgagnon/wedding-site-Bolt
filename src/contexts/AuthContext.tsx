@@ -66,6 +66,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
+  const setLocalDemoUser = () => {
+    setUser({
+      id: 'demo-local-user',
+      email: DEMO_EMAIL,
+      name: 'Alex & Jordan (Demo)',
+    });
+  };
+
   const signIn = async () => {
     if (!DEMO_MODE) {
       if (!SUPABASE_CONFIGURED) {
@@ -75,11 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (!SUPABASE_CONFIGURED) {
-      setUser({
-        id: 'demo-local-user',
-        email: DEMO_EMAIL,
-        name: 'Alex & Jordan (Demo)',
-      });
+      setLocalDemoUser();
       return;
     }
 
@@ -100,23 +104,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (signUpError) {
-        throw new Error('Unable to access demo account. Please try again.');
+        // Keep demo UX working even when Supabase auth/email settings block auto-signup.
+        setLocalDemoUser();
+        return;
       }
 
       if (signUpData.user) {
-        setUser({
-          id: signUpData.user.id,
-          email: signUpData.user.email || '',
-          name: 'Alex & Jordan (Demo)',
+        // Try to establish a real session; if not possible, fall back to local demo session.
+        const retry = await supabase.auth.signInWithPassword({
+          email: DEMO_EMAIL,
+          password: DEMO_PASSWORD,
         });
+        if (retry.data.user) {
+          setUser({
+            id: retry.data.user.id,
+            email: retry.data.user.email || '',
+            name: 'Alex & Jordan (Demo)',
+          });
+          return;
+        }
+
+        setLocalDemoUser();
+        return;
       }
-    } else if (data.user) {
+
+      setLocalDemoUser();
+      return;
+    }
+
+    if (data.user) {
       setUser({
         id: data.user.id,
         email: data.user.email || '',
         name: 'Alex & Jordan (Demo)',
       });
+      return;
     }
+
+    setLocalDemoUser();
   };
 
   const signOut = async () => {
