@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ChevronDown, ImageIcon } from 'lucide-react';
+import { X, ChevronDown, ImageIcon, Eye, EyeOff } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectSelectedSection, selectActivePage } from '../state/builderSelectors';
@@ -43,19 +43,41 @@ export const BuilderInspectorPanel: React.FC = () => {
     );
   };
 
+  const handleToggleVisibility = () => {
+    dispatch(builderActions.toggleSectionVisibility(activePage.id, selectedSection.id));
+  };
+
   return (
     <aside className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-800">{manifest.label}</h3>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-800 truncate">{manifest.label}</h3>
+            {!selectedSection.enabled && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 bg-gray-100 text-gray-400 rounded">Hidden</span>
+            )}
+          </div>
           <p className="text-xs text-gray-400">{selectedSection.type} section</p>
         </div>
-        <button
-          onClick={() => dispatch(builderActions.selectSection(null))}
-          className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X size={15} />
-        </button>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={handleToggleVisibility}
+            title={selectedSection.enabled ? 'Hide section' : 'Show section'}
+            className={`p-1.5 rounded transition-colors ${
+              selectedSection.enabled
+                ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                : 'text-rose-500 bg-rose-50 hover:bg-rose-100'
+            }`}
+          >
+            {selectedSection.enabled ? <Eye size={15} /> : <EyeOff size={15} />}
+          </button>
+          <button
+            onClick={() => dispatch(builderActions.selectSection(null))}
+            className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X size={15} />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
