@@ -22,6 +22,7 @@ export const Signup: React.FC = () => {
     secondLastName: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,6 +97,12 @@ export const Signup: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -408,6 +415,16 @@ export const Signup: React.FC = () => {
               placeholder="Create a password"
               required
               helperText="Minimum 6 characters"
+            />
+
+            <Input
+              label="Confirm Password"
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Repeat your password"
+              required
             />
 
             {error && (
