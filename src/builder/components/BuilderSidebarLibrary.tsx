@@ -115,7 +115,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
 
   return (
     <>
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden">
+    <aside className="w-64 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
       <div className="flex border-b border-gray-200">
         {([
           { id: 'layers', icon: Layers, label: 'Sections' },
@@ -578,6 +578,68 @@ const SectionTypePreview: React.FC<{ sectionType: string }> = ({ sectionType }) 
             <div className="h-1 rounded-sm bg-amber-300 w-full" />
             <div className="h-1 rounded-sm bg-amber-200 w-3/4" />
           </div>
+        </div>
+      </div>
+    ),
+    quotes: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-50">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Quotes & Wishes</div>
+        <div className="flex flex-col gap-0.5">
+          <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
+          <div className="h-0.5 rounded-sm bg-gray-200 w-4/5" />
+          <div className="h-0.5 rounded-sm bg-gray-200 w-3/5" />
+        </div>
+        <div className="flex items-center gap-1 mt-0.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-gray-200" />
+          <div className="h-0.5 w-12 rounded-sm bg-gray-300" />
+        </div>
+      </div>
+    ),
+    menu: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Dining & Menu</div>
+        <div className="flex gap-1">
+          {['Starter','Main','Dessert'].map(c => (
+            <div key={c} className="flex-1 h-3 rounded text-[5px] flex items-center justify-center bg-gray-100 text-gray-500 border border-gray-200 font-medium">{c}</div>
+          ))}
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
+          <div className="h-0.5 rounded-sm bg-gray-200 w-3/4" />
+        </div>
+      </div>
+    ),
+    music: (
+      <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-900">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Music & Playlist</div>
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-center gap-1">
+            <div className="text-[6px] text-gray-500 w-3 text-right">{i+1}</div>
+            <div className={`flex-1 h-0.5 rounded-sm ${i === 0 ? 'bg-gray-300' : 'bg-gray-600'}`} />
+            <div className="w-4 h-0.5 rounded-sm bg-gray-600" />
+          </div>
+        ))}
+      </div>
+    ),
+    directions: (
+      <div className="w-full h-16 flex bg-white">
+        <div className="flex-1 flex flex-col justify-center gap-1 px-2">
+          <div className="text-[7px] text-gray-400 uppercase tracking-widest">Directions</div>
+          <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
+          <div className="h-0.5 rounded-sm bg-gray-200 w-4/5" />
+          <div className="w-8 h-2.5 rounded text-[5px] flex items-center justify-center bg-gray-700 text-white font-semibold mt-0.5">Maps</div>
+        </div>
+        <div className="w-2/5 relative bg-slate-200">
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px), repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px)' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-red-500 bg-red-400" />
+        </div>
+      </div>
+    ),
+    video: (
+      <div className="w-full h-16 flex flex-col items-center justify-center gap-1 bg-gray-900">
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Video</div>
+        <div className="w-8 h-8 rounded-md bg-gray-700 flex items-center justify-center border border-gray-600">
+          <div className="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[8px] border-l-white/70 ml-0.5" />
         </div>
       </div>
     ),
