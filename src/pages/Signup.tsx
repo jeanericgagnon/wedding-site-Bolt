@@ -192,11 +192,10 @@ export const Signup: React.FC = () => {
         coupleName1: formData.firstName,
         coupleName2: formData.secondName,
         siteUrl: subdomain,
-      }).catch(console.error);
+      }).catch(() => {});
 
       navigate('/payment-required');
     } catch (err: unknown) {
-      console.error('Signup error:', err);
       setError((err as Error).message || 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);

@@ -76,8 +76,7 @@ export const Onboarding: React.FC = () => {
         });
 
       if (error) throw error;
-    } catch (err) {
-      console.error('Error creating wedding site:', err);
+    } catch {
       alert('Failed to create wedding site. Please try again.');
     }
   };

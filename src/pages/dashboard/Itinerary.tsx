@@ -99,8 +99,7 @@ export const DashboardItinerary: React.FC = () => {
       );
 
       setEvents(eventsWithCounts);
-    } catch (error) {
-      void error;
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -176,8 +175,7 @@ export const DashboardItinerary: React.FC = () => {
 
       setShowEventForm(false);
       loadEvents();
-    } catch (error) {
-      void error;
+    } catch {
       alert('Failed to save event. Please try again.');
     }
   }
@@ -194,8 +192,7 @@ export const DashboardItinerary: React.FC = () => {
       if (error) throw error;
 
       loadEvents();
-    } catch (error) {
-      void error;
+    } catch {
       alert('Failed to delete event. Please try again.');
     }
   }
@@ -603,8 +600,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
       setAllGuests(guests || []);
       setInvitedGuestIds(new Set(invitations?.map((i) => i.guest_id) || []));
-    } catch (error) {
-      console.error('Error loading guests:', error);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -637,9 +633,8 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       }
 
       onUpdate();
-    } catch (error) {
-      console.error('Error toggling invitation:', error);
-      alert('Failed to update invitation');
+    } catch {
+      alert('Failed to update invitation. Please try again.');
     }
   }
 

@@ -121,8 +121,7 @@ export default function EventRSVP() {
       );
 
       setInvitations(invitationsWithRsvps);
-    } catch (err) {
-      console.error('Error loading events:', err);
+    } catch {
       setError('Failed to load event invitations');
     } finally {
       setLoading(false);
@@ -211,8 +210,7 @@ export default function EventRSVP() {
         setSelectedEvent(null);
         loadGuestAndEvents();
       }, 1500);
-    } catch (err) {
-      console.error('Error submitting RSVP:', err);
+    } catch {
       alert('Failed to submit RSVP. Please try again.');
     }
   }

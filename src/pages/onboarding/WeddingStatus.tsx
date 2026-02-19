@@ -103,7 +103,6 @@ export const WeddingStatus: React.FC = () => {
         }
       });
     } catch (err: unknown) {
-      console.error('Status update error:', err);
       setError(err instanceof Error ? err.message : 'Failed to update status. Please try again.');
     } finally {
       setLoading(false);

@@ -140,8 +140,7 @@ export const DashboardGuests: React.FC = () => {
 
         setGuests(guestsWithRsvps);
       }
-    } catch (err) {
-      void err;
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -188,8 +187,7 @@ export const DashboardGuests: React.FC = () => {
       setShowAddModal(false);
       resetForm();
       toast(`${formData.first_name} ${formData.last_name} added`, 'success');
-    } catch (err) {
-      void err;
+    } catch {
       toast('Failed to add guest. Please try again.', 'error');
     }
   };
@@ -219,8 +217,7 @@ export const DashboardGuests: React.FC = () => {
       setEditingGuest(null);
       resetForm();
       toast('Guest updated', 'success');
-    } catch (err) {
-      void err;
+    } catch {
       toast('Failed to update guest. Please try again.', 'error');
     }
   };
@@ -247,8 +244,7 @@ export const DashboardGuests: React.FC = () => {
 
       await fetchGuests();
       toast('Guest removed', 'success');
-    } catch (err) {
-      void err;
+    } catch {
       toast('Failed to remove guest. Please try again.', 'error');
     } finally {
       setDeletingGuestId(null);
@@ -289,8 +285,7 @@ export const DashboardGuests: React.FC = () => {
         .eq('id', guest.id);
 
       toast(`Invitation sent to ${guestName}`, 'success');
-    } catch (err) {
-      void err;
+    } catch {
       toast('Failed to send invitation. Please try again.', 'error');
     } finally {
       setSendingInviteId(null);

@@ -187,7 +187,6 @@ export const GuidedSetup: React.FC = () => {
         }
       });
     } catch (err: unknown) {
-      console.error('Guided setup error:', err);
       setError((err as Error).message || 'Failed to save. Please try again.');
     } finally {
       setLoading(false);

@@ -61,7 +61,6 @@ export const Product: React.FC = () => {
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   const onTodo = (message: string) => {
-    console.log('TODO:', message);
     const newToast: Toast = {
       id: Date.now(),
       message: `TODO: ${message}`,

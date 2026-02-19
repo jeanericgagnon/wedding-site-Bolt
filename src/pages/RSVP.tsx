@@ -146,7 +146,7 @@ export default function RSVP() {
             notes: formData.notes || null,
             coupleName1: siteData.coupleName1,
             coupleName2: siteData.coupleName2,
-          }).catch(console.error);
+          }).catch(() => {});
         }
 
         if (guestEmail) {
@@ -158,7 +158,7 @@ export default function RSVP() {
             coupleName2: siteData.coupleName2,
             weddingDate: siteData.weddingDate,
             venueName: siteData.venueName,
-          }).catch(console.error);
+          }).catch(() => {});
         }
       }
 

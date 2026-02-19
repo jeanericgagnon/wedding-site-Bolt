@@ -29,8 +29,7 @@ export const Home: React.FC = () => {
     try {
       await signIn();
       navigate('/dashboard');
-    } catch (error) {
-      console.error('Demo login failed:', error);
+    } catch {
       setDemoLoading(false);
     }
   };

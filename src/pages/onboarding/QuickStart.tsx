@@ -119,7 +119,6 @@ export const QuickStart: React.FC = () => {
         }
       });
     } catch (err: unknown) {
-      console.error('Quick start error:', err);
       setError((err as Error).message || 'Failed to save. Please try again.');
     } finally {
       setLoading(false);

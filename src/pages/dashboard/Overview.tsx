@@ -127,9 +127,8 @@ export const DashboardOverview: React.FC = () => {
         templateName,
         recentRsvps,
       });
-    } catch (err) {
+    } catch {
       setError('Could not load overview data.');
-      console.error(err);
     } finally {
       setLoading(false);
     }

@@ -33,8 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     try {
       await signIn();
       navigate('/dashboard');
-    } catch (error) {
-      console.error('Demo login failed:', error);
+    } catch {
       setDemoLoading(false);
     }
   };
