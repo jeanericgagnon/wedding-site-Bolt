@@ -13,7 +13,9 @@ import {
   XCircle,
   Clock,
   Palette,
+  ArrowLeft,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
@@ -50,6 +52,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   saveError,
   publishError,
 }) => {
+  const navigate = useNavigate();
   const { state, dispatch } = useBuilderContext();
   const undoRedo = selectUndoRedo(state);
   const isPreview = selectIsPreviewMode(state);
@@ -67,6 +70,17 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3 z-50 sticky top-0">
+      <button
+        onClick={() => navigate('/dashboard')}
+        title="Back to Dashboard"
+        className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors flex-shrink-0"
+      >
+        <ArrowLeft size={15} />
+        <span className="hidden sm:inline">Dashboard</span>
+      </button>
+
+      <div className="h-5 w-px bg-gray-200 flex-shrink-0" />
+
       <div className="flex items-center gap-2 min-w-0">
         <div className="w-7 h-7 bg-rose-600 rounded-md flex items-center justify-center flex-shrink-0">
           <span className="text-white text-xs font-bold">W</span>
