@@ -125,14 +125,14 @@ export const SeatingFeature: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Shield className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-ink mb-3">Offline Fallback</h3>
+              <h3 className="text-xl font-serif font-bold text-ink mb-3">RSVP Drift Detection</h3>
               <p className="text-ink/70 mb-4">
-                Works offline in case venue WiFi fails. All guest data cached locally on your device.
+                When a guest changes their RSVP after you've assigned seating, Dayof flags the affected assignment. No silent gaps in your chart.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Full offline mode</li>
-                <li>• Syncs when reconnected</li>
-                <li>• No data loss</li>
+                <li>• Highlights invalidated seats</li>
+                <li>• Reassign in one click</li>
+                <li>• Never miss a late change</li>
               </ul>
             </div>
 
@@ -142,12 +142,12 @@ export const SeatingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Caterer Export</h3>
               <p className="text-ink/70 mb-4">
-                Export seating chart and meal choices formatted for your caterer. CSV, Excel, or PDF.
+                Export your seating chart and meal choices as a CSV formatted for your caterer or venue coordinator.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Multiple export formats</li>
-                <li>• Include meal preferences</li>
-                <li>• Dietary restrictions noted</li>
+                <li>• Seating CSV export</li>
+                <li>• Place cards CSV export</li>
+                <li>• Includes meal preferences</li>
               </ul>
             </div>
           </div>
@@ -198,9 +198,9 @@ export const SeatingFeature: React.FC = () => {
                     <QrCode className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">QR Code Check-in</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Auto-Assign by RSVP</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Generate QR codes for each guest or table. Scan to check in quickly at the entrance or during cocktail hour.
+                      Let Dayof fill your tables automatically based on confirmed attendees. Adjust manually, then export — the bulk of the work is done in seconds.
                     </p>
                   </div>
                 </div>
@@ -222,18 +222,18 @@ export const SeatingFeature: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[
-                'Visual seating chart',
-                'Drag-and-drop assign',
+                'Drag-and-drop seating board',
+                'Per-event seating',
                 'Table capacity tracking',
-                'Print place cards',
-                'Table number cards',
-                'Day-of check-in mode',
-                'Offline fallback',
-                'QR code check-in',
-                'Meal integration',
-                'Caterer export',
-                'Real-time updates',
-                'Mobile-friendly',
+                'Auto-assign from RSVPs',
+                'Household-aware grouping',
+                'RSVP drift detection',
+                'Seating CSV export',
+                'Place cards CSV export',
+                'Meal preference display',
+                'Reset with confirmation',
+                'Unassigned guest pool',
+                'Attendance counters',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />

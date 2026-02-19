@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Image } from 'lucide-react';
+import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Download, Upload, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button, Card, Input, Textarea } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { fromOnboarding } from '../../lib/generateWeddingData';
@@ -15,7 +15,7 @@ type Step =
   | 'rsvp'
   | 'faq'
   | 'design'
-  | 'photos'
+  | 'guests'
   | 'complete';
 
 interface FormData {
@@ -60,7 +60,11 @@ export const GuidedSetup: React.FC = () => {
     colorScheme: 'romantic',
   });
 
-  const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'photos', 'complete'];
+  const [csvImportResult, setCsvImportResult] = useState<{ created: number; updated: number; invalid: number } | null>(null);
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvError, setCsvError] = useState('');
+
+  const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
   const currentStepIndex = steps.indexOf(currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
@@ -193,6 +197,112 @@ export const GuidedSetup: React.FC = () => {
     }
   };
 
+  const downloadCsvTemplate = () => {
+    const headers = 'first_name,last_name,email,phone,group_name,plus_one_allowed,invited_to_ceremony,invited_to_reception';
+    const example1 = 'Jane,Smith,jane@example.com,555-0100,Smith Family,true,true,true';
+    const example2 = 'John,Smith,john@example.com,555-0101,Smith Family,false,true,true';
+    const example3 = 'Alice,Johnson,alice@example.com,,College Friends,true,false,true';
+    const csv = [headers, example1, example2, example3].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'guest-list-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvError('');
+    setCsvImporting(true);
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) throw new Error('CSV must have a header row and at least one guest row');
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: site } = await supabase
+        .from('wedding_sites')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!site) throw new Error('Wedding site not found');
+
+      const headerLine = lines[0].toLowerCase();
+      const cols = headerLine.split(',').map(h => h.trim());
+      const idx = (name: string) => cols.indexOf(name);
+
+      let created = 0;
+      let updated = 0;
+      let invalid = 0;
+
+      for (const line of lines.slice(1)) {
+        const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        const firstName = vals[idx('first_name')] || vals[idx('firstname')] || '';
+        const lastName = vals[idx('last_name')] || vals[idx('lastname')] || '';
+        const email = vals[idx('email')] || null;
+        const phone = vals[idx('phone')] || null;
+        const groupName = vals[idx('group_name')] || vals[idx('group')] || null;
+        const plusOne = vals[idx('plus_one_allowed')]?.toLowerCase() === 'true';
+        const toCeremony = vals[idx('invited_to_ceremony')]?.toLowerCase() !== 'false';
+        const toReception = vals[idx('invited_to_reception')]?.toLowerCase() !== 'false';
+
+        if (!firstName && !lastName && !email) { invalid++; continue; }
+
+        const name = [firstName, lastName].filter(Boolean).join(' ') || email || 'Guest';
+
+        if (email) {
+          const { data: existing } = await supabase
+            .from('guests')
+            .select('id')
+            .eq('wedding_site_id', site.id)
+            .eq('email', email)
+            .maybeSingle();
+
+          if (existing) {
+            await supabase.from('guests').update({
+              first_name: firstName || null,
+              last_name: lastName || null,
+              phone: phone || null,
+              group_name: groupName,
+              plus_one_allowed: plusOne,
+              invited_to_ceremony: toCeremony,
+              invited_to_reception: toReception,
+            }).eq('id', existing.id);
+            updated++;
+            continue;
+          }
+        }
+
+        await supabase.from('guests').insert({
+          wedding_site_id: site.id,
+          name,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          email: email || null,
+          phone: phone || null,
+          group_name: groupName,
+          plus_one_allowed: plusOne,
+          invited_to_ceremony: toCeremony,
+          invited_to_reception: toReception,
+          rsvp_status: 'pending',
+        });
+        created++;
+      }
+
+      setCsvImportResult({ created, updated, invalid });
+    } catch (err: unknown) {
+      setCsvError((err as Error).message || 'Failed to import CSV');
+    } finally {
+      setCsvImporting(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 'welcome':
@@ -281,8 +391,8 @@ export const GuidedSetup: React.FC = () => {
                     <span className="text-xs font-bold text-primary">8</span>
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Photos</p>
-                    <p className="text-sm text-text-secondary">Upload your favorite images</p>
+                    <p className="font-medium text-text-primary">Guest List</p>
+                    <p className="text-sm text-text-secondary">Import guests via CSV</p>
                   </div>
                 </div>
               </div>
@@ -459,7 +569,7 @@ export const GuidedSetup: React.FC = () => {
 
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
               <p className="text-sm text-text-secondary">
-                <span className="font-medium text-primary">Coming soon:</span> You'll be able to manage all RSVPs from your guest list dashboard
+                <span className="font-medium text-primary">Tip:</span> You can manage all RSVPs and view real-time responses from your guest list dashboard
               </p>
             </div>
           </div>
@@ -611,58 +721,92 @@ export const GuidedSetup: React.FC = () => {
           </div>
         );
 
-      case 'photos':
+      case 'guests':
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-text-primary mb-2">Add Your Photos</h2>
-              <p className="text-text-secondary">Upload engagement photos or other images (optional)</p>
+              <h2 className="text-2xl font-bold text-text-primary mb-2">Import Your Guest List</h2>
+              <p className="text-text-secondary">Start with a CSV, or skip and add guests manually later</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-3">
-                <Image className="w-4 h-4 inline mr-2" aria-hidden="true" />
-                Upload Photos
-              </label>
-              <div className="border-2 border-dashed border-border rounded-lg p-12 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                <Image className="w-16 h-16 text-text-secondary mx-auto mb-4" aria-hidden="true" />
-                <p className="text-base font-medium text-text-primary mb-2">
-                  Click to upload photos
-                </p>
-                <p className="text-sm text-text-secondary mb-4">
-                  Add engagement photos, venue images, or other pictures
-                </p>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-lg">
-                  <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
-                  <p className="text-sm text-primary font-medium">
-                    Photo upload coming soon
-                  </p>
-                </div>
-                <p className="text-xs text-text-secondary mt-4">
-                  You can add and manage photos from your dashboard
-                </p>
+            <div className="p-4 bg-surface-subtle rounded-lg space-y-3">
+              <h3 className="font-semibold text-text-primary flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" aria-hidden="true" />
+                Step 1: Download the template
+              </h3>
+              <p className="text-sm text-text-secondary">
+                Fill in guest names, emails, phone numbers, group names, and which events they're invited to.
+              </p>
+              <div className="bg-surface rounded-lg border border-border p-3 font-mono text-xs text-text-tertiary overflow-x-auto">
+                first_name, last_name, email, phone, group_name, plus_one_allowed, invited_to_ceremony, invited_to_reception
               </div>
+              <Button variant="outline" size="sm" onClick={downloadCsvTemplate}>
+                <Download className="w-4 h-4 mr-2" aria-hidden="true" />
+                Download CSV Template
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-text-primary flex items-center gap-2">
+                <Upload className="w-4 h-4 text-primary" aria-hidden="true" />
+                Step 2: Upload your filled-in CSV
+              </h3>
+              {csvImportResult ? (
+                <div className="p-4 bg-success/10 border border-success/30 rounded-lg space-y-2">
+                  <div className="flex items-center gap-2 font-medium text-success">
+                    <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+                    Import complete
+                  </div>
+                  <ul className="text-sm text-text-secondary space-y-1">
+                    <li>{csvImportResult.created} guests added</li>
+                    {csvImportResult.updated > 0 && <li>{csvImportResult.updated} guests updated</li>}
+                    {csvImportResult.invalid > 0 && <li className="text-warning">{csvImportResult.invalid} rows skipped (missing name/email)</li>}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => setCsvImportResult(null)}
+                    className="text-xs text-text-tertiary hover:text-text-primary transition-colors underline"
+                  >
+                    Import another file
+                  </button>
+                </div>
+              ) : (
+                <label className="block">
+                  <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${csvImporting ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+                    {csvImporting ? (
+                      <div className="space-y-2">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                        <p className="text-sm text-text-secondary">Importing guests...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
+                        <p className="text-sm font-medium text-text-primary mb-1">Click to upload CSV</p>
+                        <p className="text-xs text-text-tertiary">Supports the template above or any CSV with matching columns</p>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={handleCsvUpload}
+                    disabled={csvImporting}
+                  />
+                </label>
+              )}
+              {csvError && (
+                <div className="flex items-start gap-2 p-3 bg-error/10 border border-error/30 rounded-lg text-sm text-error">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  {csvError}
+                </div>
+              )}
             </div>
 
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <h3 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
-                Tips for great photos:
-              </h3>
-              <ul className="space-y-1 text-sm text-text-secondary">
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                  Use high-resolution images (at least 1920px wide)
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                  Choose photos that reflect your personality
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                  Mix candid and posed shots for variety
-                </li>
-              </ul>
+              <p className="text-sm text-text-secondary">
+                <span className="font-medium text-primary">Skip this step</span> if you're not ready. You can add and manage guests individually from the Guests dashboard at any time.
+              </p>
             </div>
           </div>
         );

@@ -527,7 +527,7 @@ export const Product: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-              Everything included <span className="text-primary">(and what's coming soon)</span>
+              Full feature breakdown
             </h2>
             <p className="text-lg text-text-secondary max-w-3xl mx-auto">
               A full-stack wedding platform built around RSVP correctness, privacy-first defaults, and calm logistics.

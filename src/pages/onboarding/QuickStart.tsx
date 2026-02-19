@@ -208,7 +208,7 @@ export const QuickStart: React.FC = () => {
           </li>
         </ul>
         <p className="text-xs text-primary mt-3 font-medium">
-          All pages will have "coming soon" placeholders you can fill in later
+          All sections are pre-filled with starter content — edit everything from your dashboard
         </p>
       </div>
 
@@ -328,7 +328,7 @@ export const QuickStart: React.FC = () => {
             Add your engagement photos or other images
           </p>
           <p className="text-xs text-accent mt-3 font-medium">
-            Photo upload coming soon - you can add photos from your dashboard
+            You can add and manage photos from the Media section in your dashboard
           </p>
         </div>
       </div>

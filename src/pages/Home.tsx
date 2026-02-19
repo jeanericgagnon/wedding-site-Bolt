@@ -193,12 +193,12 @@ export const Home: React.FC = () => {
               </div>
               <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">Messaging</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Email included</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>SMS credits optional</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Email blasts included</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Guest segmentation</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Schedule sends</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Open tracking</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Consent management</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Delivery status tracking</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Retry failed sends</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Ready-made templates</span></li>
               </ul>
             </Link>
 
@@ -239,14 +239,14 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">Seating + Check-in</h3>
+              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">Seating</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Visual seating chart</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Drag-and-drop assign</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Drag-and-drop seating board</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table capacity management</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Auto-assign by RSVP</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Print place cards</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Day-of check-in mode</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Offline fallback</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Caterer export</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Export for caterer</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Per-event seating</span></li>
               </ul>
             </Link>
           </div>
@@ -338,7 +338,7 @@ export const Home: React.FC = () => {
                   Taxes may apply depending on location.
                 </p>
                 <p className="text-[0.8125rem] text-ink/55 text-center tracking-wide leading-loose">
-                  After 2 years: renewal options shown in settings (coming soon).
+                  After 2 years: site remains readable. You'll get the option to renew.
                 </p>
               </div>
             </div>
