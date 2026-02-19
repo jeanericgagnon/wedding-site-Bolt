@@ -12,10 +12,12 @@ import {
   AlertCircle,
   XCircle,
   Clock,
+  Palette,
 } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
+import { getAllThemePresets } from '../../lib/themePresets';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -56,6 +58,12 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   const publishedAt = state.project?.lastPublishedAt ?? null;
   const isPublished = publishStatus === 'published';
+  const isThemePanelOpen = state.themePanelOpen;
+  const activeThemeId = state.project?.themeId ?? 'romantic';
+  const activeTheme = getAllThemePresets().find(p => p.id === activeThemeId);
+  const themeSwatchColors = activeTheme
+    ? [activeTheme.tokens.colorPrimary, activeTheme.tokens.colorAccent, activeTheme.tokens.colorSecondary]
+    : ['#C0697B', '#E8A0A0', '#C89F56'];
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3 z-50 sticky top-0">
@@ -91,6 +99,31 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <Redo2 size={16} />
         </button>
       </div>
+
+      <div className="h-5 w-px bg-gray-200 mx-1" />
+
+      <button
+        onClick={() =>
+          dispatch(isThemePanelOpen ? builderActions.closeThemePanel() : builderActions.openThemePanel())
+        }
+        title="Color palette"
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          isThemePanelOpen
+            ? 'bg-gray-900 text-white'
+            : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
+        }`}
+      >
+        <Palette size={14} />
+        <div className="flex gap-0.5">
+          {themeSwatchColors.map((c, i) => (
+            <div
+              key={i}
+              className="w-3 h-3 rounded-full border border-black/10"
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </button>
 
       <div className="flex-1" />
 

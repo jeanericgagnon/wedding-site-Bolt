@@ -22,6 +22,7 @@ export interface BuilderState {
   uploadQueue: MediaUploadProgress[];
   templateGalleryOpen: boolean;
   mediaLibraryOpen: boolean;
+  themePanelOpen: boolean;
   mediaPickerTargetSectionId: string | null;
   lastSavedAt: string | null;
   error: string | null;
@@ -42,6 +43,7 @@ export const initialBuilderState: BuilderState = {
   uploadQueue: [],
   templateGalleryOpen: false,
   mediaLibraryOpen: false,
+  themePanelOpen: false,
   mediaPickerTargetSectionId: null,
   lastSavedAt: null,
   error: null,
@@ -93,6 +95,8 @@ export type BuilderAction =
   | { type: 'CLOSE_TEMPLATE_GALLERY' }
   | { type: 'OPEN_MEDIA_LIBRARY'; payload?: string }
   | { type: 'CLOSE_MEDIA_LIBRARY' }
+  | { type: 'OPEN_THEME_PANEL' }
+  | { type: 'CLOSE_THEME_PANEL' }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'ADD_SECTION_TYPE'; payload: { pageId: string; sectionType: BuilderSectionType; insertAfterIndex?: number; variant?: string } }
   | { type: 'UNDO' }

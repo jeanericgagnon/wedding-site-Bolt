@@ -260,6 +260,12 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
     case 'CLOSE_MEDIA_LIBRARY':
       return { ...state, mediaLibraryOpen: false, mediaPickerTargetSectionId: null };
 
+    case 'OPEN_THEME_PANEL':
+      return { ...state, themePanelOpen: true };
+
+    case 'CLOSE_THEME_PANEL':
+      return { ...state, themePanelOpen: false };
+
     case 'SET_ERROR':
       return { ...state, error: action.payload };
 

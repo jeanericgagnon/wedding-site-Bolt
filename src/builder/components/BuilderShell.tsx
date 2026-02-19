@@ -9,10 +9,12 @@ import { BuilderCanvas } from './BuilderCanvas';
 import { BuilderInspectorPanel } from './BuilderInspectorPanel';
 import { TemplateGalleryPanel } from './TemplateGalleryPanel';
 import { MediaLibraryPanel } from './MediaLibraryPanel';
+import { ThemePalettePanel } from './ThemePalettePanel';
 import { BuilderProject } from '../../types/builder/project';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { BUILDER_AUTOSAVE_INTERVAL_MS } from '../constants/builderCapabilities';
 import { mediaService } from '../services/mediaService';
+import { applyThemePreset } from '../../lib/themePresets';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -36,9 +38,16 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   useEffect(() => {
     dispatch({ type: 'LOAD_PROJECT', payload: initialProject });
+    applyThemePreset(initialProject.themeId ?? 'romantic');
   // intentionally fires once on mount — LOAD_PROJECT is idempotent and sets baseline history
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (state.project?.themeId && state.project.themeId !== 'custom') {
+      applyThemePreset(state.project.themeId);
+    }
+  }, [state.project?.themeId]);
 
   const activePage = useMemo(() => selectActivePage(state), [state]);
   const selectedSection = useMemo(() => selectSelectedSection(state), [state]);
@@ -184,6 +193,10 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
         <TemplateGalleryPanel onSaveRequest={handleSave} />
         <MediaLibraryPanel />
+        <ThemePalettePanel
+          isOpen={state.themePanelOpen}
+          onClose={() => dispatch(builderActions.closeThemePanel())}
+        />
       </div>
     </BuilderContext.Provider>
   );

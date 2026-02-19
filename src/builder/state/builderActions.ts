@@ -66,6 +66,9 @@ export const builderActions = {
   }),
   closeMediaLibrary: (): BuilderAction => ({ type: 'CLOSE_MEDIA_LIBRARY' }),
 
+  openThemePanel: (): BuilderAction => ({ type: 'OPEN_THEME_PANEL' }),
+  closeThemePanel: (): BuilderAction => ({ type: 'CLOSE_THEME_PANEL' }),
+
   setMediaAssets: (assets: BuilderMediaAsset[]): BuilderAction => ({
     type: 'SET_MEDIA_ASSETS',
     payload: assets,
