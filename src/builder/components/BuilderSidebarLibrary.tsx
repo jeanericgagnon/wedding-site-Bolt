@@ -38,7 +38,7 @@ interface BuilderSidebarLibraryProps {
 }
 
 export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ activePageId }) => {
-  const { dispatch } = useBuilderContext();
+  const { state, dispatch } = useBuilderContext();
   const [activeTab, setActiveTab] = useState<SidebarTab>('sections');
   const [expandedType, setExpandedType] = useState<BuilderSectionType | null>(null);
   const manifests = getAllSectionManifests();
