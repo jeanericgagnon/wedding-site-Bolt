@@ -123,19 +123,30 @@ export const SiteView: React.FC = () => {
 
   if (isComingSoon) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border rounded-2xl p-10 text-center space-y-4">
-          <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center mx-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-primary">
-              <path d="M12 2l1.8 3.8L18 7l-3 2.9.7 4.1L12 12l-3.7 2 .7-4.1L6 7l4.2-1.2z"/>
-            </svg>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-surface px-4">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="relative">
+            <div className="w-24 h-24 bg-primary/8 rounded-full flex items-center justify-center mx-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-primary/60">
+                <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
+              </svg>
+            </div>
           </div>
-          <h1 className="text-2xl font-light text-text-primary">Not published yet</h1>
-          <p className="text-text-secondary">
-            This wedding site is still being set up by the couple. Check back soon!
-          </p>
-          <p className="text-xs text-text-tertiary pt-2 border-t border-border">
-            If you're the couple — visit your dashboard and click "Publish" to make your site live.
+          <div>
+            <h1 className="text-3xl font-light text-text-primary mb-3">Coming soon</h1>
+            <p className="text-text-secondary leading-relaxed">
+              The couple is putting the final touches on their wedding site. Check back soon!
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-text-tertiary px-2">dayof.love</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <p className="text-xs text-text-tertiary">
+            Are you the couple?{' '}
+            <a href="/login" className="text-primary hover:underline">Sign in</a>
+            {' '}and click Publish in your builder.
           </p>
         </div>
       </div>

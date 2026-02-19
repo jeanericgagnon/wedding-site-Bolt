@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -355,34 +355,59 @@ export const DashboardGuests: React.FC = () => {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const text = event.target?.result as string;
-      const lines = text.split('\n');
-      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+      const rawLines = text.split('\n');
+      if (rawLines.length < 2) {
+        toast('CSV file appears to be empty or missing a header row.', 'error');
+        return;
+      }
 
-      const guestsToImport = lines.slice(1)
-        .filter(line => line.trim())
-        .map(line => {
-          const values = line.split(',').map(v => v.replace(/"/g, '').trim());
-          const guest: Record<string, unknown> = {
-            wedding_site_id: weddingSiteId,
-            rsvp_status: 'pending',
-            invite_token: generateInviteToken(),
-            plus_one_allowed: false,
-            invited_to_ceremony: true,
-            invited_to_reception: true,
-          };
+      const headers = rawLines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+      const hasFirstName = headers.includes('first name');
+      const hasLastName = headers.includes('last name');
 
-          headers.forEach((header, index) => {
-            const value = values[index];
-            if (header === 'first name') guest.first_name = value;
-            if (header === 'last name') guest.last_name = value;
-            if (header === 'email') guest.email = value || null;
-            if (header === 'phone') guest.phone = value || null;
-            if (header === 'plus one') guest.plus_one_allowed = value.toLowerCase() === 'yes';
-          });
+      if (!hasFirstName && !hasLastName) {
+        toast('CSV must have "First Name" and "Last Name" columns. Check your file headers and try again.', 'error');
+        return;
+      }
 
-          guest.name = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
-          return guest;
+      const dataLines = rawLines.slice(1).filter(line => line.trim());
+      const skipped: string[] = [];
+      const guestsToImport: Record<string, unknown>[] = [];
+
+      dataLines.forEach((line, idx) => {
+        const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+        const guest: Record<string, unknown> = {
+          wedding_site_id: weddingSiteId,
+          rsvp_status: 'pending',
+          invite_token: generateInviteToken(),
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+        };
+
+        headers.forEach((header, i) => {
+          const value = values[i] ?? '';
+          if (header === 'first name') guest.first_name = value;
+          if (header === 'last name') guest.last_name = value;
+          if (header === 'email') guest.email = value || null;
+          if (header === 'phone') guest.phone = value || null;
+          if (header === 'plus one') guest.plus_one_allowed = value.toLowerCase() === 'yes';
         });
+
+        guest.name = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
+
+        if (!guest.first_name && !guest.last_name) {
+          skipped.push(`Row ${idx + 2}: missing name`);
+          return;
+        }
+
+        guestsToImport.push(guest);
+      });
+
+      if (guestsToImport.length === 0) {
+        toast('No valid guests found in the file. All rows were skipped.', 'error');
+        return;
+      }
 
       try {
         const { error } = await supabase
@@ -392,14 +417,23 @@ export const DashboardGuests: React.FC = () => {
         if (error) throw error;
 
         await fetchGuests();
-        toast(`${guestsToImport.length} guest${guestsToImport.length !== 1 ? 's' : ''} imported successfully`, 'success');
+
+        if (skipped.length > 0) {
+          toast(
+            `${guestsToImport.length} imported, ${skipped.length} skipped (missing name)`,
+            'info'
+          );
+        } else {
+          toast(`${guestsToImport.length} guest${guestsToImport.length !== 1 ? 's' : ''} imported successfully`, 'success');
+        }
       } catch (err) {
-        console.error('Error importing guests:', err);
-        toast('Failed to import guests. Check the CSV format and try again.', 'error');
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        toast(`Import failed: ${msg}`, 'error');
       }
     };
 
     reader.readAsText(file);
+    e.target.value = '';
   };
 
   const filteredGuests = guests.filter((guest) => {
@@ -592,6 +626,38 @@ export const DashboardGuests: React.FC = () => {
             </div>
           </Card>
         </div>
+
+        {(() => {
+          const conflicts: string[] = [];
+          const emailsSeen = new Map<string, string>();
+          guests.forEach(g => {
+            if (g.email) {
+              const key = g.email.toLowerCase();
+              if (emailsSeen.has(key)) {
+                conflicts.push(`Duplicate email ${g.email}: ${emailsSeen.get(key)} and ${g.first_name ?? ''} ${g.last_name ?? ''}`);
+              } else {
+                emailsSeen.set(key, `${g.first_name ?? ''} ${g.last_name ?? ''}`);
+              }
+            }
+            if (g.plus_one_allowed && g.rsvp?.attending === false) {
+              conflicts.push(`${g.first_name ?? ''} ${g.last_name ?? ''} declined but still has plus-one allowed`);
+            }
+          });
+          if (conflicts.length === 0) return null;
+          return (
+            <div className="p-4 bg-warning-light border border-warning/20 rounded-xl space-y-1">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
+                <p className="text-sm font-medium text-warning">{conflicts.length} RSVP {conflicts.length === 1 ? 'issue' : 'issues'} detected</p>
+              </div>
+              <ul className="space-y-0.5">
+                {conflicts.map((c, i) => (
+                  <li key={i} className="text-xs text-warning/90">• {c}</li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
 
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">

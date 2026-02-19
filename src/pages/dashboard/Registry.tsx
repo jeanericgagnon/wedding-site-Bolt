@@ -8,6 +8,7 @@ import {
   createRegistryItem,
   updateRegistryItem,
   deleteRegistryItem,
+  ownerMarkPurchased,
 } from './registry/registryService';
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
@@ -130,6 +131,20 @@ export const DashboardRegistry: React.FC = () => {
       toast('Item removed');
     } catch {
       toast('Failed to delete item', 'error');
+    }
+  }
+
+  async function handleMarkPurchased(item: RegistryItem, qty: number) {
+    try {
+      const updated = await ownerMarkPurchased(item.id, qty);
+      setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+      toast(
+        updated.purchase_status === 'purchased'
+          ? `"${item.item_name}" marked as fully purchased`
+          : `"${item.item_name}" updated — ${updated.quantity_purchased}/${updated.quantity_needed} purchased`
+      );
+    } catch {
+      toast('Failed to update purchase status', 'error');
     }
   }
 
@@ -280,6 +295,7 @@ export const DashboardRegistry: React.FC = () => {
                   item={item}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onMarkPurchased={handleMarkPurchased}
                 />
               ))}
             </div>

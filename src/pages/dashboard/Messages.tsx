@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
-import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle } from 'lucide-react';
+import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -64,6 +64,7 @@ export const DashboardMessages: React.FC = () => {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const [formData, setFormData] = useState({
@@ -167,7 +168,7 @@ export const DashboardMessages: React.FC = () => {
         return;
       }
 
-      let status = 'sent';
+      let status = 'queued';
       let scheduledFor = null;
       let sentAt = null;
 
@@ -177,6 +178,7 @@ export const DashboardMessages: React.FC = () => {
         status = 'scheduled';
         scheduledFor = `${formData.scheduleDate}T${formData.scheduleTime}:00`;
       } else {
+        status = 'queued';
         sentAt = new Date().toISOString();
       }
 
@@ -201,10 +203,11 @@ export const DashboardMessages: React.FC = () => {
       if (saveAsDraft) {
         toast('Saved as draft', 'info');
       } else if (status === 'scheduled') {
-        toast(`Message saved — scheduled for ${new Date(scheduledFor!).toLocaleString()}`, 'info');
+        toast(`Scheduled for ${new Date(scheduledFor!).toLocaleString()} — will send to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} when delivery goes live`, 'info');
       } else {
-        toast(`Message saved for ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}`, 'success');
+        toast(`Queued for ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} — will be delivered when email sending goes live`, 'success');
       }
+      setShowRecipientPreview(false);
 
       setFormData({
         subject: '',
@@ -239,6 +242,8 @@ export const DashboardMessages: React.FC = () => {
         return <span className="px-2 py-1 bg-surface-subtle text-text-secondary rounded text-xs border border-border">Draft</span>;
       case 'scheduled':
         return <span className="px-2 py-1 bg-warning-light text-warning rounded text-xs border border-warning/20">Scheduled</span>;
+      case 'queued':
+        return <span className="px-2 py-1 bg-primary-light text-primary rounded text-xs border border-primary/20">Queued</span>;
       case 'sent':
         return <span className="px-2 py-1 bg-success-light text-success rounded text-xs border border-success/20">Sent</span>;
       case 'failed':
@@ -247,6 +252,20 @@ export const DashboardMessages: React.FC = () => {
         return null;
     }
   };
+
+  async function handleRetry(message: Message) {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ status: 'queued', sent_at: new Date().toISOString() })
+        .eq('id', message.id);
+      if (error) throw error;
+      toast('Message re-queued for delivery', 'success');
+      await fetchMessages();
+    } catch {
+      toast('Failed to retry message', 'error');
+    }
+  }
 
   if (loading) {
     return (
@@ -397,19 +416,50 @@ export const DashboardMessages: React.FC = () => {
                   )}
                 </div>
 
+                <div className="border border-border rounded-xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowRecipientPreview(!showRecipientPreview)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-surface-subtle hover:bg-surface transition-colors text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-text-secondary" />
+                      <span className="font-medium text-text-primary">
+                        Preview recipients ({recipientsWithEmail} with email)
+                      </span>
+                    </div>
+                    {showRecipientPreview ? <ChevronUp className="w-4 h-4 text-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-text-tertiary" />}
+                  </button>
+                  {showRecipientPreview && (
+                    <div className="border-t border-border max-h-48 overflow-y-auto">
+                      {getRecipients(formData.audience).filter(g => g.email).length === 0 ? (
+                        <div className="p-4 text-sm text-text-secondary text-center">No guests with email addresses in this audience.</div>
+                      ) : (
+                        <ul className="divide-y divide-border">
+                          {getRecipients(formData.audience).filter(g => g.email).map(g => (
+                            <li key={g.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                              <span className="text-text-primary font-medium">{g.first_name ?? ''} {g.last_name ?? ''}</span>
+                              <span className="text-text-tertiary text-xs">{g.email}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="p-4 bg-primary-light border border-primary/20 rounded-lg">
                   <div className="flex items-start gap-3">
                     <Mail className="w-5 h-5 text-primary mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-medium text-text-primary">Message log</p>
+                      <p className="font-medium text-text-primary">What happens next</p>
                       <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
-                          ? `Will be saved as scheduled for ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()}`
-                          : `Will be saved for ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''} with email addresses`}
+                          ? `Scheduled for ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()} — will queue ${recipientsWithEmail} recipient${recipientsWithEmail !== 1 ? 's' : ''}`
+                          : `Will be queued for ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''} with email addresses`}
                       </p>
                       <p className="text-text-tertiary mt-2 text-xs">
-                        Messages are saved to your log. Email delivery to guests is coming soon — your messages will be ready when sending goes live.
-                        Only guests with email addresses will receive messages.
+                        Email delivery to guests activates when your account is set up for sending. Queued messages will deliver automatically.
                       </p>
                     </div>
                   </div>
@@ -490,8 +540,8 @@ export const DashboardMessages: React.FC = () => {
                     <Mail className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-text-primary">{messages.filter(m => m.status === 'sent').length}</p>
-                    <p className="text-sm text-text-secondary">Messages Sent</p>
+                    <p className="text-2xl font-bold text-text-primary">{messages.filter(m => m.status === 'sent' || m.status === 'queued').length}</p>
+                    <p className="text-sm text-text-secondary">Sent / Queued</p>
                   </div>
                 </div>
               </div>
@@ -581,14 +631,25 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                   </div>
                   <p className="text-sm text-text-secondary mb-3 line-clamp-2">{message.body}</p>
-                  <div className="flex items-center gap-4 text-xs text-text-tertiary">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {(message.recipient_filter?.recipient_count as number) || 0} recipients
-                    </span>
-                    <span className="px-2 py-1 bg-primary-light text-primary rounded border border-primary/20">
-                      {message.channel}
-                    </span>
+                  <div className="flex items-center justify-between gap-4 text-xs text-text-tertiary">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {(message.recipient_filter?.recipient_count as number) || 0} recipients
+                      </span>
+                      <span className="px-2 py-1 bg-primary-light text-primary rounded border border-primary/20">
+                        {message.channel}
+                      </span>
+                    </div>
+                    {message.status === 'failed' && (
+                      <button
+                        onClick={() => handleRetry(message)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-error border border-error/30 rounded hover:bg-error-light transition-colors"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Retry
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
