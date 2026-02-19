@@ -6,12 +6,15 @@ import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { Card } from '../components/ui/Card';
 import { CheckCircle, Search } from 'lucide-react';
+import { sendRsvpNotification, sendRsvpConfirmation } from '../lib/emailService';
 
 interface Guest {
   id: string;
   first_name: string | null;
   last_name: string | null;
   name: string;
+  email: string | null;
+  wedding_site_id: string;
   plus_one_allowed: boolean;
   invited_to_ceremony: boolean;
   invited_to_reception: boolean;
@@ -147,6 +150,46 @@ export default function RSVP() {
           rsvp_received_at: new Date().toISOString(),
         })
         .eq('id', guest.id);
+
+      // Fetch wedding site info for email
+      const { data: siteData } = await supabase
+        .from('wedding_sites')
+        .select('couple_email, couple_name_1, couple_name_2, wedding_date, venue_name')
+        .eq('id', guest.wedding_site_id)
+        .maybeSingle();
+
+      if (siteData) {
+        const guestDisplayName = guest.first_name && guest.last_name
+          ? `${guest.first_name} ${guest.last_name}`
+          : guest.name;
+
+        // Notify couple
+        if (siteData.couple_email) {
+          sendRsvpNotification({
+            coupleEmail: siteData.couple_email,
+            guestName: guestDisplayName,
+            attending: formData.attending,
+            mealChoice: formData.meal_choice || null,
+            plusOneName: formData.plus_one_name || null,
+            notes: formData.notes || null,
+            coupleName1: siteData.couple_name_1,
+            coupleName2: siteData.couple_name_2,
+          }).catch(console.error);
+        }
+
+        // Confirm to guest if they have an email
+        if (guest.email) {
+          sendRsvpConfirmation({
+            guestEmail: guest.email,
+            guestName: guestDisplayName,
+            attending: formData.attending,
+            coupleName1: siteData.couple_name_1,
+            coupleName2: siteData.couple_name_2,
+            weddingDate: siteData.wedding_date ?? null,
+            venueName: siteData.venue_name ?? null,
+          }).catch(console.error);
+        }
+      }
 
       setStep('success');
     } catch (err) {

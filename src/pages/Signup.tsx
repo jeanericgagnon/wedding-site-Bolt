@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Chrome } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
+import { sendSignupWelcome } from '../lib/emailService';
 
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
@@ -150,6 +151,14 @@ export const Signup: React.FC = () => {
         });
 
       if (siteError) throw siteError;
+
+      // Send welcome email (fire and forget)
+      sendSignupWelcome({
+        email: formData.email,
+        coupleName1: formData.firstName,
+        coupleName2: formData.secondName,
+        siteUrl: subdomain,
+      }).catch(console.error);
 
       let session = authData.session;
 

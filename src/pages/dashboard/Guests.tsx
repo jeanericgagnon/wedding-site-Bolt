@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
+import { sendWeddingInvitation } from '../../lib/emailService';
 
 interface Guest {
   id: string;
@@ -34,16 +35,27 @@ interface GuestWithRSVP extends Guest {
   rsvp?: RSVP;
 }
 
+interface WeddingSiteInfo {
+  couple_name_1: string;
+  couple_name_2: string;
+  wedding_date: string | null;
+  venue_name: string | null;
+  venue_address: string | null;
+  site_url: string | null;
+}
+
 export const DashboardGuests: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
   const [guests, setGuests] = useState<GuestWithRSVP[]>([]);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
+  const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -65,12 +77,20 @@ export const DashboardGuests: React.FC = () => {
 
     const { data } = await supabase
       .from('wedding_sites')
-      .select('id')
+      .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url')
       .eq('user_id', user.id)
       .maybeSingle();
 
     if (data) {
       setWeddingSiteId(data.id);
+      setWeddingSiteInfo({
+        couple_name_1: data.couple_name_1 ?? '',
+        couple_name_2: data.couple_name_2 ?? '',
+        wedding_date: data.wedding_date ?? null,
+        venue_name: data.venue_name ?? null,
+        venue_address: data.venue_address ?? null,
+        site_url: data.site_url ?? null,
+      });
     }
   }, [user, isDemoMode]);
 
@@ -227,6 +247,52 @@ export const DashboardGuests: React.FC = () => {
       toast('Failed to remove guest. Please try again.', 'error');
     } finally {
       setDeletingGuestId(null);
+    }
+  };
+
+  const handleSendInvitation = async (guest: GuestWithRSVP) => {
+    if (!guest.email) {
+      toast('This guest has no email address', 'error');
+      return;
+    }
+    if (isDemoMode) {
+      toast('Email sending is disabled in demo mode', 'warning');
+      return;
+    }
+
+    setSendingInviteId(guest.id);
+    try {
+      const guestName = guest.first_name && guest.last_name
+        ? `${guest.first_name} ${guest.last_name}`
+        : guest.name;
+
+      const res = await sendWeddingInvitation({
+        guestEmail: guest.email,
+        guestName,
+        coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
+        coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
+        weddingDate: weddingSiteInfo?.wedding_date ?? null,
+        venueName: weddingSiteInfo?.venue_name ?? null,
+        venueAddress: weddingSiteInfo?.venue_address ?? null,
+        siteUrl: weddingSiteInfo?.site_url ?? null,
+        inviteToken: guest.invite_token ?? null,
+      });
+
+      if (res.ok) {
+        await supabase
+          .from('guests')
+          .update({ invitation_sent_at: new Date().toISOString() })
+          .eq('id', guest.id);
+
+        toast(`Invitation sent to ${guestName}`, 'success');
+      } else {
+        toast('Failed to send invitation. Please try again.', 'error');
+      }
+    } catch (err) {
+      console.error('Error sending invitation:', err);
+      toast('Failed to send invitation. Please try again.', 'error');
+    } finally {
+      setSendingInviteId(null);
     }
   };
 
@@ -628,6 +694,18 @@ export const DashboardGuests: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          {guest.email && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSendInvitation(guest)}
+                              disabled={sendingInviteId === guest.id}
+                              title={guest.invite_token ? 'Send invitation email' : 'Send invitation'}
+                            >
+                              <Mail className="w-4 h-4 mr-1" />
+                              {sendingInviteId === guest.id ? 'Sending…' : 'Invite'}
+                            </Button>
+                          )}
                           <Button variant="ghost" size="sm" onClick={() => openEditModal(guest)}>
                             Edit
                           </Button>
