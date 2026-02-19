@@ -14,7 +14,12 @@ export type SectionType =
   | 'accommodations'
   | 'contact'
   | 'footer-cta'
-  | 'custom';
+  | 'custom'
+  | 'quotes'
+  | 'menu'
+  | 'music'
+  | 'directions'
+  | 'video';
 
 export interface SectionInstance {
   id: string;

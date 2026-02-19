@@ -173,6 +173,36 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     supportedBindings: [],
     supportedSettings: ['headline', 'subtext', 'buttonLabel', 'rsvpUrl', 'footerNote'],
   },
+  quotes: {
+    component: () => null,
+    variants: { default: () => null, carousel: () => null, grid: () => null },
+    supportedBindings: [],
+    supportedSettings: ['eyebrow', 'headline'],
+  },
+  menu: {
+    component: () => null,
+    variants: { default: () => null, tabs: () => null, card: () => null },
+    supportedBindings: [],
+    supportedSettings: ['eyebrow', 'headline'],
+  },
+  music: {
+    component: () => null,
+    variants: { default: () => null, playlist: () => null, setlist: () => null },
+    supportedBindings: [],
+    supportedSettings: ['eyebrow', 'headline'],
+  },
+  directions: {
+    component: () => null,
+    variants: { default: () => null, pin: () => null, split: () => null },
+    supportedBindings: [],
+    supportedSettings: ['eyebrow', 'headline'],
+  },
+  video: {
+    component: () => null,
+    variants: { default: () => null, full: () => null, card: () => null },
+    supportedBindings: [],
+    supportedSettings: ['eyebrow', 'headline'],
+  },
 };
 
 export function getSectionComponent(

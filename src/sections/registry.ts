@@ -25,6 +25,16 @@ import { accommodationsCardsDefinition } from './variants/accommodations/cards';
 import { contactFormDefinition } from './variants/contact/form';
 import { footerCtaRsvpPushDefinition } from './variants/footerCta/rsvpPush';
 import { customSectionDefinition } from './variants/custom/customSection';
+import { quotesCarouselDefinition } from './variants/quotes/carousel';
+import { quotesGridDefinition } from './variants/quotes/grid';
+import { menuTabsDefinition } from './variants/menu/tabs';
+import { menuCardDefinition } from './variants/menu/card';
+import { musicPlaylistDefinition } from './variants/music/playlist';
+import { musicSetlistDefinition } from './variants/music/setlist';
+import { directionsPinDefinition } from './variants/directions/pin';
+import { directionsSplitDefinition } from './variants/directions/split';
+import { videoFullDefinition } from './variants/video/full';
+import { videoCardDefinition } from './variants/video/card';
 
 type RegistryKey = string;
 
@@ -64,6 +74,16 @@ registerDefinition(accommodationsCardsDefinition);
 registerDefinition(contactFormDefinition);
 registerDefinition(footerCtaRsvpPushDefinition);
 registerDefinition(customSectionDefinition);
+registerDefinition(quotesCarouselDefinition);
+registerDefinition(quotesGridDefinition);
+registerDefinition(menuTabsDefinition);
+registerDefinition(menuCardDefinition);
+registerDefinition(musicPlaylistDefinition);
+registerDefinition(musicSetlistDefinition);
+registerDefinition(directionsPinDefinition);
+registerDefinition(directionsSplitDefinition);
+registerDefinition(videoFullDefinition);
+registerDefinition(videoCardDefinition);
 
 export function getDefinition(type: string, variant: string): SectionDefinition | null {
   return SECTION_REGISTRY.get(makeKey(type, variant)) ?? null;
