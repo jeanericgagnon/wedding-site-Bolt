@@ -1,7 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
-import { AuthContext, AuthUser, DEMO_EMAIL } from './authContext';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface AuthContextType {
+  user: AuthUser | null;
+  loading: boolean;
+  isDemoMode: boolean;
+  signIn: () => Promise<void>;
+  signOut: () => Promise<void>;
+}
+
+export const DEMO_EMAIL = 'demo@dayof.love';
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
 
 const DEMO_PASSWORD = 'demo-password-12345';
 
