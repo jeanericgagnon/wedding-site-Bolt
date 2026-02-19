@@ -71,13 +71,71 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     );
   }
 
+  if (!section.enabled) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="relative group"
+        onClick={handleSelect}
+        onMouseEnter={() => dispatch(builderActions.hoverSection(section.id))}
+        onMouseLeave={() => dispatch(builderActions.hoverSection(null))}
+      >
+        <div className={`flex items-center justify-between px-3 py-2 border border-dashed transition-colors ${
+          isHighlighted ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+        }`}>
+          <div className="flex items-center gap-2">
+            {manifest.capabilities.draggable && !section.locked && (
+              <button
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing p-0.5 rounded text-gray-400 hover:text-gray-600"
+                onClick={e => e.stopPropagation()}
+                aria-label="Drag to reorder"
+              >
+                <GripVertical size={12} />
+              </button>
+            )}
+            <EyeOff size={12} className="text-gray-400" />
+            <span className="text-xs font-medium text-gray-400">{manifest.label}</span>
+            {section.variant !== 'default' && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-gray-200 text-gray-500 rounded">{section.variant}</span>
+            )}
+            <span className="text-[10px] text-gray-400">Hidden</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleToggleVisibility}
+              title="Show section"
+              className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors"
+              aria-label="Show section"
+            >
+              <Eye size={11} />
+              Show
+            </button>
+            {manifest.capabilities.deletable && !section.locked && (
+              <button
+                onClick={handleDelete}
+                title="Delete section"
+                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                aria-label="Delete section"
+              >
+                <Trash2 size={11} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={`relative group transition-all duration-150 ${
-        !section.enabled ? 'opacity-40' : ''
-      } ${isHighlighted ? 'ring-2 ring-rose-400 ring-inset' : ''}`}
+        isHighlighted ? 'ring-2 ring-rose-400 ring-inset' : ''
+      }`}
       onClick={handleSelect}
       onMouseEnter={() => dispatch(builderActions.hoverSection(section.id))}
       onMouseLeave={() => dispatch(builderActions.hoverSection(null))}
@@ -105,11 +163,11 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
           <div className="flex items-center gap-1">
             <button
               onClick={handleToggleVisibility}
-              title={section.enabled ? 'Hide section' : 'Show section'}
+              title="Hide section"
               className="p-1 hover:bg-rose-600 rounded transition-colors"
-              aria-label={section.enabled ? 'Hide section' : 'Show section'}
+              aria-label="Hide section"
             >
-              {section.enabled ? <Eye size={12} /> : <EyeOff size={12} />}
+              <Eye size={12} />
             </button>
             {manifest.capabilities.duplicable && (
               <button
