@@ -77,6 +77,10 @@ export const builderActions = {
     type: 'OPEN_MEDIA_LIBRARY',
     payload: { sectionId, targetField: 'customBlock', blockPath },
   }),
+  openImageArrayPicker: (sectionId: string, imageIndex: number): BuilderAction => ({
+    type: 'OPEN_MEDIA_LIBRARY',
+    payload: { sectionId, targetField: 'imageArray', imageIndex },
+  }),
   updateCustomBlock: (
     pageId: string,
     sectionId: string,

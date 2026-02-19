@@ -39,6 +39,18 @@ export const MediaLibraryPanel: React.FC = () => {
     } else if (state.mediaPickerTargetField === 'customBlock' && state.mediaPickerTargetBlockPath) {
       const { blockId, columnIndex, columnBlockId } = state.mediaPickerTargetBlockPath;
       dispatch(builderActions.updateCustomBlock(pageId, sectionId, blockId, { imageUrl: asset.url }, columnIndex, columnBlockId));
+    } else if (state.mediaPickerTargetField === 'imageArray' && state.mediaPickerTargetImageIndex !== null) {
+      const images = ((section.settings.images ?? []) as Array<Record<string, unknown>>).slice();
+      const idx = state.mediaPickerTargetImageIndex;
+      if (idx < images.length) {
+        images[idx] = { ...images[idx], url: asset.url };
+      } else {
+        images.push({ id: String(Date.now()), url: asset.url, alt: '', caption: '' });
+      }
+      const { images: _removed, ...restSettings } = section.settings as Record<string, unknown>;
+      dispatch(builderActions.updateSection(pageId, sectionId, {
+        settings: { ...restSettings, images },
+      }));
     } else {
       const imageKey = resolveImageSettingKey(section.type);
       dispatch(builderActions.updateSection(pageId, sectionId, {

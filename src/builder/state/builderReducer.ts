@@ -274,6 +274,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         mediaPickerTargetSectionId: action.payload?.sectionId ?? null,
         mediaPickerTargetField: action.payload?.targetField ?? null,
         mediaPickerTargetBlockPath: action.payload?.blockPath ?? null,
+        mediaPickerTargetImageIndex: action.payload?.imageIndex ?? null,
       };
 
     case 'CLOSE_MEDIA_LIBRARY':
@@ -283,6 +284,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         mediaPickerTargetSectionId: null,
         mediaPickerTargetField: null,
         mediaPickerTargetBlockPath: null,
+        mediaPickerTargetImageIndex: null,
       };
 
     case 'UPDATE_CUSTOM_BLOCK': {

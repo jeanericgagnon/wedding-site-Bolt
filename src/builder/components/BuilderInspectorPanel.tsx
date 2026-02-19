@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image } from 'lucide-react';
+import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image, Plus, Trash2 } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectSelectedSection, selectActivePage } from '../state/builderSelectors';
@@ -141,7 +141,14 @@ export const BuilderInspectorPanel: React.FC = () => {
                 blocks={(selectedSection.settings.blocks ?? []) as CustomBlock[]}
               />
             )}
-            {manifest.settingsSchema.fields.length === 0 && selectedSection.type !== 'custom' && (
+            {manifest.capabilities.mediaAware && selectedSection.type !== 'custom' && (
+              <GalleryImageEditor
+                sectionId={selectedSection.id}
+                pageId={activePage.id}
+                images={(selectedSection.settings.images ?? []) as GalleryImage[]}
+              />
+            )}
+            {manifest.settingsSchema.fields.length === 0 && selectedSection.type !== 'custom' && !manifest.capabilities.mediaAware && (
               <p className="text-xs text-gray-400 text-center py-6">No editable content fields for this section.</p>
             )}
           </div>
@@ -522,6 +529,118 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
         </div>
       );
   }
+};
+
+interface GalleryImage {
+  id: string;
+  url: string;
+  alt: string;
+  caption: string;
+}
+
+const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: GalleryImage[] }> = ({ sectionId, pageId, images }) => {
+  const { state, dispatch } = useBuilderContext();
+
+  const currentSettings = () => {
+    const page = state.project?.pages.find(p => p.id === pageId);
+    return page?.sections.find(s => s.id === sectionId)?.settings ?? {};
+  };
+
+  const handleUpdateImage = (index: number, patch: Partial<GalleryImage>) => {
+    const updated = images.map((img, i) => i === index ? { ...img, ...patch } : img);
+    dispatch(builderActions.updateSection(pageId, sectionId, {
+      settings: { ...currentSettings(), images: updated },
+    }));
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const updated = images.filter((_, i) => i !== index);
+    dispatch(builderActions.updateSection(pageId, sectionId, {
+      settings: { ...currentSettings(), images: updated },
+    }));
+  };
+
+  const handleAddImage = () => {
+    const newImg: GalleryImage = { id: String(Date.now()), url: '', alt: '', caption: '' };
+    const updated = [...images, newImg];
+    dispatch(builderActions.updateSection(pageId, sectionId, {
+      settings: { ...currentSettings(), images: updated },
+    }));
+    dispatch(builderActions.openImageArrayPicker(sectionId, updated.length - 1));
+  };
+
+  return (
+    <div className="pt-2 border-t border-gray-100 mt-2">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Photos ({images.length})</p>
+        <button
+          onClick={handleAddImage}
+          className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 font-medium transition-colors"
+        >
+          <Plus size={12} />
+          Add photo
+        </button>
+      </div>
+      <div className="space-y-2 max-h-96 overflow-y-auto pr-0.5">
+        {images.map((img, i) => (
+          <div key={img.id} className="group border border-gray-100 rounded-xl overflow-hidden bg-gray-50 hover:border-gray-200 transition-colors">
+            <div className="relative aspect-video bg-gray-200">
+              {img.url ? (
+                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ImageIcon size={20} className="text-gray-300" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <button
+                  onClick={() => dispatch(builderActions.openImageArrayPicker(sectionId, i))}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-lg text-xs font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                >
+                  <Image size={12} />
+                  Change
+                </button>
+                <button
+                  onClick={() => handleRemoveImage(i)}
+                  className="p-1.5 bg-white rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+              <div className="absolute top-1.5 left-1.5 w-5 h-5 bg-black/50 rounded text-white text-[9px] font-bold flex items-center justify-center">
+                {i + 1}
+              </div>
+            </div>
+            <div className="p-2 space-y-1.5">
+              <input
+                type="text"
+                value={img.alt}
+                onChange={e => handleUpdateImage(i, { alt: e.target.value })}
+                placeholder="Alt text"
+                className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white transition-colors"
+              />
+              <input
+                type="text"
+                value={img.caption}
+                onChange={e => handleUpdateImage(i, { caption: e.target.value })}
+                placeholder="Caption (optional)"
+                className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white transition-colors"
+              />
+            </div>
+          </div>
+        ))}
+        {images.length === 0 && (
+          <button
+            onClick={handleAddImage}
+            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-4 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+          >
+            <Plus size={14} />
+            Add your first photo
+          </button>
+        )}
+      </div>
+    </div>
+  );
 };
 
 type BlockPath = { blockId: string; columnIndex?: number; columnBlockId?: string };
