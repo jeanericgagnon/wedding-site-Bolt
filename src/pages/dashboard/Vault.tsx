@@ -452,16 +452,18 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1.5">Opens After</label>
               <select
-                value={isCustom ? 'custom' : durationYears}
+                value={isCustom ? 'custom' : String(durationYears)}
                 onChange={e => {
                   if (e.target.value !== 'custom') {
                     setDurationYears(Number(e.target.value));
+                  } else {
+                    setDurationYears(durationYears);
                   }
                 }}
                 className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {DURATION_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={String(o.value)}>{o.label}</option>
                 ))}
                 <option value="custom">Custom…</option>
               </select>
