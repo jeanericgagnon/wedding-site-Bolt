@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Heart, Menu, X } from 'lucide-react';
 import { Button } from '../ui';
+import { useAuth } from '../../hooks/useAuth';
 
 interface HeaderProps {
   variant?: 'marketing' | 'dashboard';
@@ -10,9 +11,11 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { signIn } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('top');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const isHomePage = location.pathname === '/';
 
@@ -24,8 +27,16 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     navigate('/login');
   };
 
-  const handleViewDemo = () => {
-    navigate('/login');
+  const handleViewDemo = async () => {
+    if (demoLoading) return;
+    setDemoLoading(true);
+    try {
+      await signIn();
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Demo login failed:', error);
+      setDemoLoading(false);
+    }
   };
 
   const scrollToSection = (sectionId: string) => {
@@ -158,8 +169,8 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
             <Button variant="ghost" size="sm" onClick={handleLogin}>
               Login
             </Button>
-            <Button variant="outline" size="sm" onClick={handleViewDemo}>
-              View demo
+            <Button variant="outline" size="sm" onClick={handleViewDemo} disabled={demoLoading}>
+              {demoLoading ? 'Loading...' : 'View demo'}
             </Button>
             <Button variant="accent" size="sm" onClick={handleSignUp}>
               Sign up
@@ -217,8 +228,8 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                 <Button variant="ghost" size="md" fullWidth onClick={handleLogin}>
                   Login
                 </Button>
-                <Button variant="outline" size="md" fullWidth onClick={handleViewDemo}>
-                  View demo
+                <Button variant="outline" size="md" fullWidth onClick={handleViewDemo} disabled={demoLoading}>
+                  {demoLoading ? 'Loading...' : 'View demo'}
                 </Button>
                 <Button variant="accent" size="md" fullWidth onClick={handleSignUp}>
                   Sign up

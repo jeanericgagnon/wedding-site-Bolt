@@ -17,17 +17,21 @@ export const Home: React.FC = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const handleSignUp = async () => {
     navigate('/signup');
   };
 
   const handleDemoLogin = async () => {
+    if (demoLoading) return;
+    setDemoLoading(true);
     try {
       await signIn();
       navigate('/dashboard');
     } catch (error) {
       console.error('Demo login failed:', error);
+      setDemoLoading(false);
     }
   };
 
@@ -55,9 +59,16 @@ export const Home: React.FC = () => {
               </button>
               <button
                 onClick={handleDemoLogin}
-                className="inline-flex items-center justify-center px-8 py-4 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                disabled={demoLoading}
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
               >
-                Preview demo
+                {demoLoading && (
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                )}
+                {demoLoading ? 'Loading demo...' : 'Preview demo'}
               </button>
             </div>
             <p className="text-[0.8125rem] text-ink/60 tracking-wide leading-loose">
@@ -310,9 +321,16 @@ export const Home: React.FC = () => {
                 </button>
                 <button
                   onClick={handleDemoLogin}
-                  className="block w-full px-6 py-3 text-center border-2 border-brand/40 text-brand font-medium rounded-xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                  disabled={demoLoading}
+                  className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 text-center border-2 border-brand/40 text-brand font-medium rounded-xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
                 >
-                  Preview demo
+                  {demoLoading && (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                  )}
+                  {demoLoading ? 'Loading demo...' : 'Preview demo'}
                 </button>
               </div>
 
