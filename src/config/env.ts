@@ -1,8 +1,16 @@
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
-export const SUPABASE_CONFIGURED =
-  Boolean(import.meta.env.VITE_SUPABASE_URL) &&
-  Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY);
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const isPlaceholderSupabase =
+  !supabaseUrl ||
+  !supabaseAnon ||
+  supabaseUrl.includes('your-project.supabase.co') ||
+  supabaseUrl.includes('example.supabase.co') ||
+  supabaseAnon === 'your-anon-key-here' ||
+  supabaseAnon === 'demo-anon-key';
+
+export const SUPABASE_CONFIGURED = !isPlaceholderSupabase;
 
 export function requireSupabase(): void {
   if (!SUPABASE_CONFIGURED && !DEMO_MODE) {

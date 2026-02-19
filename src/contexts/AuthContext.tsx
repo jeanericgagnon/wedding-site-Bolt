@@ -35,6 +35,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!SUPABASE_CONFIGURED) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser({
@@ -67,6 +72,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Supabase is not configured. Please set up your environment variables.');
       }
       throw new Error('Demo mode is not enabled. Please use regular sign in.');
+    }
+
+    if (!SUPABASE_CONFIGURED) {
+      setUser({
+        id: 'demo-local-user',
+        email: DEMO_EMAIL,
+        name: 'Alex & Jordan (Demo)',
+      });
+      return;
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
