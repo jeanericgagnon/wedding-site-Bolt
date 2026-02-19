@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/ui/Toast';
 import {
   Heart,
   Users,
@@ -16,6 +17,7 @@ import {
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { toast } = useToast();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [demoLoading, setDemoLoading] = useState(false);
 
@@ -29,7 +31,9 @@ export const Home: React.FC = () => {
     try {
       await signIn();
       navigate('/dashboard');
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
+      toast(message, 'error');
       setDemoLoading(false);
     }
   };
