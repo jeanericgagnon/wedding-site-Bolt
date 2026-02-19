@@ -24,7 +24,7 @@ export interface BuilderState {
   mediaLibraryOpen: boolean;
   themePanelOpen: boolean;
   mediaPickerTargetSectionId: string | null;
-  mediaPickerTargetField: 'settings' | 'sideImage' | 'customBlock' | null;
+  mediaPickerTargetField: 'settings' | 'sideImage' | 'customBlock' | 'imageArray' | null;
   mediaPickerTargetBlockPath: { blockId: string; columnIndex?: number; columnBlockId?: string } | null;
   mediaPickerTargetImageIndex: number | null;
   lastSavedAt: string | null;

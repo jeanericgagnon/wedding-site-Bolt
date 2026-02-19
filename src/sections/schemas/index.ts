@@ -45,7 +45,7 @@ export const PersistedSectionSchema = z.object({
   site_id: z.string(),
   type: z.string(),
   variant: z.string().default('default'),
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
   order: z.number().int().nonnegative().default(0),
   visible: z.boolean().default(true),
   schema_version: z.number().int().positive().default(1),

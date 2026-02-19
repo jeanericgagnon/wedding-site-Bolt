@@ -131,7 +131,7 @@ export const DashboardGuests: React.FC = () => {
           rsvp_received_at: guest.rsvp_status !== 'pending' ? new Date().toISOString() : null,
           rsvp: demoRSVPs.find(r => r.guest_id === guest.id),
         }));
-        setGuests(guestsWithRsvps);
+        setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
         setLoading(false);
         return;
       }
@@ -156,7 +156,7 @@ export const DashboardGuests: React.FC = () => {
           rsvp: rsvpsData?.find(r => r.guest_id === guest.id),
         }));
 
-        setGuests(guestsWithRsvps);
+        setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
       }
     } catch {
     } finally {
@@ -1240,9 +1240,9 @@ export const DashboardGuests: React.FC = () => {
                         <p className="text-sm font-medium text-text-primary truncate">
                           {String(g.first_name || '')} {String(g.last_name || '')}
                         </p>
-                        {g.email && <p className="text-xs text-text-secondary truncate">{String(g.email)}</p>}
+                        {Boolean(g.email) && <p className="text-xs text-text-secondary truncate">{String(g.email)}</p>}
                       </div>
-                      {g.plus_one_allowed && (
+                      {Boolean(g.plus_one_allowed) && (
                         <span className="text-xs px-2 py-0.5 bg-surface-subtle rounded-full text-text-secondary flex-shrink-0">+1</span>
                       )}
                     </div>

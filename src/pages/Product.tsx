@@ -945,7 +945,7 @@ export const Product: React.FC = () => {
 
                     {tmpl.isNew && (
                       <div className="absolute top-7 right-2">
-                        <Badge variant="accent" className="text-xs">New</Badge>
+                        <Badge variant="primary" className="text-xs">New</Badge>
                       </div>
                     )}
                   </div>

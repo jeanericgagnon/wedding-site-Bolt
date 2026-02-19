@@ -173,6 +173,12 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     supportedBindings: [],
     supportedSettings: ['headline', 'subtext', 'buttonLabel', 'rsvpUrl', 'footerNote'],
   },
+  custom: {
+    component: () => null,
+    variants: { default: () => null },
+    supportedBindings: [],
+    supportedSettings: ['skeletonId', 'backgroundColor', 'paddingSize', 'blocks'],
+  },
   quotes: {
     component: () => null,
     variants: { default: () => null, carousel: () => null, grid: () => null, featured: () => null },

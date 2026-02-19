@@ -36,7 +36,7 @@ export const SectionInstanceSchema = z.object({
   id: z.string(),
   type: z.string(),
   variant: z.string().default('default'),
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
   order: z.number().int().nonnegative().default(0),
   visible: z.boolean().default(true),
   schemaVersion: z.number().int().positive().default(1),

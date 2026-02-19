@@ -54,10 +54,10 @@ export const BuilderInspectorPanel: React.FC = () => {
     dispatch(builderActions.toggleSectionVisibility(activePage.id, selectedSection.id));
   };
 
-  const tabs: { id: InspectorTab; icon: React.FC<{ size?: number; className?: string }>; label: string; show: boolean }[] = [
-    { id: 'content', icon: Pencil, label: 'Content', show: manifest.settingsSchema.fields.length > 0 },
-    { id: 'style', icon: Palette, label: 'Style', show: true },
-    { id: 'data', icon: Database, label: 'Data', show: hasBindings },
+  const tabs: { id: InspectorTab; icon: React.ComponentType<{ size?: string | number; className?: string }>; label: string; show: boolean }[] = [
+    { id: 'content' as InspectorTab, icon: Pencil, label: 'Content', show: manifest.settingsSchema.fields.length > 0 },
+    { id: 'style' as InspectorTab, icon: Palette, label: 'Style', show: true },
+    { id: 'data' as InspectorTab, icon: Database, label: 'Data', show: hasBindings },
   ].filter(t => t.show);
 
   return (
@@ -389,7 +389,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
 interface InspectorFieldProps {
   field: BuilderSettingsField;
-  value: string | boolean | number | undefined;
+  value: unknown;
   onChange: (val: string | boolean | number) => void;
   sectionId?: string;
 }

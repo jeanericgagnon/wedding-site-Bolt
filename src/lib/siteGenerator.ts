@@ -134,7 +134,7 @@ export function generateSiteConfig(data: OnboardingData): SiteConfig {
 
   const sections: SiteConfig['sections'] = template.defaultLayout.sections.map((sectionDef, index) => ({
     id: `${sectionDef.type}-${index}`,
-    type: sectionDef.type,
+    type: sectionDef.type as SiteConfig['sections'][number]['type'],
     enabled: sectionDef.enabled,
     props_key: sectionDef.type,
     variant: sectionDef.variant,
