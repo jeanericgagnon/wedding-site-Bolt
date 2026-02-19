@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GripVertical, Eye, EyeOff, Settings2, Trash2, Copy, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { DeleteSectionModal } from './DeleteSectionModal';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { BuilderSectionInstance } from '../../types/builder/section';
@@ -26,6 +27,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
 }) => {
   const { dispatch } = useBuilderContext();
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const manifest = getSectionManifest(section.type);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -58,8 +60,13 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (section.locked || !manifest.capabilities.deletable) return;
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
     dispatch(builderActions.removeSection(pageId, section.id));
     dispatch(builderActions.selectSection(null));
+    setShowDeleteModal(false);
   };
 
   const isHighlighted = !isPreview && (isSelected || isHovered);
@@ -77,8 +84,17 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     );
   }
 
+  const deleteModal = showDeleteModal ? (
+    <DeleteSectionModal
+      sectionLabel={manifest.label}
+      onConfirm={confirmDelete}
+      onCancel={() => setShowDeleteModal(false)}
+    />
+  ) : null;
+
   if (!section.enabled) {
     return (
+      <>
       <div
         ref={setNodeRef}
         style={style}
@@ -130,6 +146,8 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
           </div>
         </div>
       </div>
+      {deleteModal}
+      </>
     );
   }
 
@@ -230,6 +248,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
           onClose={() => setInlineEditOpen(false)}
         />
       )}
+      {deleteModal}
     </div>
   );
 };

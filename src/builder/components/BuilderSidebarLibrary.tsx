@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { DeleteSectionModal } from './DeleteSectionModal';
 import {
   Image, Heart, MapPin, Clock, Plane, Gift, HelpCircle, Mail, Images,
   Layout, Palette, FolderOpen, ChevronRight, ArrowLeft, Plus, LucideIcon,
@@ -447,6 +448,7 @@ interface SortableLayerItemProps {
 
 const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, pageId, isSelected, isDragging }) => {
   const { dispatch } = useBuilderContext();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id });
 
   const style: React.CSSProperties = {
@@ -506,7 +508,7 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
         <button
           onClick={e => {
             e.stopPropagation();
-            if (pageId) dispatch(builderActions.removeSection(pageId, section.id));
+            setShowDeleteModal(true);
           }}
           title="Delete section"
           className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
@@ -517,6 +519,20 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
 
       {!section.enabled && (
         <div className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" title="Hidden" />
+      )}
+
+      {showDeleteModal && (
+        <DeleteSectionModal
+          sectionLabel={manifest.label}
+          onConfirm={() => {
+            if (pageId) {
+              dispatch(builderActions.removeSection(pageId, section.id));
+              dispatch(builderActions.selectSection(null));
+            }
+            setShowDeleteModal(false);
+          }}
+          onCancel={() => setShowDeleteModal(false)}
+        />
       )}
     </div>
   );
