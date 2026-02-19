@@ -576,7 +576,8 @@ export const DashboardVault: React.FC = () => {
     if (!weddingSiteId || vaultConfigs.length >= MAX_VAULTS || addingVault) return;
     setAddingVault(true);
     try {
-      const nextIndex = vaultConfigs.length + 1;
+      const usedIndexes = vaultConfigs.map(c => c.vault_index);
+      const nextIndex = [1, 2, 3, 4, 5].find(i => !usedIndexes.includes(i)) ?? (vaultConfigs.length + 1);
       const existingYears = vaultConfigs.map(c => c.duration_years);
       const years = nextAvailableYears(existingYears);
       const label = defaultVaultLabel(nextIndex, years);
