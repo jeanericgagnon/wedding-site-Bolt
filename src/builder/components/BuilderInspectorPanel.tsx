@@ -141,58 +141,104 @@ export const BuilderInspectorPanel: React.FC = () => {
         )}
 
         {activeTab === 'style' && (
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-5">
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">Background Color</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={selectedSection.styleOverrides?.backgroundColor ?? '#ffffff'}
-                  onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                    styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
-                  }))}
-                  className="w-9 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5"
-                />
-                <input
-                  type="text"
-                  value={selectedSection.styleOverrides?.backgroundColor ?? ''}
-                  onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                    styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
-                  }))}
-                  placeholder="e.g. #f9fafb or transparent"
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono"
-                />
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Colors</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1.5">Background</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={selectedSection.styleOverrides?.backgroundColor ?? '#ffffff'}
+                      onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                        styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
+                      }))}
+                      className="w-8 h-8 rounded-md cursor-pointer border border-gray-200 p-0.5 flex-shrink-0"
+                    />
+                    <input
+                      type="text"
+                      value={selectedSection.styleOverrides?.backgroundColor ?? ''}
+                      onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                        styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
+                      }))}
+                      placeholder="inherit"
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono bg-gray-50 focus:bg-white transition-colors"
+                    />
+                    {selectedSection.styleOverrides?.backgroundColor && (
+                      <button
+                        onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                          styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: undefined },
+                        }))}
+                        title="Clear"
+                        className="text-gray-300 hover:text-gray-500 flex-shrink-0 transition-colors"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1.5">Text Color</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={selectedSection.styleOverrides?.textColor ?? '#111827'}
+                      onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                        styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
+                      }))}
+                      className="w-8 h-8 rounded-md cursor-pointer border border-gray-200 p-0.5 flex-shrink-0"
+                    />
+                    <input
+                      type="text"
+                      value={selectedSection.styleOverrides?.textColor ?? ''}
+                      onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                        styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
+                      }))}
+                      placeholder="inherit"
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono bg-gray-50 focus:bg-white transition-colors"
+                    />
+                    {selectedSection.styleOverrides?.textColor && (
+                      <button
+                        onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                          styleOverrides: { ...selectedSection.styleOverrides, textColor: undefined },
+                        }))}
+                        title="Clear"
+                        className="text-gray-300 hover:text-gray-500 flex-shrink-0 transition-colors"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">Text Color</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={selectedSection.styleOverrides?.textColor ?? '#111827'}
-                  onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                    styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
-                  }))}
-                  className="w-9 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5"
-                />
-                <input
-                  type="text"
-                  value={selectedSection.styleOverrides?.textColor ?? ''}
-                  onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                    styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
-                  }))}
-                  placeholder="e.g. #111827"
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono"
-                />
-              </div>
+
+            <div className="border-t border-gray-100 pt-4">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Spacing</p>
+              <SpacingControl
+                label="Padding Top"
+                value={selectedSection.styleOverrides?.paddingTop ?? ''}
+                onChange={val => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                  styleOverrides: { ...selectedSection.styleOverrides, paddingTop: val || undefined },
+                }))}
+              />
+              <SpacingControl
+                label="Padding Bottom"
+                value={selectedSection.styleOverrides?.paddingBottom ?? ''}
+                onChange={val => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                  styleOverrides: { ...selectedSection.styleOverrides, paddingBottom: val || undefined },
+                }))}
+              />
             </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">Layout Variant</label>
+
+            <div className="border-t border-gray-100 pt-4">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Layout</p>
               <div className="relative">
                 <select
                   value={selectedSection.variant}
                   onChange={e => handleChangeVariant(e.target.value)}
-                  className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 pr-8 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-700 pr-8 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-colors"
                 >
                   {manifest.variantMeta.map(v => (
                     <option key={v.id} value={v.id}>{v.label} — {v.description}</option>
@@ -364,4 +410,53 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
         </div>
       );
   }
+};
+
+const SPACING_PRESETS = [
+  { label: 'None', value: '0px' },
+  { label: 'S', value: '2rem' },
+  { label: 'M', value: '4rem' },
+  { label: 'L', value: '6rem' },
+  { label: 'XL', value: '10rem' },
+];
+
+const SpacingControl: React.FC<{
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+}> = ({ label, value, onChange }) => {
+  const activePreset = SPACING_PRESETS.find(p => p.value === value);
+
+  return (
+    <div className="mb-3">
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="text-xs font-medium text-gray-600">{label}</label>
+        {value && (
+          <span className="text-[10px] font-mono text-gray-400">{value}</span>
+        )}
+      </div>
+      <div className="flex gap-1 mb-2">
+        {SPACING_PRESETS.map(preset => (
+          <button
+            key={preset.value}
+            onClick={() => onChange(preset.value === value ? '' : preset.value)}
+            className={`flex-1 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+              activePreset?.value === preset.value
+                ? 'bg-gray-900 text-white'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+      <input
+        type="text"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder="e.g. 4rem, 64px, 10%"
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono bg-gray-50 focus:bg-white transition-colors"
+      />
+    </div>
+  );
 };

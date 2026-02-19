@@ -78,7 +78,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
 
   if (isPreview) {
     return (
-      <div style={style} className={!section.enabled ? 'hidden' : ''}>
+      <div style={style} data-section-id={section.id} className={!section.enabled ? 'hidden' : ''}>
         {children}
       </div>
     );
@@ -98,6 +98,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
       <div
         ref={setNodeRef}
         style={style}
+        data-section-id={section.id}
         className="relative group"
         onClick={handleSelect}
         onMouseEnter={() => dispatch(builderActions.hoverSection(section.id))}
@@ -155,6 +156,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     <div
       ref={setNodeRef}
       style={style}
+      data-section-id={section.id}
       className={`relative group transition-all duration-150 ${
         isHighlighted ? 'ring-2 ring-rose-400 ring-inset' : ''
       }`}

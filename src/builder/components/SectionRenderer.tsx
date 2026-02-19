@@ -96,14 +96,16 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     const { def, parsedData } = resolved;
     const { Component } = def;
 
+    const overrideStyle: React.CSSProperties = {
+      backgroundColor: section.styleOverrides.backgroundColor ?? undefined,
+      color: section.styleOverrides.textColor ?? undefined,
+      paddingTop: section.styleOverrides.paddingTop ?? undefined,
+      paddingBottom: section.styleOverrides.paddingBottom ?? undefined,
+    };
+
     return (
       <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
-        <div
-          style={{
-            backgroundColor: section.styleOverrides.backgroundColor ?? undefined,
-            color: section.styleOverrides.textColor ?? undefined,
-          }}
-        >
+        <div style={overrideStyle}>
           <Component data={parsedData as never} siteSlug={siteSlug} />
         </div>
       </SectionErrorBoundary>
@@ -125,14 +127,16 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
 
   const instance = toSectionInstance(section);
 
+  const legacyOverrideStyle: React.CSSProperties = {
+    backgroundColor: section.styleOverrides.backgroundColor ?? undefined,
+    color: section.styleOverrides.textColor ?? undefined,
+    paddingTop: section.styleOverrides.paddingTop ?? undefined,
+    paddingBottom: section.styleOverrides.paddingBottom ?? undefined,
+  };
+
   return (
     <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
-      <div
-        style={{
-          backgroundColor: section.styleOverrides.backgroundColor ?? undefined,
-          color: section.styleOverrides.textColor ?? undefined,
-        }}
-      >
+      <div style={legacyOverrideStyle}>
         <LegacyComponent data={weddingData} instance={instance} />
       </div>
     </SectionErrorBoundary>

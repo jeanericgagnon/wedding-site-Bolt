@@ -446,6 +446,13 @@ interface SortableLayerItemProps {
   isDragging: boolean;
 }
 
+function scrollToSection(sectionId: string) {
+  const el = document.querySelector(`[data-section-id="${sectionId}"]`);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
 const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, pageId, isSelected, isDragging }) => {
   const { dispatch } = useBuilderContext();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -464,7 +471,10 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
     <div
       ref={setNodeRef}
       style={style}
-      onClick={() => dispatch(builderActions.selectSection(section.id))}
+      onClick={() => {
+        dispatch(builderActions.selectSection(section.id));
+        scrollToSection(section.id);
+      }}
       className={`flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer group transition-colors ${
         isSelected
           ? 'bg-rose-50 border border-rose-200'
