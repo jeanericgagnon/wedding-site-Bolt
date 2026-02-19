@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { BuilderSectionInstance } from '../../types/builder/section';
+import { BuilderSectionInstance, BuilderSectionStyleOverrides } from '../../types/builder/section';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { resolveAndParse } from '../../sections/registry';
@@ -25,6 +25,56 @@ function toSectionInstance(section: BuilderSectionInstance): SectionInstance {
     overrides: { ...section.styleOverrides } as Record<string, string | boolean | number | undefined>,
   };
 }
+
+function buildOverrideStyle(overrides: BuilderSectionStyleOverrides): React.CSSProperties {
+  return {
+    backgroundColor: overrides.backgroundColor ?? undefined,
+    color: overrides.textColor ?? undefined,
+    paddingTop: overrides.paddingTop ?? undefined,
+    paddingBottom: overrides.paddingBottom ?? undefined,
+  };
+}
+
+const SIZE_TO_CLASS: Record<string, string> = {
+  sm: '25%',
+  md: '40%',
+  lg: '50%',
+};
+
+interface SideImageWrapperProps {
+  overrides: BuilderSectionStyleOverrides;
+  children: React.ReactNode;
+}
+
+const SideImageWrapper: React.FC<SideImageWrapperProps> = ({ overrides, children }) => {
+  const { sideImage, sideImagePosition = 'right', sideImageSize = 'md', sideImageFit = 'cover' } = overrides;
+  if (!sideImage) return <>{children}</>;
+
+  const imgWidth = SIZE_TO_CLASS[sideImageSize] ?? '40%';
+  const isLeft = sideImagePosition === 'left';
+
+  const imageEl = (
+    <div
+      style={{ width: imgWidth, flexShrink: 0 }}
+      className="relative overflow-hidden"
+    >
+      <img
+        src={sideImage}
+        alt=""
+        className="absolute inset-0 w-full h-full"
+        style={{ objectFit: sideImageFit }}
+      />
+    </div>
+  );
+
+  return (
+    <div className="flex" style={{ minHeight: '200px' }}>
+      {isLeft && imageEl}
+      <div className="flex-1 min-w-0">{children}</div>
+      {!isLeft && imageEl}
+    </div>
+  );
+};
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -96,18 +146,15 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     const { def, parsedData } = resolved;
     const { Component } = def;
 
-    const overrideStyle: React.CSSProperties = {
-      backgroundColor: section.styleOverrides.backgroundColor ?? undefined,
-      color: section.styleOverrides.textColor ?? undefined,
-      paddingTop: section.styleOverrides.paddingTop ?? undefined,
-      paddingBottom: section.styleOverrides.paddingBottom ?? undefined,
-    };
+    const overrideStyle = buildOverrideStyle(section.styleOverrides);
 
     return (
       <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
-        <div style={overrideStyle}>
-          <Component data={parsedData as never} siteSlug={siteSlug} />
-        </div>
+        <SideImageWrapper overrides={section.styleOverrides}>
+          <div style={overrideStyle}>
+            <Component data={parsedData as never} siteSlug={siteSlug} />
+          </div>
+        </SideImageWrapper>
       </SectionErrorBoundary>
     );
   }
@@ -126,19 +173,15 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
   }
 
   const instance = toSectionInstance(section);
-
-  const legacyOverrideStyle: React.CSSProperties = {
-    backgroundColor: section.styleOverrides.backgroundColor ?? undefined,
-    color: section.styleOverrides.textColor ?? undefined,
-    paddingTop: section.styleOverrides.paddingTop ?? undefined,
-    paddingBottom: section.styleOverrides.paddingBottom ?? undefined,
-  };
+  const legacyOverrideStyle = buildOverrideStyle(section.styleOverrides);
 
   return (
     <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
-      <div style={legacyOverrideStyle}>
-        <LegacyComponent data={weddingData} instance={instance} />
-      </div>
+      <SideImageWrapper overrides={section.styleOverrides}>
+        <div style={legacyOverrideStyle}>
+          <LegacyComponent data={weddingData} instance={instance} />
+        </div>
+      </SideImageWrapper>
     </SectionErrorBoundary>
   );
 };

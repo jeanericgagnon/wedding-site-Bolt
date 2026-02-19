@@ -62,7 +62,11 @@ export const builderActions = {
 
   openMediaLibrary: (targetSectionId?: string): BuilderAction => ({
     type: 'OPEN_MEDIA_LIBRARY',
-    payload: targetSectionId,
+    payload: targetSectionId ? { sectionId: targetSectionId, targetField: 'settings' } : undefined,
+  }),
+  openSideImagePicker: (sectionId: string): BuilderAction => ({
+    type: 'OPEN_MEDIA_LIBRARY',
+    payload: { sectionId, targetField: 'sideImage' },
   }),
   closeMediaLibrary: (): BuilderAction => ({ type: 'CLOSE_MEDIA_LIBRARY' }),
 

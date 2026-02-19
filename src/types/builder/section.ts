@@ -77,6 +77,10 @@ export interface BuilderSectionStyleOverrides {
   paddingBottom?: string;
   fontFamily?: string;
   customCss?: string;
+  sideImage?: string;
+  sideImagePosition?: 'left' | 'right';
+  sideImageSize?: 'sm' | 'md' | 'lg';
+  sideImageFit?: 'cover' | 'contain';
 }
 
 export interface BuilderDropZoneModel {

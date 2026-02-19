@@ -255,10 +255,15 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       return { ...state, templateGalleryOpen: false };
 
     case 'OPEN_MEDIA_LIBRARY':
-      return { ...state, mediaLibraryOpen: true, mediaPickerTargetSectionId: action.payload ?? null };
+      return {
+        ...state,
+        mediaLibraryOpen: true,
+        mediaPickerTargetSectionId: action.payload?.sectionId ?? null,
+        mediaPickerTargetField: action.payload?.targetField ?? null,
+      };
 
     case 'CLOSE_MEDIA_LIBRARY':
-      return { ...state, mediaLibraryOpen: false, mediaPickerTargetSectionId: null };
+      return { ...state, mediaLibraryOpen: false, mediaPickerTargetSectionId: null, mediaPickerTargetField: null };
 
     case 'OPEN_THEME_PANEL':
       return { ...state, themePanelOpen: true };

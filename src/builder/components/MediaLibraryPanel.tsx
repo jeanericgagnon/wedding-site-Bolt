@@ -31,10 +31,17 @@ export const MediaLibraryPanel: React.FC = () => {
     const activePage = state.project?.pages.find(p => p.id === pageId);
     const section = activePage?.sections.find(s => s.id === sectionId);
     if (!section) return;
-    const imageKey = resolveImageSettingKey(section.type);
-    dispatch(builderActions.updateSection(pageId, sectionId, {
-      settings: { ...section.settings, [imageKey]: asset.url },
-    }));
+
+    if (state.mediaPickerTargetField === 'sideImage') {
+      dispatch(builderActions.updateSection(pageId, sectionId, {
+        styleOverrides: { ...section.styleOverrides, sideImage: asset.url },
+      }));
+    } else {
+      const imageKey = resolveImageSettingKey(section.type);
+      dispatch(builderActions.updateSection(pageId, sectionId, {
+        settings: { ...section.settings, [imageKey]: asset.url },
+      }));
+    }
     dispatch(builderActions.closeMediaLibrary());
   };
 

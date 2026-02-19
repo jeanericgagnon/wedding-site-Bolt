@@ -233,6 +233,111 @@ export const BuilderInspectorPanel: React.FC = () => {
             </div>
 
             <div className="border-t border-gray-100 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Side Image</p>
+                {selectedSection.styleOverrides?.sideImage && (
+                  <button
+                    onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                      styleOverrides: { ...selectedSection.styleOverrides, sideImage: undefined },
+                    }))}
+                    className="text-[10px] text-red-400 hover:text-red-600 font-medium transition-colors"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {selectedSection.styleOverrides?.sideImage ? (
+                <div className="space-y-3">
+                  <div className="relative rounded-xl overflow-hidden border border-gray-200 aspect-video bg-gray-100 group">
+                    <img
+                      src={selectedSection.styleOverrides.sideImage}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => dispatch(builderActions.openSideImagePicker(selectedSection.id))}
+                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium"
+                    >
+                      Change Image
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 block mb-1.5">Position</label>
+                    <div className="flex gap-1.5">
+                      {(['left', 'right'] as const).map(pos => (
+                        <button
+                          key={pos}
+                          onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                            styleOverrides: { ...selectedSection.styleOverrides, sideImagePosition: pos },
+                          }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
+                            (selectedSection.styleOverrides?.sideImagePosition ?? 'right') === pos
+                              ? 'bg-gray-900 text-white'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {pos}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 block mb-1.5">Width</label>
+                    <div className="flex gap-1.5">
+                      {([['sm', '25%'], ['md', '40%'], ['lg', '50%']] as const).map(([key, label]) => (
+                        <button
+                          key={key}
+                          onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                            styleOverrides: { ...selectedSection.styleOverrides, sideImageSize: key },
+                          }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            (selectedSection.styleOverrides?.sideImageSize ?? 'md') === key
+                              ? 'bg-gray-900 text-white'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 block mb-1.5">Fit</label>
+                    <div className="flex gap-1.5">
+                      {(['cover', 'contain'] as const).map(fit => (
+                        <button
+                          key={fit}
+                          onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                            styleOverrides: { ...selectedSection.styleOverrides, sideImageFit: fit },
+                          }))}
+                          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
+                            (selectedSection.styleOverrides?.sideImageFit ?? 'cover') === fit
+                              ? 'bg-gray-900 text-white'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {fit}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => dispatch(builderActions.openSideImagePicker(selectedSection.id))}
+                  className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-4 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                >
+                  <ImageIcon size={15} />
+                  Add a side image
+                </button>
+              )}
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Layout</p>
               <div className="relative">
                 <select

@@ -24,6 +24,7 @@ export interface BuilderState {
   mediaLibraryOpen: boolean;
   themePanelOpen: boolean;
   mediaPickerTargetSectionId: string | null;
+  mediaPickerTargetField: 'settings' | 'sideImage' | null;
   lastSavedAt: string | null;
   error: string | null;
 }
@@ -45,6 +46,7 @@ export const initialBuilderState: BuilderState = {
   mediaLibraryOpen: false,
   themePanelOpen: false,
   mediaPickerTargetSectionId: null,
+  mediaPickerTargetField: null,
   lastSavedAt: null,
   error: null,
 };
@@ -93,7 +95,7 @@ export type BuilderAction =
   | { type: 'REMOVE_FROM_UPLOAD_QUEUE'; payload: string }
   | { type: 'OPEN_TEMPLATE_GALLERY' }
   | { type: 'CLOSE_TEMPLATE_GALLERY' }
-  | { type: 'OPEN_MEDIA_LIBRARY'; payload?: string }
+  | { type: 'OPEN_MEDIA_LIBRARY'; payload?: { sectionId?: string; targetField?: 'settings' | 'sideImage' } }
   | { type: 'CLOSE_MEDIA_LIBRARY' }
   | { type: 'OPEN_THEME_PANEL' }
   | { type: 'CLOSE_THEME_PANEL' }
