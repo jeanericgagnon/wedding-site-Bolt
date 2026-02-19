@@ -10,6 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "verify": "npm run typecheck && npm run build",
+    "deploy:prod": "npm run verify && npx vercel --prod --yes --scope eric-gagnons-projects",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
