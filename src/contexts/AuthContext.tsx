@@ -29,35 +29,47 @@ export function useAuth(): AuthContextType {
 }
 
 const DEMO_PASSWORD = 'demo-password-12345';
+const LOCAL_DEMO_AUTH_KEY = 'dayof_demo_local_auth';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const shouldUseLocalDemo = DEMO_MODE && localStorage.getItem(LOCAL_DEMO_AUTH_KEY) === '1';
+
     if (!SUPABASE_CONFIGURED) {
+      if (shouldUseLocalDemo) {
+        setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
+      }
       setLoading(false);
       return;
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
         setUser({
           id: session.user.id,
           email: session.user.email || '',
           name: session.user.user_metadata?.name || session.user.email || '',
         });
+      } else if (shouldUseLocalDemo) {
+        setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
       }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
+        localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
         setUser({
           id: session.user.id,
           email: session.user.email || '',
           name: session.user.user_metadata?.name || session.user.email || '',
         });
+      } else if (DEMO_MODE && localStorage.getItem(LOCAL_DEMO_AUTH_KEY) === '1') {
+        setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
       } else {
         setUser(null);
       }
@@ -67,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setLocalDemoUser = () => {
+    localStorage.setItem(LOCAL_DEMO_AUTH_KEY, '1');
     setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
   };
 
@@ -94,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const existingUser = await trySupabaseDemoSignIn();
     if (existingUser) {
+      localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
       setUser({
         id: existingUser.id,
         email: existingUser.email || '',
@@ -116,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const newUser = await trySupabaseDemoSignIn();
     if (newUser) {
+      localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
       setUser({
         id: newUser.id,
         email: newUser.email || '',
@@ -128,6 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
     await supabase.auth.signOut();
     setUser(null);
   };
