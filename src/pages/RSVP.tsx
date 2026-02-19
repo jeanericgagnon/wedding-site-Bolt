@@ -489,17 +489,65 @@ export default function RSVP() {
         )}
 
         {step === 'success' && (
-          <Card className="p-8 text-center">
-            <div className="flex justify-center mb-6">
-              <CheckCircle className="w-20 h-20 text-green-500" />
+          <Card className="p-8">
+            <div className="text-center mb-6">
+              <div className="flex justify-center mb-4">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${formData.attending ? 'bg-green-100' : 'bg-neutral-100'}`}>
+                  <CheckCircle className={`w-9 h-9 ${formData.attending ? 'text-green-500' : 'text-neutral-500'}`} />
+                </div>
+              </div>
+              <h1 className="text-3xl font-serif mb-2">
+                {formData.attending ? "You're confirmed!" : "Response recorded"}
+              </h1>
+              <p className="text-gray-500 text-sm">
+                {guestDisplayName && `For ${guestDisplayName}`}
+              </p>
             </div>
-            <h1 className="text-3xl font-serif mb-4">Thank You!</h1>
-            <p className="text-gray-600 mb-6">
-              {formData.attending
-                ? "We're so excited to celebrate with you!"
-                : "We'll miss you, but we understand. Thank you for letting us know."}
-            </p>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600 font-medium">Attendance</span>
+                <span className={`font-semibold px-2.5 py-1 rounded-full text-xs ${
+                  formData.attending
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  {formData.attending ? "Attending" : "Not attending"}
+                </span>
+              </div>
+              {formData.attending && formData.meal_choice && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Meal</span>
+                  <span className="text-gray-900 capitalize">{formData.meal_choice}</span>
+                </div>
+              )}
+              {formData.attending && formData.plus_one_name && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Plus one</span>
+                  <span className="text-gray-900">{formData.plus_one_name}</span>
+                </div>
+              )}
+              {formData.notes && (
+                <div className="flex items-start justify-between text-sm gap-4">
+                  <span className="text-gray-600 font-medium flex-shrink-0">Notes</span>
+                  <span className="text-gray-900 text-right">{formData.notes}</span>
+                </div>
+              )}
+            </div>
+
+            {formData.attending && (
+              <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg py-3 px-4 mb-6">
+                We can't wait to celebrate with you!
+              </p>
+            )}
+            {!formData.attending && (
+              <p className="text-center text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg py-3 px-4 mb-6">
+                We'll miss you, but thank you for letting us know.
+              </p>
+            )}
+
             <Button
+              variant="outline"
               onClick={() => {
                 setStep('search');
                 setSearchValue('');
@@ -509,6 +557,7 @@ export default function RSVP() {
                 setRsvpDeadline(null);
                 setFormData({ attending: true, meal_choice: '', plus_one_name: '', notes: '' });
               }}
+              className="w-full"
             >
               Submit Another RSVP
             </Button>

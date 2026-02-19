@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui/Button';
@@ -26,6 +26,7 @@ interface EventWithInvites extends ItineraryEvent {
   invitation_count: number;
   rsvp_count: number;
   attending_count: number;
+  declined_count: number;
 }
 
 export const DashboardItinerary: React.FC = () => {
@@ -88,12 +89,14 @@ export const DashboardItinerary: React.FC = () => {
 
           const rsvpCount = rsvps?.length || 0;
           const attendingCount = rsvps?.filter((r) => r.attending).length || 0;
+          const declinedCount = rsvps?.filter((r) => !r.attending).length || 0;
 
           return {
             ...event,
             invitation_count: inviteCount || 0,
             rsvp_count: rsvpCount,
             attending_count: attendingCount,
+            declined_count: declinedCount,
           };
         })
       );
@@ -434,113 +437,126 @@ export const DashboardItinerary: React.FC = () => {
         <div className="space-y-4">
           {(() => {
             const conflictIds = findConflicts(events);
-            return events.map((event) => (
-            <Card key={event.id} className={`p-6 hover:shadow-lg transition-shadow ${conflictIds.has(event.id) ? 'ring-2 ring-amber-300' : ''}`}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3 flex-wrap">
-                    <h3 className="text-xl font-semibold text-neutral-900">
-                      {event.event_name}
-                    </h3>
-                    {!event.is_visible && (
-                      <span className="px-2 py-1 text-xs font-medium bg-neutral-100 text-neutral-600 rounded">
-                        Hidden
-                      </span>
-                    )}
-                    {conflictIds.has(event.id) && (
-                      <span className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded">
-                        <AlertTriangle className="w-3 h-3" />
-                        Time overlap with another event
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-neutral-600">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>{formatDate(event.event_date)}</span>
+            return events.map((event) => {
+              const pending = event.invitation_count - event.rsvp_count;
+              return (
+              <Card key={event.id} className={`p-6 hover:shadow-lg transition-shadow ${conflictIds.has(event.id) ? 'ring-2 ring-amber-300' : ''}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
+                      <h3 className="text-xl font-semibold text-neutral-900">
+                        {event.event_name}
+                      </h3>
+                      {!event.is_visible && (
+                        <span className="px-2 py-1 text-xs font-medium bg-neutral-100 text-neutral-600 rounded">
+                          Hidden
+                        </span>
+                      )}
+                      {conflictIds.has(event.id) && (
+                        <span className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded">
+                          <AlertTriangle className="w-3 h-3" />
+                          Time overlap with another event
+                        </span>
+                      )}
                     </div>
 
-                    {event.start_time && (
+                    <div className="space-y-2 mb-4">
                       <div className="flex items-center text-neutral-600">
-                        <Clock className="w-4 h-4 mr-2" />
-                        <span>
-                          {formatTime(event.start_time)}
-                          {event.end_time && ` - ${formatTime(event.end_time)}`}
-                        </span>
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>{formatDate(event.event_date)}</span>
                       </div>
-                    )}
 
-                    {event.location_name && (
-                      <div className="flex items-center gap-2 text-neutral-600">
-                        <MapPin className="w-4 h-4 flex-shrink-0" />
-                        <div className="flex-1">
-                          <div>{event.location_name}</div>
-                          {event.location_address && (
-                            <div className="text-sm text-neutral-500">{event.location_address}</div>
+                      {event.start_time && (
+                        <div className="flex items-center text-neutral-600">
+                          <Clock className="w-4 h-4 mr-2" />
+                          <span>
+                            {formatTime(event.start_time)}
+                            {event.end_time && ` - ${formatTime(event.end_time)}`}
+                          </span>
+                        </div>
+                      )}
+
+                      {event.location_name && (
+                        <div className="flex items-center gap-2 text-neutral-600">
+                          <MapPin className="w-4 h-4 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div>{event.location_name}</div>
+                            {event.location_address && (
+                              <div className="text-sm text-neutral-500">{event.location_address}</div>
+                            )}
+                          </div>
+                          {(event.location_name || event.location_address) && (
+                            <a
+                              href={getMapUrl(event.location_name || '', event.location_address || '')}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 px-3 py-1 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors"
+                            >
+                              <MapPin className="w-3 h-3" />
+                              Map
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
                           )}
                         </div>
-                        {(event.location_name || event.location_address) && (
-                          <a
-                            href={getMapUrl(event.location_name || '', event.location_address || '')}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-1 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors"
-                          >
-                            <MapPin className="w-3 h-3" />
-                            Map
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
+                      )}
+
+                      {event.description && (
+                        <p className="text-neutral-600 mt-3">{event.description}</p>
+                      )}
+                    </div>
+
+                    <div className="flex items-stretch gap-3 pt-3 border-t border-neutral-200">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-50 border border-neutral-200 text-sm">
+                        <Users className="w-4 h-4 text-neutral-500" />
+                        <span className="font-semibold text-neutral-900">{event.invitation_count}</span>
+                        <span className="text-neutral-500">invited</span>
                       </div>
-                    )}
-
-                    {event.description && (
-                      <p className="text-neutral-600 mt-3">{event.description}</p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-6 pt-3 border-t border-neutral-200">
-                    <div className="flex items-center text-sm text-neutral-600">
-                      <Users className="w-4 h-4 mr-1" />
-                      <span className="font-medium">{event.invitation_count}</span> invited
-                    </div>
-                    <div className="text-sm text-neutral-600">
-                      <span className="font-medium">{event.rsvp_count}</span> responded
-                    </div>
-                    <div className="text-sm text-green-600">
-                      <span className="font-medium">{event.attending_count}</span> attending
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-sm">
+                        <Check className="w-4 h-4 text-emerald-600" />
+                        <span className="font-semibold text-emerald-700">{event.attending_count}</span>
+                        <span className="text-emerald-600">yes</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-sm">
+                        <X className="w-4 h-4 text-red-500" />
+                        <span className="font-semibold text-red-600">{event.declined_count}</span>
+                        <span className="text-red-500">no</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-sm">
+                        <HelpCircle className="w-4 h-4 text-amber-500" />
+                        <span className="font-semibold text-amber-600">{pending}</span>
+                        <span className="text-amber-500">pending</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex gap-2 ml-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedEventId(event.id)}
-                  >
-                    <UserPlus className="w-4 h-4 mr-1" />
-                    Manage Guests
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEventForm(event)}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteEvent(event.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2 ml-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedEventId(event.id)}
+                    >
+                      <UserPlus className="w-4 h-4 mr-1" />
+                      Manage Guests
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEventForm(event)}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteEvent(event.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ));
+              </Card>
+            );
+            });
           })()}
         </div>
       )}
@@ -568,6 +584,8 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
   const [allGuests, setAllGuests] = useState<any[]>([]);
   const [invitedGuestIds, setInvitedGuestIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadGuests();
@@ -638,14 +656,91 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
     }
   }
 
+  async function inviteAll() {
+    setBulkLoading(true);
+    try {
+      const uninvited = allGuests.filter(g => !invitedGuestIds.has(g.id));
+      if (uninvited.length === 0) return;
+
+      const { error } = await supabase
+        .from('event_invitations')
+        .insert(uninvited.map(g => ({ event_id: eventId, guest_id: g.id })));
+
+      if (error) throw error;
+
+      setInvitedGuestIds(new Set(allGuests.map(g => g.id)));
+      onUpdate();
+    } catch {
+      alert('Failed to invite all guests. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  async function removeAll() {
+    if (!confirm('Remove all guests from this event?')) return;
+    setBulkLoading(true);
+    try {
+      const { error } = await supabase
+        .from('event_invitations')
+        .delete()
+        .eq('event_id', eventId);
+
+      if (error) throw error;
+
+      setInvitedGuestIds(new Set());
+      onUpdate();
+    } catch {
+      alert('Failed to remove all guests. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  const filteredGuests = allGuests.filter(g => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const name = (g.name || `${g.first_name || ''} ${g.last_name || ''}`).toLowerCase();
+    return name.includes(q) || (g.email || '').toLowerCase().includes(q);
+  });
+
+  const invitedCount = invitedGuestIds.size;
+  const totalCount = allGuests.length;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <Card className="w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-neutral-200">
-          <h2 className="text-xl font-semibold text-neutral-900">Manage Event Guests</h2>
-          <p className="text-sm text-neutral-600 mt-1">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-xl font-semibold text-neutral-900">Manage Event Guests</h2>
+            <span className="text-sm text-neutral-500">{invitedCount} of {totalCount} invited</span>
+          </div>
+          <p className="text-sm text-neutral-600">
             Select which guests to invite to this event
           </p>
+          <div className="flex items-center gap-2 mt-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search guests..."
+              className="flex-1 px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+            <button
+              onClick={inviteAll}
+              disabled={bulkLoading || invitedCount === totalCount}
+              className="px-3 py-2 text-sm font-medium bg-primary-50 text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Invite All
+            </button>
+            <button
+              onClick={removeAll}
+              disabled={bulkLoading || invitedCount === 0}
+              className="px-3 py-2 text-sm font-medium bg-neutral-50 text-neutral-600 border border-neutral-200 rounded-lg hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Remove All
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -657,29 +752,42 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
             <p className="text-center text-neutral-600 py-8">
               No guests found. Add guests first in the Guests page.
             </p>
+          ) : filteredGuests.length === 0 ? (
+            <p className="text-center text-neutral-500 py-8 text-sm">No guests match your search.</p>
           ) : (
             <div className="space-y-2">
-              {allGuests.map((guest) => (
-                <div
-                  key={guest.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
-                >
-                  <div>
-                    <p className="font-medium text-neutral-900">{guest.name}</p>
-                    <p className="text-sm text-neutral-600">{guest.email}</p>
-                  </div>
-                  <button
-                    onClick={() => toggleGuestInvitation(guest.id)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      invitedGuestIds.has(guest.id)
-                        ? 'bg-primary-600 text-white hover:bg-primary-700'
-                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              {filteredGuests.map((guest) => {
+                const isInvited = invitedGuestIds.has(guest.id);
+                return (
+                  <div
+                    key={guest.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
+                      isInvited
+                        ? 'bg-primary-50 border-primary-200'
+                        : 'border-neutral-200 hover:bg-neutral-50'
                     }`}
+                    onClick={() => toggleGuestInvitation(guest.id)}
                   >
-                    {invitedGuestIds.has(guest.id) ? 'Invited' : 'Invite'}
-                  </button>
-                </div>
-              ))}
+                    <div>
+                      <p className="font-medium text-neutral-900">{guest.name || `${guest.first_name || ''} ${guest.last_name || ''}`.trim()}</p>
+                      {guest.email && <p className="text-sm text-neutral-500">{guest.email}</p>}
+                    </div>
+                    <div
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        isInvited
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-neutral-100 text-neutral-600'
+                      }`}
+                    >
+                      {isInvited ? (
+                        <><Check className="w-3.5 h-3.5" /> Invited</>
+                      ) : (
+                        <>Invite</>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

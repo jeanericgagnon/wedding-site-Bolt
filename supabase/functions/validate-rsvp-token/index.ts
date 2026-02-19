@@ -86,7 +86,7 @@ Deno.serve(async (req: Request) => {
         .limit(10);
 
       if (!byName || byName.length === 0) {
-        return json({ error: "Guest not found. Please check your name or invitation code." }, 404);
+        return json({ error: "We couldn't find an invitation matching that name or code. Please double-check the spelling or use the invitation code from your email." }, 404);
       }
 
       if (byName.length === 1) {
@@ -115,15 +115,15 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       if (guestErr || !guest) {
-        return json({ error: "Guest not found" }, 404);
+        return json({ error: "We couldn't find your invitation. Please use the RSVP link from your invitation email, or search by your full name." }, 404);
       }
 
       if (!guest.invite_token || guest.invite_token !== inviteToken) {
-        return json({ error: "Invalid invitation token" }, 403);
+        return json({ error: "This RSVP link isn't valid. Please use the original link from your invitation email, or ask the couple for a new one." }, 403);
       }
 
       if (guest.token_expires_at && new Date(guest.token_expires_at) < new Date()) {
-        return json({ error: "This invitation link has expired. Please contact the couple." }, 403);
+        return json({ error: "This RSVP link has expired. Please reach out to the couple to receive a new invitation link." }, 403);
       }
 
       const rsvpPayload = {

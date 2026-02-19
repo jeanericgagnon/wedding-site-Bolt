@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Check, X, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, MapPin, Check, X, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -52,13 +52,15 @@ export default function EventRSVP() {
     dietary_restrictions: '',
     notes: '',
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   useEffect(() => {
     if (token) {
       loadGuestAndEvents();
     } else {
-      setError('No invitation token provided');
+      setError('No invitation link found. Please use the link from your invitation email.');
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,7 +76,7 @@ export default function EventRSVP() {
 
       if (guestError) throw guestError;
       if (!guestData) {
-        setError('Invalid invitation token');
+        setError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
         setLoading(false);
         return;
       }
@@ -122,7 +124,7 @@ export default function EventRSVP() {
 
       setInvitations(invitationsWithRsvps);
     } catch {
-      setError('Failed to load event invitations');
+      setError('Failed to load your event invitations. Please try again or contact the couple.');
     } finally {
       setLoading(false);
     }
@@ -153,6 +155,8 @@ export default function EventRSVP() {
 
   function openRsvpForm(invitation: EventInvitation) {
     setSelectedEvent(invitation.id);
+    setSubmitError('');
+    setSubmitSuccess(false);
     if (invitation.rsvp) {
       setRsvpForm({
         attending: invitation.rsvp.attending,
@@ -166,13 +170,14 @@ export default function EventRSVP() {
         notes: '',
       });
     }
-    setSubmitSuccess(false);
   }
 
   async function handleSubmitRsvp(e: React.FormEvent) {
     e.preventDefault();
+    if (!selectedEvent || submitting) return;
 
-    if (!selectedEvent) return;
+    setSubmitting(true);
+    setSubmitError('');
 
     try {
       const invitation = invitations.find((i) => i.id === selectedEvent);
@@ -208,10 +213,13 @@ export default function EventRSVP() {
       setSubmitSuccess(true);
       setTimeout(() => {
         setSelectedEvent(null);
+        setSubmitSuccess(false);
         loadGuestAndEvents();
-      }, 1500);
+      }, 2000);
     } catch {
-      alert('Failed to submit RSVP. Please try again.');
+      setSubmitError('Failed to save your RSVP. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -232,9 +240,11 @@ export default function EventRSVP() {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <X className="w-16 h-16 text-error-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-neutral-900 mb-4">Invalid Invitation</h1>
-          <p className="text-neutral-600">{error}</p>
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-neutral-900 mb-3">Link Not Recognized</h1>
+          <p className="text-neutral-600 max-w-md mx-auto">{error}</p>
         </div>
         <Footer />
       </div>
@@ -247,11 +257,13 @@ export default function EventRSVP() {
 
       <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-neutral-900 mb-4">
+          <h1 className="text-4xl font-bold text-neutral-900 mb-3">
             Hello, {guest?.name}!
           </h1>
-          <p className="text-xl text-neutral-600">
-            You're invited to these special events
+          <p className="text-lg text-neutral-600">
+            {invitations.length === 1
+              ? "You're invited to the event below. Please let us know if you can make it."
+              : `You're invited to ${invitations.length} events. Please RSVP for each one.`}
           </p>
         </div>
 
@@ -267,24 +279,40 @@ export default function EventRSVP() {
             {invitations.map((invitation) => (
               <Card key={invitation.id} className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-neutral-900 mb-2">
-                      {invitation.event.event_name}
-                    </h2>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
+                      <h2 className="text-2xl font-semibold text-neutral-900">
+                        {invitation.event.event_name}
+                      </h2>
+                      {invitation.rsvp && (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
+                            invitation.rsvp.attending
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-neutral-100 text-neutral-600'
+                          }`}
+                        >
+                          {invitation.rsvp.attending
+                            ? <><Check className="w-3.5 h-3.5" /> Attending</>
+                            : <><X className="w-3.5 h-3.5" /> Not attending</>
+                          }
+                        </span>
+                      )}
+                    </div>
 
                     <div className="space-y-2">
                       <div className="flex items-center text-neutral-600">
-                        <Calendar className="w-5 h-5 mr-2" />
+                        <Calendar className="w-5 h-5 mr-2 flex-shrink-0" />
                         <span>{formatDate(invitation.event.event_date)}</span>
                       </div>
 
                       {invitation.event.start_time && (
                         <div className="flex items-center text-neutral-600">
-                          <Clock className="w-5 h-5 mr-2" />
+                          <Clock className="w-5 h-5 mr-2 flex-shrink-0" />
                           <span>
                             {formatTime(invitation.event.start_time)}
                             {invitation.event.end_time &&
-                              ` - ${formatTime(invitation.event.end_time)}`}
+                              ` – ${formatTime(invitation.event.end_time)}`}
                           </span>
                         </div>
                       )}
@@ -300,34 +328,20 @@ export default function EventRSVP() {
                               </div>
                             )}
                           </div>
-                          {(invitation.event.location_name || invitation.event.location_address) && (
-                            <a
-                              href={getMapUrl(invitation.event.location_name || '', invitation.event.location_address || '')}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 px-3 py-2 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors whitespace-nowrap"
-                            >
-                              <MapPin className="w-4 h-4" />
-                              View Map
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
+                          <a
+                            href={getMapUrl(invitation.event.location_name || '', invitation.event.location_address || '')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-3 py-2 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            <MapPin className="w-4 h-4" />
+                            View Map
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
                       )}
                     </div>
                   </div>
-
-                  {invitation.rsvp && (
-                    <div
-                      className={`px-4 py-2 rounded-full text-sm font-medium ${
-                        invitation.rsvp.attending
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-neutral-100 text-neutral-700'
-                      }`}
-                    >
-                      {invitation.rsvp.attending ? 'Attending' : 'Not Attending'}
-                    </div>
-                  )}
                 </div>
 
                 {invitation.event.description && (
@@ -335,26 +349,24 @@ export default function EventRSVP() {
                 )}
 
                 {invitation.event.dress_code && (
-                  <div className="mb-4">
-                    <span className="text-sm font-medium text-neutral-700">Dress Code:</span>{' '}
-                    <span className="text-sm text-neutral-600">
-                      {invitation.event.dress_code}
-                    </span>
+                  <div className="mb-4 text-sm">
+                    <span className="font-medium text-neutral-700">Dress Code:</span>{' '}
+                    <span className="text-neutral-600">{invitation.event.dress_code}</span>
                   </div>
                 )}
 
                 {invitation.event.notes && (
-                  <div className="mb-4 p-3 bg-neutral-50 rounded-lg">
-                    <p className="text-sm text-neutral-600">{invitation.event.notes}</p>
+                  <div className="mb-4 p-3 bg-neutral-50 rounded-lg text-sm text-neutral-600">
+                    {invitation.event.notes}
                   </div>
                 )}
 
                 <Button
                   onClick={() => openRsvpForm(invitation)}
-                  className="w-full mt-4"
+                  className="w-full mt-2"
                   variant={invitation.rsvp ? 'outline' : 'primary'}
                 >
-                  {invitation.rsvp ? 'Update RSVP' : 'RSVP Now'}
+                  {invitation.rsvp ? 'Update my RSVP' : 'RSVP for this event'}
                 </Button>
               </Card>
             ))}
@@ -367,9 +379,17 @@ export default function EventRSVP() {
           <Card className="w-full max-w-lg">
             {submitSuccess ? (
               <div className="p-8 text-center">
-                <Check className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-neutral-900 mb-2">RSVP Submitted!</h3>
-                <p className="text-neutral-600">Thank you for responding.</p>
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-9 h-9 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-neutral-900 mb-2">
+                  {rsvpForm.attending ? "You're in!" : "Response saved"}
+                </h3>
+                <p className="text-neutral-500 text-sm">
+                  {rsvpForm.attending
+                    ? `Looking forward to seeing you at ${invitations.find(i => i.id === selectedEvent)?.event.event_name}!`
+                    : "Thank you for letting us know."}
+                </p>
               </div>
             ) : (
               <>
@@ -377,35 +397,43 @@ export default function EventRSVP() {
                   <h3 className="text-xl font-semibold text-neutral-900">
                     {invitations.find((i) => i.id === selectedEvent)?.event.event_name}
                   </h3>
+                  <p className="text-sm text-neutral-500 mt-1">
+                    {(() => {
+                      const inv = invitations.find(i => i.id === selectedEvent);
+                      return inv ? formatDate(inv.event.event_date) : '';
+                    })()}
+                  </p>
                 </div>
 
-                <form onSubmit={handleSubmitRsvp} className="p-6 space-y-6">
+                <form onSubmit={handleSubmitRsvp} className="p-6 space-y-5">
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-3">
                       Will you attend?
                     </label>
-                    <div className="flex gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
                         onClick={() => setRsvpForm({ ...rsvpForm, attending: true })}
-                        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
                           rsvpForm.attending
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                            ? 'bg-green-600 text-white shadow-sm'
+                            : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                         }`}
                       >
+                        <Check className="w-4 h-4" />
                         Yes, I'll be there
                       </button>
                       <button
                         type="button"
                         onClick={() => setRsvpForm({ ...rsvpForm, attending: false })}
-                        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
                           !rsvpForm.attending
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                            ? 'bg-neutral-700 text-white shadow-sm'
+                            : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                         }`}
                       >
-                        Sorry, can't make it
+                        <X className="w-4 h-4" />
+                        Can't make it
                       </button>
                     </div>
                   </div>
@@ -414,41 +442,61 @@ export default function EventRSVP() {
                     <>
                       <div>
                         <label className="block text-sm font-medium text-neutral-700 mb-1">
-                          Dietary Restrictions (Optional)
+                          Dietary restrictions <span className="text-neutral-400 font-normal">(optional)</span>
                         </label>
                         <Input
                           value={rsvpForm.dietary_restrictions}
                           onChange={(e) =>
                             setRsvpForm({ ...rsvpForm, dietary_restrictions: e.target.value })
                           }
-                          placeholder="e.g., Vegetarian, Gluten-free"
+                          placeholder="e.g., Vegetarian, Gluten-free, Nut allergy"
                         />
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-neutral-700 mb-1">
-                          Additional Notes (Optional)
+                          Additional notes <span className="text-neutral-400 font-normal">(optional)</span>
                         </label>
                         <Textarea
                           value={rsvpForm.notes}
                           onChange={(e) => setRsvpForm({ ...rsvpForm, notes: e.target.value })}
-                          placeholder="Any special requests or messages"
+                          placeholder="Any special requests or messages for the couple"
                           rows={3}
                         />
                       </div>
                     </>
                   )}
 
-                  <div className="flex gap-3">
-                    <Button type="submit" className="flex-1">
-                      Submit RSVP
-                    </Button>
+                  {submitError && (
+                    <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      {submitError}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-1">
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setSelectedEvent(null)}
+                      onClick={() => {
+                        if (!submitting) setSelectedEvent(null);
+                      }}
+                      className="flex-1"
+                      disabled={submitting}
                     >
                       Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1"
+                    >
+                      {submitting
+                        ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving…</>
+                        : invitations.find(i => i.id === selectedEvent)?.rsvp
+                          ? 'Update RSVP'
+                          : 'Submit RSVP'
+                      }
                     </Button>
                   </div>
                 </form>

@@ -62,6 +62,20 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
+function isPastScheduledTime(scheduledFor: string | null): boolean {
+  if (!scheduledFor) return false;
+  return new Date(scheduledFor) < new Date();
+}
+
+function formatScheduledDate(scheduledFor: string): string {
+  const d = new Date(scheduledFor);
+  const local = d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  const utcOffset = -d.getTimezoneOffset() / 60;
+  const sign = utcOffset >= 0 ? '+' : '-';
+  const absOffset = Math.abs(utcOffset);
+  return `${local} (UTC${sign}${absOffset})`;
+}
+
 const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
   <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
     {toasts.map(t => (
@@ -119,10 +133,11 @@ function getRecipientCount(message: Message): number {
 interface MessageDetailModalProps {
   message: Message;
   onClose: () => void;
-  onRetry: (message: Message) => void;
+  onRetry: (message: Message) => Promise<void>;
 }
 
 const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClose, onRetry }) => {
+  const [retrying, setRetrying] = React.useState(false);
   const recipientCount = getRecipientCount(message);
   const audienceLabel = getAudienceLabel(message);
 
@@ -219,10 +234,21 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
             <Button
               variant="primary"
               size="sm"
-              onClick={() => { onRetry(message); onClose(); }}
+              disabled={retrying}
+              onClick={async () => {
+                setRetrying(true);
+                try {
+                  await onRetry(message);
+                } finally {
+                  setRetrying(false);
+                  onClose();
+                }
+              }}
             >
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              {message.status === 'partial' ? 'Retry Failed' : 'Retry Send'}
+              {retrying
+                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Retrying…</>
+                : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />{message.status === 'partial' ? 'Retry failed recipients' : 'Retry send'}</>
+              }
             </Button>
           ) : (
             <span />
@@ -539,26 +565,48 @@ export const DashboardMessages: React.FC = () => {
                   </div>
 
                   {formData.scheduleType === 'later' && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
-                      <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Date</label>
-                        <Input
-                          type="date"
-                          value={formData.scheduleDate}
-                          onChange={(e) => setFormData({ ...formData, scheduleDate: e.target.value })}
-                          min={new Date().toISOString().split('T')[0]}
-                          required
-                        />
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
+                        <div>
+                          <label className="block text-sm font-medium text-text-primary mb-2">Date</label>
+                          <Input
+                            type="date"
+                            value={formData.scheduleDate}
+                            onChange={(e) => setFormData({ ...formData, scheduleDate: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-text-primary mb-2">
+                            Time
+                            <span className="ml-1 text-xs font-normal text-text-tertiary">
+                              ({Intl.DateTimeFormat().resolvedOptions().timeZone})
+                            </span>
+                          </label>
+                          <Input
+                            type="time"
+                            value={formData.scheduleTime}
+                            onChange={(e) => setFormData({ ...formData, scheduleTime: e.target.value })}
+                            required
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Time</label>
-                        <Input
-                          type="time"
-                          value={formData.scheduleTime}
-                          onChange={(e) => setFormData({ ...formData, scheduleTime: e.target.value })}
-                          required
-                        />
-                      </div>
+                      {formData.scheduleDate && formData.scheduleTime &&
+                        isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`) && (
+                        <div className="flex items-start gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-medium">Scheduled time is in the past.</span>
+                            {' '}This message will be sent immediately when you click Schedule Message.
+                          </div>
+                        </div>
+                      )}
+                      {formData.scheduleDate && formData.scheduleTime &&
+                        !isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`) && (
+                        <p className="text-xs text-text-tertiary px-1">
+                          Scheduled for: {formatScheduledDate(`${formData.scheduleDate}T${formData.scheduleTime}:00`)}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -602,7 +650,9 @@ export const DashboardMessages: React.FC = () => {
                       <p className="font-medium text-text-primary">What happens next</p>
                       <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
-                          ? `Scheduled for ${new Date(`${formData.scheduleDate}T${formData.scheduleTime}`).toLocaleString()} — ${recipientsWithEmail} recipient${recipientsWithEmail !== 1 ? 's' : ''}`
+                          ? isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`)
+                            ? `Will send immediately (scheduled time has passed) — ${recipientsWithEmail} recipient${recipientsWithEmail !== 1 ? 's' : ''}`
+                            : `Scheduled for ${formatScheduledDate(`${formData.scheduleDate}T${formData.scheduleTime}:00`)} — ${recipientsWithEmail} recipient${recipientsWithEmail !== 1 ? 's' : ''}`
                           : `Email will be sent immediately to ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''}`}
                       </p>
                     </div>
@@ -741,7 +791,7 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                     <p className="text-sm text-text-secondary mb-3 line-clamp-2">{message.body}</p>
                     <div className="flex items-center justify-between gap-4 text-xs text-text-tertiary">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {recipientCount} {recipientCount === 1 ? 'recipient' : 'recipients'}
@@ -750,9 +800,21 @@ export const DashboardMessages: React.FC = () => {
                           {message.channel}
                         </span>
                         <span className="text-text-tertiary">{getAudienceLabel(message)}</span>
+                        {(message.delivered_count != null && message.delivered_count > 0) && (
+                          <span className="flex items-center gap-1 text-success font-medium">
+                            <CheckCircle size={10} />
+                            {message.delivered_count} delivered
+                          </span>
+                        )}
+                        {(message.failed_count != null && message.failed_count > 0) && (
+                          <span className="flex items-center gap-1 text-error font-medium">
+                            <AlertCircle size={10} />
+                            {message.failed_count} failed
+                          </span>
+                        )}
                       </div>
                       <span className="text-primary text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                        View message →
+                        View →
                       </span>
                     </div>
                   </button>
