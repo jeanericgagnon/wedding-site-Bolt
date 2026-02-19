@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -45,6 +45,14 @@ interface WeddingSiteInfo {
   site_url: string | null;
 }
 
+interface ItineraryEvent {
+  id: string;
+  event_name: string;
+  event_date: string | null;
+  start_time: string | null;
+  location_name: string | null;
+}
+
 export const DashboardGuests: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
@@ -65,6 +73,12 @@ export const DashboardGuests: React.FC = () => {
   const [csvPreview, setCsvPreview] = useState<Record<string, unknown>[] | null>(null);
   const [csvSkipped, setCsvSkipped] = useState<string[]>([]);
   const [csvImporting, setCsvImporting] = useState(false);
+
+  const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
+  const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
+  const [guestEventIds, setGuestEventIds] = useState<Set<string>>(new Set());
+  const [loadingDrawer, setLoadingDrawer] = useState(false);
+  const [togglingEventId, setTogglingEventId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -353,6 +367,53 @@ export const DashboardGuests: React.FC = () => {
       toast('Guest reassigned', 'success');
     } catch {
       toast('Failed to reassign guest', 'error');
+    }
+  }
+
+  async function openItineraryDrawer(guest: GuestWithRSVP) {
+    if (!weddingSiteId) return;
+    setItineraryDrawerGuest(guest);
+    setLoadingDrawer(true);
+    try {
+      const [eventsResult, invitesResult] = await Promise.all([
+        supabase
+          .from('itinerary_events')
+          .select('id, event_name, event_date, start_time, location_name')
+          .eq('wedding_site_id', weddingSiteId)
+          .order('event_date', { ascending: true }),
+        supabase
+          .from('event_invitations')
+          .select('event_id')
+          .eq('guest_id', guest.id),
+      ]);
+      setItineraryEvents((eventsResult.data ?? []) as ItineraryEvent[]);
+      setGuestEventIds(new Set((invitesResult.data ?? []).map((r: { event_id: string }) => r.event_id)));
+    } finally {
+      setLoadingDrawer(false);
+    }
+  }
+
+  async function handleToggleEventInvite(eventId: string, currentlyInvited: boolean) {
+    if (!itineraryDrawerGuest || togglingEventId) return;
+    setTogglingEventId(eventId);
+    try {
+      if (currentlyInvited) {
+        await supabase
+          .from('event_invitations')
+          .delete()
+          .eq('event_id', eventId)
+          .eq('guest_id', itineraryDrawerGuest.id);
+        setGuestEventIds(prev => { const n = new Set(prev); n.delete(eventId); return n; });
+      } else {
+        await supabase
+          .from('event_invitations')
+          .insert({ event_id: eventId, guest_id: itineraryDrawerGuest.id });
+        setGuestEventIds(prev => new Set([...prev, eventId]));
+      }
+    } catch {
+      toast('Failed to update event invitation', 'error');
+    } finally {
+      setTogglingEventId(null);
     }
   }
 
@@ -927,13 +988,20 @@ export const DashboardGuests: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-border-subtle">
                       {filteredGuests.map((guest) => (
-                        <tr key={guest.id} className="hover:bg-surface-subtle transition-colors">
+                        <tr
+                          key={guest.id}
+                          className="hover:bg-surface-subtle transition-colors cursor-pointer"
+                          onClick={() => openItineraryDrawer(guest)}
+                        >
                           <td className="px-6 py-4">
-                            <div>
-                              <p className="font-medium text-text-primary">
-                                {guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}
-                              </p>
-                              <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <p className="font-medium text-text-primary">
+                                  {guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}
+                                </p>
+                                <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
+                              </div>
+                              <ChevronRight className="w-3.5 h-3.5 text-text-tertiary ml-1 opacity-0 group-hover:opacity-100" />
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -957,8 +1025,17 @@ export const DashboardGuests: React.FC = () => {
                               {guest.invite_token?.slice(0, 12) || '—'}
                             </code>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openItineraryDrawer(guest)}
+                                title="Manage event invitations"
+                              >
+                                <CalendarDays className="w-4 h-4 mr-1" />
+                                Events
+                              </Button>
                               {guest.email && (
                                 <Button
                                   variant="ghost"
@@ -1024,6 +1101,103 @@ export const DashboardGuests: React.FC = () => {
           onSubmit={handleEditGuest}
           onClose={() => { setEditingGuest(null); resetForm(); }}
         />
+      )}
+
+      {itineraryDrawerGuest && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/30 z-40"
+            onClick={() => setItineraryDrawerGuest(null)}
+          />
+          <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-surface shadow-2xl z-50 flex flex-col border-l border-border">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div>
+                <h2 className="text-base font-semibold text-text-primary">
+                  {itineraryDrawerGuest.first_name && itineraryDrawerGuest.last_name
+                    ? `${itineraryDrawerGuest.first_name} ${itineraryDrawerGuest.last_name}`
+                    : itineraryDrawerGuest.name}
+                </h2>
+                <p className="text-xs text-text-secondary mt-0.5">Itinerary event invitations</p>
+              </div>
+              <button
+                onClick={() => setItineraryDrawerGuest(null)}
+                className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {loadingDrawer ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                </div>
+              ) : itineraryEvents.length === 0 ? (
+                <div className="text-center py-12">
+                  <CalendarDays className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
+                  <p className="text-sm font-medium text-text-secondary mb-1">No events on the itinerary</p>
+                  <p className="text-xs text-text-tertiary">Add events on the Itinerary page first.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-text-tertiary mb-3">
+                    Toggle each event to invite or uninvite this guest.
+                  </p>
+                  {itineraryEvents.map(event => {
+                    const invited = guestEventIds.has(event.id);
+                    const isToggling = togglingEventId === event.id;
+                    return (
+                      <button
+                        key={event.id}
+                        onClick={() => handleToggleEventInvite(event.id, invited)}
+                        disabled={isToggling}
+                        className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${
+                          invited
+                            ? 'border-primary/30 bg-primary/5'
+                            : 'border-border hover:border-border hover:bg-surface-subtle'
+                        } ${isToggling ? 'opacity-50' : ''}`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+                          invited ? 'border-primary bg-primary' : 'border-border'
+                        }`}>
+                          {isToggling
+                            ? <Loader2 className="w-3 h-3 animate-spin text-white" />
+                            : invited
+                              ? <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                              : null
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium truncate ${invited ? 'text-primary' : 'text-text-primary'}`}>
+                            {event.event_name}
+                          </p>
+                          <p className="text-xs text-text-tertiary mt-0.5">
+                            {event.event_date
+                              ? new Date(event.event_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                              : 'No date set'}
+                            {event.start_time && ` · ${event.start_time}`}
+                            {event.location_name && ` · ${event.location_name}`}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-medium flex-shrink-0 ${invited ? 'text-primary' : 'text-text-tertiary'}`}>
+                          {invited ? 'Invited' : 'Not invited'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {!loadingDrawer && itineraryEvents.length > 0 && (
+              <div className="px-5 py-4 border-t border-border bg-surface-subtle">
+                <p className="text-xs text-text-tertiary text-center">
+                  {guestEventIds.size} of {itineraryEvents.length} events · Changes save instantly
+                </p>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {csvPreview && (
