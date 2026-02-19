@@ -122,7 +122,8 @@ function signupWelcomeHtml(data: Record<string, unknown>): string {
         <li>Manage your registry</li>
       </ul>
     </div>
-    <div style="padding:20px 40px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;">
+    <div style="padding:24px 40px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;">
+      <p style="margin:0 0 10px;font-size:13px;color:#555;line-height:1.6;">I'm always working to make DayOf better.<br>If something breaks or you want a new feature, please email me at <a href="mailto:eric@dayof.love" style="color:#1a1a1a;text-decoration:none;font-weight:600;">eric@dayof.love</a>.</p>
       <p style="margin:0;font-size:12px;color:#aaa;">Powered by DayOf</p>
     </div>
   </div>
