@@ -16,13 +16,28 @@ const defaultCapabilities: BuilderSectionCapabilities = {
   locked: false,
 };
 
-export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinition> = {
+export interface VariantMeta {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export type BuilderSectionDefinitionWithMeta = BuilderSectionDefinition & {
+  variantMeta: VariantMeta[];
+};
+
+export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinitionWithMeta> = {
   hero: {
     type: 'hero',
     label: 'Hero',
     icon: 'Image',
     defaultVariant: 'default',
     supportedVariants: ['default', 'minimal', 'fullbleed'],
+    variantMeta: [
+      { id: 'default', label: 'Classic', description: 'Names, date, and photo with a soft overlay' },
+      { id: 'minimal', label: 'Minimal', description: 'Clean typography only, no background image' },
+      { id: 'fullbleed', label: 'Full Bleed', description: 'Edge-to-edge image with bold text overlay' },
+    ],
     capabilities: { ...defaultCapabilities, mediaAware: true, deletable: false },
     settingsSchema: {
       fields: [
@@ -42,6 +57,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     icon: 'Heart',
     defaultVariant: 'default',
     supportedVariants: ['default', 'centered', 'split'],
+    variantMeta: [
+      { id: 'default', label: 'Classic', description: 'Text on left, photo on right' },
+      { id: 'centered', label: 'Centered', description: 'Story text centered with photo above' },
+      { id: 'split', label: 'Split', description: 'Large image beside full-height text' },
+    ],
     capabilities: { ...defaultCapabilities, mediaAware: true },
     settingsSchema: {
       fields: [
@@ -60,6 +80,10 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     icon: 'MapPin',
     defaultVariant: 'default',
     supportedVariants: ['default', 'card'],
+    variantMeta: [
+      { id: 'default', label: 'Standard', description: 'List view with map and address details' },
+      { id: 'card', label: 'Card', description: 'Each venue in its own visual card with photo' },
+    ],
     capabilities: { ...defaultCapabilities, hasBindings: true, mediaAware: true },
     settingsSchema: {
       fields: [
@@ -81,6 +105,10 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     icon: 'Clock',
     defaultVariant: 'default',
     supportedVariants: ['default', 'timeline'],
+    variantMeta: [
+      { id: 'default', label: 'List', description: 'Simple stacked list of events with times' },
+      { id: 'timeline', label: 'Timeline', description: 'Visual vertical timeline with icons' },
+    ],
     capabilities: { ...defaultCapabilities, hasBindings: true },
     settingsSchema: {
       fields: [
@@ -102,6 +130,10 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     icon: 'Plane',
     defaultVariant: 'default',
     supportedVariants: ['default', 'cards'],
+    variantMeta: [
+      { id: 'default', label: 'Compact', description: 'Clean list of hotels and travel tips' },
+      { id: 'cards', label: 'Cards', description: 'Each hotel recommendation in a rich card' },
+    ],
     capabilities: { ...defaultCapabilities },
     settingsSchema: {
       fields: [
@@ -119,6 +151,10 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     icon: 'Gift',
     defaultVariant: 'default',
     supportedVariants: ['default', 'grid'],
+    variantMeta: [
+      { id: 'default', label: 'List', description: 'Registry links stacked with descriptions' },
+      { id: 'grid', label: 'Grid', description: 'Logo grid layout for each registry store' },
+    ],
     capabilities: { ...defaultCapabilities, hasBindings: true },
     settingsSchema: {
       fields: [
@@ -140,6 +176,10 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     icon: 'HelpCircle',
     defaultVariant: 'default',
     supportedVariants: ['default', 'accordion'],
+    variantMeta: [
+      { id: 'default', label: 'Open List', description: 'All questions and answers visible at once' },
+      { id: 'accordion', label: 'Accordion', description: 'Collapsible questions, one open at a time' },
+    ],
     capabilities: { ...defaultCapabilities, hasBindings: true },
     settingsSchema: {
       fields: [
@@ -161,6 +201,10 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     icon: 'Mail',
     defaultVariant: 'default',
     supportedVariants: ['default', 'inline'],
+    variantMeta: [
+      { id: 'default', label: 'Full Form', description: 'Dedicated RSVP section with form fields' },
+      { id: 'inline', label: 'Inline', description: 'Compact inline form embedded in the page' },
+    ],
     capabilities: { ...defaultCapabilities, deletable: false },
     settingsSchema: {
       fields: [
@@ -179,6 +223,10 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     icon: 'Images',
     defaultVariant: 'default',
     supportedVariants: ['default', 'masonry'],
+    variantMeta: [
+      { id: 'default', label: 'Grid', description: 'Uniform grid of equal-sized photos' },
+      { id: 'masonry', label: 'Masonry', description: 'Pinterest-style varied height layout' },
+    ],
     capabilities: { ...defaultCapabilities, mediaAware: true },
     settingsSchema: {
       fields: [
@@ -200,13 +248,13 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
   },
 };
 
-export function getSectionManifest(type: BuilderSectionType): BuilderSectionDefinition {
+export function getSectionManifest(type: BuilderSectionType): BuilderSectionDefinitionWithMeta {
   const manifest = SECTION_MANIFESTS[type];
   if (!manifest) throw new Error(`Unknown section type: ${type}`);
   return manifest;
 }
 
-export function getAllSectionManifests(): BuilderSectionDefinition[] {
+export function getAllSectionManifests(): BuilderSectionDefinitionWithMeta[] {
   return Object.values(SECTION_MANIFESTS);
 }
 

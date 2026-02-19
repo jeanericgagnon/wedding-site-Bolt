@@ -89,10 +89,10 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       }, `Add ${action.payload.section.type}`, 'ADD_SECTION');
 
     case 'ADD_SECTION_TYPE': {
-      const { pageId, sectionType, insertAfterIndex } = action.payload;
+      const { pageId, sectionType, insertAfterIndex, variant } = action.payload;
       const page = state.project?.pages.find(p => p.id === pageId);
       const orderIndex = insertAfterIndex !== undefined ? insertAfterIndex + 1 : (page?.sections.length ?? 0);
-      const newSection = getDefaultSectionInstance(sectionType, undefined, orderIndex);
+      const newSection = getDefaultSectionInstance(sectionType, variant, orderIndex);
       return updatePageSections(state, pageId, pg => {
         const sections = [...pg.sections];
         sections.splice(orderIndex, 0, { ...newSection, orderIndex });

@@ -94,6 +94,6 @@ export type BuilderAction =
   | { type: 'OPEN_MEDIA_LIBRARY'; payload?: string }
   | { type: 'CLOSE_MEDIA_LIBRARY' }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'ADD_SECTION_TYPE'; payload: { pageId: string; sectionType: BuilderSectionType; insertAfterIndex?: number } }
+  | { type: 'ADD_SECTION_TYPE'; payload: { pageId: string; sectionType: BuilderSectionType; insertAfterIndex?: number; variant?: string } }
   | { type: 'UNDO' }
   | { type: 'REDO' };

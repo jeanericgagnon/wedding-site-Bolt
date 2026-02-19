@@ -17,9 +17,9 @@ export const builderActions = {
     payload: { pageId, section, insertAfterIndex },
   }),
 
-  addSectionByType: (pageId: string, sectionType: BuilderSectionType, insertAfterIndex?: number): BuilderAction => ({
+  addSectionByType: (pageId: string, sectionType: BuilderSectionType, insertAfterIndex?: number, variant?: string): BuilderAction => ({
     type: 'ADD_SECTION_TYPE',
-    payload: { pageId, sectionType, insertAfterIndex },
+    payload: { pageId, sectionType, insertAfterIndex, variant },
   }),
 
   removeSection: (pageId: string, sectionId: string): BuilderAction => ({
