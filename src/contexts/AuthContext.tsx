@@ -28,7 +28,6 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-const DEMO_PASSWORD = 'demo-password-12345';
 const LOCAL_DEMO_AUTH_KEY = 'dayof_demo_local_auth';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -83,15 +82,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
   };
 
-  const trySupabaseDemoSignIn = async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-    });
-    if (error || !data.user) return null;
-    return data.user;
-  };
-
   const signIn = async () => {
     if (!DEMO_MODE) {
       if (!SUPABASE_CONFIGURED) {
@@ -100,45 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Demo mode is not enabled. Please use regular sign in.');
     }
 
-    if (!SUPABASE_CONFIGURED) {
-      setLocalDemoUser();
-      return;
-    }
-
-    const existingUser = await trySupabaseDemoSignIn();
-    if (existingUser) {
-      localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
-      setUser({
-        id: existingUser.id,
-        email: existingUser.email || '',
-        name: existingUser.user_metadata?.name || 'Alex & Jordan (Demo)',
-      });
-      return;
-    }
-
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-      options: { data: { name: 'Alex & Jordan (Demo)' } },
-    });
-
-    // If sign-up fails (email confirmations/rate-limits/settings), keep demo UX available.
-    if (signUpError) {
-      setLocalDemoUser();
-      return;
-    }
-
-    const newUser = await trySupabaseDemoSignIn();
-    if (newUser) {
-      localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
-      setUser({
-        id: newUser.id,
-        email: newUser.email || '',
-        name: newUser.user_metadata?.name || 'Alex & Jordan (Demo)',
-      });
-      return;
-    }
-
+    // In demo mode, always use local auth to avoid backend dependency/noise.
     setLocalDemoUser();
   };
 
