@@ -17,6 +17,11 @@ interface OverviewStats {
   siteSlug: string | null;
   siteUpdatedAt: string | null;
   templateName: string | null;
+  coupleName1: string | null;
+  coupleName2: string | null;
+  venueName: string | null;
+  venueLocation: string | null;
+  registryItemCount: number;
   recentRsvps: RecentRsvp[];
 }
 
@@ -102,6 +107,11 @@ export const DashboardOverview: React.FC = () => {
           siteSlug: demoWeddingSite.site_url,
           siteUpdatedAt: new Date().toISOString(),
           templateName: 'classic',
+          coupleName1: demoWeddingSite.couple_name_1,
+          coupleName2: demoWeddingSite.couple_name_2,
+          venueName: demoWeddingSite.venue_name,
+          venueLocation: demoWeddingSite.venue_location,
+          registryItemCount: 2,
           recentRsvps,
         });
         return;
@@ -109,7 +119,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, updated_at, template_id, wedding_data')
+        .select('id, site_slug, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -131,6 +141,11 @@ export const DashboardOverview: React.FC = () => {
         .order('rsvp_received_at', { ascending: false });
 
       if (guestsErr) throw guestsErr;
+
+      const { count: registryItemCount } = await supabase
+        .from('registry_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '');
 
       const allGuests = guests ?? [];
       const confirmed = allGuests.filter((g) => g.rsvp_status === 'confirmed');
@@ -157,6 +172,11 @@ export const DashboardOverview: React.FC = () => {
         siteSlug: site?.site_slug ?? null,
         siteUpdatedAt: site?.updated_at ?? null,
         templateName,
+        coupleName1: site?.couple_name_1 ?? null,
+        coupleName2: site?.couple_name_2 ?? null,
+        venueName: site?.venue_name ?? null,
+        venueLocation: site?.wedding_location ?? null,
+        registryItemCount: registryItemCount ?? 0,
         recentRsvps,
       });
     } catch {
@@ -170,6 +190,48 @@ export const DashboardOverview: React.FC = () => {
     stats && stats.totalGuests > 0
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
+
+  const setupChecklist = stats
+    ? [
+        {
+          id: 'names',
+          label: 'Add couple names',
+          done: Boolean(stats.coupleName1 || stats.coupleName2),
+          actionLabel: 'Open settings',
+          action: () => navigate('/dashboard/settings'),
+        },
+        {
+          id: 'date',
+          label: 'Set wedding date',
+          done: Boolean(stats.weddingDate),
+          actionLabel: 'Set date',
+          action: () => navigate('/dashboard/settings'),
+        },
+        {
+          id: 'venue',
+          label: 'Add venue/address',
+          done: Boolean(stats.venueName || stats.venueLocation),
+          actionLabel: 'Add venue',
+          action: () => navigate('/dashboard/settings'),
+        },
+        {
+          id: 'registry',
+          label: 'Add at least 1 registry item',
+          done: stats.registryItemCount > 0,
+          actionLabel: 'Go to registry',
+          action: () => navigate('/dashboard/registry'),
+        },
+        {
+          id: 'publish',
+          label: 'Publish site once',
+          done: Boolean(stats.siteSlug),
+          actionLabel: 'Open builder',
+          action: () => navigate('/dashboard/builder'),
+        },
+      ]
+    : [];
+
+  const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
 
   return (
     <DashboardLayout currentPage="overview">
@@ -413,6 +475,32 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card variant="bordered" padding="lg">
+              <CardHeader>
+                <CardTitle>Setup checklist</CardTitle>
+                <CardDescription>
+                  {setupCompletedCount}/{setupChecklist.length} complete
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {setupChecklist.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 py-2 border-b border-border-subtle last:border-0">
+                      <label className="flex items-center gap-3 text-sm text-text-primary">
+                        <input type="checkbox" checked={item.done} readOnly className="h-4 w-4 rounded border-border" />
+                        <span className={item.done ? 'line-through text-text-secondary' : ''}>{item.label}</span>
+                      </label>
+                      {!item.done && (
+                        <Button variant="ghost" size="sm" onClick={item.action}>
+                          {item.actionLabel}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             <Card variant="bordered" padding="lg">
               <CardHeader>

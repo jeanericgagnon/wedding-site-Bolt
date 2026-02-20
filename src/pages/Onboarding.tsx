@@ -26,12 +26,42 @@ export const Onboarding: React.FC = () => {
   });
 
   const setupChecklist = [
-    { id: 'names', label: 'Add couple names', done: Boolean(formData.partnerNames.trim()) },
-    { id: 'date', label: 'Set wedding date', done: Boolean(formData.weddingDate) },
-    { id: 'venue', label: 'Add venue/address', done: Boolean(formData.venueName.trim() || formData.venueLocation.trim()) },
-    { id: 'registry', label: 'Add registry link', done: Boolean(formData.registryLink.trim()) },
-    { id: 'publish', label: 'Publish site', done: false },
-  ] as const;
+    {
+      id: 'names',
+      label: 'Add couple names',
+      done: Boolean(formData.partnerNames.trim()),
+      actionLabel: 'Go',
+      action: () => setStep('quick-1' as OnboardingStep),
+    },
+    {
+      id: 'date',
+      label: 'Set wedding date',
+      done: Boolean(formData.weddingDate),
+      actionLabel: 'Go',
+      action: () => setStep('quick-1' as OnboardingStep),
+    },
+    {
+      id: 'venue',
+      label: 'Add venue/address',
+      done: Boolean(formData.venueName.trim() || formData.venueLocation.trim()),
+      actionLabel: 'Go',
+      action: () => setStep('quick-1' as OnboardingStep),
+    },
+    {
+      id: 'registry',
+      label: 'Add registry link',
+      done: Boolean(formData.registryLink.trim()),
+      actionLabel: 'Go',
+      action: () => setStep('quick-3' as OnboardingStep),
+    },
+    {
+      id: 'publish',
+      label: 'Publish site',
+      done: step === 'complete',
+      actionLabel: 'Finish setup',
+      action: () => setStep('quick-3' as OnboardingStep),
+    },
+  ];
 
   const completedSetupCount = setupChecklist.filter(item => item.done).length;
 
@@ -139,10 +169,21 @@ export const Onboarding: React.FC = () => {
       </div>
       <div className="space-y-2">
         {setupChecklist.map((item) => (
-          <label key={item.id} className="flex items-center gap-3 text-sm text-text-primary">
-            <input type="checkbox" checked={item.done} readOnly className="h-4 w-4 rounded border-border" />
-            <span className={item.done ? 'line-through text-text-secondary' : ''}>{item.label}</span>
-          </label>
+          <div key={item.id} className="flex items-center justify-between gap-3 text-sm text-text-primary">
+            <label className="flex items-center gap-3">
+              <input type="checkbox" checked={item.done} readOnly className="h-4 w-4 rounded border-border" />
+              <span className={item.done ? 'line-through text-text-secondary' : ''}>{item.label}</span>
+            </label>
+            {!item.done && (
+              <button
+                type="button"
+                onClick={item.action}
+                className="text-xs text-primary hover:text-primary-hover font-medium"
+              >
+                {item.actionLabel}
+              </button>
+            )}
+          </div>
         ))}
       </div>
       <p className="text-xs text-text-secondary mt-3">Publish becomes available after you finish setup and enter the dashboard/builder.</p>

@@ -201,7 +201,7 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Guest segmentation</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Schedule sends</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Delivery status tracking</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Retry failed sends</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Draft + scheduled send flow</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Ready-made templates</span></li>
               </ul>
             </Link>
@@ -248,7 +248,7 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Drag-and-drop seating board</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table capacity management</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Auto-assign by RSVP</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Print place cards</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table assignment workflows</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Export for caterer</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Per-event seating</span></li>
               </ul>
@@ -305,7 +305,7 @@ export const Home: React.FC = () => {
                   'Itinerary timeline',
                   'Private by default',
                   'Mobile-friendly for all ages',
-                  'Data export anytime',
+                  'Guest export tools',
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
