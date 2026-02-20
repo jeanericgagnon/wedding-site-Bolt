@@ -20,6 +20,7 @@ export const Home: React.FC = () => {
   const { toast } = useToast();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [demoLoading, setDemoLoading] = useState(false);
+  const proposalImageUrl = `${import.meta.env.BASE_URL}7641B308-4D92-48B2-8332-E6AB193A128D_1_105_c.jpeg`;
 
   const handleSignUp = async () => {
     navigate('/signup');
@@ -91,9 +92,10 @@ export const Home: React.FC = () => {
 
             <div className="mb-10">
               <img
-                src="/7641B308-4D92-48B2-8332-E6AB193A128D_1_105_c.jpeg"
+                src={proposalImageUrl}
                 alt="Proposal moment in a park overlooking the city"
-                className="w-full rounded-2xl shadow-lg mb-8"
+                loading="lazy"
+                className="w-full rounded-2xl shadow-lg mb-8 object-cover"
               />
               <div className="space-y-5 max-w-2xl mx-auto">
                 <p className="text-[1.0625rem] text-ink/80 leading-relaxed">
