@@ -14,6 +14,8 @@ import {
 import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
+import { useAuth } from '../../hooks/useAuth';
+import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -212,7 +214,11 @@ function TableForm({ initial, onSave, onCancel }: {
   );
 }
 
+const DEMO_EVENT_ID = 'demo-event-reception';
+const DEMO_SEATING_EVENT_ID = 'demo-seating-event';
+
 export const DashboardSeating: React.FC = () => {
+  const { isDemoMode } = useAuth();
   const [siteId, setSiteId] = useState<string | null>(null);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -242,6 +248,20 @@ export const DashboardSeating: React.FC = () => {
 
   async function loadInitial() {
     try {
+      if (isDemoMode) {
+        setSiteId(demoWeddingSite.id);
+        const demoEvent: ItineraryEvent = {
+          id: DEMO_EVENT_ID,
+          event_name: 'Reception',
+          event_date: new Date().toISOString().slice(0, 10),
+          start_time: '18:00',
+          location_name: 'Grand Ballroom',
+        };
+        setItineraryEvents([demoEvent]);
+        setSelectedEventId(demoEvent.id);
+        return;
+      }
+
       const id = await getWeddingSiteId();
       if (!id) return;
       setSiteId(id);
@@ -270,6 +290,42 @@ export const DashboardSeating: React.FC = () => {
     if (!siteId || !selectedEventId) return;
     setLoadingSeating(true);
     try {
+      if (isDemoMode) {
+        const se: SeatingEvent = {
+          id: DEMO_SEATING_EVENT_ID,
+          wedding_site_id: siteId,
+          itinerary_event_id: selectedEventId,
+          default_table_capacity: 8,
+          notes: '',
+          created_at: new Date().toISOString(),
+        };
+        setSeatingEvent(se);
+
+        const guestsData: EligibleGuest[] = demoGuests.map((g, idx) => {
+          const fullName = g.name || [g.first_name, g.last_name].filter(Boolean).join(' ') || `Guest ${idx + 1}`;
+          return {
+            id: g.id,
+            full_name: fullName,
+            email: g.email ?? null,
+            rsvp_status: g.rsvp_status,
+            household_id: null,
+            group_name: null,
+            is_attending: g.rsvp_status === 'confirmed',
+            is_invited_to_event: true,
+          };
+        });
+
+        setTables([]);
+        setAssignments([]);
+        setAllGuests(guestsData);
+        const attending = guestsData.filter(g => g.is_attending).length;
+        const declined = guestsData.filter(g => g.rsvp_status === 'declined' || g.rsvp_status === 'not_attending').length;
+        const pending = guestsData.filter(g => !g.rsvp_status || g.rsvp_status === 'pending').length;
+        setCounters({ invited: guestsData.length, attending, declined, pending, seated: 0, unassigned: attending });
+        setInvalidCount(0);
+        return;
+      }
+
       const se = await getOrCreateSeatingEvent(siteId, selectedEventId);
       setSeatingEvent(se);
       const [tablesData, assignmentsData, guestsData] = await Promise.all([
@@ -309,7 +365,9 @@ export const DashboardSeating: React.FC = () => {
 
     if (dropId === UNASSIGNED_DROPPABLE) {
       try {
-        await unassignGuest(seatingEvent.id, guestId);
+        if (!isDemoMode) {
+          await unassignGuest(seatingEvent.id, guestId);
+        }
         setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
       } catch {
         toast('Failed to unassign guest', 'error');
@@ -327,7 +385,16 @@ export const DashboardSeating: React.FC = () => {
     }
 
     try {
-      const assignment = await assignGuestToTable(seatingEvent.id, targetTable.id, guestId);
+      const assignment = isDemoMode
+        ? {
+            id: `demo-assignment-${guestId}`,
+            seating_event_id: seatingEvent.id,
+            table_id: targetTable.id,
+            guest_id: guestId,
+            seat_index: null,
+            is_valid: true,
+          }
+        : await assignGuestToTable(seatingEvent.id, targetTable.id, guestId);
       setAssignments(prev => {
         const filtered = prev.filter(a => a.guest_id !== guestId);
         return [...filtered, assignment];
@@ -340,18 +407,29 @@ export const DashboardSeating: React.FC = () => {
   const handleRemoveGuest = useCallback(async (guestId: string) => {
     if (!seatingEvent) return;
     try {
-      await unassignGuest(seatingEvent.id, guestId);
+      if (!isDemoMode) {
+        await unassignGuest(seatingEvent.id, guestId);
+      }
       setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
     } catch {
       toast('Failed to unassign guest', 'error');
     }
-  }, [seatingEvent, toast]);
+  }, [seatingEvent, toast, isDemoMode]);
 
   async function handleAddTable(tableData: Partial<SeatingTable>) {
     if (!seatingEvent) return;
     try {
       const sortOrder = tables.length;
-      const created = await createTable({ ...tableData, seating_event_id: seatingEvent.id, sort_order: sortOrder });
+      const created = isDemoMode
+        ? {
+            id: `demo-table-${Date.now()}`,
+            seating_event_id: seatingEvent.id,
+            table_name: tableData.table_name || `Table ${sortOrder + 1}`,
+            capacity: tableData.capacity || 8,
+            sort_order: sortOrder,
+            notes: tableData.notes || '',
+          }
+        : await createTable({ ...tableData, seating_event_id: seatingEvent.id, sort_order: sortOrder });
       setTables(prev => [...prev, created]);
       setAddingTable(false);
       toast('Table added', 'success');
@@ -362,7 +440,9 @@ export const DashboardSeating: React.FC = () => {
 
   async function handleUpdateTable(id: string, tableData: Partial<SeatingTable>) {
     try {
-      await updateTable(id, tableData);
+      if (!isDemoMode) {
+        await updateTable(id, tableData);
+      }
       setTables(prev => prev.map(t => t.id === id ? { ...t, ...tableData } : t));
       setEditingTable(null);
       toast('Table updated', 'success');
@@ -373,7 +453,9 @@ export const DashboardSeating: React.FC = () => {
 
   async function handleDeleteTable(id: string) {
     try {
-      await deleteTable(id);
+      if (!isDemoMode) {
+        await deleteTable(id);
+      }
       setTables(prev => prev.filter(t => t.id !== id));
       setAssignments(prev => prev.filter(a => a.table_id !== id));
       toast('Table deleted', 'success');
@@ -385,7 +467,9 @@ export const DashboardSeating: React.FC = () => {
   async function handleReset() {
     if (!seatingEvent) return;
     try {
-      await resetSeating(seatingEvent.id);
+      if (!isDemoMode) {
+        await resetSeating(seatingEvent.id);
+      }
       setAssignments([]);
       setShowResetConfirm(false);
       toast('Seating reset', 'success');
@@ -397,7 +481,16 @@ export const DashboardSeating: React.FC = () => {
   async function handleAutoCreateTables() {
     if (!seatingEvent || !counters) return;
     try {
-      const created = await autoCreateTables(seatingEvent.id, counters.attending, autoCapacity);
+      const created = isDemoMode
+        ? Array.from({ length: Math.ceil(counters.attending / autoCapacity) }).map((_, idx) => ({
+            id: `demo-auto-table-${Date.now()}-${idx}`,
+            seating_event_id: seatingEvent.id,
+            table_name: `Table ${tables.length + idx + 1}`,
+            capacity: autoCapacity,
+            sort_order: tables.length + idx,
+            notes: '',
+          }))
+        : await autoCreateTables(seatingEvent.id, counters.attending, autoCapacity);
       setTables(prev => [...prev, ...created]);
       setShowAutoTablesModal(false);
       toast(`Created ${created.length} tables`, 'success');
@@ -413,7 +506,27 @@ export const DashboardSeating: React.FC = () => {
       return;
     }
     try {
-      const newAssignments = await autoSeatGuests(seatingEvent.id, tables, allGuests);
+      const newAssignments = isDemoMode
+        ? (() => {
+            const attendees = allGuests.filter(g => g.is_attending);
+            const occupancy = new Map<string, number>(tables.map(t => [t.id, 0]));
+            const generated: SeatingAssignment[] = [];
+            for (const guest of attendees) {
+              const table = tables.find(t => (occupancy.get(t.id) ?? 0) < t.capacity);
+              if (!table) break;
+              occupancy.set(table.id, (occupancy.get(table.id) ?? 0) + 1);
+              generated.push({
+                id: `demo-auto-assign-${guest.id}`,
+                seating_event_id: seatingEvent.id,
+                table_id: table.id,
+                guest_id: guest.id,
+                seat_index: null,
+                is_valid: true,
+              });
+            }
+            return generated;
+          })()
+        : await autoSeatGuests(seatingEvent.id, tables, allGuests);
       setAssignments(prev => {
         const existingMap = new Map(prev.map(a => [a.guest_id, a]));
         newAssignments.forEach(a => existingMap.set(a.guest_id, a));
@@ -427,6 +540,10 @@ export const DashboardSeating: React.FC = () => {
 
   async function handleCheckDrift() {
     if (!seatingEvent || !selectedEventId || !siteId) return;
+    if (isDemoMode) {
+      toast('All assignments are valid', 'success');
+      return;
+    }
     try {
       const count = await invalidateDriftedAssignments(seatingEvent.id, selectedEventId, siteId);
       if (count > 0) {
