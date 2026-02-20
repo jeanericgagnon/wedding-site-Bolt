@@ -240,6 +240,7 @@ export const BuilderPage: React.FC = () => {
       initialProject={project}
       initialWeddingData={weddingData ?? undefined}
       projectName={coupleName}
+      isDemoMode={isDemoMode}
       onSave={handleSave}
       onPublish={handlePublish}
     />

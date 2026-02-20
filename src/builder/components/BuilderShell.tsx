@@ -20,6 +20,7 @@ interface BuilderShellProps {
   initialProject: BuilderProject;
   initialWeddingData?: WeddingDataV1;
   projectName?: string;
+  isDemoMode?: boolean;
   onSave?: (project: BuilderProject) => Promise<void>;
   onPublish?: (projectId: string) => Promise<void>;
 }
@@ -28,6 +29,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   initialProject,
   initialWeddingData,
   projectName,
+  isDemoMode = false,
   onSave,
   onPublish,
 }) => {
@@ -74,11 +76,14 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   useEffect(() => {
     const weddingId = initialProject.weddingId;
-    if (!weddingId) return;
+    if (!weddingId || isDemoMode) {
+      dispatch(builderActions.setMediaAssets([]));
+      return;
+    }
     mediaService.listAssets(weddingId)
       .then(assets => { dispatch(builderActions.setMediaAssets(assets)); })
       .catch(() => { dispatch(builderActions.setError('Could not load media library. Your uploads may not appear.')); });
-  }, [initialProject.weddingId]);
+  }, [initialProject.weddingId, isDemoMode]);
 
   const handleSave = useCallback(async () => {
     const currentState = stateRef.current;
