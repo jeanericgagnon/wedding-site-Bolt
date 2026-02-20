@@ -15,6 +15,7 @@ import {
   Palette,
   ArrowLeft,
 } from 'lucide-react';
+import { getSectionManifest } from '../registry/sectionManifests';
 import { useNavigate } from 'react-router-dom';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
@@ -62,6 +63,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const publishedAt = state.project?.lastPublishedAt ?? null;
   const isPublished = publishStatus === 'published';
   const projectPages = state.project?.pages ?? [];
+  const activePage = projectPages.find((p) => p.id === state.activePageId) ?? null;
   const isThemePanelOpen = state.themePanelOpen;
   const activeThemeId = state.project?.themeId ?? 'romantic';
   const activeTheme = getAllThemePresets().find(p => p.id === activeThemeId);
@@ -142,7 +144,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="flex-1" />
 
-      <div className="w-full lg:hidden">
+      <div className="w-full lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div className="flex items-center gap-2">
           <label htmlFor="mobile-page-nav" className="text-xs text-gray-500 whitespace-nowrap">Page</label>
           <select
@@ -156,6 +158,32 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           >
             {projectPages.map((page) => (
               <option key={page.id} value={page.id}>{page.title}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label htmlFor="mobile-section-nav" className="text-xs text-gray-500 whitespace-nowrap">Section</label>
+          <select
+            id="mobile-section-nav"
+            value={state.selectedSectionId ?? ''}
+            onChange={(e) => {
+              const sectionId = e.target.value || null;
+              dispatch(builderActions.selectSection(sectionId));
+              if (sectionId) {
+                requestAnimationFrame(() => {
+                  const el = document.querySelector(`[data-section-id="${sectionId}"]`);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+              }
+            }}
+            className="w-full px-2.5 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
+          >
+            <option value="">Top of page</option>
+            {(activePage?.sections ?? []).map((section, idx) => (
+              <option key={section.id} value={section.id}>
+                {idx + 1}. {getSectionManifest(section.type).label}
+              </option>
             ))}
           </select>
         </div>
