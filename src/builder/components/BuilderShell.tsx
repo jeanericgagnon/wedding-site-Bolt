@@ -182,7 +182,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishError={publishError}
         />
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-auto lg:overflow-hidden">
           {state.mode === 'edit' && (
             <BuilderSidebarLibrary activePageId={state.activePageId} />
           )}

@@ -69,7 +69,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     : ['#C0697B', '#E8A0A0', '#C89F56'];
 
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3 z-50 sticky top-0">
+    <header className="min-h-14 bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-3 md:px-4 py-2 md:py-0 gap-2 md:gap-3 z-50 sticky top-0">
       <button
         onClick={() => navigate('/dashboard')}
         title="Back to Dashboard"
@@ -79,7 +79,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <span className="hidden sm:inline">Dashboard</span>
       </button>
 
-      <div className="h-5 w-px bg-gray-200 flex-shrink-0" />
+      <div className="hidden sm:block h-5 w-px bg-gray-200 flex-shrink-0" />
 
       <div className="flex items-center gap-2 min-w-0">
         <div className="w-7 h-7 bg-rose-600 rounded-md flex items-center justify-center flex-shrink-0">
@@ -91,9 +91,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
       </div>
 
-      <div className="h-5 w-px bg-gray-200 mx-1" />
+      <div className="hidden md:block h-5 w-px bg-gray-200 mx-1" />
 
-      <div className="flex items-center gap-1">
+      <div className="hidden sm:flex items-center gap-1">
         <button
           onClick={() => dispatch(builderActions.undo())}
           disabled={!undoRedo.canUndo}
@@ -114,7 +114,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </button>
       </div>
 
-      <div className="h-5 w-px bg-gray-200 mx-1" />
+      <div className="hidden md:block h-5 w-px bg-gray-200 mx-1" />
 
       <button
         onClick={() =>
@@ -141,9 +141,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-2">
+      <div className="w-full md:w-auto flex items-center justify-end gap-2 flex-wrap">
         {state.isSaving && (
-          <span className="text-xs text-gray-500 flex items-center gap-1.5">
+          <span className="hidden sm:flex text-xs text-gray-500 items-center gap-1.5">
             <Loader2 size={12} className="animate-spin" />
             Saving…
           </span>
@@ -155,13 +155,13 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </span>
         )}
         {!state.isSaving && !saveError && state.lastSavedAt && !isDirty && (
-          <span className="text-xs text-green-700 flex items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-1 rounded-md" title={`Last saved: ${new Date(state.lastSavedAt).toLocaleString()}`}>
+          <span className="hidden sm:flex text-xs text-green-700 items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-1 rounded-md" title={`Last saved: ${new Date(state.lastSavedAt).toLocaleString()}`}>
             <CheckCircle2 size={12} className="text-green-500" />
             {formatSavedAt(state.lastSavedAt)}
           </span>
         )}
         {!state.isSaving && !saveError && isDirty && (
-          <span className="text-xs text-amber-600 flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md">
+          <span className="hidden sm:flex text-xs text-amber-600 items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md">
             <AlertCircle size={12} />
             Unsaved changes
           </span>

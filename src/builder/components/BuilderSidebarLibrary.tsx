@@ -118,8 +118,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   return (
     <>
     <aside
-      className={`flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarExpanded ? 'w-96' : 'w-64'}`}
-      style={{ minWidth: sidebarExpanded ? '24rem' : '16rem' }}
+      className={`flex-shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarExpanded ? 'w-full lg:w-96' : 'w-full lg:w-64'}`}
     >
       <div className="flex border-b border-gray-200">
         {([

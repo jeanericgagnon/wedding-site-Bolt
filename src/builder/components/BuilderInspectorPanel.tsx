@@ -21,7 +21,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   if (!selectedSection || !activePage) {
     return (
-      <aside className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
+      <aside className="w-full lg:w-72 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div>
             <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -61,7 +61,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   ].filter(t => t.show);
 
   return (
-    <aside className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
+    <aside className="w-full lg:w-72 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
