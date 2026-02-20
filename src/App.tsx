@@ -224,7 +224,7 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <AppContent />
         </BrowserRouter>
       </ToastProvider>
