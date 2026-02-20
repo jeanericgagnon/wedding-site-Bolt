@@ -5,12 +5,13 @@ import { useAuth } from '../hooks/useAuth';
 import { BuilderShell } from './components/BuilderShell';
 import { builderProjectService } from './services/builderProjectService';
 import { publishService } from './services/publishService';
-import { BuilderProject } from '../types/builder/project';
-import { WeddingDataV1 } from '../types/weddingData';
+import { BuilderProject, createEmptyBuilderProject } from '../types/builder/project';
+import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
 import { supabase } from '../lib/supabase';
+import { demoWeddingSite } from '../lib/demoData';
 
 export const BuilderPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
   const [project, setProject] = useState<BuilderProject | null>(null);
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
@@ -21,12 +22,26 @@ export const BuilderPage: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     loadBuilderProject(user.id);
-  }, [user]);
+  }, [user, isDemoMode]);
 
   const loadBuilderProject = async (userId: string) => {
     try {
       setLoading(true);
       setError(null);
+
+      if (isDemoMode) {
+        const demoProject = createEmptyBuilderProject(demoWeddingSite.id, 'modern-luxe');
+        const demoWedding = createEmptyWeddingData();
+        demoWedding.couple.partner1Name = demoWeddingSite.couple_name_1;
+        demoWedding.couple.partner2Name = demoWeddingSite.couple_name_2;
+        demoWedding.couple.displayName = `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`;
+        demoWedding.event.weddingDateISO = new Date(demoWeddingSite.wedding_date).toISOString();
+
+        setProject(demoProject);
+        setWeddingData(demoWedding);
+        setCoupleName(demoWedding.couple.displayName || 'My Wedding');
+        return;
+      }
 
       const { data: siteData, error: siteError } = await supabase
         .from('wedding_sites')
@@ -61,11 +76,16 @@ export const BuilderPage: React.FC = () => {
   };
 
   const handleSave = async (updatedProject: BuilderProject) => {
+    if (isDemoMode) {
+      setProject(updatedProject);
+      return;
+    }
     await publishService.saveDraft(updatedProject);
   };
 
   const handlePublish = async (projectId: string) => {
     if (!project) return;
+    if (isDemoMode) return;
     const result = await publishService.publish({ ...project, id: projectId });
     if (!result.success) throw new Error(result.error);
   };
