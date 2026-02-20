@@ -184,12 +184,18 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-auto lg:overflow-hidden">
           {state.mode === 'edit' && (
-            <BuilderSidebarLibrary activePageId={state.activePageId} />
+            <div className="hidden lg:block">
+              <BuilderSidebarLibrary activePageId={state.activePageId} />
+            </div>
           )}
 
           <BuilderCanvas />
 
-          {state.mode === 'edit' && <BuilderInspectorPanel />}
+          {state.mode === 'edit' && (
+            <div className="hidden lg:block">
+              <BuilderInspectorPanel />
+            </div>
+          )}
         </div>
 
         {state.error && (
