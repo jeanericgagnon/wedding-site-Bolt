@@ -61,6 +61,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   const publishedAt = state.project?.lastPublishedAt ?? null;
   const isPublished = publishStatus === 'published';
+  const projectPages = state.project?.pages ?? [];
   const isThemePanelOpen = state.themePanelOpen;
   const activeThemeId = state.project?.themeId ?? 'romantic';
   const activeTheme = getAllThemePresets().find(p => p.id === activeThemeId);
@@ -140,6 +141,25 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       </button>
 
       <div className="flex-1" />
+
+      <div className="w-full lg:hidden">
+        <div className="flex items-center gap-2">
+          <label htmlFor="mobile-page-nav" className="text-xs text-gray-500 whitespace-nowrap">Page</label>
+          <select
+            id="mobile-page-nav"
+            value={state.activePageId ?? ''}
+            onChange={(e) => {
+              dispatch(builderActions.setActivePage(e.target.value));
+              dispatch(builderActions.selectSection(null));
+            }}
+            className="w-full px-2.5 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
+          >
+            {projectPages.map((page) => (
+              <option key={page.id} value={page.id}>{page.title}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <div className="w-full md:w-auto flex items-center justify-end gap-2 flex-wrap">
         {state.isSaving && (
