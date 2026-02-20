@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badg
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Loader2, AlertCircle, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 
 interface OverviewStats {
   totalGuests: number;
@@ -58,7 +59,7 @@ function calcDaysUntil(dateStr: string): number {
 }
 
 export const DashboardOverview: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,7 +68,7 @@ export const DashboardOverview: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     loadStats();
-  }, [user]);
+  }, [user, isDemoMode]);
 
   async function loadStats() {
     if (!user) return;
@@ -75,6 +76,37 @@ export const DashboardOverview: React.FC = () => {
     setError(null);
 
     try {
+      if (isDemoMode) {
+        const confirmed = demoGuests.filter(g => g.rsvp_status === 'confirmed');
+        const declined = demoGuests.filter(g => g.rsvp_status === 'declined');
+        const pending = demoGuests.filter(g => g.rsvp_status === 'pending');
+
+        const recentRsvps: RecentRsvp[] = [...confirmed, ...declined]
+          .slice(0, 5)
+          .map((g, i) => ({
+            id: g.id,
+            guestName: g.name || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || 'Guest',
+            status: g.rsvp_status as 'confirmed' | 'declined',
+            receivedAt: new Date(Date.now() - i * 60 * 60 * 1000).toISOString(),
+          }));
+
+        const weddingDate = demoWeddingSite.wedding_date ?? null;
+
+        setStats({
+          totalGuests: demoGuests.length,
+          confirmedGuests: confirmed.length,
+          declinedGuests: declined.length,
+          pendingGuests: pending.length,
+          daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
+          weddingDate,
+          siteSlug: demoWeddingSite.site_url,
+          siteUpdatedAt: new Date().toISOString(),
+          templateName: 'classic',
+          recentRsvps,
+        });
+        return;
+      }
+
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
         .select('id, site_slug, updated_at, template_id, wedding_data')
