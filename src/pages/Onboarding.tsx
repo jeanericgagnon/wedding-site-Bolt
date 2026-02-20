@@ -4,12 +4,13 @@ import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { demoWeddingSite } from '../lib/demoData';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -82,6 +83,23 @@ export const Onboarding: React.FC = () => {
   useEffect(() => {
     checkExistingSite();
   }, [checkExistingSite]);
+
+  useEffect(() => {
+    if (!isDemoMode) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      partnerNames: prev.partnerNames || `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
+      weddingDate: prev.weddingDate || demoWeddingSite.wedding_date || '',
+      venueName: prev.venueName || demoWeddingSite.venue_name || '',
+      venueLocation: prev.venueLocation || demoWeddingSite.venue_location || '',
+      story: prev.story || 'We met on a rainy Tuesday and never stopped choosing each other.',
+      ceremonyTime: prev.ceremonyTime || '16:00',
+      receptionTime: prev.receptionTime || '18:00',
+      rsvpDeadline: prev.rsvpDeadline || '2026-05-25',
+      registryLink: prev.registryLink || 'https://www.zola.com/registry/alex-and-jordan',
+    }));
+  }, [isDemoMode]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
