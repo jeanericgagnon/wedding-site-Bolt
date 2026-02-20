@@ -236,6 +236,24 @@ export const DashboardOverview: React.FC = () => {
   return (
     <DashboardLayout currentPage="overview">
       <div className="max-w-7xl mx-auto space-y-8">
+        <div className="rounded-2xl border border-border-subtle bg-surface px-5 py-4 md:px-6 md:py-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Setup progress</p>
+              <p className="text-sm text-text-secondary mt-1">Keep momentum — complete your core setup items.</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-text-primary">{setupCompletedCount}/{setupChecklist.length}</p>
+              <p className="text-xs text-text-tertiary">complete</p>
+            </div>
+          </div>
+          <div className="mt-4 h-2 rounded-full bg-surface-subtle overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${(setupCompletedCount / Math.max(setupChecklist.length, 1)) * 100}%` }}
+            />
+          </div>
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
@@ -257,7 +275,7 @@ export const DashboardOverview: React.FC = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card variant="bordered" padding="md">
+              <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-accent-light rounded-lg">
                     <Users className="w-6 h-6 text-accent" aria-hidden="true" />
@@ -277,7 +295,7 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </Card>
 
-              <Card variant="bordered" padding="md">
+              <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-primary-light rounded-lg">
                     <CheckCircle2 className="w-6 h-6 text-primary" aria-hidden="true" />
@@ -297,7 +315,7 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </Card>
 
-              <Card variant="bordered" padding="md">
+              <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-primary-light rounded-lg">
                     <Clock className="w-6 h-6 text-primary" aria-hidden="true" />
@@ -316,7 +334,7 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </Card>
 
-              <Card variant="bordered" padding="md">
+              <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-primary-light rounded-lg">
                     <Calendar className="w-6 h-6 text-primary" aria-hidden="true" />
@@ -362,7 +380,7 @@ export const DashboardOverview: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card variant="bordered" padding="lg">
+              <Card variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -431,7 +449,7 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card variant="bordered" padding="lg">
+              <Card variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>
                   <CardTitle>Recent RSVPs</CardTitle>
                   <CardDescription>Latest responses from your guests</CardDescription>
@@ -476,7 +494,7 @@ export const DashboardOverview: React.FC = () => {
               </Card>
             </div>
 
-            <Card variant="bordered" padding="lg">
+            <Card variant="bordered" padding="lg" className="shadow-sm">
               <CardHeader>
                 <CardTitle>Setup checklist</CardTitle>
                 <CardDescription>
@@ -502,7 +520,7 @@ export const DashboardOverview: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card variant="bordered" padding="lg">
+            <Card variant="bordered" padding="lg" className="shadow-sm">
               <CardHeader>
                 <CardTitle>Quick actions</CardTitle>
                 <CardDescription>Jump to key sections of your dashboard</CardDescription>
