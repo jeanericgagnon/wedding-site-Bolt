@@ -156,7 +156,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               if (sectionId) {
                 requestAnimationFrame(() => {
                   const el = document.querySelector(`[data-section-id="${sectionId}"]`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
               }
             }}
