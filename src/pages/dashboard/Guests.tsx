@@ -180,11 +180,38 @@ export const DashboardGuests: React.FC = () => {
     return data as string;
   };
 
+  const generateLocalInviteToken = () => `demo_${Math.random().toString(36).slice(2, 14)}`;
+
   const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!weddingSiteId) return;
 
     try {
+      if (isDemoMode) {
+        const newGuest: GuestWithRSVP = {
+          id: `demo-${Date.now()}`,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          name: `${formData.first_name} ${formData.last_name}`.trim(),
+          email: formData.email || null,
+          phone: formData.phone || null,
+          plus_one_allowed: formData.plus_one_allowed,
+          plus_one_name: null,
+          invited_to_ceremony: formData.invited_to_ceremony,
+          invited_to_reception: formData.invited_to_reception,
+          invite_token: generateLocalInviteToken(),
+          rsvp_status: 'pending',
+          rsvp_received_at: null,
+          household_id: null,
+        };
+
+        setGuests(prev => [newGuest, ...prev]);
+        setShowAddModal(false);
+        resetForm();
+        toast(`${formData.first_name} ${formData.last_name} added`, 'success');
+        return;
+      }
+
       const inviteToken = await generateSecureToken();
       const { error } = await supabase
         .from('guests')
@@ -218,6 +245,28 @@ export const DashboardGuests: React.FC = () => {
     if (!editingGuest) return;
 
     try {
+      if (isDemoMode) {
+        setGuests(prev => prev.map(guest => (
+          guest.id === editingGuest.id
+            ? {
+                ...guest,
+                first_name: formData.first_name,
+                last_name: formData.last_name,
+                name: `${formData.first_name} ${formData.last_name}`.trim(),
+                email: formData.email || null,
+                phone: formData.phone || null,
+                plus_one_allowed: formData.plus_one_allowed,
+                invited_to_ceremony: formData.invited_to_ceremony,
+                invited_to_reception: formData.invited_to_reception,
+              }
+            : guest
+        )));
+        setEditingGuest(null);
+        resetForm();
+        toast('Guest updated', 'success');
+        return;
+      }
+
       const { error } = await supabase
         .from('guests')
         .update({
@@ -256,6 +305,12 @@ export const DashboardGuests: React.FC = () => {
     setDeletingGuestId(guestId);
     setConfirmDeleteId(null);
     try {
+      if (isDemoMode) {
+        setGuests(prev => prev.filter(guest => guest.id !== guestId));
+        toast('Guest removed', 'success');
+        return;
+      }
+
       const { error } = await supabase
         .from('guests')
         .delete()
@@ -555,6 +610,32 @@ export const DashboardGuests: React.FC = () => {
     if (!csvPreview || !weddingSiteId) return;
     setCsvImporting(true);
     try {
+      if (isDemoMode) {
+        const importedGuests = csvPreview.map((g, idx) => ({
+          id: `demo-import-${Date.now()}-${idx}`,
+          first_name: String(g.first_name || ''),
+          last_name: String(g.last_name || ''),
+          name: `${String(g.first_name || '')} ${String(g.last_name || '')}`.trim(),
+          email: g.email ? String(g.email) : null,
+          phone: g.phone ? String(g.phone) : null,
+          plus_one_allowed: Boolean(g.plus_one_allowed),
+          plus_one_name: null,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: generateLocalInviteToken(),
+          rsvp_status: 'pending',
+          rsvp_received_at: null,
+          household_id: null,
+        } as GuestWithRSVP));
+
+        setGuests(prev => [...importedGuests, ...prev]);
+        const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
+        toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
+        setCsvPreview(null);
+        setCsvSkipped([]);
+        return;
+      }
+
       const guestsWithTokens = await Promise.all(
         csvPreview.map(async g => ({ ...g, invite_token: await generateSecureToken() }))
       );
