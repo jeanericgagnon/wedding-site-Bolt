@@ -31,11 +31,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
-  const { user, signOut } = useAuth();
+  const { user, signOut, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
+
+    if (isDemoMode) {
+      setSiteSlug('alex-jordan-demo');
+      return;
+    }
+
     supabase
       .from('wedding_sites')
       .select('site_slug')
@@ -44,7 +50,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       .then(({ data }) => {
         if (data?.site_slug) setSiteSlug(data.site_slug);
       });
-  }, [user]);
+  }, [user, isDemoMode]);
 
   const handleLogout = async () => {
     await signOut();
