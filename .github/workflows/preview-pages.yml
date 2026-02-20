@@ -34,8 +34,9 @@ jobs:
       - name: Build (Pages base path)
         run: npm run build -- --base=/wedding-site-Bolt/
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Demo preview: use placeholder Supabase values; demo flow uses local auth/fallbacks.
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: demo-preview-key
           VITE_DEMO_MODE: "true"
 
       - name: SPA fallback
