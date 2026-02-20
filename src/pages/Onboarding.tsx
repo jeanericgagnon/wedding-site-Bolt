@@ -25,6 +25,16 @@ export const Onboarding: React.FC = () => {
     theme: 'garden',
   });
 
+  const setupChecklist = [
+    { id: 'names', label: 'Add couple names', done: Boolean(formData.partnerNames.trim()) },
+    { id: 'date', label: 'Set wedding date', done: Boolean(formData.weddingDate) },
+    { id: 'venue', label: 'Add venue/address', done: Boolean(formData.venueName.trim() || formData.venueLocation.trim()) },
+    { id: 'registry', label: 'Add registry link', done: Boolean(formData.registryLink.trim()) },
+    { id: 'publish', label: 'Publish site', done: false },
+  ] as const;
+
+  const completedSetupCount = setupChecklist.filter(item => item.done).length;
+
   const checkExistingSite = useCallback(async () => {
     if (!user) return;
 
@@ -121,6 +131,24 @@ export const Onboarding: React.FC = () => {
     }
   };
 
+  const renderSetupChecklist = () => (
+    <Card variant="bordered" padding="lg" className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-semibold text-text-primary">Setup checklist</h3>
+        <span className="text-sm font-medium text-text-secondary">{completedSetupCount}/{setupChecklist.length} complete</span>
+      </div>
+      <div className="space-y-2">
+        {setupChecklist.map((item) => (
+          <label key={item.id} className="flex items-center gap-3 text-sm text-text-primary">
+            <input type="checkbox" checked={item.done} readOnly className="h-4 w-4 rounded border-border" />
+            <span className={item.done ? 'line-through text-text-secondary' : ''}>{item.label}</span>
+          </label>
+        ))}
+      </div>
+      <p className="text-xs text-text-secondary mt-3">Publish becomes available after you finish setup and enter the dashboard/builder.</p>
+    </Card>
+  );
+
   const renderChoice = () => (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-12">
@@ -131,6 +159,8 @@ export const Onboarding: React.FC = () => {
           Choose how you'd like to get started
         </p>
       </div>
+
+      {renderSetupChecklist()}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card variant="bordered" padding="lg" className="hover:border-primary transition-colors cursor-pointer">
@@ -210,6 +240,8 @@ export const Onboarding: React.FC = () => {
       <h1 className="text-3xl font-bold text-text-primary mb-2">The basics</h1>
       <p className="text-text-secondary mb-8">Tell us about your big day</p>
 
+      {renderSetupChecklist()}
+
       <Card variant="default" padding="lg">
         <div className="space-y-6">
           <Input
@@ -274,6 +306,8 @@ export const Onboarding: React.FC = () => {
 
       <h1 className="text-3xl font-bold text-text-primary mb-2">Your story and schedule</h1>
       <p className="text-text-secondary mb-8">Share what makes you two special</p>
+
+      {renderSetupChecklist()}
 
       <Card variant="default" padding="lg">
         <div className="space-y-6">
@@ -344,6 +378,8 @@ export const Onboarding: React.FC = () => {
 
       <h1 className="text-3xl font-bold text-text-primary mb-2">Final touches</h1>
       <p className="text-text-secondary mb-8">Pick a theme and add optional details</p>
+
+      {renderSetupChecklist()}
 
       <Card variant="default" padding="lg">
         <div className="space-y-6">
