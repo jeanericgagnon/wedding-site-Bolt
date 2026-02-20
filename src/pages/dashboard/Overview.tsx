@@ -424,7 +424,7 @@ export const DashboardOverview: React.FC = () => {
                       {stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}
                     </span>
                   </div>
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     {stats?.siteSlug && (
                       <Button
                         variant="accent"
@@ -504,7 +504,7 @@ export const DashboardOverview: React.FC = () => {
               <CardContent>
                 <div className="space-y-3">
                   {setupChecklist.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-3 py-2 border-b border-border-subtle last:border-0">
+                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2 border-b border-border-subtle last:border-0">
                       <label className="flex items-center gap-3 text-sm text-text-primary">
                         <input type="checkbox" checked={item.done} readOnly className="h-4 w-4 rounded border-border" />
                         <span className={item.done ? 'line-through text-text-secondary' : ''}>{item.label}</span>

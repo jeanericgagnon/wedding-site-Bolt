@@ -166,21 +166,21 @@ export const Product: React.FC = () => {
         <div className="container-custom">
           <div className="text-center max-w-4xl mx-auto">
             <Badge variant="primary" className="mb-4">Complete Product Tour</Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary mb-6 leading-tight">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-text-primary mb-6 leading-tight">
               Everything your wedding site needs,<br className="hidden md:block" />
               <span className="text-primary"> built right</span>
             </h1>
             <p className="text-lg md:text-xl text-text-secondary mb-10 max-w-3xl mx-auto leading-relaxed">
               Explore every feature, demo the RSVP flow, browse real templates, and see how DayOf engineers around the common failure modes of wedding sites.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/signup">
-                <Button variant="primary" size="lg">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
+              <Link to="/signup" className="w-full sm:w-auto">
+                <Button variant="primary" size="lg" fullWidth>
                   Get started — $49 flat
                 </Button>
               </Link>
-              <a href="#templates">
-                <Button variant="outline" size="lg">
+              <a href="#templates" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" fullWidth>
                   Browse templates
                 </Button>
               </a>
