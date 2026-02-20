@@ -144,24 +144,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="flex-1" />
 
-      <div className="w-full lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div className="flex items-center gap-2">
-          <label htmlFor="mobile-page-nav" className="text-xs text-gray-500 whitespace-nowrap">Page</label>
-          <select
-            id="mobile-page-nav"
-            value={state.activePageId ?? ''}
-            onChange={(e) => {
-              dispatch(builderActions.setActivePage(e.target.value));
-              dispatch(builderActions.selectSection(null));
-            }}
-            className="w-full px-2.5 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400"
-          >
-            {projectPages.map((page) => (
-              <option key={page.id} value={page.id}>{page.title}</option>
-            ))}
-          </select>
-        </div>
-
+      <div className="w-full lg:hidden">
         <div className="flex items-center gap-2">
           <label htmlFor="mobile-section-nav" className="text-xs text-gray-500 whitespace-nowrap">Section</label>
           <select
