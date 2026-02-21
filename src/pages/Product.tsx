@@ -84,8 +84,6 @@ export const Product: React.FC = () => {
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
 
   const templates = getAllTemplatePacks();
-  const qaScreenshotUrl = `${import.meta.env.BASE_URL}product-screenshots/qa-preview-full.jpg`;
-  const productionScreenshotUrl = `${import.meta.env.BASE_URL}product-screenshots/production-full.jpg`;
 
   const showToast = (message: string) => {
     const t: ToastMsg = { id: Date.now(), message };
@@ -188,27 +186,6 @@ export const Product: React.FC = () => {
               </a>
             </div>
             <p className="mt-4 text-sm text-text-tertiary">2-year access · No subscription · Private by default</p>
-          </div>
-        </div>
-      </section>
-
-      {/* LIVE PAGE SNAPSHOTS */}
-      <section className="section-shell bg-background">
-        <div className="container-custom">
-          <div className="text-center mb-10">
-            <h2 className="section-title mb-3 text-text-primary">Current page snapshots</h2>
-            <p className="section-subtitle max-w-2xl mx-auto">Quick visual reference of the current QA preview and production product pages.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <article className="card-elevated p-4">
-              <p className="text-sm font-semibold text-text-primary mb-3">QA Preview</p>
-              <img src={qaScreenshotUrl} alt="QA preview product page full screenshot" loading="lazy" className="w-full rounded-xl border border-border-subtle" />
-            </article>
-            <article className="card-elevated p-4">
-              <p className="text-sm font-semibold text-text-primary mb-3">Production</p>
-              <img src={productionScreenshotUrl} alt="Production product page full screenshot" loading="lazy" className="w-full rounded-xl border border-border-subtle" />
-            </article>
           </div>
         </div>
       </section>
