@@ -252,13 +252,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* FEATURE TABS */}
-      <section id="features" className="py-16 md:py-20 bg-background">
+      <section id="features" className="section-shell bg-background">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="section-title mb-4 text-text-primary">
               Every feature built for <span className="text-accent">trust and correctness</span>
             </h2>
-            <p className="text-text-secondary text-lg max-w-2xl mx-auto">No fluff. Every module is designed around the real logistics of coordinating 50–300 guests.</p>
+            <p className="section-subtitle max-w-2xl mx-auto">No fluff. Every module is designed around the real logistics of coordinating 50–300 guests.</p>
           </div>
 
           <div className="mb-8 flex flex-wrap gap-2 justify-center">
@@ -523,13 +523,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* FULL FEATURE LIST */}
-      <section id="full-features" className="py-16 md:py-20 bg-surface-subtle">
+      <section id="full-features" className="section-shell bg-surface-subtle">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="section-title mb-4 text-text-primary">
               Full feature breakdown
             </h2>
-            <p className="text-lg text-text-secondary max-w-3xl mx-auto">
+            <p className="section-subtitle max-w-3xl mx-auto">
               A full-stack wedding platform built around RSVP correctness, privacy-first defaults, and calm logistics.
             </p>
             <div className="flex items-center justify-center gap-6 mt-5">
@@ -707,13 +707,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* RSVP DEMO */}
-      <section id="rsvp-demo" className="py-16 md:py-20 bg-background">
+      <section id="rsvp-demo" className="section-shell bg-background">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="section-title mb-4 text-text-primary">
               See how <span className="text-primary">RSVP actually works</span>
             </h2>
-            <p className="text-lg text-text-secondary">
+            <p className="section-subtitle">
               Multi-step, household-aware, with clear validation at each stage.
             </p>
           </div>
@@ -828,13 +828,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* TEMPLATE GALLERY — real data */}
-      <section id="templates" className="py-16 md:py-20 bg-surface-subtle">
+      <section id="templates" className="section-shell bg-surface-subtle">
         <div className="container-custom">
           <div className="text-center mb-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
+            <h2 className="section-title mb-3 text-text-primary">
               {templates.length} professionally designed templates
             </h2>
-            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+            <p className="section-subtitle max-w-2xl mx-auto">
               Every template ships with a curated color theme, typography pairing, and section layout — all fully customizable in the builder.
             </p>
           </div>
@@ -991,13 +991,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* COLOR PALETTE PREVIEWER — using real theme presets */}
-      <section id="colors" className="py-16 md:py-20 bg-background">
+      <section id="colors" className="section-shell bg-background">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="section-title mb-4 text-text-primary">
               {Object.keys(THEME_PRESETS).length} color themes, live preview
             </h2>
-            <p className="text-lg text-text-secondary mb-5 max-w-2xl mx-auto">
+            <p className="section-subtitle mb-5 max-w-2xl mx-auto">
               Click any palette to apply it to this page instantly. These are the exact same themes used in the builder.
             </p>
             {previewTheme && (
@@ -1043,11 +1043,11 @@ export const Product: React.FC = () => {
       </section>
 
       {/* PRICING CTA */}
-      <section className="py-16 md:py-20 bg-surface-subtle">
+      <section className="section-shell bg-surface-subtle">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">Simple pricing. No surprises.</h2>
-            <p className="text-lg text-text-secondary mb-8">One flat fee, 2 years of access, everything included. Auto-renew is off by default.</p>
+            <h2 className="section-title mb-4 text-text-primary">Simple pricing. No surprises.</h2>
+            <p className="section-subtitle mb-8">One flat fee, 2 years of access, everything included. Auto-renew is off by default.</p>
             <div className="bg-surface border-2 border-primary/20 rounded-2xl p-8 md:p-10 shadow-sm">
               <div className="flex flex-col items-center gap-2 mb-6">
                 <span className="text-5xl font-bold text-text-primary">$49</span>
