@@ -148,10 +148,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Travel & Hotels',
     icon: 'Plane',
     defaultVariant: 'list',
-    supportedVariants: ['list', 'hotelBlock', 'tiers', 'mapPins', 'splitAirHotel', 'compact'],
+    supportedVariants: ['list', 'hotelBlock', 'localGuide', 'tiers', 'mapPins', 'splitAirHotel', 'compact'],
     variantMeta: [
       { id: 'list', label: 'List', description: 'Travel tips + compact hotel list' },
       { id: 'hotelBlock', label: 'Hotel Block', description: 'Hotel-first layout with booking codes, amenities, and shuttle info' },
+      { id: 'localGuide', label: 'Local Guide', description: 'Travel logistics plus local tips and key locations for guests' },
       { id: 'tiers', label: 'Tiered Options', description: 'Hotels grouped by Closest, Best Value, and Budget tiers' },
       { id: 'mapPins', label: 'Map & Pins', description: 'Map with hotel and venue pins plus a list below' },
       { id: 'splitAirHotel', label: 'Air & Hotel Split', description: 'Airport info on the left, hotel recommendations on the right' },

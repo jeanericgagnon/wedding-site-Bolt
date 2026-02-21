@@ -6,8 +6,8 @@ import { SectionInstance } from '../types/layoutConfig';
 import { HeroSection, HeroMinimal, HeroFullbleed, HeroCountdown } from './components/HeroSection';
 import { StorySection, StoryCentered, StorySplit, StoryTimeline } from './components/StorySection';
 import { VenueSection, VenueCard } from './components/VenueSection';
-import { ScheduleSection, ScheduleTimeline } from './components/ScheduleSection';
-import { TravelSection, TravelCards } from './components/TravelSection';
+import { ScheduleSection, ScheduleTimeline, ScheduleDayTabs } from './components/ScheduleSection';
+import { TravelSection, TravelCards, TravelLocalGuide } from './components/TravelSection';
 import { RegistrySection, RegistryGrid } from './components/RegistrySection';
 import { RsvpSection, RsvpInline } from './components/RsvpSection';
 import { FaqSection, FaqAccordion } from './components/FaqSection';
@@ -72,6 +72,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     variants: {
       default: ScheduleSection,
       timeline: ScheduleTimeline,
+      dayTabs: ScheduleDayTabs,
     },
     supportedBindings: ['scheduleItemIds'],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -81,6 +82,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     variants: {
       default: TravelSection,
       cards: TravelCards,
+      localGuide: TravelLocalGuide,
     },
     supportedBindings: [],
     supportedSettings: ['showTitle', 'title', 'subtitle'],

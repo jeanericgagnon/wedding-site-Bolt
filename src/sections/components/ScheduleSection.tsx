@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Clock, MapPin } from 'lucide-react';
@@ -129,6 +129,90 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
               );
             })}
           </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
+  const { schedule, venues } = data;
+  const { settings, bindings } = instance;
+  const itemsToShow = bindings.scheduleItemIds && bindings.scheduleItemIds.length > 0
+    ? schedule.filter(s => bindings.scheduleItemIds!.includes(s.id))
+    : schedule;
+
+  const dayGroups = useMemo(() => {
+    const groups = new Map<string, typeof itemsToShow>();
+    itemsToShow.forEach((item) => {
+      const key = item.startTimeISO?.includes('T') ? item.startTimeISO.slice(0, 10) : 'Wedding Day';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(item);
+    });
+    return Array.from(groups.entries()).map(([key, items]) => ({ key, items }));
+  }, [itemsToShow]);
+
+  const [activeDay, setActiveDay] = useState(dayGroups[0]?.key ?? '');
+  const activeGroup = dayGroups.find((g) => g.key === activeDay) ?? dayGroups[0];
+
+  if (itemsToShow.length === 0) {
+    return (
+      <section className="py-20 px-4 bg-surface">
+        <div className="max-w-3xl mx-auto text-center">
+          {settings.showTitle && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Schedule'}</h2>}
+          <p className="text-text-secondary">Schedule details coming soon</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-20 px-4 bg-surface">
+      <div className="max-w-4xl mx-auto">
+        {settings.showTitle && (
+          <div className="text-center mb-10">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Weekend plan</p>
+            <h2 className="text-4xl font-light text-text-primary">{settings.title || 'Schedule'}</h2>
+          </div>
+        )}
+
+        {dayGroups.length > 1 && (
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
+            {dayGroups.map((group) => (
+              <button
+                key={group.key}
+                onClick={() => setActiveDay(group.key)}
+                className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                  activeDay === group.key
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-white text-text-secondary border-border hover:border-primary/40'
+                }`}
+              >
+                {group.key === 'Wedding Day' ? group.key : new Date(`${group.key}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {(activeGroup?.items ?? []).map((item) => {
+            const venue = item.venueId ? venues.find(v => v.id === item.venueId) : null;
+            return (
+              <div key={item.id} className="rounded-xl border border-border bg-surface-subtle p-4 md:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <h3 className="font-semibold text-text-primary">{item.label}</h3>
+                  <span className="text-sm font-medium text-primary">{formatTime(item.startTimeISO)}</span>
+                </div>
+                {venue && (
+                  <p className="text-sm text-text-secondary flex items-center gap-1.5 mt-2">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {venue.name}
+                  </p>
+                )}
+                {item.notes && <p className="text-sm text-text-secondary mt-2">{item.notes}</p>}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

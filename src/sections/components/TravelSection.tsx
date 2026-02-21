@@ -176,3 +176,69 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
     </section>
   );
 };
+
+export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
+  const { settings } = instance;
+  const { venues, travel } = data;
+
+  const localTips = (travel?.notes || '')
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+
+  return (
+    <section className="py-20 px-4 bg-surface-subtle">
+      <div className="max-w-5xl mx-auto">
+        {settings.showTitle && (
+          <div className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Plan your trip</p>
+            <h2 className="text-4xl font-light text-text-primary">{settings.title || 'Travel & Local Guide'}</h2>
+            <div className="w-10 h-px bg-primary mx-auto mt-6" />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="rounded-2xl border border-border bg-surface p-6">
+            <h3 className="font-semibold text-text-primary mb-3">Getting here</h3>
+            <div className="space-y-3 text-sm text-text-secondary">
+              <p><span className="font-medium text-text-primary">Flights:</span> {travel?.flightInfo || 'Airport and transport details coming soon.'}</p>
+              <p><span className="font-medium text-text-primary">Parking:</span> {travel?.parkingInfo || 'Parking details coming soon.'}</p>
+              <p><span className="font-medium text-text-primary">Hotels:</span> {travel?.hotelInfo || 'Hotel recommendations coming soon.'}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface p-6">
+            <h3 className="font-semibold text-text-primary mb-3">Local tips</h3>
+            <ul className="space-y-2 text-sm text-text-secondary list-disc pl-5">
+              {(localTips.length > 0
+                ? localTips
+                : [
+                    'Book accommodation early for best rates.',
+                    'Plan extra travel time around ceremony start.',
+                    'Rideshare pickup points will be shared before the event.',
+                    'Check weather and bring layers for evening events.',
+                  ]).map((tip, idx) => (
+                <li key={idx}>{tip}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {venues.length > 0 && (
+          <div className="mt-6 rounded-2xl border border-border bg-surface p-6">
+            <h3 className="font-semibold text-text-primary mb-4">Key locations</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {venues.slice(0, 4).map((venue) => (
+                <div key={venue.id} className="rounded-xl border border-border-subtle bg-surface-subtle p-4">
+                  <p className="font-medium text-text-primary">{venue.name || 'Venue'}</p>
+                  {venue.address && <p className="text-sm text-text-secondary mt-1">{venue.address}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
