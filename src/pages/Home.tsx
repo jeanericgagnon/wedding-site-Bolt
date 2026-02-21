@@ -83,10 +83,10 @@ export const Home: React.FC = () => {
       </section>
 
       {/* WHY I BUILT THIS */}
-      <section id="why" className="py-20 bg-white">
+      <section id="why" className="section-shell bg-white">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-[2rem] font-serif font-bold text-ink mb-12 text-center leading-[1.2] tracking-tight">
+            <h2 className="section-title mb-12 text-center">
               Why I built this
             </h2>
 
@@ -133,17 +133,17 @@ export const Home: React.FC = () => {
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="py-20 bg-paper">
+      <section id="features" className="section-shell bg-paper">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-[2rem] font-serif font-bold text-ink mb-4 leading-[1.2] tracking-tight">
+            <h2 className="section-title mb-4">
               Everything you need—nothing you don't
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 mb-10">
             {/* Guests + Households */}
-            <Link to="/features/guests" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border border-border-subtle hover:border-brand/40 h-full">
+            <Link to="/features/guests" className="card-elevated p-6 hover:border-brand/40 h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Users className="w-6 h-6 text-brand" />
               </div>
@@ -177,7 +177,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* RSVP Engine */}
-            <Link to="/features/rsvp" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border border-border-subtle hover:border-brand/40 h-full">
+            <Link to="/features/rsvp" className="card-elevated p-6 hover:border-brand/40 h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <CheckCircle2 className="w-6 h-6 text-brand" />
               </div>
@@ -193,7 +193,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Messaging */}
-            <Link to="/features/messaging" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border border-border-subtle hover:border-brand/40 h-full">
+            <Link to="/features/messaging" className="card-elevated p-6 hover:border-brand/40 h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
@@ -209,7 +209,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Travel + Itinerary */}
-            <Link to="/features/travel" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border border-border-subtle hover:border-brand/40 h-full">
+            <Link to="/features/travel" className="card-elevated p-6 hover:border-brand/40 h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Hotel className="w-6 h-6 text-brand" />
               </div>
@@ -225,7 +225,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Registry */}
-            <Link to="/features/registry" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border border-border-subtle hover:border-brand/40 h-full">
+            <Link to="/features/registry" className="card-elevated p-6 hover:border-brand/40 h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Heart className="w-6 h-6 text-brand" />
               </div>
@@ -241,7 +241,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Seating + Check-in */}
-            <Link to="/features/seating" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 border border-border-subtle hover:border-brand/40 h-full">
+            <Link to="/features/seating" className="card-elevated p-6 hover:border-brand/40 h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>

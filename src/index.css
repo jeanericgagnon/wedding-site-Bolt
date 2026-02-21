@@ -109,4 +109,20 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .section-shell {
+    @apply py-16 md:py-20;
+  }
+
+  .section-title {
+    @apply text-[2rem] md:text-[2.4rem] font-serif font-bold text-ink leading-[1.15] tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-[1.0625rem] md:text-[1.125rem] text-ink/70 leading-relaxed;
+  }
+
+  .card-elevated {
+    @apply bg-white rounded-2xl border border-border-subtle shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
 }

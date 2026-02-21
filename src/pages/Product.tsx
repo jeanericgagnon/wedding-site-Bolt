@@ -162,7 +162,7 @@ export const Product: React.FC = () => {
       )}
 
       {/* HERO */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-background to-surface">
+      <section className="section-shell md:py-24 bg-gradient-to-b from-background to-surface">
         <div className="container-custom">
           <div className="text-center max-w-4xl mx-auto">
             <Badge variant="primary" className="mb-4">Complete Product Tour</Badge>
@@ -191,10 +191,10 @@ export const Product: React.FC = () => {
       </section>
 
       {/* PAIN → FIX CAROUSEL */}
-      <section id="engineering" className="py-16 md:py-20 bg-surface-subtle">
+      <section id="engineering" className="section-shell bg-surface-subtle">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="section-title mb-4 text-text-primary">
               Wedding sites fail in <span className="text-primary">predictable ways</span>
             </h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">We catalogued 12 common failure modes and built explicit fixes for each one.</p>
