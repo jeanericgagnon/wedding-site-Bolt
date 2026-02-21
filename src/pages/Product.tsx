@@ -840,12 +840,12 @@ export const Product: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10">
-            {templates.map(tmpl => {
+            {templates.map((tmpl, index) => {
               const theme = TEMPLATE_THEMES[tmpl.id] ?? TEMPLATE_THEMES['modern-luxe'];
               return (
-                <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group hover:shadow-lg transition-all hover:-translate-y-0.5">
+                <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group border-border-subtle hover:border-primary/30 hover:shadow-lg transition-all hover:-translate-y-0.5">
                   {/* Rich website mockup preview */}
-                  <div className="aspect-[3/4] relative overflow-hidden" style={{ backgroundColor: theme.bg }}>
+                  <div className="aspect-[3/4] relative overflow-hidden" style={{ background: `linear-gradient(180deg, ${theme.bg} 0%, #ffffff 100%)` }}>
                     {/* Browser chrome */}
                     <div className="flex items-center gap-1 px-2 py-1.5 border-b" style={{ backgroundColor: theme.dark, borderColor: theme.dark }}>
                       <div className="w-1.5 h-1.5 rounded-full opacity-50" style={{ backgroundColor: theme.accent }} />
@@ -943,14 +943,19 @@ export const Product: React.FC = () => {
                       ))}
                     </div>
 
+                    {index < 3 && (
+                      <div className="absolute top-7 left-2">
+                        <Badge variant="secondary" className="text-xs">Top pick</Badge>
+                      </div>
+                    )}
                     {tmpl.isNew && (
                       <div className="absolute top-7 right-2">
                         <Badge variant="primary" className="text-xs">New</Badge>
                       </div>
                     )}
                   </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <CardContent className="p-4 bg-white/95">
+                    <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="text-sm font-semibold text-text-primary">{tmpl.displayName}</h3>
                       <div className="flex gap-1 flex-shrink-0 mt-0.5">
                         {[theme.dark, theme.accent, theme.bg].map((c, i) => (
@@ -958,7 +963,7 @@ export const Product: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                    <p className="text-xs text-text-tertiary mb-2 line-clamp-2 leading-relaxed">{tmpl.description}</p>
+                    <p className="text-xs text-text-tertiary mb-2 line-clamp-3 leading-relaxed min-h-[3.6em]">{tmpl.description}</p>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {tmpl.moodTags.slice(0, 2).map(tag => (
                         <Badge key={tag} variant="secondary" className="text-xs capitalize">{TEMPLATE_MOOD_LABELS[tag] ?? tag}</Badge>
@@ -969,7 +974,7 @@ export const Product: React.FC = () => {
                     </div>
                     <Link to="/signup">
                       <Button variant="primary" size="sm" fullWidth>
-                        Use this template
+                        Preview in builder
                       </Button>
                     </Link>
                   </CardContent>
