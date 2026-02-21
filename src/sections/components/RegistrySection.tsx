@@ -441,3 +441,112 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
     </section>
   );
 };
+
+export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
+  const { registry } = data;
+  const { settings, bindings } = instance;
+  const { weddingSiteId } = useSiteView();
+  const { items, loading, updateItem } = usePublicRegistryItems(weddingSiteId);
+
+  const linksToShow = bindings.linkIds && bindings.linkIds.length > 0
+    ? registry.links.filter(l => bindings.linkIds!.includes(l.id))
+    : registry.links;
+
+  if (loading) {
+    return (
+      <section className="py-20 px-4 bg-surface">
+        <div className="max-w-6xl mx-auto flex items-center justify-center gap-3 text-text-secondary">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Loading registry…
+        </div>
+      </section>
+    );
+  }
+
+  if (items.length > 0) {
+    return (
+      <section className="py-20 px-4 bg-surface">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            {settings.showTitle !== false && (
+              <>
+                <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Gift registry</p>
+                <h2 className="text-4xl font-light text-text-primary">{settings.title || 'Registry'}</h2>
+              </>
+            )}
+            {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto">{registry.notes}</p>}
+          </div>
+
+          <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8 text-center">
+            <h3 className="text-xl font-semibold text-text-primary">Honeymoon & Experiences Fund</h3>
+            <p className="text-sm text-text-secondary mt-2 max-w-2xl mx-auto">
+              Your love and support means everything. If you prefer, you can contribute toward shared memories and future adventures.
+            </p>
+          </div>
+
+          <RegistryItemsDisplay items={items} settings={{ ...settings, showTitle: false }} notes={undefined} updateItem={updateItem} />
+        </div>
+      </section>
+    );
+  }
+
+  if (linksToShow.length === 0) {
+    return (
+      <section className="py-20 px-4 bg-surface">
+        <div className="max-w-4xl mx-auto text-center">
+          {settings.showTitle !== false && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Registry'}</h2>}
+          <p className="text-text-secondary">Registry details coming soon</p>
+        </div>
+      </section>
+    );
+  }
+
+  const featured = linksToShow[0];
+  const remaining = linksToShow.slice(1);
+
+  return (
+    <section className="py-20 px-4 bg-surface">
+      <div className="max-w-5xl mx-auto">
+        {settings.showTitle !== false && (
+          <div className="text-center mb-10">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Gift registry</p>
+            <h2 className="text-4xl font-light text-text-primary">{settings.title || 'Registry'}</h2>
+            {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto">{registry.notes}</p>}
+          </div>
+        )}
+
+        <a
+          href={featured.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-2xl border border-primary/25 bg-primary/5 p-7 md:p-9 mb-6 hover:border-primary/40 transition-colors"
+        >
+          <p className="text-xs uppercase tracking-[0.24em] text-primary font-medium mb-2">Featured fund</p>
+          <h3 className="text-2xl md:text-3xl font-semibold text-text-primary">{featured.label || featured.url}</h3>
+          <p className="text-text-secondary mt-3 max-w-2xl">Contribute to our honeymoon and first-year adventures.</p>
+          <span className="inline-flex items-center gap-2 mt-5 text-primary font-medium">
+            Contribute now
+            <ExternalLink className="w-4 h-4" />
+          </span>
+        </a>
+
+        {remaining.length > 0 && (
+          <div className="grid sm:grid-cols-2 gap-4">
+            {remaining.map(link => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-4 bg-surface-subtle rounded-xl border border-border hover:border-primary/30 transition-colors"
+              >
+                <span className="font-medium text-text-primary">{link.label || link.url}</span>
+                <ExternalLink className="w-4 h-4 text-primary" />
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};

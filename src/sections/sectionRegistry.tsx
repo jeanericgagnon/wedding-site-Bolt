@@ -8,9 +8,9 @@ import { StorySection, StoryCentered, StorySplit, StoryTimeline } from './compon
 import { VenueSection, VenueCard } from './components/VenueSection';
 import { ScheduleSection, ScheduleTimeline, ScheduleDayTabs } from './components/ScheduleSection';
 import { TravelSection, TravelCards, TravelLocalGuide } from './components/TravelSection';
-import { RegistrySection, RegistryGrid } from './components/RegistrySection';
+import { RegistrySection, RegistryGrid, RegistryFundHighlight } from './components/RegistrySection';
 import { RsvpSection, RsvpInline } from './components/RsvpSection';
-import { FaqSection, FaqAccordion } from './components/FaqSection';
+import { FaqSection, FaqAccordion, FaqIconGrid } from './components/FaqSection';
 import { GallerySection, GalleryMasonry } from './components/GallerySection';
 import { CountdownSection, CountdownBanner } from './components/CountdownSection';
 import { WeddingPartySection, WeddingPartyGrid } from './components/WeddingPartySection';
@@ -92,6 +92,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     variants: {
       default: RegistrySection,
       grid: RegistryGrid,
+      fundHighlight: RegistryFundHighlight,
     },
     supportedBindings: ['linkIds'],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
@@ -110,6 +111,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     variants: {
       default: FaqSection,
       accordion: FaqAccordion,
+      iconGrid: FaqIconGrid,
     },
     supportedBindings: ['faqIds'],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
