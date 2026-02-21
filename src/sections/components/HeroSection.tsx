@@ -123,3 +123,62 @@ export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
     </section>
   );
 };
+
+function getCountdownParts(weddingDateISO?: string) {
+  if (!weddingDateISO) return null;
+  const target = new Date(weddingDateISO.includes('T') ? weddingDateISO : `${weddingDateISO}T12:00:00`);
+  const now = new Date();
+  const diff = target.getTime() - now.getTime();
+  if (Number.isNaN(diff)) return null;
+
+  const totalHours = Math.max(0, Math.floor(diff / 3_600_000));
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  return { days, hours };
+}
+
+export const HeroCountdown: React.FC<Props> = ({ data, instance }) => {
+  const { couple, event, media } = data;
+  const { settings } = instance;
+  const displayName = (settings.headline as string) || couple.displayName || `${couple.partner1Name} & ${couple.partner2Name}`;
+  const date = formatDate(event.weddingDateISO);
+  const bgImage = (settings.backgroundImage as string) || media.heroImageUrl || '';
+  const countdown = getCountdownParts(event.weddingDateISO);
+
+  return (
+    <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden bg-neutral-900">
+      {bgImage ? (
+        <div className="absolute inset-0 z-0">
+          <img src={bgImage} alt="Hero" className="w-full h-full object-cover opacity-65" />
+        </div>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-accent/70" />
+      )}
+      <div className="absolute inset-0 bg-black/35" />
+
+      <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
+        {settings.showTitle !== false && (
+          <p className="text-xs uppercase tracking-[0.35em] text-white/70 mb-5 font-medium">
+            {(settings.title as string) || 'Save the date'}
+          </p>
+        )}
+        <h1 className="text-5xl md:text-8xl font-light tracking-tight text-white leading-tight mb-4">{displayName}</h1>
+        <p className="text-base md:text-xl text-white/80 mb-8">{(settings.subtitle as string) || date}</p>
+
+        {countdown && (
+          <div className="inline-flex items-center gap-4 md:gap-8 px-6 py-4 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20">
+            <div>
+              <p className="text-3xl md:text-4xl font-semibold text-white leading-none">{countdown.days}</p>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mt-1">Days</p>
+            </div>
+            <div className="w-px h-10 bg-white/30" />
+            <div>
+              <p className="text-3xl md:text-4xl font-semibold text-white leading-none">{countdown.hours}</p>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mt-1">Hours</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};

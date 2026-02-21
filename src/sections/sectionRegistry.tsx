@@ -3,8 +3,8 @@ import { SectionType } from '../types/layoutConfig';
 import { WeddingDataV1 } from '../types/weddingData';
 import { SectionInstance } from '../types/layoutConfig';
 
-import { HeroSection, HeroMinimal, HeroFullbleed } from './components/HeroSection';
-import { StorySection, StoryCentered, StorySplit } from './components/StorySection';
+import { HeroSection, HeroMinimal, HeroFullbleed, HeroCountdown } from './components/HeroSection';
+import { StorySection, StoryCentered, StorySplit, StoryTimeline } from './components/StorySection';
 import { VenueSection, VenueCard } from './components/VenueSection';
 import { ScheduleSection, ScheduleTimeline } from './components/ScheduleSection';
 import { TravelSection, TravelCards } from './components/TravelSection';
@@ -42,6 +42,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
       default: HeroSection,
       minimal: HeroMinimal,
       fullbleed: HeroFullbleed,
+      countdown: HeroCountdown,
     },
     supportedBindings: [],
     supportedSettings: ['showTitle'],
@@ -52,6 +53,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
       default: StorySection,
       centered: StoryCentered,
       split: StorySplit,
+      timeline: StoryTimeline,
     },
     supportedBindings: [],
     supportedSettings: ['showTitle', 'title', 'subtitle'],
