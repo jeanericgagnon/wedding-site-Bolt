@@ -87,6 +87,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [commandQuery, setCommandQuery] = useState('');
   const [commandIndex, setCommandIndex] = useState(0);
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
+  const [recentCommands, setRecentCommands] = useState<string[]>([]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -142,6 +143,12 @@ export const BuilderV2Lab: React.FC = () => {
     commit(sections.map((s) => (s.id === selected.id ? { ...s, variant } : s)));
   };
 
+  const runCommand = (label: string, action: () => void) => {
+    action();
+    setRecentCommands((prev) => [label, ...prev.filter((x) => x !== label)].slice(0, 6));
+  };
+
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
@@ -150,9 +157,9 @@ export const BuilderV2Lab: React.FC = () => {
 
   const commandItems = useMemo(() => {
     const base = [
-      ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, action: () => addSection(name) })),
-      ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, action: () => setSelectedId(s.id) })),
-      ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, action: () => updateVariant(v) })),
+      ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, action: () => runCommand(`Add section: ${name}`, () => addSection(name)) })),
+      ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, action: () => runCommand(`Select section: ${s.title}`, () => setSelectedId(s.id)) })),
+      ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, action: () => runCommand(`Set variant: ${v}`, () => updateVariant(v)) })),
     ];
     const q = commandQuery.trim().toLowerCase();
     return q ? base.filter((i) => i.label.toLowerCase().includes(q)) : base;
@@ -253,6 +260,15 @@ export const BuilderV2Lab: React.FC = () => {
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Structure</h2>
+            </div>
+            <div className="mb-3 flex items-center gap-2 text-[11px]">
+              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Visible {orderedVisible.length}</span>
+              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Hidden {sections.length - orderedVisible.length}</span>
+            </div>
+            <div className="mb-3 flex flex-wrap gap-2">
+              <button onClick={() => selected && moveSection(selected.id, -1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowUp className="w-3 h-3" /> Move up</button>
+              <button onClick={() => selected && moveSection(selected.id, 1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowDown className="w-3 h-3" /> Move down</button>
+              <button onClick={() => selected && toggleVisibility(selected.id)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">{selected?.enabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />} {selected?.enabled ? 'Hide' : 'Show'}</button>
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
@@ -394,6 +410,16 @@ export const BuilderV2Lab: React.FC = () => {
                 className="w-full border rounded-md px-3 py-2 text-sm"
               />
             </div>
+            {recentCommands.length > 0 && (
+              <div className="px-3 py-2 border-b border-border-subtle">
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">Recent</p>
+                <div className="flex flex-wrap gap-1">
+                  {recentCommands.map((label) => (
+                    <button key={label} onClick={() => setCommandQuery(label)} className="text-[11px] px-2 py-1 rounded-full bg-surface-subtle border border-border-subtle hover:border-primary/30">{label}</button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="max-h-80 overflow-auto p-2">
               {commandItems.slice(0, 18).map((item, idx, arr) => (
                 <div key={item.id}>
