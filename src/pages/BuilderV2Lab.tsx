@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard } from 'lucide-react';
+import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
 import {
   DndContext,
   PointerSensor,
@@ -83,6 +83,8 @@ export const BuilderV2Lab: React.FC = () => {
   const [addQuery, setAddQuery] = useState('');
   const [showStructure, setShowStructure] = useState(true);
   const [showProperties, setShowProperties] = useState(true);
+  const [showCommand, setShowCommand] = useState(false);
+  const [commandQuery, setCommandQuery] = useState('');
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -144,6 +146,16 @@ export const BuilderV2Lab: React.FC = () => {
   const orderedVisible = useMemo(() => sections.filter((s) => s.enabled), [sections]);
   const filteredAddables = useMemo(() => ADDABLE_SECTIONS.filter((name) => name.toLowerCase().includes(addQuery.trim().toLowerCase())), [addQuery]);
 
+  const commandItems = useMemo(() => {
+    const base = [
+      ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, label: `Add section: ${name}`, action: () => addSection(name) })),
+      ...sections.map((s) => ({ id: `select-${s.id}`, label: `Select section: ${s.title}`, action: () => setSelectedId(s.id) })),
+      ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => ({ id: `variant-${v}`, label: `Set variant: ${v}`, action: () => updateVariant(v) })),
+    ];
+    const q = commandQuery.trim().toLowerCase();
+    return q ? base.filter((i) => i.label.toLowerCase().includes(q)) : base;
+  }, [commandQuery, sections, selected.id]);
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const isMeta = e.metaKey || e.ctrlKey;
@@ -154,6 +166,10 @@ export const BuilderV2Lab: React.FC = () => {
       if ((isMeta && e.key.toLowerCase() === 'z' && e.shiftKey) || (isMeta && e.key.toLowerCase() === 'y')) {
         e.preventDefault();
         if (canRedo) setHistoryIndex((i) => i + 1);
+      }
+      if (isMeta && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommand((v) => !v);
       }
       if (e.key === 'ArrowDown' && isMeta) {
         e.preventDefault();
@@ -191,6 +207,7 @@ export const BuilderV2Lab: React.FC = () => {
         <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
           <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+↑/↓ select section</p>
           <div className="flex items-center gap-2">
+            <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Command</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
             <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Properties</button>
           </div>
@@ -287,6 +304,35 @@ export const BuilderV2Lab: React.FC = () => {
           </aside>)}
         </div>
       </div>
+
+      {showCommand && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-start justify-center pt-24" onClick={() => setShowCommand(false)}>
+          <div className="w-full max-w-xl bg-white rounded-xl border border-border shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="p-3 border-b border-border-subtle">
+              <input
+                autoFocus
+                value={commandQuery}
+                onChange={(e) => setCommandQuery(e.target.value)}
+                placeholder="Type a command..."
+                className="w-full border rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="max-h-80 overflow-auto p-2">
+              {commandItems.slice(0, 18).map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => { item.action(); setShowCommand(false); setCommandQuery(''); }}
+                  className="w-full text-left px-3 py-2 rounded-md hover:bg-surface-subtle text-sm"
+                >
+                  {item.label}
+                </button>
+              ))}
+              {commandItems.length === 0 && <p className="text-sm text-text-tertiary px-3 py-2">No matching commands</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
