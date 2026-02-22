@@ -519,10 +519,10 @@ export const BuilderV2Lab: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
-          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+A select all · ⇧⌘/Ctrl+I invert · ⌘/Ctrl+P focus · Esc clear</p>
+          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Keyboard controls are available in Shortcuts.</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Command</button>
-            <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">Help ?</button>
+            <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
             <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Properties</button>
             <button onClick={() => setShowMinimap((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showMinimap ? 'Hide' : 'Show'} Mini-map</button>
