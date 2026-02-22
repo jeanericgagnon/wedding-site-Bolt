@@ -306,6 +306,10 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
+                  <div className="rounded-xl border border-border bg-surface-subtle p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-text-tertiary mb-2">How household logic works</p>
+                    <p className="text-sm text-text-secondary leading-relaxed">One invite can represent a household, but each person keeps their own RSVP status, meal choice, and event permissions. You get fewer invite mistakes without losing per-guest accuracy.</p>
+                  </div>
                   <Link to="/features/guests"><Button variant="primary">Full guest management docs <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
                 </>
               )}

@@ -232,6 +232,7 @@ export const DashboardOverview: React.FC = () => {
     : [];
 
   const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
+  const nextSetupItem = setupChecklist.find((item) => !item.done) ?? null;
 
   return (
     <DashboardLayout currentPage="overview">
@@ -259,6 +260,11 @@ export const DashboardOverview: React.FC = () => {
             <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
             <p className="text-text-secondary">Your wedding at a glance</p>
           </div>
+          {nextSetupItem && !loading && (
+            <Button variant="outline" size="sm" onClick={nextSetupItem.action}>
+              Next step: {nextSetupItem.label}
+            </Button>
+          )}
         </div>
 
         {error && (
