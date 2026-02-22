@@ -955,11 +955,12 @@ export const BuilderV2Lab: React.FC = () => {
             <h1 className="text-lg md:text-xl font-semibold mt-0.5">Functional shell (Sprint 2 in progress)</h1>
             <p className="text-text-secondary mt-0.5 text-xs max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full ${saveState === 'saved' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
               {saveState === 'saved' ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
               {saveState === 'saved' ? `All changes saved${lastSavedAt ? ` · ${lastSavedAt}` : ''}` : 'Saving...'}
             </span>
+            <Link to="/dashboard/builder" className="text-sm border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">Back to guidance <ArrowRight className="w-4 h-4" /></Link>
             <Link to="/product" className="text-sm text-primary hover:text-primary-hover inline-flex items-center gap-1">Back <ArrowRight className="w-4 h-4" /></Link>
           </div>
         </div>
