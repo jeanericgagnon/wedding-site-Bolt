@@ -48,6 +48,7 @@ export const VaultContribute: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [submittedYears, setSubmittedYears] = useState<number[]>([]);
+  const [compressVideo, setCompressVideo] = useState(true);
 
   const [form, setForm] = useState({
     title: '',
@@ -204,6 +205,67 @@ export const VaultContribute: React.FC = () => {
     setStep('form');
   }
 
+  async function compressVideoTo720p(input: File): Promise<File> {
+    const url = URL.createObjectURL(input);
+    const video = document.createElement('video');
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () => reject(new Error('Could not read video metadata'));
+    });
+
+    const maxW = 1280;
+    const maxH = 720;
+    const ratio = Math.min(maxW / video.videoWidth, maxH / video.videoHeight, 1);
+    const outW = Math.max(2, Math.round(video.videoWidth * ratio));
+    const outH = Math.max(2, Math.round(video.videoHeight * ratio));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = outW;
+    canvas.height = outH;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas not available');
+
+    const stream = canvas.captureStream(30);
+    const mimeCandidates = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 1_500_000 });
+
+    const chunks: BlobPart[] = [];
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+
+    let raf = 0;
+    const draw = () => {
+      if (!video.paused && !video.ended) {
+        ctx.drawImage(video, 0, 0, outW, outH);
+        raf = requestAnimationFrame(draw);
+      }
+    };
+
+    const finished = new Promise<File>((resolve, reject) => {
+      recorder.onerror = () => reject(new Error('Video compression failed'));
+      recorder.onstop = () => {
+        cancelAnimationFrame(raf);
+        URL.revokeObjectURL(url);
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+        resolve(new File([blob], `${input.name.replace(/\.[^.]+$/, '')}-720p.webm`, { type: blob.type }));
+      };
+    });
+
+    recorder.start(500);
+    await video.play();
+    draw();
+    await new Promise<void>((resolve) => {
+      video.onended = () => resolve();
+    });
+    recorder.stop();
+
+    return finished;
+  }
+
   function validate(): boolean {
     const newErrors: typeof errors = {};
     if (!form.content.trim()) newErrors.content = 'Please write a message.';
@@ -225,7 +287,19 @@ export const VaultContribute: React.FC = () => {
       setUploadProgress(3);
 
       for (let i = 0; i < selectedFiles.length; i += 1) {
-        const file = selectedFiles[i];
+        let file = selectedFiles[i];
+
+        if (form.media_type === 'video' && compressVideo) {
+          try {
+            file = await compressVideoTo720p(file);
+          } catch (err) {
+            setUploadProgress(null);
+            setSubmitting(false);
+            setSubmitError(err instanceof Error ? err.message : 'Video compression failed');
+            return;
+          }
+        }
+
         const ext = file.name.split('.').pop() || 'bin';
         const safeType = form.media_type === 'voice' ? 'audio' : form.media_type;
         const path = `public/${site.id}/${vaultConfig.id}/${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
@@ -569,8 +643,13 @@ export const VaultContribute: React.FC = () => {
                               setSelectedFiles([]);
                               return;
                             }
-                            if (file.size > maxMb * 1024 * 1024) {
-                              setSubmitError(`File too large. Max ${maxMb}MB for ${mediaType}.`);
+                            const effectiveMaxMb = mediaType === 'video' && compressVideo ? 200 : maxMb;
+                            if (file.size > effectiveMaxMb * 1024 * 1024) {
+                              setSubmitError(
+                                mediaType === 'video' && compressVideo
+                                  ? 'Source video too large. Max 200MB before compression.'
+                                  : `File too large. Max ${maxMb}MB for ${mediaType}.`
+                              );
                               setSelectedFiles([]);
                               return;
                             }
@@ -582,7 +661,13 @@ export const VaultContribute: React.FC = () => {
                         className="w-full text-sm"
                       />
                       {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
-                      <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each' : form.media_type === 'video' ? 'Up to 3 videos, 35MB each' : 'Single voice file, 12MB max'}</p>
+                      {form.media_type === 'video' && (
+                        <label className="mt-1 inline-flex items-center gap-2 text-xs text-stone-600">
+                          <input type="checkbox" checked={compressVideo} onChange={e => setCompressVideo(e.target.checked)} />
+                          Compress to 720p before upload (recommended)
+                        </label>
+                      )}
+                      <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (compressed to 720p)' : 'Up to 3 videos, 35MB each') : 'Single voice file, 12MB max'}</p>
                     </div>
                   )}
                 </div>
