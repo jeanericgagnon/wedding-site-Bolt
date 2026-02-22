@@ -294,6 +294,7 @@ export const Product: React.FC = () => {
                     {[
                       'Import CSV with intelligent column auto-mapping',
                       'Group guests into households — merge, split, reassign',
+                      'Household logic handles couples/families cleanly (one RSVP link, per-person meal + attendance)',
                       'Manage plus-ones per guest with explicit named/unnamed rules',
                       'Track dietary restrictions and meal preferences',
                       'Tag guests by event: ceremony-only, reception, or all events',
@@ -846,6 +847,13 @@ export const Product: React.FC = () => {
                 <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group border-border-subtle hover:border-primary/30 hover:shadow-lg transition-all hover:-translate-y-0.5">
                   {/* Rich website mockup preview */}
                   <div className="aspect-[3/4] relative overflow-hidden" style={{ background: `linear-gradient(180deg, ${theme.bg} 0%, #ffffff 100%)` }}>
+                    <img
+                      src={tmpl.previewThumbnailPath}
+                      alt={`${tmpl.displayName} preview`}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover opacity-20 scale-105 group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-white/10 to-white/25" />
                     {/* Browser chrome */}
                     <div className="flex items-center gap-1 px-2 py-1.5 border-b" style={{ backgroundColor: theme.dark, borderColor: theme.dark }}>
                       <div className="w-1.5 h-1.5 rounded-full opacity-50" style={{ backgroundColor: theme.accent }} />

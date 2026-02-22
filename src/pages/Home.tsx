@@ -31,7 +31,9 @@ export const Home: React.FC = () => {
     setDemoLoading(true);
     try {
       await signIn();
-      navigate('/dashboard');
+      // Ensure auth context state is committed before protected-route evaluation.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      navigate('/dashboard/overview', { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
       toast(message, 'error');
