@@ -1188,14 +1188,17 @@ export const BuilderV2Lab: React.FC = () => {
                         const d = normalizeBlockData(block);
                         return (
                         <div key={block.id} className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · {BLOCK_LABELS[block.type]}</p>
-                            <div className="flex items-center gap-1.5">
-                              <button onClick={() => moveBlock(selected.id, block.id, -1)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↑</button>
-                              <button onClick={() => moveBlock(selected.id, block.id, 1)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↓</button>
-                              <button onClick={() => duplicateBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">⧉</button>
-                              <button onClick={() => toggleBlockCollapsed(block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">{collapsedBlocks[block.id] ? '▸' : '▾'}</button>
-                              <button onClick={() => removeBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">✕</button>
+                          <div className="sticky top-0 z-[1] -mx-3 px-3 py-1.5 mb-1 bg-white/95 backdrop-blur flex items-center justify-between gap-2 border-b border-border-subtle">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-[10px] text-text-tertiary cursor-grab select-none" title="Reorder block">⋮⋮</span>
+                              <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium truncate">Block · {BLOCK_LABELS[block.type]}</p>
+                            </div>
+                            <div className="flex items-center gap-1 p-0.5 rounded-md border border-border-subtle bg-surface-subtle">
+                              <button title="Move block up" onClick={() => moveBlock(selected.id, block.id, -1)} className="text-[10px] border rounded px-1.5 py-0.5 bg-white hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↑</button>
+                              <button title="Move block down" onClick={() => moveBlock(selected.id, block.id, 1)} className="text-[10px] border rounded px-1.5 py-0.5 bg-white hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↓</button>
+                              <button title="Duplicate block" onClick={() => duplicateBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 bg-white hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">⧉</button>
+                              <button title={collapsedBlocks[block.id] ? 'Expand block' : 'Collapse block'} onClick={() => toggleBlockCollapsed(block.id)} className="text-[10px] border rounded px-1.5 py-0.5 bg-white hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">{collapsedBlocks[block.id] ? '▸' : '▾'}</button>
+                              <button title="Remove block" onClick={() => removeBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 bg-white hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">✕</button>
                             </div>
                           </div>
 
