@@ -71,6 +71,23 @@ const BLOCK_DEFAULTS: Record<BlockType, string> = {
   divider: '———',
 };
 
+const makeDefaultBlockContent = (type: BlockType): AddedBlockContent => {
+  switch (type) {
+    case 'qna':
+      return { question: 'Your question?', answer: 'Your answer.' };
+    case 'photo':
+      return { imageUrl: '', caption: 'Photo caption' };
+    default:
+      return { text: BLOCK_DEFAULTS[type] };
+  }
+};
+
+const normalizeBlockData = (block: AddedBlock): AddedBlockContent => {
+  if (block.data) return block.data;
+  return makeDefaultBlockContent(block.type);
+};
+
+
 const SECTION_BLOCK_CATALOG: Record<string, BlockType[]> = {
   hero: ['title', 'text', 'photo', 'divider'],
   story: ['story', 'timelineItem', 'text', 'photo', 'title', 'divider'],
@@ -87,10 +104,19 @@ const SECTION_BLOCK_CATALOG: Record<string, BlockType[]> = {
   accommodations: ['hotelCard', 'travelTip', 'text', 'divider'],
 };
 
+type AddedBlockContent = {
+  text?: string;
+  question?: string;
+  answer?: string;
+  imageUrl?: string;
+  caption?: string;
+};
+
 type AddedBlock = {
   id: string;
   type: BlockType;
   content: string;
+  data?: AddedBlockContent;
 };
 
 type LabSection = {
@@ -362,11 +388,22 @@ export const BuilderV2Lab: React.FC = () => {
       id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       type: blockType,
       content: BLOCK_DEFAULTS[blockType],
+      data: makeDefaultBlockContent(blockType),
     };
     setSectionBlocks((prev) => ({ ...prev, [selected.id]: [...(prev[selected.id] ?? []), block] }));
     setShowAddBlockPicker(false);
     markSaving();
     notify(`${BLOCK_LABELS[blockType]} added`);
+  };
+
+  const updateBlockData = (sectionId: string, blockId: string, patch: Partial<AddedBlockContent>) => {
+    setSectionBlocks((prev) => ({
+      ...prev,
+      [sectionId]: (prev[sectionId] ?? []).map((b) =>
+        b.id === blockId ? { ...b, data: { ...normalizeBlockData(b), ...patch } } : b
+      ),
+    }));
+    markSaving();
   };
 
   const updateBlockContent = (sectionId: string, blockId: string, content: string) => {
@@ -851,7 +888,23 @@ export const BuilderV2Lab: React.FC = () => {
                           {(sectionBlocks[instance.id] ?? []).map((b) => (
                             <div key={b.id} className="px-6 py-4 border-b border-border-subtle bg-white/95">
                               <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">{BLOCK_LABELS[b.type]}</p>
-                              <p className="text-sm text-text-secondary whitespace-pre-wrap">{b.content}</p>
+                              {b.type === 'qna' ? (
+                                <div className="space-y-1">
+                                  <p className="text-sm text-text-primary"><span className="font-medium">Q:</span> {normalizeBlockData(b).question}</p>
+                                  <p className="text-sm text-text-secondary"><span className="font-medium">A:</span> {normalizeBlockData(b).answer}</p>
+                                </div>
+                              ) : b.type === 'photo' ? (
+                                <div className="space-y-2">
+                                  {normalizeBlockData(b).imageUrl ? (
+                                    <img src={normalizeBlockData(b).imageUrl} alt={normalizeBlockData(b).caption || 'Photo'} className="w-full h-40 object-cover rounded" />
+                                  ) : (
+                                    <div className="w-full h-24 rounded bg-surface-subtle border border-border-subtle flex items-center justify-center text-xs text-text-tertiary">Photo placeholder</div>
+                                  )}
+                                  {normalizeBlockData(b).caption && <p className="text-sm text-text-secondary">{normalizeBlockData(b).caption}</p>}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-text-secondary whitespace-pre-wrap">{normalizeBlockData(b).text ?? b.content}</p>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1005,7 +1058,9 @@ export const BuilderV2Lab: React.FC = () => {
                       )}
 
 
-                      {(sectionBlocks[selected.id] ?? []).map((block, idx) => (
+                      {(sectionBlocks[selected.id] ?? []).map((block, idx) => {
+                        const d = normalizeBlockData(block);
+                        return (
                         <div key={block.id} className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · {BLOCK_LABELS[block.type]}</p>
@@ -1015,13 +1070,58 @@ export const BuilderV2Lab: React.FC = () => {
                               <button onClick={() => removeBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">✕</button>
                             </div>
                           </div>
-                          <textarea
-                            value={block.content}
-                            onChange={(e) => updateBlockContent(selected.id, block.id, e.target.value)}
-                            className="w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-20 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          />
+
+                          {block.type === 'qna' ? (
+                            <>
+                              <label className="block">
+                                <span className="text-[11px] text-text-tertiary">Question</span>
+                                <input
+                                  value={d.question ?? ''}
+                                  onChange={(e) => updateBlockData(selected.id, block.id, { question: e.target.value })}
+                                  className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                              </label>
+                              <label className="block">
+                                <span className="text-[11px] text-text-tertiary">Answer</span>
+                                <textarea
+                                  value={d.answer ?? ''}
+                                  onChange={(e) => updateBlockData(selected.id, block.id, { answer: e.target.value })}
+                                  className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-20 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                              </label>
+                            </>
+                          ) : block.type === 'photo' ? (
+                            <>
+                              <label className="block">
+                                <span className="text-[11px] text-text-tertiary">Image URL</span>
+                                <input
+                                  value={d.imageUrl ?? ''}
+                                  onChange={(e) => updateBlockData(selected.id, block.id, { imageUrl: e.target.value })}
+                                  className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                              </label>
+                              <label className="block">
+                                <span className="text-[11px] text-text-tertiary">Caption</span>
+                                <input
+                                  value={d.caption ?? ''}
+                                  onChange={(e) => updateBlockData(selected.id, block.id, { caption: e.target.value })}
+                                  className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                              </label>
+                            </>
+                          ) : (
+                            <label className="block">
+                              <span className="text-[11px] text-text-tertiary">Content</span>
+                              <textarea
+                                value={d.text ?? block.content}
+                                onChange={(e) => updateBlockData(selected.id, block.id, { text: e.target.value })}
+                                className="w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-20 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              />
+                            </label>
+                          )}
                         </div>
-                      ))}
+                        );
+                      })}
 
                       {selected.type === 'rsvp' && (
                         <div id="rail-section-rsvp" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
