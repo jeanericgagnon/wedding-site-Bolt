@@ -98,6 +98,7 @@ export const BuilderV2Lab: React.FC = () => {
 
   const sections = history[historyIndex];
   const selected = sections.find((s) => s.id === selectedId) ?? sections[0];
+  const selectedIds = useMemo(() => Array.from(new Set([selectedId, ...multiSelectedIds])), [selectedId, multiSelectedIds]);
 
   const selectSection = (id: string, additive = false) => {
     setSelectedId(id);
@@ -118,6 +119,45 @@ export const BuilderV2Lab: React.FC = () => {
     setHistory([...trimmed, next]);
     setHistoryIndex(trimmed.length);
     markSaving();
+  };
+
+  const bulkToggleVisibility = () => {
+    if (selectedIds.length <= 1) return;
+    const selectedSet = new Set(selectedIds);
+    const shouldShow = sections.filter((s) => selectedSet.has(s.id)).some((s) => !s.enabled);
+    commit(sections.map((s) => (selectedSet.has(s.id) ? { ...s, enabled: shouldShow } : s)));
+  };
+
+  const bulkMoveBlock = (dir: -1 | 1) => {
+    if (selectedIds.length <= 1) return;
+    const selectedSet = new Set(selectedIds);
+    const selectedBlock = sections.filter((s) => selectedSet.has(s.id));
+    const remaining = sections.filter((s) => !selectedSet.has(s.id));
+    const currentMin = Math.min(...selectedBlock.map((s) => sections.findIndex((x) => x.id === s.id)));
+    const currentMax = Math.max(...selectedBlock.map((s) => sections.findIndex((x) => x.id === s.id)));
+    const targetIndex = dir === -1
+      ? Math.max(0, currentMin - 1)
+      : Math.min(sections.length - selectedBlock.length, currentMax + 1 - selectedBlock.length + 1);
+    const next = [...remaining];
+    next.splice(Math.min(targetIndex, next.length), 0, ...selectedBlock);
+    commit(next);
+  };
+
+  const bulkDuplicate = () => {
+    if (selectedIds.length <= 1) return;
+    const selectedSet = new Set(selectedIds);
+    const next: typeof sections = [];
+    for (const section of sections) {
+      next.push(section);
+      if (selectedSet.has(section.id)) {
+        next.push({
+          ...section,
+          id: `${section.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          title: `${section.title} Copy`,
+        });
+      }
+    }
+    commit(next);
   };
 
   const moveSection = (id: string, dir: -1 | 1) => {
@@ -287,6 +327,14 @@ export const BuilderV2Lab: React.FC = () => {
               <button onClick={() => selected && toggleVisibility(selected.id)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">{selected?.enabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />} {selected?.enabled ? 'Hide' : 'Show'}</button>
               <button onClick={() => setMultiSelectedIds([])} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Clear multi</button>
             </div>
+            {selectedIds.length > 1 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button onClick={() => bulkMoveBlock(-1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Move block up</button>
+                <button onClick={() => bulkMoveBlock(1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Move block down</button>
+                <button onClick={bulkToggleVisibility} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Toggle visibility (selected)</button>
+                <button onClick={bulkDuplicate} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Duplicate selected</button>
+              </div>
+            )}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
