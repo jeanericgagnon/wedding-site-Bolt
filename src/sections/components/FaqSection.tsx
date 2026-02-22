@@ -22,7 +22,7 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-bold text-text-primary mb-8">{settings.title || 'FAQ'}</h2>
           )}
-          <p className="text-text-secondary">FAQ coming soon</p>
+          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
         </div>
       </section>
     );
@@ -62,7 +62,7 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'FAQ'}</h2>
           )}
-          <p className="text-text-secondary">FAQ coming soon</p>
+          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
         </div>
       </section>
     );
@@ -119,7 +119,7 @@ export const FaqIconGrid: React.FC<Props> = ({ data, instance }) => {
       <section className="py-20 px-4 bg-surface-subtle">
         <div className="max-w-3xl mx-auto text-center">
           {settings.showTitle && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'FAQ'}</h2>}
-          <p className="text-text-secondary">FAQ coming soon</p>
+          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
         </div>
       </section>
     );

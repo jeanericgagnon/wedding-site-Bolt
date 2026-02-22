@@ -23,7 +23,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
         )}
         {!hasContent ? (
           <div className="text-center">
-            <p className="text-text-secondary">Travel and accommodation information coming soon.</p>
+            <p className="text-text-secondary">Travel and accommodation details will appear here once added.</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -150,7 +150,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             </div>
             <h3 className="font-semibold text-text-primary mb-2">Getting Here</h3>
             <p className="text-sm text-text-secondary whitespace-pre-wrap">
-              {travel?.flightInfo || 'Flight and transport information coming soon'}
+              {travel?.flightInfo || 'Flight and transport details will appear here once added'}
             </p>
           </div>
           <div className="text-center p-8 rounded-2xl border border-border bg-surface-subtle">
@@ -159,7 +159,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             </div>
             <h3 className="font-semibold text-text-primary mb-2">Where to Stay</h3>
             <p className="text-sm text-text-secondary whitespace-pre-wrap">
-              {travel?.hotelInfo || 'Hotel recommendations coming soon'}
+              {travel?.hotelInfo || 'Hotel recommendations will appear here once added'}
             </p>
           </div>
           <div className="text-center p-8 rounded-2xl border border-border bg-surface-subtle">
@@ -168,7 +168,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             </div>
             <h3 className="font-semibold text-text-primary mb-2">Parking</h3>
             <p className="text-sm text-text-secondary whitespace-pre-wrap">
-              {travel?.parkingInfo || 'Parking details coming soon'}
+              {travel?.parkingInfo || 'Parking details will appear here once added'}
             </p>
           </div>
         </div>
@@ -202,9 +202,9 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
           <div className="rounded-2xl border border-border bg-surface p-6">
             <h3 className="font-semibold text-text-primary mb-3">Getting here</h3>
             <div className="space-y-3 text-sm text-text-secondary">
-              <p><span className="font-medium text-text-primary">Flights:</span> {travel?.flightInfo || 'Airport and transport details coming soon.'}</p>
-              <p><span className="font-medium text-text-primary">Parking:</span> {travel?.parkingInfo || 'Parking details coming soon.'}</p>
-              <p><span className="font-medium text-text-primary">Hotels:</span> {travel?.hotelInfo || 'Hotel recommendations coming soon.'}</p>
+              <p><span className="font-medium text-text-primary">Flights:</span> {travel?.flightInfo || 'Airport and transport details will appear here once added.'}</p>
+              <p><span className="font-medium text-text-primary">Parking:</span> {travel?.parkingInfo || 'Parking details will appear here once added.'}</p>
+              <p><span className="font-medium text-text-primary">Hotels:</span> {travel?.hotelInfo || 'Hotel recommendations will appear here once added.'}</p>
             </div>
           </div>
 

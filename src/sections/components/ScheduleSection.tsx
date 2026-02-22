@@ -39,7 +39,7 @@ export const ScheduleSection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-bold text-text-primary mb-8">{settings.title || 'Schedule'}</h2>
           )}
-          <p className="text-text-secondary">Schedule details coming soon</p>
+          <p className="text-text-secondary">Schedule details will appear here once events are added</p>
         </div>
       </section>
     );
@@ -86,7 +86,7 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Schedule'}</h2>
           )}
-          <p className="text-text-secondary">Schedule details coming soon</p>
+          <p className="text-text-secondary">Schedule details will appear here once events are added</p>
         </div>
       </section>
     );
@@ -160,7 +160,7 @@ export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
       <section className="py-20 px-4 bg-surface">
         <div className="max-w-3xl mx-auto text-center">
           {settings.showTitle && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Schedule'}</h2>}
-          <p className="text-text-secondary">Schedule details coming soon</p>
+          <p className="text-text-secondary">Schedule details will appear here once events are added</p>
         </div>
       </section>
     );

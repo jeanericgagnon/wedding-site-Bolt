@@ -330,7 +330,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle !== false && (
             <h2 className="text-4xl font-bold text-text-primary mb-8">{settings.title || 'Registry'}</h2>
           )}
-          <p className="text-text-secondary">Registry details coming soon</p>
+          <p className="text-text-secondary">Registry links and gift details will appear here once added</p>
         </div>
       </section>
     );
@@ -400,7 +400,7 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle !== false && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Registry'}</h2>
           )}
-          <p className="text-text-secondary">Registry details coming soon</p>
+          <p className="text-text-secondary">Registry links and gift details will appear here once added</p>
         </div>
       </section>
     );
@@ -495,7 +495,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
       <section className="py-20 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle !== false && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Registry'}</h2>}
-          <p className="text-text-secondary">Registry details coming soon</p>
+          <p className="text-text-secondary">Registry links and gift details will appear here once added</p>
         </div>
       </section>
     );

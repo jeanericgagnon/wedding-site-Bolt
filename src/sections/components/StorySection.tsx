@@ -81,7 +81,7 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
             <img src={photoUrl} alt="Couple" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-secondary">
-              <span className="text-sm">Photo coming soon</span>
+              <span className="text-sm">Photo placeholder</span>
             </div>
           )}
         </div>
