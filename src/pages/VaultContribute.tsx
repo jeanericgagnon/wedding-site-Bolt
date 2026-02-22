@@ -20,6 +20,7 @@ interface VaultConfigInfo {
 
 type Step = 'loading' | 'form' | 'success' | 'error' | 'invalid';
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
+const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 10, video: 100, voice: 25 };
 
 function ordinalLabel(years: number): string {
   if (years === 1) return 'first';
@@ -43,6 +44,7 @@ export const VaultContribute: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [uploadProgress] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -431,10 +433,44 @@ export const VaultContribute: React.FC = () => {
                       <input
                         type="file"
                         accept={form.media_type === 'photo' ? 'image/*' : form.media_type === 'video' ? 'video/*' : 'audio/*'}
-                        onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
+                        onChange={e => {
+                          const file = e.target.files?.[0] ?? null;
+                          if (!file) {
+                            setSelectedFile(null);
+                            return;
+                          }
+
+                          const mediaType = form.media_type;
+                          if (mediaType === 'photo' && !file.type.startsWith('image/')) {
+                            setSubmitError('Please choose an image file for Photo type.');
+                            setSelectedFile(null);
+                            return;
+                          }
+                          if (mediaType === 'video' && !file.type.startsWith('video/')) {
+                            setSubmitError('Please choose a video file for Video type.');
+                            setSelectedFile(null);
+                            return;
+                          }
+                          if (mediaType === 'voice' && !file.type.startsWith('audio/')) {
+                            setSubmitError('Please choose an audio file for Voice type.');
+                            setSelectedFile(null);
+                            return;
+                          }
+
+                          const maxMb = MAX_UPLOAD_MB_BY_TYPE[mediaType as 'photo' | 'video' | 'voice'];
+                          if (file.size > maxMb * 1024 * 1024) {
+                            setSubmitError(`File too large. Max ${maxMb}MB for ${mediaType}.`);
+                            setSelectedFile(null);
+                            return;
+                          }
+
+                          setSubmitError(null);
+                          setSelectedFile(file);
+                        }}
                         className="w-full text-sm"
                       />
                       {selectedFile && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFile.name}</p>}
+                      <p className="text-[11px] text-stone-400 mt-1">Max upload: {form.media_type === 'photo' ? '10MB image' : form.media_type === 'video' ? '100MB video' : '25MB audio'}</p>
                     </div>
                   )}
                 </div>
@@ -458,6 +494,10 @@ export const VaultContribute: React.FC = () => {
                 <div className="p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm">
                   {submitError}
                 </div>
+              )}
+
+              {uploadProgress !== null && (
+                <div className="text-xs text-stone-500">Uploading media… {uploadProgress}%</div>
               )}
 
               <button
