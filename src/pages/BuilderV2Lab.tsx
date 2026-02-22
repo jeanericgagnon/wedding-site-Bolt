@@ -571,12 +571,12 @@ export const BuilderV2Lab: React.FC = () => {
 
   return (
     <div className="h-screen bg-background text-text-primary overflow-hidden">
-      <div className="w-full px-2 md:px-3 py-2 h-full flex flex-col gap-2">
+      <div className="w-full px-2 md:px-3 py-1.5 h-full flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
-            <h1 className="text-3xl md:text-4xl font-bold mt-2">Functional shell (Sprint 2 in progress)</h1>
-            <p className="text-text-secondary mt-2 max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
+            <h1 className="text-xl md:text-2xl font-semibold mt-1">Functional shell (Sprint 2 in progress)</h1>
+            <p className="text-text-secondary mt-1 text-sm max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
           </div>
           <div className="flex items-center gap-3">
             <span className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full ${saveState === 'saved' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
@@ -597,8 +597,8 @@ export const BuilderV2Lab: React.FC = () => {
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[220px_1fr_360px]' : showProperties ? 'lg:grid-cols-[1fr_360px]' : showStructure ? 'lg:grid-cols-[220px_1fr]' : 'lg:grid-cols-1'} gap-2 flex-1 min-h-0`}>
-          {!focusPreview && showStructure && (<aside className="rounded-2xl border border-border bg-surface p-4 h-full min-h-0 overflow-hidden">
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[200px_1fr_380px]' : showProperties ? 'lg:grid-cols-[1fr_380px]' : showStructure ? 'lg:grid-cols-[200px_1fr]' : 'lg:grid-cols-1'} gap-2 flex-1 min-h-0`}>
+          {!focusPreview && showStructure && (<aside className="rounded-lg border border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Pages</h2>
@@ -649,8 +649,8 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </aside>)}
 
-          <main className="relative rounded-2xl border border-border bg-surface p-4 h-full min-h-0 overflow-hidden">
-            <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-border-subtle -mx-4 px-4 py-2.5 mb-3 flex items-center justify-between">
+          <main className="relative rounded-lg border border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
+            <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-border-subtle -mx-3 px-3 py-2 mb-2 flex items-center justify-between">
               <h2 className="text-sm font-semibold">Preview</h2>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -666,8 +666,8 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
-            <div className="h-[calc(100%-58px)] rounded-xl border border-border-subtle bg-surface-subtle p-3 overflow-auto">
-              <div className={`mx-auto bg-white rounded-lg border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
+            <div className="h-[calc(100%-58px)] rounded-md border border-border-subtle bg-surface-subtle p-2 overflow-auto">
+              <div className={`mx-auto bg-white rounded-sm border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
                   if (!sectionState) return null;
@@ -719,7 +719,7 @@ export const BuilderV2Lab: React.FC = () => {
             )}
           </main>
 
-          {!focusPreview && showProperties && (<aside className="rounded-xl border border-border bg-white p-0 overflow-hidden h-full min-h-0">
+          {!focusPreview && showProperties && (<aside className="rounded-lg border border-border bg-white p-0 overflow-hidden h-full min-h-0">
             <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
               <h2 className="text-[1.02rem] font-semibold">Edit website</h2>
               <button onClick={() => setShowProperties(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
@@ -727,11 +727,11 @@ export const BuilderV2Lab: React.FC = () => {
 
             <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-53px)]">
               <div className="space-y-2">
-                <button className="w-full text-left border border-border rounded-md px-3 py-2 hover:border-primary/30">
+                <button className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
                   <p className="text-sm font-medium">Design</p>
                   <p className="text-xs text-text-tertiary">Update style, color and layout</p>
                 </button>
-                <button className="w-full text-left border border-border rounded-md px-3 py-2 hover:border-primary/30">
+                <button className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
                   <p className="text-sm font-medium">Privacy & URL</p>
                   <p className="text-xs text-text-tertiary">Manage visibility and link preferences</p>
                 </button>
@@ -747,7 +747,7 @@ export const BuilderV2Lab: React.FC = () => {
                     <button
                       key={`rail-${page.id}`}
                       onClick={() => selectSection(page.id)}
-                      className={`w-full text-left border rounded-md px-3 py-2 transition-colors ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
+                      className={`w-full text-left border rounded-sm px-2.5 py-1.5 transition-colors ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
@@ -761,7 +761,7 @@ export const BuilderV2Lab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="border border-border rounded-md p-3 bg-surface-subtle space-y-2.5">
+              <div className="border border-border rounded-sm p-2.5 bg-surface-subtle space-y-2">
                 <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Selected page</p>
                 <p className="text-[11px] text-text-tertiary">Core settings</p>
                 <label className="block">
