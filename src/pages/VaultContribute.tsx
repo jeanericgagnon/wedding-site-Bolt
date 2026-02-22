@@ -42,6 +42,7 @@ export const VaultContribute: React.FC = () => {
   const [step, setStep] = useState<Step>('loading');
   const [submitting, setSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -155,6 +156,7 @@ export const VaultContribute: React.FC = () => {
     if (!form.author_name.trim()) newErrors.author_name = 'Please enter your name.';
     if (form.media_type !== 'text' && !form.attachment_url.trim() && !selectedFile) newErrors.attachment_url = 'Please add a media URL or upload a file.';
     setErrors(newErrors);
+    setSubmitError(null);
     return Object.keys(newErrors).length === 0;
   }
 
@@ -179,7 +181,9 @@ export const VaultContribute: React.FC = () => {
 
         if (uploadError) {
           setSubmitting(false);
-          setStep('error');
+          setSubmitError(uploadError.message?.includes('bucket')
+            ? 'Media upload is not configured yet (missing vault-attachments bucket or policy).'
+            : `Upload failed: ${uploadError.message}`);
           return;
         }
 
@@ -207,7 +211,7 @@ export const VaultContribute: React.FC = () => {
 
     setSubmitting(false);
     if (error) {
-      setStep('error');
+      setSubmitError(`Could not save your message: ${error.message}`);
     } else {
       setStep('success');
     }
@@ -445,6 +449,13 @@ export const VaultContribute: React.FC = () => {
                   className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
                 />
               </div>
+
+
+              {submitError && (
+                <div className="p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm">
+                  {submitError}
+                </div>
+              )}
 
               <button
                 type="submit"
