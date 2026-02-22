@@ -127,7 +127,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
   const [lastSavedAt, setLastSavedAt] = useState<string>('');
   const [addQuery, setAddQuery] = useState('');
-  const [showStructure, setShowStructure] = useState(true);
+  const [showStructure, setShowStructure] = useState(false);
   const [showProperties, setShowProperties] = useState(true);
   const [showCommand, setShowCommand] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
@@ -520,67 +520,22 @@ export const BuilderV2Lab: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
-          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Use Shortcuts for keyboard commands.</p>
+          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Canvas-first mode. Open tools only when needed.</p>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Command</button>
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
-            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
-            <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Properties</button>
-            <button onClick={() => setShowMinimap((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showMinimap ? 'Hide' : 'Show'} Mini-map</button>
-            <button onClick={() => setFocusPreview((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{focusPreview ? 'Exit' : 'Enter'} Focus</button>
+            <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
+            <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Edit rail</button>
+            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Pages</button>
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[290px_1fr_320px]' : showStructure || showProperties ? 'lg:grid-cols-[290px_1fr]' : 'lg:grid-cols-1'} gap-4`}>
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[260px_1fr_360px]' : showProperties ? 'lg:grid-cols-[1fr_360px]' : showStructure ? 'lg:grid-cols-[260px_1fr]' : 'lg:grid-cols-1'} gap-4`}>
           {!focusPreview && showStructure && (<aside className="rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold">Structure</h2>
+              <h2 className="text-sm font-semibold">Pages</h2>
             </div>
-            <div className="mb-3 flex items-center gap-2 text-[11px]">
-              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Visible {orderedVisible.length}</span>
-              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Hidden {sections.length - orderedVisible.length}</span>
-              <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">Selected {1 + multiSelectedIds.length}</span>
-            </div>
-            <div className="mb-3 flex flex-wrap gap-2">
-              <button onClick={() => selected && moveSection(selected.id, -1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowUp className="w-3 h-3" /> Move</button>
-              <button onClick={() => selected && toggleVisibility(selected.id)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">{selected?.enabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />} {selected?.enabled ? 'Hide' : 'Show'}</button>
-              <button onClick={() => setShowAdvancedActions((v) => !v)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">{showAdvancedActions ? 'Less' : 'More'} actions</button>
-            </div>
-            {showAdvancedActions && (
-              <div className="mb-3 flex flex-wrap gap-2">
-                <button onClick={() => selected && moveSection(selected.id, 1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowDown className="w-3 h-3" /> Move down</button>
-                <button onClick={clearSelection} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Clear multi</button>
-                <button onClick={selectAllSections} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Select all</button>
-                <button onClick={invertSelection} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Invert</button>
-              </div>
-            )}
-            {selectedIds.length > 1 && (
-              <div className="mb-3 flex flex-wrap gap-2">
-                <button onClick={() => bulkMoveBlock(-1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Move block up</button>
-                <button onClick={() => bulkMoveBlock(1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Move block down</button>
-                <button onClick={bulkToggleVisibility} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Toggle visibility (selected)</button>
-                <button onClick={bulkDuplicate} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Duplicate selected</button>
-                <select
-                  defaultValue=""
-                  onChange={(e) => {
-                    if (!e.target.value) return;
-                    applyVariantToSelection(e.target.value);
-                    e.currentTarget.value = '';
-                  }}
-                  className="text-[11px] border rounded px-2 py-1 bg-white"
-                >
-                  <option value="">Bulk variant…</option>
-                  <option value="default">default</option>
-                  <option value="countdown">countdown</option>
-                  <option value="timeline">timeline</option>
-                  <option value="dayTabs">dayTabs</option>
-                  <option value="localGuide">localGuide</option>
-                  <option value="iconGrid">iconGrid</option>
-                  <option value="fundHighlight">fundHighlight</option>
-                </select>
-              </div>
-            )}
+            <div className="mb-3 text-[11px] text-text-tertiary">Drag to reorder pages. Select to edit in the right rail.</div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
@@ -628,7 +583,7 @@ export const BuilderV2Lab: React.FC = () => {
 
           <main className="relative rounded-2xl border border-border bg-surface p-4 min-h-[560px]">
             <div className="sticky top-0 z-20 bg-surface/95 backdrop-blur border-b border-border-subtle -mx-4 px-4 py-3 mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Canvas</h2>
+              <h2 className="text-sm font-semibold">Preview</h2>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   {(['desktop','tablet','mobile'] as const).map((d) => (
@@ -643,8 +598,8 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
-            <div className="h-[500px] rounded-xl border border-border-subtle bg-surface-subtle p-3 overflow-auto">
-              <div className={`mx-auto bg-white rounded-lg border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1000px]' : previewDevice === 'tablet' ? 'w-[820px] max-w-full' : 'w-[420px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
+            <div className="h-[640px] rounded-xl border border-border-subtle bg-surface-subtle p-3 overflow-auto">
+              <div className={`mx-auto bg-white rounded-lg border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : previewDevice === 'tablet' ? 'w-[880px] max-w-full' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
                   if (!sectionState) return null;
@@ -699,14 +654,14 @@ export const BuilderV2Lab: React.FC = () => {
           {!focusPreview && showProperties && (<aside className="rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2 mb-3">
               <SlidersHorizontal className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold">Properties</h2>
-              <p className="text-[11px] text-text-tertiary">Start with Content, then adjust Layout.</p>
+              <h2 className="text-sm font-semibold">Edit website</h2>
+              <p className="text-[11px] text-text-tertiary">Design, page settings, and content edits.</p>
             </div>
 
             <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-surface-subtle border border-border-subtle mb-3 text-xs">
               {([
-                ['content', 'Content'],
-                ['layout', 'Layout'],
+                ['content', 'Page'],
+                ['layout', 'Design'],
                 ['data', 'Data'],
               ] as const).map(([id, label]) => (
                 <button
