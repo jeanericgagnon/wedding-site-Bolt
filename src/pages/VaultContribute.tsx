@@ -41,6 +41,7 @@ export const VaultContribute: React.FC = () => {
   const [vaultOptions, setVaultOptions] = useState<VaultConfigInfo[]>([]);
   const [step, setStep] = useState<Step>('loading');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -152,7 +153,7 @@ export const VaultContribute: React.FC = () => {
     const newErrors: typeof errors = {};
     if (!form.content.trim()) newErrors.content = 'Please write a message.';
     if (!form.author_name.trim()) newErrors.author_name = 'Please enter your name.';
-    if (form.media_type !== 'text' && !form.attachment_url.trim()) newErrors.attachment_url = 'Please add a media URL.';
+    if (form.media_type !== 'text' && !form.attachment_url.trim() && !selectedFile) newErrors.attachment_url = 'Please add a media URL or upload a file.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -161,6 +162,31 @@ export const VaultContribute: React.FC = () => {
     e.preventDefault();
     if (!validate() || !site || !vaultConfig) return;
     setSubmitting(true);
+
+    let uploadedUrl = form.attachment_url.trim() || null;
+
+    if (selectedFile && form.media_type !== 'text') {
+      const ext = selectedFile.name.split('.').pop() || 'bin';
+      const safeType = form.media_type === 'voice' ? 'audio' : form.media_type;
+      const path = `public/${site.id}/${vaultConfig.id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+
+      if (DEMO_MODE && site.id === 'demo-site-id') {
+        uploadedUrl = `demo-upload://${safeType}/${selectedFile.name}`;
+      } else {
+        const { error: uploadError } = await supabase.storage
+          .from('vault-attachments')
+          .upload(path, selectedFile, { upsert: false, contentType: selectedFile.type || undefined });
+
+        if (uploadError) {
+          setSubmitting(false);
+          setStep('error');
+          return;
+        }
+
+        const { data: publicData } = supabase.storage.from('vault-attachments').getPublicUrl(path);
+        uploadedUrl = publicData.publicUrl;
+      }
+    }
 
     if (DEMO_MODE && site.id === 'demo-site-id') {
       setSubmitting(false);
@@ -175,8 +201,8 @@ export const VaultContribute: React.FC = () => {
       title: form.title.trim() || null,
       content: form.content.trim(),
       author_name: form.author_name.trim(),
-      attachment_url: form.attachment_url.trim() || null,
-      attachment_name: form.attachment_name.trim() || (form.media_type !== 'text' ? `${form.media_type} attachment` : null),
+      attachment_url: uploadedUrl,
+      attachment_name: form.attachment_name.trim() || (selectedFile?.name ?? (form.media_type !== 'text' ? `${form.media_type} attachment` : null)),
     });
 
     setSubmitting(false);
@@ -392,6 +418,18 @@ export const VaultContribute: React.FC = () => {
                     }`}
                   />
                   {errors.attachment_url && <p className="text-red-500 text-xs mt-1">{errors.attachment_url}</p>}
+                  {form.media_type !== 'text' && (
+                    <div className="mt-2">
+                      <label className="block text-xs text-stone-500 mb-1">or upload file</label>
+                      <input
+                        type="file"
+                        accept={form.media_type === 'photo' ? 'image/*' : form.media_type === 'video' ? 'video/*' : 'audio/*'}
+                        onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
+                        className="w-full text-sm"
+                      />
+                      {selectedFile && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFile.name}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
 
