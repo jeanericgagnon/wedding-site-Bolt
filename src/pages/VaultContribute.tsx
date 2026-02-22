@@ -92,7 +92,9 @@ export const VaultContribute: React.FC = () => {
           { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
           { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
         ] as VaultConfigInfo[];
-        const fallback = enabled.length ? enabled : seeded;
+        const byYear = new Map<number, VaultConfigInfo>();
+        [...seeded, ...enabled].forEach(v => byYear.set(v.duration_years, v));
+        const fallback = Array.from(byYear.values()).sort((a, b) => a.duration_years - b.duration_years);
         setVaultOptions(fallback);
         setVaultConfig(fallback[0]);
         setStep('form');
@@ -102,7 +104,7 @@ export const VaultContribute: React.FC = () => {
           { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
           { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
         ] as VaultConfigInfo[];
-        setVaultOptions(fallback);
+        setVaultOptions(fallback.sort((a, b) => a.duration_years - b.duration_years));
         setVaultConfig(fallback[0]);
         setStep('form');
       }
