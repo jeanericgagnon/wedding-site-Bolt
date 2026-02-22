@@ -130,6 +130,12 @@ export const BuilderV2Lab: React.FC = () => {
     coupleDisplayName: `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
     eventDateISO: `${demoWeddingSite.wedding_date}T16:00:00`,
     storyText: 'A modern love story from city coffee dates to sunset vows in Napa.',
+    scheduleTitle: 'Wedding Day',
+    scheduleNote: 'Weekend events',
+    travelFlights: 'Fly into SFO/OAK, then shuttle or rideshare.',
+    travelParking: 'On-site valet + overflow lot',
+    travelHotels: 'Room blocks at River Inn and Garden Suites',
+    travelTips: 'Book early for best rates. Shuttle details shared 2 weeks before.',
   });
   const [addQuery, setAddQuery] = useState('');
   const [showStructure, setShowStructure] = useState(false);
@@ -212,7 +218,19 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
 
-  const updatePreviewField = (key: 'coupleDisplayName' | 'eventDateISO' | 'storyText', value: string) => {
+  const updatePreviewField = (
+    key:
+      | 'coupleDisplayName'
+      | 'eventDateISO'
+      | 'storyText'
+      | 'scheduleTitle'
+      | 'scheduleNote'
+      | 'travelFlights'
+      | 'travelParking'
+      | 'travelHotels'
+      | 'travelTips',
+    value: string
+  ) => {
     setPreviewFields((prev) => ({ ...prev, [key]: value }));
     markSaving();
   };
@@ -380,9 +398,15 @@ export const BuilderV2Lab: React.FC = () => {
     venues: [
       { id: 'venue-main', name: demoWeddingSite.venue_name, address: demoWeddingSite.venue_location },
     ],
-    schedule: demoEvents.map((e) => ({ id: e.id, label: e.event_name, startTimeISO: `${e.event_date}T${e.start_time}:00`, venueId: 'venue-main', notes: e.description })),
+    schedule: demoEvents.map((e, i) => ({
+      id: e.id,
+      label: i === 0 ? previewFields.scheduleTitle : e.event_name,
+      startTimeISO: `${e.event_date}T${e.start_time}:00`,
+      venueId: 'venue-main',
+      notes: i === 0 ? previewFields.scheduleNote : e.description,
+    })),
     rsvp: { enabled: true, deadlineISO: `${demoWeddingSite.wedding_date}T00:00:00` },
-    travel: { notes: 'Book early for best rates. Shuttle details shared 2 weeks before.', parkingInfo: 'On-site valet + overflow lot', hotelInfo: 'Room blocks at River Inn and Garden Suites', flightInfo: 'Fly into SFO/OAK, then shuttle or rideshare.' },
+    travel: { notes: previewFields.travelTips, parkingInfo: previewFields.travelParking, hotelInfo: previewFields.travelHotels, flightInfo: previewFields.travelFlights },
     registry: { links: [{ id: 'reg-1', label: 'Honeymoon Fund', url: 'https://example.com/honeymoon' }], notes: 'Your presence is our favorite gift.' },
     faq: [
       { id: 'faq-1', q: 'What should I wear?', a: 'Cocktail attire encouraged.' },
@@ -739,6 +763,38 @@ export const BuilderV2Lab: React.FC = () => {
                       className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-24"
                     />
                   </label>
+                )}
+                {selected.type === 'schedule' && (
+                  <>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">First event title</span>
+                      <input value={previewFields.scheduleTitle} onChange={(e) => updatePreviewField('scheduleTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">First event note</span>
+                      <input value={previewFields.scheduleNote} onChange={(e) => updatePreviewField('scheduleNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                    </label>
+                  </>
+                )}
+                {selected.type === 'travel' && (
+                  <>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Flights</span>
+                      <input value={previewFields.travelFlights} onChange={(e) => updatePreviewField('travelFlights', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Parking</span>
+                      <input value={previewFields.travelParking} onChange={(e) => updatePreviewField('travelParking', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Hotels</span>
+                      <input value={previewFields.travelHotels} onChange={(e) => updatePreviewField('travelHotels', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Local tips</span>
+                      <textarea value={previewFields.travelTips} onChange={(e) => updatePreviewField('travelTips', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" />
+                    </label>
+                  </>
                 )}
                 <label className="block">
                   <span className="text-xs text-text-tertiary">Layout variant</span>
