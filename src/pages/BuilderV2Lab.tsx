@@ -77,6 +77,20 @@ const makeDefaultBlockContent = (type: BlockType): AddedBlockContent => {
       return { question: 'Your question?', answer: 'Your answer.' };
     case 'photo':
       return { imageUrl: '', caption: 'Photo caption' };
+    case 'event':
+      return { title: 'Ceremony', time: '4:00 PM', location: 'Sunset Gardens', note: 'Guests seated by 3:45 PM.' };
+    case 'travelTip':
+      return { title: 'Travel tip', note: 'Book flights 6-8 weeks in advance.' };
+    case 'hotelCard':
+      return { title: 'River Inn', note: '2-night minimum', url: 'https://example.com/hotel' };
+    case 'registryItem':
+      return { title: 'Stand mixer', note: 'Kitchen wish list item', url: 'https://example.com/registry-item' };
+    case 'fundHighlight':
+      return { title: 'Honeymoon Fund', note: 'Help us create new memories', url: 'https://example.com/honeymoon' };
+    case 'rsvpNote':
+      return { note: 'Please reply by our RSVP date.' };
+    case 'faqItem':
+      return { question: 'Is there parking?', answer: 'Yes, valet is available on-site.' };
     default:
       return { text: BLOCK_DEFAULTS[type] };
   }
@@ -110,6 +124,12 @@ type AddedBlockContent = {
   answer?: string;
   imageUrl?: string;
   caption?: string;
+  title?: string;
+  subtitle?: string;
+  time?: string;
+  location?: string;
+  note?: string;
+  url?: string;
 };
 
 type AddedBlock = {
@@ -902,6 +922,25 @@ export const BuilderV2Lab: React.FC = () => {
                                   )}
                                   {normalizeBlockData(b).caption && <p className="text-sm text-text-secondary">{normalizeBlockData(b).caption}</p>}
                                 </div>
+                              ) : b.type === 'event' ? (
+                                <div className="space-y-1">
+                                  <p className="text-sm text-text-primary font-medium">{normalizeBlockData(b).title}</p>
+                                  <p className="text-sm text-text-secondary">{normalizeBlockData(b).time} · {normalizeBlockData(b).location}</p>
+                                  {normalizeBlockData(b).note && <p className="text-sm text-text-secondary">{normalizeBlockData(b).note}</p>}
+                                </div>
+                              ) : b.type === 'travelTip' || b.type === 'hotelCard' || b.type === 'registryItem' || b.type === 'fundHighlight' ? (
+                                <div className="space-y-1">
+                                  <p className="text-sm text-text-primary font-medium">{normalizeBlockData(b).title}</p>
+                                  {normalizeBlockData(b).note && <p className="text-sm text-text-secondary">{normalizeBlockData(b).note}</p>}
+                                  {normalizeBlockData(b).url && <p className="text-xs text-primary">{normalizeBlockData(b).url}</p>}
+                                </div>
+                              ) : b.type === 'rsvpNote' ? (
+                                <p className="text-sm text-text-secondary whitespace-pre-wrap">{normalizeBlockData(b).note}</p>
+                              ) : b.type === 'faqItem' ? (
+                                <div className="space-y-1">
+                                  <p className="text-sm text-text-primary"><span className="font-medium">Q:</span> {normalizeBlockData(b).question}</p>
+                                  <p className="text-sm text-text-secondary"><span className="font-medium">A:</span> {normalizeBlockData(b).answer}</p>
+                                </div>
                               ) : (
                                 <p className="text-sm text-text-secondary whitespace-pre-wrap">{normalizeBlockData(b).text ?? b.content}</p>
                               )}
@@ -1108,6 +1147,33 @@ export const BuilderV2Lab: React.FC = () => {
                                   className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                 />
                               </label>
+                            </>
+                          ) : block.type === 'event' ? (
+                            <>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">Title</span><input value={d.title ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { title: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">Time</span><input value={d.time ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { time: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">Location</span><input value={d.location ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { location: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">Note</span><textarea value={d.note ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { note: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-16 focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                            </>
+                          ) : block.type === 'travelTip' || block.type === 'hotelCard' || block.type === 'registryItem' || block.type === 'fundHighlight' ? (
+                            <>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">Title</span><input value={d.title ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { title: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">Note</span><textarea value={d.note ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { note: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-16 focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">URL (optional)</span><input value={d.url ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { url: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                            </>
+                          ) : block.type === 'rsvpNote' ? (
+                            <label className="block">
+                              <span className="text-[11px] text-text-tertiary">RSVP note</span>
+                              <textarea
+                                value={d.note ?? ''}
+                                onChange={(e) => updateBlockData(selected.id, block.id, { note: e.target.value })}
+                                className="w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-20 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              />
+                            </label>
+                          ) : block.type === 'faqItem' ? (
+                            <>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">Question</span><input value={d.question ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { question: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                              <label className="block"><span className="text-[11px] text-text-tertiary">Answer</span><textarea value={d.answer ?? ''} onChange={(e) => updateBlockData(selected.id, block.id, { answer: e.target.value })} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-16 focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                             </>
                           ) : (
                             <label className="block">
