@@ -207,6 +207,9 @@ export const VaultContribute: React.FC = () => {
       author_name: form.author_name.trim(),
       attachment_url: uploadedUrl,
       attachment_name: form.attachment_name.trim() || (selectedFile?.name ?? (form.media_type !== 'text' ? `${form.media_type} attachment` : null)),
+      media_type: form.media_type,
+      mime_type: selectedFile?.type || null,
+      size_bytes: selectedFile?.size || null,
     });
 
     setSubmitting(false);

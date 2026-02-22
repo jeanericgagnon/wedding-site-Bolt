@@ -29,6 +29,7 @@ interface VaultEntry {
   author_name: string;
   attachment_url: string | null;
   attachment_name: string | null;
+  media_type?: 'text' | 'photo' | 'video' | 'voice' | null;
   created_at: string;
 }
 
@@ -39,7 +40,10 @@ interface Toast {
 }
 
 
-function inferAttachmentKind(url: string | null, name: string | null): 'image' | 'video' | 'audio' | 'file' {
+function inferAttachmentKind(url: string | null, name: string | null, mediaType?: string | null): 'image' | 'video' | 'audio' | 'file' {
+  if (mediaType === 'photo') return 'image';
+  if (mediaType === 'video') return 'video';
+  if (mediaType === 'voice') return 'audio';
   const target = `${url ?? ''} ${name ?? ''}`.toLowerCase();
   if (/\.(png|jpe?g|gif|webp|avif|heic)(\?|$)/.test(target) || /photo|image/.test(target)) return 'image';
   if (/\.(mp4|mov|webm|m4v)(\?|$)/.test(target) || /video/.test(target)) return 'video';
@@ -359,7 +363,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
               </div>
               <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
               {entry.attachment_url && (() => {
-                const kind = inferAttachmentKind(entry.attachment_url, entry.attachment_name);
+                const kind = inferAttachmentKind(entry.attachment_url, entry.attachment_name, entry.media_type);
                 return (
                   <div className="mt-2 space-y-2">
                     {kind === 'image' && (
@@ -736,6 +740,7 @@ export const DashboardVault: React.FC = () => {
         author_name: entry.author_name,
         attachment_url: entry.attachment_url,
         attachment_name: entry.attachment_name,
+        media_type: entry.attachment_url ? 'photo' : 'text',
         created_at: new Date().toISOString(),
       };
       const nextEntries = [...entries, demoEntry];
