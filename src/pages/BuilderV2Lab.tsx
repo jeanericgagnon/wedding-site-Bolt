@@ -138,7 +138,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
   const [showQuickHelp, setShowQuickHelp] = useState(false);
   const [showAdvancedActions, setShowAdvancedActions] = useState(false);
-  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [previewScale, setPreviewScale] = useState(100);
   const [focusPreview, setFocusPreview] = useState(false);
   const [showMinimap, setShowMinimap] = useState(false);
@@ -586,7 +586,7 @@ export const BuilderV2Lab: React.FC = () => {
               <h2 className="text-sm font-semibold">Preview</h2>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
-                  {(['desktop','tablet','mobile'] as const).map((d) => (
+                  {(['desktop','mobile'] as const).map((d) => (
                     <button key={d} onClick={() => setPreviewDevice(d)} className={`text-[11px] px-2 py-1 border rounded ${previewDevice === d ? 'border-primary/50 bg-primary/10 text-primary' : ''}`}>{d}</button>
                   ))}
                 </div>
@@ -599,7 +599,7 @@ export const BuilderV2Lab: React.FC = () => {
               </div>
             </div>
             <div className="h-[640px] rounded-xl border border-border-subtle bg-surface-subtle p-3 overflow-auto">
-              <div className={`mx-auto bg-white rounded-lg border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : previewDevice === 'tablet' ? 'w-[880px] max-w-full' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
+              <div className={`mx-auto bg-white rounded-lg border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
                   if (!sectionState) return null;
