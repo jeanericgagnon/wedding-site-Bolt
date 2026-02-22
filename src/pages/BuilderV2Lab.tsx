@@ -172,7 +172,7 @@ export const BuilderV2Lab: React.FC = () => {
     document.getElementById(`rail-section-${type}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const selectSection = (id: string, additive = false, range = false, scroll = false) => {
+  const selectSection = (id: string, additive = false, range = false, scroll = false, openEditor = false) => {
     const currentIndex = sections.findIndex((s) => s.id === id);
     const lastIndex = sections.findIndex((s) => s.id === lastSelectedId);
 
@@ -182,6 +182,7 @@ export const BuilderV2Lab: React.FC = () => {
       setSelectedId(id);
       setMultiSelectedIds(rangeIds.filter((x) => x !== id));
       setLastSelectedId(id);
+      if (openEditor) setShowProperties(true);
       if (scroll) scrollToPreviewSection(id);
       return;
     }
@@ -190,10 +191,12 @@ export const BuilderV2Lab: React.FC = () => {
     setLastSelectedId(id);
     if (!additive) {
       setMultiSelectedIds([]);
+      if (openEditor) setShowProperties(true);
       if (scroll) scrollToPreviewSection(id);
       return;
     }
     setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    if (openEditor) setShowProperties(true);
     if (scroll) scrollToPreviewSection(id);
   };
 
@@ -703,9 +706,9 @@ export const BuilderV2Lab: React.FC = () => {
                       onMouseEnter={() => setHoveredPreviewId(instance.id)}
                       onMouseLeave={() => setHoveredPreviewId(null)}
                       onClick={(e) => {
-                        if (e.shiftKey) selectSection(instance.id, false, true);
-                        else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true);
-                        else selectSection(instance.id);
+                        if (e.shiftKey) selectSection(instance.id, false, true, false, true);
+                        else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true, false, false, true);
+                        else selectSection(instance.id, false, false, false, true);
                         window.setTimeout(() => scrollRailToSectionType(instance.type), 0);
                       }}
                     >
@@ -756,6 +759,10 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
 
             <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-var(--rail-head-h))]">
+              <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border border-border-subtle rounded-sm px-2.5 py-2">
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Now editing</p>
+                <p className="text-sm font-medium text-text-primary truncate">{selected.title}</p>
+              </div>
               <div className="space-y-2">
                 <button onClick={() => scrollToRailSection('design-section')} className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
                   <p className="text-sm font-medium">Design</p>
