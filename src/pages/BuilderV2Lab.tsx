@@ -377,14 +377,16 @@ export const BuilderV2Lab: React.FC = () => {
 
     if (primedPreviewSectionId === id) {
       selectSection(id, false, false, false, true);
+      setPropertyTab('content');
       setPrimedPreviewSectionId(null);
       window.setTimeout(() => scrollRailToSectionType(type), 0);
       return;
     }
 
     selectSection(id, false, false, false, false);
-    setShowStructure(true);
-    setShowProperties(false);
+    setShowStructure(false);
+    setShowProperties(true);
+    setPropertyTab('layout');
     setShowAddBlockPicker(false);
     setPrimedPreviewSectionId(id);
     notify('Section selected. Click again to open editor.');
@@ -1208,11 +1210,14 @@ export const BuilderV2Lab: React.FC = () => {
                   onClick={() => {
                     setShowAddBlockPicker(false);
                     setFocusPreview(false);
-                    setShowStructure(true);
+                    setShowStructure(false);
+                    setShowProperties(true);
+                    setPropertyTab('layout');
+                    notify('Select a section in preview, then click again to open editor.');
                   }}
                   className="text-[11px] border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 hover:bg-primary/5 transition-all"
                 >
-                  ← Back to section list
+                  ← Back to section guide
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-1 p-1 rounded-sm border border-border-subtle bg-surface-subtle">
