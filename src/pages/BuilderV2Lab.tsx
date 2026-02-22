@@ -268,6 +268,10 @@ export const BuilderV2Lab: React.FC = () => {
     updatePreviewField('eventDateISO', `${localDateTime}:00`);
   };
 
+  const scrollToRailSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
 
   const commit = (next: LabSection[]) => {
     const trimmed = history.slice(0, historyIndex + 1);
@@ -727,11 +731,11 @@ export const BuilderV2Lab: React.FC = () => {
 
             <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-var(--rail-head-h))]">
               <div className="space-y-2">
-                <button className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
+                <button onClick={() => scrollToRailSection('design-section')} className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
                   <p className="text-sm font-medium">Design</p>
                   <p className="text-xs text-text-tertiary">Update style, color and layout</p>
                 </button>
-                <button className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
+                <button onClick={() => scrollToRailSection('privacy-section')} className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
                   <p className="text-sm font-medium">Privacy & URL</p>
                   <p className="text-xs text-text-tertiary">Manage visibility and link preferences</p>
                 </button>
@@ -863,7 +867,7 @@ export const BuilderV2Lab: React.FC = () => {
                     </label>
                   </>
                 )}
-                <label className="block">
+                <label id="design-section" className="block">
                   <span className="text-xs text-text-tertiary">Page layout</span>
                   <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm">
                     {(VARIANTS_BY_TYPE[selected.type] ?? ['default']).map((v) => (
@@ -871,7 +875,7 @@ export const BuilderV2Lab: React.FC = () => {
                     ))}
                   </select>
                 </label>
-                <button onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40">
+                <button id="privacy-section" onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40">
                   {selected.enabled ? 'Hide this page' : 'Show this page'}
                 </button>
               </div>
