@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical } from 'lucide-react';
+import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard } from 'lucide-react';
 import {
   DndContext,
   PointerSensor,
@@ -81,6 +81,8 @@ export const BuilderV2Lab: React.FC = () => {
   const [selectedId, setSelectedId] = useState(INITIAL_SECTIONS[0].id);
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
   const [addQuery, setAddQuery] = useState('');
+  const [showStructure, setShowStructure] = useState(true);
+  const [showProperties, setShowProperties] = useState(true);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -142,6 +144,32 @@ export const BuilderV2Lab: React.FC = () => {
   const orderedVisible = useMemo(() => sections.filter((s) => s.enabled), [sections]);
   const filteredAddables = useMemo(() => ADDABLE_SECTIONS.filter((name) => name.toLowerCase().includes(addQuery.trim().toLowerCase())), [addQuery]);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isMeta = e.metaKey || e.ctrlKey;
+      if (isMeta && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo) setHistoryIndex((i) => i - 1);
+      }
+      if ((isMeta && e.key.toLowerCase() === 'z' && e.shiftKey) || (isMeta && e.key.toLowerCase() === 'y')) {
+        e.preventDefault();
+        if (canRedo) setHistoryIndex((i) => i + 1);
+      }
+      if (e.key === 'ArrowDown' && isMeta) {
+        e.preventDefault();
+        const idx = sections.findIndex((s) => s.id === selected.id);
+        if (idx < sections.length - 1) setSelectedId(sections[idx + 1].id);
+      }
+      if (e.key === 'ArrowUp' && isMeta) {
+        e.preventDefault();
+        const idx = sections.findIndex((s) => s.id === selected.id);
+        if (idx > 0) setSelectedId(sections[idx - 1].id);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [canRedo, canUndo, sections, selected.id]);
+
   return (
     <div className="min-h-screen bg-background text-text-primary">
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 space-y-6">
@@ -160,8 +188,16 @@ export const BuilderV2Lab: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[290px_1fr_320px] gap-4">
-          <aside className="rounded-2xl border border-border bg-surface p-4">
+        <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
+          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+↑/↓ select section</p>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
+            <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Properties</button>
+          </div>
+        </div>
+
+        <div className={`grid grid-cols-1 ${showStructure && showProperties ? 'lg:grid-cols-[290px_1fr_320px]' : showStructure || showProperties ? 'lg:grid-cols-[290px_1fr]' : 'lg:grid-cols-1'} gap-4`}>
+          {showStructure && (<aside className="rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Structure</h2>
@@ -206,7 +242,7 @@ export const BuilderV2Lab: React.FC = () => {
                 )}
               </div>
             </div>
-          </aside>
+          </aside>)}
 
           <main className="rounded-2xl border border-border bg-surface p-4 min-h-[560px]">
             <div className="flex items-center justify-between mb-3">
@@ -226,7 +262,7 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </main>
 
-          <aside className="rounded-2xl border border-border bg-surface p-4">
+          {showStructure && (<aside className="rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2 mb-3">
               <SlidersHorizontal className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Properties</h2>
@@ -248,7 +284,7 @@ export const BuilderV2Lab: React.FC = () => {
                 {selected.enabled ? 'Hide section' : 'Show section'}
               </button>
             </div>
-          </aside>
+          </aside>)}
         </div>
       </div>
     </div>
