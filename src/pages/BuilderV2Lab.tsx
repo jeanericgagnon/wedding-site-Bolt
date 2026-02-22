@@ -740,7 +740,7 @@ export const BuilderV2Lab: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Pages</p>
-                  <button onClick={() => setShowStructure(true)} className="text-xs text-primary hover:text-primary-hover">Open page organizer</button>
+                  <button onClick={() => setShowStructure(true)} className="text-xs text-primary hover:text-primary-hover">Reorder pages</button>
                 </div>
                 <div className="space-y-2 max-h-[340px] overflow-auto pr-1">
                   {orderedVisible.map((page) => (
@@ -763,14 +763,16 @@ export const BuilderV2Lab: React.FC = () => {
 
               <div className="border border-border rounded-md p-3 bg-surface-subtle space-y-2.5">
                 <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Selected page</p>
+                <p className="text-[11px] text-text-tertiary">Core settings</p>
                 <label className="block">
                   <span className="text-xs text-text-tertiary">Title</span>
                   <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                 </label>
+                <p className="text-[11px] text-text-tertiary">Page content</p>
                 {selected.type === 'hero' && (
                   <>
                     <label className="block">
-                      <span className="text-xs text-text-tertiary">Couple display name</span>
+                      <span className="text-xs text-text-tertiary">Couple names</span>
                       <input
                         value={previewFields.coupleDisplayName}
                         onChange={(e) => updatePreviewField('coupleDisplayName', e.target.value)}
@@ -802,11 +804,11 @@ export const BuilderV2Lab: React.FC = () => {
                 {selected.type === 'schedule' && (
                   <>
                     <label className="block">
-                      <span className="text-xs text-text-tertiary">First event title</span>
+                      <span className="text-xs text-text-tertiary">Primary event title</span>
                       <input value={previewFields.scheduleTitle} onChange={(e) => updatePreviewField('scheduleTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                     </label>
                     <label className="block">
-                      <span className="text-xs text-text-tertiary">First event note</span>
+                      <span className="text-xs text-text-tertiary">Primary event note</span>
                       <input value={previewFields.scheduleNote} onChange={(e) => updatePreviewField('scheduleNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                     </label>
                   </>
@@ -834,7 +836,7 @@ export const BuilderV2Lab: React.FC = () => {
                 {selected.type === 'registry' && (
                   <>
                     <label className="block">
-                      <span className="text-xs text-text-tertiary">Featured registry title</span>
+                      <span className="text-xs text-text-tertiary">Featured registry item</span>
                       <input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                     </label>
                     <label className="block">
@@ -846,7 +848,7 @@ export const BuilderV2Lab: React.FC = () => {
                 {selected.type === 'rsvp' && (
                   <>
                     <label className="block">
-                      <span className="text-xs text-text-tertiary">RSVP section title</span>
+                      <span className="text-xs text-text-tertiary">RSVP heading</span>
                       <input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                     </label>
                     <label className="block">
@@ -862,7 +864,7 @@ export const BuilderV2Lab: React.FC = () => {
                   </>
                 )}
                 <label className="block">
-                  <span className="text-xs text-text-tertiary">Layout variant</span>
+                  <span className="text-xs text-text-tertiary">Page layout</span>
                   <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm">
                     {(VARIANTS_BY_TYPE[selected.type] ?? ['default']).map((v) => (
                       <option key={v} value={v}>{v}</option>
@@ -870,7 +872,7 @@ export const BuilderV2Lab: React.FC = () => {
                   </select>
                 </label>
                 <button onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40">
-                  {selected.enabled ? 'Hide page' : 'Show page'}
+                  {selected.enabled ? 'Hide this page' : 'Show this page'}
                 </button>
               </div>
             </div>
