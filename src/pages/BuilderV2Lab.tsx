@@ -695,12 +695,18 @@ export const BuilderV2Lab: React.FC = () => {
                     <div
                       id={`preview-section-${instance.id}`}
                       key={instance.id}
-                      className={`relative transition-all duration-200 ease-out ${hoveredPreviewId && hoveredPreviewId !== instance.id ? 'opacity-75' : 'opacity-100'} ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
+                      className={`relative transition-all duration-200 ease-out ${hoveredPreviewId && hoveredPreviewId !== instance.id ? 'opacity-45' : 'opacity-100'} ${hoveredPreviewId === instance.id ? 'ring-2 ring-primary/30' : ''} ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onMouseEnter={() => setHoveredPreviewId(instance.id)}
                       onMouseLeave={() => setHoveredPreviewId(null)}
                       onClick={(e) => { if (e.shiftKey) selectSection(instance.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true); else selectSection(instance.id); }}
                     >
-                      <div className={`absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded text-white transition-colors ${hoveredPreviewId === instance.id ? 'bg-black/75' : 'bg-black/55'}`}>{sectionState.title} · {instance.variant}</div>
+                      <div className={`absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded text-white transition-colors ${hoveredPreviewId === instance.id ? 'bg-black/80' : 'bg-black/55'}`}>{sectionState.title} · {instance.variant}</div>
+                      {hoveredPreviewId === instance.id && (
+                        <>
+                          <div className="absolute inset-x-0 top-0 h-[2px] bg-primary/70" />
+                          <div className="absolute inset-x-0 bottom-0 h-[2px] bg-primary/70" />
+                        </>
+                      )}
                       {Content ? (
                         <Content data={previewData} instance={instance} />
                       ) : (
