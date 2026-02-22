@@ -977,7 +977,7 @@ export const BuilderV2Lab: React.FC = () => {
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[140px_minmax(0,1fr)_560px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_560px]' : showStructure ? 'lg:grid-cols-[140px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[140px_minmax(0,1fr)_620px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_620px]' : showStructure ? 'lg:grid-cols-[140px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
           {!focusPreview && showStructure && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
