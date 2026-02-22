@@ -139,6 +139,29 @@ export const BuilderV2Lab: React.FC = () => {
     setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
+
+  const selectAllSections = () => {
+    if (!sections.length) return;
+    setSelectedId(sections[0].id);
+    setMultiSelectedIds(sections.slice(1).map((s) => s.id));
+    notify('All sections selected');
+  };
+
+  const clearSelection = () => {
+    setMultiSelectedIds([]);
+    notify('Multi selection cleared');
+  };
+
+  const invertSelection = () => {
+    if (!sections.length) return;
+    const selectedSet = new Set(selectedIds);
+    const inverted = sections.map((s) => s.id).filter((id) => !selectedSet.has(id));
+    if (!inverted.length) return;
+    setSelectedId(inverted[0]);
+    setMultiSelectedIds(inverted.slice(1));
+    notify('Selection inverted');
+  };
+
   const markSaving = () => {
     setSaveState('saving');
     window.setTimeout(() => setSaveState('saved'), 600);
@@ -276,8 +299,9 @@ export const BuilderV2Lab: React.FC = () => {
       ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, keywords: ['insert', 'new', name.toLowerCase()], action: () => runCommand(`Add section: ${name}`, () => addSection(name)) })),
       ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, keywords: ['focus', 'go to', s.title.toLowerCase()], action: () => runCommand(`Select section: ${s.title}`, () => setSelectedId(s.id)) })),
       ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, keywords: ['layout', 'style', v.toLowerCase()], action: () => runCommand(`Set variant: ${v}`, () => updateVariant(v)) })),
-      { id: 'sel-clear', group: 'Selection', label: 'Clear multi selection', keywords: ['clear', 'multi', 'selection'], action: () => runCommand('Clear multi selection', () => setMultiSelectedIds([])) },
-      { id: 'sel-all', group: 'Selection', label: 'Select all sections', keywords: ['all', 'selection'], action: () => runCommand('Select all sections', () => { if (sections[0]) { setSelectedId(sections[0].id); setMultiSelectedIds(sections.slice(1).map(s => s.id)); } }) },
+      { id: 'sel-clear', group: 'Selection', label: 'Clear multi selection', keywords: ['clear', 'multi', 'selection'], action: () => runCommand('Clear multi selection', clearSelection) },
+      { id: 'sel-all', group: 'Selection', label: 'Select all sections', keywords: ['all', 'selection'], action: () => runCommand('Select all sections', selectAllSections) },
+      { id: 'sel-invert', group: 'Selection', label: 'Invert selection', keywords: ['invert', 'selection'], action: () => runCommand('Invert selection', invertSelection) },
     ];
     const q = commandQuery.trim().toLowerCase();
     if (!q) return base;
@@ -317,6 +341,18 @@ export const BuilderV2Lab: React.FC = () => {
       if (isMeta && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setShowCommand((v) => !v);
+      }
+      if (isMeta && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        selectAllSections();
+      }
+      if (isMeta && e.shiftKey && e.key.toLowerCase() === 'i') {
+        e.preventDefault();
+        invertSelection();
+      }
+      if (e.key === 'Escape' && !showCommand) {
+        e.preventDefault();
+        clearSelection();
       }
       if (showCommand) {
         if (e.key === 'Escape') {
@@ -379,7 +415,7 @@ export const BuilderV2Lab: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
-          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+↑/↓ select section · ⇧/⌘ click multi-select</p>
+          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+A select all · ⇧⌘/Ctrl+I invert · Esc clear</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Command</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
@@ -402,7 +438,9 @@ export const BuilderV2Lab: React.FC = () => {
               <button onClick={() => selected && moveSection(selected.id, -1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowUp className="w-3 h-3" /> Move up</button>
               <button onClick={() => selected && moveSection(selected.id, 1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowDown className="w-3 h-3" /> Move down</button>
               <button onClick={() => selected && toggleVisibility(selected.id)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">{selected?.enabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />} {selected?.enabled ? 'Hide' : 'Show'}</button>
-              <button onClick={() => setMultiSelectedIds([])} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Clear multi</button>
+              <button onClick={clearSelection} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Clear multi</button>
+              <button onClick={selectAllSections} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Select all</button>
+              <button onClick={invertSelection} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Invert</button>
             </div>
             {selectedIds.length > 1 && (
               <div className="mb-3 flex flex-wrap gap-2">
