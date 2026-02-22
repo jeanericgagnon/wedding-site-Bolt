@@ -269,8 +269,14 @@ export const DashboardOverview: React.FC = () => {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="space-y-6 animate-pulse" aria-hidden="true">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+            </div>
+            <div className="h-44 rounded-2xl bg-surface-subtle border border-border-subtle" />
           </div>
         ) : (
           <>

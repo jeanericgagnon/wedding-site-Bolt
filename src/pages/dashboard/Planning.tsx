@@ -279,8 +279,13 @@ export const DashboardPlanning: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-4 animate-pulse" aria-hidden="true">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+            </div>
+            <div className="h-56 rounded-2xl bg-surface-subtle border border-border-subtle" />
           </div>
         ) : (
           <>

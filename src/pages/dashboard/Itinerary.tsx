@@ -306,8 +306,11 @@ export const DashboardItinerary: React.FC = () => {
   if (loading) {
     return (
       <DashboardLayout currentPage="itinerary">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="space-y-4 animate-pulse" aria-hidden="true">
+          <div className="h-12 w-64 rounded-xl bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
         </div>
       </DashboardLayout>
     );
