@@ -140,7 +140,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [previewScale, setPreviewScale] = useState(100);
   const [focusPreview, setFocusPreview] = useState(false);
-  const [showMinimap, setShowMinimap] = useState(true);
+  const [showMinimap, setShowMinimap] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -673,7 +673,10 @@ export const BuilderV2Lab: React.FC = () => {
 
             {showMinimap && (
               <div className="absolute right-6 bottom-6 z-30 w-44 max-h-64 overflow-auto rounded-lg border border-border bg-white/95 shadow-sm p-2 space-y-1">
-                <p className="text-[10px] uppercase tracking-wide text-text-tertiary px-1 pb-1">Mini-map</p>
+                <div className="flex items-center justify-between px-1 pb-1">
+                  <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Mini-map</p>
+                  <button onClick={() => setShowMinimap(false)} className="text-[10px] text-text-tertiary hover:text-text-primary">Close</button>
+                </div>
                 {orderedVisible.map((s) => (
                   <button
                     key={`mini-${s.id}`}
