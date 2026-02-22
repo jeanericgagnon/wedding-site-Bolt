@@ -342,7 +342,7 @@ export const BuilderV2Lab: React.FC = () => {
       setSelectedId(id);
       setMultiSelectedIds(rangeIds.filter((x) => x !== id));
       setLastSelectedId(id);
-      if (openEditor) setShowProperties(true);
+      if (openEditor) { setShowStructure(true); setShowProperties(false); }
       if (scroll) scrollToPreviewSection(id);
       return;
     }
@@ -351,12 +351,12 @@ export const BuilderV2Lab: React.FC = () => {
     setLastSelectedId(id);
     if (!additive) {
       setMultiSelectedIds([]);
-      if (openEditor) setShowProperties(true);
+      if (openEditor) { setShowStructure(true); setShowProperties(false); }
       if (scroll) scrollToPreviewSection(id);
       return;
     }
     setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-    if (openEditor) setShowProperties(true);
+    if (openEditor) { setShowStructure(true); setShowProperties(false); }
     if (scroll) scrollToPreviewSection(id);
   };
 
@@ -377,6 +377,8 @@ export const BuilderV2Lab: React.FC = () => {
 
     if (primedPreviewSectionId === id) {
       selectSection(id, false, false, false, true);
+      setShowStructure(true);
+      setShowProperties(false);
       setPropertyTab('content');
       setPrimedPreviewSectionId(null);
       window.setTimeout(() => scrollRailToSectionType(type), 0);
