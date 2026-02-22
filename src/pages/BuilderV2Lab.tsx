@@ -5,6 +5,8 @@ import { getSectionComponent } from '../sections/sectionRegistry';
 import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
 import { demoWeddingSite, demoEvents } from '../lib/demoData';
+import { toBuilderV2Document } from '../builder-v2/adapter';
+import type { BuilderV2Document } from '../builder-v2/contracts';
 import {
   DndContext,
   PointerSensor,
@@ -480,7 +482,7 @@ export const BuilderV2Lab: React.FC = () => {
       [sectionId]: (prev[sectionId] ?? []).filter((b) => b.id !== blockId),
     }));
     markSaving();
-    notify('Block removed');
+    notify('Removed block');
   };
 
 
@@ -499,7 +501,7 @@ export const BuilderV2Lab: React.FC = () => {
       return { ...prev, [sectionId]: arr };
     });
     markSaving();
-    notify('Block duplicated');
+    notify('Duplicated block');
   };
 
   const toggleBlockCollapsed = (blockId: string) => {
@@ -717,6 +719,77 @@ export const BuilderV2Lab: React.FC = () => {
     return '';
   };
 
+
+  const allInstancesForExport: SectionInstance[] = useMemo(() => sections.map((s) => ({
+    id: s.id,
+    type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
+    variant: s.variant,
+    enabled: s.enabled,
+    bindings: {},
+    settings: { showTitle: true, title: s.title, subtitle: s.subtitle },
+  })), [sections]);
+
+  const exportV2Json = () => {
+    const doc = toBuilderV2Document(allInstancesForExport);
+    const withBlocks = {
+      ...doc,
+      sections: doc.sections.map((sec) => ({
+        ...sec,
+        blocks: (sectionBlocks[sec.id] ?? sec.blocks).map((b) => ({
+          id: b.id,
+          type: b.type,
+          data: b.data ?? { text: b.content },
+        })),
+      })),
+    } as BuilderV2Document;
+    const blob = new Blob([JSON.stringify(withBlocks, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `builder-v2-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    notify('Exported V2 JSON');
+  };
+
+  const importV2Json = () => {
+    const raw = window.prompt('Paste Builder V2 JSON');
+    if (!raw) return;
+    try {
+      const doc = JSON.parse(raw) as BuilderV2Document;
+      if (!doc.sections || !Array.isArray(doc.sections)) throw new Error('Invalid sections');
+      const nextSections = doc.sections.map((sec) => ({
+        id: sec.id,
+        type: sec.type,
+        title: sec.title || sec.type,
+        subtitle: sec.subtitle || '',
+        variant: sec.variant || 'default',
+        enabled: sec.enabled !== false,
+        density: 'comfortable' as const,
+      }));
+      const nextBlocks = Object.fromEntries(
+        doc.sections.map((sec) => [
+          sec.id,
+          (sec.blocks || []).map((b) => ({
+            id: b.id,
+            type: b.type,
+            data: b.data || {},
+            content: b.data?.text || b.data?.title || b.data?.note || '',
+          })),
+        ])
+      ) as Record<string, AddedBlock[]>;
+      setHistory([nextSections]);
+      setHistoryIndex(0);
+      setSelectedId(nextSections[0]?.id ?? '');
+      setMultiSelectedIds([]);
+      setSectionBlocks(nextBlocks);
+      notify('Imported V2 JSON');
+      markSaving();
+    } catch {
+      notify('Import failed: invalid JSON');
+    }
+  };
+
   const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
     id: s.id,
     type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
@@ -859,6 +932,8 @@ export const BuilderV2Lab: React.FC = () => {
           <div className="flex items-center gap-2">
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
             <button onClick={() => setShowCommand(true)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
+            <button onClick={exportV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export V2</button>
+            <button onClick={importV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import V2</button>
             <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Edit rail</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} Pages</button>
           </div>
@@ -933,7 +1008,7 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
-            <div className="h-[calc(100%-56px)] border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto scroll-smooth">
+            <div className="h-[calc(100%-56px)] border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto scroll-smooth [scrollbar-gutter:stable]">
               <div className={`mx-auto bg-white border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
@@ -950,7 +1025,7 @@ export const BuilderV2Lab: React.FC = () => {
                     <div
                       id={`preview-section-${instance.id}`}
                       key={instance.id}
-                      className={`relative transition-all duration-300 ease-out ${hoveredPreviewId && hoveredPreviewId !== instance.id ? 'opacity-60' : 'opacity-100'} ${hoveredPreviewId === instance.id ? 'ring-2 ring-primary/30' : ''} ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
+                      className={`relative transition-all duration-300 ease-out ${hoveredPreviewId && hoveredPreviewId !== instance.id ? 'opacity-60' : 'opacity-100'} ${hoveredPreviewId === instance.id ? 'ring-2 ring-primary/30' : ''} ${selected.id === instance.id ? 'ring-2 ring-primary/30 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onMouseEnter={() => setHoveredPreviewId(instance.id)}
                       onMouseLeave={() => setHoveredPreviewId(null)}
                       onClick={(e) => {
@@ -979,7 +1054,7 @@ export const BuilderV2Lab: React.FC = () => {
                       {(sectionBlocks[instance.id] ?? []).length > 0 && (
                         <div className="border-t border-border-subtle bg-white">
                           {(sectionBlocks[instance.id] ?? []).map((b) => (
-                            <div key={b.id} className="px-6 py-4 border-b border-border-subtle bg-white/95">
+                            <div key={b.id} className="px-5 py-3.5 border-b border-border-subtle bg-white/95">
                               <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">{BLOCK_LABELS[b.type]}</p>
                               {b.type === 'qna' ? (
                                 <div className="space-y-1">
@@ -1066,8 +1141,8 @@ export const BuilderV2Lab: React.FC = () => {
                 <p className="text-sm font-medium text-text-primary truncate">{selected.title}</p>
               </div>
               <div className="grid grid-cols-2 gap-1 p-1 rounded-sm border border-border-subtle bg-surface-subtle">
-                <button onClick={() => setPropertyTab('content')} className={`text-xs px-2 py-1.5 rounded-sm ${propertyTab === 'content' ? 'bg-white border border-border' : ''}`}>Content</button>
-                <button onClick={() => setPropertyTab('layout')} className={`text-xs px-2 py-1.5 rounded-sm ${propertyTab === 'layout' ? 'bg-white border border-border' : ''}`}>Settings</button>
+                <button onClick={() => setPropertyTab('content')} className={`text-xs px-2 py-1.5 rounded-sm transition-colors ${propertyTab === 'content' ? 'bg-white border border-border shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Content</button>
+                <button onClick={() => setPropertyTab('layout')} className={`text-xs px-2 py-1.5 rounded-sm transition-colors ${propertyTab === 'layout' ? 'bg-white border border-border shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Settings</button>
               </div>
 
               <div className="border border-border rounded-sm p-2.5 bg-surface-subtle space-y-2">
@@ -1093,7 +1168,7 @@ export const BuilderV2Lab: React.FC = () => {
                               onClick={() => addBlockToSection(k)}
                               disabled={!allowed.ok}
                               title={allowed.ok ? `Add ${BLOCK_LABELS[k]}` : allowed.reason}
-                              className={`text-left text-xs border border-border rounded-md px-2.5 py-2.5 transition-all ${allowed.ok ? 'hover:border-primary/40 hover:bg-primary/5' : 'opacity-50 cursor-not-allowed bg-surface-subtle'}`}
+                              className={`text-left text-xs border border-border rounded-md px-2.5 py-2.5 transition-all ${allowed.ok ? 'hover:border-primary/40 hover:bg-primary/5' : 'opacity-60 cursor-not-allowed bg-surface-subtle border-dashed'}`}
                             >
                               <div className="flex items-start gap-2">
                                 <span className="text-[12px] leading-none mt-[1px]">{BLOCK_META[k].icon}</span>
@@ -1109,8 +1184,9 @@ export const BuilderV2Lab: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <p className="text-[11px] text-text-tertiary">Page content</p>
+                      <p className="text-[10px] text-text-tertiary">Section limits: content blocks are capped to keep pages clean and readable.</p>
 
                       <div className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
                         <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Header</p>
@@ -1199,7 +1275,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                       {(sectionBlocks[selected.id] ?? []).length === 0 && (
                         <div className="border border-dashed border-border rounded-md p-3 bg-white text-[11px] text-text-tertiary">
-                          No blocks yet. Use <span className="font-medium">Add to your page</span> to insert your first content block.
+                          No blocks yet. Use <span className="font-medium">+ Add to your page</span> to insert your first block.
                         </div>
                       )}
 
@@ -1429,15 +1505,15 @@ const BLOCK_META: Record<BlockType, { icon: string; desc: string }> = {
   title: { icon: 'T', desc: 'Section heading text' },
   text: { icon: '≡', desc: 'Paragraph or long-form copy' },
   qna: { icon: '?', desc: 'Question and answer pair' },
-  photo: { icon: '🖼', desc: 'Image with optional caption' },
+  photo: { icon: '▣', desc: 'Image with optional caption' },
   story: { icon: '✎', desc: 'Story paragraph block' },
   timelineItem: { icon: '⏱', desc: 'Milestone in a timeline' },
-  event: { icon: '🗓', desc: 'Time, title, location' },
-  travelTip: { icon: '✈', desc: 'Travel guidance note' },
-  hotelCard: { icon: '🏨', desc: 'Hotel recommendation card' },
-  registryItem: { icon: '🎁', desc: 'Registry gift item' },
-  fundHighlight: { icon: '💍', desc: 'Featured fund contribution' },
-  rsvpNote: { icon: '✉', desc: 'RSVP instructions/note' },
+  event: { icon: '◷', desc: 'Time, title, location' },
+  travelTip: { icon: '↗', desc: 'Travel guidance note' },
+  hotelCard: { icon: '⌂', desc: 'Hotel recommendation card' },
+  registryItem: { icon: '◉', desc: 'Registry gift item' },
+  fundHighlight: { icon: '◎', desc: 'Featured fund contribution' },
+  rsvpNote: { icon: '✎', desc: 'RSVP instructions/note' },
   faqItem: { icon: '❓', desc: 'FAQ question and answer' },
   divider: { icon: '—', desc: 'Visual section divider' },
 };
@@ -1448,6 +1524,8 @@ import { getSectionComponent } from '../sections/sectionRegistry';
 import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
 import { demoWeddingSite, demoEvents } from '../lib/demoData';
+import { toBuilderV2Document } from '../builder-v2/adapter';
+import type { BuilderV2Document } from '../builder-v2/contracts';
 import {
   DndContext,
   PointerSensor,
@@ -1923,7 +2001,7 @@ export const BuilderV2Lab: React.FC = () => {
       [sectionId]: (prev[sectionId] ?? []).filter((b) => b.id !== blockId),
     }));
     markSaving();
-    notify('Block removed');
+    notify('Removed block');
   };
 
 
@@ -1942,7 +2020,7 @@ export const BuilderV2Lab: React.FC = () => {
       return { ...prev, [sectionId]: arr };
     });
     markSaving();
-    notify('Block duplicated');
+    notify('Duplicated block');
   };
 
   const toggleBlockCollapsed = (blockId: string) => {
@@ -2160,6 +2238,77 @@ export const BuilderV2Lab: React.FC = () => {
     return '';
   };
 
+
+  const allInstancesForExport: SectionInstance[] = useMemo(() => sections.map((s) => ({
+    id: s.id,
+    type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
+    variant: s.variant,
+    enabled: s.enabled,
+    bindings: {},
+    settings: { showTitle: true, title: s.title, subtitle: s.subtitle },
+  })), [sections]);
+
+  const exportV2Json = () => {
+    const doc = toBuilderV2Document(allInstancesForExport);
+    const withBlocks = {
+      ...doc,
+      sections: doc.sections.map((sec) => ({
+        ...sec,
+        blocks: (sectionBlocks[sec.id] ?? sec.blocks).map((b) => ({
+          id: b.id,
+          type: b.type,
+          data: b.data ?? { text: b.content },
+        })),
+      })),
+    } as BuilderV2Document;
+    const blob = new Blob([JSON.stringify(withBlocks, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `builder-v2-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    notify('Exported V2 JSON');
+  };
+
+  const importV2Json = () => {
+    const raw = window.prompt('Paste Builder V2 JSON');
+    if (!raw) return;
+    try {
+      const doc = JSON.parse(raw) as BuilderV2Document;
+      if (!doc.sections || !Array.isArray(doc.sections)) throw new Error('Invalid sections');
+      const nextSections = doc.sections.map((sec) => ({
+        id: sec.id,
+        type: sec.type,
+        title: sec.title || sec.type,
+        subtitle: sec.subtitle || '',
+        variant: sec.variant || 'default',
+        enabled: sec.enabled !== false,
+        density: 'comfortable' as const,
+      }));
+      const nextBlocks = Object.fromEntries(
+        doc.sections.map((sec) => [
+          sec.id,
+          (sec.blocks || []).map((b) => ({
+            id: b.id,
+            type: b.type,
+            data: b.data || {},
+            content: b.data?.text || b.data?.title || b.data?.note || '',
+          })),
+        ])
+      ) as Record<string, AddedBlock[]>;
+      setHistory([nextSections]);
+      setHistoryIndex(0);
+      setSelectedId(nextSections[0]?.id ?? '');
+      setMultiSelectedIds([]);
+      setSectionBlocks(nextBlocks);
+      notify('Imported V2 JSON');
+      markSaving();
+    } catch {
+      notify('Import failed: invalid JSON');
+    }
+  };
+
   const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
     id: s.id,
     type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
@@ -2302,6 +2451,8 @@ export const BuilderV2Lab: React.FC = () => {
           <div className="flex items-center gap-2">
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
             <button onClick={() => setShowCommand(true)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
+            <button onClick={exportV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export V2</button>
+            <button onClick={importV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import V2</button>
             <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Edit rail</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} Pages</button>
           </div>
@@ -2376,7 +2527,7 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
-            <div className="h-[calc(100%-56px)] border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto scroll-smooth">
+            <div className="h-[calc(100%-56px)] border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto scroll-smooth [scrollbar-gutter:stable]">
               <div className={`mx-auto bg-white border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
@@ -2393,7 +2544,7 @@ export const BuilderV2Lab: React.FC = () => {
                     <div
                       id={`preview-section-${instance.id}`}
                       key={instance.id}
-                      className={`relative transition-all duration-300 ease-out ${hoveredPreviewId && hoveredPreviewId !== instance.id ? 'opacity-60' : 'opacity-100'} ${hoveredPreviewId === instance.id ? 'ring-2 ring-primary/30' : ''} ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
+                      className={`relative transition-all duration-300 ease-out ${hoveredPreviewId && hoveredPreviewId !== instance.id ? 'opacity-60' : 'opacity-100'} ${hoveredPreviewId === instance.id ? 'ring-2 ring-primary/30' : ''} ${selected.id === instance.id ? 'ring-2 ring-primary/30 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onMouseEnter={() => setHoveredPreviewId(instance.id)}
                       onMouseLeave={() => setHoveredPreviewId(null)}
                       onClick={(e) => {
@@ -2422,7 +2573,7 @@ export const BuilderV2Lab: React.FC = () => {
                       {(sectionBlocks[instance.id] ?? []).length > 0 && (
                         <div className="border-t border-border-subtle bg-white">
                           {(sectionBlocks[instance.id] ?? []).map((b) => (
-                            <div key={b.id} className="px-6 py-4 border-b border-border-subtle bg-white/95">
+                            <div key={b.id} className="px-5 py-3.5 border-b border-border-subtle bg-white/95">
                               <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">{BLOCK_LABELS[b.type]}</p>
                               {b.type === 'qna' ? (
                                 <div className="space-y-1">
@@ -2509,8 +2660,8 @@ export const BuilderV2Lab: React.FC = () => {
                 <p className="text-sm font-medium text-text-primary truncate">{selected.title}</p>
               </div>
               <div className="grid grid-cols-2 gap-1 p-1 rounded-sm border border-border-subtle bg-surface-subtle">
-                <button onClick={() => setPropertyTab('content')} className={`text-xs px-2 py-1.5 rounded-sm ${propertyTab === 'content' ? 'bg-white border border-border' : ''}`}>Content</button>
-                <button onClick={() => setPropertyTab('layout')} className={`text-xs px-2 py-1.5 rounded-sm ${propertyTab === 'layout' ? 'bg-white border border-border' : ''}`}>Settings</button>
+                <button onClick={() => setPropertyTab('content')} className={`text-xs px-2 py-1.5 rounded-sm transition-colors ${propertyTab === 'content' ? 'bg-white border border-border shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Content</button>
+                <button onClick={() => setPropertyTab('layout')} className={`text-xs px-2 py-1.5 rounded-sm transition-colors ${propertyTab === 'layout' ? 'bg-white border border-border shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Settings</button>
               </div>
 
               <div className="border border-border rounded-sm p-2.5 bg-surface-subtle space-y-2">
@@ -2536,7 +2687,7 @@ export const BuilderV2Lab: React.FC = () => {
                               onClick={() => addBlockToSection(k)}
                               disabled={!allowed.ok}
                               title={allowed.ok ? `Add ${BLOCK_LABELS[k]}` : allowed.reason}
-                              className={`text-left text-xs border border-border rounded-md px-2.5 py-2.5 transition-all ${allowed.ok ? 'hover:border-primary/40 hover:bg-primary/5' : 'opacity-50 cursor-not-allowed bg-surface-subtle'}`}
+                              className={`text-left text-xs border border-border rounded-md px-2.5 py-2.5 transition-all ${allowed.ok ? 'hover:border-primary/40 hover:bg-primary/5' : 'opacity-60 cursor-not-allowed bg-surface-subtle border-dashed'}`}
                             >
                               <div className="flex items-start gap-2">
                                 <span className="text-[12px] leading-none mt-[1px]">{BLOCK_META[k].icon}</span>
@@ -2552,8 +2703,9 @@ export const BuilderV2Lab: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <p className="text-[11px] text-text-tertiary">Page content</p>
+                      <p className="text-[10px] text-text-tertiary">Section limits: content blocks are capped to keep pages clean and readable.</p>
 
                       <div className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
                         <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Header</p>
@@ -2642,7 +2794,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                       {(sectionBlocks[selected.id] ?? []).length === 0 && (
                         <div className="border border-dashed border-border rounded-md p-3 bg-white text-[11px] text-text-tertiary">
-                          No blocks yet. Use <span className="font-medium">Add to your page</span> to insert your first content block.
+                          No blocks yet. Use <span className="font-medium">+ Add to your page</span> to insert your first block.
                         </div>
                       )}
 
