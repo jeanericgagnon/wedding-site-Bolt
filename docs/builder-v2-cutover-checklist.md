@@ -7,7 +7,7 @@ Status: draft (post-lab hardening)
 - [x] Define `BuilderV2Document` contract (`src/builder-v2/contracts.ts`)
 - [x] Add adapter skeleton from `SectionInstance[]` (`src/builder-v2/adapter.ts`)
 - [x] Add lab import/export JSON round-trip
-- [ ] Add strict runtime validator (shape + supported block types)
+- [x] Add strict runtime validator (shape + supported block types)
 - [ ] Add version migration policy (`v2` -> future)
 
 ## 2) Editor Behavior QA

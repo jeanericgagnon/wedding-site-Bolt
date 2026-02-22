@@ -7,6 +7,7 @@ import type { WeddingDataV1 } from '../types/weddingData';
 import { demoWeddingSite, demoEvents } from '../lib/demoData';
 import { toBuilderV2Document } from '../builder-v2/adapter';
 import type { BuilderV2Document } from '../builder-v2/contracts';
+import { validateBuilderV2Document } from '../builder-v2/validate';
 import {
   DndContext,
   PointerSensor,
@@ -781,9 +782,10 @@ export const BuilderV2Lab: React.FC = () => {
     const raw = window.prompt('Paste Builder V2 JSON');
     if (!raw) return;
     try {
-      const doc = JSON.parse(raw) as BuilderV2Document;
-      if (doc.version !== 'v2') throw new Error('Invalid version');
-      if (!doc.sections || !Array.isArray(doc.sections)) throw new Error('Invalid sections');
+      const parsed = JSON.parse(raw) as unknown;
+      const checked = validateBuilderV2Document(parsed);
+      if (!checked.ok) throw new Error(checked.error);
+      const doc = checked.doc;
       const nextSections = doc.sections.map((sec) => ({
         id: sec.id,
         type: sec.type,
