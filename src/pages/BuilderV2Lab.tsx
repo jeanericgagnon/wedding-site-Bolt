@@ -109,6 +109,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [commandIndex, setCommandIndex] = useState(0);
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
+  const [actionNotice, setActionNotice] = useState<string>('');
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -142,6 +143,12 @@ export const BuilderV2Lab: React.FC = () => {
     window.setTimeout(() => setSaveState('saved'), 600);
   };
 
+  const notify = (text: string) => {
+    setActionNotice(text);
+    window.setTimeout(() => setActionNotice(''), 2200);
+  };
+
+
   const commit = (next: LabSection[]) => {
     const trimmed = history.slice(0, historyIndex + 1);
     setHistory([...trimmed, next]);
@@ -154,6 +161,7 @@ export const BuilderV2Lab: React.FC = () => {
     const selectedSet = new Set(selectedIds);
     const shouldShow = sections.filter((s) => selectedSet.has(s.id)).some((s) => !s.enabled);
     commit(sections.map((s) => (selectedSet.has(s.id) ? { ...s, enabled: shouldShow } : s)));
+    notify(`${selectedIds.length} sections ${shouldShow ? 'shown' : 'hidden'}`);
   };
 
   const bulkMoveBlock = (dir: -1 | 1) => {
@@ -169,6 +177,7 @@ export const BuilderV2Lab: React.FC = () => {
     const next = [...remaining];
     next.splice(Math.min(targetIndex, next.length), 0, ...selectedBlock);
     commit(next);
+    notify(`${selectedIds.length} sections moved ${dir === -1 ? 'up' : 'down'}`);
   };
 
   const bulkDuplicate = () => {
@@ -186,19 +195,28 @@ export const BuilderV2Lab: React.FC = () => {
       }
     }
     commit(next);
+    notify(`${selectedIds.length} sections duplicated`);
   };
 
 
   const applyVariantToSelection = (variant: string) => {
     if (selectedIds.length <= 1) return;
     const selectedSet = new Set(selectedIds);
+    let updated = 0;
+    let skipped = 0;
     commit(
       sections.map((s) => {
         if (!selectedSet.has(s.id)) return s;
         const allowed = VARIANTS_BY_TYPE[s.type] ?? ['default'];
-        return allowed.includes(variant) ? { ...s, variant } : s;
+        if (allowed.includes(variant)) {
+          updated += 1;
+          return { ...s, variant };
+        }
+        skipped += 1;
+        return s;
       })
     );
+    notify(`${updated} updated${skipped ? `, ${skipped} skipped` : ''}`);
   };
 
   const moveSection = (id: string, dir: -1 | 1) => {
