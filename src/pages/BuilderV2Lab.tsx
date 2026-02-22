@@ -754,7 +754,7 @@ export const BuilderV2Lab: React.FC = () => {
 
           {!focusPreview && showProperties && (<aside className="border-l border-border bg-white p-0 overflow-hidden h-full min-h-0">
             <div className="px-4 h-[var(--rail-head-h)] border-b border-border-subtle flex items-center justify-between">
-              <h2 className="text-[1.02rem] font-semibold">Edit website</h2>
+              <h2 className="text-[1.02rem] font-semibold truncate">{selected.title}</h2>
               <button onClick={() => setShowProperties(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
             </div>
 
@@ -763,50 +763,23 @@ export const BuilderV2Lab: React.FC = () => {
                 <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Now editing</p>
                 <p className="text-sm font-medium text-text-primary truncate">{selected.title}</p>
               </div>
-              <div className="space-y-2">
-                <button onClick={() => scrollToRailSection('design-section')} className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
-                  <p className="text-sm font-medium">Design</p>
-                  <p className="text-xs text-text-tertiary">Update style, color and layout</p>
-                </button>
-                <button onClick={() => scrollToRailSection('privacy-section')} className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
-                  <p className="text-sm font-medium">Privacy & URL</p>
-                  <p className="text-xs text-text-tertiary">Manage visibility and link preferences</p>
-                </button>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Pages</p>
-                  <button onClick={() => setShowStructure(true)} className="text-xs text-primary hover:text-primary-hover">Reorder or add pages</button>
-                </div>
-                <div className="space-y-2 max-h-[340px] overflow-auto pr-1">
-                  {orderedVisible.map((page) => (
-                    <button
-                      key={`rail-${page.id}`}
-                      onClick={() => selectSection(page.id, false, false, true)}
-                      className={`w-full text-left border rounded-sm px-2.5 h-[var(--page-row-h)] transition-colors ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{page.title}</p>
-                          {page.subtitle && <p className="text-xs text-text-tertiary truncate mt-0.5">{page.subtitle}</p>}
-                        </div>
-                        <span className="text-text-tertiary text-sm">›</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-sm border border-border-subtle bg-surface-subtle">
+                <button onClick={() => setPropertyTab('content')} className={`text-xs px-2 py-1.5 rounded-sm ${propertyTab === 'content' ? 'bg-white border border-border' : ''}`}>Content</button>
+                <button onClick={() => setPropertyTab('layout')} className={`text-xs px-2 py-1.5 rounded-sm ${propertyTab === 'layout' ? 'bg-white border border-border' : ''}`}>Settings</button>
               </div>
 
               <div className="border border-border rounded-sm p-2.5 bg-surface-subtle space-y-2">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Selected page</p>
-                <p className="text-[11px] text-text-tertiary">Core settings</p>
-                <label className="block">
-                  <span className="text-xs text-text-tertiary">Title</span>
-                  <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                </label>
-                <p className="text-[11px] text-text-tertiary">Page content</p>
-                {selected.type === 'hero' && (
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{propertyTab === 'content' ? 'Content' : 'Settings'}</p>
+                {propertyTab === 'content' && (
+                  <>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Title</span>
+                      <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                    </label>
+                    <p className="text-[11px] text-text-tertiary">Page content</p>
+                  </>
+                )}
+                {propertyTab === 'content' && selected.type === 'hero' && (
                   <div id="rail-section-hero">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Couple names</span>
@@ -828,7 +801,7 @@ export const BuilderV2Lab: React.FC = () => {
                     </label>
                   </div>
                 )}
-                {selected.type === 'story' && (
+                {propertyTab === 'content' && selected.type === 'story' && (
                   <div id="rail-section-story">
                   <label className="block">
                     <span className="text-xs text-text-tertiary">Story text</span>
@@ -840,7 +813,7 @@ export const BuilderV2Lab: React.FC = () => {
                   </label>
                   </div>
                 )}
-                {selected.type === 'schedule' && (
+                {propertyTab === 'content' && selected.type === 'schedule' && (
                   <div id="rail-section-schedule">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Primary event title</span>
@@ -852,7 +825,7 @@ export const BuilderV2Lab: React.FC = () => {
                     </label>
                   </div>
                 )}
-                {selected.type === 'travel' && (
+                {propertyTab === 'content' && selected.type === 'travel' && (
                   <div id="rail-section-travel">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Flights</span>
@@ -872,7 +845,7 @@ export const BuilderV2Lab: React.FC = () => {
                     </label>
                   </div>
                 )}
-                {selected.type === 'registry' && (
+                {propertyTab === 'content' && selected.type === 'registry' && (
                   <div id="rail-section-registry">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Featured registry item</span>
@@ -884,7 +857,7 @@ export const BuilderV2Lab: React.FC = () => {
                     </label>
                   </div>
                 )}
-                {selected.type === 'rsvp' && (
+                {propertyTab === 'content' && selected.type === 'rsvp' && (
                   <div id="rail-section-rsvp">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">RSVP heading</span>
@@ -902,17 +875,21 @@ export const BuilderV2Lab: React.FC = () => {
                     </label>
                   </div>
                 )}
-                <label id="design-section" className="block">
-                  <span className="text-xs text-text-tertiary">Page layout</span>
-                  <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm">
-                    {(VARIANTS_BY_TYPE[selected.type] ?? ['default']).map((v) => (
-                      <option key={v} value={v}>{v}</option>
-                    ))}
-                  </select>
-                </label>
-                <button id="privacy-section" onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40">
-                  {selected.enabled ? 'Hide this page' : 'Show this page'}
-                </button>
+                {propertyTab === 'layout' && (
+                  <>
+                    <label id="design-section" className="block">
+                      <span className="text-xs text-text-tertiary">Page layout</span>
+                      <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm">
+                        {(VARIANTS_BY_TYPE[selected.type] ?? ['default']).map((v) => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <button id="privacy-section" onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40">
+                      {selected.enabled ? 'Hide this page' : 'Show this page'}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </aside>)}
