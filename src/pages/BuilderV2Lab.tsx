@@ -342,7 +342,7 @@ export const BuilderV2Lab: React.FC = () => {
       setSelectedId(id);
       setMultiSelectedIds(rangeIds.filter((x) => x !== id));
       setLastSelectedId(id);
-      if (openEditor) { setShowProperties(true); setShowStructure(false); }
+      if (openEditor) { setShowStructure(true); setShowProperties(false); }
       if (scroll) scrollToPreviewSection(id);
       return;
     }
@@ -351,7 +351,7 @@ export const BuilderV2Lab: React.FC = () => {
     setLastSelectedId(id);
     if (!additive) {
       setMultiSelectedIds([]);
-      if (openEditor) { setShowProperties(true); setShowStructure(false); }
+      if (openEditor) { setShowStructure(true); setShowProperties(false); }
       if (scroll) scrollToPreviewSection(id);
       return;
     }
@@ -377,14 +377,15 @@ export const BuilderV2Lab: React.FC = () => {
 
     if (primedPreviewSectionId === id) {
       selectSection(id, false, false, false, true);
-      setPropertyTab('content');
+      setShowStructure(true);
+      setShowProperties(false);
       setPrimedPreviewSectionId(null);
-      window.setTimeout(() => scrollRailToSectionType(type), 0);
+      notify('Section ready in left navigator.');
       return;
     }
 
     selectSection(id, false, false, true, false);
-    setShowStructure(false);
+    setShowStructure(true);
     setShowProperties(false);
     setShowAddBlockPicker(false);
     setPrimedPreviewSectionId(id);
@@ -1004,13 +1005,12 @@ export const BuilderV2Lab: React.FC = () => {
             <button onClick={() => setShowCommand(true)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
             <button onClick={exportV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export V2</button>
             <button onClick={importV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import V2</button>
-            <span className="hidden" />
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} Pages</button>
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[180px_minmax(0,1fr)_620px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_620px]' : showStructure ? 'lg:grid-cols-[180px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
-          {!focusPreview && showStructure && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : 'lg:grid-cols-[260px_minmax(0,1fr)]'} gap-0 flex-1 min-h-0`}>
+          {!focusPreview && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Pages</h2>
