@@ -42,20 +42,25 @@ type StructureItemProps = {
   isFirst: boolean;
   isLast: boolean;
   onSelect: () => void;
+  onSelectAdditive: () => void;
+  multiSelected: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onToggleVisibility: () => void;
 };
 
-const StructureItem: React.FC<StructureItemProps> = ({ section, selected, isFirst, isLast, onSelect, onMoveUp, onMoveDown, onToggleVisibility }) => {
+const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiSelected, isFirst, isLast, onSelect, onSelectAdditive, onMoveUp, onMoveDown, onToggleVisibility }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
 
   return (
     <button
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.7 : 1 }}
-      onClick={onSelect}
-      className={`w-full text-left px-3 py-2 rounded-lg border text-sm ${selected ? 'bg-primary/10 border-primary/40 text-primary shadow-sm' : 'bg-surface-subtle border-border text-text-secondary'}`}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey) onSelectAdditive();
+        else onSelect();
+      }}
+      className={`w-full text-left px-3 py-2 rounded-lg border text-sm ${selected ? 'bg-primary/10 border-primary/40 text-primary shadow-sm' : multiSelected ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-surface-subtle border-border text-text-secondary'}`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -79,6 +84,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [history, setHistory] = useState<LabSection[][]>([INITIAL_SECTIONS]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [selectedId, setSelectedId] = useState(INITIAL_SECTIONS[0].id);
+  const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
   const [addQuery, setAddQuery] = useState('');
   const [showStructure, setShowStructure] = useState(true);
@@ -92,6 +98,15 @@ export const BuilderV2Lab: React.FC = () => {
 
   const sections = history[historyIndex];
   const selected = sections.find((s) => s.id === selectedId) ?? sections[0];
+
+  const selectSection = (id: string, additive = false) => {
+    setSelectedId(id);
+    if (!additive) {
+      setMultiSelectedIds([]);
+      return;
+    }
+    setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const markSaving = () => {
     setSaveState('saving');
@@ -247,7 +262,7 @@ export const BuilderV2Lab: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
-          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+↑/↓ select section</p>
+          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+↑/↓ select section · ⇧/⌘ click multi-select</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Command</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
@@ -264,11 +279,13 @@ export const BuilderV2Lab: React.FC = () => {
             <div className="mb-3 flex items-center gap-2 text-[11px]">
               <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Visible {orderedVisible.length}</span>
               <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Hidden {sections.length - orderedVisible.length}</span>
+              <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">Selected {1 + multiSelectedIds.length}</span>
             </div>
             <div className="mb-3 flex flex-wrap gap-2">
               <button onClick={() => selected && moveSection(selected.id, -1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowUp className="w-3 h-3" /> Move up</button>
               <button onClick={() => selected && moveSection(selected.id, 1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowDown className="w-3 h-3" /> Move down</button>
               <button onClick={() => selected && toggleVisibility(selected.id)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">{selected?.enabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />} {selected?.enabled ? 'Hide' : 'Show'}</button>
+              <button onClick={() => setMultiSelectedIds([])} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Clear multi</button>
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
@@ -278,9 +295,11 @@ export const BuilderV2Lab: React.FC = () => {
                       key={s.id}
                       section={s}
                       selected={selected.id === s.id}
+                      multiSelected={multiSelectedIds.includes(s.id)}
                       isFirst={idx === 0}
                       isLast={idx === sections.length - 1}
-                      onSelect={() => setSelectedId(s.id)}
+                      onSelect={() => selectSection(s.id)}
+                      onSelectAdditive={() => selectSection(s.id, true)}
                       onMoveUp={() => moveSection(s.id, -1)}
                       onMoveDown={() => moveSection(s.id, 1)}
                       onToggleVisibility={() => toggleVisibility(s.id)}
@@ -322,7 +341,7 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
             <div className="h-[500px] rounded-xl border border-border-subtle bg-surface-subtle p-5 space-y-3 overflow-auto">
               {orderedVisible.map((s) => (
-                <div key={s.id} className={`rounded-xl bg-white border p-4 ${selected.id === s.id ? 'border-primary/40 ring-2 ring-primary/20' : 'border-border-subtle'}`} onClick={() => setSelectedId(s.id)}>
+                <div key={s.id} className={`rounded-xl bg-white border p-4 ${selected.id === s.id ? 'border-primary/40 ring-2 ring-primary/20' : multiSelectedIds.includes(s.id) ? 'border-primary/20 bg-primary/5' : 'border-border-subtle'}`} onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) selectSection(s.id, true); else selectSection(s.id); }}>
                   <p className="font-medium text-sm">{s.title}</p>
                   <p className="text-xs text-text-tertiary mt-1">Variant: {s.variant}</p>
                 </div>
