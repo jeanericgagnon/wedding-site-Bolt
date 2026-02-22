@@ -250,9 +250,22 @@ export const BuilderV2Lab: React.FC = () => {
     return idx > 0 ? iso.slice(0, idx) : iso;
   };
 
+  const toDateTimeLocalValue = (iso: string) => {
+    if (!iso) return '';
+    const [date, timeRaw] = iso.split('T');
+    if (!date || !timeRaw) return '';
+    const hhmm = timeRaw.slice(0, 5);
+    return `${date}T${hhmm}`;
+  };
+
   const updateRsvpDeadlineDate = (dateOnly: string) => {
     if (!dateOnly) return;
     updatePreviewField('rsvpDeadlineISO', `${dateOnly}T00:00:00`);
+  };
+
+  const updateWeddingDateTime = (localDateTime: string) => {
+    if (!localDateTime) return;
+    updatePreviewField('eventDateISO', `${localDateTime}:00`);
   };
 
 
@@ -765,12 +778,14 @@ export const BuilderV2Lab: React.FC = () => {
                       />
                     </label>
                     <label className="block">
-                      <span className="text-xs text-text-tertiary">Wedding datetime (ISO)</span>
+                      <span className="text-xs text-text-tertiary">Wedding date & time</span>
                       <input
-                        value={previewFields.eventDateISO}
-                        onChange={(e) => updatePreviewField('eventDateISO', e.target.value)}
+                        type="datetime-local"
+                        value={toDateTimeLocalValue(previewFields.eventDateISO)}
+                        onChange={(e) => updateWeddingDateTime(e.target.value)}
                         className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
                       />
+                      <p className="text-[11px] text-text-tertiary mt-1">Stored as ISO internally.</p>
                     </label>
                   </>
                 )}
