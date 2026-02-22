@@ -140,6 +140,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [previewScale, setPreviewScale] = useState(100);
   const [focusPreview, setFocusPreview] = useState(false);
+  const [showMinimap, setShowMinimap] = useState(true);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -524,6 +525,7 @@ export const BuilderV2Lab: React.FC = () => {
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">Help ?</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
             <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Properties</button>
+            <button onClick={() => setShowMinimap((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showMinimap ? 'Hide' : 'Show'} Mini-map</button>
             <button onClick={() => setFocusPreview((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{focusPreview ? 'Exit' : 'Enter'} Focus</button>
           </div>
         </div>
@@ -618,8 +620,8 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </aside>)}
 
-          <main className="rounded-2xl border border-border bg-surface p-4 min-h-[560px]">
-            <div className="flex items-center justify-between mb-3">
+          <main className="relative rounded-2xl border border-border bg-surface p-4 min-h-[560px]">
+            <div className="sticky top-0 z-20 bg-surface/95 backdrop-blur border-b border-border-subtle -mx-4 px-4 py-3 mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold">Canvas</h2>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -651,7 +653,7 @@ export const BuilderV2Lab: React.FC = () => {
                   return (
                     <div
                       key={instance.id}
-                      className={`relative ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
+                      className={`relative transition-all duration-150 ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onClick={(e) => { if (e.shiftKey) selectSection(instance.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true); else selectSection(instance.id); }}
                     >
                       <div className="absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded bg-black/65 text-white">{sectionState.title} · {instance.variant}</div>
@@ -668,6 +670,21 @@ export const BuilderV2Lab: React.FC = () => {
                 })}
               </div>
             </div>
+
+            {showMinimap && (
+              <div className="absolute right-6 bottom-6 z-30 w-44 max-h-64 overflow-auto rounded-lg border border-border bg-white/95 shadow-sm p-2 space-y-1">
+                <p className="text-[10px] uppercase tracking-wide text-text-tertiary px-1 pb-1">Mini-map</p>
+                {orderedVisible.map((s) => (
+                  <button
+                    key={`mini-${s.id}`}
+                    onClick={() => selectSection(s.id)}
+                    className={`w-full text-left text-[11px] px-2 py-1.5 rounded ${selected.id === s.id ? 'bg-primary/10 text-primary' : 'hover:bg-surface-subtle text-text-secondary'}`}
+                  >
+                    {s.title}
+                  </button>
+                ))}
+              </div>
+            )}
           </main>
 
           {!focusPreview && showProperties && (<aside className="rounded-2xl border border-border bg-surface p-4">
