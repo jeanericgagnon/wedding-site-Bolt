@@ -65,6 +65,7 @@ export const Onboarding: React.FC = () => {
   ];
 
   const completedSetupCount = setupChecklist.filter(item => item.done).length;
+  const nextSetupItem = setupChecklist.find(item => !item.done) ?? null;
 
   const checkExistingSite = useCallback(async () => {
     if (!user) return;
@@ -112,6 +113,31 @@ export const Onboarding: React.FC = () => {
 
   const handleQuickSetup = () => {
     setStep('quick-1');
+  };
+
+  const handleOneClickStarter = async () => {
+    setLoading(true);
+    const fallbackNames = isDemoMode
+      ? `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`
+      : 'Alex & Jordan';
+    const names = (formData.partnerNames || fallbackNames).split('&').map(n => n.trim());
+    const firstName = names[0] || 'Alex';
+    const secondName = names[1] || 'Jordan';
+
+    await createWeddingSite({
+      couple_name_1: firstName,
+      couple_name_2: secondName,
+      couple_first_name: firstName,
+      couple_second_name: secondName,
+      wedding_date: formData.weddingDate || demoWeddingSite.wedding_date || null,
+      venue_name: formData.venueName || demoWeddingSite.venue_name || null,
+      venue_location: formData.venueLocation || demoWeddingSite.venue_location || null,
+      site_url: user?.email?.split('@')[0] || 'my-wedding',
+      rsvp_deadline: formData.rsvpDeadline || null,
+    });
+
+    setLoading(false);
+    navigate('/dashboard/builder');
   };
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
@@ -204,7 +230,14 @@ export const Onboarding: React.FC = () => {
           </div>
         ))}
       </div>
-      <p className="text-xs text-text-secondary mt-3">Publish becomes available after you finish setup and enter the dashboard/builder.</p>
+      <div className="mt-3 flex items-center justify-between gap-3 text-xs">
+        <p className="text-text-secondary">Publish becomes available after you finish setup and enter the dashboard/builder.</p>
+        {nextSetupItem && (
+          <button type="button" onClick={nextSetupItem.action} className="text-primary font-medium hover:text-primary-hover">
+            Next: {nextSetupItem.label}
+          </button>
+        )}
+      </div>
     </Card>
   );
 
@@ -246,9 +279,14 @@ export const Onboarding: React.FC = () => {
                 </li>
               </ul>
             </div>
-            <Button variant="accent" size="lg" fullWidth onClick={handleQuickSetup} disabled={loading}>
-              Start Quick Setup
-            </Button>
+            <div className="space-y-2">
+              <Button variant="accent" size="lg" fullWidth onClick={handleQuickSetup} disabled={loading}>
+                Start guided setup
+              </Button>
+              <Button variant="outline" size="lg" fullWidth onClick={handleOneClickStarter} disabled={loading}>
+                {loading ? 'Creating starter site...' : 'One-click starter (fastest)'}
+              </Button>
+            </div>
           </div>
         </Card>
 
