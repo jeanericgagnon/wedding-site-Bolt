@@ -126,6 +126,11 @@ export const BuilderV2Lab: React.FC = () => {
   const [lastSelectedId, setLastSelectedId] = useState<string>(INITIAL_SECTIONS[0].id);
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
   const [lastSavedAt, setLastSavedAt] = useState<string>('');
+  const [previewFields, setPreviewFields] = useState({
+    coupleDisplayName: `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
+    eventDateISO: `${demoWeddingSite.wedding_date}T16:00:00`,
+    storyText: 'A modern love story from city coffee dates to sunset vows in Napa.',
+  });
   const [addQuery, setAddQuery] = useState('');
   const [showStructure, setShowStructure] = useState(false);
   const [showProperties, setShowProperties] = useState(true);
@@ -204,6 +209,12 @@ export const BuilderV2Lab: React.FC = () => {
   const notify = (text: string) => {
     setActionNotice(text);
     window.setTimeout(() => setActionNotice(''), 2200);
+  };
+
+
+  const updatePreviewField = (key: 'coupleDisplayName' | 'eventDateISO' | 'storyText', value: string) => {
+    setPreviewFields((prev) => ({ ...prev, [key]: value }));
+    markSaving();
   };
 
 
@@ -359,11 +370,11 @@ export const BuilderV2Lab: React.FC = () => {
     couple: {
       partner1Name: demoWeddingSite.couple_name_1,
       partner2Name: demoWeddingSite.couple_name_2,
-      displayName: `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
-      story: 'A modern love story from city coffee dates to sunset vows in Napa.',
+      displayName: previewFields.coupleDisplayName,
+      story: previewFields.storyText,
     },
     event: {
-      weddingDateISO: `${demoWeddingSite.wedding_date}T16:00:00`,
+      weddingDateISO: previewFields.eventDateISO,
       timezone: 'America/Los_Angeles',
     },
     venues: [
@@ -380,7 +391,7 @@ export const BuilderV2Lab: React.FC = () => {
     theme: { preset: 'romantic' },
     media: { heroImageUrl: demoWeddingSite.hero_image_url, gallery: [{ id: 'g1', url: demoWeddingSite.hero_image_url || '', caption: 'Engagement' }] },
     meta: { createdAtISO: new Date().toISOString(), updatedAtISO: new Date().toISOString() },
-  }), []);
+  }), [previewFields]);
 
   const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
     id: s.id,
@@ -699,6 +710,36 @@ export const BuilderV2Lab: React.FC = () => {
                   <span className="text-xs text-text-tertiary">Title</span>
                   <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                 </label>
+                {selected.type === 'hero' && (
+                  <>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Couple display name</span>
+                      <input
+                        value={previewFields.coupleDisplayName}
+                        onChange={(e) => updatePreviewField('coupleDisplayName', e.target.value)}
+                        className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Wedding datetime (ISO)</span>
+                      <input
+                        value={previewFields.eventDateISO}
+                        onChange={(e) => updatePreviewField('eventDateISO', e.target.value)}
+                        className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
+                      />
+                    </label>
+                  </>
+                )}
+                {selected.type === 'story' && (
+                  <label className="block">
+                    <span className="text-xs text-text-tertiary">Story text</span>
+                    <textarea
+                      value={previewFields.storyText}
+                      onChange={(e) => updatePreviewField('storyText', e.target.value)}
+                      className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-24"
+                    />
+                  </label>
+                )}
                 <label className="block">
                   <span className="text-xs text-text-tertiary">Layout variant</span>
                   <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm">
