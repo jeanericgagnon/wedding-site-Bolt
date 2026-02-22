@@ -21,9 +21,75 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+type BlockType =
+  | 'title'
+  | 'text'
+  | 'qna'
+  | 'photo'
+  | 'story'
+  | 'timelineItem'
+  | 'event'
+  | 'travelTip'
+  | 'hotelCard'
+  | 'registryItem'
+  | 'fundHighlight'
+  | 'rsvpNote'
+  | 'faqItem'
+  | 'divider';
+
+const BLOCK_LABELS: Record<BlockType, string> = {
+  title: 'Title',
+  text: 'Text Block',
+  qna: 'Q&A',
+  photo: 'Photo',
+  story: 'Story Paragraph',
+  timelineItem: 'Timeline Item',
+  event: 'Event Item',
+  travelTip: 'Travel Tip',
+  hotelCard: 'Hotel Card',
+  registryItem: 'Registry Item',
+  fundHighlight: 'Fund Highlight',
+  rsvpNote: 'RSVP Note',
+  faqItem: 'FAQ Item',
+  divider: 'Divider',
+};
+
+const BLOCK_DEFAULTS: Record<BlockType, string> = {
+  title: 'New heading',
+  text: 'Add your text here...',
+  qna: 'Q: Your question?\nA: Your answer.',
+  photo: 'Photo caption',
+  story: 'A short story paragraph',
+  timelineItem: 'Our first date · Summer 2022',
+  event: 'Ceremony · 4:00 PM · Sunset Gardens',
+  travelTip: 'Book early for best rates.',
+  hotelCard: 'River Inn · 2-night minimum',
+  registryItem: 'KitchenAid Mixer',
+  fundHighlight: 'Honeymoon Fund',
+  rsvpNote: 'Please reply by our deadline.',
+  faqItem: 'Q: Is there parking? A: Yes, valet on-site.',
+  divider: '———',
+};
+
+const SECTION_BLOCK_CATALOG: Record<string, BlockType[]> = {
+  hero: ['title', 'text', 'photo', 'divider'],
+  story: ['story', 'timelineItem', 'text', 'photo', 'title', 'divider'],
+  schedule: ['event', 'title', 'text', 'divider'],
+  travel: ['travelTip', 'hotelCard', 'text', 'photo', 'qna', 'divider'],
+  registry: ['registryItem', 'fundHighlight', 'title', 'text', 'photo', 'divider'],
+  rsvp: ['rsvpNote', 'title', 'text', 'qna', 'divider'],
+  faq: ['faqItem', 'qna', 'title', 'text', 'divider'],
+  venue: ['title', 'text', 'photo', 'divider'],
+  gallery: ['photo', 'title', 'text', 'divider'],
+  'wedding-party': ['photo', 'title', 'text', 'divider'],
+  'dress-code': ['title', 'text', 'photo', 'divider'],
+  directions: ['title', 'text', 'photo', 'divider'],
+  accommodations: ['hotelCard', 'travelTip', 'text', 'divider'],
+};
+
 type AddedBlock = {
   id: string;
-  type: 'title' | 'text' | 'qna' | 'photo' | 'story';
+  type: BlockType;
   content: string;
 };
 
@@ -291,23 +357,16 @@ export const BuilderV2Lab: React.FC = () => {
     updatePreviewField('eventDateISO', `${localDateTime}:00`);
   };
 
-  const addBlockToSection = (blockType: AddedBlock['type']) => {
-    const defaultContent: Record<AddedBlock['type'], string> = {
-      title: 'New heading',
-      text: 'Add your text here...',
-      qna: 'Q: Your question?\nA: Your answer.',
-      photo: 'Photo caption',
-      story: 'A short story paragraph',
-    };
+  const addBlockToSection = (blockType: BlockType) => {
     const block: AddedBlock = {
       id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       type: blockType,
-      content: defaultContent[blockType],
+      content: BLOCK_DEFAULTS[blockType],
     };
     setSectionBlocks((prev) => ({ ...prev, [selected.id]: [...(prev[selected.id] ?? []), block] }));
     setShowAddBlockPicker(false);
     markSaving();
-    notify(`${blockType.toUpperCase()} block added`);
+    notify(`${BLOCK_LABELS[blockType]} added`);
   };
 
   const updateBlockContent = (sectionId: string, blockId: string, content: string) => {
@@ -525,6 +584,8 @@ export const BuilderV2Lab: React.FC = () => {
     media: { heroImageUrl: demoWeddingSite.hero_image_url, gallery: [{ id: 'g1', url: demoWeddingSite.hero_image_url || '', caption: 'Engagement' }] },
     meta: { createdAtISO: new Date().toISOString(), updatedAtISO: new Date().toISOString() },
   }), [previewFields]);
+
+  const addableBlocksForSelected = useMemo(() => SECTION_BLOCK_CATALOG[selected.type] ?? ['title', 'text', 'photo', 'qna'], [selected.type]);
 
   const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
     id: s.id,
@@ -789,7 +850,7 @@ export const BuilderV2Lab: React.FC = () => {
                         <div className="border-t border-border-subtle bg-white">
                           {(sectionBlocks[instance.id] ?? []).map((b) => (
                             <div key={b.id} className="px-6 py-4 border-b border-border-subtle bg-white/95">
-                              <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">{b.type}</p>
+                              <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">{BLOCK_LABELS[b.type]}</p>
                               <p className="text-sm text-text-secondary whitespace-pre-wrap">{b.content}</p>
                             </div>
                           ))}
@@ -850,18 +911,8 @@ export const BuilderV2Lab: React.FC = () => {
 
                     {showAddBlockPicker && (
                       <div className="border border-border-subtle rounded-md p-2.5 bg-white grid grid-cols-2 gap-2.5">
-                        {((() => {
-                          const byType: Record<string, Array<'qna' | 'story' | 'title' | 'text' | 'photo'>> = {
-                            hero: ['title', 'text', 'photo'],
-                            story: ['story', 'text', 'photo', 'title'],
-                            schedule: ['title', 'text', 'photo'],
-                            travel: ['title', 'text', 'photo', 'qna'],
-                            registry: ['title', 'text', 'photo'],
-                            rsvp: ['title', 'text', 'qna'],
-                          };
-                          return byType[selected.type] ?? ['title', 'text', 'photo', 'qna', 'story'];
-                        })()).map((k) => (
-                          <button key={k} onClick={() => addBlockToSection(k)} className="text-xs border border-border rounded-md px-2 py-3 hover:border-primary/40 hover:bg-primary/5 transition-all">{{'qna':'Q&A','story':'Story','title':'Title','text':'Text','photo':'Photo'}[k]}</button>
+                        {addableBlocksForSelected.map((k) => (
+                          <button key={k} onClick={() => addBlockToSection(k)} className="text-xs border border-border rounded-md px-2 py-3 hover:border-primary/40 hover:bg-primary/5 transition-all">{BLOCK_LABELS[k]}</button>
                         ))}
                       </div>
                     )}
@@ -957,7 +1008,7 @@ export const BuilderV2Lab: React.FC = () => {
                       {(sectionBlocks[selected.id] ?? []).map((block, idx) => (
                         <div key={block.id} className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · {block.type}</p>
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · {BLOCK_LABELS[block.type]}</p>
                             <div className="flex items-center gap-1.5">
                               <button onClick={() => moveBlock(selected.id, block.id, -1)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↑</button>
                               <button onClick={() => moveBlock(selected.id, block.id, 1)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↓</button>
