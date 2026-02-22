@@ -653,8 +653,8 @@ export const VaultContribute: React.FC = () => {
                             if (file.size > effectiveMaxMb * 1024 * 1024) {
                               setSubmitError(
                                 mediaType === 'video' && compressVideo
-                                  ? 'Source video too large. Max 200MB before compression.'
-                                  : `File too large. Max ${maxMb}MB for ${mediaType}.`
+                                  ? 'This video is too large to process here (max 200MB source). Please trim/compress it first, then try again.'
+                                  : `This file is too large (max ${maxMb}MB for ${mediaType}). Please compress or trim it and re-upload.`
                               );
                               setSelectedFiles([]);
                               return;
@@ -673,7 +673,7 @@ export const VaultContribute: React.FC = () => {
                           Compress to 720p before upload (recommended)
                         </label>
                       )}
-                      <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (compressed to 720p)' : 'Up to 3 videos, 35MB each') : 'Single voice file, 12MB max'}</p>
+                      <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each. If larger, compress first.' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (auto-compressed to 720p).' : 'Up to 3 videos, 35MB each. If larger, compress/trim first.') : 'Single voice file, 12MB max. If larger, trim/compress first.'}</p>
                     </div>
                   )}
                 </div>
