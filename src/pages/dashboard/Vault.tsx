@@ -38,6 +38,15 @@ interface Toast {
   type: 'success' | 'error';
 }
 
+
+function inferAttachmentKind(url: string | null, name: string | null): 'image' | 'video' | 'audio' | 'file' {
+  const target = `${url ?? ''} ${name ?? ''}`.toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|avif|heic)(\?|$)/.test(target) || /photo|image/.test(target)) return 'image';
+  if (/\.(mp4|mov|webm|m4v)(\?|$)/.test(target) || /video/.test(target)) return 'video';
+  if (/\.(mp3|wav|m4a|aac|ogg|webm)(\?|$)/.test(target) || /voice|audio/.test(target)) return 'audio';
+  return 'file';
+}
+
 const DURATION_OPTIONS = [
   { value: 1, label: '1 year (1st anniversary)' },
   { value: 2, label: '2 years (2nd anniversary)' },
@@ -316,7 +325,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           {entries.length === 0 && !showForm && (
             <div className="text-center py-6 border border-dashed border-border rounded-xl">
               <p className="text-sm text-text-secondary mb-1">No entries yet</p>
-              <p className="text-xs text-text-tertiary">Add a message, note, or link to preserve for this anniversary.</p>
+              <p className="text-xs text-text-tertiary">Add text, photo, video, voice note, or link for this anniversary.</p>
             </div>
           )}
 
@@ -349,17 +358,37 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 </button>
               </div>
               <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
-              {entry.attachment_url && (
-                <a
-                  href={entry.attachment_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-2 text-xs text-primary hover:underline"
-                >
-                  <Paperclip className="w-3 h-3" />
-                  {entry.attachment_name || 'View attachment'}
-                </a>
-              )}
+              {entry.attachment_url && (() => {
+                const kind = inferAttachmentKind(entry.attachment_url, entry.attachment_name);
+                return (
+                  <div className="mt-2 space-y-2">
+                    {kind === 'image' && (
+                      <a href={entry.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+                        <img src={entry.attachment_url} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" />
+                      </a>
+                    )}
+                    {kind === 'video' && (
+                      <video controls preload="metadata" className="w-full max-h-56 rounded-lg border border-border bg-black/80">
+                        <source src={entry.attachment_url} />
+                      </video>
+                    )}
+                    {kind === 'audio' && (
+                      <audio controls preload="metadata" className="w-full">
+                        <source src={entry.attachment_url} />
+                      </audio>
+                    )}
+                    <a
+                      href={entry.attachment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                    >
+                      <Paperclip className="w-3 h-3" />
+                      {entry.attachment_name || 'View attachment'}
+                    </a>
+                  </div>
+                );
+              })()}
             </div>
           ))}
 
