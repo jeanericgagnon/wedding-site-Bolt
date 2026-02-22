@@ -244,6 +244,18 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
 
+  const toDateInputValue = (iso: string) => {
+    if (!iso) return '';
+    const idx = iso.indexOf('T');
+    return idx > 0 ? iso.slice(0, idx) : iso;
+  };
+
+  const updateRsvpDeadlineDate = (dateOnly: string) => {
+    if (!dateOnly) return;
+    updatePreviewField('rsvpDeadlineISO', `${dateOnly}T00:00:00`);
+  };
+
+
   const commit = (next: LabSection[]) => {
     const trimmed = history.slice(0, historyIndex + 1);
     setHistory([...trimmed, next]);
@@ -823,8 +835,14 @@ export const BuilderV2Lab: React.FC = () => {
                       <input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                     </label>
                     <label className="block">
-                      <span className="text-xs text-text-tertiary">RSVP deadline (ISO)</span>
-                      <input value={previewFields.rsvpDeadlineISO} onChange={(e) => updatePreviewField('rsvpDeadlineISO', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                      <span className="text-xs text-text-tertiary">RSVP deadline</span>
+                      <input
+                        type="date"
+                        value={toDateInputValue(previewFields.rsvpDeadlineISO)}
+                        onChange={(e) => updateRsvpDeadlineDate(e.target.value)}
+                        className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
+                      />
+                      <p className="text-[11px] text-text-tertiary mt-1">Stored as ISO internally.</p>
                     </label>
                   </>
                 )}
