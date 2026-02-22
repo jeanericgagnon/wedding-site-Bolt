@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { DEMO_MODE } from '../config/env';
 
 interface SiteInfo {
   id: string;
@@ -57,6 +58,13 @@ export const VaultContribute: React.FC = () => {
   }, [siteSlug, year]);
 
   async function loadData() {
+    if (DEMO_MODE && siteSlug === 'alex-jordan-demo') {
+      setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: null });
+      setVaultConfig({ id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true });
+      setStep('form');
+      return;
+    }
+
     const { data: siteData, error: siteError } = await supabase
       .from('wedding_sites')
       .select('id, couple_name_1, couple_name_2, wedding_date, is_published')
@@ -99,6 +107,12 @@ export const VaultContribute: React.FC = () => {
     e.preventDefault();
     if (!validate() || !site || !vaultConfig) return;
     setSubmitting(true);
+
+    if (DEMO_MODE && site.id === 'demo-site-id') {
+      setSubmitting(false);
+      setStep('success');
+      return;
+    }
 
     const { error } = await supabase.from('vault_entries').insert({
       wedding_site_id: site.id,
