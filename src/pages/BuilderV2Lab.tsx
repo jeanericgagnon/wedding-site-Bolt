@@ -113,6 +113,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
   const [actionNotice, setActionNotice] = useState<string>('');
   const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
+  const [showQuickHelp, setShowQuickHelp] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -208,6 +209,7 @@ export const BuilderV2Lab: React.FC = () => {
 
   const bulkDuplicate = () => {
     if (selectedIds.length <= 1) return;
+    if (!window.confirm(`Duplicate ${selectedIds.length} selected sections?`)) return;
     const selectedSet = new Set(selectedIds);
     const next: typeof sections = [];
     for (const section of sections) {
@@ -293,6 +295,22 @@ export const BuilderV2Lab: React.FC = () => {
     commit(sections.map((s) => (s.id === selected.id ? { ...s, density } : s)));
   };
 
+
+  const applyLayoutPreset = (preset: 'airy' | 'balanced' | 'compact') => {
+    if (preset === 'airy') {
+      updateDensity('comfortable');
+      notify('Applied Airy preset');
+      return;
+    }
+    if (preset === 'compact') {
+      updateDensity('compact');
+      notify('Applied Compact preset');
+      return;
+    }
+    updateDensity('comfortable');
+    notify('Applied Balanced preset');
+  };
+
   const runCommand = (label: string, action: () => void) => {
     action();
     setRecentCommands((prev) => [label, ...prev.filter((x) => x !== label)].slice(0, 6));
@@ -352,6 +370,10 @@ export const BuilderV2Lab: React.FC = () => {
       if (isMeta && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setShowCommand((v) => !v);
+      }
+      if (e.key === '?') {
+        e.preventDefault();
+        setShowQuickHelp((v) => !v);
       }
       if (isMeta && e.key.toLowerCase() === 'a') {
         e.preventDefault();
@@ -429,6 +451,7 @@ export const BuilderV2Lab: React.FC = () => {
           <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+A select all · ⇧⌘/Ctrl+I invert · Esc clear</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Command</button>
+            <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">Help ?</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
             <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Properties</button>
           </div>
@@ -612,6 +635,11 @@ export const BuilderV2Lab: React.FC = () => {
                     <option value="compact">compact</option>
                   </select>
                 </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button onClick={() => applyLayoutPreset('airy')} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Airy</button>
+                  <button onClick={() => applyLayoutPreset('balanced')} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Balanced</button>
+                  <button onClick={() => applyLayoutPreset('compact')} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Compact</button>
+                </div>
                 <button onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left hover:border-primary/40">
                   {selected.enabled ? 'Hide section' : 'Show section'}
                 </button>
@@ -634,6 +662,25 @@ export const BuilderV2Lab: React.FC = () => {
           </aside>)}
         </div>
       </div>
+
+
+
+      {showQuickHelp && (
+        <div className="fixed inset-0 z-40 bg-black/20 flex items-start justify-center pt-24" onClick={() => setShowQuickHelp(false)}>
+          <div className="w-full max-w-lg bg-white rounded-xl border border-border shadow-xl p-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-sm mb-2">Builder V2 Lab shortcuts</h3>
+            <ul className="text-xs text-text-secondary space-y-1.5">
+              <li>⌘/Ctrl + K — open command palette</li>
+              <li>⌘/Ctrl + Z / ⇧⌘/Ctrl + Z — undo / redo</li>
+              <li>⌘/Ctrl + A — select all sections</li>
+              <li>⇧⌘/Ctrl + I — invert selection</li>
+              <li>Esc — clear multi-selection</li>
+              <li>Shift click — select a range</li>
+              <li>Cmd/Ctrl click — additive selection</li>
+            </ul>
+          </div>
+        </div>
+      )}
 
       {showCommand && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-start justify-center pt-24" onClick={() => setShowCommand(false)}>
