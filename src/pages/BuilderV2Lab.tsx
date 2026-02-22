@@ -469,49 +469,6 @@ export const BuilderV2Lab: React.FC = () => {
     meta: { createdAtISO: new Date().toISOString(), updatedAtISO: new Date().toISOString() },
   }), [previewFields]);
 
-
-
-  const existingContentItems = useMemo(() => {
-    switch (selected.type) {
-      case 'hero': {
-        const items = [] as string[];
-        if (previewFields.coupleDisplayName) items.push('Couple names');
-        if (previewFields.eventDateISO) items.push('Wedding date & time');
-        return items;
-      }
-      case 'story':
-        return previewFields.storyText ? ['Story text'] : [];
-      case 'schedule': {
-        const items = [] as string[];
-        if (previewFields.scheduleTitle) items.push('Primary event title');
-        if (previewFields.scheduleNote) items.push('Primary event note');
-        return items;
-      }
-      case 'travel': {
-        const items = [] as string[];
-        if (previewFields.travelFlights) items.push('Flights');
-        if (previewFields.travelParking) items.push('Parking');
-        if (previewFields.travelHotels) items.push('Hotels');
-        if (previewFields.travelTips) items.push('Local tips');
-        return items;
-      }
-      case 'registry': {
-        const items = [] as string[];
-        if (previewFields.registryTitle) items.push('Featured registry item');
-        if (previewFields.registryNote) items.push('Registry note');
-        return items;
-      }
-      case 'rsvp': {
-        const items = [] as string[];
-        if (previewFields.rsvpTitle) items.push('RSVP heading');
-        if (previewFields.rsvpDeadlineISO) items.push('RSVP deadline');
-        return items;
-      }
-      default:
-        return [];
-    }
-  }, [selected.type, previewFields]);
-
   const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
     id: s.id,
     type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
@@ -822,120 +779,104 @@ export const BuilderV2Lab: React.FC = () => {
                       + Add section
                     </button>
 
-                    {existingContentItems.length > 0 && (
-                      <div className="space-y-1.5">
-                        <p className="text-[11px] text-text-tertiary">Already in this section</p>
-                        {existingContentItems.map((item) => (
-                          <div key={item} className="border border-border-subtle rounded-md px-2.5 py-2 bg-white text-sm text-text-secondary">
-                            {item}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      <p className="text-[11px] text-text-tertiary">Current section blocks</p>
 
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Title</span>
-                      <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                    </label>
-                    <p className="text-[11px] text-text-tertiary">Page content</p>
+                      <div className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                        <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Header</p>
+                        <label className="block">
+                          <span className="text-xs text-text-tertiary">Title</span>
+                          <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                        </label>
+                      </div>
+
+                      {selected.type === 'hero' && (
+                        <>
+                          <div id="rail-section-hero" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Couple names</p>
+                            <label className="block">
+                              <span className="text-xs text-text-tertiary">Couple names</span>
+                              <input
+                                value={previewFields.coupleDisplayName}
+                                onChange={(e) => updatePreviewField('coupleDisplayName', e.target.value)}
+                                className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
+                              />
+                            </label>
+                          </div>
+                          <div className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Date</p>
+                            <label className="block">
+                              <span className="text-xs text-text-tertiary">Wedding date & time</span>
+                              <input
+                                type="datetime-local"
+                                value={toDateTimeLocalValue(previewFields.eventDateISO)}
+                                onChange={(e) => updateWeddingDateTime(e.target.value)}
+                                className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
+                              />
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      {selected.type === 'story' && (
+                        <div id="rail-section-story" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Story text</p>
+                          <label className="block">
+                            <span className="text-xs text-text-tertiary">Story text</span>
+                            <textarea
+                              value={previewFields.storyText}
+                              onChange={(e) => updatePreviewField('storyText', e.target.value)}
+                              className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-24"
+                            />
+                          </label>
+                        </div>
+                      )}
+
+                      {selected.type === 'schedule' && (
+                        <>
+                          <div id="rail-section-schedule" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Primary event</p>
+                            <label className="block">
+                              <span className="text-xs text-text-tertiary">Primary event title</span>
+                              <input value={previewFields.scheduleTitle} onChange={(e) => updatePreviewField('scheduleTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                            </label>
+                            <label className="block">
+                              <span className="text-xs text-text-tertiary">Primary event note</span>
+                              <input value={previewFields.scheduleNote} onChange={(e) => updatePreviewField('scheduleNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      {selected.type === 'travel' && (
+                        <div id="rail-section-travel" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Travel details</p>
+                          <label className="block"><span className="text-xs text-text-tertiary">Flights</span><input value={previewFields.travelFlights} onChange={(e) => updatePreviewField('travelFlights', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                          <label className="block"><span className="text-xs text-text-tertiary">Parking</span><input value={previewFields.travelParking} onChange={(e) => updatePreviewField('travelParking', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                          <label className="block"><span className="text-xs text-text-tertiary">Hotels</span><input value={previewFields.travelHotels} onChange={(e) => updatePreviewField('travelHotels', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                          <label className="block"><span className="text-xs text-text-tertiary">Local tips</span><textarea value={previewFields.travelTips} onChange={(e) => updatePreviewField('travelTips', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" /></label>
+                        </div>
+                      )}
+
+                      {selected.type === 'registry' && (
+                        <div id="rail-section-registry" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Registry</p>
+                          <label className="block"><span className="text-xs text-text-tertiary">Featured registry item</span><input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                          <label className="block"><span className="text-xs text-text-tertiary">Registry note</span><textarea value={previewFields.registryNote} onChange={(e) => updatePreviewField('registryNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" /></label>
+                        </div>
+                      )}
+
+                      {selected.type === 'rsvp' && (
+                        <div id="rail-section-rsvp" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · RSVP</p>
+                          <label className="block"><span className="text-xs text-text-tertiary">RSVP heading</span><input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                          <label className="block"><span className="text-xs text-text-tertiary">RSVP deadline</span><input type="date" value={toDateInputValue(previewFields.rsvpDeadlineISO)} onChange={(e) => updateRsvpDeadlineDate(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
-                {propertyTab === 'content' && selected.type === 'hero' && (
-                  <div id="rail-section-hero">
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Couple names</span>
-                      <input
-                        value={previewFields.coupleDisplayName}
-                        onChange={(e) => updatePreviewField('coupleDisplayName', e.target.value)}
-                        className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Wedding date & time</span>
-                      <input
-                        type="datetime-local"
-                        value={toDateTimeLocalValue(previewFields.eventDateISO)}
-                        onChange={(e) => updateWeddingDateTime(e.target.value)}
-                        className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
-                      />
-                      <p className="text-[11px] text-text-tertiary mt-1">Stored as ISO internally.</p>
-                    </label>
-                  </div>
-                )}
-                {propertyTab === 'content' && selected.type === 'story' && (
-                  <div id="rail-section-story">
-                  <label className="block">
-                    <span className="text-xs text-text-tertiary">Story text</span>
-                    <textarea
-                      value={previewFields.storyText}
-                      onChange={(e) => updatePreviewField('storyText', e.target.value)}
-                      className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-24"
-                    />
-                  </label>
-                  </div>
-                )}
-                {propertyTab === 'content' && selected.type === 'schedule' && (
-                  <div id="rail-section-schedule">
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Primary event title</span>
-                      <input value={previewFields.scheduleTitle} onChange={(e) => updatePreviewField('scheduleTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Primary event note</span>
-                      <input value={previewFields.scheduleNote} onChange={(e) => updatePreviewField('scheduleNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                    </label>
-                  </div>
-                )}
-                {propertyTab === 'content' && selected.type === 'travel' && (
-                  <div id="rail-section-travel">
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Flights</span>
-                      <input value={previewFields.travelFlights} onChange={(e) => updatePreviewField('travelFlights', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Parking</span>
-                      <input value={previewFields.travelParking} onChange={(e) => updatePreviewField('travelParking', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Hotels</span>
-                      <input value={previewFields.travelHotels} onChange={(e) => updatePreviewField('travelHotels', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Local tips</span>
-                      <textarea value={previewFields.travelTips} onChange={(e) => updatePreviewField('travelTips', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" />
-                    </label>
-                  </div>
-                )}
-                {propertyTab === 'content' && selected.type === 'registry' && (
-                  <div id="rail-section-registry">
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Featured registry item</span>
-                      <input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">Registry note</span>
-                      <textarea value={previewFields.registryNote} onChange={(e) => updatePreviewField('registryNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" />
-                    </label>
-                  </div>
-                )}
-                {propertyTab === 'content' && selected.type === 'rsvp' && (
-                  <div id="rail-section-rsvp">
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">RSVP heading</span>
-                      <input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs text-text-tertiary">RSVP deadline</span>
-                      <input
-                        type="date"
-                        value={toDateInputValue(previewFields.rsvpDeadlineISO)}
-                        onChange={(e) => updateRsvpDeadlineDate(e.target.value)}
-                        className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
-                      />
-                      <p className="text-[11px] text-text-tertiary mt-1">Stored as ISO internally.</p>
-                    </label>
-                  </div>
-                )}
+
                 {propertyTab === 'layout' && (
                   <>
                     <label id="design-section" className="block">
