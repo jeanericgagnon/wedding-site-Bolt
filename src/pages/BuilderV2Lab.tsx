@@ -113,7 +113,7 @@ const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiS
           </span>
           <span className="truncate">{section.title}</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button onClick={(e) => { e.stopPropagation(); onMoveUp(); }} className="p-0.5" disabled={isFirst}><ArrowUp className="w-3.5 h-3.5" /></button>
           <button onClick={(e) => { e.stopPropagation(); onMoveDown(); }} className="p-0.5" disabled={isLast}><ArrowDown className="w-3.5 h-3.5" /></button>
           <button onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }} className="p-0.5">{section.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
@@ -729,7 +729,7 @@ export const BuilderV2Lab: React.FC = () => {
             <div className="sticky top-0 z-20 h-12 bg-white/95 backdrop-blur border-b border-border-subtle -mx-3 px-3 mb-2 flex items-center justify-between">
               <h2 className="text-sm font-semibold">Preview</h2>
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   {(['desktop','mobile'] as const).map((d) => (
                     <button key={d} onClick={() => setPreviewDevice(d)} className={`text-[11px] px-2 py-1 border rounded ${previewDevice === d ? 'border-primary/50 bg-primary/10 text-primary' : ''}`}>{d}</button>
                   ))}
@@ -788,7 +788,7 @@ export const BuilderV2Lab: React.FC = () => {
                       {(sectionBlocks[instance.id] ?? []).length > 0 && (
                         <div className="border-t border-border-subtle bg-white">
                           {(sectionBlocks[instance.id] ?? []).map((b) => (
-                            <div key={b.id} className="px-6 py-4 border-b border-border-subtle">
+                            <div key={b.id} className="px-6 py-4 border-b border-border-subtle bg-white/95">
                               <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">{b.type}</p>
                               <p className="text-sm text-text-secondary whitespace-pre-wrap">{b.content}</p>
                             </div>
@@ -829,7 +829,7 @@ export const BuilderV2Lab: React.FC = () => {
 
             <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-var(--rail-head-h))]">
               <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border border-border-subtle rounded-sm px-2.5 py-2">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Now editing</p>
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Now editing</p>
                 <p className="text-sm font-medium text-text-primary truncate">{selected.title}</p>
               </div>
               <div className="grid grid-cols-2 gap-1 p-1 rounded-sm border border-border-subtle bg-surface-subtle">
@@ -838,20 +838,20 @@ export const BuilderV2Lab: React.FC = () => {
               </div>
 
               <div className="border border-border rounded-sm p-2.5 bg-surface-subtle space-y-2">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{propertyTab === 'content' ? 'Content' : 'Settings'}</p>
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">{propertyTab === 'content' ? 'Content' : 'Settings'}</p>
                 {propertyTab === 'content' && (
                   <>
                     <button
                       onClick={() => setShowAddBlockPicker((v) => !v)}
-                      className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40 bg-white"
+                      className="w-full border rounded-md px-3 py-2.5 text-left text-sm font-medium hover:border-primary/40 bg-white shadow-sm hover:shadow transition-all"
                     >
                       + Add to your page
                     </button>
 
                     {showAddBlockPicker && (
-                      <div className="border border-border-subtle rounded-md p-2 bg-white grid grid-cols-3 gap-2">
+                      <div className="border border-border-subtle rounded-md p-2.5 bg-white grid grid-cols-2 gap-2.5">
                         {(['qna','story','title','text','photo'] as const).map((k) => (
-                          <button key={k} onClick={() => addBlockToSection(k)} className="text-xs border border-border rounded-sm px-2 py-2 hover:border-primary/40">{k.toUpperCase()}</button>
+                          <button key={k} onClick={() => addBlockToSection(k)} className="text-xs border border-border rounded-md px-2 py-3 hover:border-primary/40 hover:bg-primary/5 transition-all">{{'qna':'Q&A','story':'Story','title':'Title','text':'Text','photo':'Photo'}[k]}</button>
                         ))}
                       </div>
                     )}
@@ -859,36 +859,36 @@ export const BuilderV2Lab: React.FC = () => {
                     <div className="space-y-2">
                       <p className="text-[11px] text-text-tertiary">Current section blocks</p>
 
-                      <div className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
-                        <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Header</p>
+                      <div className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
+                        <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · Header</p>
                         <label className="block">
                           <span className="text-xs text-text-tertiary">Title</span>
-                          <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                          <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                         </label>
                       </div>
 
                       {selected.type === 'hero' && (
                         <>
-                          <div id="rail-section-hero" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Couple names</p>
+                          <div id="rail-section-hero" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · Couple names</p>
                             <label className="block">
                               <span className="text-xs text-text-tertiary">Couple names</span>
                               <input
                                 value={previewFields.coupleDisplayName}
                                 onChange={(e) => updatePreviewField('coupleDisplayName', e.target.value)}
-                                className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
+                                className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                               />
                             </label>
                           </div>
-                          <div className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Date</p>
+                          <div className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · Date</p>
                             <label className="block">
                               <span className="text-xs text-text-tertiary">Wedding date & time</span>
                               <input
                                 type="datetime-local"
                                 value={toDateTimeLocalValue(previewFields.eventDateISO)}
                                 onChange={(e) => updateWeddingDateTime(e.target.value)}
-                                className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
+                                className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                               />
                             </label>
                           </div>
@@ -896,8 +896,8 @@ export const BuilderV2Lab: React.FC = () => {
                       )}
 
                       {selected.type === 'story' && (
-                        <div id="rail-section-story" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Story text</p>
+                        <div id="rail-section-story" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · Story text</p>
                           <label className="block">
                             <span className="text-xs text-text-tertiary">Story text</span>
                             <textarea
@@ -911,62 +911,62 @@ export const BuilderV2Lab: React.FC = () => {
 
                       {selected.type === 'schedule' && (
                         <>
-                          <div id="rail-section-schedule" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Primary event</p>
+                          <div id="rail-section-schedule" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · Primary event</p>
                             <label className="block">
                               <span className="text-xs text-text-tertiary">Primary event title</span>
-                              <input value={previewFields.scheduleTitle} onChange={(e) => updatePreviewField('scheduleTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                              <input value={previewFields.scheduleTitle} onChange={(e) => updatePreviewField('scheduleTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                             </label>
                             <label className="block">
                               <span className="text-xs text-text-tertiary">Primary event note</span>
-                              <input value={previewFields.scheduleNote} onChange={(e) => updatePreviewField('scheduleNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                              <input value={previewFields.scheduleNote} onChange={(e) => updatePreviewField('scheduleNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                             </label>
                           </div>
                         </>
                       )}
 
                       {selected.type === 'travel' && (
-                        <div id="rail-section-travel" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Travel details</p>
-                          <label className="block"><span className="text-xs text-text-tertiary">Flights</span><input value={previewFields.travelFlights} onChange={(e) => updatePreviewField('travelFlights', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
-                          <label className="block"><span className="text-xs text-text-tertiary">Parking</span><input value={previewFields.travelParking} onChange={(e) => updatePreviewField('travelParking', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
-                          <label className="block"><span className="text-xs text-text-tertiary">Hotels</span><input value={previewFields.travelHotels} onChange={(e) => updatePreviewField('travelHotels', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                        <div id="rail-section-travel" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · Travel details</p>
+                          <label className="block"><span className="text-xs text-text-tertiary">Flights</span><input value={previewFields.travelFlights} onChange={(e) => updatePreviewField('travelFlights', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                          <label className="block"><span className="text-xs text-text-tertiary">Parking</span><input value={previewFields.travelParking} onChange={(e) => updatePreviewField('travelParking', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                          <label className="block"><span className="text-xs text-text-tertiary">Hotels</span><input value={previewFields.travelHotels} onChange={(e) => updatePreviewField('travelHotels', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                           <label className="block"><span className="text-xs text-text-tertiary">Local tips</span><textarea value={previewFields.travelTips} onChange={(e) => updatePreviewField('travelTips', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" /></label>
                         </div>
                       )}
 
                       {selected.type === 'registry' && (
-                        <div id="rail-section-registry" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · Registry</p>
-                          <label className="block"><span className="text-xs text-text-tertiary">Featured registry item</span><input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                        <div id="rail-section-registry" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · Registry</p>
+                          <label className="block"><span className="text-xs text-text-tertiary">Featured registry item</span><input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                           <label className="block"><span className="text-xs text-text-tertiary">Registry note</span><textarea value={previewFields.registryNote} onChange={(e) => updatePreviewField('registryNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" /></label>
                         </div>
                       )}
 
 
                       {(sectionBlocks[selected.id] ?? []).map((block, idx) => (
-                        <div key={block.id} className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                        <div key={block.id} className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · {block.type}</p>
-                            <div className="flex items-center gap-1">
-                              <button onClick={() => moveBlock(selected.id, block.id, -1)} className="text-[10px] border rounded px-1.5 py-0.5">↑</button>
-                              <button onClick={() => moveBlock(selected.id, block.id, 1)} className="text-[10px] border rounded px-1.5 py-0.5">↓</button>
-                              <button onClick={() => removeBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5">✕</button>
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · {block.type}</p>
+                            <div className="flex items-center gap-1.5">
+                              <button onClick={() => moveBlock(selected.id, block.id, -1)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-colors">↑</button>
+                              <button onClick={() => moveBlock(selected.id, block.id, 1)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-colors">↓</button>
+                              <button onClick={() => removeBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-colors">✕</button>
                             </div>
                           </div>
                           <textarea
                             value={block.content}
                             onChange={(e) => updateBlockContent(selected.id, block.id, e.target.value)}
-                            className="w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20"
+                            className="w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-20 focus:outline-none focus:ring-2 focus:ring-primary/20"
                           />
                         </div>
                       ))}
 
                       {selected.type === 'rsvp' && (
-                        <div id="rail-section-rsvp" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · RSVP</p>
-                          <label className="block"><span className="text-xs text-text-tertiary">RSVP heading</span><input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
-                          <label className="block"><span className="text-xs text-text-tertiary">RSVP deadline</span><input type="date" value={toDateInputValue(previewFields.rsvpDeadlineISO)} onChange={(e) => updateRsvpDeadlineDate(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
+                        <div id="rail-section-rsvp" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Block · RSVP</p>
+                          <label className="block"><span className="text-xs text-text-tertiary">RSVP heading</span><input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
+                          <label className="block"><span className="text-xs text-text-tertiary">RSVP deadline</span><input type="date" value={toDateInputValue(previewFields.rsvpDeadlineISO)} onChange={(e) => updateRsvpDeadlineDate(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                         </div>
                       )}
 
@@ -978,7 +978,7 @@ export const BuilderV2Lab: React.FC = () => {
                   <>
                     <label id="design-section" className="block">
                       <span className="text-xs text-text-tertiary">Page layout</span>
-                      <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm">
+                      <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
                         {(VARIANTS_BY_TYPE[selected.type] ?? ['default']).map((v) => (
                           <option key={v} value={v}>{v}</option>
                         ))}
