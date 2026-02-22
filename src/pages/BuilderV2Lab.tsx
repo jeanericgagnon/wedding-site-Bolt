@@ -163,7 +163,11 @@ export const BuilderV2Lab: React.FC = () => {
   const selected = sections.find((s) => s.id === selectedId) ?? sections[0];
   const selectedIds = useMemo(() => Array.from(new Set([selectedId, ...multiSelectedIds])), [selectedId, multiSelectedIds]);
 
-  const selectSection = (id: string, additive = false, range = false) => {
+  const scrollToPreviewSection = (id: string) => {
+    document.getElementById(`preview-section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const selectSection = (id: string, additive = false, range = false, scroll = false) => {
     const currentIndex = sections.findIndex((s) => s.id === id);
     const lastIndex = sections.findIndex((s) => s.id === lastSelectedId);
 
@@ -173,6 +177,7 @@ export const BuilderV2Lab: React.FC = () => {
       setSelectedId(id);
       setMultiSelectedIds(rangeIds.filter((x) => x !== id));
       setLastSelectedId(id);
+      if (scroll) scrollToPreviewSection(id);
       return;
     }
 
@@ -180,9 +185,11 @@ export const BuilderV2Lab: React.FC = () => {
     setLastSelectedId(id);
     if (!additive) {
       setMultiSelectedIds([]);
+      if (scroll) scrollToPreviewSection(id);
       return;
     }
     setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    if (scroll) scrollToPreviewSection(id);
   };
 
 
@@ -619,7 +626,7 @@ export const BuilderV2Lab: React.FC = () => {
                       multiSelected={multiSelectedIds.includes(s.id)}
                       isFirst={idx === 0}
                       isLast={idx === sections.length - 1}
-                      onSelect={() => selectSection(s.id)}
+                      onSelect={() => selectSection(s.id, false, false, true)}
                       onSelectAdditive={() => selectSection(s.id, true)}
                       onSelectRange={() => selectSection(s.id, false, true)}
                       onMoveUp={() => moveSection(s.id, -1)}
@@ -685,6 +692,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                   return (
                     <div
+                      id={`preview-section-${instance.id}`}
                       key={instance.id}
                       className={`relative transition-all duration-200 ease-out ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onClick={(e) => { if (e.shiftKey) selectSection(instance.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true); else selectSection(instance.id); }}
@@ -713,7 +721,7 @@ export const BuilderV2Lab: React.FC = () => {
                 {orderedVisible.map((s) => (
                   <button
                     key={`mini-${s.id}`}
-                    onClick={() => selectSection(s.id)}
+                    onClick={() => selectSection(s.id, false, false, true)}
                     className={`w-full text-left text-[11px] px-2 py-1.5 rounded ${selected.id === s.id ? 'bg-primary/10 text-primary' : 'hover:bg-surface-subtle text-text-secondary'}`}
                   >
                     {s.title}
@@ -750,7 +758,7 @@ export const BuilderV2Lab: React.FC = () => {
                   {orderedVisible.map((page) => (
                     <button
                       key={`rail-${page.id}`}
-                      onClick={() => selectSection(page.id)}
+                      onClick={() => selectSection(page.id, false, false, true)}
                       className={`w-full text-left border rounded-sm px-2.5 h-[var(--page-row-h)] transition-colors ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
                     >
                       <div className="flex items-center justify-between gap-2">
