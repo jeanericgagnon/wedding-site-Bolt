@@ -47,6 +47,7 @@ export const VaultContribute: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [compressionStatus, setCompressionStatus] = useState<string | null>(null);
   const [submittedYears, setSubmittedYears] = useState<number[]>([]);
   const [compressVideo, setCompressVideo] = useState(true);
 
@@ -290,9 +291,12 @@ export const VaultContribute: React.FC = () => {
         let file = selectedFiles[i];
 
         if (form.media_type === 'video' && compressVideo) {
+          setCompressionStatus(`Compressing video ${i + 1}/${selectedFiles.length} to 720p…`);
           try {
             file = await compressVideoTo720p(file);
+            setCompressionStatus(null);
           } catch (err) {
+            setCompressionStatus(null);
             setUploadProgress(null);
             setSubmitting(false);
             setSubmitError(err instanceof Error ? err.message : 'Video compression failed');
@@ -336,6 +340,7 @@ export const VaultContribute: React.FC = () => {
     if (DEMO_MODE && site.id === 'demo-site-id') {
       setSubmitting(false);
       setUploadProgress(null);
+      setCompressionStatus(null);
       markSubmitted(vaultConfig.duration_years);
       setStep('success');
       return;
@@ -359,6 +364,7 @@ export const VaultContribute: React.FC = () => {
 
     setSubmitting(false);
     setUploadProgress(null);
+    setCompressionStatus(null);
     if (error) {
       setSubmitError(`Could not save your message: ${error.message}`);
     } else {
@@ -691,6 +697,10 @@ export const VaultContribute: React.FC = () => {
                 <div className="p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm">
                   {submitError}
                 </div>
+              )}
+
+              {compressionStatus && (
+                <div className="text-xs text-stone-500">{compressionStatus}</div>
               )}
 
               {uploadProgress !== null && (
