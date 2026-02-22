@@ -570,13 +570,13 @@ export const BuilderV2Lab: React.FC = () => {
   }, [canRedo, canUndo, sections, selected.id, showCommand, commandItems, commandIndex]);
 
   return (
-    <div className="h-screen bg-background text-text-primary overflow-hidden">
-      <div className="w-full px-2 md:px-3 py-1.5 h-full flex flex-col gap-1.5">
+    <div className="h-screen bg-[#f6f6f6] text-text-primary overflow-hidden">
+      <div className="w-full px-1.5 md:px-2 py-1 h-full flex flex-col gap-1">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
-            <h1 className="text-xl md:text-2xl font-semibold mt-1">Functional shell (Sprint 2 in progress)</h1>
-            <p className="text-text-secondary mt-1 text-sm max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
+            <h1 className="text-lg md:text-xl font-semibold mt-0.5">Functional shell (Sprint 2 in progress)</h1>
+            <p className="text-text-secondary mt-0.5 text-xs max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
           </div>
           <div className="flex items-center gap-3">
             <span className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full ${saveState === 'saved' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
@@ -590,14 +590,14 @@ export const BuilderV2Lab: React.FC = () => {
         <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
           <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Canvas-first mode. Open tools only when needed.</p>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
-            <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
-            <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Edit rail</button>
-            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} Pages</button>
+            <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
+            <button onClick={() => setShowCommand(true)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
+            <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Edit rail</button>
+            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} Pages</button>
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[200px_1fr_380px]' : showProperties ? 'lg:grid-cols-[1fr_380px]' : showStructure ? 'lg:grid-cols-[200px_1fr]' : 'lg:grid-cols-1'} gap-2 flex-1 min-h-0`}>
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[188px_minmax(0,1fr)_372px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_372px]' : showStructure ? 'lg:grid-cols-[188px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-2 flex-1 min-h-0`}>
           {!focusPreview && showStructure && (<aside className="rounded-lg border border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
@@ -666,7 +666,7 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
-            <div className="h-[calc(100%-58px)] rounded-md border border-border-subtle bg-surface-subtle p-2 overflow-auto">
+            <div className="h-[calc(100%-52px)] rounded-sm border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto">
               <div className={`mx-auto bg-white rounded-sm border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
@@ -685,7 +685,7 @@ export const BuilderV2Lab: React.FC = () => {
                       className={`relative transition-all duration-200 ease-out ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onClick={(e) => { if (e.shiftKey) selectSection(instance.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true); else selectSection(instance.id); }}
                     >
-                      <div className="absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded bg-black/65 text-white">{sectionState.title} · {instance.variant}</div>
+                      <div className="absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded bg-black/55 text-white">{sectionState.title} · {instance.variant}</div>
                       {Content ? (
                         <Content data={previewData} instance={instance} />
                       ) : (
@@ -720,12 +720,12 @@ export const BuilderV2Lab: React.FC = () => {
           </main>
 
           {!focusPreview && showProperties && (<aside className="rounded-lg border border-border bg-white p-0 overflow-hidden h-full min-h-0">
-            <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
+            <div className="px-4 py-2.5 border-b border-border-subtle flex items-center justify-between">
               <h2 className="text-[1.02rem] font-semibold">Edit website</h2>
               <button onClick={() => setShowProperties(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
             </div>
 
-            <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-53px)]">
+            <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-50px)]">
               <div className="space-y-2">
                 <button className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
                   <p className="text-sm font-medium">Design</p>
@@ -747,7 +747,7 @@ export const BuilderV2Lab: React.FC = () => {
                     <button
                       key={`rail-${page.id}`}
                       onClick={() => selectSection(page.id)}
-                      className={`w-full text-left border rounded-sm px-2.5 py-1.5 transition-colors ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
+                      className={`w-full text-left border rounded-sm px-2.5 py-2 transition-colors min-h-[52px] ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
