@@ -571,8 +571,8 @@ export const BuilderV2Lab: React.FC = () => {
 
   return (
     <div className="h-screen bg-[#f6f6f6] text-text-primary overflow-hidden">
-      <div className="w-full px-1.5 md:px-2 py-1 h-full flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-4">
+      <div className="w-full px-1.5 md:px-2 py-1 h-full flex flex-col gap-1 [--topbar-h:48px] [--rail-head-h:50px] [--page-row-h:52px]">
+        <div className="h-[var(--topbar-h)] flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
             <h1 className="text-lg md:text-xl font-semibold mt-0.5">Functional shell (Sprint 2 in progress)</h1>
@@ -650,7 +650,7 @@ export const BuilderV2Lab: React.FC = () => {
           </aside>)}
 
           <main className="relative rounded-lg border border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
-            <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-border-subtle -mx-3 px-3 py-2 mb-2 flex items-center justify-between">
+            <div className="sticky top-0 z-20 h-12 bg-white/95 backdrop-blur border-b border-border-subtle -mx-3 px-3 mb-2 flex items-center justify-between">
               <h2 className="text-sm font-semibold">Preview</h2>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -666,7 +666,7 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
-            <div className="h-[calc(100%-52px)] rounded-sm border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto">
+            <div className="h-[calc(100%-56px)] rounded-sm border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto">
               <div className={`mx-auto bg-white rounded-sm border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
@@ -720,12 +720,12 @@ export const BuilderV2Lab: React.FC = () => {
           </main>
 
           {!focusPreview && showProperties && (<aside className="rounded-lg border border-border bg-white p-0 overflow-hidden h-full min-h-0">
-            <div className="px-4 py-2.5 border-b border-border-subtle flex items-center justify-between">
+            <div className="px-4 h-[var(--rail-head-h)] border-b border-border-subtle flex items-center justify-between">
               <h2 className="text-[1.02rem] font-semibold">Edit website</h2>
               <button onClick={() => setShowProperties(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
             </div>
 
-            <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-50px)]">
+            <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-var(--rail-head-h))]">
               <div className="space-y-2">
                 <button className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
                   <p className="text-sm font-medium">Design</p>
@@ -747,7 +747,7 @@ export const BuilderV2Lab: React.FC = () => {
                     <button
                       key={`rail-${page.id}`}
                       onClick={() => selectSection(page.id)}
-                      className={`w-full text-left border rounded-sm px-2.5 py-2 transition-colors min-h-[52px] ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
+                      className={`w-full text-left border rounded-sm px-2.5 h-[var(--page-row-h)] transition-colors ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
