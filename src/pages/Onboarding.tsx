@@ -124,7 +124,7 @@ export const Onboarding: React.FC = () => {
     const firstName = names[0] || 'Alex';
     const secondName = names[1] || 'Jordan';
 
-    await createWeddingSite({
+    const ok = await createWeddingSite({
       couple_name_1: firstName,
       couple_name_2: secondName,
       couple_first_name: firstName,
@@ -137,11 +137,15 @@ export const Onboarding: React.FC = () => {
     });
 
     setLoading(false);
-    navigate('/dashboard/builder');
+    if (ok) navigate('/dashboard/builder');
   };
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
-    if (!user) return;
+    if (!user) return false;
+
+    if (isDemoMode) {
+      return true;
+    }
 
     try {
       const { error } = await supabase
@@ -160,20 +164,22 @@ export const Onboarding: React.FC = () => {
         });
 
       if (error) throw error;
+      return true;
     } catch {
       alert('Failed to create wedding site. Please try again.');
+      return false;
     }
   };
 
   const handleManualSetup = async () => {
     setLoading(true);
-    await createWeddingSite({
+    const ok = await createWeddingSite({
       couple_name_1: 'Partner 1',
       couple_name_2: 'Partner 2',
       site_url: user?.email?.split('@')[0] || 'my-wedding',
     });
     setLoading(false);
-    navigate('/dashboard');
+    if (ok) navigate('/dashboard');
   };
 
   const nextStep = async () => {
@@ -188,7 +194,7 @@ export const Onboarding: React.FC = () => {
       const firstName = names[0] || '';
       const secondName = names[1] || names[0] || '';
 
-      await createWeddingSite({
+      const ok = await createWeddingSite({
         couple_name_1: firstName,
         couple_name_2: secondName,
         couple_first_name: firstName,
@@ -201,7 +207,7 @@ export const Onboarding: React.FC = () => {
       });
 
       setLoading(false);
-      setStep('complete');
+      if (ok) setStep('complete');
     }
   };
 
