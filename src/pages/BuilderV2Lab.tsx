@@ -23,15 +23,17 @@ type LabSection = {
   title: string;
   variant: string;
   enabled: boolean;
+  subtitle?: string;
+  density?: 'compact' | 'comfortable';
 };
 
 const INITIAL_SECTIONS: LabSection[] = [
-  { id: 'hero', type: 'hero', title: 'Hero', variant: 'countdown', enabled: true },
-  { id: 'story', type: 'story', title: 'Story', variant: 'timeline', enabled: true },
-  { id: 'schedule', type: 'schedule', title: 'Schedule', variant: 'dayTabs', enabled: true },
-  { id: 'travel', type: 'travel', title: 'Travel', variant: 'localGuide', enabled: true },
-  { id: 'registry', type: 'registry', title: 'Registry', variant: 'fundHighlight', enabled: true },
-  { id: 'rsvp', type: 'rsvp', title: 'RSVP', variant: 'card', enabled: true },
+  { id: 'hero', type: 'hero', title: 'Hero', subtitle: 'Alex & Jordan · June 21, 2026', variant: 'countdown', enabled: true, density: 'comfortable' },
+  { id: 'story', type: 'story', title: 'Story', subtitle: 'How we met', variant: 'timeline', enabled: true, density: 'comfortable' },
+  { id: 'schedule', type: 'schedule', title: 'Schedule', subtitle: 'Weekend events', variant: 'dayTabs', enabled: true, density: 'comfortable' },
+  { id: 'travel', type: 'travel', title: 'Travel', subtitle: 'Stay + transport', variant: 'localGuide', enabled: true, density: 'comfortable' },
+  { id: 'registry', type: 'registry', title: 'Registry', subtitle: 'Gift options', variant: 'fundHighlight', enabled: true, density: 'comfortable' },
+  { id: 'rsvp', type: 'rsvp', title: 'RSVP', subtitle: 'Let us know', variant: 'card', enabled: true, density: 'comfortable' },
 ];
 
 const ADDABLE_SECTIONS = ['Gallery', 'FAQ', 'Venue', 'Countdown', 'Wedding Party', 'Dress Code', 'Accommodations', 'Directions'];
@@ -269,7 +271,7 @@ export const BuilderV2Lab: React.FC = () => {
   const addSection = (typeLabel: string) => {
     const normalizedType = typeLabel.toLowerCase().replace(/\s+/g, '-');
     const id = `${normalizedType}-${Date.now()}`;
-    const next = [...sections, { id, type: normalizedType, title: typeLabel, variant: 'default', enabled: true }];
+    const next = [...sections, { id, type: normalizedType, title: typeLabel, subtitle: '', variant: 'default', enabled: true, density: 'comfortable' as const }];
     setSelectedId(id);
     commit(next);
   };
@@ -280,6 +282,15 @@ export const BuilderV2Lab: React.FC = () => {
 
   const updateVariant = (variant: string) => {
     commit(sections.map((s) => (s.id === selected.id ? { ...s, variant } : s)));
+  };
+
+
+  const updateSubtitle = (subtitle: string) => {
+    commit(sections.map((s) => (s.id === selected.id ? { ...s, subtitle } : s)));
+  };
+
+  const updateDensity = (density: 'compact' | 'comfortable') => {
+    commit(sections.map((s) => (s.id === selected.id ? { ...s, density } : s)));
   };
 
   const runCommand = (label: string, action: () => void) => {
@@ -523,9 +534,10 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
             <div className="h-[500px] rounded-xl border border-border-subtle bg-surface-subtle p-5 space-y-3 overflow-auto">
               {orderedVisible.map((s) => (
-                <div key={s.id} className={`rounded-xl bg-white border p-4 ${selected.id === s.id ? 'border-primary/40 ring-2 ring-primary/20' : multiSelectedIds.includes(s.id) ? 'border-primary/20 bg-primary/5' : 'border-border-subtle'}`} onClick={(e) => { if (e.shiftKey) selectSection(s.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(s.id, true); else selectSection(s.id); }}>
+                <div key={s.id} className={`rounded-xl bg-white border ${s.density === 'compact' ? 'p-3' : 'p-4'} ${selected.id === s.id ? 'border-primary/40 ring-2 ring-primary/20' : multiSelectedIds.includes(s.id) ? 'border-primary/20 bg-primary/5' : 'border-border-subtle'}`} onClick={(e) => { if (e.shiftKey) selectSection(s.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(s.id, true); else selectSection(s.id); }}>
                   <p className="font-medium text-sm">{s.title}</p>
                   <p className="text-xs text-text-tertiary mt-1">Variant: {s.variant}</p>
+                  {s.subtitle && <p className="text-xs text-text-secondary mt-1">{s.subtitle}</p>}
                 </div>
               ))}
             </div>
@@ -559,6 +571,12 @@ export const BuilderV2Lab: React.FC = () => {
                   <span className="text-xs text-text-tertiary">Section title</span>
                   <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
                 </label>
+                {['hero','story','schedule','travel','registry','rsvp'].includes(selected.type) && (
+                  <label className="block">
+                    <span className="text-xs text-text-tertiary">Subtitle</span>
+                    <input value={selected.subtitle ?? ''} onChange={(e) => updateSubtitle(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+                  </label>
+                )}
                 <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
                   <p className="text-xs text-text-tertiary">Section id</p>
                   <p className="text-sm font-medium mt-0.5">{selected.id}</p>
@@ -585,6 +603,13 @@ export const BuilderV2Lab: React.FC = () => {
                     {(VARIANTS_BY_TYPE[selected.type] ?? ['default']).map((v) => (
                       <option key={v} value={v}>{v}</option>
                     ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-xs text-text-tertiary">Density</span>
+                  <select value={selected.density ?? 'comfortable'} onChange={(e) => updateDensity(e.target.value as 'compact' | 'comfortable')} className="mt-1 w-full border rounded-md px-3 py-2 bg-white">
+                    <option value="comfortable">comfortable</option>
+                    <option value="compact">compact</option>
                   </select>
                 </label>
                 <button onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left hover:border-primary/40">
