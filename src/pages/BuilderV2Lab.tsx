@@ -137,6 +137,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [actionNotice, setActionNotice] = useState<string>('');
   const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
   const [showQuickHelp, setShowQuickHelp] = useState(false);
+  const [showAdvancedActions, setShowAdvancedActions] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [previewScale, setPreviewScale] = useState(100);
   const [focusPreview, setFocusPreview] = useState(false);
@@ -507,7 +508,7 @@ export const BuilderV2Lab: React.FC = () => {
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
             <h1 className="text-3xl md:text-4xl font-bold mt-2">Functional shell (Sprint 2 in progress)</h1>
-            <p className="text-text-secondary mt-2 max-w-2xl">Isolated V2 with real section state, selection, reorder, visibility, undo/redo, autosave indicator, plus searchable add-section flow.</p>
+            <p className="text-text-secondary mt-2 max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
           </div>
           <div className="flex items-center gap-3">
             <span className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full ${saveState === 'saved' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
@@ -519,7 +520,7 @@ export const BuilderV2Lab: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
-          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Keyboard controls are available in Shortcuts.</p>
+          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Use Shortcuts for keyboard commands.</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Command</button>
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
@@ -542,13 +543,18 @@ export const BuilderV2Lab: React.FC = () => {
               <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">Selected {1 + multiSelectedIds.length}</span>
             </div>
             <div className="mb-3 flex flex-wrap gap-2">
-              <button onClick={() => selected && moveSection(selected.id, -1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowUp className="w-3 h-3" /> Move up</button>
-              <button onClick={() => selected && moveSection(selected.id, 1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowDown className="w-3 h-3" /> Move down</button>
+              <button onClick={() => selected && moveSection(selected.id, -1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowUp className="w-3 h-3" /> Move</button>
               <button onClick={() => selected && toggleVisibility(selected.id)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">{selected?.enabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />} {selected?.enabled ? 'Hide' : 'Show'}</button>
-              <button onClick={clearSelection} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Clear multi</button>
-              <button onClick={selectAllSections} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Select all</button>
-              <button onClick={invertSelection} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Invert</button>
+              <button onClick={() => setShowAdvancedActions((v) => !v)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">{showAdvancedActions ? 'Less' : 'More'} actions</button>
             </div>
+            {showAdvancedActions && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button onClick={() => selected && moveSection(selected.id, 1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1"><ArrowDown className="w-3 h-3" /> Move down</button>
+                <button onClick={clearSelection} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Clear multi</button>
+                <button onClick={selectAllSections} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Select all</button>
+                <button onClick={invertSelection} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Invert</button>
+              </div>
+            )}
             {selectedIds.length > 1 && (
               <div className="mb-3 flex flex-wrap gap-2">
                 <button onClick={() => bulkMoveBlock(-1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Move block up</button>
@@ -653,7 +659,7 @@ export const BuilderV2Lab: React.FC = () => {
                   return (
                     <div
                       key={instance.id}
-                      className={`relative transition-all duration-150 ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
+                      className={`relative transition-all duration-200 ease-out ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onClick={(e) => { if (e.shiftKey) selectSection(instance.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true); else selectSection(instance.id); }}
                     >
                       <div className="absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded bg-black/65 text-white">{sectionState.title} · {instance.variant}</div>
@@ -694,6 +700,7 @@ export const BuilderV2Lab: React.FC = () => {
             <div className="flex items-center gap-2 mb-3">
               <SlidersHorizontal className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Properties</h2>
+              <p className="text-[11px] text-text-tertiary">Start with Content, then adjust Layout.</p>
             </div>
 
             <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-surface-subtle border border-border-subtle mb-3 text-xs">
