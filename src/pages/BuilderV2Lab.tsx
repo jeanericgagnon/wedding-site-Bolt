@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
+import { getSectionComponent } from '../sections/sectionRegistry';
+import type { SectionType, SectionInstance } from '../types/layoutConfig';
+import type { WeddingDataV1 } from '../types/weddingData';
+import { demoWeddingSite, demoEvents } from '../lib/demoData';
 import {
   DndContext,
   PointerSensor,
@@ -48,6 +52,24 @@ const VARIANTS_BY_TYPE: Record<string, string[]> = {
   venue: ['default'],
   countdown: ['default'],
   rsvp: ['default'],
+};
+
+const SECTION_TYPE_MAP: Record<string, SectionType> = {
+  hero: 'hero',
+  story: 'story',
+  schedule: 'schedule',
+  travel: 'travel',
+  registry: 'registry',
+  rsvp: 'rsvp',
+  faq: 'faq',
+  venue: 'venue',
+  countdown: 'countdown',
+  gallery: 'gallery',
+  accommodations: 'accommodations',
+  contact: 'contact',
+  'wedding-party': 'wedding-party',
+  'dress-code': 'dress-code',
+  directions: 'directions',
 };
 
 
@@ -327,6 +349,43 @@ export const BuilderV2Lab: React.FC = () => {
   const orderedVisible = useMemo(() => sections.filter((s) => s.enabled), [sections]);
   const filteredAddables = useMemo(() => ADDABLE_SECTIONS.filter((name) => name.toLowerCase().includes(addQuery.trim().toLowerCase())), [addQuery]);
 
+  const previewData: WeddingDataV1 = useMemo(() => ({
+    version: '1',
+    couple: {
+      partner1Name: demoWeddingSite.couple_name_1,
+      partner2Name: demoWeddingSite.couple_name_2,
+      displayName: `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
+      story: 'A modern love story from city coffee dates to sunset vows in Napa.',
+    },
+    event: {
+      weddingDateISO: `${demoWeddingSite.wedding_date}T16:00:00`,
+      timezone: 'America/Los_Angeles',
+    },
+    venues: [
+      { id: 'venue-main', name: demoWeddingSite.venue_name, address: demoWeddingSite.venue_location },
+    ],
+    schedule: demoEvents.map((e) => ({ id: e.id, label: e.event_name, startTimeISO: `${e.event_date}T${e.start_time}:00`, venueId: 'venue-main', notes: e.description })),
+    rsvp: { enabled: true, deadlineISO: `${demoWeddingSite.wedding_date}T00:00:00` },
+    travel: { notes: 'Book early for best rates. Shuttle details shared 2 weeks before.', parkingInfo: 'On-site valet + overflow lot', hotelInfo: 'Room blocks at River Inn and Garden Suites', flightInfo: 'Fly into SFO/OAK, then shuttle or rideshare.' },
+    registry: { links: [{ id: 'reg-1', label: 'Honeymoon Fund', url: 'https://example.com/honeymoon' }], notes: 'Your presence is our favorite gift.' },
+    faq: [
+      { id: 'faq-1', q: 'What should I wear?', a: 'Cocktail attire encouraged.' },
+      { id: 'faq-2', q: 'Can I bring a plus one?', a: 'If your invite includes one, yes.' },
+    ],
+    theme: { preset: 'romantic' },
+    media: { heroImageUrl: demoWeddingSite.hero_image_url, gallery: [{ id: 'g1', url: demoWeddingSite.hero_image_url || '', caption: 'Engagement' }] },
+    meta: { createdAtISO: new Date().toISOString(), updatedAtISO: new Date().toISOString() },
+  }), []);
+
+  const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
+    id: s.id,
+    type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
+    variant: s.variant,
+    enabled: s.enabled,
+    bindings: {},
+    settings: { showTitle: true, title: s.title, subtitle: s.subtitle },
+  })), [orderedVisible]);
+
   const commandItems = useMemo(() => {
     const base = [
       ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, keywords: ['insert', 'new', name.toLowerCase()], action: () => runCommand(`Add section: ${name}`, () => addSection(name)) })),
@@ -559,14 +618,38 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
-            <div className="h-[500px] rounded-xl border border-border-subtle bg-surface-subtle p-5 space-y-3 overflow-auto">
-              {orderedVisible.map((s) => (
-                <div key={s.id} className={`rounded-xl bg-white border ${s.density === 'compact' ? 'p-3' : 'p-4'} ${selected.id === s.id ? 'border-primary/40 ring-2 ring-primary/20' : multiSelectedIds.includes(s.id) ? 'border-primary/20 bg-primary/5' : 'border-border-subtle'}`} onClick={(e) => { if (e.shiftKey) selectSection(s.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(s.id, true); else selectSection(s.id); }}>
-                  <p className="font-medium text-sm">{s.title}</p>
-                  <p className="text-xs text-text-tertiary mt-1">Variant: {s.variant}</p>
-                  {s.subtitle && <p className="text-xs text-text-secondary mt-1">{s.subtitle}</p>}
-                </div>
-              ))}
+            <div className="h-[500px] rounded-xl border border-border-subtle bg-surface-subtle p-3 overflow-auto">
+              <div className="bg-white rounded-lg border border-border-subtle overflow-hidden">
+                {previewInstances.map((instance) => {
+                  const sectionState = orderedVisible.find((x) => x.id === instance.id);
+                  if (!sectionState) return null;
+
+                  let Content: React.FC<{ data: WeddingDataV1; instance: SectionInstance }> | null = null;
+                  try {
+                    Content = getSectionComponent(instance.type, instance.variant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
+                  } catch {
+                    Content = null;
+                  }
+
+                  return (
+                    <div
+                      key={instance.id}
+                      className={`relative ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
+                      onClick={(e) => { if (e.shiftKey) selectSection(instance.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true); else selectSection(instance.id); }}
+                    >
+                      <div className="absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded bg-black/65 text-white">{sectionState.title} · {instance.variant}</div>
+                      {Content ? (
+                        <Content data={previewData} instance={instance} />
+                      ) : (
+                        <div className={`border-b border-border-subtle bg-white ${sectionState.density === 'compact' ? 'p-3' : 'p-4'}`}>
+                          <p className="font-medium text-sm">{sectionState.title}</p>
+                          <p className="text-xs text-text-tertiary mt-1">Preview placeholder ({instance.type}:{instance.variant})</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </main>
 
