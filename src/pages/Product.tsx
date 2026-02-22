@@ -193,7 +193,7 @@ export const Product: React.FC = () => {
       {/* PAIN → FIX CAROUSEL */}
       <section id="engineering" className="section-shell bg-surface-subtle">
         <div className="container-custom">
-          <div className="text-center mb-12">
+          <div className="section-intro">
             <h2 className="section-title mb-4 text-text-primary">
               Wedding sites fail in <span className="text-primary">predictable ways</span>
             </h2>
@@ -254,7 +254,7 @@ export const Product: React.FC = () => {
       {/* FEATURE TABS */}
       <section id="features" className="section-shell bg-background">
         <div className="container-custom">
-          <div className="text-center mb-12">
+          <div className="section-intro">
             <h2 className="section-title mb-4 text-text-primary">
               Every feature built for <span className="text-accent">trust and correctness</span>
             </h2>

@@ -236,7 +236,7 @@ export const DashboardOverview: React.FC = () => {
   return (
     <DashboardLayout currentPage="overview">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="rounded-2xl border border-border-subtle bg-surface px-5 py-4 md:px-6 md:py-5">
+        <div className="card-clean px-5 py-4 md:px-6 md:py-5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-text-tertiary">Setup progress</p>
