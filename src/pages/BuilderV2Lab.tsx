@@ -469,6 +469,49 @@ export const BuilderV2Lab: React.FC = () => {
     meta: { createdAtISO: new Date().toISOString(), updatedAtISO: new Date().toISOString() },
   }), [previewFields]);
 
+
+
+  const existingContentItems = useMemo(() => {
+    switch (selected.type) {
+      case 'hero': {
+        const items = [] as string[];
+        if (previewFields.coupleDisplayName) items.push('Couple names');
+        if (previewFields.eventDateISO) items.push('Wedding date & time');
+        return items;
+      }
+      case 'story':
+        return previewFields.storyText ? ['Story text'] : [];
+      case 'schedule': {
+        const items = [] as string[];
+        if (previewFields.scheduleTitle) items.push('Primary event title');
+        if (previewFields.scheduleNote) items.push('Primary event note');
+        return items;
+      }
+      case 'travel': {
+        const items = [] as string[];
+        if (previewFields.travelFlights) items.push('Flights');
+        if (previewFields.travelParking) items.push('Parking');
+        if (previewFields.travelHotels) items.push('Hotels');
+        if (previewFields.travelTips) items.push('Local tips');
+        return items;
+      }
+      case 'registry': {
+        const items = [] as string[];
+        if (previewFields.registryTitle) items.push('Featured registry item');
+        if (previewFields.registryNote) items.push('Registry note');
+        return items;
+      }
+      case 'rsvp': {
+        const items = [] as string[];
+        if (previewFields.rsvpTitle) items.push('RSVP heading');
+        if (previewFields.rsvpDeadlineISO) items.push('RSVP deadline');
+        return items;
+      }
+      default:
+        return [];
+    }
+  }, [selected.type, previewFields]);
+
   const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
     id: s.id,
     type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
@@ -772,6 +815,24 @@ export const BuilderV2Lab: React.FC = () => {
                 <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{propertyTab === 'content' ? 'Content' : 'Settings'}</p>
                 {propertyTab === 'content' && (
                   <>
+                    <button
+                      onClick={() => notify('Add section panel coming next')}
+                      className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40 bg-white"
+                    >
+                      + Add section
+                    </button>
+
+                    {existingContentItems.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-[11px] text-text-tertiary">Already in this section</p>
+                        {existingContentItems.map((item) => (
+                          <div key={item} className="border border-border-subtle rounded-md px-2.5 py-2 bg-white text-sm text-text-secondary">
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Title</span>
                       <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
