@@ -1211,9 +1211,9 @@ export const BuilderV2Lab: React.FC = () => {
                     setShowAddBlockPicker(false);
                     setFocusPreview(false);
                     setShowStructure(false);
-                    setShowProperties(true);
-                    setPropertyTab('layout');
-                    notify('Select a section in preview, then click again to open editor.');
+                    setShowProperties(false);
+                    setPrimedPreviewSectionId(null);
+                    notify('Guide mode on. Click a section, then click again to open editor.');
                   }}
                   className="text-[11px] border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 hover:bg-primary/5 transition-all"
                 >
