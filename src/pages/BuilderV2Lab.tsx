@@ -651,100 +651,67 @@ export const BuilderV2Lab: React.FC = () => {
             )}
           </main>
 
-          {!focusPreview && showProperties && (<aside className="rounded-2xl border border-border bg-surface p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <SlidersHorizontal className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold">Edit website</h2>
-              <p className="text-[11px] text-text-tertiary">Design, page settings, and content edits.</p>
+          {!focusPreview && showProperties && (<aside className="rounded-2xl border border-border bg-white p-0 overflow-hidden">
+            <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
+              <h2 className="text-base font-semibold">Edit website</h2>
+              <button onClick={() => setShowProperties(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
             </div>
 
-            <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-surface-subtle border border-border-subtle mb-3 text-xs">
-              {([
-                ['content', 'Page'],
-                ['layout', 'Design'],
-                ['data', 'Data'],
-              ] as const).map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setPropertyTab(id)}
-                  className={`px-2 py-1.5 rounded-md font-medium ${propertyTab === id ? 'bg-white border border-border text-text-primary' : 'text-text-secondary'}`}
-                >
-                  {label}
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                <button className="w-full text-left border border-border rounded-lg px-3 py-2.5 hover:border-primary/30">
+                  <p className="text-sm font-medium">Design</p>
+                  <p className="text-xs text-text-tertiary">Update style, color and layout</p>
                 </button>
-              ))}
-            </div>
-
-            {propertyTab === 'content' && (
-              <div className="space-y-3 text-sm">
-                <label className="block">
-                  <span className="text-xs text-text-tertiary">Section title</span>
-                  <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
-                </label>
-                {['hero','story','schedule','travel','registry','rsvp'].includes(selected.type) && (
-                  <label className="block">
-                    <span className="text-xs text-text-tertiary">Subtitle</span>
-                    <input value={selected.subtitle ?? ''} onChange={(e) => updateSubtitle(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
-                  </label>
-                )}
-                <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
-                  <p className="text-xs text-text-tertiary">Section id</p>
-                  <p className="text-sm font-medium mt-0.5">{selected.id}</p>
-                </div>
-                {selectedIds.length > 1 && (
-                  <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
-                    <p className="text-xs text-text-tertiary mb-1">Multi-selected sections ({selectedIds.length})</p>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedIds.map((id) => {
-                        const section = sections.find((s) => s.id === id);
-                        return <span key={id} className="text-[11px] px-2 py-1 rounded-full bg-white border border-border-subtle">{section?.title ?? id}</span>;
-                      })}
-                    </div>
-                  </div>
-                )}
+                <button className="w-full text-left border border-border rounded-lg px-3 py-2.5 hover:border-primary/30">
+                  <p className="text-sm font-medium">Privacy & URL</p>
+                  <p className="text-xs text-text-tertiary">Manage visibility and link preferences</p>
+                </button>
               </div>
-            )}
 
-            {propertyTab === 'layout' && (
-              <div className="space-y-3 text-sm">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Pages</p>
+                  <button onClick={() => setShowStructure(true)} className="text-xs text-primary hover:text-primary-hover">Open page organizer</button>
+                </div>
+                <div className="space-y-2 max-h-[320px] overflow-auto pr-1">
+                  {orderedVisible.map((page) => (
+                    <button
+                      key={`rail-${page.id}`}
+                      onClick={() => selectSection(page.id)}
+                      className={`w-full text-left border rounded-lg px-3 py-2.5 transition-colors ${selected.id === page.id ? 'border-primary/35 bg-primary/5' : 'border-border hover:border-primary/25'}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{page.title}</p>
+                          {page.subtitle && <p className="text-xs text-text-tertiary truncate mt-0.5">{page.subtitle}</p>}
+                        </div>
+                        <span className="text-text-tertiary">›</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border border-border rounded-lg p-3 bg-surface-subtle space-y-3">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">Selected page</p>
                 <label className="block">
-                  <span className="text-xs text-text-tertiary">Variant</span>
-                  <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white">
+                  <span className="text-xs text-text-tertiary">Title</span>
+                  <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-text-tertiary">Layout variant</span>
+                  <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm">
                     {(VARIANTS_BY_TYPE[selected.type] ?? ['default']).map((v) => (
                       <option key={v} value={v}>{v}</option>
                     ))}
                   </select>
                 </label>
-                <label className="block">
-                  <span className="text-xs text-text-tertiary">Density</span>
-                  <select value={selected.density ?? 'comfortable'} onChange={(e) => updateDensity(e.target.value as 'compact' | 'comfortable')} className="mt-1 w-full border rounded-md px-3 py-2 bg-white">
-                    <option value="comfortable">comfortable</option>
-                    <option value="compact">compact</option>
-                  </select>
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button onClick={() => applyLayoutPreset('airy')} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Airy</button>
-                  <button onClick={() => applyLayoutPreset('balanced')} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Balanced</button>
-                  <button onClick={() => applyLayoutPreset('compact')} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Compact</button>
-                </div>
-                <button onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left hover:border-primary/40">
-                  {selected.enabled ? 'Hide section' : 'Show section'}
+                <button onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40">
+                  {selected.enabled ? 'Hide page' : 'Show page'}
                 </button>
               </div>
-            )}
-
-            {propertyTab === 'data' && (
-              <div className="space-y-3 text-sm">
-                <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
-                  <p className="text-xs text-text-tertiary">Data source</p>
-                  <p className="text-sm font-medium mt-0.5">Demo wedding dataset</p>
-                  <p className="text-xs text-text-secondary mt-1">Bindings are mocked in this editor phase. Rendering/data wiring comes next.</p>
-                </div>
-                <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
-                  <p className="text-xs text-text-tertiary">Binding mode</p>
-                  <p className="text-sm font-medium mt-0.5">Auto</p>
-                </div>
-              </div>
-            )}
+            </div>
           </aside>)}
         </div>
       </div>
