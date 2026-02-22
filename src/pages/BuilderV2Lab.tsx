@@ -1,6 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2 } from 'lucide-react';
+import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type LabSection = {
   id: string;
@@ -21,12 +36,52 @@ const INITIAL_SECTIONS: LabSection[] = [
 
 const ADDABLE_SECTIONS = ['Gallery', 'FAQ', 'Venue', 'Countdown', 'Wedding Party', 'Dress Code', 'Accommodations', 'Directions'];
 
+type StructureItemProps = {
+  section: LabSection;
+  selected: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  onSelect: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onToggleVisibility: () => void;
+};
+
+const StructureItem: React.FC<StructureItemProps> = ({ section, selected, isFirst, isLast, onSelect, onMoveUp, onMoveDown, onToggleVisibility }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.7 : 1 }}
+      onClick={onSelect}
+      className={`w-full text-left px-3 py-2 rounded-lg border text-sm ${selected ? 'bg-primary/10 border-primary/40 text-primary shadow-sm' : 'bg-surface-subtle border-border text-text-secondary'}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span {...attributes} {...listeners} onClick={(e) => e.stopPropagation()} className="cursor-grab active:cursor-grabbing text-text-tertiary">
+            <GripVertical className="w-3.5 h-3.5" />
+          </span>
+          <span className="truncate">{section.title}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={(e) => { e.stopPropagation(); onMoveUp(); }} className="p-0.5" disabled={isFirst}><ArrowUp className="w-3.5 h-3.5" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onMoveDown(); }} className="p-0.5" disabled={isLast}><ArrowDown className="w-3.5 h-3.5" /></button>
+          <button onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }} className="p-0.5">{section.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
+        </div>
+      </div>
+      <p className="text-[11px] opacity-70 mt-0.5">{section.variant}</p>
+    </button>
+  );
+};
+
 export const BuilderV2Lab: React.FC = () => {
   const [history, setHistory] = useState<LabSection[][]>([INITIAL_SECTIONS]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [selectedId, setSelectedId] = useState(INITIAL_SECTIONS[0].id);
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
   const [addQuery, setAddQuery] = useState('');
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
   const selected = sections.find((s) => s.id === selectedId) ?? sections[0];
@@ -51,6 +106,15 @@ export const BuilderV2Lab: React.FC = () => {
     const [item] = next.splice(idx, 1);
     next.splice(nextIdx, 0, item);
     commit(next);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = sections.findIndex((s) => s.id === String(active.id));
+    const newIndex = sections.findIndex((s) => s.id === String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    commit(arrayMove(sections, oldIndex, newIndex));
   };
 
   const toggleVisibility = (id: string) => {
@@ -102,21 +166,25 @@ export const BuilderV2Lab: React.FC = () => {
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Structure</h2>
             </div>
-            <div className="space-y-2">
-              {sections.map((s, idx) => (
-                <button key={s.id} onClick={() => setSelectedId(s.id)} className={`w-full text-left px-3 py-2 rounded-lg border text-sm ${selected.id === s.id ? 'bg-primary/10 border-primary/40 text-primary shadow-sm' : 'bg-surface-subtle border-border text-text-secondary'}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate">{s.title}</span>
-                    <div className="flex items-center gap-1">
-                      <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, -1); }} className="p-0.5" disabled={idx === 0}><ArrowUp className="w-3.5 h-3.5" /></button>
-                      <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, 1); }} className="p-0.5" disabled={idx === sections.length - 1}><ArrowDown className="w-3.5 h-3.5" /></button>
-                      <button onClick={(e) => { e.stopPropagation(); toggleVisibility(s.id); }} className="p-0.5">{s.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}</button>
-                    </div>
-                  </div>
-                  <p className="text-[11px] opacity-70 mt-0.5">{s.variant}</p>
-                </button>
-              ))}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {sections.map((s, idx) => (
+                    <StructureItem
+                      key={s.id}
+                      section={s}
+                      selected={selected.id === s.id}
+                      isFirst={idx === 0}
+                      isLast={idx === sections.length - 1}
+                      onSelect={() => setSelectedId(s.id)}
+                      onMoveUp={() => moveSection(s.id, -1)}
+                      onMoveDown={() => moveSection(s.id, 1)}
+                      onToggleVisibility={() => toggleVisibility(s.id)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
             <div className="mt-3 space-y-2">
               <label className="block">
                 <span className="text-[11px] text-text-tertiary">Add section</span>
