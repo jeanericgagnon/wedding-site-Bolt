@@ -571,7 +571,7 @@ export const BuilderV2Lab: React.FC = () => {
 
   return (
     <div className="h-screen bg-background text-text-primary overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 py-4 md:py-5 h-full flex flex-col gap-4">
+      <div className="w-full px-2 md:px-3 py-2 h-full flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
@@ -597,7 +597,7 @@ export const BuilderV2Lab: React.FC = () => {
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[250px_1fr_380px]' : showProperties ? 'lg:grid-cols-[1fr_380px]' : showStructure ? 'lg:grid-cols-[260px_1fr]' : 'lg:grid-cols-1'} gap-4 flex-1 min-h-0`}>
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[220px_1fr_360px]' : showProperties ? 'lg:grid-cols-[1fr_360px]' : showStructure ? 'lg:grid-cols-[220px_1fr]' : 'lg:grid-cols-1'} gap-2 flex-1 min-h-0`}>
           {!focusPreview && showStructure && (<aside className="rounded-2xl border border-border bg-surface p-4 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
