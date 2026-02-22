@@ -43,13 +43,14 @@ type StructureItemProps = {
   isLast: boolean;
   onSelect: () => void;
   onSelectAdditive: () => void;
+  onSelectRange: () => void;
   multiSelected: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onToggleVisibility: () => void;
 };
 
-const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiSelected, isFirst, isLast, onSelect, onSelectAdditive, onMoveUp, onMoveDown, onToggleVisibility }) => {
+const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiSelected, isFirst, isLast, onSelect, onSelectAdditive, onSelectRange, onMoveUp, onMoveDown, onToggleVisibility }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
 
   return (
@@ -57,7 +58,7 @@ const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiS
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.7 : 1 }}
       onClick={(e) => {
-        if (e.metaKey || e.ctrlKey || e.shiftKey) onSelectAdditive();
+        if (e.shiftKey) onSelectRange(); else if (e.metaKey || e.ctrlKey) onSelectAdditive();
         else onSelect();
       }}
       className={`w-full text-left px-3 py-2 rounded-lg border text-sm ${selected ? 'bg-primary/10 border-primary/40 text-primary shadow-sm' : multiSelected ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-surface-subtle border-border text-text-secondary'}`}
@@ -85,6 +86,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [selectedId, setSelectedId] = useState(INITIAL_SECTIONS[0].id);
   const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([]);
+  const [lastSelectedId, setLastSelectedId] = useState<string>(INITIAL_SECTIONS[0].id);
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
   const [addQuery, setAddQuery] = useState('');
   const [showStructure, setShowStructure] = useState(true);
@@ -100,8 +102,21 @@ export const BuilderV2Lab: React.FC = () => {
   const selected = sections.find((s) => s.id === selectedId) ?? sections[0];
   const selectedIds = useMemo(() => Array.from(new Set([selectedId, ...multiSelectedIds])), [selectedId, multiSelectedIds]);
 
-  const selectSection = (id: string, additive = false) => {
+  const selectSection = (id: string, additive = false, range = false) => {
+    const currentIndex = sections.findIndex((s) => s.id === id);
+    const lastIndex = sections.findIndex((s) => s.id === lastSelectedId);
+
+    if (range && lastIndex >= 0 && currentIndex >= 0) {
+      const [start, end] = [Math.min(lastIndex, currentIndex), Math.max(lastIndex, currentIndex)];
+      const rangeIds = sections.slice(start, end + 1).map((s) => s.id);
+      setSelectedId(id);
+      setMultiSelectedIds(rangeIds.filter((x) => x !== id));
+      setLastSelectedId(id);
+      return;
+    }
+
     setSelectedId(id);
+    setLastSelectedId(id);
     if (!additive) {
       setMultiSelectedIds([]);
       return;
@@ -348,6 +363,7 @@ export const BuilderV2Lab: React.FC = () => {
                       isLast={idx === sections.length - 1}
                       onSelect={() => selectSection(s.id)}
                       onSelectAdditive={() => selectSection(s.id, true)}
+                      onSelectRange={() => selectSection(s.id, false, true)}
                       onMoveUp={() => moveSection(s.id, -1)}
                       onMoveDown={() => moveSection(s.id, 1)}
                       onToggleVisibility={() => toggleVisibility(s.id)}
@@ -389,7 +405,7 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
             <div className="h-[500px] rounded-xl border border-border-subtle bg-surface-subtle p-5 space-y-3 overflow-auto">
               {orderedVisible.map((s) => (
-                <div key={s.id} className={`rounded-xl bg-white border p-4 ${selected.id === s.id ? 'border-primary/40 ring-2 ring-primary/20' : multiSelectedIds.includes(s.id) ? 'border-primary/20 bg-primary/5' : 'border-border-subtle'}`} onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) selectSection(s.id, true); else selectSection(s.id); }}>
+                <div key={s.id} className={`rounded-xl bg-white border p-4 ${selected.id === s.id ? 'border-primary/40 ring-2 ring-primary/20' : multiSelectedIds.includes(s.id) ? 'border-primary/20 bg-primary/5' : 'border-border-subtle'}`} onClick={(e) => { if (e.shiftKey) selectSection(s.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(s.id, true); else selectSection(s.id); }}>
                   <p className="font-medium text-sm">{s.title}</p>
                   <p className="text-xs text-text-tertiary mt-1">Variant: {s.variant}</p>
                 </div>
@@ -429,6 +445,17 @@ export const BuilderV2Lab: React.FC = () => {
                   <p className="text-xs text-text-tertiary">Section id</p>
                   <p className="text-sm font-medium mt-0.5">{selected.id}</p>
                 </div>
+                {selectedIds.length > 1 && (
+                  <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
+                    <p className="text-xs text-text-tertiary mb-1">Multi-selected sections ({selectedIds.length})</p>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedIds.map((id) => {
+                        const section = sections.find((s) => s.id === id);
+                        return <span key={id} className="text-[11px] px-2 py-1 rounded-full bg-white border border-border-subtle">{section?.title ?? id}</span>;
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
