@@ -197,14 +197,14 @@ export const DashboardOverview: React.FC = () => {
           id: 'names',
           label: 'Add couple names',
           done: Boolean(stats.coupleName1 || stats.coupleName2),
-          actionLabel: 'Open settings',
+          actionLabel: 'Edit settings',
           action: () => navigate('/dashboard/settings'),
         },
         {
           id: 'date',
           label: 'Set wedding date',
           done: Boolean(stats.weddingDate),
-          actionLabel: 'Set date',
+          actionLabel: 'Edit date',
           action: () => navigate('/dashboard/settings'),
         },
         {
@@ -218,14 +218,14 @@ export const DashboardOverview: React.FC = () => {
           id: 'registry',
           label: 'Add at least 1 registry item',
           done: stats.registryItemCount > 0,
-          actionLabel: 'Go to registry',
+          actionLabel: 'Open registry',
           action: () => navigate('/dashboard/registry'),
         },
         {
           id: 'publish',
           label: 'Publish site once',
           done: Boolean(stats.siteSlug),
-          actionLabel: 'Open builder',
+          actionLabel: 'Open site builder',
           action: () => navigate('/dashboard/builder'),
         },
       ]

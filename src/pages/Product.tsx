@@ -176,7 +176,7 @@ export const Product: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
               <Link to="/signup" className="w-full sm:w-auto">
                 <Button variant="primary" size="lg" fullWidth>
-                  Get started — $49 flat
+                  Start free — $49 flat
                 </Button>
               </Link>
               <a href="#templates" className="w-full sm:w-auto">
@@ -996,7 +996,7 @@ export const Product: React.FC = () => {
             <Link to="/signup">
               <Button variant="primary" size="lg">
                 <Sparkles className="w-5 h-5 mr-2" />
-                Start building — $49 flat
+                Start free — $49 flat
               </Button>
             </Link>
           </div>
@@ -1087,7 +1087,7 @@ export const Product: React.FC = () => {
               </div>
               <Link to="/signup">
                 <Button variant="primary" size="lg" fullWidth>
-                  Get started today
+                  Start free — $49 flat
                 </Button>
               </Link>
               <p className="text-xs text-text-tertiary mt-4">

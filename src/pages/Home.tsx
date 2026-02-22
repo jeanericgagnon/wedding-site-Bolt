@@ -74,7 +74,7 @@ export const Home: React.FC = () => {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                   </svg>
                 )}
-                {demoLoading ? 'Loading demo...' : 'Preview demo'}
+                {demoLoading ? 'Opening demo...' : 'Try demo'}
               </button>
             </div>
             <p className="text-[0.8125rem] text-ink/60 tracking-wide leading-loose">
@@ -324,7 +324,7 @@ export const Home: React.FC = () => {
                   onClick={handleSignUp}
                   aria-label="Sign up for your wedding site"
                 >
-                  Sign up
+                  Start free
                 </button>
                 <button
                   onClick={handleDemoLogin}
@@ -337,7 +337,7 @@ export const Home: React.FC = () => {
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
                   )}
-                  {demoLoading ? 'Loading demo...' : 'Preview demo'}
+                  {demoLoading ? 'Opening demo...' : 'Try demo'}
                 </button>
               </div>
 
