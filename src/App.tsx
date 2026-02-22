@@ -52,6 +52,7 @@ const AppContent = () => {
         <Route path="/product" element={<Product />} />
         <Route path="/builder-v2-lab" element={<BuilderV2Lab />} />
         <Route path="/site/:slug" element={<SiteView />} />
+        <Route path="/vault/:siteSlug" element={<VaultContribute />} />
         <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
         <Route path="/rsvp" element={<RSVP />} />
         <Route path="/events" element={<EventRSVP />} />

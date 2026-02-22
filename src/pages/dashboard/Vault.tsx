@@ -218,7 +218,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
   function handleCopyLink() {
     if (!siteSlug) return;
-    const url = `${window.location.origin}/vault/${siteSlug}/${config.duration_years}`;
+    const url = `${window.location.origin}/vault/${siteSlug}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

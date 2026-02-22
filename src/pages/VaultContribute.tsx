@@ -19,6 +19,7 @@ interface VaultConfigInfo {
 }
 
 type Step = 'loading' | 'form' | 'success' | 'error' | 'invalid';
+const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 
 function ordinalLabel(years: number): string {
   if (years === 1) return 'first';
@@ -37,6 +38,7 @@ export const VaultContribute: React.FC = () => {
   const { siteSlug, year } = useParams<{ siteSlug: string; year: string }>();
   const [site, setSite] = useState<SiteInfo | null>(null);
   const [vaultConfig, setVaultConfig] = useState<VaultConfigInfo | null>(null);
+  const [vaultOptions, setVaultOptions] = useState<VaultConfigInfo[]>([]);
   const [step, setStep] = useState<Step>('loading');
   const [submitting, setSubmitting] = useState(false);
 
@@ -47,10 +49,15 @@ export const VaultContribute: React.FC = () => {
   });
   const [errors, setErrors] = useState<{ content?: string; author_name?: string }>({});
 
-  const vaultYear = parseInt(year ?? '0', 10);
+  const hasYearParam = typeof year === 'string' && year.length > 0;
+  const vaultYear = hasYearParam ? parseInt(year ?? '0', 10) : null;
 
   useEffect(() => {
-    if (!siteSlug || !vaultYear || isNaN(vaultYear)) {
+    if (!siteSlug) {
+      setStep('invalid');
+      return;
+    }
+    if (hasYearParam && (vaultYear === null || Number.isNaN(vaultYear))) {
       setStep('invalid');
       return;
     }
@@ -60,8 +67,29 @@ export const VaultContribute: React.FC = () => {
   async function loadData() {
     if (DEMO_MODE && siteSlug === 'alex-jordan-demo') {
       setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: null });
-      setVaultConfig({ id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true });
-      setStep('form');
+
+      if (hasYearParam && vaultYear) {
+        const cfg = { id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true } as VaultConfigInfo;
+        setVaultOptions([cfg]);
+        setVaultConfig(cfg);
+        setStep('form');
+        return;
+      }
+
+      try {
+        const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[] } : { vaultConfigs: [] };
+        const enabled = (parsed.vaultConfigs ?? []).filter(v => v.is_enabled);
+        const fallback = enabled.length ? enabled : [{ id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true } as VaultConfigInfo];
+        setVaultOptions(fallback);
+        setVaultConfig(fallback[0]);
+        setStep('form');
+      } catch {
+        const fallback = [{ id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true } as VaultConfigInfo];
+        setVaultOptions(fallback);
+        setVaultConfig(fallback[0]);
+        setStep('form');
+      }
       return;
     }
 
@@ -78,20 +106,42 @@ export const VaultContribute: React.FC = () => {
 
     setSite(siteData as SiteInfo);
 
-    const { data: configData, error: configError } = await supabase
+    if (hasYearParam && vaultYear) {
+      const { data: configData, error: configError } = await supabase
+        .from('vault_configs')
+        .select('id, label, duration_years, is_enabled')
+        .eq('wedding_site_id', (siteData as SiteInfo).id)
+        .eq('duration_years', vaultYear)
+        .eq('is_enabled', true)
+        .maybeSingle();
+
+      if (configError || !configData) {
+        setStep('invalid');
+        return;
+      }
+
+      const cfg = configData as VaultConfigInfo;
+      setVaultOptions([cfg]);
+      setVaultConfig(cfg);
+      setStep('form');
+      return;
+    }
+
+    const { data: configList, error: listError } = await supabase
       .from('vault_configs')
       .select('id, label, duration_years, is_enabled')
       .eq('wedding_site_id', (siteData as SiteInfo).id)
-      .eq('duration_years', vaultYear)
       .eq('is_enabled', true)
-      .maybeSingle();
+      .order('duration_years', { ascending: true });
 
-    if (configError || !configData) {
+    if (listError || !configList || configList.length === 0) {
       setStep('invalid');
       return;
     }
 
-    setVaultConfig(configData as VaultConfigInfo);
+    const options = configList as VaultConfigInfo[];
+    setVaultOptions(options);
+    setVaultConfig(options[0]);
     setStep('form');
   }
 
@@ -147,7 +197,7 @@ export const VaultContribute: React.FC = () => {
   const vaultLabel = vaultConfig?.label || (vaultConfig ? `${vaultConfig.duration_years}-Year Anniversary Vault` : 'Anniversary Vault');
   const description = vaultConfig
     ? `Leave a message to be opened on the couple's ${ordinal} anniversary.`
-    : '';
+    : 'Choose a vault and leave a message for a future anniversary.';
 
   if (step === 'loading') {
     return (
@@ -240,6 +290,24 @@ export const VaultContribute: React.FC = () => {
 
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {vaultOptions.length > 1 && (
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">Choose a vault</label>
+                  <select
+                    value={vaultConfig?.id ?? ''}
+                    onChange={e => {
+                      const next = vaultOptions.find(v => v.id === e.target.value) ?? null;
+                      setVaultConfig(next);
+                    }}
+                    className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                  >
+                    {vaultOptions.map(v => (
+                      <option key={v.id} value={v.id}>{v.label || `${v.duration_years}-Year Anniversary Vault`}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-1.5">
                   Your name <span className="text-red-500">*</span>
