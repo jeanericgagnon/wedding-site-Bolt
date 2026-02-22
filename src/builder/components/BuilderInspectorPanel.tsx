@@ -75,10 +75,11 @@ export const BuilderInspectorPanel: React.FC = () => {
             <select
               value={selectedSection.variant}
               onChange={e => handleChangeVariant(e.target.value)}
-              className="text-[10px] text-gray-600 font-medium bg-transparent border-none outline-none cursor-pointer"
+              className="text-[10px] text-gray-700 font-medium bg-transparent border-none outline-none cursor-pointer max-w-[170px] truncate"
+              title="Switch layout variant"
             >
-              {manifest.supportedVariants.map(v => (
-                <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+              {manifest.variantMeta.map(v => (
+                <option key={v.id} value={v.id}>{v.label}</option>
               ))}
             </select>
           </div>
@@ -365,6 +366,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
+              <p className="mt-1.5 text-[11px] text-gray-500">Tip: changing layout keeps your content and data bindings.</p>
             </div>
           </div>
         )}
