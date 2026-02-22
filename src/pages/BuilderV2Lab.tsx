@@ -118,6 +118,23 @@ const SECTION_BLOCK_CATALOG: Record<string, BlockType[]> = {
   accommodations: ['hotelCard', 'travelTip', 'text', 'divider'],
 };
 
+const SECTION_BLOCK_LIMITS: Record<string, { total: number; perType?: Partial<Record<BlockType, number>> }> = {
+  hero: { total: 6, perType: { fundHighlight: 0 } },
+  story: { total: 10 },
+  schedule: { total: 10, perType: { event: 6 } },
+  travel: { total: 10, perType: { hotelCard: 4, travelTip: 6 } },
+  registry: { total: 10, perType: { fundHighlight: 1 } },
+  rsvp: { total: 8, perType: { rsvpNote: 2 } },
+  faq: { total: 12, perType: { faqItem: 10, qna: 10 } },
+  venue: { total: 8 },
+  gallery: { total: 14, perType: { photo: 10 } },
+  'wedding-party': { total: 12 },
+  'dress-code': { total: 8 },
+  directions: { total: 8 },
+  accommodations: { total: 10, perType: { hotelCard: 5 } },
+};
+
+
 type AddedBlockContent = {
   text?: string;
   question?: string;
@@ -403,7 +420,29 @@ export const BuilderV2Lab: React.FC = () => {
     updatePreviewField('eventDateISO', `${localDateTime}:00`);
   };
 
+
+  const getSectionLimitConfig = (sectionType: string) =>
+    SECTION_BLOCK_LIMITS[sectionType] ?? { total: 10, perType: {} };
+
+  const canAddBlockToSection = (sectionId: string, sectionType: string, blockType: BlockType) => {
+    const cfg = getSectionLimitConfig(sectionType);
+    const blocks = sectionBlocks[sectionId] ?? [];
+    if (blocks.length >= cfg.total) return { ok: false, reason: `Max ${cfg.total} blocks for this section` };
+    const perType = cfg.perType?.[blockType];
+    if (typeof perType === 'number') {
+      const count = blocks.filter((b) => b.type === blockType).length;
+      if (count >= perType) return { ok: false, reason: `Max ${perType} ${BLOCK_LABELS[blockType]} block(s)` };
+    }
+    return { ok: true as const, reason: '' };
+  };
+
   const addBlockToSection = (blockType: BlockType) => {
+    const allowed = canAddBlockToSection(selected.id, selected.type, blockType);
+    if (!allowed.ok) {
+      notify(allowed.reason);
+      return;
+    }
+
     const block: AddedBlock = {
       id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       type: blockType,
@@ -643,6 +682,16 @@ export const BuilderV2Lab: React.FC = () => {
   }), [previewFields]);
 
   const addableBlocksForSelected = useMemo(() => SECTION_BLOCK_CATALOG[selected.type] ?? ['title', 'text', 'photo', 'qna'], [selected.type]);
+
+
+  const getBlockValidationWarning = (block: AddedBlock) => {
+    const d = normalizeBlockData(block);
+    if (block.type === 'qna' && (!(d.question || '').trim() || !(d.answer || '').trim())) return 'Question and answer are required';
+    if (block.type === 'photo' && !(d.imageUrl || '').trim()) return 'Image URL is recommended';
+    if (block.type === 'event' && (!(d.title || '').trim() || !(d.time || '').trim())) return 'Event title and time are required';
+    if ((block.type === 'registryItem' || block.type === 'fundHighlight') && !(d.title || '').trim()) return 'Item title is required';
+    return '';
+  };
 
   const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
     id: s.id,
@@ -1002,10 +1051,24 @@ export const BuilderV2Lab: React.FC = () => {
                     </button>
 
                     {showAddBlockPicker && (
-                      <div className="border border-border-subtle rounded-md p-2.5 bg-white grid grid-cols-2 gap-2.5">
-                        {addableBlocksForSelected.map((k) => (
-                          <button key={k} onClick={() => addBlockToSection(k)} className="text-xs border border-border rounded-md px-2 py-3 hover:border-primary/40 hover:bg-primary/5 transition-all">{BLOCK_LABELS[k]}</button>
-                        ))}
+                      <div className="border border-border-subtle rounded-md p-2.5 bg-white">
+                        <p className="text-[11px] text-text-tertiary mb-2">Add blocks to this section (limits apply)</p>
+                        <div className="grid grid-cols-2 gap-2.5">
+                        {addableBlocksForSelected.map((k) => {
+                          const allowed = canAddBlockToSection(selected.id, selected.type, k);
+                          return (
+                            <button
+                              key={k}
+                              onClick={() => addBlockToSection(k)}
+                              disabled={!allowed.ok}
+                              title={allowed.ok ? `Add ${BLOCK_LABELS[k]}` : allowed.reason}
+                              className={`text-xs border border-border rounded-md px-2 py-3 transition-all ${allowed.ok ? 'hover:border-primary/40 hover:bg-primary/5' : 'opacity-45 cursor-not-allowed bg-surface-subtle'}`}
+                            >
+                              {BLOCK_LABELS[k]}
+                            </button>
+                          );
+                        })}
+                        </div>
                       </div>
                     )}
 
@@ -1109,6 +1172,12 @@ export const BuilderV2Lab: React.FC = () => {
                               <button onClick={() => removeBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">✕</button>
                             </div>
                           </div>
+
+                          {getBlockValidationWarning(block) && (
+                            <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                              {getBlockValidationWarning(block)}
+                            </div>
+                          )}
 
                           {block.type === 'qna' ? (
                             <>
