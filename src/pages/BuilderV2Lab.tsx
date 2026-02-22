@@ -136,6 +136,10 @@ export const BuilderV2Lab: React.FC = () => {
     travelParking: 'On-site valet + overflow lot',
     travelHotels: 'Room blocks at River Inn and Garden Suites',
     travelTips: 'Book early for best rates. Shuttle details shared 2 weeks before.',
+    registryTitle: 'Honeymoon Fund',
+    registryNote: 'Your presence is our favorite gift.',
+    rsvpTitle: 'Kindly reply',
+    rsvpDeadlineISO: `${demoWeddingSite.wedding_date}T00:00:00`,
   });
   const [addQuery, setAddQuery] = useState('');
   const [showStructure, setShowStructure] = useState(false);
@@ -228,7 +232,11 @@ export const BuilderV2Lab: React.FC = () => {
       | 'travelFlights'
       | 'travelParking'
       | 'travelHotels'
-      | 'travelTips',
+      | 'travelTips'
+      | 'registryTitle'
+      | 'registryNote'
+      | 'rsvpTitle'
+      | 'rsvpDeadlineISO',
     value: string
   ) => {
     setPreviewFields((prev) => ({ ...prev, [key]: value }));
@@ -405,9 +413,9 @@ export const BuilderV2Lab: React.FC = () => {
       venueId: 'venue-main',
       notes: i === 0 ? previewFields.scheduleNote : e.description,
     })),
-    rsvp: { enabled: true, deadlineISO: `${demoWeddingSite.wedding_date}T00:00:00` },
+    rsvp: { enabled: true, deadlineISO: previewFields.rsvpDeadlineISO },
     travel: { notes: previewFields.travelTips, parkingInfo: previewFields.travelParking, hotelInfo: previewFields.travelHotels, flightInfo: previewFields.travelFlights },
-    registry: { links: [{ id: 'reg-1', label: 'Honeymoon Fund', url: 'https://example.com/honeymoon' }], notes: 'Your presence is our favorite gift.' },
+    registry: { links: [{ id: 'reg-1', label: previewFields.registryTitle, url: 'https://example.com/honeymoon' }], notes: previewFields.registryNote },
     faq: [
       { id: 'faq-1', q: 'What should I wear?', a: 'Cocktail attire encouraged.' },
       { id: 'faq-2', q: 'Can I bring a plus one?', a: 'If your invite includes one, yes.' },
@@ -423,7 +431,7 @@ export const BuilderV2Lab: React.FC = () => {
     variant: s.variant,
     enabled: s.enabled,
     bindings: {},
-    settings: { showTitle: true, title: s.title, subtitle: s.subtitle },
+    settings: { showTitle: true, title: s.type === 'rsvp' ? previewFields.rsvpTitle : s.title, subtitle: s.subtitle },
   })), [orderedVisible]);
 
   const commandItems = useMemo(() => {
@@ -793,6 +801,30 @@ export const BuilderV2Lab: React.FC = () => {
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Local tips</span>
                       <textarea value={previewFields.travelTips} onChange={(e) => updatePreviewField('travelTips', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" />
+                    </label>
+                  </>
+                )}
+                {selected.type === 'registry' && (
+                  <>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Featured registry title</span>
+                      <input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">Registry note</span>
+                      <textarea value={previewFields.registryNote} onChange={(e) => updatePreviewField('registryNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" />
+                    </label>
+                  </>
+                )}
+                {selected.type === 'rsvp' && (
+                  <>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">RSVP section title</span>
+                      <input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-text-tertiary">RSVP deadline (ISO)</span>
+                      <input value={previewFields.rsvpDeadlineISO} onChange={(e) => updatePreviewField('rsvpDeadlineISO', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                     </label>
                   </>
                 )}
