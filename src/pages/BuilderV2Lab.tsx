@@ -574,9 +574,9 @@ export const BuilderV2Lab: React.FC = () => {
       <div className="w-full px-1.5 md:px-2 py-1 h-full flex flex-col gap-1 [--topbar-h:48px] [--rail-head-h:50px] [--page-row-h:52px]">
         <div className="h-[var(--topbar-h)] flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
-            <h1 className="text-lg md:text-xl font-semibold mt-0.5">Functional shell (Sprint 2 in progress)</h1>
-            <p className="text-text-secondary mt-0.5 text-xs max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-primary/90 font-semibold">Builder v2 Lab</p>
+            <h1 className="text-[1.05rem] md:text-[1.1rem] font-semibold leading-tight mt-0.5">Functional shell (Sprint 2 in progress)</h1>
+            <p className="text-text-secondary/90 mt-0.5 text-[11px] leading-relaxed max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
           </div>
           <div className="flex items-center gap-3">
             <span className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full ${saveState === 'saved' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
@@ -601,9 +601,9 @@ export const BuilderV2Lab: React.FC = () => {
           {!focusPreview && showStructure && (<aside className="rounded-lg border border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold">Pages</h2>
+              <h2 className="text-[13px] font-semibold">Pages</h2>
             </div>
-            <div className="mb-3 text-[11px] text-text-tertiary">Drag to reorder pages. Select to edit in the right rail.</div>
+            <div className="mb-3 text-[11px] text-text-tertiary/90">Drag to reorder pages. Select to edit in the right rail.</div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2 overflow-auto pr-1 max-h-[38vh]">
@@ -628,7 +628,7 @@ export const BuilderV2Lab: React.FC = () => {
             </DndContext>
             <div className="mt-3 space-y-2">
               <label className="block">
-                <span className="text-[11px] text-text-tertiary">Add section</span>
+                <span className="text-[11px] text-text-tertiary/90">Add section</span>
                 <input
                   value={addQuery}
                   onChange={(e) => setAddQuery(e.target.value)}
@@ -643,7 +643,7 @@ export const BuilderV2Lab: React.FC = () => {
                   </button>
                 ))}
                 {filteredAddables.length === 0 && (
-                  <p className="col-span-2 text-[11px] text-text-tertiary">No matches. Try another keyword.</p>
+                  <p className="col-span-2 text-[11px] text-text-tertiary/90">No matches. Try another keyword.</p>
                 )}
               </div>
             </div>
@@ -651,7 +651,7 @@ export const BuilderV2Lab: React.FC = () => {
 
           <main className="relative rounded-lg border border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="sticky top-0 z-20 h-12 bg-white/95 backdrop-blur border-b border-border-subtle -mx-3 px-3 mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Preview</h2>
+              <h2 className="text-[13px] font-semibold">Preview</h2>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   {(['desktop','mobile'] as const).map((d) => (
@@ -721,18 +721,18 @@ export const BuilderV2Lab: React.FC = () => {
 
           {!focusPreview && showProperties && (<aside className="rounded-lg border border-border bg-white p-0 overflow-hidden h-full min-h-0">
             <div className="px-4 h-[var(--rail-head-h)] border-b border-border-subtle flex items-center justify-between">
-              <h2 className="text-[1.02rem] font-semibold">Edit website</h2>
+              <h2 className="text-[1rem] font-semibold tracking-tight">Edit website</h2>
               <button onClick={() => setShowProperties(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
             </div>
 
             <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-var(--rail-head-h))]">
               <div className="space-y-2">
                 <button className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
-                  <p className="text-sm font-medium">Design</p>
+                  <p className="text-[13px] font-medium">Design</p>
                   <p className="text-xs text-text-tertiary">Update style, color and layout</p>
                 </button>
                 <button className="w-full text-left border border-border rounded-sm px-2.5 py-1.5 hover:border-primary/30">
-                  <p className="text-sm font-medium">Privacy & URL</p>
+                  <p className="text-[13px] font-medium">Privacy & URL</p>
                   <p className="text-xs text-text-tertiary">Manage visibility and link preferences</p>
                 </button>
               </div>
@@ -751,7 +751,7 @@ export const BuilderV2Lab: React.FC = () => {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{page.title}</p>
+                          <p className="text-[13px] font-medium truncate">{page.title}</p>
                           {page.subtitle && <p className="text-xs text-text-tertiary truncate mt-0.5">{page.subtitle}</p>}
                         </div>
                         <span className="text-text-tertiary text-sm">›</span>
@@ -763,12 +763,12 @@ export const BuilderV2Lab: React.FC = () => {
 
               <div className="border border-border rounded-sm p-2.5 bg-surface-subtle space-y-2">
                 <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Selected page</p>
-                <p className="text-[11px] text-text-tertiary">Core settings</p>
+                <p className="text-[11px] text-text-tertiary/90">Core settings</p>
                 <label className="block">
                   <span className="text-xs text-text-tertiary">Title</span>
                   <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                 </label>
-                <p className="text-[11px] text-text-tertiary">Page content</p>
+                <p className="text-[11px] text-text-tertiary/90">Page content</p>
                 {selected.type === 'hero' && (
                   <>
                     <label className="block">
@@ -787,7 +787,7 @@ export const BuilderV2Lab: React.FC = () => {
                         onChange={(e) => updateWeddingDateTime(e.target.value)}
                         className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
                       />
-                      <p className="text-[11px] text-text-tertiary mt-1">Stored as ISO internally.</p>
+                      <p className="text-[11px] text-text-tertiary/90 mt-1">Stored as ISO internally.</p>
                     </label>
                   </>
                 )}
@@ -859,7 +859,7 @@ export const BuilderV2Lab: React.FC = () => {
                         onChange={(e) => updateRsvpDeadlineDate(e.target.value)}
                         className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm"
                       />
-                      <p className="text-[11px] text-text-tertiary mt-1">Stored as ISO internally.</p>
+                      <p className="text-[11px] text-text-tertiary/90 mt-1">Stored as ISO internally.</p>
                     </label>
                   </>
                 )}
