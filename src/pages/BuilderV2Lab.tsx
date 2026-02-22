@@ -1174,9 +1174,19 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
 
             <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-var(--rail-head-h))] scroll-smooth">
-              <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border border-border-subtle rounded-sm px-2.5 py-2">
+              <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border border-border-subtle rounded-sm px-2.5 py-2 space-y-1.5">
                 <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Now editing</p>
                 <p className="text-sm font-medium text-text-primary truncate">{selected.title}</p>
+                <button
+                  onClick={() => {
+                    setShowAddBlockPicker(false);
+                    setFocusPreview(false);
+                    setShowStructure(true);
+                  }}
+                  className="text-[11px] border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 hover:bg-primary/5 transition-all"
+                >
+                  ← Back to section list
+                </button>
               </div>
               <div className="grid grid-cols-2 gap-1 p-1 rounded-sm border border-border-subtle bg-surface-subtle">
                 <button onClick={() => setPropertyTab('content')} className={`text-xs px-2 py-1.5 rounded-sm transition-colors ${propertyTab === 'content' ? 'bg-white border border-border shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>Content</button>
