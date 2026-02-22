@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE } from '../config/env';
@@ -18,9 +18,10 @@ interface VaultConfigInfo {
   is_enabled: boolean;
 }
 
-type Step = 'loading' | 'form' | 'success' | 'error' | 'invalid';
+type Step = 'loading' | 'hub' | 'form' | 'success' | 'error' | 'invalid';
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
+const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
 
 function ordinalLabel(years: number): string {
   if (years === 1) return 'first';
@@ -37,6 +38,7 @@ function ordinalLabel(years: number): string {
 
 export const VaultContribute: React.FC = () => {
   const { siteSlug, year } = useParams<{ siteSlug: string; year: string }>();
+  const navigate = useNavigate();
   const [site, setSite] = useState<SiteInfo | null>(null);
   const [vaultConfig, setVaultConfig] = useState<VaultConfigInfo | null>(null);
   const [vaultOptions, setVaultOptions] = useState<VaultConfigInfo[]>([]);
@@ -45,6 +47,7 @@ export const VaultContribute: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [submittedYears, setSubmittedYears] = useState<number[]>([]);
 
   const [form, setForm] = useState({
     title: '',
@@ -59,6 +62,31 @@ export const VaultContribute: React.FC = () => {
   const hasYearParam = typeof year === 'string' && year.length > 0;
   const vaultYear = hasYearParam ? parseInt(year ?? '0', 10) : null;
 
+
+  const submittedKey = `${VAULT_SUBMITTED_KEY_PREFIX}${siteSlug ?? 'unknown'}`;
+
+  function loadSubmittedYears() {
+    try {
+      const raw = localStorage.getItem(submittedKey);
+      const parsed = raw ? JSON.parse(raw) as number[] : [];
+      setSubmittedYears(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setSubmittedYears([]);
+    }
+  }
+
+  function markSubmitted(years: number) {
+    try {
+      const raw = localStorage.getItem(submittedKey);
+      const parsed = raw ? JSON.parse(raw) as number[] : [];
+      const next = Array.from(new Set([...(Array.isArray(parsed) ? parsed : []), years])).sort((a, b) => a - b);
+      localStorage.setItem(submittedKey, JSON.stringify(next));
+      setSubmittedYears(next);
+    } catch {
+      // ignore
+    }
+  }
+
   useEffect(() => {
     if (!siteSlug) {
       setStep('invalid');
@@ -68,6 +96,7 @@ export const VaultContribute: React.FC = () => {
       setStep('invalid');
       return;
     }
+    loadSubmittedYears();
     loadData();
   }, [siteSlug, year]);
 
@@ -97,7 +126,7 @@ export const VaultContribute: React.FC = () => {
         const fallback = Array.from(byYear.values()).sort((a, b) => a.duration_years - b.duration_years);
         setVaultOptions(fallback);
         setVaultConfig(fallback[0]);
-        setStep('form');
+        setStep(hasYearParam ? 'form' : 'hub');
       } catch {
         const fallback = [
           { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
@@ -106,7 +135,7 @@ export const VaultContribute: React.FC = () => {
         ] as VaultConfigInfo[];
         setVaultOptions(fallback.sort((a, b) => a.duration_years - b.duration_years));
         setVaultConfig(fallback[0]);
-        setStep('form');
+        setStep(hasYearParam ? 'form' : 'hub');
       }
       return;
     }
@@ -233,6 +262,7 @@ export const VaultContribute: React.FC = () => {
     if (DEMO_MODE && site.id === 'demo-site-id') {
       setSubmitting(false);
       setUploadProgress(null);
+      markSubmitted(vaultConfig.duration_years);
       setStep('success');
       return;
     }
@@ -258,9 +288,19 @@ export const VaultContribute: React.FC = () => {
     if (error) {
       setSubmitError(`Could not save your message: ${error.message}`);
     } else {
+      markSubmitted(vaultConfig.duration_years);
       setStep('success');
     }
   }
+
+
+  useEffect(() => {
+    if (step === 'success' && hasYearParam && siteSlug) {
+      const t = window.setTimeout(() => navigate(`/vault/${siteSlug}`), 1200);
+      return () => window.clearTimeout(t);
+    }
+    return;
+  }, [step, hasYearParam, siteSlug, navigate]);
 
   const coupleName = site
     ? site.couple_name_1 && site.couple_name_2
@@ -300,6 +340,46 @@ export const VaultContribute: React.FC = () => {
     );
   }
 
+
+  if (step === 'hub') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex flex-col">
+        <div className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-3xl">
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 bg-white border border-amber-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <Lock className="w-6 h-6 text-amber-700" />
+              </div>
+              {coupleName && <p className="text-sm text-stone-500 mb-1 tracking-wide uppercase font-medium">{coupleName}</p>}
+              <h1 className="text-2xl font-bold text-stone-800">Choose an Anniversary Vault</h1>
+              <p className="text-stone-500 text-sm mt-2">Pick a vault to leave a message. Completed vaults are marked.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {vaultOptions.map((v) => {
+                const done = submittedYears.includes(v.duration_years);
+                return (
+                  <Link
+                    key={v.id}
+                    to={`/vault/${siteSlug}/${v.duration_years}`}
+                    className="bg-white rounded-2xl border border-stone-200 p-5 hover:border-amber-300 transition-colors shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-stone-800">{v.label || `${v.duration_years}-Year Anniversary Vault`}</p>
+                      {done && <CheckCircle className="w-5 h-5 text-green-600" />}
+                    </div>
+                    <p className="text-xs text-stone-500 mt-2">Opens on the {ordinalLabel(v.duration_years)} anniversary.</p>
+                    <p className="text-xs mt-3 text-amber-700 font-medium">{done ? 'Submitted ✓' : 'Add message →'}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'success') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center px-4">
@@ -319,6 +399,7 @@ export const VaultContribute: React.FC = () => {
           <div className="mt-8 p-4 bg-amber-50 border border-amber-200/60 rounded-xl text-sm text-amber-800">
             <Heart className="w-4 h-4 inline-block mr-1.5 mb-0.5" />
             Thank you for being part of this moment.
+            {hasYearParam && <p className="mt-2 text-xs text-amber-700">Returning to vault list…</p>}
           </div>
         </div>
       </div>
@@ -369,24 +450,6 @@ export const VaultContribute: React.FC = () => {
 
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
-              {vaultOptions.length > 1 && (
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5">Choose a vault</label>
-                  <select
-                    value={vaultConfig?.id ?? ''}
-                    onChange={e => {
-                      const next = vaultOptions.find(v => v.id === e.target.value) ?? null;
-                      setVaultConfig(next);
-                    }}
-                    className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
-                  >
-                    {vaultOptions.map(v => (
-                      <option key={v.id} value={v.id}>{v.label || `${v.duration_years}-Year Anniversary Vault`}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-1.5">
                   Your name <span className="text-red-500">*</span>
