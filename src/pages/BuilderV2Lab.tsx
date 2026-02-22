@@ -85,6 +85,8 @@ export const BuilderV2Lab: React.FC = () => {
   const [showProperties, setShowProperties] = useState(true);
   const [showCommand, setShowCommand] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
+  const [commandIndex, setCommandIndex] = useState(0);
+  const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -148,13 +150,19 @@ export const BuilderV2Lab: React.FC = () => {
 
   const commandItems = useMemo(() => {
     const base = [
-      ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, label: `Add section: ${name}`, action: () => addSection(name) })),
-      ...sections.map((s) => ({ id: `select-${s.id}`, label: `Select section: ${s.title}`, action: () => setSelectedId(s.id) })),
-      ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => ({ id: `variant-${v}`, label: `Set variant: ${v}`, action: () => updateVariant(v) })),
+      ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, action: () => addSection(name) })),
+      ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, action: () => setSelectedId(s.id) })),
+      ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, action: () => updateVariant(v) })),
     ];
     const q = commandQuery.trim().toLowerCase();
     return q ? base.filter((i) => i.label.toLowerCase().includes(q)) : base;
   }, [commandQuery, sections, selected.id]);
+
+
+
+  useEffect(() => {
+    setCommandIndex(0);
+  }, [commandQuery, showCommand]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -171,6 +179,33 @@ export const BuilderV2Lab: React.FC = () => {
         e.preventDefault();
         setShowCommand((v) => !v);
       }
+      if (showCommand) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setShowCommand(false);
+          return;
+        }
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setCommandIndex((i) => Math.min(i + 1, Math.max(commandItems.length - 1, 0)));
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setCommandIndex((i) => Math.max(i - 1, 0));
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const item = commandItems[commandIndex];
+          if (item) {
+            item.action();
+            setShowCommand(false);
+            setCommandQuery('');
+          }
+          return;
+        }
+      }
       if (e.key === 'ArrowDown' && isMeta) {
         e.preventDefault();
         const idx = sections.findIndex((s) => s.id === selected.id);
@@ -184,7 +219,7 @@ export const BuilderV2Lab: React.FC = () => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [canRedo, canUndo, sections, selected.id]);
+  }, [canRedo, canUndo, sections, selected.id, showCommand, commandItems, commandIndex]);
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
@@ -279,28 +314,70 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </main>
 
-          {showStructure && (<aside className="rounded-2xl border border-border bg-surface p-4">
+          {showProperties && (<aside className="rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2 mb-3">
               <SlidersHorizontal className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Properties</h2>
             </div>
-            <div className="space-y-3 text-sm">
-              <label className="block">
-                <span className="text-xs text-text-tertiary">Section title</span>
-                <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
-              </label>
-              <label className="block">
-                <span className="text-xs text-text-tertiary">Variant</span>
-                <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white">
-                  {['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
-              </label>
-              <button onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left hover:border-primary/40">
-                {selected.enabled ? 'Hide section' : 'Show section'}
-              </button>
+
+            <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-surface-subtle border border-border-subtle mb-3 text-xs">
+              {([
+                ['content', 'Content'],
+                ['layout', 'Layout'],
+                ['data', 'Data'],
+              ] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => setPropertyTab(id)}
+                  className={`px-2 py-1.5 rounded-md font-medium ${propertyTab === id ? 'bg-white border border-border text-text-primary' : 'text-text-secondary'}`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
+
+            {propertyTab === 'content' && (
+              <div className="space-y-3 text-sm">
+                <label className="block">
+                  <span className="text-xs text-text-tertiary">Section title</span>
+                  <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+                </label>
+                <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
+                  <p className="text-xs text-text-tertiary">Section id</p>
+                  <p className="text-sm font-medium mt-0.5">{selected.id}</p>
+                </div>
+              </div>
+            )}
+
+            {propertyTab === 'layout' && (
+              <div className="space-y-3 text-sm">
+                <label className="block">
+                  <span className="text-xs text-text-tertiary">Variant</span>
+                  <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white">
+                    {['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => (
+                      <option key={v} value={v}>{v}</option>
+                    ))}
+                  </select>
+                </label>
+                <button onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left hover:border-primary/40">
+                  {selected.enabled ? 'Hide section' : 'Show section'}
+                </button>
+              </div>
+            )}
+
+            {propertyTab === 'data' && (
+              <div className="space-y-3 text-sm">
+                <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
+                  <p className="text-xs text-text-tertiary">Data source</p>
+                  <p className="text-sm font-medium mt-0.5">Demo wedding dataset</p>
+                  <p className="text-xs text-text-secondary mt-1">Bindings are mocked in this editor phase. Rendering/data wiring comes next.</p>
+                </div>
+                <div className="rounded-md border border-border-subtle p-3 bg-surface-subtle">
+                  <p className="text-xs text-text-tertiary">Binding mode</p>
+                  <p className="text-sm font-medium mt-0.5">Auto</p>
+                </div>
+              </div>
+            )}
           </aside>)}
         </div>
       </div>
@@ -318,14 +395,18 @@ export const BuilderV2Lab: React.FC = () => {
               />
             </div>
             <div className="max-h-80 overflow-auto p-2">
-              {commandItems.slice(0, 18).map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => { item.action(); setShowCommand(false); setCommandQuery(''); }}
-                  className="w-full text-left px-3 py-2 rounded-md hover:bg-surface-subtle text-sm"
-                >
-                  {item.label}
-                </button>
+              {commandItems.slice(0, 18).map((item, idx, arr) => (
+                <div key={item.id}>
+                  {(idx === 0 || arr[idx - 1].group !== item.group) && (
+                    <p className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wide text-text-tertiary">{item.group}</p>
+                  )}
+                  <button
+                    onClick={() => { item.action(); setShowCommand(false); setCommandQuery(''); }}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm ${idx === commandIndex ? 'bg-primary/10 border border-primary/30' : 'hover:bg-surface-subtle'}`}
+                  >
+                    {item.label}
+                  </button>
+                </div>
               ))}
               {commandItems.length === 0 && <p className="text-sm text-text-tertiary px-3 py-2">No matching commands</p>}
             </div>
