@@ -137,6 +137,9 @@ export const BuilderV2Lab: React.FC = () => {
   const [actionNotice, setActionNotice] = useState<string>('');
   const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
   const [showQuickHelp, setShowQuickHelp] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [previewScale, setPreviewScale] = useState(100);
+  const [focusPreview, setFocusPreview] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -438,6 +441,10 @@ export const BuilderV2Lab: React.FC = () => {
         e.preventDefault();
         setShowQuickHelp((v) => !v);
       }
+      if (isMeta && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        setFocusPreview((v) => !v);
+      }
       if (isMeta && e.key.toLowerCase() === 'a') {
         e.preventDefault();
         selectAllSections();
@@ -511,17 +518,18 @@ export const BuilderV2Lab: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between gap-3 text-xs text-text-tertiary">
-          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+A select all · ⇧⌘/Ctrl+I invert · Esc clear</p>
+          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Shortcuts: ⌘/Ctrl+Z undo · ⇧⌘/Ctrl+Z redo · ⌘/Ctrl+A select all · ⇧⌘/Ctrl+I invert · ⌘/Ctrl+P focus · Esc clear</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Command</button>
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">Help ?</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Structure</button>
             <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Properties</button>
+            <button onClick={() => setFocusPreview((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{focusPreview ? 'Exit' : 'Enter'} Focus</button>
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${showStructure && showProperties ? 'lg:grid-cols-[290px_1fr_320px]' : showStructure || showProperties ? 'lg:grid-cols-[290px_1fr]' : 'lg:grid-cols-1'} gap-4`}>
-          {showStructure && (<aside className="rounded-2xl border border-border bg-surface p-4">
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[290px_1fr_320px]' : showStructure || showProperties ? 'lg:grid-cols-[290px_1fr]' : 'lg:grid-cols-1'} gap-4`}>
+          {!focusPreview && showStructure && (<aside className="rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Structure</h2>
@@ -613,13 +621,22 @@ export const BuilderV2Lab: React.FC = () => {
           <main className="rounded-2xl border border-border bg-surface p-4 min-h-[560px]">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold">Canvas</h2>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  {(['desktop','tablet','mobile'] as const).map((d) => (
+                    <button key={d} onClick={() => setPreviewDevice(d)} className={`text-[11px] px-2 py-1 border rounded ${previewDevice === d ? 'border-primary/50 bg-primary/10 text-primary' : ''}`}>{d}</button>
+                  ))}
+                </div>
+                <select value={previewScale} onChange={(e) => setPreviewScale(Number(e.target.value))} className="text-[11px] border rounded px-2 py-1 bg-white">
+                  <option value={80}>80%</option><option value={90}>90%</option><option value={100}>100%</option><option value={110}>110%</option>
+                </select>
+
                 <button onClick={() => canUndo && setHistoryIndex((i) => i - 1)} disabled={!canUndo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Undo2 className="w-3.5 h-3.5" />Undo</button>
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
             <div className="h-[500px] rounded-xl border border-border-subtle bg-surface-subtle p-3 overflow-auto">
-              <div className="bg-white rounded-lg border border-border-subtle overflow-hidden">
+              <div className={`mx-auto bg-white rounded-lg border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1000px]' : previewDevice === 'tablet' ? 'w-[820px] max-w-full' : 'w-[420px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
                   if (!sectionState) return null;
@@ -653,7 +670,7 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </main>
 
-          {showProperties && (<aside className="rounded-2xl border border-border bg-surface p-4">
+          {!focusPreview && showProperties && (<aside className="rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-center gap-2 mb-3">
               <SlidersHorizontal className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Properties</h2>
