@@ -593,7 +593,7 @@ export const BuilderV2Lab: React.FC = () => {
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
             <button onClick={() => setShowCommand(true)} className="px-2 py-1 border rounded-md hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
             <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Edit rail</button>
-            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Show'} Pages</button>
+            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1 border rounded-md hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} Pages</button>
           </div>
         </div>
 
@@ -740,7 +740,7 @@ export const BuilderV2Lab: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Pages</p>
-                  <button onClick={() => setShowStructure(true)} className="text-xs text-primary hover:text-primary-hover">Reorder pages</button>
+                  <button onClick={() => setShowStructure(true)} className="text-xs text-primary hover:text-primary-hover">Reorder or add pages</button>
                 </div>
                 <div className="space-y-2 max-h-[340px] overflow-auto pr-1">
                   {orderedVisible.map((page) => (
