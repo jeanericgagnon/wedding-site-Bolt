@@ -110,6 +110,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
   const [actionNotice, setActionNotice] = useState<string>('');
+  const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -272,12 +273,28 @@ export const BuilderV2Lab: React.FC = () => {
 
   const commandItems = useMemo(() => {
     const base = [
-      ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, action: () => runCommand(`Add section: ${name}`, () => addSection(name)) })),
-      ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, action: () => runCommand(`Select section: ${s.title}`, () => setSelectedId(s.id)) })),
-      ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, action: () => runCommand(`Set variant: ${v}`, () => updateVariant(v)) })),
+      ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, keywords: ['insert', 'new', name.toLowerCase()], action: () => runCommand(`Add section: ${name}`, () => addSection(name)) })),
+      ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, keywords: ['focus', 'go to', s.title.toLowerCase()], action: () => runCommand(`Select section: ${s.title}`, () => setSelectedId(s.id)) })),
+      ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, keywords: ['layout', 'style', v.toLowerCase()], action: () => runCommand(`Set variant: ${v}`, () => updateVariant(v)) })),
+      { id: 'sel-clear', group: 'Selection', label: 'Clear multi selection', keywords: ['clear', 'multi', 'selection'], action: () => runCommand('Clear multi selection', () => setMultiSelectedIds([])) },
+      { id: 'sel-all', group: 'Selection', label: 'Select all sections', keywords: ['all', 'selection'], action: () => runCommand('Select all sections', () => { if (sections[0]) { setSelectedId(sections[0].id); setMultiSelectedIds(sections.slice(1).map(s => s.id)); } }) },
     ];
     const q = commandQuery.trim().toLowerCase();
-    return q ? base.filter((i) => i.label.toLowerCase().includes(q)) : base;
+    if (!q) return base;
+
+    const score = (item: (typeof base)[number]) => {
+      const hay = `${item.label} ${item.keywords.join(' ')}`.toLowerCase();
+      if (item.label.toLowerCase().startsWith(q)) return 100;
+      if (item.label.toLowerCase().includes(q)) return 80;
+      if (hay.includes(q)) return 60;
+      return 0;
+    };
+
+    return base
+      .map((item) => ({ item, s: score(item) }))
+      .filter((x) => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .map((x) => x.item);
   }, [commandQuery, sections, selected.id]);
 
 
@@ -567,6 +584,17 @@ export const BuilderV2Lab: React.FC = () => {
                 className="w-full border rounded-md px-3 py-2 text-sm"
               />
             </div>
+            {pinnedCommands.length > 0 && (
+              <div className="px-3 py-2 border-b border-border-subtle">
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">Pinned</p>
+                <div className="flex flex-wrap gap-1">
+                  {pinnedCommands.map((label) => (
+                    <button key={label} onClick={() => setCommandQuery(label)} className="text-[11px] px-2 py-1 rounded-full bg-amber-50 border border-amber-200 hover:border-amber-300">{label}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {recentCommands.length > 0 && (
               <div className="px-3 py-2 border-b border-border-subtle">
                 <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">Recent</p>
