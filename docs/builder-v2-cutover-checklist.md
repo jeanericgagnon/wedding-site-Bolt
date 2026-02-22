@@ -34,7 +34,7 @@ Status: draft (post-lab hardening)
 ## 3) Regression Guardrails
 
 - [x] unit tests for `toBuilderV2Document` and default block mapping
-- [ ] unit tests for import sanitization fallback (`unknown block -> text`)
+- [x] unit tests for import sanitization fallback (`unknown block -> text`)
 - [ ] smoke test script path for `/builder-v2-lab`
 - [ ] CI gate includes typecheck + build + v2 adapter tests
 

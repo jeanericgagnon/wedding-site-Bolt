@@ -1,14 +1,10 @@
-import type { BuilderV2BlockType, BuilderV2Document } from './contracts';
-
-const BLOCK_TYPES: BuilderV2BlockType[] = [
-  'title','text','qna','photo','story','timelineItem','event','travelTip','hotelCard','registryItem','fundHighlight','rsvpNote','faqItem','divider',
-];
+import { BUILDER_V2_BLOCK_TYPES, type BuilderV2BlockType, type BuilderV2Document } from './contracts';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isString = (v: unknown): v is string => typeof v === 'string';
 
 export function isBuilderV2BlockType(v: unknown): v is BuilderV2BlockType {
-  return isString(v) && (BLOCK_TYPES as string[]).includes(v);
+  return isString(v) && (BUILDER_V2_BLOCK_TYPES as readonly string[]).includes(v);
 }
 
 export function validateBuilderV2Document(input: unknown): { ok: true; doc: BuilderV2Document } | { ok: false; error: string } {

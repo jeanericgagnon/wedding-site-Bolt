@@ -8,6 +8,7 @@ import { demoWeddingSite, demoEvents } from '../lib/demoData';
 import { toBuilderV2Document } from '../builder-v2/adapter';
 import type { BuilderV2Document } from '../builder-v2/contracts';
 import { validateBuilderV2Document } from '../builder-v2/validate';
+import { sanitizeImportedBlockType } from '../builder-v2/importSanitize';
 import {
   DndContext,
   PointerSensor,
@@ -800,7 +801,7 @@ export const BuilderV2Lab: React.FC = () => {
           sec.id,
           (sec.blocks || []).map((b) => ({
             id: b.id,
-            type: (BLOCK_LABELS[b.type as BlockType] ? b.type : 'text') as BlockType,
+            type: sanitizeImportedBlockType(b.type) as BlockType,
             data: b.data || {},
             content: b.data?.text || b.data?.title || b.data?.note || '',
           })),

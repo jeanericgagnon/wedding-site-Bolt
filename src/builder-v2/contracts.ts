@@ -1,18 +1,21 @@
-export type BuilderV2BlockType =
-  | 'title'
-  | 'text'
-  | 'qna'
-  | 'photo'
-  | 'story'
-  | 'timelineItem'
-  | 'event'
-  | 'travelTip'
-  | 'hotelCard'
-  | 'registryItem'
-  | 'fundHighlight'
-  | 'rsvpNote'
-  | 'faqItem'
-  | 'divider';
+export const BUILDER_V2_BLOCK_TYPES = [
+  'title',
+  'text',
+  'qna',
+  'photo',
+  'story',
+  'timelineItem',
+  'event',
+  'travelTip',
+  'hotelCard',
+  'registryItem',
+  'fundHighlight',
+  'rsvpNote',
+  'faqItem',
+  'divider',
+] as const;
+
+export type BuilderV2BlockType = typeof BUILDER_V2_BLOCK_TYPES[number];
 
 export type BuilderV2BlockData = {
   text?: string;
