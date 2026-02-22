@@ -157,7 +157,19 @@ export const VaultContribute: React.FC = () => {
       return;
     }
 
-    const options = configList as VaultConfigInfo[];
+    let options = configList as VaultConfigInfo[];
+
+    if (siteSlug === 'alex-jordan-demo') {
+      const seeded = [
+        { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+        { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+        { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+      ] as VaultConfigInfo[];
+      const byYear = new Map<number, VaultConfigInfo>();
+      [...seeded, ...options].forEach(v => byYear.set(v.duration_years, v));
+      options = Array.from(byYear.values()).sort((a, b) => a.duration_years - b.duration_years);
+    }
+
     setVaultOptions(options);
     setVaultConfig(options[0]);
     setStep('form');
