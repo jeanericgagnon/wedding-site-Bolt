@@ -342,7 +342,7 @@ export const BuilderV2Lab: React.FC = () => {
       setSelectedId(id);
       setMultiSelectedIds(rangeIds.filter((x) => x !== id));
       setLastSelectedId(id);
-      if (openEditor) { setShowStructure(true); setShowProperties(false); }
+      if (openEditor) { setShowProperties(true); setShowStructure(false); }
       if (scroll) scrollToPreviewSection(id);
       return;
     }
@@ -351,12 +351,12 @@ export const BuilderV2Lab: React.FC = () => {
     setLastSelectedId(id);
     if (!additive) {
       setMultiSelectedIds([]);
-      if (openEditor) { setShowStructure(true); setShowProperties(false); }
+      if (openEditor) { setShowProperties(true); setShowStructure(false); }
       if (scroll) scrollToPreviewSection(id);
       return;
     }
     setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-    if (openEditor) { setShowStructure(true); setShowProperties(false); }
+    if (openEditor) { setShowProperties(true); setShowStructure(false); }
     if (scroll) scrollToPreviewSection(id);
   };
 
@@ -377,22 +377,18 @@ export const BuilderV2Lab: React.FC = () => {
 
     if (primedPreviewSectionId === id) {
       selectSection(id, false, false, false, true);
-      setShowStructure(true);
-      setShowProperties(false);
       setPropertyTab('content');
       setPrimedPreviewSectionId(null);
       window.setTimeout(() => scrollRailToSectionType(type), 0);
       return;
     }
 
-    selectSection(id, false, false, false, false);
-    setShowStructure(true);
+    selectSection(id, false, false, true, false);
+    setShowStructure(false);
     setShowProperties(false);
-    setPropertyTab('layout');
     setShowAddBlockPicker(false);
     setPrimedPreviewSectionId(id);
     notify('Section selected. Click again to open editor.');
-    scrollToPreviewSection(id);
   };
 
 
@@ -1013,7 +1009,7 @@ export const BuilderV2Lab: React.FC = () => {
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure ? 'lg:grid-cols-[180px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[180px_minmax(0,1fr)_620px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_620px]' : showStructure ? 'lg:grid-cols-[180px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
           {!focusPreview && showStructure && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
@@ -1198,7 +1194,7 @@ export const BuilderV2Lab: React.FC = () => {
             )}
           </main>
 
-          {!focusPreview && false && showProperties && (<aside className="border-l border-border bg-white p-0 overflow-hidden h-full min-h-0">
+          {!focusPreview && showProperties && (<aside className="border-l border-border bg-white p-0 overflow-hidden h-full min-h-0">
             <div className="px-4 h-[var(--rail-head-h)] border-b border-border-subtle flex items-center justify-between">
               <h2 className="text-[1.02rem] font-semibold truncate">{selected.title}</h2>
               <button onClick={() => setShowProperties(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
