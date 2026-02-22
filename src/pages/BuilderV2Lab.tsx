@@ -314,6 +314,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [focusPreview, setFocusPreview] = useState(false);
   const [showMinimap, setShowMinimap] = useState(false);
   const [hoveredPreviewId, setHoveredPreviewId] = useState<string | null>(null);
+  const [primedPreviewSectionId, setPrimedPreviewSectionId] = useState<string | null>(null);
   const [showAddBlockPicker, setShowAddBlockPicker] = useState(false);
   const [sectionBlocks, setSectionBlocks] = useState<Record<string, AddedBlock[]>>({});
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
@@ -357,6 +358,37 @@ export const BuilderV2Lab: React.FC = () => {
     setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     if (openEditor) setShowProperties(true);
     if (scroll) scrollToPreviewSection(id);
+  };
+
+  const handlePreviewSectionClick = (id: string, type: string, e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.shiftKey) {
+      selectSection(id, false, true, false, true);
+      setPrimedPreviewSectionId(null);
+      window.setTimeout(() => scrollRailToSectionType(type), 0);
+      return;
+    }
+
+    if (e.metaKey || e.ctrlKey) {
+      selectSection(id, true, false, false, true);
+      setPrimedPreviewSectionId(null);
+      window.setTimeout(() => scrollRailToSectionType(type), 0);
+      return;
+    }
+
+    if (primedPreviewSectionId === id) {
+      selectSection(id, false, false, false, true);
+      setPrimedPreviewSectionId(null);
+      window.setTimeout(() => scrollRailToSectionType(type), 0);
+      return;
+    }
+
+    selectSection(id, false, false, false, false);
+    setShowStructure(true);
+    setShowProperties(false);
+    setShowAddBlockPicker(false);
+    setPrimedPreviewSectionId(id);
+    notify('Section selected. Click again to open editor.');
+    scrollToPreviewSection(id);
   };
 
 
@@ -1066,12 +1098,7 @@ export const BuilderV2Lab: React.FC = () => {
                       className={`relative transition-all duration-300 ease-out ${hoveredPreviewId && hoveredPreviewId !== instance.id ? 'opacity-60' : 'opacity-100'} ${hoveredPreviewId === instance.id ? 'ring-2 ring-primary/30' : ''} ${selected.id === instance.id ? 'ring-2 ring-primary/30 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onMouseEnter={() => setHoveredPreviewId(instance.id)}
                       onMouseLeave={() => setHoveredPreviewId(null)}
-                      onClick={(e) => {
-                        if (e.shiftKey) selectSection(instance.id, false, true, false, true);
-                        else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true, false, false, true);
-                        else selectSection(instance.id, false, false, false, true);
-                        window.setTimeout(() => scrollRailToSectionType(instance.type), 0);
-                      }}
+                      onClick={(e) => handlePreviewSectionClick(instance.id, instance.type, e)}
                     >
                       <div className={`absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded text-white transition-colors ${hoveredPreviewId === instance.id ? 'bg-black/80' : 'bg-black/55'}`}>{sectionState.title} · {instance.variant}</div>
                       {hoveredPreviewId === instance.id && (
