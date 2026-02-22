@@ -42,7 +42,7 @@ export const VaultContribute: React.FC = () => {
   const [vaultOptions, setVaultOptions] = useState<VaultConfigInfo[]>([]);
   const [step, setStep] = useState<Step>('loading');
   const [submitting, setSubmitting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
@@ -179,7 +179,7 @@ export const VaultContribute: React.FC = () => {
     const newErrors: typeof errors = {};
     if (!form.content.trim()) newErrors.content = 'Please write a message.';
     if (!form.author_name.trim()) newErrors.author_name = 'Please enter your name.';
-    if (form.media_type !== 'text' && !form.attachment_url.trim() && !selectedFile) newErrors.attachment_url = 'Please add a media URL or upload a file.';
+    if (form.media_type !== 'text' && !form.attachment_url.trim() && selectedFiles.length === 0) newErrors.attachment_url = 'Please add a media URL or upload at least one file.';
     setErrors(newErrors);
     setSubmitError(null);
     return Object.keys(newErrors).length === 0;
@@ -190,32 +190,28 @@ export const VaultContribute: React.FC = () => {
     if (!validate() || !site || !vaultConfig) return;
     setSubmitting(true);
 
-    let uploadedUrl = form.attachment_url.trim() || null;
+    const uploadedItems: Array<{ url: string | null; name: string | null; mime: string | null; size: number | null }> = [];
 
-    if (selectedFile && form.media_type !== 'text') {
-      const ext = selectedFile.name.split('.').pop() || 'bin';
-      const safeType = form.media_type === 'voice' ? 'audio' : form.media_type;
-      const path = `public/${site.id}/${vaultConfig.id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
-      setUploadProgress(5);
-      const timer = window.setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev === null) return 10;
-          if (prev >= 90) return prev;
-          return prev + 7;
-        });
-      }, 180);
+    if (selectedFiles.length > 0 && form.media_type !== 'text') {
+      setUploadProgress(3);
 
-      if (DEMO_MODE && site.id === 'demo-site-id') {
-        uploadedUrl = `demo-upload://${safeType}/${selectedFile.name}`;
-        window.clearInterval(timer);
-        setUploadProgress(100);
-      } else {
+      for (let i = 0; i < selectedFiles.length; i += 1) {
+        const file = selectedFiles[i];
+        const ext = file.name.split('.').pop() || 'bin';
+        const safeType = form.media_type === 'voice' ? 'audio' : form.media_type;
+        const path = `public/${site.id}/${vaultConfig.id}/${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+
+        if (DEMO_MODE && site.id === 'demo-site-id') {
+          uploadedItems.push({ url: `demo-upload://${safeType}/${file.name}`, name: file.name, mime: file.type || null, size: file.size || null });
+          setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
+          continue;
+        }
+
         const { error: uploadError } = await supabase.storage
           .from('vault-attachments')
-          .upload(path, selectedFile, { upsert: false, contentType: selectedFile.type || undefined });
+          .upload(path, file, { upsert: false, contentType: file.type || undefined });
 
         if (uploadError) {
-          window.clearInterval(timer);
           setUploadProgress(null);
           setSubmitting(false);
           setSubmitError(uploadError.message?.includes('bucket')
@@ -225,10 +221,13 @@ export const VaultContribute: React.FC = () => {
         }
 
         const { data: publicData } = supabase.storage.from('vault-attachments').getPublicUrl(path);
-        uploadedUrl = publicData.publicUrl;
-        window.clearInterval(timer);
-        setUploadProgress(100);
+        uploadedItems.push({ url: publicData.publicUrl, name: file.name, mime: file.type || null, size: file.size || null });
+        setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
       }
+    } else if (form.attachment_url.trim()) {
+      uploadedItems.push({ url: form.attachment_url.trim(), name: form.attachment_name.trim() || null, mime: null, size: null });
+    } else {
+      uploadedItems.push({ url: null, name: null, mime: null, size: null });
     }
 
     if (DEMO_MODE && site.id === 'demo-site-id') {
@@ -238,19 +237,21 @@ export const VaultContribute: React.FC = () => {
       return;
     }
 
-    const { error } = await supabase.from('vault_entries').insert({
+    const rows = uploadedItems.map((item, idx) => ({
       wedding_site_id: site.id,
       vault_config_id: vaultConfig.id,
       vault_year: vaultConfig.duration_years,
       title: form.title.trim() || null,
       content: form.content.trim(),
       author_name: form.author_name.trim(),
-      attachment_url: uploadedUrl,
-      attachment_name: form.attachment_name.trim() || (selectedFile?.name ?? (form.media_type !== 'text' ? `${form.media_type} attachment` : null)),
+      attachment_url: item.url,
+      attachment_name: item.name || form.attachment_name.trim() || (form.media_type !== 'text' ? `${form.media_type} attachment ${uploadedItems.length > 1 ? `#${idx + 1}` : ''}`.trim() : null),
       media_type: form.media_type,
-      mime_type: selectedFile?.type || null,
-      size_bytes: selectedFile?.size || null,
-    });
+      mime_type: item.mime,
+      size_bytes: item.size,
+    }));
+
+    const { error } = await supabase.from('vault_entries').insert(rows);
 
     setSubmitting(false);
     setUploadProgress(null);
@@ -443,7 +444,7 @@ export const VaultContribute: React.FC = () => {
                   <label className="block text-sm font-medium text-stone-700 mb-1.5">Message type</label>
                   <select
                     value={form.media_type}
-                    onChange={e => setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' })}
+                    onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); }}
                     className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
                   >
                     <option value="text">Text only</option>
@@ -471,45 +472,54 @@ export const VaultContribute: React.FC = () => {
                       <label className="block text-xs text-stone-500 mb-1">or upload file</label>
                       <input
                         type="file"
+                        multiple={form.media_type === 'photo' || form.media_type === 'video'}
                         accept={form.media_type === 'photo' ? 'image/*' : form.media_type === 'video' ? 'video/*' : 'audio/*'}
                         onChange={e => {
-                          const file = e.target.files?.[0] ?? null;
-                          if (!file) {
-                            setSelectedFile(null);
+                          const files = Array.from(e.target.files ?? []);
+                          if (files.length === 0) {
+                            setSelectedFiles([]);
+                            return;
+                          }
+
+                          if ((form.media_type === 'photo' || form.media_type === 'video') && files.length > 5) {
+                            setSubmitError('You can upload up to 5 photos or videos per submission.');
+                            setSelectedFiles([]);
                             return;
                           }
 
                           const mediaType = form.media_type;
-                          if (mediaType === 'photo' && !file.type.startsWith('image/')) {
-                            setSubmitError('Please choose an image file for Photo type.');
-                            setSelectedFile(null);
-                            return;
-                          }
-                          if (mediaType === 'video' && !file.type.startsWith('video/')) {
-                            setSubmitError('Please choose a video file for Video type.');
-                            setSelectedFile(null);
-                            return;
-                          }
-                          if (mediaType === 'voice' && !file.type.startsWith('audio/')) {
-                            setSubmitError('Please choose an audio file for Voice type.');
-                            setSelectedFile(null);
-                            return;
-                          }
-
                           const maxMb = MAX_UPLOAD_MB_BY_TYPE[mediaType as 'photo' | 'video' | 'voice'];
-                          if (file.size > maxMb * 1024 * 1024) {
-                            setSubmitError(`File too large. Max ${maxMb}MB for ${mediaType}.`);
-                            setSelectedFile(null);
-                            return;
+
+                          for (const file of files) {
+                            if (mediaType === 'photo' && !file.type.startsWith('image/')) {
+                              setSubmitError('Please choose only image files for Photo type.');
+                              setSelectedFiles([]);
+                              return;
+                            }
+                            if (mediaType === 'video' && !file.type.startsWith('video/')) {
+                              setSubmitError('Please choose only video files for Video type.');
+                              setSelectedFiles([]);
+                              return;
+                            }
+                            if (mediaType === 'voice' && !file.type.startsWith('audio/')) {
+                              setSubmitError('Please choose an audio file for Voice type.');
+                              setSelectedFiles([]);
+                              return;
+                            }
+                            if (file.size > maxMb * 1024 * 1024) {
+                              setSubmitError(`File too large. Max ${maxMb}MB for ${mediaType}.`);
+                              setSelectedFiles([]);
+                              return;
+                            }
                           }
 
                           setSubmitError(null);
-                          setSelectedFile(file);
+                          setSelectedFiles(files);
                         }}
                         className="w-full text-sm"
                       />
-                      {selectedFile && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFile.name}</p>}
-                      <p className="text-[11px] text-stone-400 mt-1">Max upload: {form.media_type === 'photo' ? '10MB image' : form.media_type === 'video' ? '100MB video' : '25MB audio'}</p>
+                      {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
+                      <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 5 photos, 10MB each' : form.media_type === 'video' ? 'Up to 5 videos, 100MB each' : 'Single voice file, 25MB max'}</p>
                     </div>
                   )}
                 </div>
