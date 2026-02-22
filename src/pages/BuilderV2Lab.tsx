@@ -21,6 +21,12 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+type AddedBlock = {
+  id: string;
+  type: 'title' | 'text' | 'qna' | 'photo' | 'story';
+  content: string;
+};
+
 type LabSection = {
   id: string;
   type: string;
@@ -158,6 +164,8 @@ export const BuilderV2Lab: React.FC = () => {
   const [focusPreview, setFocusPreview] = useState(false);
   const [showMinimap, setShowMinimap] = useState(false);
   const [hoveredPreviewId, setHoveredPreviewId] = useState<string | null>(null);
+  const [showAddBlockPicker, setShowAddBlockPicker] = useState(false);
+  const [sectionBlocks, setSectionBlocks] = useState<Record<string, AddedBlock[]>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -281,6 +289,55 @@ export const BuilderV2Lab: React.FC = () => {
   const updateWeddingDateTime = (localDateTime: string) => {
     if (!localDateTime) return;
     updatePreviewField('eventDateISO', `${localDateTime}:00`);
+  };
+
+  const addBlockToSection = (blockType: AddedBlock['type']) => {
+    const defaultContent: Record<AddedBlock['type'], string> = {
+      title: 'New heading',
+      text: 'Add your text here...',
+      qna: 'Q: Your question?\nA: Your answer.',
+      photo: 'Photo caption',
+      story: 'A short story paragraph',
+    };
+    const block: AddedBlock = {
+      id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      type: blockType,
+      content: defaultContent[blockType],
+    };
+    setSectionBlocks((prev) => ({ ...prev, [selected.id]: [...(prev[selected.id] ?? []), block] }));
+    setShowAddBlockPicker(false);
+    markSaving();
+    notify(`${blockType.toUpperCase()} block added`);
+  };
+
+  const updateBlockContent = (sectionId: string, blockId: string, content: string) => {
+    setSectionBlocks((prev) => ({
+      ...prev,
+      [sectionId]: (prev[sectionId] ?? []).map((b) => (b.id === blockId ? { ...b, content } : b)),
+    }));
+    markSaving();
+  };
+
+  const removeBlock = (sectionId: string, blockId: string) => {
+    setSectionBlocks((prev) => ({
+      ...prev,
+      [sectionId]: (prev[sectionId] ?? []).filter((b) => b.id !== blockId),
+    }));
+    markSaving();
+    notify('Block removed');
+  };
+
+  const moveBlock = (sectionId: string, blockId: string, dir: -1 | 1) => {
+    setSectionBlocks((prev) => {
+      const arr = [...(prev[sectionId] ?? [])];
+      const idx = arr.findIndex((b) => b.id === blockId);
+      const nextIdx = idx + dir;
+      if (idx < 0 || nextIdx < 0 || nextIdx >= arr.length) return prev;
+      const [item] = arr.splice(idx, 1);
+      arr.splice(nextIdx, 0, item);
+      return { ...prev, [sectionId]: arr };
+    });
+    markSaving();
   };
 
   const scrollToRailSection = (id: string) => {
@@ -727,6 +784,18 @@ export const BuilderV2Lab: React.FC = () => {
                           <p className="text-xs text-text-tertiary mt-1">Preview placeholder ({instance.type}:{instance.variant})</p>
                         </div>
                       )}
+
+                      {(sectionBlocks[instance.id] ?? []).length > 0 && (
+                        <div className="border-t border-border-subtle bg-white">
+                          {(sectionBlocks[instance.id] ?? []).map((b) => (
+                            <div key={b.id} className="px-6 py-4 border-b border-border-subtle">
+                              <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">{b.type}</p>
+                              <p className="text-sm text-text-secondary whitespace-pre-wrap">{b.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                     </div>
                   );
                 })}
@@ -773,11 +842,19 @@ export const BuilderV2Lab: React.FC = () => {
                 {propertyTab === 'content' && (
                   <>
                     <button
-                      onClick={() => notify('Add section panel coming next')}
+                      onClick={() => setShowAddBlockPicker((v) => !v)}
                       className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40 bg-white"
                     >
-                      + Add section
+                      + Add to your page
                     </button>
+
+                    {showAddBlockPicker && (
+                      <div className="border border-border-subtle rounded-md p-2 bg-white grid grid-cols-3 gap-2">
+                        {(['qna','story','title','text','photo'] as const).map((k) => (
+                          <button key={k} onClick={() => addBlockToSection(k)} className="text-xs border border-border rounded-sm px-2 py-2 hover:border-primary/40">{k.toUpperCase()}</button>
+                        ))}
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <p className="text-[11px] text-text-tertiary">Current section blocks</p>
@@ -866,6 +943,25 @@ export const BuilderV2Lab: React.FC = () => {
                         </div>
                       )}
 
+
+                      {(sectionBlocks[selected.id] ?? []).map((block, idx) => (
+                        <div key={block.id} className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · {block.type}</p>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => moveBlock(selected.id, block.id, -1)} className="text-[10px] border rounded px-1.5 py-0.5">↑</button>
+                              <button onClick={() => moveBlock(selected.id, block.id, 1)} className="text-[10px] border rounded px-1.5 py-0.5">↓</button>
+                              <button onClick={() => removeBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5">✕</button>
+                            </div>
+                          </div>
+                          <textarea
+                            value={block.content}
+                            onChange={(e) => updateBlockContent(selected.id, block.id, e.target.value)}
+                            className="w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20"
+                          />
+                        </div>
+                      ))}
+
                       {selected.type === 'rsvp' && (
                         <div id="rail-section-rsvp" className="border border-border-subtle rounded-md p-2.5 bg-white space-y-2">
                           <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Block · RSVP</p>
@@ -873,6 +969,7 @@ export const BuilderV2Lab: React.FC = () => {
                           <label className="block"><span className="text-xs text-text-tertiary">RSVP deadline</span><input type="date" value={toDateInputValue(previewFields.rsvpDeadlineISO)} onChange={(e) => updateRsvpDeadlineDate(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" /></label>
                         </div>
                       )}
+
                     </div>
                   </>
                 )}
