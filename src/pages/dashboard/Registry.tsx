@@ -244,7 +244,7 @@ export const DashboardRegistry: React.FC = () => {
     const url = item.item_url ?? item.canonical_url;
     if (!url) return;
     if (isDemoMode) {
-      toast('Metadata refresh is disabled in demo mode');
+      toast('Demo: sample product details are already populated', 'success');
       return;
     }
     try {

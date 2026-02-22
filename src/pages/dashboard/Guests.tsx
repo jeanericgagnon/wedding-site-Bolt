@@ -333,7 +333,7 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
     if (isDemoMode) {
-      toast('Email sending is disabled in demo mode', 'warning');
+      toast('Demo: invitation send simulated (no real email sent)', 'success');
       return;
     }
 
