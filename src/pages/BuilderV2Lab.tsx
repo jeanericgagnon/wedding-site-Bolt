@@ -298,8 +298,8 @@ export const BuilderV2Lab: React.FC = () => {
     rsvpDeadlineISO: `${demoWeddingSite.wedding_date}T00:00:00`,
   });
   const [addQuery, setAddQuery] = useState('');
-  const [showStructure, setShowStructure] = useState(true);
-  const [showProperties, setShowProperties] = useState(false);
+  const [showStructure, setShowStructure] = useState(false);
+  const [showProperties, setShowProperties] = useState(true);
   const [showCommand, setShowCommand] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [commandIndex, setCommandIndex] = useState(0);
@@ -342,7 +342,7 @@ export const BuilderV2Lab: React.FC = () => {
       setSelectedId(id);
       setMultiSelectedIds(rangeIds.filter((x) => x !== id));
       setLastSelectedId(id);
-      if (openEditor) { setShowStructure(true); setShowProperties(false); }
+      if (openEditor) { setShowStructure(false); setShowProperties(true); }
       if (scroll) scrollToPreviewSection(id);
       return;
     }
@@ -351,12 +351,12 @@ export const BuilderV2Lab: React.FC = () => {
     setLastSelectedId(id);
     if (!additive) {
       setMultiSelectedIds([]);
-      if (openEditor) { setShowStructure(true); setShowProperties(false); }
+      if (openEditor) { setShowStructure(false); setShowProperties(true); }
       if (scroll) scrollToPreviewSection(id);
       return;
     }
     setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-    if (openEditor) { setShowProperties(true); setShowStructure(false); }
+    if (openEditor) { setShowStructure(false); setShowProperties(true); }
     if (scroll) scrollToPreviewSection(id);
   };
 
@@ -377,15 +377,16 @@ export const BuilderV2Lab: React.FC = () => {
 
     if (primedPreviewSectionId === id) {
       selectSection(id, false, false, false, true);
-      setShowStructure(true);
-      setShowProperties(false);
+      setShowStructure(false);
+      setShowProperties(true);
+      setPropertyTab('content');
       setPrimedPreviewSectionId(null);
-      notify('Section ready in left navigator.');
+      window.setTimeout(() => scrollRailToSectionType(type), 0);
       return;
     }
 
     selectSection(id, false, false, true, false);
-    setShowStructure(true);
+    setShowStructure(false);
     setShowProperties(false);
     setShowAddBlockPicker(false);
     setPrimedPreviewSectionId(id);
@@ -1009,8 +1010,8 @@ export const BuilderV2Lab: React.FC = () => {
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : 'lg:grid-cols-[260px_minmax(0,1fr)]'} gap-0 flex-1 min-h-0`}>
-          {!focusPreview && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[180px_minmax(0,1fr)_620px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_620px]' : showStructure ? 'lg:grid-cols-[180px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
+          {!focusPreview && showStructure && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Pages</h2>
