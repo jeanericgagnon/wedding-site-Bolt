@@ -831,7 +831,7 @@ export const Product: React.FC = () => {
       {/* TEMPLATE GALLERY — real data */}
       <section id="templates" className="section-shell bg-surface-subtle">
         <div className="container-custom">
-          <div className="text-center mb-4">
+          <div className="section-intro">
             <h2 className="section-title mb-3 text-text-primary">
               {templates.length} professionally designed templates
             </h2>
@@ -844,7 +844,7 @@ export const Product: React.FC = () => {
             {templates.map((tmpl, index) => {
               const theme = TEMPLATE_THEMES[tmpl.id] ?? TEMPLATE_THEMES['modern-luxe'];
               return (
-                <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group border-border-subtle hover:border-primary/30 hover:shadow-lg transition-all hover:-translate-y-0.5">
+                <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group border-border-subtle hover:border-primary/30 hover:shadow-lg transition-all hover:-translate-y-0.5 h-full">
                   {/* Rich website mockup preview */}
                   <div className="aspect-[3/4] relative overflow-hidden" style={{ background: `linear-gradient(180deg, ${theme.bg} 0%, #ffffff 100%)` }}>
                     <img
@@ -953,16 +953,16 @@ export const Product: React.FC = () => {
 
                     {index < 3 && (
                       <div className="absolute top-7 left-2">
-                        <Badge variant="secondary" className="text-xs">Top pick</Badge>
+                        <Badge variant="secondary" className="text-[11px]">Editor pick</Badge>
                       </div>
                     )}
                     {tmpl.isNew && (
                       <div className="absolute top-7 right-2">
-                        <Badge variant="primary" className="text-xs">New</Badge>
+                        <Badge variant="primary" className="text-[11px]">New</Badge>
                       </div>
                     )}
                   </div>
-                  <CardContent className="p-4 bg-white/95">
+                  <CardContent className="p-4 bg-white/95 flex flex-col h-full">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="text-sm font-semibold text-text-primary">{tmpl.displayName}</h3>
                       <div className="flex gap-1 flex-shrink-0 mt-0.5">
@@ -971,18 +971,22 @@ export const Product: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                    <p className="text-xs text-text-tertiary mb-2 line-clamp-3 leading-relaxed min-h-[3.6em]">{tmpl.description}</p>
+                    <p className="text-xs text-text-tertiary mb-3 line-clamp-3 leading-relaxed min-h-[3.6em]">{tmpl.description}</p>
+                    <p className="text-[11px] text-text-tertiary mb-2 uppercase tracking-wide">
+                      Best for: {tmpl.moodTags.slice(0, 2).map(tag => TEMPLATE_MOOD_LABELS[tag] ?? tag).join(' · ')} weddings
+                    </p>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {tmpl.moodTags.slice(0, 2).map(tag => (
                         <Badge key={tag} variant="secondary" className="text-xs capitalize">{TEMPLATE_MOOD_LABELS[tag] ?? tag}</Badge>
                       ))}
                     </div>
-                    <div className="text-xs text-text-tertiary mb-3">
+                    <div className="text-xs text-text-tertiary mb-4">
                       <span className="font-medium">{tmpl.suggestedFonts.heading}</span> + {tmpl.suggestedFonts.body}
                     </div>
+                    <div className="mt-auto" />
                     <Link to="/signup">
                       <Button variant="primary" size="sm" fullWidth>
-                        Preview in builder
+                        Open in builder
                       </Button>
                     </Link>
                   </CardContent>
