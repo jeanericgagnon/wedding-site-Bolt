@@ -168,6 +168,10 @@ export const BuilderV2Lab: React.FC = () => {
     document.getElementById(`preview-section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const scrollRailToSectionType = (type: string) => {
+    document.getElementById(`rail-section-${type}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const selectSection = (id: string, additive = false, range = false, scroll = false) => {
     const currentIndex = sections.findIndex((s) => s.id === id);
     const lastIndex = sections.findIndex((s) => s.id === lastSelectedId);
@@ -698,7 +702,12 @@ export const BuilderV2Lab: React.FC = () => {
                       className={`relative transition-all duration-200 ease-out ${hoveredPreviewId && hoveredPreviewId !== instance.id ? 'opacity-45' : 'opacity-100'} ${hoveredPreviewId === instance.id ? 'ring-2 ring-primary/30' : ''} ${selected.id === instance.id ? 'ring-2 ring-primary/25' : multiSelectedIds.includes(instance.id) ? 'ring-1 ring-primary/15' : ''}`}
                       onMouseEnter={() => setHoveredPreviewId(instance.id)}
                       onMouseLeave={() => setHoveredPreviewId(null)}
-                      onClick={(e) => { if (e.shiftKey) selectSection(instance.id, false, true); else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true); else selectSection(instance.id); }}
+                      onClick={(e) => {
+                        if (e.shiftKey) selectSection(instance.id, false, true);
+                        else if (e.metaKey || e.ctrlKey) selectSection(instance.id, true);
+                        else selectSection(instance.id);
+                        window.setTimeout(() => scrollRailToSectionType(instance.type), 0);
+                      }}
                     >
                       <div className={`absolute top-2 left-2 z-10 text-[11px] px-2 py-1 rounded text-white transition-colors ${hoveredPreviewId === instance.id ? 'bg-black/80' : 'bg-black/55'}`}>{sectionState.title} · {instance.variant}</div>
                       {hoveredPreviewId === instance.id && (
@@ -791,7 +800,7 @@ export const BuilderV2Lab: React.FC = () => {
                 </label>
                 <p className="text-[11px] text-text-tertiary">Page content</p>
                 {selected.type === 'hero' && (
-                  <>
+                  <div id="rail-section-hero">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Couple names</span>
                       <input
@@ -810,9 +819,10 @@ export const BuilderV2Lab: React.FC = () => {
                       />
                       <p className="text-[11px] text-text-tertiary mt-1">Stored as ISO internally.</p>
                     </label>
-                  </>
+                  </div>
                 )}
                 {selected.type === 'story' && (
+                  <div id="rail-section-story">
                   <label className="block">
                     <span className="text-xs text-text-tertiary">Story text</span>
                     <textarea
@@ -821,9 +831,10 @@ export const BuilderV2Lab: React.FC = () => {
                       className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-24"
                     />
                   </label>
+                  </div>
                 )}
                 {selected.type === 'schedule' && (
-                  <>
+                  <div id="rail-section-schedule">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Primary event title</span>
                       <input value={previewFields.scheduleTitle} onChange={(e) => updatePreviewField('scheduleTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
@@ -832,10 +843,10 @@ export const BuilderV2Lab: React.FC = () => {
                       <span className="text-xs text-text-tertiary">Primary event note</span>
                       <input value={previewFields.scheduleNote} onChange={(e) => updatePreviewField('scheduleNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
                     </label>
-                  </>
+                  </div>
                 )}
                 {selected.type === 'travel' && (
-                  <>
+                  <div id="rail-section-travel">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Flights</span>
                       <input value={previewFields.travelFlights} onChange={(e) => updatePreviewField('travelFlights', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
@@ -852,10 +863,10 @@ export const BuilderV2Lab: React.FC = () => {
                       <span className="text-xs text-text-tertiary">Local tips</span>
                       <textarea value={previewFields.travelTips} onChange={(e) => updatePreviewField('travelTips', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" />
                     </label>
-                  </>
+                  </div>
                 )}
                 {selected.type === 'registry' && (
-                  <>
+                  <div id="rail-section-registry">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">Featured registry item</span>
                       <input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
@@ -864,10 +875,10 @@ export const BuilderV2Lab: React.FC = () => {
                       <span className="text-xs text-text-tertiary">Registry note</span>
                       <textarea value={previewFields.registryNote} onChange={(e) => updatePreviewField('registryNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" />
                     </label>
-                  </>
+                  </div>
                 )}
                 {selected.type === 'rsvp' && (
-                  <>
+                  <div id="rail-section-rsvp">
                     <label className="block">
                       <span className="text-xs text-text-tertiary">RSVP heading</span>
                       <input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm" />
@@ -882,7 +893,7 @@ export const BuilderV2Lab: React.FC = () => {
                       />
                       <p className="text-[11px] text-text-tertiary mt-1">Stored as ISO internally.</p>
                     </label>
-                  </>
+                  </div>
                 )}
                 <label id="design-section" className="block">
                   <span className="text-xs text-text-tertiary">Page layout</span>
