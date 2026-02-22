@@ -103,6 +103,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string>(INITIAL_SECTIONS[0].id);
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
+  const [lastSavedAt, setLastSavedAt] = useState<string>('');
   const [addQuery, setAddQuery] = useState('');
   const [showStructure, setShowStructure] = useState(true);
   const [showProperties, setShowProperties] = useState(true);
@@ -167,7 +168,10 @@ export const BuilderV2Lab: React.FC = () => {
 
   const markSaving = () => {
     setSaveState('saving');
-    window.setTimeout(() => setSaveState('saved'), 600);
+    window.setTimeout(() => {
+      setSaveState('saved');
+      setLastSavedAt(new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
+    }, 600);
   };
 
   const notify = (text: string) => {
@@ -441,7 +445,7 @@ export const BuilderV2Lab: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full ${saveState === 'saved' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
               {saveState === 'saved' ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
-              {saveState === 'saved' ? 'All changes saved' : 'Saving...'}
+              {saveState === 'saved' ? `All changes saved${lastSavedAt ? ` · ${lastSavedAt}` : ''}` : 'Saving...'}
             </span>
             <Link to="/product" className="text-sm text-primary hover:text-primary-hover inline-flex items-center gap-1">Back <ArrowRight className="w-4 h-4" /></Link>
           </div>
