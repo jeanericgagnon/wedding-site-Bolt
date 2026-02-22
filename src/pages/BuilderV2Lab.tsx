@@ -1015,7 +1015,7 @@ export const BuilderV2Lab: React.FC = () => {
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Pages</h2>
             </div>
-            <div className="mb-3 text-[11px] text-text-tertiary">Drag to reorder pages. Select to edit in the right rail.</div>
+            <div className="mb-3 text-[11px] text-text-tertiary">Drag to reorder pages. Select a section to focus it in preview.</div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2 overflow-auto pr-1 max-h-[38vh]">
