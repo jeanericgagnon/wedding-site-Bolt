@@ -87,12 +87,21 @@ export const VaultContribute: React.FC = () => {
         const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[] } : { vaultConfigs: [] };
         const enabled = (parsed.vaultConfigs ?? []).filter(v => v.is_enabled);
-        const fallback = enabled.length ? enabled : [{ id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true } as VaultConfigInfo];
+        const seeded = [
+          { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+          { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+          { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+        ] as VaultConfigInfo[];
+        const fallback = enabled.length ? enabled : seeded;
         setVaultOptions(fallback);
         setVaultConfig(fallback[0]);
         setStep('form');
       } catch {
-        const fallback = [{ id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true } as VaultConfigInfo];
+        const fallback = [
+          { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+          { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+          { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+        ] as VaultConfigInfo[];
         setVaultOptions(fallback);
         setVaultConfig(fallback[0]);
         setStep('form');
