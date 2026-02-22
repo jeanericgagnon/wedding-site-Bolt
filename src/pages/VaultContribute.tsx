@@ -46,8 +46,11 @@ export const VaultContribute: React.FC = () => {
     title: '',
     content: '',
     author_name: '',
+    media_type: 'text' as 'text' | 'photo' | 'video' | 'voice',
+    attachment_url: '',
+    attachment_name: '',
   });
-  const [errors, setErrors] = useState<{ content?: string; author_name?: string }>({});
+  const [errors, setErrors] = useState<{ content?: string; author_name?: string; attachment_url?: string }>({});
 
   const hasYearParam = typeof year === 'string' && year.length > 0;
   const vaultYear = hasYearParam ? parseInt(year ?? '0', 10) : null;
@@ -149,6 +152,7 @@ export const VaultContribute: React.FC = () => {
     const newErrors: typeof errors = {};
     if (!form.content.trim()) newErrors.content = 'Please write a message.';
     if (!form.author_name.trim()) newErrors.author_name = 'Please enter your name.';
+    if (form.media_type !== 'text' && !form.attachment_url.trim()) newErrors.attachment_url = 'Please add a media URL.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -171,8 +175,8 @@ export const VaultContribute: React.FC = () => {
       title: form.title.trim() || null,
       content: form.content.trim(),
       author_name: form.author_name.trim(),
-      attachment_url: null,
-      attachment_name: null,
+      attachment_url: form.attachment_url.trim() || null,
+      attachment_name: form.attachment_name.trim() || (form.media_type !== 'text' ? `${form.media_type} attachment` : null),
     });
 
     setSubmitting(false);
@@ -357,6 +361,51 @@ export const VaultContribute: React.FC = () => {
                 ) : (
                   <p className="text-stone-400 text-xs mt-1">{form.content.length} characters</p>
                 )}
+              </div>
+
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">Message type</label>
+                  <select
+                    value={form.media_type}
+                    onChange={e => setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' })}
+                    className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                  >
+                    <option value="text">Text only</option>
+                    <option value="photo">Photo</option>
+                    <option value="video">Video</option>
+                    <option value="voice">Voice note</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Media URL {form.media_type !== 'text' ? <span className="text-red-500">*</span> : <span className="text-stone-400 font-normal">(optional)</span>}
+                  </label>
+                  <input
+                    type="url"
+                    value={form.attachment_url}
+                    onChange={e => setForm({ ...form, attachment_url: e.target.value })}
+                    placeholder={form.media_type === 'text' ? 'https://… (optional)' : 'https://… (required for media)'}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition ${
+                      errors.attachment_url ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
+                    }`}
+                  />
+                  {errors.attachment_url && <p className="text-red-500 text-xs mt-1">{errors.attachment_url}</p>}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                  Media label <span className="text-stone-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.attachment_name}
+                  onChange={e => setForm({ ...form, attachment_name: e.target.value })}
+                  placeholder="e.g. Engagement video, Voice memo"
+                  className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                />
               </div>
 
               <button
