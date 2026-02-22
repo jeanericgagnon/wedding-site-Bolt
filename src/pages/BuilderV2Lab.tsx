@@ -295,6 +295,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [hoveredPreviewId, setHoveredPreviewId] = useState<string | null>(null);
   const [showAddBlockPicker, setShowAddBlockPicker] = useState(false);
   const [sectionBlocks, setSectionBlocks] = useState<Record<string, AddedBlock[]>>({});
+  const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -480,6 +481,29 @@ export const BuilderV2Lab: React.FC = () => {
     }));
     markSaving();
     notify('Block removed');
+  };
+
+
+
+  const duplicateBlock = (sectionId: string, blockId: string) => {
+    setSectionBlocks((prev) => {
+      const arr = [...(prev[sectionId] ?? [])];
+      const idx = arr.findIndex((b) => b.id === blockId);
+      if (idx < 0) return prev;
+      const source = arr[idx];
+      const dup: AddedBlock = {
+        ...source,
+        id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      };
+      arr.splice(idx + 1, 0, dup);
+      return { ...prev, [sectionId]: arr };
+    });
+    markSaving();
+    notify('Block duplicated');
+  };
+
+  const toggleBlockCollapsed = (blockId: string) => {
+    setCollapsedBlocks((prev) => ({ ...prev, [blockId]: !prev[blockId] }));
   };
 
   const moveBlock = (sectionId: string, blockId: string, dir: -1 | 1) => {
@@ -1169,17 +1193,19 @@ export const BuilderV2Lab: React.FC = () => {
                             <div className="flex items-center gap-1.5">
                               <button onClick={() => moveBlock(selected.id, block.id, -1)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↑</button>
                               <button onClick={() => moveBlock(selected.id, block.id, 1)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↓</button>
+                              <button onClick={() => duplicateBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">⧉</button>
+                              <button onClick={() => toggleBlockCollapsed(block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">{collapsedBlocks[block.id] ? '▸' : '▾'}</button>
                               <button onClick={() => removeBlock(selected.id, block.id)} className="text-[10px] border rounded px-1.5 py-0.5 hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">✕</button>
                             </div>
                           </div>
 
-                          {getBlockValidationWarning(block) && (
+                          {!collapsedBlocks[block.id] && getBlockValidationWarning(block) && (
                             <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
                               {getBlockValidationWarning(block)}
                             </div>
                           )}
 
-                          {block.type === 'qna' ? (
+                          {!collapsedBlocks[block.id] && (block.type === 'qna' ? (
                             <>
                               <label className="block">
                                 <span className="text-[11px] text-text-tertiary">Question</span>
@@ -1253,7 +1279,7 @@ export const BuilderV2Lab: React.FC = () => {
                                 className="w-full border rounded-md px-3 py-2.5 bg-white text-sm min-h-20 focus:outline-none focus:ring-2 focus:ring-primary/20"
                               />
                             </label>
-                          )}
+                          ))}
                         </div>
                         );
                       })}
