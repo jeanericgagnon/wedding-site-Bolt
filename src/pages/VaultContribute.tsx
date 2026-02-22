@@ -20,7 +20,7 @@ interface VaultConfigInfo {
 
 type Step = 'loading' | 'form' | 'success' | 'error' | 'invalid';
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
-const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 10, video: 100, voice: 25 };
+const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
 
 function ordinalLabel(years: number): string {
   if (years === 1) return 'first';
@@ -481,8 +481,8 @@ export const VaultContribute: React.FC = () => {
                             return;
                           }
 
-                          if ((form.media_type === 'photo' || form.media_type === 'video') && files.length > 5) {
-                            setSubmitError('You can upload up to 5 photos or videos per submission.');
+                          if ((form.media_type === 'photo' || form.media_type === 'video') && files.length > 3) {
+                            setSubmitError('You can upload up to 3 photos or videos per submission.');
                             setSelectedFiles([]);
                             return;
                           }
@@ -519,7 +519,7 @@ export const VaultContribute: React.FC = () => {
                         className="w-full text-sm"
                       />
                       {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
-                      <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 5 photos, 10MB each' : form.media_type === 'video' ? 'Up to 5 videos, 100MB each' : 'Single voice file, 25MB max'}</p>
+                      <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each' : form.media_type === 'video' ? 'Up to 3 videos, 35MB each' : 'Single voice file, 12MB max'}</p>
                     </div>
                   )}
                 </div>
