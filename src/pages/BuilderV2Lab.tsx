@@ -298,7 +298,7 @@ export const BuilderV2Lab: React.FC = () => {
     rsvpDeadlineISO: `${demoWeddingSite.wedding_date}T00:00:00`,
   });
   const [addQuery, setAddQuery] = useState('');
-  const [showStructure, setShowStructure] = useState(false);
+  const [showStructure, setShowStructure] = useState(true);
   const [showProperties, setShowProperties] = useState(false);
   const [showCommand, setShowCommand] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
@@ -1208,10 +1208,10 @@ export const BuilderV2Lab: React.FC = () => {
                   onClick={() => {
                     setShowAddBlockPicker(false);
                     setFocusPreview(false);
-                    setShowStructure(false);
+                    setShowStructure(true);
                     setShowProperties(false);
                     setPrimedPreviewSectionId(null);
-                    notify('Guide mode on. Click a section, then click again to open editor.');
+                    notify('Section browser open. Click a section, then click again to open editor.');
                   }}
                   className="text-[11px] border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 hover:bg-primary/5 transition-all"
                 >
