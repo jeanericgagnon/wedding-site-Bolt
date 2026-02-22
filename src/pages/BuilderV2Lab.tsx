@@ -299,7 +299,7 @@ export const BuilderV2Lab: React.FC = () => {
   });
   const [addQuery, setAddQuery] = useState('');
   const [showStructure, setShowStructure] = useState(false);
-  const [showProperties, setShowProperties] = useState(true);
+  const [showProperties, setShowProperties] = useState(false);
   const [showCommand, setShowCommand] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [commandIndex, setCommandIndex] = useState(0);
@@ -384,8 +384,8 @@ export const BuilderV2Lab: React.FC = () => {
     }
 
     selectSection(id, false, false, false, false);
-    setShowStructure(false);
-    setShowProperties(true);
+    setShowStructure(true);
+    setShowProperties(false);
     setPropertyTab('layout');
     setShowAddBlockPicker(false);
     setPrimedPreviewSectionId(id);
@@ -1006,12 +1006,12 @@ export const BuilderV2Lab: React.FC = () => {
             <button onClick={() => setShowCommand(true)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
             <button onClick={exportV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export V2</button>
             <button onClick={importV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import V2</button>
-            <button onClick={() => setShowProperties((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showProperties ? 'Hide' : 'Show'} Edit rail</button>
+            <span className="hidden" />
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} Pages</button>
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[140px_minmax(0,1fr)_620px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_620px]' : showStructure ? 'lg:grid-cols-[140px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
+        <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure ? 'lg:grid-cols-[180px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
           {!focusPreview && showStructure && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
@@ -1196,7 +1196,7 @@ export const BuilderV2Lab: React.FC = () => {
             )}
           </main>
 
-          {!focusPreview && showProperties && (<aside className="border-l border-border bg-white p-0 overflow-hidden h-full min-h-0">
+          {!focusPreview && false && showProperties && (<aside className="border-l border-border bg-white p-0 overflow-hidden h-full min-h-0">
             <div className="px-4 h-[var(--rail-head-h)] border-b border-border-subtle flex items-center justify-between">
               <h2 className="text-[1.02rem] font-semibold truncate">{selected.title}</h2>
               <button onClick={() => setShowProperties(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
