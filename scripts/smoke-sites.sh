@@ -34,4 +34,9 @@ for r in "${ROUTES[@]}"; do
 done
 
 echo
+echo "== Smoke: QA fallback assets =="
+check_url "$QA_BASE" "/404.html"
+check_url "$QA_BASE" "/?oc_redirect=%2Fdashboard%2Fbuilder"
+
+echo
 echo "Note: GitHub Pages SPA deep links may return 404 over raw HTTP while still working client-side via 404.html fallback."

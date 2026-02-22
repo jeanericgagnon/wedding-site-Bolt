@@ -88,7 +88,7 @@ export const DashboardPlanning: React.FC = () => {
         .from('guests')
         .select('id', { count: 'exact', head: true })
         .eq('wedding_site_id', id)
-        .eq('rsvp_status', 'attending');
+        .in('rsvp_status', ['confirmed', 'attending']);
 
       const { data: seatingEventsData } = await supabase
         .from('seating_events')
