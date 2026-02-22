@@ -36,6 +36,19 @@ const INITIAL_SECTIONS: LabSection[] = [
 
 const ADDABLE_SECTIONS = ['Gallery', 'FAQ', 'Venue', 'Countdown', 'Wedding Party', 'Dress Code', 'Accommodations', 'Directions'];
 
+const VARIANTS_BY_TYPE: Record<string, string[]> = {
+  hero: ['default', 'countdown'],
+  story: ['default', 'timeline'],
+  schedule: ['default', 'dayTabs'],
+  travel: ['default', 'localGuide'],
+  registry: ['default', 'fundHighlight'],
+  faq: ['default', 'iconGrid'],
+  venue: ['default'],
+  countdown: ['default'],
+  rsvp: ['default'],
+};
+
+
 type StructureItemProps = {
   section: LabSection;
   selected: boolean;
@@ -175,6 +188,19 @@ export const BuilderV2Lab: React.FC = () => {
     commit(next);
   };
 
+
+  const applyVariantToSelection = (variant: string) => {
+    if (selectedIds.length <= 1) return;
+    const selectedSet = new Set(selectedIds);
+    commit(
+      sections.map((s) => {
+        if (!selectedSet.has(s.id)) return s;
+        const allowed = VARIANTS_BY_TYPE[s.type] ?? ['default'];
+        return allowed.includes(variant) ? { ...s, variant } : s;
+      })
+    );
+  };
+
   const moveSection = (id: string, dir: -1 | 1) => {
     const idx = sections.findIndex((s) => s.id === id);
     const nextIdx = idx + dir;
@@ -199,8 +225,9 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
   const addSection = (typeLabel: string) => {
-    const id = `${typeLabel.toLowerCase()}-${Date.now()}`;
-    const next = [...sections, { id, type: typeLabel.toLowerCase(), title: typeLabel, variant: 'default', enabled: true }];
+    const normalizedType = typeLabel.toLowerCase().replace(/\s+/g, '-');
+    const id = `${normalizedType}-${Date.now()}`;
+    const next = [...sections, { id, type: normalizedType, title: typeLabel, variant: 'default', enabled: true }];
     setSelectedId(id);
     commit(next);
   };
@@ -348,6 +375,24 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => bulkMoveBlock(1)} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Move block down</button>
                 <button onClick={bulkToggleVisibility} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Toggle visibility (selected)</button>
                 <button onClick={bulkDuplicate} className="text-[11px] border rounded px-2 py-1 hover:border-primary/40">Duplicate selected</button>
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    applyVariantToSelection(e.target.value);
+                    e.currentTarget.value = '';
+                  }}
+                  className="text-[11px] border rounded px-2 py-1 bg-white"
+                >
+                  <option value="">Bulk variant…</option>
+                  <option value="default">default</option>
+                  <option value="countdown">countdown</option>
+                  <option value="timeline">timeline</option>
+                  <option value="dayTabs">dayTabs</option>
+                  <option value="localGuide">localGuide</option>
+                  <option value="iconGrid">iconGrid</option>
+                  <option value="fundHighlight">fundHighlight</option>
+                </select>
               </div>
             )}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -464,7 +509,7 @@ export const BuilderV2Lab: React.FC = () => {
                 <label className="block">
                   <span className="text-xs text-text-tertiary">Variant</span>
                   <select value={selected.variant} onChange={(e) => updateVariant(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white">
-                    {['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight'].map((v) => (
+                    {(VARIANTS_BY_TYPE[selected.type] ?? ['default']).map((v) => (
                       <option key={v} value={v}>{v}</option>
                     ))}
                   </select>
