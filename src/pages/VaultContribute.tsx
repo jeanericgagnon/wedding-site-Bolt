@@ -44,7 +44,7 @@ export const VaultContribute: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [uploadProgress] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -173,15 +173,27 @@ export const VaultContribute: React.FC = () => {
       const ext = selectedFile.name.split('.').pop() || 'bin';
       const safeType = form.media_type === 'voice' ? 'audio' : form.media_type;
       const path = `public/${site.id}/${vaultConfig.id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      setUploadProgress(5);
+      const timer = window.setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev === null) return 10;
+          if (prev >= 90) return prev;
+          return prev + 7;
+        });
+      }, 180);
 
       if (DEMO_MODE && site.id === 'demo-site-id') {
         uploadedUrl = `demo-upload://${safeType}/${selectedFile.name}`;
+        window.clearInterval(timer);
+        setUploadProgress(100);
       } else {
         const { error: uploadError } = await supabase.storage
           .from('vault-attachments')
           .upload(path, selectedFile, { upsert: false, contentType: selectedFile.type || undefined });
 
         if (uploadError) {
+          window.clearInterval(timer);
+          setUploadProgress(null);
           setSubmitting(false);
           setSubmitError(uploadError.message?.includes('bucket')
             ? 'Media upload is not configured yet (missing vault-attachments bucket or policy).'
@@ -191,11 +203,14 @@ export const VaultContribute: React.FC = () => {
 
         const { data: publicData } = supabase.storage.from('vault-attachments').getPublicUrl(path);
         uploadedUrl = publicData.publicUrl;
+        window.clearInterval(timer);
+        setUploadProgress(100);
       }
     }
 
     if (DEMO_MODE && site.id === 'demo-site-id') {
       setSubmitting(false);
+      setUploadProgress(null);
       setStep('success');
       return;
     }
@@ -215,6 +230,7 @@ export const VaultContribute: React.FC = () => {
     });
 
     setSubmitting(false);
+    setUploadProgress(null);
     if (error) {
       setSubmitError(`Could not save your message: ${error.message}`);
     } else {
@@ -497,7 +513,12 @@ export const VaultContribute: React.FC = () => {
               )}
 
               {uploadProgress !== null && (
-                <div className="text-xs text-stone-500">Uploading media… {uploadProgress}%</div>
+                <div className="space-y-1">
+                  <div className="text-xs text-stone-500">Uploading media… {uploadProgress}%</div>
+                  <div className="h-2 rounded-full bg-stone-200 overflow-hidden">
+                    <div className="h-full bg-amber-500 transition-all" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                </div>
               )}
 
               <button
