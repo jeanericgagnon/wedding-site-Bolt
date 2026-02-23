@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2 } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -36,6 +36,26 @@ interface GuestWithRSVP extends Guest {
   rsvp?: RSVP;
 }
 
+function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; reception?: boolean } | null {
+  if (!notes) return null;
+  const match = notes.match(/\[Events\s+([^\]]+)\]/i);
+  if (!match) return null;
+
+  const pairs = match[1]
+    .split(',')
+    .map((part) => part.trim())
+    .map((part) => {
+      const [k, v] = part.split(':').map((x) => (x || '').trim().toLowerCase());
+      return [k, v === 'yes'] as const;
+    });
+
+  const map = Object.fromEntries(pairs) as Record<string, boolean>;
+  return {
+    ceremony: map.ceremony,
+    reception: map.reception,
+  };
+}
+
 interface WeddingSiteInfo {
   couple_name_1: string;
   couple_name_2: string;
@@ -44,6 +64,11 @@ interface WeddingSiteInfo {
   venue_address: string | null;
   site_url: string | null;
 }
+
+const RSVP_CAMPAIGN_LOG_KEY = 'dayof_rsvp_campaign_log_v1';
+const RSVP_FOLLOWUP_TASKS_KEY = 'dayof_rsvp_followup_tasks_v1';
+const RSVP_CAMPAIGN_PRESET_KEY = 'dayof_rsvp_campaign_preset_v1';
+const RSVP_SAVED_SEGMENTS_KEY = 'dayof_rsvp_saved_segments_v1';
 
 interface ItineraryEvent {
   id: string;
@@ -61,10 +86,90 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
+  const [bulkSending, setBulkSending] = useState(false);
+  const [campaignLog, setCampaignLog] = useState<Array<{ id: number; segment: string; count: number; sentAt: string }>>([]);
+  const [showRecipientPreview, setShowRecipientPreview] = useState(false);
+  const [campaignPreset, setCampaignPreset] = useState<'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email'>('pending');
+  const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
+  const [sortByPriority, setSortByPriority] = useState(true);
+  const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
+
+
+  useEffect(() => {
+    try {
+      const rawPreset = localStorage.getItem(RSVP_CAMPAIGN_PRESET_KEY);
+      if (rawPreset) {
+        const preset = rawPreset as typeof campaignPreset;
+        setCampaignPreset(preset);
+        setFilterStatus(preset);
+      }
+    } catch {
+      // noop
+    }
+
+    try {
+      const rawTasks = localStorage.getItem(RSVP_FOLLOWUP_TASKS_KEY);
+      const parsed = rawTasks ? JSON.parse(rawTasks) : [];
+      if (Array.isArray(parsed)) setFollowUpTasks(parsed.slice(0, 12));
+    } catch {
+      // noop
+    }
+
+    try {
+      const rawSeg = localStorage.getItem(RSVP_SAVED_SEGMENTS_KEY);
+      const parsed = rawSeg ? JSON.parse(rawSeg) : [];
+      if (Array.isArray(parsed)) setSavedSegments(parsed.slice(0, 12));
+    } catch {
+      // noop
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RSVP_CAMPAIGN_PRESET_KEY, campaignPreset);
+    } catch {
+      // noop
+    }
+  }, [campaignPreset]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RSVP_FOLLOWUP_TASKS_KEY, JSON.stringify(followUpTasks.slice(0, 12)));
+    } catch {
+      // noop
+    }
+  }, [followUpTasks]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RSVP_SAVED_SEGMENTS_KEY, JSON.stringify(savedSegments.slice(0, 12)));
+    } catch {
+      // noop
+    }
+  }, [savedSegments]);
+
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RSVP_CAMPAIGN_LOG_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) setCampaignLog(parsed.slice(0, 12));
+    } catch {
+      // noop
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RSVP_CAMPAIGN_LOG_KEY, JSON.stringify(campaignLog.slice(0, 12)));
+    } catch {
+      // noop
+    }
+  }, [campaignLog]);
 
   const [viewMode, setViewMode] = useState<'list' | 'households'>('list');
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
@@ -368,6 +473,203 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+
+
+  const handleCopyOpsSummary = async () => {
+    const summary = [
+      `RSVP Ops Summary (${new Date().toLocaleString()})`,
+      `Segment: ${segmentLabelMap[filterStatus] || filterStatus}`,
+      `Eligible reminders: ${reminderCandidates.length}`,
+      `No response: ${rsvpOps.noResponse}`,
+      `Missing meal: ${rsvpOps.missingMeal}`,
+      `Plus-one missing: ${rsvpOps.plusOneMissingName}`,
+      `Pending no email: ${rsvpOps.pendingNoEmail}`,
+      `No contact: ${contactStats.withNoContact}`,
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(summary);
+      toast('Copied RSVP ops summary', 'success');
+    } catch {
+      window.prompt('Copy RSVP ops summary:', summary);
+    }
+  };
+
+  const handleCopyFilteredEmails = async () => {
+    const emails = reminderCandidates.map(g => g.email).filter(Boolean) as string[];
+    if (emails.length === 0) {
+      toast('No emails available in this filtered segment.', 'error');
+      return;
+    }
+    const payload = emails.join(', ');
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast(`Copied ${emails.length} email${emails.length === 1 ? '' : 's'}`, 'success');
+    } catch {
+      window.prompt('Copy filtered emails:', payload);
+    }
+  };
+
+  const applyCampaignPreset = (preset: 'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email') => {
+    setCampaignPreset(preset);
+    setFilterStatus(preset);
+    setViewMode('list');
+    setSearchQuery('');
+  };
+
+
+  const saveCurrentSegment = () => {
+    const label = `${segmentLabelMap[filterStatus] || filterStatus} (${filteredGuests.length})`;
+    const seg = { id: Date.now(), label, filter: filterStatus, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
+    setSavedSegments((prev) => [seg, ...prev.filter((x) => x.filter !== filterStatus)].slice(0, 12));
+    toast('Segment saved', 'success');
+  };
+
+  const addFollowUpTask = (text: string) => {
+    const task = { id: Date.now(), text, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
+    setFollowUpTasks((prev) => [task, ...prev].slice(0, 6));
+    toast('Follow-up task captured', 'success');
+  };
+
+
+  const generateChecklistTasks = () => {
+    const tasks: string[] = [];
+    if (rsvpOps.noResponse > 0) tasks.push(`Follow up ${rsvpOps.noResponse} pending RSVP(s)`);
+    if (rsvpOps.missingMeal > 0) tasks.push(`Collect ${rsvpOps.missingMeal} missing meal choice(s)`);
+    if (rsvpOps.plusOneMissingName > 0) tasks.push(`Collect ${rsvpOps.plusOneMissingName} plus-one name(s)`);
+    if (rsvpOps.pendingNoEmail > 0) tasks.push(`Add contact details for ${rsvpOps.pendingNoEmail} pending guest(s)`);
+    if (contactStats.withNoContact > 0) tasks.push(`Resolve no-contact info for ${contactStats.withNoContact} guest(s)`);
+
+    if (tasks.length === 0) {
+      toast('No blockers right now. Great shape!', 'success');
+      return;
+    }
+
+    const stamped = tasks.map((text, i) => ({
+      id: Date.now() + i,
+      text,
+      createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    }));
+
+    setFollowUpTasks((prev) => [...stamped, ...prev].slice(0, 12));
+    toast(`Generated ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
+  };
+
+  const handleSendSelectedInvitations = async () => {
+    const selectedRecipients = guests.filter(g => selectedGuestIds.has(g.id) && !!g.email && !!g.invite_token);
+    if (selectedRecipients.length === 0) {
+      toast('No selected guests with email + invite token.', 'error');
+      return;
+    }
+
+    if (!window.confirm(`Send reminders to ${selectedRecipients.length} selected guest(s)?`)) return;
+
+    if (isDemoMode) {
+      toast(`Demo: simulated reminders for ${selectedRecipients.length} selected guests`, 'success');
+      return;
+    }
+
+    setBulkSending(true);
+    let successCount = 0;
+    try {
+      for (const guest of selectedRecipients) {
+        if (!guest.email) continue;
+        const guestName = (guest.first_name || guest.last_name)
+          ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
+          : guest.name;
+        try {
+          await sendWeddingInvitation({
+            guestEmail: guest.email,
+            guestName,
+            coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
+            coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
+            weddingDate: weddingSiteInfo?.wedding_date ?? null,
+            venueName: weddingSiteInfo?.venue_name ?? null,
+            venueAddress: weddingSiteInfo?.venue_address ?? null,
+            siteUrl: weddingSiteInfo?.site_url ?? null,
+            inviteToken: guest.invite_token ?? null,
+          });
+          await supabase.from('guests').update({ invitation_sent_at: new Date().toISOString() }).eq('id', guest.id);
+          successCount += 1;
+        } catch {
+          // continue
+        }
+      }
+      toast(successCount > 0 ? `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}` : 'No selected reminders were sent.', successCount > 0 ? 'success' : 'error');
+    } finally {
+      setBulkSending(false);
+    }
+  };
+
+const handleSendBulkInvitations = async () => {
+    if (reminderCandidates.length === 0) {
+      toast('No reminder recipients in this filtered view.', 'error');
+      return;
+    }
+
+    const previewNames = reminderCandidates.slice(0, 3).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name);
+    const previewText = previewNames.length ? `\n\nFirst recipients: ${previewNames.join(', ')}${reminderCandidates.length > 3 ? ` +${reminderCandidates.length - 3} more` : ''}` : '';
+    const noContactWarning = contactStats.withNoContact > 0 ? `\nNo-contact guests in database: ${contactStats.withNoContact} (not included in send)` : '';
+    if (!window.confirm(`Reminder dry-run:
+Segment: ${segmentLabelMap[filterStatus] || filterStatus}
+Recipients: ${reminderCandidates.length}
+Skip recent (24h): ${skipRecentlyInvited ? "On" : "Off"}${noContactWarning}${previewText}
+
+Proceed with send?`)) return;
+
+    if (isDemoMode) {
+      const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: reminderCandidates.length, sentAt }, ...prev].slice(0, 6));
+      toast(`Demo: simulated reminders for ${reminderCandidates.length} guests`, 'success');
+      return;
+    }
+
+    setBulkSending(true);
+    let successCount = 0;
+
+    try {
+      for (const guest of reminderCandidates) {
+        if (!guest.email) continue;
+        const guestName = guest.first_name && guest.last_name
+          ? `${guest.first_name} ${guest.last_name}`
+          : guest.name;
+
+        try {
+          await sendWeddingInvitation({
+            guestEmail: guest.email,
+            guestName,
+            coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
+            coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
+            weddingDate: weddingSiteInfo?.wedding_date ?? null,
+            venueName: weddingSiteInfo?.venue_name ?? null,
+            venueAddress: weddingSiteInfo?.venue_address ?? null,
+            siteUrl: weddingSiteInfo?.site_url ?? null,
+            inviteToken: guest.invite_token ?? null,
+          });
+
+          await supabase
+            .from('guests')
+            .update({ invitation_sent_at: new Date().toISOString() })
+            .eq('id', guest.id);
+
+          successCount += 1;
+        } catch {
+          // continue sending others
+        }
+      }
+
+      if (successCount > 0) {
+        const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: successCount, sentAt }, ...prev].slice(0, 6));
+        toast(`Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`, 'success');
+      } else {
+        toast('No reminders were sent. Please try again.', 'error');
+      }
+    } finally {
+      setBulkSending(false);
+    }
+  };
+
   async function handleMergeIntoHousehold() {
     if (selectedGuestIds.size < 2 || !weddingSiteId || isDemoMode) return;
     setHouseholdBusy(true);
@@ -511,9 +813,9 @@ export const DashboardGuests: React.FC = () => {
     });
   };
 
-  const exportCSV = () => {
+  const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = 'guests') => {
     const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Plus One', 'Meal Choice', 'RSVP Date', 'Invite Token'];
-    const rows = guests.map(guest => [
+    const rows = rowsSource.map(guest => [
       guest.first_name || '',
       guest.last_name || '',
       guest.email || '',
@@ -533,9 +835,14 @@ export const DashboardGuests: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `guests_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `${suffix}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportFilteredCSV = () => {
+    const segment = (segmentLabelMap[filterStatus] || filterStatus).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    exportCSV(filteredGuests, `guests-${segment}`);
   };
 
   const importCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -661,9 +968,86 @@ export const DashboardGuests: React.FC = () => {
       guest.last_name?.toLowerCase().includes(searchTerm) ||
       guest.name.toLowerCase().includes(searchTerm) ||
       guest.email?.toLowerCase().includes(searchTerm);
-    const matchesFilter = filterStatus === 'all' || guest.rsvp_status === filterStatus;
+
+    const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+    const matchesFilter =
+      filterStatus === 'all' ||
+      guest.rsvp_status === filterStatus ||
+      (filterStatus === 'ceremony-no' && eventSelections?.ceremony === false) ||
+      (filterStatus === 'reception-no' && eventSelections?.reception === false) ||
+      (filterStatus === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
+      (filterStatus === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
+      (filterStatus === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
+      (filterStatus === 'no-contact' && !guest.email && !guest.phone);
+
     return matchesSearch && matchesFilter;
   });
+
+  const emailableFilteredGuests = filteredGuests.filter(g => !!g.email && !!g.invite_token);
+
+
+  const daysToWedding = weddingSiteInfo?.wedding_date
+    ? Math.ceil((new Date(weddingSiteInfo.wedding_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+
+  const issueCountForGuest = (guest: GuestWithRSVP) => {
+    let issues = 0;
+    const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+    if (guest.rsvp_status === 'pending') issues += 1;
+    if (guest.rsvp?.attending && !guest.rsvp?.meal_choice) issues += 1;
+    if (guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name) issues += 1;
+    if (guest.rsvp_status === 'pending' && !guest.email && !guest.phone) issues += 1;
+    if (ev?.ceremony === false || ev?.reception === false) issues += 1;
+    return issues;
+  };
+
+  const priorityScore = (guest: GuestWithRSVP) => {
+    let score = 0;
+    const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+    if (guest.rsvp_status === 'pending') score += 100;
+    if (guest.rsvp?.attending && !guest.rsvp?.meal_choice) score += 60;
+    if (guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name) score += 40;
+    if (ev?.ceremony === false || ev?.reception === false) score += 15;
+    if (guest.rsvp_status === 'pending' && !guest.email) score += 20;
+    if (daysToWedding !== null && daysToWedding <= 30) score += 15;
+    return score;
+  };
+
+  const displayedGuests = sortByPriority
+    ? [...filteredGuests].sort((a, b) => priorityScore(b) - priorityScore(a))
+    : filteredGuests;
+
+
+  const nextUnresolvedGuest = displayedGuests.find((g) => issueCountForGuest(g) > 0);
+
+  const selectUnresolvedGuests = () => {
+    const ids = displayedGuests.filter((g) => issueCountForGuest(g) > 0).map((g) => g.id);
+    setSelectedGuestIds(new Set(ids));
+    toast(ids.length > 0 ? `Selected ${ids.length} unresolved guest${ids.length === 1 ? '' : 's'}` : 'No unresolved guests in current view', ids.length > 0 ? 'success' : 'error');
+  };
+
+  const clearGuestSelection = () => {
+    setSelectedGuestIds(new Set());
+  };
+
+  const selectFilteredGuests = () => {
+    const ids = filteredGuests.map((g) => g.id);
+    setSelectedGuestIds(new Set(ids));
+    toast(ids.length > 0 ? `Selected ${ids.length} guest${ids.length === 1 ? '' : 's'} in current filter` : 'No guests in current filter', ids.length > 0 ? 'success' : 'error');
+  };
+
+  const keepOnlyVisibleSelection = () => {
+    const visibleIds = new Set(filteredGuests.map((g) => g.id));
+    setSelectedGuestIds((prev) => {
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) next.add(id);
+      });
+      return next;
+    });
+    toast('Selection trimmed to current filter', 'success');
+  };
 
   const stats = {
     total: guests.length,
@@ -671,6 +1055,118 @@ export const DashboardGuests: React.FC = () => {
     declined: guests.filter(g => g.rsvp_status === 'declined').length,
     pending: guests.filter(g => g.rsvp_status === 'pending').length,
     rsvpRate: guests.length > 0 ? Math.round(((guests.filter(g => g.rsvp_status !== 'pending').length) / guests.length) * 100) : 0,
+  };
+
+
+  const contactStats = {
+    withEmail: guests.filter(g => !!g.email).length,
+    withPhone: guests.filter(g => !!g.phone).length,
+    withNoContact: guests.filter(g => !g.email && !g.phone).length,
+    contactCoverage: guests.length > 0
+      ? Math.round((guests.filter(g => !!g.email || !!g.phone).length / guests.length) * 100)
+      : 0,
+  };
+
+  const rsvpOps = {
+    missingMeal: guests.filter(g => g.rsvp?.attending && !g.rsvp?.meal_choice).length,
+    plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
+    ceremonyNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.ceremony === false).length,
+    receptionNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.reception === false).length,
+    noResponse: guests.filter(g => g.rsvp_status === 'pending').length,
+    pendingNoEmail: guests.filter(g => g.rsvp_status === 'pending' && !g.email).length,
+  };
+
+
+  const recommendedAction = (() => {
+    if (rsvpOps.pendingNoEmail > 0) {
+      return {
+        filter: 'pending-no-email' as const,
+        title: 'Collect missing email addresses',
+        detail: `${rsvpOps.pendingNoEmail} pending guests can’t receive reminders yet.`,
+      };
+    }
+    if (rsvpOps.noResponse > 0) {
+      return {
+        filter: 'pending' as const,
+        title: 'Send reminder to pending guests',
+        detail: `${rsvpOps.noResponse} guests still haven’t responded.`,
+      };
+    }
+    if (rsvpOps.missingMeal > 0) {
+      return {
+        filter: 'missing-meal' as const,
+        title: 'Collect missing meal choices',
+        detail: `${rsvpOps.missingMeal} attending guests are missing meal picks.`,
+      };
+    }
+    if (rsvpOps.plusOneMissingName > 0) {
+      return {
+        filter: 'plusone-missing' as const,
+        title: 'Collect plus-one names',
+        detail: `${rsvpOps.plusOneMissingName} RSVPs allow plus-ones but names are missing.`,
+      };
+    }
+    return null;
+  })();
+
+  const rsvpCompleteness = Math.max(0, 100 - Math.min(100, (
+    (rsvpOps.noResponse * 0.55) +
+    (rsvpOps.missingMeal * 0.25) +
+    (rsvpOps.plusOneMissingName * 0.2)
+  )));
+
+
+  const campaignReadiness = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        (guests.length === 0
+          ? 100
+          : ((guests.length - contactStats.withNoContact) / guests.length) * 100) * 0.5 +
+        (100 - Math.min(100, rsvpOps.pendingNoEmail * 12)) * 0.25 +
+        (100 - Math.min(100, rsvpOps.noResponse * 4)) * 0.25
+      )
+    )
+  );
+
+
+  const opsQueue = guests.flatMap((g) => {
+    const items: Array<{ guestId: string; guestName: string; issue: string; filter: typeof filterStatus }> = [];
+    const guestName = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
+    const eventSelections = parseRsvpEventSelections(g.rsvp?.notes ?? null);
+
+    if (g.rsvp_status === 'pending') {
+      items.push({ guestId: g.id, guestName, issue: 'No RSVP response yet', filter: 'pending' });
+    }
+    if (g.rsvp?.attending && !g.rsvp?.meal_choice) {
+      items.push({ guestId: g.id, guestName, issue: 'Missing meal choice', filter: 'missing-meal' });
+    }
+    if (g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name) {
+      items.push({ guestId: g.id, guestName, issue: 'Missing plus-one name', filter: 'plusone-missing' });
+    }
+    if (eventSelections?.ceremony === false) {
+      items.push({ guestId: g.id, guestName, issue: 'Ceremony declined', filter: 'ceremony-no' });
+    }
+    if (eventSelections?.reception === false) {
+      items.push({ guestId: g.id, guestName, issue: 'Reception declined', filter: 'reception-no' });
+    }
+
+    return items;
+  }).slice(0, 8);
+
+
+  const segmentLabelMap: Record<string, string> = {
+    all: 'All Guests',
+    confirmed: 'Confirmed',
+    declined: 'Declined',
+    pending: 'Pending',
+    'ceremony-no': 'Ceremony: No',
+    'reception-no': 'Reception: No',
+    'missing-meal': 'Missing Meal',
+    'plusone-missing': 'Plus-one Missing Name',
+    'pending-no-email': 'Pending, No Email',
+    'no-contact': 'No Contact Info',
   };
 
   const getStatusBadge = (status: string) => {
@@ -774,6 +1270,18 @@ export const DashboardGuests: React.FC = () => {
     </>
   );
 
+  const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
+
+  const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
+    if (!skipRecentlyInvited) return true;
+    const invitedAt = (g as any).invitation_sent_at ? new Date((g as any).invitation_sent_at) : null;
+    if (!invitedAt || Number.isNaN(invitedAt.getTime())) return true;
+    return (Date.now() - invitedAt.getTime()) > 24 * 60 * 60 * 1000;
+  });
+
+  const dryRunRecipientPreview = reminderCandidates.slice(0, 8).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ""} ${g.last_name ?? ""}`.trim() : g.name);
+
+
   if (loading) {
     return (
       <DashboardLayout currentPage="guests">
@@ -795,7 +1303,7 @@ export const DashboardGuests: React.FC = () => {
           <p className="text-text-secondary">Manage your guest list and track responses</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-success-light rounded-lg flex-shrink-0">
@@ -843,7 +1351,75 @@ export const DashboardGuests: React.FC = () => {
               </div>
             </div>
           </Card>
+
+          <Card variant="bordered" padding="md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <CheckCircle2 className="w-6 h-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{Math.round(rsvpCompleteness)}%</p>
+                <p className="text-sm text-text-secondary">Completeness</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card variant="bordered" padding="md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{contactStats.contactCoverage}%</p>
+                <p className="text-sm text-text-secondary">Contact coverage</p>
+              </div>
+            </div>
+          </Card>
+          <Card variant="bordered" padding="md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{campaignReadiness}%</p>
+                <p className="text-sm text-text-secondary">Campaign readiness</p>
+              </div>
+            </div>
+          </Card>
         </div>
+
+        <Card variant="bordered" padding="md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+            <h3 className="text-sm font-semibold text-text-primary">RSVP Ops Panel</h3>
+            <span className="text-xs text-text-tertiary">Action-focused follow up</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Missing meal choice</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Plus-one missing name</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('ceremony-no'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Ceremony: No</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.ceremonyNo}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('reception-no'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Reception: No</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.receptionNo}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('pending'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">No response yet</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.noResponse}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Pending, no email</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.pendingNoEmail}</p>
+            </button>
+          </div>
+        </Card>
 
         {(() => {
           const conflicts: string[] = [];
@@ -863,10 +1439,18 @@ export const DashboardGuests: React.FC = () => {
           });
           if (conflicts.length === 0) return null;
           return (
-            <div className="p-4 bg-warning-light border border-warning/20 rounded-xl space-y-1">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
-                <p className="text-sm font-medium text-warning">{conflicts.length} RSVP {conflicts.length === 1 ? 'issue' : 'issues'} detected</p>
+            <div className="p-4 bg-warning-light border border-warning/20 rounded-xl space-y-2">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
+                  <p className="text-sm font-medium text-warning">{conflicts.length} RSVP {conflicts.length === 1 ? 'issue' : 'issues'} detected</p>
+                </div>
+                <button
+                  onClick={() => { setFilterStatus('pending'); setViewMode('list'); }}
+                  className="text-xs px-2 py-1 rounded-md border border-warning/30 text-warning hover:bg-warning/10"
+                >
+                  Review pending
+                </button>
               </div>
               <ul className="space-y-0.5">
                 {conflicts.map((c, i) => (
@@ -879,6 +1463,52 @@ export const DashboardGuests: React.FC = () => {
 
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">
+
+            {recommendedAction && (
+              <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Recommended next action: {recommendedAction.title}</p>
+                  <p className="text-xs text-text-secondary mt-0.5">{recommendedAction.detail}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setFilterStatus(recommendedAction.filter); setViewMode('list'); setSearchQuery(''); }}
+                  >
+                    Focus now
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => addFollowUpTask(`${recommendedAction.title}`)}
+                  >
+                    Save task
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {opsQueue.length > 0 && (
+              <div className="p-3.5 rounded-xl border border-border-subtle bg-white space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-text-primary">Priority RSVP queue</p>
+                  <span className="text-xs text-text-tertiary">Top {opsQueue.length}</span>
+                </div>
+                <div className="space-y-1.5">
+                  {opsQueue.map((item, idx) => (
+                    <button
+                      key={`${item.guestId}-${idx}`}
+                      onClick={() => { setFilterStatus(item.filter); setViewMode('list'); setSearchQuery(item.guestName); }}
+                      className="w-full text-left px-2.5 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                    >
+                      <p className="text-xs font-semibold text-text-primary">{item.guestName}</p>
+                      <p className="text-[11px] text-text-tertiary">{item.issue}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <Input
@@ -900,24 +1530,240 @@ export const DashboardGuests: React.FC = () => {
                     Import CSV
                   </span>
                 </label>
-                <Button variant="outline" size="md" onClick={exportCSV}>
+                <Button variant="outline" size="md" onClick={() => exportCSV()}>
                   <Download className="w-4 h-4 mr-2" />
-                  Export
+                  Export All
+                </Button>
+                <Button variant="outline" size="md" onClick={exportFilteredCSV}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Filtered
+                </Button>
+                <Button variant="outline" size="md" onClick={handleCopyOpsSummary}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Ops Summary
+                </Button>
+                <Button variant="outline" size="md" onClick={generateChecklistTasks}>
+                  Generate Checklist
+                </Button>
+                <Button variant="outline" size="md" onClick={() => {
+                  const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
+                  const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
+                  navigator.clipboard.writeText(text).then(() => toast('Copied checklist markdown', 'success')).catch(() => window.prompt('Copy checklist:', text));
+                }}>
+                  Copy Checklist
+                </Button>
+                <Button variant="outline" size="md" onClick={selectUnresolvedGuests}>
+                  Select unresolved
+                </Button>
+                <Button variant="outline" size="md" onClick={selectFilteredGuests}>
+                  Select filtered
+                </Button>
+                <Button variant="outline" size="md" onClick={handleSendSelectedInvitations} disabled={bulkSending || selectedGuestIds.size === 0}>
+                  {bulkSending ? 'Sending…' : `Remind Selected (${selectedGuestIds.size})`}
+                </Button>
+                <Button variant="ghost" size="md" onClick={clearGuestSelection} disabled={selectedGuestIds.size === 0}>
+                  Clear Selection
+                </Button>
+                <Button variant="outline" size="md" onClick={() => { if (nextUnresolvedGuest) { setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name); setViewMode('list'); } }} disabled={!nextUnresolvedGuest}>
+                  Next unresolved
                 </Button>
                 <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
                   <UserPlus className="w-4 h-4 mr-2" />
                   Add Guest
                 </Button>
+                <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || reminderCandidates.length === 0} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  {bulkSending ? 'Sending…' : `Remind Filtered (${reminderCandidates.length})`}
+                </Button>
+                <Button variant="outline" size="md" onClick={handleCopyFilteredEmails} disabled={reminderCandidates.length === 0} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Emails
+                </Button>
+                <Button variant="outline" size="md" onClick={() => window.alert(`Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`)} disabled={reminderCandidates.length === 0}>
+                  Dry Run
+                </Button>
               </div>
             </div>
 
-            <div className="flex gap-2 flex-wrap items-center justify-between">
+            <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle space-y-2">
+              <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
+              {daysToWedding !== null && (
+                <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
+                  Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <p className="text-xs text-text-secondary">
+                  Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
+                  Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span> ·
+                  Campaign readiness: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
+                </p>
+                <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
+                  <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
+                  Skip guests invited in last 24h
+                </label>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <label className="text-xs text-text-secondary w-28">Campaign preset</label>
+                <select
+                  value={campaignPreset}
+                  onChange={(e) => applyCampaignPreset(e.target.value as any)}
+                  className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
+                >
+                  <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
+                  <option value="missing-meal">Missing meal ({rsvpOps.missingMeal})</option>
+                  <option value="plusone-missing">Missing plus-one name ({rsvpOps.plusOneMissingName})</option>
+                  <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
+                  <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
+                  <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
+                </select>
+              </div>
+
+              {reminderCandidates.length > 0 && (
+                <div className="space-y-1">
+                  <button
+                    onClick={() => setShowRecipientPreview(v => !v)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    {showRecipientPreview ? 'Hide' : 'Show'} recipient preview ({reminderCandidates.length})
+                  </button>
+                  {showRecipientPreview && (
+                    <div className="max-h-28 overflow-auto rounded-lg border border-border bg-white p-2 text-xs text-text-secondary">
+                      {reminderCandidates.slice(0, 20).map((g) => (
+                        <div key={g.id} className="py-0.5">
+                          {(g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name}
+                          {g.email ? ` · ${g.email}` : ''}
+                        </div>
+                      ))}
+                      {reminderCandidates.length > 20 && (
+                        <div className="pt-1 text-text-tertiary">+{reminderCandidates.length - 20} more</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => { setFilterStatus('pending'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
+                <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
+                <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
+                <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
+                <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
+                <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
+              </div>
+
+              {savedSegments.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-text-tertiary">Saved segments</p>
+                    <button
+                      onClick={() => setSavedSegments([])}
+                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                    >
+                      Clear segments
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {savedSegments.map((seg) => (
+                      <button key={seg.id} onClick={() => { setFilterStatus(seg.filter as any); setViewMode('list'); setSearchQuery(''); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">
+                        {seg.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {followUpTasks.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-text-tertiary">Saved follow-up tasks</p>
+                    <button
+                      onClick={() => setFollowUpTasks([])}
+                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                    >
+                      Clear tasks
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {followUpTasks.map((task) => (
+                      <span key={task.id} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary">{task.text} · {task.createdAt}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {campaignLog.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-text-tertiary">Recent reminder sends</p>
+                    <button
+                      onClick={() => setCampaignLog([])}
+                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                    >
+                      Clear log
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {campaignLog.map((log) => (
+                      <span key={log.id} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary">
+                        {log.segment}: {log.count} sent · {log.sentAt}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border-subtle bg-surface-subtle">
+              <p className="text-xs text-text-secondary">
+                Active segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span>
+                {searchQuery ? <> · Search: <span className="font-semibold text-text-primary">“{searchQuery}”</span></> : null}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={saveCurrentSegment}
+                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                >
+                  Save segment
+                </button>
+                <button
+                  onClick={() => { setFilterStatus('all'); setSearchQuery(''); setViewMode('list'); }}
+                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                >
+                  Clear filters
+                </button>
+              </div>
+            </div>
+
+            {filterStatus === 'no-contact' && (
+              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs">
+                These guests have no email or phone. Add contact info before reminder campaigns.
+              </div>
+            )}
+
+            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-center justify-between bg-white/90 backdrop-blur p-2 rounded-lg border border-border-subtle">
               <div className="flex gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSortByPriority(v => !v)}
+                    className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                  >
+                    {sortByPriority ? 'Priority sort: On' : 'Priority sort: Off'}
+                  </button>
+                  {sortByPriority && <span className="text-[11px] text-text-tertiary">Ranks by pending/meal/plus-one/contact gaps</span>}
+                  <span className="text-[11px] text-text-tertiary">Issue legend: pending, meal, plus-one, contact, event-decline</span>
+                </div>
                 {([
                   { id: 'all', label: `All (${stats.total})` },
                   { id: 'confirmed', label: `Confirmed (${stats.confirmed})` },
                   { id: 'declined', label: `Declined (${stats.declined})` },
                   { id: 'pending', label: `Pending (${stats.pending})` },
+                  { id: 'ceremony-no', label: `Ceremony No (${rsvpOps.ceremonyNo})` },
+                  { id: 'reception-no', label: `Reception No (${rsvpOps.receptionNo})` },
+                  { id: 'missing-meal', label: `Missing Meal (${rsvpOps.missingMeal})` },
+                  { id: 'plusone-missing', label: `Plus-One Missing (${rsvpOps.plusOneMissingName})` },
+                  { id: 'pending-no-email', label: `Pending No Email (${rsvpOps.pendingNoEmail})` },
+                  { id: 'no-contact', label: `No Contact (${contactStats.withNoContact})` },
                 ] as const).map(({ id, label }) => (
                   <button
                     key={id}
@@ -945,7 +1791,28 @@ export const DashboardGuests: React.FC = () => {
               </button>
             </div>
 
-            {viewMode === 'households' ? (
+
+            {selectedGuestIds.size > 0 && viewMode === 'list' && (
+              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-xl">
+                <span className="text-sm font-medium text-primary">{selectedGuestIds.size} selected · {filteredGuests.filter((g) => selectedGuestIds.has(g.id)).length} visible</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={keepOnlyVisibleSelection} className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Keep visible only</button>
+                  <button onClick={clearGuestSelection} className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Clear</button>
+                </div>
+              </div>
+            )}
+
+            {filteredGuests.length === 0 && viewMode === 'list' ? (
+              <div className="p-6 border border-dashed border-border rounded-xl text-center bg-surface-subtle">
+                <p className="text-sm text-text-secondary">No guests in this segment right now.</p>
+                <button
+                  onClick={() => { setFilterStatus('all'); setSearchQuery(''); }}
+                  className="mt-2 text-xs text-primary hover:underline"
+                >
+                  Clear filters to view all guests
+                </button>
+              </div>
+            ) : viewMode === 'households' ? (
               <div className="space-y-4">
                 {selectedGuestIds.size >= 2 && (
                   <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border border-primary/20 rounded-xl">
@@ -1093,6 +1960,33 @@ export const DashboardGuests: React.FC = () => {
                                   {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>
                               )}
+                              {(() => {
+                                const issues = issueCountForGuest(guest);
+                                if (issues <= 0) return null;
+                                return (
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${issues >= 3 ? 'bg-warning/10 text-warning border-warning/30' : 'bg-primary/5 text-primary border-primary/20'}`}>
+                                    {issues >= 3 ? 'High risk' : 'Needs review'} · {issues}
+                                  </span>
+                                );
+                              })()}
+                              {(() => {
+                                const events = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+                                if (!events) return null;
+                                return (
+                                  <div className="flex flex-wrap gap-1 pt-1">
+                                    {typeof events.ceremony === 'boolean' && (
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${events.ceremony ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
+                                        Ceremony: {events.ceremony ? 'Yes' : 'No'}
+                                      </span>
+                                    )}
+                                    {typeof events.reception === 'boolean' && (
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${events.reception ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
+                                        Reception: {events.reception ? 'Yes' : 'No'}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-text-secondary hidden md:table-cell">

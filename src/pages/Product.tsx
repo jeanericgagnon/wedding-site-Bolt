@@ -317,7 +317,7 @@ export const Product: React.FC = () => {
               {activeTab === 'rsvp' && (
                 <>
                   <h3 className="text-2xl font-bold text-text-primary">RSVP Engine</h3>
-                  <p className="text-text-secondary">Tokenized, secure, household-aware RSVP with server-side email confirmations.</p>
+                  <p className="text-text-secondary">Tokenized, secure, household-aware RSVP with production-ready core flows. Advanced automations are rolling out incrementally.</p>
                   <ul className="space-y-3">
                     {[
                       'Per-guest cryptographic invite tokens — no name-search guessing',
@@ -325,7 +325,7 @@ export const Product: React.FC = () => {
                       'Meal selection + dietary note collection per guest',
                       'Plus-one acceptance with mandatory name capture',
                       'RSVP deadline enforcement with configurable late override',
-                      'Automatic confirmation email to guest + notification to couple',
+                      'RSVP confirmation pipeline (advanced email automation in rollout)',
                       'Rate-limited and honeypot-protected submission endpoint',
                     ].map((item, i) => (
                       <li key={i} className="flex items-start gap-3">
@@ -582,8 +582,8 @@ export const Product: React.FC = () => {
                   { icon: Lock,          label: 'Cryptographic per-guest invite tokens',        done: true },
                   { icon: CheckCircle2,  label: 'Multi-event RSVP with separate permissions',   done: true },
                   { icon: Utensils,      label: 'Meal choices + dietary/allergen notes',         done: true },
-                  { icon: MessageSquare, label: 'Custom questions per RSVP form',               done: true },
-                  { icon: Mail,          label: 'Confirmation email to guest + couple',          done: true },
+                  { icon: MessageSquare, label: 'Custom RSVP questions (rolling out)',           done: false },
+                  { icon: Mail,          label: 'Confirmation email automation (rolling out)',    done: false },
                   { icon: Clock,         label: 'RSVP deadline enforcement',                    done: true },
                   { icon: Shield,        label: 'Rate limiting + honeypot spam protection',     done: true },
                 ].map((f, i) => (

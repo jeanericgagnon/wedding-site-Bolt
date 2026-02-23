@@ -62,6 +62,39 @@ function guestLabel(g: Guest): string {
   return g.name || 'Guest';
 }
 
+
+function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cleanNotes: string; attendCeremony: boolean; attendReception: boolean } {
+  const fallback = {
+    cleanNotes: notes || '',
+    attendCeremony: !!guest.invited_to_ceremony,
+    attendReception: !!guest.invited_to_reception,
+  };
+
+  if (!notes) return fallback;
+
+  const match = notes.match(/\[Events\s+([^\]]+)\]/i);
+  if (!match) return fallback;
+
+  const eventPart = match[1] || '';
+  const map = Object.fromEntries(
+    eventPart
+      .split(',')
+      .map((piece) => piece.trim())
+      .map((piece) => {
+        const [k, v] = piece.split(':').map((x) => (x || '').trim().toLowerCase());
+        return [k, v === 'yes'];
+      })
+  ) as Record<string, boolean>;
+
+  const cleanNotes = notes.replace(match[0], '').trim();
+
+  return {
+    cleanNotes,
+    attendCeremony: guest.invited_to_ceremony ? (map['ceremony'] ?? true) : false,
+    attendReception: guest.invited_to_reception ? (map['reception'] ?? true) : false,
+  };
+}
+
 export default function RSVP() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -74,9 +107,12 @@ export default function RSVP() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
+  const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
 
   const [formData, setFormData] = useState({
     attending: true,
+    attendCeremony: true,
+    attendReception: true,
     meal_choice: '',
     plus_one_name: '',
     notes: '',
@@ -145,13 +181,28 @@ export default function RSVP() {
     setRsvpDeadline(deadline);
     if (foundRsvp) {
       setExistingRsvp(foundRsvp);
+      const parsed = parseEventSelectionsFromNotes(foundRsvp.notes, foundGuest);
       setFormData({
         attending: foundRsvp.attending,
+        attendCeremony: parsed.attendCeremony,
+        attendReception: parsed.attendReception,
         meal_choice: foundRsvp.meal_choice || '',
         plus_one_name: foundRsvp.plus_one_name || '',
-        notes: foundRsvp.notes || '',
+        notes: parsed.cleanNotes,
       });
     }
+    if (!foundRsvp) {
+      setFormData(prev => ({
+        ...prev,
+        attending: true,
+        attendCeremony: !!foundGuest.invited_to_ceremony,
+        attendReception: !!foundGuest.invited_to_reception,
+        meal_choice: '',
+        plus_one_name: '',
+        notes: '',
+      }));
+    }
+    setFormStep(1);
     setStep('form');
   };
 
@@ -186,6 +237,17 @@ export default function RSVP() {
         return;
       }
 
+      if (formData.attending && guest.invited_to_ceremony && guest.invited_to_reception && !formData.attendCeremony && !formData.attendReception) {
+        setError('Please select at least one event (ceremony or reception), or mark not attending.');
+        return;
+      }
+
+      const eventSelections: string[] = [];
+      if (guest.invited_to_ceremony) eventSelections.push(`Ceremony:${formData.attendCeremony ? 'yes' : 'no'}`);
+      if (guest.invited_to_reception) eventSelections.push(`Reception:${formData.attendReception ? 'yes' : 'no'}`);
+      const eventTag = eventSelections.length ? `[Events ${eventSelections.join(', ')}]` : '';
+      const notesPayload = [formData.notes?.trim() || '', eventTag].filter(Boolean).join('\n').trim();
+
       const { data, error: err } = await rsvpCall({
         action: 'submit',
         guestId: guest.id,
@@ -193,7 +255,7 @@ export default function RSVP() {
         attending: formData.attending,
         mealChoice: formData.meal_choice || null,
         plusOneName: formData.plus_one_name || null,
-        notes: formData.notes || null,
+        notes: notesPayload || null,
       });
 
       if (err) {
@@ -216,6 +278,37 @@ export default function RSVP() {
     : '';
 
   const deadlinePassed = rsvpDeadline ? new Date(rsvpDeadline) < new Date() : false;
+
+  const canSubmit = !!guest?.invite_token && !(deadlinePassed && !existingRsvp);
+
+  const goToNextFormStep = () => {
+    if (formStep === 1) {
+      if (formData.attending && guest && !guest.invited_to_ceremony && !guest.invited_to_reception) {
+        setError('You are marked attending, but no event invitations are enabled for this guest.');
+        return;
+      }
+      setError('');
+      setFormStep(2);
+      return;
+    }
+
+    if (formStep === 2) {
+      if (formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception) {
+        setError('Please select at least one event before continuing.');
+        return;
+      }
+      if (formData.attending && !formData.meal_choice) {
+        setError('Please choose a meal option before review.');
+        return;
+      }
+      setError('');
+      setFormStep(3);
+    }
+  };
+  const invitedEvents = [
+    guest?.invited_to_ceremony ? 'Ceremony' : null,
+    guest?.invited_to_reception ? 'Reception' : null,
+  ].filter(Boolean) as string[];
 
   if (tokenAutoLoading) {
     return (
@@ -376,76 +469,164 @@ export default function RSVP() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">Will you be attending?</label>
-                <Select
-                  value={formData.attending ? 'yes' : 'no'}
-                  onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
-                  required
-                  options={[
-                    { value: 'yes', label: "Yes, I'll be there!" },
-                    { value: 'no', label: "Sorry, I can't make it" },
-                  ]}
-                />
+            <div className="mb-6">
+              <div className="flex items-center gap-2 text-xs">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className={`flex items-center gap-2 ${n < 3 ? 'flex-1' : ''}`}>
+                    <div className={`w-6 h-6 rounded-full grid place-items-center font-semibold ${formStep >= n ? 'bg-rose-500 text-white' : 'bg-gray-200 text-gray-500'}`}>{n}</div>
+                    {n < 3 && <div className={`h-0.5 flex-1 ${formStep > n ? 'bg-rose-400' : 'bg-gray-200'}`} />}
+                  </div>
+                ))}
               </div>
+              <p className="mt-2 text-xs text-gray-500">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Final review & submit'} · {Math.round((formStep / 3) * 100)}% complete</p>
+            </div>
 
-              {formData.attending && (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {formStep === 1 && (
                 <>
-                  {(guest.invited_to_ceremony || guest.invited_to_reception) && (
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                      <p className="font-medium mb-1">You're invited to:</p>
-                      <ul className="list-disc list-inside space-y-1 text-gray-700">
-                        {guest.invited_to_ceremony && <li>Wedding Ceremony</li>}
-                        {guest.invited_to_reception && <li>Reception</li>}
-                      </ul>
-                    </div>
-                  )}
-
                   <div>
-                    <label className="block text-sm font-medium mb-2">Meal Choice</label>
+                    <label className="block text-sm font-medium mb-2">Will you be attending?</label>
                     <Select
-                      value={formData.meal_choice}
-                      onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
+                      value={formData.attending ? 'yes' : 'no'}
+                      onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
+                      required
                       options={[
-                        { value: '', label: 'Select a meal option' },
-                        { value: 'chicken', label: 'Chicken' },
-                        { value: 'beef', label: 'Beef' },
-                        { value: 'fish', label: 'Fish' },
-                        { value: 'vegetarian', label: 'Vegetarian' },
-                        { value: 'vegan', label: 'Vegan' },
+                        { value: 'yes', label: "Yes, I'll be there!" },
+                        { value: 'no', label: "Sorry, I can't make it" },
                       ]}
                     />
                   </div>
 
-                  {guest.plus_one_allowed && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Plus One Name (Optional)
-                      </label>
-                      <Input
-                        type="text"
-                        value={formData.plus_one_name}
-                        onChange={(e) => setFormData({ ...formData, plus_one_name: e.target.value })}
-                        placeholder="Guest's full name"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">You're welcome to bring a guest</p>
+                  {invitedEvents.length > 0 && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                      <p className="font-medium mb-1">You're invited to:</p>
+                      <ul className="list-disc list-inside space-y-1 text-gray-700">
+                        {invitedEvents.map((ev) => <li key={ev}>{ev}</li>)}
+                      </ul>
                     </div>
                   )}
                 </>
               )}
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Additional Notes (Optional)
-                </label>
-                <Textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Dietary restrictions, accessibility needs, or special requests"
-                  rows={3}
-                />
-              </div>
+              {formStep === 2 && (
+                <>
+                  {formData.attending && (
+                    <>
+                      {(guest.invited_to_ceremony || guest.invited_to_reception) && (
+                        <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg space-y-3">
+                          <p className="text-sm font-medium text-gray-800">Which events will you attend?</p>
+                          {guest.invited_to_ceremony && (
+                            <label className="flex items-center justify-between text-sm">
+                              <span>Wedding Ceremony</span>
+                              <input
+                                type="checkbox"
+                                checked={formData.attendCeremony}
+                                onChange={(e) => setFormData({ ...formData, attendCeremony: e.target.checked })}
+                                className="w-4 h-4"
+                              />
+                            </label>
+                          )}
+                          {guest.invited_to_reception && (
+                            <label className="flex items-center justify-between text-sm">
+                              <span>Reception</span>
+                              <input
+                                type="checkbox"
+                                checked={formData.attendReception}
+                                onChange={(e) => setFormData({ ...formData, attendReception: e.target.checked })}
+                                className="w-4 h-4"
+                              />
+                            </label>
+                          )}
+                          <p className="text-xs text-gray-500">Event choices are saved with your RSVP details.</p>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Meal Choice</label>
+                        <Select
+                          value={formData.meal_choice}
+                          onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
+                          options={[
+                            { value: '', label: 'Select a meal option' },
+                            { value: 'chicken', label: 'Chicken' },
+                            { value: 'beef', label: 'Beef' },
+                            { value: 'fish', label: 'Fish' },
+                            { value: 'vegetarian', label: 'Vegetarian' },
+                            { value: 'vegan', label: 'Vegan' },
+                          ]}
+                        />
+                      </div>
+
+                      {guest.plus_one_allowed && (
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Plus One Name (Optional)
+                          </label>
+                          <Input
+                            type="text"
+                            value={formData.plus_one_name}
+                            onChange={(e) => setFormData({ ...formData, plus_one_name: e.target.value })}
+                            placeholder="Guest's full name"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">You're welcome to bring a guest</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Additional Notes (Optional)
+                    </label>
+                    <Textarea
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Dietary restrictions, accessibility needs, or special requests"
+                      rows={3}
+                    />
+                  </div>
+                </>
+              )}
+
+              {formStep === 3 && (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-3">
+                  {formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception && (
+                    <div className="text-xs text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
+                      Please review: attending is on, but no events are selected.
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 font-medium">Attendance</span>
+                    <span className={`font-semibold px-2.5 py-1 rounded-full text-xs ${formData.attending ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {formData.attending ? 'Attending' : 'Not attending'}
+                    </span>
+                  </div>
+                  {formData.attending && (guest.invited_to_ceremony || guest.invited_to_reception) && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 font-medium">Events</span>
+                      <span className="text-gray-900">{[guest.invited_to_ceremony ? (formData.attendCeremony ? 'Ceremony' : null) : null, guest.invited_to_reception ? (formData.attendReception ? 'Reception' : null) : null].filter(Boolean).join(' + ') || 'None selected'}</span>
+                    </div>
+                  )}
+                  {formData.attending && formData.meal_choice && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 font-medium">Meal</span>
+                      <span className="text-gray-900 capitalize">{formData.meal_choice}</span>
+                    </div>
+                  )}
+                  {formData.attending && formData.plus_one_name && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 font-medium">Plus one</span>
+                      <span className="text-gray-900">{formData.plus_one_name}</span>
+                    </div>
+                  )}
+                  {formData.notes && (
+                    <div className="flex items-start justify-between text-sm gap-4">
+                      <span className="text-gray-600 font-medium flex-shrink-0">Notes</span>
+                      <span className="text-gray-900 text-right">{formData.notes}</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
@@ -458,18 +639,36 @@ export default function RSVP() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => { setStep('search'); setError(''); }}
+                  onClick={() => {
+                    if (formStep > 1) {
+                      setFormStep((formStep - 1) as 1 | 2 | 3);
+                    } else {
+                      setStep('search');
+                      setError('');
+                    }
+                  }}
                   className="flex-1"
                 >
-                  Back
+                  {formStep > 1 ? 'Back' : 'Cancel'}
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={loading || !guest.invite_token || (deadlinePassed && !existingRsvp)}
-                  className="flex-1"
-                >
-                  {loading ? 'Submitting...' : existingRsvp ? 'Update RSVP' : 'Submit RSVP'}
-                </Button>
+
+                {formStep < 3 ? (
+                  <Button
+                    type="button"
+                    onClick={goToNextFormStep}
+                    className="flex-1"
+                  >
+                    {formStep === 1 ? 'Continue to details' : 'Continue to review'}
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={loading || !canSubmit}
+                    className="flex-1"
+                  >
+                    {loading ? 'Submitting...' : existingRsvp ? 'Update RSVP' : 'Submit RSVP'}
+                  </Button>
+                )}
               </div>
             </form>
           </Card>
@@ -542,7 +741,8 @@ export default function RSVP() {
                 setExistingRsvp(null);
                 setAmbiguousGuests([]);
                 setRsvpDeadline(null);
-                setFormData({ attending: true, meal_choice: '', plus_one_name: '', notes: '' });
+                setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+                setFormStep(1);
               }}
               className="w-full"
             >
