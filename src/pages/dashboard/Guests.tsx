@@ -1031,6 +1031,12 @@ Proceed with send?`)) return;
     setSelectedGuestIds(new Set());
   };
 
+  const selectFilteredGuests = () => {
+    const ids = filteredGuests.map((g) => g.id);
+    setSelectedGuestIds(new Set(ids));
+    toast(ids.length > 0 ? `Selected ${ids.length} guest${ids.length === 1 ? '' : 's'} in current filter` : 'No guests in current filter', ids.length > 0 ? 'success' : 'error');
+  };
+
   const stats = {
     total: guests.length,
     confirmed: guests.filter(g => g.rsvp_status === 'confirmed').length,
@@ -1537,6 +1543,9 @@ Proceed with send?`)) return;
                 <Button variant="outline" size="md" onClick={selectUnresolvedGuests}>
                   Select unresolved
                 </Button>
+                <Button variant="outline" size="md" onClick={selectFilteredGuests}>
+                  Select filtered
+                </Button>
                 <Button variant="outline" size="md" onClick={handleSendSelectedInvitations} disabled={bulkSending || selectedGuestIds.size === 0}>
                   {bulkSending ? 'Sending…' : `Remind Selected (${selectedGuestIds.size})`}
                 </Button>
@@ -1769,6 +1778,16 @@ Proceed with send?`)) return;
                 Households
               </button>
             </div>
+
+
+            {selectedGuestIds.size > 0 && viewMode === 'list' && (
+              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-xl">
+                <span className="text-sm font-medium text-primary">{selectedGuestIds.size} selected</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={clearGuestSelection} className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Clear</button>
+                </div>
+              </div>
+            )}
 
             {filteredGuests.length === 0 && viewMode === 'list' ? (
               <div className="p-6 border border-dashed border-border rounded-xl text-center bg-surface-subtle">
