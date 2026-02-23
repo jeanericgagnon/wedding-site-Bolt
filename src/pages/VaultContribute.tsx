@@ -546,7 +546,7 @@ export const VaultContribute: React.FC = () => {
                   <Link
                     key={v.id}
                     to={`/vault/${siteSlug}/${v.duration_years}`}
-                    className="group bg-white/95 backdrop-blur rounded-2xl border border-border-subtle p-5 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm relative overflow-hidden"
+                    className="group bg-white/95 backdrop-blur rounded-2xl border border-border-subtle p-5 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 shadow-sm relative overflow-hidden"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-stone-800">{v.label || `${v.duration_years}-Year Anniversary Vault`}</p>
@@ -568,7 +568,7 @@ export const VaultContribute: React.FC = () => {
     return (
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-green-200">
+          <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-green-200 shadow-sm">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-[26px] leading-tight font-bold text-stone-800 mb-2">Sealed in the vault ✨</h1>
@@ -632,9 +632,9 @@ export const VaultContribute: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8 relative overflow-hidden">
+          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8 relative overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/20 via-primary/60 to-primary/20" />
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5 md:space-y-5.5">
               {contributionWindow.message && (
                 <div className={`text-xs rounded-xl px-3 py-2 border ${contributionWindow.canSubmit ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-warning/10 border-warning/30 text-warning'}`}>
                   {contributionWindow.message}
@@ -694,7 +694,7 @@ export const VaultContribute: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5">Message type</label>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5 tracking-[0.01em]">Message type</label>
                   <select
                     value={form.media_type}
                     onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); if (isRecordingVoice) stopVoiceRecording(); }}
@@ -839,7 +839,7 @@ export const VaultContribute: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting || !contributionWindow.canSubmit}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl text-sm transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-[1px] disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" />Uploading and saving to vault…</>
