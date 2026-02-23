@@ -232,6 +232,7 @@ export default function RSVP() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
+  const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
   const [customAnswers, setCustomAnswers] = useState<Record<string, string | string[]>>({});
@@ -463,6 +464,11 @@ export default function RSVP() {
 
   const canSubmit = !!guest?.invite_token && !(deadlinePassed && !existingRsvp);
 
+
+  useEffect(() => {
+    setActivePredictionIndex(-1);
+  }, [searchValue]);
+
   const guestPredictions = useMemo(() => {
     if (!DEMO_MODE) return [] as string[];
     const q = searchValue.trim().toLowerCase();
@@ -563,6 +569,28 @@ export default function RSVP() {
                   type="text"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (guestPredictions.length === 0) return;
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setActivePredictionIndex((idx) => (idx + 1) % guestPredictions.length);
+                      return;
+                    }
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setActivePredictionIndex((idx) => (idx <= 0 ? guestPredictions.length - 1 : idx - 1));
+                      return;
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setActivePredictionIndex(-1);
+                      return;
+                    }
+                    if (e.key === 'Enter' && activePredictionIndex >= 0) {
+                      e.preventDefault();
+                      setSearchValue(guestPredictions[activePredictionIndex]);
+                    }
+                  }}
                   placeholder={t('rsvp.search_placeholder')}
                   required
                 />
@@ -576,7 +604,8 @@ export default function RSVP() {
                         key={name}
                         type="button"
                         onClick={() => setSearchValue(name)}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                        onMouseEnter={() => setActivePredictionIndex(guestPredictions.indexOf(name))}
+                        className={`w-full text-left px-3 py-2 text-sm ${guestPredictions[activePredictionIndex] === name ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
                       >
                         {name}
                       </button>
