@@ -26,6 +26,9 @@ export interface RegistryItem {
   metadata_confidence_score?: number | null;
   previous_price_amount?: number | null;
   price_last_changed_at?: string | null;
+  next_refresh_at?: string | null;
+  last_auto_refreshed_at?: string | null;
+  refresh_fail_count?: number | null;
   created_at: string;
   updated_at: string;
 }

@@ -108,6 +108,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const asOfLabel = item.metadata_last_checked_at
     ? new Date(item.metadata_last_checked_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
+  const nextCheckLabel = item.next_refresh_at
+    ? new Date(item.next_refresh_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null;
 
   function handleDeleteClick() {
     if (confirmDelete) {

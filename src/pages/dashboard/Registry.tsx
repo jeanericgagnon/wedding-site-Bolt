@@ -112,6 +112,9 @@ export const DashboardRegistry: React.FC = () => {
       metadata_confidence_score: null,
       previous_price_amount: null,
       price_last_changed_at: null,
+      next_refresh_at: null,
+      last_auto_refreshed_at: null,
+      refresh_fail_count: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -184,6 +187,7 @@ export const DashboardRegistry: React.FC = () => {
       quantity_needed: parseInt(draft.desired_quantity) || 1,
       hide_when_purchased: draft.hide_when_purchased,
       metadata_last_checked_at: new Date().toISOString(),
+      next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
     };
 
     if (isDemoMode) {
@@ -217,6 +221,9 @@ export const DashboardRegistry: React.FC = () => {
           metadata_confidence_score: null,
           previous_price_amount: null,
           price_last_changed_at: null,
+          next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
+          last_auto_refreshed_at: null,
+          refresh_fail_count: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -292,6 +299,7 @@ export const DashboardRegistry: React.FC = () => {
       const preview = await fetchUrlPreview(url, true);
       const fields: Partial<RegistryItem> = {
         metadata_last_checked_at: new Date().toISOString(),
+      next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
         metadata_fetch_status: preview.fetch_status ?? 'success',
         metadata_confidence_score: preview.confidence_score ?? null,
         availability: preview.availability ?? null,
@@ -338,10 +346,11 @@ export const DashboardRegistry: React.FC = () => {
     const staleCandidates = items
       .filter((item) => !!(item.item_url || item.canonical_url))
       .filter((item) => {
+        const dueBySchedule = !item.next_refresh_at || new Date(item.next_refresh_at).getTime() <= Date.now();
         const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS;
         const outOfStock = (item.availability || '').toLowerCase().includes('out');
         const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
-        return alertsOnly ? (stale || outOfStock || priceChanged) : stale;
+        return alertsOnly ? (dueBySchedule || stale || outOfStock || priceChanged) : (dueBySchedule || stale);
       })
       .slice(0, Math.min(12, remaining));
 
@@ -359,6 +368,7 @@ export const DashboardRegistry: React.FC = () => {
         const preview = await fetchUrlPreview(url, true);
         const fields: Partial<RegistryItem> = {
           metadata_last_checked_at: new Date().toISOString(),
+      next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
           metadata_fetch_status: preview.fetch_status ?? 'success',
           metadata_confidence_score: preview.confidence_score ?? null,
           availability: preview.availability ?? null,
@@ -423,6 +433,7 @@ export const DashboardRegistry: React.FC = () => {
           quantity_needed: 1,
           hide_when_purchased: false,
           metadata_last_checked_at: new Date().toISOString(),
+      next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
           metadata_fetch_status: preview.fetch_status ?? 'success',
           metadata_confidence_score: preview.confidence_score ?? null,
           availability: preview.availability ?? null,
