@@ -485,8 +485,7 @@ export const DashboardGuests: React.FC = () => {
       `Plus-one missing: ${rsvpOps.plusOneMissingName}`,
       `Pending no email: ${rsvpOps.pendingNoEmail}`,
       `No contact: ${contactStats.withNoContact}`,
-    ].join('
-');
+    ].join('\n');
 
     try {
       await navigator.clipboard.writeText(summary);
@@ -557,7 +556,7 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleSendSelectedInvitations = async () => {
-    const selectedRecipients = guests.filter(g => selectedGuestIds.includes(g.id) && !!g.email && !!g.invite_token);
+    const selectedRecipients = guests.filter(g => selectedGuestIds.has(g.id) && !!g.email && !!g.invite_token);
     if (selectedRecipients.length === 0) {
       toast('No selected guests with email + invite token.', 'error');
       return;
@@ -1024,12 +1023,12 @@ Proceed with send?`)) return;
 
   const selectUnresolvedGuests = () => {
     const ids = displayedGuests.filter((g) => issueCountForGuest(g) > 0).map((g) => g.id);
-    setSelectedGuestIds(ids);
+    setSelectedGuestIds(new Set(ids));
     toast(ids.length > 0 ? `Selected ${ids.length} unresolved guest${ids.length === 1 ? '' : 's'}` : 'No unresolved guests in current view', ids.length > 0 ? 'success' : 'error');
   };
 
   const clearGuestSelection = () => {
-    setSelectedGuestIds([]);
+    setSelectedGuestIds(new Set());
   };
 
   const stats = {
