@@ -522,6 +522,18 @@ export const DashboardRegistry: React.FC = () => {
     }
   }
 
+  async function handleResetMonthlyBudgetCounter() {
+    if (!weddingSiteId || isDemoMode) return;
+    const monthKey = new Date().toISOString().slice(0, 7);
+    await supabase
+      .from('wedding_sites')
+      .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: monthKey })
+      .eq('id', weddingSiteId);
+    setMonthlyRefreshCount(0);
+    setMonthlyRefreshMonth(monthKey);
+    toast('Monthly refresh counter reset.');
+  }
+
   function handleEdit(item: RegistryItem) {
     setEditItem(item);
     setShowForm(true);
@@ -567,8 +579,9 @@ export const DashboardRegistry: React.FC = () => {
   const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
   const budgetUtilization = monthlyRefreshCap > 0 ? monthlyRefreshCount / monthlyRefreshCap : 0;
   const nearBudgetCap = budgetUtilization >= 0.8;
-  const projectedMonthlyCalls = Math.min(items.length, monthlyRefreshCap);
-  const projectedRefreshCoverage = items.length > 0 ? Math.round((projectedMonthlyCalls / items.length) * 100) : 100;
+  const eligibleItemCount = items.filter((item) => refreshIncludePurchased || (item.purchase_status !== 'purchased' && !item.hide_when_purchased)).length;
+  const projectedMonthlyCalls = Math.min(eligibleItemCount, monthlyRefreshCap);
+  const projectedRefreshCoverage = eligibleItemCount > 0 ? Math.round((projectedMonthlyCalls / eligibleItemCount) * 100) : 100;
   const daysUntilRefreshWindowEnd = refreshWindowUntil ? Math.ceil((refreshWindowUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   async function ensureMonthlyBudgetState() {
     const monthKey = new Date().toISOString().slice(0, 7);
@@ -629,7 +642,7 @@ export const DashboardRegistry: React.FC = () => {
               Auto-refresh: {autoRefreshEnabled ? (refreshWindowOpen ? 'Open' : 'Closed (window)') : 'Paused'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month{monthlyRefreshMonth ? ` (${monthlyRefreshMonth})` : ''} · Scope: {refreshIncludePurchased ? 'All items' : 'Active only'}
             </p>
             <p className="text-xs text-text-tertiary mt-1">
-              Projection: ~{projectedMonthlyCalls} item checks/month · coverage {projectedRefreshCoverage}% of {items.length} items
+              Projection: ~{projectedMonthlyCalls} item checks/month · coverage {projectedRefreshCoverage}% of {eligibleItemCount} eligible items
             </p>
             {daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14 && (
               <p className="text-xs text-warning mt-1">Near expiry: auto-lean recommended to minimize late-cycle compute.</p>
@@ -683,6 +696,7 @@ export const DashboardRegistry: React.FC = () => {
               <Button variant="ghost" size="sm" onClick={setDefaultRefreshWindowFromWedding} disabled={!weddingDate}>Use wedding + 30d</Button>
               <Button variant={nearBudgetCap && refreshPreset !== 'lean' ? 'outline' : 'ghost'} size="sm" onClick={() => applyRefreshPreset(recommendedPreset)}>{nearBudgetCap && refreshPreset !== 'lean' ? 'Switch to Lean' : 'Apply recommended'}</Button>
               <Button variant="outline" size="sm" onClick={handleSaveRefreshPolicy} disabled={savingRefreshPolicy || isDemoMode}>{savingRefreshPolicy ? 'Saving…' : 'Save policy'}</Button>
+              <Button variant="ghost" size="sm" onClick={handleResetMonthlyBudgetCounter} disabled={isDemoMode || monthlyRefreshCount === 0}>Reset month usage</Button>
               <span className="text-[11px] text-text-tertiary">Lean=60 · Balanced=120 · Aggressive=240 refreshes/month · Recommended: {recommendedPreset}{items.length > 0 ? ` (${items.length} items)` : ''}</span>
             </div>
           </div>
