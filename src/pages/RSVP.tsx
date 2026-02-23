@@ -62,6 +62,39 @@ function guestLabel(g: Guest): string {
   return g.name || 'Guest';
 }
 
+
+function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cleanNotes: string; attendCeremony: boolean; attendReception: boolean } {
+  const fallback = {
+    cleanNotes: notes || '',
+    attendCeremony: !!guest.invited_to_ceremony,
+    attendReception: !!guest.invited_to_reception,
+  };
+
+  if (!notes) return fallback;
+
+  const match = notes.match(/\[Events\s+([^\]]+)\]/i);
+  if (!match) return fallback;
+
+  const eventPart = match[1] || '';
+  const map = Object.fromEntries(
+    eventPart
+      .split(',')
+      .map((piece) => piece.trim())
+      .map((piece) => {
+        const [k, v] = piece.split(':').map((x) => (x || '').trim().toLowerCase());
+        return [k, v === 'yes'];
+      })
+  ) as Record<string, boolean>;
+
+  const cleanNotes = notes.replace(match[0], '').trim();
+
+  return {
+    cleanNotes,
+    attendCeremony: guest.invited_to_ceremony ? (map['ceremony'] ?? true) : false,
+    attendReception: guest.invited_to_reception ? (map['reception'] ?? true) : false,
+  };
+}
+
 export default function RSVP() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -148,13 +181,14 @@ export default function RSVP() {
     setRsvpDeadline(deadline);
     if (foundRsvp) {
       setExistingRsvp(foundRsvp);
+      const parsed = parseEventSelectionsFromNotes(foundRsvp.notes, foundGuest);
       setFormData({
         attending: foundRsvp.attending,
-        attendCeremony: !!foundGuest.invited_to_ceremony,
-        attendReception: !!foundGuest.invited_to_reception,
+        attendCeremony: parsed.attendCeremony,
+        attendReception: parsed.attendReception,
         meal_choice: foundRsvp.meal_choice || '',
         plus_one_name: foundRsvp.plus_one_name || '',
-        notes: foundRsvp.notes || '',
+        notes: parsed.cleanNotes,
       });
     }
     if (!foundRsvp) {
