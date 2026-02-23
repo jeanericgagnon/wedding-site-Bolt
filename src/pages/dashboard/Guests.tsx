@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2 } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -412,6 +412,21 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+
+  const handleCopyFilteredEmails = async () => {
+    const emails = reminderCandidates.map(g => g.email).filter(Boolean) as string[];
+    if (emails.length === 0) {
+      toast('No emails available in this filtered segment.', 'error');
+      return;
+    }
+    const payload = emails.join(', ');
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast(`Copied ${emails.length} email${emails.length === 1 ? '' : 's'}`, 'success');
+    } catch {
+      window.prompt('Copy filtered emails:', payload);
+    }
+  };
 
   const handleSendBulkInvitations = async () => {
     if (reminderCandidates.length === 0) {
@@ -1128,6 +1143,10 @@ export const DashboardGuests: React.FC = () => {
                 <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || reminderCandidates.length === 0} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>
                   <Mail className="w-4 h-4 mr-2" />
                   {bulkSending ? 'Sending…' : `Remind Filtered (${reminderCandidates.length})`}
+                </Button>
+                <Button variant="outline" size="md" onClick={handleCopyFilteredEmails} disabled={reminderCandidates.length === 0} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Emails
                 </Button>
               </div>
             </div>
