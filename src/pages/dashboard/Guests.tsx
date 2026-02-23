@@ -94,6 +94,7 @@ export const DashboardGuests: React.FC = () => {
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [campaignPreset, setCampaignPreset] = useState<'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email'>('pending');
   const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
+  const [sortByPriority, setSortByPriority] = useState(true);
 
 
   useEffect(() => {
@@ -860,6 +861,27 @@ export const DashboardGuests: React.FC = () => {
 
   const emailableFilteredGuests = filteredGuests.filter(g => !!g.email && !!g.invite_token);
 
+
+  const daysToWedding = weddingSiteInfo?.wedding_date
+    ? Math.ceil((new Date(weddingSiteInfo.wedding_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const priorityScore = (guest: GuestWithRSVP) => {
+    let score = 0;
+    const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+    if (guest.rsvp_status === 'pending') score += 100;
+    if (guest.rsvp?.attending && !guest.rsvp?.meal_choice) score += 60;
+    if (guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name) score += 40;
+    if (ev?.ceremony === false || ev?.reception === false) score += 15;
+    if (guest.rsvp_status === 'pending' && !guest.email) score += 20;
+    if (daysToWedding !== null && daysToWedding <= 30) score += 15;
+    return score;
+  };
+
+  const displayedGuests = sortByPriority
+    ? [...filteredGuests].sort((a, b) => priorityScore(b) - priorityScore(a))
+    : filteredGuests;
+
   const stats = {
     total: guests.length,
     confirmed: guests.filter(g => g.rsvp_status === 'confirmed').length,
@@ -1314,6 +1336,11 @@ export const DashboardGuests: React.FC = () => {
 
             <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle space-y-2">
               <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span></div>
+              {daysToWedding !== null && (
+                <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
+                  Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <p className="text-xs text-text-secondary">
                   Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
@@ -1427,6 +1454,12 @@ export const DashboardGuests: React.FC = () => {
 
             <div className="flex gap-2 flex-wrap items-center justify-between">
               <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setSortByPriority(v => !v)}
+                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                >
+                  {sortByPriority ? 'Priority sort: On' : 'Priority sort: Off'}
+                </button>
                 {([
                   { id: 'all', label: `All (${stats.total})` },
                   { id: 'confirmed', label: `Confirmed (${stats.confirmed})` },
