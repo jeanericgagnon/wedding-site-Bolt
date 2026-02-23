@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { PersistedSection, PersistedSectionSchema, parseSections } from '../sections/schemas';
-import { SectionTypeValue } from '../sections/schemas/sectionInstanceSchema';
+import { PersistedSection, PersistedSectionSchema, parseSections, SectionTypeValue } from '../sections/schemas';
 import { BuilderSectionInstance } from '../types/builder/section';
 
 export interface SectionReorderItem {

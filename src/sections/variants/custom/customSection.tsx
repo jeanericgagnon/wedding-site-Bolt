@@ -121,7 +121,7 @@ const BlockRenderer: React.FC<{ block: CustomBlock; dark?: boolean }> = ({ block
       );
 
     case 'paragraph': {
-      const sizeClass = { sm: 'text-sm', md: 'text-base', lg: 'text-lg' }[block.size ?? 'md'] ?? 'text-base';
+      const sizeClass = { sm: 'text-sm', md: 'text-base', lg: 'text-lg', xl: 'text-xl' }[block.size ?? 'md'] ?? 'text-base';
       return (
         <div ref={ref} className={`${baseTransition} ${revealClass}`}>
           <p className={`${sizeClass} ${alignClass} font-light leading-relaxed ${isLight ? 'text-white/80' : 'text-stone-600'} whitespace-pre-line mb-3`}>
@@ -170,7 +170,7 @@ const BlockRenderer: React.FC<{ block: CustomBlock; dark?: boolean }> = ({ block
       );
 
     case 'spacer':
-      return <div className={{ sm: 'h-4', md: 'h-8', lg: 'h-16' }[block.size ?? 'md'] ?? 'h-8'} />;
+      return <div className={{ sm: 'h-4', md: 'h-8', lg: 'h-16', xl: 'h-24' }[block.size ?? 'md'] ?? 'h-8'} />;
 
     case 'columns':
       return (

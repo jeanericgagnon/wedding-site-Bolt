@@ -4,12 +4,13 @@ import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { demoWeddingSite } from '../lib/demoData';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -24,6 +25,47 @@ export const Onboarding: React.FC = () => {
     registryLink: '',
     theme: 'garden',
   });
+
+  const setupChecklist = [
+    {
+      id: 'names',
+      label: 'Add couple names',
+      done: Boolean(formData.partnerNames.trim()),
+      actionLabel: 'Go',
+      action: () => setStep('quick-1' as OnboardingStep),
+    },
+    {
+      id: 'date',
+      label: 'Set wedding date',
+      done: Boolean(formData.weddingDate),
+      actionLabel: 'Go',
+      action: () => setStep('quick-1' as OnboardingStep),
+    },
+    {
+      id: 'venue',
+      label: 'Add venue/address',
+      done: Boolean(formData.venueName.trim() || formData.venueLocation.trim()),
+      actionLabel: 'Go',
+      action: () => setStep('quick-1' as OnboardingStep),
+    },
+    {
+      id: 'registry',
+      label: 'Add registry link',
+      done: Boolean(formData.registryLink.trim()),
+      actionLabel: 'Go',
+      action: () => setStep('quick-3' as OnboardingStep),
+    },
+    {
+      id: 'publish',
+      label: 'Publish site',
+      done: step === 'complete',
+      actionLabel: 'Finish setup',
+      action: () => setStep('quick-3' as OnboardingStep),
+    },
+  ];
+
+  const completedSetupCount = setupChecklist.filter(item => item.done).length;
+  const nextSetupItem = setupChecklist.find(item => !item.done) ?? null;
 
   const checkExistingSite = useCallback(async () => {
     if (!user) return;
@@ -43,6 +85,23 @@ export const Onboarding: React.FC = () => {
     checkExistingSite();
   }, [checkExistingSite]);
 
+  useEffect(() => {
+    if (!isDemoMode) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      partnerNames: prev.partnerNames || `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
+      weddingDate: prev.weddingDate || demoWeddingSite.wedding_date || '',
+      venueName: prev.venueName || demoWeddingSite.venue_name || '',
+      venueLocation: prev.venueLocation || demoWeddingSite.venue_location || '',
+      story: prev.story || 'We met on a rainy Tuesday and never stopped choosing each other.',
+      ceremonyTime: prev.ceremonyTime || '16:00',
+      receptionTime: prev.receptionTime || '18:00',
+      rsvpDeadline: prev.rsvpDeadline || '2026-05-25',
+      registryLink: prev.registryLink || 'https://www.zola.com/registry/alex-and-jordan',
+    }));
+  }, [isDemoMode]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -56,8 +115,37 @@ export const Onboarding: React.FC = () => {
     setStep('quick-1');
   };
 
+  const handleOneClickStarter = async () => {
+    setLoading(true);
+    const fallbackNames = isDemoMode
+      ? `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`
+      : 'Alex & Jordan';
+    const names = (formData.partnerNames || fallbackNames).split('&').map(n => n.trim());
+    const firstName = names[0] || 'Alex';
+    const secondName = names[1] || 'Jordan';
+
+    const ok = await createWeddingSite({
+      couple_name_1: firstName,
+      couple_name_2: secondName,
+      couple_first_name: firstName,
+      couple_second_name: secondName,
+      wedding_date: formData.weddingDate || demoWeddingSite.wedding_date || null,
+      venue_name: formData.venueName || demoWeddingSite.venue_name || null,
+      venue_location: formData.venueLocation || demoWeddingSite.venue_location || null,
+      site_url: user?.email?.split('@')[0] || 'my-wedding',
+      rsvp_deadline: formData.rsvpDeadline || null,
+    });
+
+    setLoading(false);
+    if (ok) navigate('/dashboard/builder');
+  };
+
   const createWeddingSite = async (data: Record<string, unknown>) => {
-    if (!user) return;
+    if (!user) return false;
+
+    if (isDemoMode) {
+      return true;
+    }
 
     try {
       const { error } = await supabase
@@ -76,20 +164,22 @@ export const Onboarding: React.FC = () => {
         });
 
       if (error) throw error;
+      return true;
     } catch {
       alert('Failed to create wedding site. Please try again.');
+      return false;
     }
   };
 
   const handleManualSetup = async () => {
     setLoading(true);
-    await createWeddingSite({
+    const ok = await createWeddingSite({
       couple_name_1: 'Partner 1',
       couple_name_2: 'Partner 2',
       site_url: user?.email?.split('@')[0] || 'my-wedding',
     });
     setLoading(false);
-    navigate('/dashboard');
+    if (ok) navigate('/dashboard');
   };
 
   const nextStep = async () => {
@@ -104,7 +194,7 @@ export const Onboarding: React.FC = () => {
       const firstName = names[0] || '';
       const secondName = names[1] || names[0] || '';
 
-      await createWeddingSite({
+      const ok = await createWeddingSite({
         couple_name_1: firstName,
         couple_name_2: secondName,
         couple_first_name: firstName,
@@ -117,9 +207,45 @@ export const Onboarding: React.FC = () => {
       });
 
       setLoading(false);
-      setStep('complete');
+      if (ok) setStep('complete');
     }
   };
+
+  const renderSetupChecklist = () => (
+    <Card variant="bordered" padding="lg" className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-semibold text-text-primary">Setup checklist</h3>
+        <span className="text-sm font-medium text-text-secondary">{completedSetupCount}/{setupChecklist.length} complete</span>
+      </div>
+      <div className="space-y-2">
+        {setupChecklist.map((item) => (
+          <div key={item.id} className="flex items-center justify-between gap-3 text-sm text-text-primary">
+            <label className="flex items-center gap-3">
+              <input type="checkbox" checked={item.done} readOnly className="h-4 w-4 rounded border-border" />
+              <span className={item.done ? 'line-through text-text-secondary' : ''}>{item.label}</span>
+            </label>
+            {!item.done && (
+              <button
+                type="button"
+                onClick={item.action}
+                className="text-xs text-primary hover:text-primary-hover font-medium"
+              >
+                {item.actionLabel}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3 text-xs">
+        <p className="text-text-secondary">Publish becomes available after you finish setup and enter the dashboard/builder.</p>
+        {nextSetupItem && (
+          <button type="button" onClick={nextSetupItem.action} className="text-primary font-medium hover:text-primary-hover">
+            Next: {nextSetupItem.label}
+          </button>
+        )}
+      </div>
+    </Card>
+  );
 
   const renderChoice = () => (
     <div className="max-w-4xl mx-auto">
@@ -131,6 +257,8 @@ export const Onboarding: React.FC = () => {
           Choose how you'd like to get started
         </p>
       </div>
+
+      {renderSetupChecklist()}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card variant="bordered" padding="lg" className="hover:border-primary transition-colors cursor-pointer">
@@ -157,9 +285,14 @@ export const Onboarding: React.FC = () => {
                 </li>
               </ul>
             </div>
-            <Button variant="accent" size="lg" fullWidth onClick={handleQuickSetup} disabled={loading}>
-              Start Quick Setup
-            </Button>
+            <div className="space-y-2">
+              <Button variant="accent" size="lg" fullWidth onClick={handleQuickSetup} disabled={loading}>
+                Start guided setup
+              </Button>
+              <Button variant="outline" size="lg" fullWidth onClick={handleOneClickStarter} disabled={loading}>
+                {loading ? 'Creating starter site...' : 'One-click starter (fastest)'}
+              </Button>
+            </div>
           </div>
         </Card>
 
@@ -209,6 +342,8 @@ export const Onboarding: React.FC = () => {
 
       <h1 className="text-3xl font-bold text-text-primary mb-2">The basics</h1>
       <p className="text-text-secondary mb-8">Tell us about your big day</p>
+
+      {renderSetupChecklist()}
 
       <Card variant="default" padding="lg">
         <div className="space-y-6">
@@ -274,6 +409,8 @@ export const Onboarding: React.FC = () => {
 
       <h1 className="text-3xl font-bold text-text-primary mb-2">Your story and schedule</h1>
       <p className="text-text-secondary mb-8">Share what makes you two special</p>
+
+      {renderSetupChecklist()}
 
       <Card variant="default" padding="lg">
         <div className="space-y-6">
@@ -344,6 +481,8 @@ export const Onboarding: React.FC = () => {
 
       <h1 className="text-3xl font-bold text-text-primary mb-2">Final touches</h1>
       <p className="text-text-secondary mb-8">Pick a theme and add optional details</p>
+
+      {renderSetupChecklist()}
 
       <Card variant="default" padding="lg">
         <div className="space-y-6">

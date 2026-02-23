@@ -43,6 +43,14 @@ describe('fetchUrlPreview', () => {
       image_url: 'https://example.com/img.jpg',
       merchant: 'amazon.com',
       canonical_url: 'https://amazon.com/dp/B001',
+      description: null,
+      currency: null,
+      availability: null,
+      brand: null,
+      retailer: null,
+      confidence_score: null,
+      source_method: null,
+      fetch_status: null,
       error: null,
     };
 
@@ -88,6 +96,14 @@ describe('fetchUrlPreview', () => {
       image_url: null,
       merchant: 'amazon.com',
       canonical_url: 'https://amazon.com/dp/B001',
+      description: null,
+      currency: null,
+      availability: null,
+      brand: null,
+      retailer: null,
+      confidence_score: null,
+      source_method: null,
+      fetch_status: 'error',
       error: 'Could not fetch page',
     };
 

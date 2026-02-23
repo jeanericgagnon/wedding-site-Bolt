@@ -157,7 +157,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
       ref={setNodeRef}
       style={style}
       data-section-id={section.id}
-      className={`relative group transition-all duration-150 ${
+      className={`relative group scroll-mt-24 transition-all duration-150 ${
         isHighlighted ? 'ring-2 ring-rose-400 ring-inset' : ''
       }`}
       onClick={handleSelect}

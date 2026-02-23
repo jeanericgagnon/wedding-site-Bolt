@@ -55,7 +55,7 @@ export interface BuilderSectionInstance {
   enabled: boolean;
   locked: boolean;
   orderIndex: number;
-  settings: Record<string, string | boolean | number | undefined>;
+  settings: Record<string, unknown>;
   bindings: {
     venueIds?: string[];
     scheduleItemIds?: string[];

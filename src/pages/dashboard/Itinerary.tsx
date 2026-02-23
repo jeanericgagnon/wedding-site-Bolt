@@ -3,6 +3,8 @@ import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, External
 import { supabase } from '../../lib/supabase';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui/Button';
+import { useAuth } from '../../hooks/useAuth';
+import { demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
@@ -30,6 +32,7 @@ interface EventWithInvites extends ItineraryEvent {
 }
 
 export const DashboardItinerary: React.FC = () => {
+  const { isDemoMode } = useAuth();
   const [events, setEvents] = useState<EventWithInvites[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
@@ -51,10 +54,33 @@ export const DashboardItinerary: React.FC = () => {
 
   useEffect(() => {
     loadEvents();
-  }, []);
+  }, [isDemoMode]);
 
   async function loadEvents() {
     try {
+      if (isDemoMode) {
+        const seeded = demoEvents.map((event, idx) => ({
+          id: event.id,
+          event_name: event.event_name,
+          description: event.description,
+          event_date: event.event_date,
+          start_time: event.start_time,
+          end_time: null,
+          location_name: event.location_name,
+          location_address: '',
+          dress_code: idx % 2 === 0 ? 'Cocktail Attire' : null,
+          notes: idx === 0 ? 'Shuttle departs from hotel lobby at 5:30 PM.' : null,
+          display_order: event.display_order,
+          is_visible: true,
+          invitation_count: [86, 120, 120, 52][idx] ?? 0,
+          rsvp_count: [72, 107, 109, 44][idx] ?? 0,
+          attending_count: [68, 98, 101, 39][idx] ?? 0,
+          declined_count: [4, 9, 8, 5][idx] ?? 0,
+        }));
+        setEvents(seeded as EventWithInvites[]);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -145,6 +171,27 @@ export const DashboardItinerary: React.FC = () => {
     e.preventDefault();
 
     try {
+      if (isDemoMode) {
+        if (editingEvent) {
+          setEvents(prev => prev.map(e => e.id === editingEvent.id ? { ...e, ...formData, end_time: formData.end_time || null, dress_code: formData.dress_code || null, notes: formData.notes || null } : e));
+        } else {
+          setEvents(prev => ([...prev, {
+            id: `demo-event-${Date.now()}`,
+            ...formData,
+            end_time: formData.end_time || null,
+            dress_code: formData.dress_code || null,
+            notes: formData.notes || null,
+            display_order: prev.length + 1,
+            invitation_count: 60,
+            rsvp_count: 0,
+            attending_count: 0,
+            declined_count: 0,
+          }] as EventWithInvites[]));
+        }
+        setShowEventForm(false);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -187,6 +234,10 @@ export const DashboardItinerary: React.FC = () => {
     if (!confirm('Are you sure you want to delete this event?')) return;
 
     try {
+      if (isDemoMode) {
+        setEvents(prev => prev.filter(e => e.id !== eventId));
+        return;
+      }
       const { error } = await supabase
         .from('itinerary_events')
         .delete()
@@ -255,8 +306,11 @@ export const DashboardItinerary: React.FC = () => {
   if (loading) {
     return (
       <DashboardLayout currentPage="itinerary">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="space-y-4 animate-pulse" aria-hidden="true">
+          <div className="h-12 w-64 rounded-xl bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
         </div>
       </DashboardLayout>
     );

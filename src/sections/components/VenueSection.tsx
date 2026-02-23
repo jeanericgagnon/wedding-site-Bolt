@@ -22,7 +22,7 @@ export const VenueSection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-bold text-text-primary mb-8">{settings.title || 'Venue'}</h2>
           )}
-          <p className="text-text-secondary">Venue details coming soon</p>
+          <p className="text-text-secondary">Venue details will appear here once added</p>
         </div>
       </section>
     );
@@ -67,7 +67,7 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Venue'}</h2>
           )}
-          <p className="text-text-secondary">Venue details coming soon</p>
+          <p className="text-text-secondary">Venue details will appear here once added</p>
         </div>
       </section>
     );

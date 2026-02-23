@@ -45,7 +45,7 @@ export const defaultVideoCardData: VideoCardData = {
   ],
 };
 
-function getEmbedUrl(url: string, type: VideoItemSchema['shape']['videoType']['_type']): string | null {
+function getEmbedUrl(url: string, type: z.infer<typeof VideoItemSchema>['videoType']): string | null {
   if (!url) return null;
   if (type === 'youtube') {
     const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);

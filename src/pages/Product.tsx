@@ -162,25 +162,25 @@ export const Product: React.FC = () => {
       )}
 
       {/* HERO */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-background to-surface">
+      <section className="section-shell md:py-24 bg-gradient-to-b from-background to-surface">
         <div className="container-custom">
           <div className="text-center max-w-4xl mx-auto">
             <Badge variant="primary" className="mb-4">Complete Product Tour</Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary mb-6 leading-tight">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-text-primary mb-6 leading-tight">
               Everything your wedding site needs,<br className="hidden md:block" />
               <span className="text-primary"> built right</span>
             </h1>
             <p className="text-lg md:text-xl text-text-secondary mb-10 max-w-3xl mx-auto leading-relaxed">
               Explore every feature, demo the RSVP flow, browse real templates, and see how DayOf engineers around the common failure modes of wedding sites.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/signup">
-                <Button variant="primary" size="lg">
-                  Get started — $49 flat
+            <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
+              <Link to="/signup" className="w-full sm:w-auto">
+                <Button variant="primary" size="lg" fullWidth>
+                  Start free — $49 flat
                 </Button>
               </Link>
-              <a href="#templates">
-                <Button variant="outline" size="lg">
+              <a href="#templates" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" fullWidth>
                   Browse templates
                 </Button>
               </a>
@@ -191,10 +191,10 @@ export const Product: React.FC = () => {
       </section>
 
       {/* PAIN → FIX CAROUSEL */}
-      <section id="engineering" className="py-16 md:py-20 bg-surface-subtle">
+      <section id="engineering" className="section-shell bg-surface-subtle">
         <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+          <div className="section-intro">
+            <h2 className="section-title mb-4 text-text-primary">
               Wedding sites fail in <span className="text-primary">predictable ways</span>
             </h2>
             <p className="text-text-secondary text-lg max-w-2xl mx-auto">We catalogued 12 common failure modes and built explicit fixes for each one.</p>
@@ -252,13 +252,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* FEATURE TABS */}
-      <section id="features" className="py-16 md:py-20 bg-background">
+      <section id="features" className="section-shell bg-background">
         <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+          <div className="section-intro">
+            <h2 className="section-title mb-4 text-text-primary">
               Every feature built for <span className="text-accent">trust and correctness</span>
             </h2>
-            <p className="text-text-secondary text-lg max-w-2xl mx-auto">No fluff. Every module is designed around the real logistics of coordinating 50–300 guests.</p>
+            <p className="section-subtitle max-w-2xl mx-auto">No fluff. Every module is designed around the real logistics of coordinating 50–300 guests.</p>
           </div>
 
           <div className="mb-8 flex flex-wrap gap-2 justify-center">
@@ -294,6 +294,7 @@ export const Product: React.FC = () => {
                     {[
                       'Import CSV with intelligent column auto-mapping',
                       'Group guests into households — merge, split, reassign',
+                      'Household logic handles couples/families cleanly (one RSVP link, per-person meal + attendance)',
                       'Manage plus-ones per guest with explicit named/unnamed rules',
                       'Track dietary restrictions and meal preferences',
                       'Tag guests by event: ceremony-only, reception, or all events',
@@ -305,6 +306,10 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
+                  <div className="rounded-xl border border-border bg-surface-subtle p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-text-tertiary mb-2">How household logic works</p>
+                    <p className="text-sm text-text-secondary leading-relaxed">One invite can represent a household, but each person keeps their own RSVP status, meal choice, and event permissions. You get fewer invite mistakes without losing per-guest accuracy.</p>
+                  </div>
                   <Link to="/features/guests"><Button variant="primary">Full guest management docs <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
                 </>
               )}
@@ -523,13 +528,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* FULL FEATURE LIST */}
-      <section id="full-features" className="py-16 md:py-20 bg-surface-subtle">
+      <section id="full-features" className="section-shell bg-surface-subtle">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="section-title mb-4 text-text-primary">
               Full feature breakdown
             </h2>
-            <p className="text-lg text-text-secondary max-w-3xl mx-auto">
+            <p className="section-subtitle max-w-3xl mx-auto">
               A full-stack wedding platform built around RSVP correctness, privacy-first defaults, and calm logistics.
             </p>
             <div className="flex items-center justify-center gap-6 mt-5">
@@ -707,13 +712,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* RSVP DEMO */}
-      <section id="rsvp-demo" className="py-16 md:py-20 bg-background">
+      <section id="rsvp-demo" className="section-shell bg-background">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="section-title mb-4 text-text-primary">
               See how <span className="text-primary">RSVP actually works</span>
             </h2>
-            <p className="text-lg text-text-secondary">
+            <p className="section-subtitle">
               Multi-step, household-aware, with clear validation at each stage.
             </p>
           </div>
@@ -828,24 +833,31 @@ export const Product: React.FC = () => {
       </section>
 
       {/* TEMPLATE GALLERY — real data */}
-      <section id="templates" className="py-16 md:py-20 bg-surface-subtle">
+      <section id="templates" className="section-shell bg-surface-subtle">
         <div className="container-custom">
-          <div className="text-center mb-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
+          <div className="section-intro">
+            <h2 className="section-title mb-3 text-text-primary">
               {templates.length} professionally designed templates
             </h2>
-            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+            <p className="section-subtitle max-w-2xl mx-auto">
               Every template ships with a curated color theme, typography pairing, and section layout — all fully customizable in the builder.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-10">
-            {templates.map(tmpl => {
+            {templates.map((tmpl, index) => {
               const theme = TEMPLATE_THEMES[tmpl.id] ?? TEMPLATE_THEMES['modern-luxe'];
               return (
-                <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group hover:shadow-lg transition-all hover:-translate-y-0.5">
+                <Card key={tmpl.id} variant="bordered" padding="none" className="overflow-hidden bg-surface group border-border-subtle hover:border-primary/30 hover:shadow-lg transition-all hover:-translate-y-0.5 h-full">
                   {/* Rich website mockup preview */}
-                  <div className="aspect-[3/4] relative overflow-hidden" style={{ backgroundColor: theme.bg }}>
+                  <div className="aspect-[3/4] relative overflow-hidden" style={{ background: `linear-gradient(180deg, ${theme.bg} 0%, #ffffff 100%)` }}>
+                    <img
+                      src={tmpl.previewThumbnailPath}
+                      alt={`${tmpl.displayName} preview`}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover opacity-20 scale-105 group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-white/10 to-white/25" />
                     {/* Browser chrome */}
                     <div className="flex items-center gap-1 px-2 py-1.5 border-b" style={{ backgroundColor: theme.dark, borderColor: theme.dark }}>
                       <div className="w-1.5 h-1.5 rounded-full opacity-50" style={{ backgroundColor: theme.accent }} />
@@ -943,14 +955,19 @@ export const Product: React.FC = () => {
                       ))}
                     </div>
 
+                    {index < 3 && (
+                      <div className="absolute top-7 left-2">
+                        <Badge variant="secondary" className="text-[11px]">Editor pick</Badge>
+                      </div>
+                    )}
                     {tmpl.isNew && (
                       <div className="absolute top-7 right-2">
-                        <Badge variant="accent" className="text-xs">New</Badge>
+                        <Badge variant="primary" className="text-[11px]">New</Badge>
                       </div>
                     )}
                   </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <CardContent className="p-4 bg-white/95 flex flex-col h-full">
+                    <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="text-sm font-semibold text-text-primary">{tmpl.displayName}</h3>
                       <div className="flex gap-1 flex-shrink-0 mt-0.5">
                         {[theme.dark, theme.accent, theme.bg].map((c, i) => (
@@ -958,18 +975,22 @@ export const Product: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                    <p className="text-xs text-text-tertiary mb-2 line-clamp-2 leading-relaxed">{tmpl.description}</p>
+                    <p className="text-xs text-text-tertiary mb-3 line-clamp-3 leading-relaxed min-h-[3.6em]">{tmpl.description}</p>
+                    <p className="text-[11px] text-text-tertiary mb-2 uppercase tracking-wide">
+                      Best for: {tmpl.moodTags.slice(0, 2).map(tag => TEMPLATE_MOOD_LABELS[tag] ?? tag).join(' · ')} weddings
+                    </p>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {tmpl.moodTags.slice(0, 2).map(tag => (
                         <Badge key={tag} variant="secondary" className="text-xs capitalize">{TEMPLATE_MOOD_LABELS[tag] ?? tag}</Badge>
                       ))}
                     </div>
-                    <div className="text-xs text-text-tertiary mb-3">
+                    <div className="text-xs text-text-tertiary mb-4">
                       <span className="font-medium">{tmpl.suggestedFonts.heading}</span> + {tmpl.suggestedFonts.body}
                     </div>
+                    <div className="mt-auto" />
                     <Link to="/signup">
                       <Button variant="primary" size="sm" fullWidth>
-                        Use this template
+                        Open in builder
                       </Button>
                     </Link>
                   </CardContent>
@@ -983,7 +1004,7 @@ export const Product: React.FC = () => {
             <Link to="/signup">
               <Button variant="primary" size="lg">
                 <Sparkles className="w-5 h-5 mr-2" />
-                Start building — $49 flat
+                Start free — $49 flat
               </Button>
             </Link>
           </div>
@@ -991,13 +1012,13 @@ export const Product: React.FC = () => {
       </section>
 
       {/* COLOR PALETTE PREVIEWER — using real theme presets */}
-      <section id="colors" className="py-16 md:py-20 bg-background">
+      <section id="colors" className="section-shell bg-background">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
+            <h2 className="section-title mb-4 text-text-primary">
               {Object.keys(THEME_PRESETS).length} color themes, live preview
             </h2>
-            <p className="text-lg text-text-secondary mb-5 max-w-2xl mx-auto">
+            <p className="section-subtitle mb-5 max-w-2xl mx-auto">
               Click any palette to apply it to this page instantly. These are the exact same themes used in the builder.
             </p>
             {previewTheme && (
@@ -1043,11 +1064,11 @@ export const Product: React.FC = () => {
       </section>
 
       {/* PRICING CTA */}
-      <section className="py-16 md:py-20 bg-surface-subtle">
+      <section className="section-shell bg-surface-subtle">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">Simple pricing. No surprises.</h2>
-            <p className="text-lg text-text-secondary mb-8">One flat fee, 2 years of access, everything included. Auto-renew is off by default.</p>
+            <h2 className="section-title mb-4 text-text-primary">Simple pricing. No surprises.</h2>
+            <p className="section-subtitle mb-8">One flat fee, 2 years of access, everything included. Auto-renew is off by default.</p>
             <div className="bg-surface border-2 border-primary/20 rounded-2xl p-8 md:p-10 shadow-sm">
               <div className="flex flex-col items-center gap-2 mb-6">
                 <span className="text-5xl font-bold text-text-primary">$49</span>
@@ -1074,7 +1095,7 @@ export const Product: React.FC = () => {
               </div>
               <Link to="/signup">
                 <Button variant="primary" size="lg" fullWidth>
-                  Get started today
+                  Start free — $49 flat
                 </Button>
               </Link>
               <p className="text-xs text-text-tertiary mt-4">

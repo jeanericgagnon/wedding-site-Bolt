@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Heart, Menu, X } from 'lucide-react';
 import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../ui/Toast';
 
 interface HeaderProps {
   variant?: 'marketing' | 'dashboard';
@@ -12,6 +13,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn } = useAuth();
+  const { toast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('top');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -33,7 +35,9 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     try {
       await signIn();
       navigate('/dashboard');
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
+      toast(message, 'error');
       setDemoLoading(false);
     }
   };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, HelpCircle, Calendar, MapPin, Shirt, Gift } from 'lucide-react';
 
 interface Props {
   data: WeddingDataV1;
@@ -22,7 +22,7 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-bold text-text-primary mb-8">{settings.title || 'FAQ'}</h2>
           )}
-          <p className="text-text-secondary">FAQ coming soon</p>
+          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
         </div>
       </section>
     );
@@ -62,7 +62,7 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'FAQ'}</h2>
           )}
-          <p className="text-text-secondary">FAQ coming soon</p>
+          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
         </div>
       </section>
     );
@@ -99,6 +99,56 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
               )}
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export const FaqIconGrid: React.FC<Props> = ({ data, instance }) => {
+  const { faq } = data;
+  const { settings, bindings } = instance;
+  const faqsToShow = bindings.faqIds && bindings.faqIds.length > 0
+    ? faq.filter(f => bindings.faqIds!.includes(f.id))
+    : faq;
+
+  const icons = [HelpCircle, Calendar, MapPin, Shirt, Gift];
+
+  if (faqsToShow.length === 0) {
+    return (
+      <section className="py-20 px-4 bg-surface-subtle">
+        <div className="max-w-3xl mx-auto text-center">
+          {settings.showTitle && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'FAQ'}</h2>}
+          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-20 px-4 bg-surface-subtle">
+      <div className="max-w-5xl mx-auto">
+        {settings.showTitle && (
+          <div className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Good to know</p>
+            <h2 className="text-4xl font-light text-text-primary">{settings.title || 'FAQ'}</h2>
+            <div className="w-10 h-px bg-primary mx-auto mt-6" />
+          </div>
+        )}
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {faqsToShow.map((item, idx) => {
+            const Icon = icons[idx % icons.length];
+            return (
+              <div key={item.id} className="rounded-2xl border border-border bg-surface p-5">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                  <Icon className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-text-primary mb-2">{item.q}</h3>
+                <p className="text-sm text-text-secondary whitespace-pre-wrap">{item.a}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

@@ -21,7 +21,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   if (!selectedSection || !activePage) {
     return (
-      <aside className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
+      <aside className="w-full lg:w-72 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div>
             <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -54,14 +54,14 @@ export const BuilderInspectorPanel: React.FC = () => {
     dispatch(builderActions.toggleSectionVisibility(activePage.id, selectedSection.id));
   };
 
-  const tabs: { id: InspectorTab; icon: React.FC<{ size?: number; className?: string }>; label: string; show: boolean }[] = [
-    { id: 'content', icon: Pencil, label: 'Content', show: manifest.settingsSchema.fields.length > 0 },
-    { id: 'style', icon: Palette, label: 'Style', show: true },
-    { id: 'data', icon: Database, label: 'Data', show: hasBindings },
+  const tabs: { id: InspectorTab; icon: React.ComponentType<{ size?: string | number; className?: string }>; label: string; show: boolean }[] = [
+    { id: 'content' as InspectorTab, icon: Pencil, label: 'Content', show: manifest.settingsSchema.fields.length > 0 },
+    { id: 'style' as InspectorTab, icon: Palette, label: 'Style', show: true },
+    { id: 'data' as InspectorTab, icon: Database, label: 'Data', show: hasBindings },
   ].filter(t => t.show);
 
   return (
-    <aside className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
+    <aside className="w-full lg:w-72 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -75,10 +75,11 @@ export const BuilderInspectorPanel: React.FC = () => {
             <select
               value={selectedSection.variant}
               onChange={e => handleChangeVariant(e.target.value)}
-              className="text-[10px] text-gray-600 font-medium bg-transparent border-none outline-none cursor-pointer"
+              className="text-[10px] text-gray-700 font-medium bg-transparent border-none outline-none cursor-pointer max-w-[170px] truncate"
+              title="Switch layout variant"
             >
-              {manifest.supportedVariants.map(v => (
-                <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+              {manifest.variantMeta.map(v => (
+                <option key={v.id} value={v.id}>{v.label}</option>
               ))}
             </select>
           </div>
@@ -365,6 +366,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
+              <p className="mt-1.5 text-[11px] text-gray-500">Tip: changing layout keeps your content and data bindings.</p>
             </div>
           </div>
         )}
@@ -389,7 +391,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
 interface InspectorFieldProps {
   field: BuilderSettingsField;
-  value: string | boolean | number | undefined;
+  value: unknown;
   onChange: (val: string | boolean | number) => void;
   sectionId?: string;
 }

@@ -28,31 +28,47 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-const DEMO_PASSWORD = 'demo-password-12345';
+const LOCAL_DEMO_AUTH_KEY = 'dayof_demo_local_auth';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const shouldUseLocalDemo = DEMO_MODE && localStorage.getItem(LOCAL_DEMO_AUTH_KEY) === '1';
+
+    if (!SUPABASE_CONFIGURED) {
+      if (shouldUseLocalDemo) {
+        setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
+      }
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
         setUser({
           id: session.user.id,
           email: session.user.email || '',
           name: session.user.user_metadata?.name || session.user.email || '',
         });
+      } else if (shouldUseLocalDemo) {
+        setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
       }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
+        localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
         setUser({
           id: session.user.id,
           email: session.user.email || '',
           name: session.user.user_metadata?.name || session.user.email || '',
         });
+      } else if (DEMO_MODE && localStorage.getItem(LOCAL_DEMO_AUTH_KEY) === '1') {
+        setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
       } else {
         setUser(null);
       }
@@ -60,6 +76,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const setLocalDemoUser = () => {
+    localStorage.setItem(LOCAL_DEMO_AUTH_KEY, '1');
+    setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
+  };
 
   const signIn = async () => {
     if (!DEMO_MODE) {
@@ -69,43 +90,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Demo mode is not enabled. Please use regular sign in.');
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-    });
-
-    if (error) {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: DEMO_EMAIL,
-        password: DEMO_PASSWORD,
-        options: {
-          data: {
-            name: 'Alex & Jordan (Demo)',
-          },
-        },
-      });
-
-      if (signUpError) {
-        throw new Error('Unable to access demo account. Please try again.');
-      }
-
-      if (signUpData.user) {
-        setUser({
-          id: signUpData.user.id,
-          email: signUpData.user.email || '',
-          name: 'Alex & Jordan (Demo)',
-        });
-      }
-    } else if (data.user) {
-      setUser({
-        id: data.user.id,
-        email: data.user.email || '',
-        name: 'Alex & Jordan (Demo)',
-      });
-    }
+    // In demo mode, always use local auth to avoid backend dependency/noise.
+    setLocalDemoUser();
   };
 
   const signOut = async () => {
+    localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
     await supabase.auth.signOut();
     setUser(null);
   };

@@ -3,6 +3,8 @@ import { ClipboardList } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
+import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors } from '../../lib/demoData';
 import {
   PlanningTask, PlanningBudgetItem, PlanningVendor,
   getWeddingSiteId, getWeddingDate,
@@ -26,6 +28,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export const DashboardPlanning: React.FC = () => {
+  const { isDemoMode } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [siteId, setSiteId] = useState<string | null>(null);
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
@@ -38,10 +41,20 @@ export const DashboardPlanning: React.FC = () => {
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [isDemoMode]);
 
   async function loadAll() {
     try {
+      if (isDemoMode) {
+        setSiteId(demoWeddingSite.id);
+        setWeddingDate(demoWeddingSite.wedding_date);
+        setTasks(demoPlanningTasks as unknown as PlanningTask[]);
+        setBudgetItems(demoBudgetItems as unknown as PlanningBudgetItem[]);
+        setVendors(demoVendors as unknown as PlanningVendor[]);
+        setSeatingReadiness({ attending: 68, seated: 52, unassigned: 16 });
+        return;
+      }
+
       const id = await getWeddingSiteId();
       if (!id) return;
       setSiteId(id);
@@ -75,7 +88,7 @@ export const DashboardPlanning: React.FC = () => {
         .from('guests')
         .select('id', { count: 'exact', head: true })
         .eq('wedding_site_id', id)
-        .eq('rsvp_status', 'attending');
+        .in('rsvp_status', ['confirmed', 'attending']);
 
       const { data: seatingEventsData } = await supabase
         .from('seating_events')
@@ -106,104 +119,135 @@ export const DashboardPlanning: React.FC = () => {
   const handleAddTask = useCallback(async (task: Partial<PlanningTask>) => {
     if (!siteId) return;
     try {
+      if (isDemoMode) {
+        const created = {
+          id: `demo-task-${Date.now()}`,
+          wedding_site_id: siteId,
+          title: task.title ?? 'New task',
+          description: task.description ?? '',
+          due_date: task.due_date ?? null,
+          status: (task.status ?? 'todo') as PlanningTask['status'],
+          priority: (task.priority ?? 'medium') as PlanningTask['priority'],
+          owner_name: task.owner_name ?? '',
+          linked_event_id: null,
+          linked_vendor_id: null,
+          sort_order: Date.now(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as PlanningTask;
+        setTasks(prev => [...prev, created]);
+        toast('Task added', 'success');
+        return;
+      }
       const created = await createTask(siteId, task);
       setTasks(prev => [...prev, created]);
       toast('Task added', 'success');
     } catch {
       toast('Failed to add task', 'error');
     }
-  }, [siteId, toast]);
+  }, [siteId, toast, isDemoMode]);
 
   const handleUpdateTask = useCallback(async (id: string, updates: Partial<PlanningTask>) => {
     try {
-      await updateTask(id, updates);
+      if (!isDemoMode) await updateTask(id, updates);
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
     } catch {
       toast('Failed to update task', 'error');
     }
-  }, [toast]);
+  }, [toast, isDemoMode]);
 
   const handleDeleteTask = useCallback(async (id: string) => {
     try {
-      await deleteTask(id);
+      if (!isDemoMode) await deleteTask(id);
       setTasks(prev => prev.filter(t => t.id !== id));
       toast('Task deleted', 'success');
     } catch {
       toast('Failed to delete task', 'error');
     }
-  }, [toast]);
+  }, [toast, isDemoMode]);
 
   const handleGenerateMilestones = useCallback(async () => {
     if (!siteId || !weddingDate) return;
     try {
       const milestones = generateMilestoneTasks(siteId, weddingDate);
+      if (isDemoMode) {
+        const created = milestones.slice(0, 6).map((m, idx) => ({
+          ...(m as PlanningTask),
+          id: `demo-milestone-${Date.now()}-${idx}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }));
+        setTasks(prev => [...prev, ...created]);
+        toast(`Added ${created.length} milestone tasks`, 'success');
+        return;
+      }
       const created = await Promise.all(milestones.map(m => createTask(siteId, m)));
       setTasks(prev => [...prev, ...created]);
       toast(`Added ${created.length} milestone tasks`, 'success');
     } catch {
       toast('Failed to generate milestones', 'error');
     }
-  }, [siteId, weddingDate, toast]);
+  }, [siteId, weddingDate, toast, isDemoMode]);
 
   const handleAddBudgetItem = useCallback(async (item: Partial<PlanningBudgetItem>) => {
     if (!siteId) return;
     try {
-      const created = await createBudgetItem(siteId, item);
+      const created = isDemoMode ? ({ id: `demo-budget-${Date.now()}`, wedding_site_id: siteId, category: item.category ?? 'General', item_name: item.item_name ?? 'New item', estimated_amount: item.estimated_amount ?? 0, actual_amount: item.actual_amount ?? 0, paid_amount: item.paid_amount ?? 0, due_date: item.due_date ?? null, vendor_id: null, notes: item.notes ?? '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as PlanningBudgetItem) : await createBudgetItem(siteId, item);
       setBudgetItems(prev => [...prev, created]);
       toast('Budget item added', 'success');
     } catch {
       toast('Failed to add budget item', 'error');
     }
-  }, [siteId, toast]);
+  }, [siteId, toast, isDemoMode]);
 
   const handleUpdateBudgetItem = useCallback(async (id: string, updates: Partial<PlanningBudgetItem>) => {
     try {
-      await updateBudgetItem(id, updates);
+      if (!isDemoMode) await updateBudgetItem(id, updates);
       setBudgetItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
     } catch {
       toast('Failed to update budget item', 'error');
     }
-  }, [toast]);
+  }, [toast, isDemoMode]);
 
   const handleDeleteBudgetItem = useCallback(async (id: string) => {
     try {
-      await deleteBudgetItem(id);
+      if (!isDemoMode) await deleteBudgetItem(id);
       setBudgetItems(prev => prev.filter(i => i.id !== id));
       toast('Budget item deleted', 'success');
     } catch {
       toast('Failed to delete budget item', 'error');
     }
-  }, [toast]);
+  }, [toast, isDemoMode]);
 
   const handleAddVendor = useCallback(async (vendor: Partial<PlanningVendor>) => {
     if (!siteId) return;
     try {
-      const created = await createVendor(siteId, vendor);
+      const created = isDemoMode ? ({ id: `demo-vendor-${Date.now()}`, wedding_site_id: siteId, vendor_type: vendor.vendor_type ?? 'Vendor', name: vendor.name ?? 'New vendor', contact_name: vendor.contact_name ?? '', email: vendor.email ?? '', phone: vendor.phone ?? '', website: vendor.website ?? '', contract_total: vendor.contract_total ?? 0, amount_paid: vendor.amount_paid ?? 0, balance_due: vendor.balance_due ?? 0, next_payment_due: vendor.next_payment_due ?? null, notes: vendor.notes ?? '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as PlanningVendor) : await createVendor(siteId, vendor);
       setVendors(prev => [...prev, created]);
       toast('Vendor added', 'success');
     } catch {
       toast('Failed to add vendor', 'error');
     }
-  }, [siteId, toast]);
+  }, [siteId, toast, isDemoMode]);
 
   const handleUpdateVendor = useCallback(async (id: string, updates: Partial<PlanningVendor>) => {
     try {
-      await updateVendor(id, updates);
+      if (!isDemoMode) await updateVendor(id, updates);
       setVendors(prev => prev.map(v => v.id === id ? { ...v, ...updates } : v));
     } catch {
       toast('Failed to update vendor', 'error');
     }
-  }, [toast]);
+  }, [toast, isDemoMode]);
 
   const handleDeleteVendor = useCallback(async (id: string) => {
     try {
-      await deleteVendor(id);
+      if (!isDemoMode) await deleteVendor(id);
       setVendors(prev => prev.filter(v => v.id !== id));
       toast('Vendor deleted', 'success');
     } catch {
       toast('Failed to delete vendor', 'error');
     }
-  }, [toast]);
+  }, [toast, isDemoMode]);
 
   return (
     <DashboardLayout currentPage="planning">
@@ -235,8 +279,13 @@ export const DashboardPlanning: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-4 animate-pulse" aria-hidden="true">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+            </div>
+            <div className="h-56 rounded-2xl bg-surface-subtle border border-border-subtle" />
           </div>
         ) : (
           <>

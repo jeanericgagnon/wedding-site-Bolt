@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/ui/Toast';
 import {
   Heart,
   Users,
@@ -16,8 +17,10 @@ import {
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { toast } = useToast();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [demoLoading, setDemoLoading] = useState(false);
+  const proposalImageUrl = `${import.meta.env.BASE_URL}7641B308-4D92-48B2-8332-E6AB193A128D_1_105_c.jpeg`;
 
   const handleSignUp = async () => {
     navigate('/signup');
@@ -28,8 +31,12 @@ export const Home: React.FC = () => {
     setDemoLoading(true);
     try {
       await signIn();
-      navigate('/dashboard');
-    } catch {
+      // Ensure auth context state is committed before protected-route evaluation.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      navigate('/dashboard/overview', { replace: true });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
+      toast(message, 'error');
       setDemoLoading(false);
     }
   };
@@ -42,10 +49,10 @@ export const Home: React.FC = () => {
       <section id="top" className="py-20 md:py-32 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-[2.75rem] md:text-[4rem] font-serif font-bold text-ink mb-6 leading-[1.1] tracking-tight">
+            <h1 className="text-[2.5rem] md:text-[4.25rem] font-serif font-bold text-ink mb-6 leading-[1.05] tracking-tight">
               A wedding site that doesn't break when it matters
             </h1>
-            <p className="text-[1.25rem] text-ink/75 mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-[1.125rem] md:text-[1.25rem] text-ink/75 mb-10 leading-relaxed max-w-3xl mx-auto">
               RSVP correctness, privacy-first defaults, and simple pricing—built for couples who want confidence, not chaos.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -67,7 +74,7 @@ export const Home: React.FC = () => {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                   </svg>
                 )}
-                {demoLoading ? 'Loading demo...' : 'Preview demo'}
+                {demoLoading ? 'Opening demo...' : 'Try demo'}
               </button>
             </div>
             <p className="text-[0.8125rem] text-ink/60 tracking-wide leading-loose">
@@ -78,18 +85,19 @@ export const Home: React.FC = () => {
       </section>
 
       {/* WHY I BUILT THIS */}
-      <section id="why" className="py-20 bg-white">
+      <section id="why" className="section-shell bg-white">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-[2rem] font-serif font-bold text-ink mb-12 text-center leading-[1.2] tracking-tight">
+            <h2 className="section-title mb-12 text-center">
               Why I built this
             </h2>
 
             <div className="mb-10">
               <img
-                src="/7641B308-4D92-48B2-8332-E6AB193A128D_1_105_c.jpeg"
+                src={proposalImageUrl}
                 alt="Proposal moment in a park overlooking the city"
-                className="w-full rounded-2xl shadow-lg mb-8"
+                loading="lazy"
+                className="w-full rounded-2xl shadow-lg mb-8 object-cover"
               />
               <div className="space-y-5 max-w-2xl mx-auto">
                 <p className="text-[1.0625rem] text-ink/80 leading-relaxed">
@@ -127,17 +135,17 @@ export const Home: React.FC = () => {
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="py-20 bg-paper">
+      <section id="features" className="section-shell bg-paper">
         <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="text-[2rem] font-serif font-bold text-ink mb-4 leading-[1.2] tracking-tight">
+          <div className="section-intro">
+            <h2 className="section-title mb-4">
               Everything you need—nothing you don't
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 mb-10">
             {/* Guests + Households */}
-            <Link to="/features/guests" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border border-border-subtle hover:border-brand/30">
+            <Link to="/features/guests" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Users className="w-6 h-6 text-brand" />
               </div>
@@ -171,7 +179,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* RSVP Engine */}
-            <Link to="/features/rsvp" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border border-border-subtle hover:border-brand/30">
+            <Link to="/features/rsvp" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <CheckCircle2 className="w-6 h-6 text-brand" />
               </div>
@@ -187,7 +195,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Messaging */}
-            <Link to="/features/messaging" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border border-border-subtle hover:border-brand/30">
+            <Link to="/features/messaging" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
@@ -197,13 +205,13 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Guest segmentation</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Schedule sends</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Delivery status tracking</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Retry failed sends</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Draft + scheduled send flow</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Ready-made templates</span></li>
               </ul>
             </Link>
 
             {/* Travel + Itinerary */}
-            <Link to="/features/travel" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border border-border-subtle hover:border-brand/30">
+            <Link to="/features/travel" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Hotel className="w-6 h-6 text-brand" />
               </div>
@@ -219,7 +227,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Registry */}
-            <Link to="/features/registry" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border border-border-subtle hover:border-brand/30">
+            <Link to="/features/registry" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Heart className="w-6 h-6 text-brand" />
               </div>
@@ -235,7 +243,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Seating + Check-in */}
-            <Link to="/features/seating" className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border border-border-subtle hover:border-brand/30">
+            <Link to="/features/seating" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
@@ -244,7 +252,7 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Drag-and-drop seating board</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table capacity management</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Auto-assign by RSVP</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Print place cards</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table assignment workflows</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Export for caterer</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Per-event seating</span></li>
               </ul>
@@ -301,7 +309,7 @@ export const Home: React.FC = () => {
                   'Itinerary timeline',
                   'Private by default',
                   'Mobile-friendly for all ages',
-                  'Data export anytime',
+                  'Guest export tools',
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
@@ -316,7 +324,7 @@ export const Home: React.FC = () => {
                   onClick={handleSignUp}
                   aria-label="Sign up for your wedding site"
                 >
-                  Sign up
+                  Start free
                 </button>
                 <button
                   onClick={handleDemoLogin}
@@ -329,7 +337,7 @@ export const Home: React.FC = () => {
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
                   )}
-                  {demoLoading ? 'Loading demo...' : 'Preview demo'}
+                  {demoLoading ? 'Opening demo...' : 'Try demo'}
                 </button>
               </div>
 

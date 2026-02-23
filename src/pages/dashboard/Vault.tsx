@@ -10,6 +10,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
 const MAX_VAULTS = 5;
+const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
+const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
 
 interface VaultConfig {
   id: string;
@@ -28,6 +30,7 @@ interface VaultEntry {
   author_name: string;
   attachment_url: string | null;
   attachment_name: string | null;
+  media_type?: 'text' | 'photo' | 'video' | 'voice' | null;
   created_at: string;
 }
 
@@ -35,6 +38,18 @@ interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error';
+}
+
+
+function inferAttachmentKind(url: string | null, name: string | null, mediaType?: string | null): 'image' | 'video' | 'audio' | 'file' {
+  if (mediaType === 'photo') return 'image';
+  if (mediaType === 'video') return 'video';
+  if (mediaType === 'voice') return 'audio';
+  const target = `${url ?? ''} ${name ?? ''}`.toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|avif|heic)(\?|$)/.test(target) || /photo|image/.test(target)) return 'image';
+  if (/\.(mp4|mov|webm|m4v)(\?|$)/.test(target) || /video/.test(target)) return 'video';
+  if (/\.(mp3|wav|m4a|aac|ogg|webm)(\?|$)/.test(target) || /voice|audio/.test(target)) return 'audio';
+  return 'file';
 }
 
 const DURATION_OPTIONS = [
@@ -217,7 +232,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
   function handleCopyLink() {
     if (!siteSlug) return;
-    const url = `${window.location.origin}/vault/${siteSlug}/${config.duration_years}`;
+    const url = `${window.location.origin}/vault/${siteSlug}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -315,7 +330,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           {entries.length === 0 && !showForm && (
             <div className="text-center py-6 border border-dashed border-border rounded-xl">
               <p className="text-sm text-text-secondary mb-1">No entries yet</p>
-              <p className="text-xs text-text-tertiary">Add a message, note, or link to preserve for this anniversary.</p>
+              <p className="text-xs text-text-tertiary">Add text, photo, video, voice note, or link for this anniversary.</p>
             </div>
           )}
 
@@ -348,17 +363,37 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 </button>
               </div>
               <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
-              {entry.attachment_url && (
-                <a
-                  href={entry.attachment_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-2 text-xs text-primary hover:underline"
-                >
-                  <Paperclip className="w-3 h-3" />
-                  {entry.attachment_name || 'View attachment'}
-                </a>
-              )}
+              {entry.attachment_url && (() => {
+                const kind = inferAttachmentKind(entry.attachment_url, entry.attachment_name, entry.media_type);
+                return (
+                  <div className="mt-2 space-y-2">
+                    {kind === 'image' && (
+                      <a href={entry.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+                        <img src={entry.attachment_url} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" />
+                      </a>
+                    )}
+                    {kind === 'video' && (
+                      <video controls preload="metadata" className="w-full max-h-56 rounded-lg border border-border bg-black/80">
+                        <source src={entry.attachment_url} />
+                      </video>
+                    )}
+                    {kind === 'audio' && (
+                      <audio controls preload="metadata" className="w-full">
+                        <source src={entry.attachment_url} />
+                      </audio>
+                    )}
+                    <a
+                      href={entry.attachment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                    >
+                      <Paperclip className="w-3 h-3" />
+                      {entry.attachment_name || 'View attachment'}
+                    </a>
+                  </div>
+                );
+              })()}
             </div>
           ))}
 
@@ -517,7 +552,7 @@ function nextAvailableYears(existingYears: number[]): number {
 }
 
 export const DashboardVault: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [weddingDate, setWeddingDate] = useState<Date | null>(null);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
@@ -535,10 +570,38 @@ export const DashboardVault: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
 
+
+  function loadDemoState(): { vaultConfigs: VaultConfig[]; entries: VaultEntry[] } {
+    try {
+      const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
+      if (!raw) return { vaultConfigs: [], entries: [] };
+      const parsed = JSON.parse(raw) as { vaultConfigs?: VaultConfig[]; entries?: VaultEntry[] };
+      return {
+        vaultConfigs: parsed.vaultConfigs ?? [],
+        entries: parsed.entries ?? [],
+      };
+    } catch {
+      return { vaultConfigs: [], entries: [] };
+    }
+  }
+
+  function saveDemoState(nextConfigs: VaultConfig[], nextEntries: VaultEntry[]) {
+    localStorage.setItem(DEMO_VAULT_STORAGE_KEY, JSON.stringify({ vaultConfigs: nextConfigs, entries: nextEntries }));
+  }
+
   const loadData = useCallback(async () => {
-    if (!user) return;
     setLoading(true);
     try {
+      if (isDemoMode) {
+        setWeddingSiteId('demo-site-id');
+        setSiteSlug('alex-jordan-demo');
+        const demoState = loadDemoState();
+        setVaultConfigs(demoState.vaultConfigs);
+        setEntries(demoState.entries);
+        return;
+      }
+
+      if (!user) return;
       const { data: site } = await supabase
         .from('wedding_sites')
         .select('id, wedding_date, site_slug')
@@ -575,14 +638,66 @@ export const DashboardVault: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isDemoMode]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!weddingDate || vaultConfigs.length === 0) return;
+
+    const notified = (() => {
+      try {
+        const raw = localStorage.getItem(VAULT_RELEASE_NOTICE_KEY);
+        return raw ? JSON.parse(raw) as string[] : [];
+      } catch {
+        return [] as string[];
+      }
+    })();
+
+    const newlyUnlocked = vaultConfigs.filter((cfg) => {
+      const unlockDate = new Date(weddingDate);
+      unlockDate.setFullYear(unlockDate.getFullYear() + cfg.duration_years);
+      const key = `${cfg.id}:${unlockDate.toISOString().slice(0, 10)}`;
+      return cfg.is_enabled && new Date() >= unlockDate && !notified.includes(key);
+    });
+
+    if (newlyUnlocked.length === 0) return;
+
+    newlyUnlocked.forEach((cfg) => {
+      toast(`Vault unlocked: ${cfg.label || `${cfg.duration_years}-Year Anniversary Vault`} ✨`);
+    });
+
+    const next = [...notified, ...newlyUnlocked.map((cfg) => {
+      const unlockDate = new Date(weddingDate);
+      unlockDate.setFullYear(unlockDate.getFullYear() + cfg.duration_years);
+      return `${cfg.id}:${unlockDate.toISOString().slice(0, 10)}`;
+    })];
+
+    localStorage.setItem(VAULT_RELEASE_NOTICE_KEY, JSON.stringify(Array.from(new Set(next))));
+  }, [vaultConfigs, weddingDate]);
 
   async function handleAddVault() {
     if (!weddingSiteId || vaultConfigs.length >= MAX_VAULTS || addingVault) return;
     setAddingVault(true);
     try {
+      if (isDemoMode) {
+        const usedIndexes = vaultConfigs.map(c => c.vault_index);
+        const nextIndex = [1, 2, 3, 4, 5].find(i => !usedIndexes.includes(i)) ?? (vaultConfigs.length + 1);
+        const existingYears = vaultConfigs.map(c => c.duration_years);
+        const years = nextAvailableYears(existingYears);
+        const demoConfig: VaultConfig = {
+          id: `demo-vault-${Date.now()}`,
+          vault_index: nextIndex,
+          label: defaultVaultLabel(nextIndex, years),
+          duration_years: years,
+          is_enabled: true,
+        };
+        const nextConfigs = [...vaultConfigs, demoConfig];
+        setVaultConfigs(nextConfigs);
+        saveDemoState(nextConfigs, entries);
+        toast('Vault added');
+        return;
+      }
       const usedIndexes = vaultConfigs.map(c => c.vault_index);
       const nextIndex = [1, 2, 3, 4, 5].find(i => !usedIndexes.includes(i)) ?? (vaultConfigs.length + 1);
       const existingYears = vaultConfigs.map(c => c.duration_years);
@@ -612,6 +727,13 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleToggleEnabled(configId: string, enabled: boolean) {
+    if (isDemoMode) {
+      const nextConfigs = vaultConfigs.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c);
+      setVaultConfigs(nextConfigs);
+      saveDemoState(nextConfigs, entries);
+      toast(enabled ? 'Vault enabled' : 'Vault disabled');
+      return;
+    }
     const { error } = await supabase
       .from('vault_configs')
       .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
@@ -623,6 +745,13 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleEditSave(id: string, label: string, durationYears: number) {
+    if (isDemoMode) {
+      const nextConfigs = vaultConfigs.map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c);
+      setVaultConfigs(nextConfigs);
+      saveDemoState(nextConfigs, entries);
+      toast('Vault updated');
+      return;
+    }
     const { error } = await supabase
       .from('vault_configs')
       .update({ label, duration_years: durationYears, updated_at: new Date().toISOString() })
@@ -635,6 +764,28 @@ export const DashboardVault: React.FC = () => {
 
   async function handleSaveEntry(entry: { vault_config_id: string; vault_year: number; title: string; content: string; author_name: string; attachment_url: string | null; attachment_name: string | null }) {
     if (!weddingSiteId) throw new Error('No wedding site found');
+
+    if (isDemoMode) {
+      const demoEntry: VaultEntry = {
+        id: `demo-entry-${Date.now()}`,
+        vault_config_id: entry.vault_config_id,
+        vault_year: entry.vault_year,
+        title: entry.title,
+        content: entry.content,
+        author_name: entry.author_name,
+        attachment_url: entry.attachment_url,
+        attachment_name: entry.attachment_name,
+        media_type: entry.attachment_url ? 'photo' : 'text',
+        created_at: new Date().toISOString(),
+      };
+      const nextEntries = [...entries, demoEntry];
+      setEntries(nextEntries);
+      setActiveFormConfigId(null);
+      saveDemoState(vaultConfigs, nextEntries);
+      toast('Entry added to vault');
+      return;
+    }
+
     const { data, error } = await supabase
       .from('vault_entries')
       .insert({ ...entry, wedding_site_id: weddingSiteId })
@@ -648,6 +799,13 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleDeleteEntry(id: string) {
+    if (isDemoMode) {
+      const nextEntries = entries.filter(e => e.id !== id);
+      setEntries(nextEntries);
+      saveDemoState(vaultConfigs, nextEntries);
+      toast('Entry removed');
+      return;
+    }
     const { error } = await supabase.from('vault_entries').delete().eq('id', id);
     if (error) { toast('Failed to delete entry', 'error'); return; }
     setEntries(prev => prev.filter(e => e.id !== id));
@@ -655,6 +813,15 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleDeleteVault(configId: string) {
+    if (isDemoMode) {
+      const remaining = vaultConfigs.filter(c => c.id !== configId).map((c, i) => ({ ...c, vault_index: i + 1 }));
+      const nextEntries = entries.filter(e => e.vault_config_id !== configId);
+      setVaultConfigs(remaining);
+      setEntries(nextEntries);
+      saveDemoState(remaining, nextEntries);
+      toast('Vault removed');
+      return;
+    }
     const { error } = await supabase.from('vault_configs').delete().eq('id', configId);
     if (error) { toast('Failed to delete vault', 'error'); return; }
     setVaultConfigs(prev => {

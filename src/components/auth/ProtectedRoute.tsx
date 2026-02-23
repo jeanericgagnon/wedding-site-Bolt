@@ -18,10 +18,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
       setBillingInfo(null);
       return;
     }
+
+    if (isDemoMode) {
+      setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' });
+      return;
+    }
+
     fetchBillingInfo(user.id)
       .then(info => setBillingInfo(info))
       .catch(() => setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' }));
-  }, [user]);
+  }, [user, isDemoMode]);
 
   if (loading || billingInfo === 'loading') {
     return (

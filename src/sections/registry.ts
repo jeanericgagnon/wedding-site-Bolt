@@ -43,14 +43,14 @@ import { videoInlineDefinition } from './variants/video/inline';
 
 type RegistryKey = string;
 
-const SECTION_REGISTRY = new Map<RegistryKey, SectionDefinition>();
+const SECTION_REGISTRY = new Map<RegistryKey, SectionDefinition<any>>();
 
 function makeKey(type: string, variant: string): RegistryKey {
   return `${type}::${variant}`;
 }
 
-function registerDefinition(def: SectionDefinition): void {
-  SECTION_REGISTRY.set(makeKey(def.type, def.variant), def);
+function registerDefinition<T>(def: SectionDefinition<T>): void {
+  SECTION_REGISTRY.set(makeKey(def.type, def.variant), def as SectionDefinition<any>);
 }
 
 registerDefinition(heroFullBleedDefinition);

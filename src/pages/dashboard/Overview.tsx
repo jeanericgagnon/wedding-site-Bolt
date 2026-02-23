@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badg
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Loader2, AlertCircle, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 
 interface OverviewStats {
   totalGuests: number;
@@ -16,6 +17,11 @@ interface OverviewStats {
   siteSlug: string | null;
   siteUpdatedAt: string | null;
   templateName: string | null;
+  coupleName1: string | null;
+  coupleName2: string | null;
+  venueName: string | null;
+  venueLocation: string | null;
+  registryItemCount: number;
   recentRsvps: RecentRsvp[];
 }
 
@@ -58,7 +64,7 @@ function calcDaysUntil(dateStr: string): number {
 }
 
 export const DashboardOverview: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,7 +73,7 @@ export const DashboardOverview: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     loadStats();
-  }, [user]);
+  }, [user, isDemoMode]);
 
   async function loadStats() {
     if (!user) return;
@@ -75,9 +81,45 @@ export const DashboardOverview: React.FC = () => {
     setError(null);
 
     try {
+      if (isDemoMode) {
+        const confirmed = demoGuests.filter(g => g.rsvp_status === 'confirmed');
+        const declined = demoGuests.filter(g => g.rsvp_status === 'declined');
+        const pending = demoGuests.filter(g => g.rsvp_status === 'pending');
+
+        const recentRsvps: RecentRsvp[] = [...confirmed, ...declined]
+          .slice(0, 5)
+          .map((g, i) => ({
+            id: g.id,
+            guestName: g.name || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || 'Guest',
+            status: g.rsvp_status as 'confirmed' | 'declined',
+            receivedAt: new Date(Date.now() - i * 60 * 60 * 1000).toISOString(),
+          }));
+
+        const weddingDate = demoWeddingSite.wedding_date ?? null;
+
+        setStats({
+          totalGuests: demoGuests.length,
+          confirmedGuests: confirmed.length,
+          declinedGuests: declined.length,
+          pendingGuests: pending.length,
+          daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
+          weddingDate,
+          siteSlug: demoWeddingSite.site_url,
+          siteUpdatedAt: new Date().toISOString(),
+          templateName: 'classic',
+          coupleName1: demoWeddingSite.couple_name_1,
+          coupleName2: demoWeddingSite.couple_name_2,
+          venueName: demoWeddingSite.venue_name,
+          venueLocation: demoWeddingSite.venue_location,
+          registryItemCount: 2,
+          recentRsvps,
+        });
+        return;
+      }
+
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, updated_at, template_id, wedding_data')
+        .select('id, site_slug, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -99,6 +141,11 @@ export const DashboardOverview: React.FC = () => {
         .order('rsvp_received_at', { ascending: false });
 
       if (guestsErr) throw guestsErr;
+
+      const { count: registryItemCount } = await supabase
+        .from('registry_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '');
 
       const allGuests = guests ?? [];
       const confirmed = allGuests.filter((g) => g.rsvp_status === 'confirmed');
@@ -125,6 +172,11 @@ export const DashboardOverview: React.FC = () => {
         siteSlug: site?.site_slug ?? null,
         siteUpdatedAt: site?.updated_at ?? null,
         templateName,
+        coupleName1: site?.couple_name_1 ?? null,
+        coupleName2: site?.couple_name_2 ?? null,
+        venueName: site?.venue_name ?? null,
+        venueLocation: site?.wedding_location ?? null,
+        registryItemCount: registryItemCount ?? 0,
         recentRsvps,
       });
     } catch {
@@ -139,14 +191,80 @@ export const DashboardOverview: React.FC = () => {
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
 
+  const setupChecklist = stats
+    ? [
+        {
+          id: 'names',
+          label: 'Add couple names',
+          done: Boolean(stats.coupleName1 || stats.coupleName2),
+          actionLabel: 'Edit settings',
+          action: () => navigate('/dashboard/settings'),
+        },
+        {
+          id: 'date',
+          label: 'Set wedding date',
+          done: Boolean(stats.weddingDate),
+          actionLabel: 'Edit date',
+          action: () => navigate('/dashboard/settings'),
+        },
+        {
+          id: 'venue',
+          label: 'Add venue/address',
+          done: Boolean(stats.venueName || stats.venueLocation),
+          actionLabel: 'Add venue',
+          action: () => navigate('/dashboard/settings'),
+        },
+        {
+          id: 'registry',
+          label: 'Add at least 1 registry item',
+          done: stats.registryItemCount > 0,
+          actionLabel: 'Open registry',
+          action: () => navigate('/dashboard/registry'),
+        },
+        {
+          id: 'publish',
+          label: 'Publish site once',
+          done: Boolean(stats.siteSlug),
+          actionLabel: 'Open site builder',
+          action: () => navigate('/dashboard/builder'),
+        },
+      ]
+    : [];
+
+  const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
+  const nextSetupItem = setupChecklist.find((item) => !item.done) ?? null;
+
   return (
     <DashboardLayout currentPage="overview">
       <div className="max-w-7xl mx-auto space-y-8">
+        <div className="card-clean px-5 py-4 md:px-6 md:py-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Setup progress</p>
+              <p className="text-sm text-text-secondary mt-1">Keep momentum — complete your core setup items.</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-text-primary">{setupCompletedCount}/{setupChecklist.length}</p>
+              <p className="text-xs text-text-tertiary">complete</p>
+            </div>
+          </div>
+          <div className="mt-4 h-2 rounded-full bg-surface-subtle overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${(setupCompletedCount / Math.max(setupChecklist.length, 1)) * 100}%` }}
+            />
+          </div>
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
             <p className="text-text-secondary">Your wedding at a glance</p>
           </div>
+          {nextSetupItem && !loading && (
+            <Button variant="outline" size="sm" onClick={nextSetupItem.action}>
+              Next step: {nextSetupItem.label}
+            </Button>
+          )}
         </div>
 
         {error && (
@@ -157,13 +275,19 @@ export const DashboardOverview: React.FC = () => {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="space-y-6 animate-pulse" aria-hidden="true">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+            </div>
+            <div className="h-44 rounded-2xl bg-surface-subtle border border-border-subtle" />
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card variant="bordered" padding="md">
+              <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-accent-light rounded-lg">
                     <Users className="w-6 h-6 text-accent" aria-hidden="true" />
@@ -183,7 +307,7 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </Card>
 
-              <Card variant="bordered" padding="md">
+              <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-primary-light rounded-lg">
                     <CheckCircle2 className="w-6 h-6 text-primary" aria-hidden="true" />
@@ -203,7 +327,7 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </Card>
 
-              <Card variant="bordered" padding="md">
+              <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-primary-light rounded-lg">
                     <Clock className="w-6 h-6 text-primary" aria-hidden="true" />
@@ -222,7 +346,7 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </Card>
 
-              <Card variant="bordered" padding="md">
+              <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-primary-light rounded-lg">
                     <Calendar className="w-6 h-6 text-primary" aria-hidden="true" />
@@ -268,7 +392,7 @@ export const DashboardOverview: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card variant="bordered" padding="lg">
+              <Card variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -312,7 +436,7 @@ export const DashboardOverview: React.FC = () => {
                       {stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}
                     </span>
                   </div>
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     {stats?.siteSlug && (
                       <Button
                         variant="accent"
@@ -337,7 +461,7 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card variant="bordered" padding="lg">
+              <Card variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>
                   <CardTitle>Recent RSVPs</CardTitle>
                   <CardDescription>Latest responses from your guests</CardDescription>
@@ -382,7 +506,33 @@ export const DashboardOverview: React.FC = () => {
               </Card>
             </div>
 
-            <Card variant="bordered" padding="lg">
+            <Card variant="bordered" padding="lg" className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Setup checklist</CardTitle>
+                <CardDescription>
+                  {setupCompletedCount}/{setupChecklist.length} complete
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {setupChecklist.map((item) => (
+                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2 border-b border-border-subtle last:border-0">
+                      <label className="flex items-center gap-3 text-sm text-text-primary">
+                        <input type="checkbox" checked={item.done} readOnly className="h-4 w-4 rounded border-border" />
+                        <span className={item.done ? 'line-through text-text-secondary' : ''}>{item.label}</span>
+                      </label>
+                      {!item.done && (
+                        <Button variant="ghost" size="sm" onClick={item.action}>
+                          {item.actionLabel}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card variant="bordered" padding="lg" className="shadow-sm">
               <CardHeader>
                 <CardTitle>Quick actions</CardTitle>
                 <CardDescription>Jump to key sections of your dashboard</CardDescription>

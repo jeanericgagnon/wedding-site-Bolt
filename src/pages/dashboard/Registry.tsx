@@ -3,6 +3,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button } from '../../components/ui';
 import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 import {
   fetchRegistryItems,
   createRegistryItem,
@@ -14,6 +15,7 @@ import {
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
 import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry/registryTypes';
+import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
 
 interface Toast {
   id: number;
@@ -46,6 +48,7 @@ const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
 ];
 
 export const DashboardRegistry: React.FC = () => {
+  const { isDemoMode } = useAuth();
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
@@ -61,6 +64,37 @@ export const DashboardRegistry: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
 
+  function toDemoRegistryItem(item: typeof demoRegistryItems[number], index: number): RegistryItem {
+    const quantityPurchased = item.quantity_purchased ?? 0;
+    const quantityNeeded = item.quantity_needed ?? 1;
+    const purchaseStatus: RegistryItem['purchase_status'] =
+      quantityPurchased <= 0 ? 'available' : quantityPurchased >= quantityNeeded ? 'purchased' : 'partial';
+
+    return {
+      id: item.id,
+      wedding_site_id: demoWeddingSite.id,
+      item_name: item.item_name,
+      price_label: null,
+      price_amount: item.price ?? null,
+      store_name: item.store_name ?? null,
+      merchant: item.store_name ?? null,
+      item_url: null,
+      canonical_url: null,
+      image_url: null,
+      description: null,
+      notes: null,
+      quantity_needed: quantityNeeded,
+      quantity_purchased: quantityPurchased,
+      purchaser_name: null,
+      purchase_status: purchaseStatus,
+      hide_when_purchased: false,
+      sort_order: index,
+      priority: item.priority,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
   const loadItems = useCallback(async (siteId: string) => {
     try {
       const data = await fetchRegistryItems(siteId);
@@ -74,6 +108,12 @@ export const DashboardRegistry: React.FC = () => {
     async function init() {
       setLoading(true);
       try {
+        if (isDemoMode) {
+          setWeddingSiteId(demoWeddingSite.id);
+          setItems(demoRegistryItems.map(toDemoRegistryItem));
+          return;
+        }
+
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         const { data: site } = await supabase
@@ -92,8 +132,7 @@ export const DashboardRegistry: React.FC = () => {
       }
     }
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isDemoMode, loadItems]);
 
   async function handleSave(draft: RegistryItemDraft) {
     if (!weddingSiteId) throw new Error('No wedding site found');
@@ -112,6 +151,42 @@ export const DashboardRegistry: React.FC = () => {
       hide_when_purchased: draft.hide_when_purchased,
     };
 
+    if (isDemoMode) {
+      if (editItem) {
+        setItems(prev => prev.map(i => (i.id === editItem.id ? { ...i, ...fields, updated_at: new Date().toISOString() } : i)));
+        toast('Item updated');
+      } else {
+        const created: RegistryItem = {
+          id: `demo-registry-${Date.now()}`,
+          wedding_site_id: weddingSiteId,
+          item_name: fields.item_name || 'Untitled item',
+          price_label: fields.price_label ?? null,
+          price_amount: fields.price_amount ?? null,
+          store_name: fields.store_name ?? null,
+          merchant: fields.merchant ?? null,
+          item_url: fields.item_url ?? null,
+          canonical_url: null,
+          image_url: fields.image_url ?? null,
+          description: null,
+          notes: fields.notes ?? null,
+          quantity_needed: fields.quantity_needed ?? 1,
+          quantity_purchased: 0,
+          purchaser_name: null,
+          purchase_status: 'available',
+          hide_when_purchased: fields.hide_when_purchased ?? false,
+          sort_order: items.length,
+          priority: 'medium',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setItems(prev => [...prev, created]);
+        toast('Item added to registry');
+      }
+      setShowForm(false);
+      setEditItem(null);
+      return;
+    }
+
     if (editItem) {
       const updated = await updateRegistryItem(editItem.id, fields);
       setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
@@ -128,7 +203,9 @@ export const DashboardRegistry: React.FC = () => {
 
   async function handleDelete(id: string) {
     try {
-      await deleteRegistryItem(id);
+      if (!isDemoMode) {
+        await deleteRegistryItem(id);
+      }
       setItems(prev => prev.filter(i => i.id !== id));
       toast('Item removed');
     } catch {
@@ -138,7 +215,20 @@ export const DashboardRegistry: React.FC = () => {
 
   async function handleMarkPurchased(item: RegistryItem, qty: number) {
     try {
-      const updated = await ownerMarkPurchased(item.id, qty);
+      const updated = isDemoMode
+        ? (() => {
+            const newQty = Math.min(item.quantity_purchased + qty, item.quantity_needed);
+            const newStatus: RegistryItem['purchase_status'] =
+              newQty >= item.quantity_needed ? 'purchased' : newQty > 0 ? 'partial' : 'available';
+            return {
+              ...item,
+              quantity_purchased: newQty,
+              purchase_status: newStatus,
+              updated_at: new Date().toISOString(),
+            };
+          })()
+        : await ownerMarkPurchased(item.id, qty);
+
       setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
       toast(
         updated.purchase_status === 'purchased'
@@ -153,6 +243,10 @@ export const DashboardRegistry: React.FC = () => {
   async function handleRefetchMetadata(item: RegistryItem) {
     const url = item.item_url ?? item.canonical_url;
     if (!url) return;
+    if (isDemoMode) {
+      toast('Demo: sample product details are already populated', 'success');
+      return;
+    }
     try {
       const preview = await fetchUrlPreview(url, true);
       const fields: Partial<RegistryItem> = {};

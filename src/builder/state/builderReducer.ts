@@ -308,7 +308,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
           });
           return { ...sec, settings: { ...sec.settings, blocks: updatedBlocks } };
         }),
-      }), 'Edit custom block', 'UPDATE_SECTION');
+      }), 'Edit custom block', 'UPDATE_SECTION_SETTINGS');
     }
 
     case 'OPEN_THEME_PANEL':

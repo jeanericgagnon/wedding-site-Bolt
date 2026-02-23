@@ -8,6 +8,17 @@
     <meta property="og:image" content="https://bolt.new/static/og_default.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://bolt.new/static/og_default.png" />
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var redirect = params.get('oc_redirect');
+        if (!redirect) return;
+        var segs = window.location.pathname.split('/').filter(Boolean);
+        var base = window.location.hostname.endsWith('github.io') && segs.length > 0 ? '/' + segs[0] : '';
+        var target = base + (redirect.startsWith('/') ? redirect : '/' + redirect);
+        window.history.replaceState(null, '', target);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
