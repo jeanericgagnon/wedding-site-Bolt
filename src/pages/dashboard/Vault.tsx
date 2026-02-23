@@ -1251,6 +1251,7 @@ setWeddingSiteId('demo-site-id');
   const setupStepConnectDone = googleDriveConnected;
   const setupStepHealthDone = !!googleDriveConnected && !!driveHealthMessage && !driveNeedsReconnect;
   const setupStepProviderDone = vaultStorageProvider === 'google_drive';
+  const shouldNudgeProviderSwitch = setupStepHealthDone && !setupStepProviderDone;
 
   return (
     <DashboardLayout currentPage="vault">
@@ -1318,8 +1319,8 @@ setWeddingSiteId('demo-site-id');
               <button
                 onClick={() => handleStorageProviderChange('google_drive')}
                 disabled={!googleDriveConnected}
-                className={`px-3 py-2 rounded-lg text-sm border ${vaultStorageProvider === 'google_drive' ? 'bg-primary/10 border-primary text-primary' : 'border-border text-text-secondary'} disabled:opacity-60`}
-                title={!googleDriveConnected ? 'Connect Google Drive first' : undefined}
+                className={`px-3 py-2 rounded-lg text-sm border transition-all ${vaultStorageProvider === 'google_drive' ? 'bg-primary/10 border-primary text-primary' : 'border-border text-text-secondary'} ${shouldNudgeProviderSwitch ? 'ring-2 ring-primary/30 border-primary/50 animate-pulse' : ''} disabled:opacity-60`}
+                title={!googleDriveConnected ? 'Connect Google Drive first' : (shouldNudgeProviderSwitch ? 'Health check passed. Switch provider to Google Drive.' : undefined)}
               >
                 Google Drive
               </button>
