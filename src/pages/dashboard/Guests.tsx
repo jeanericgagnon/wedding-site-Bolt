@@ -893,6 +893,18 @@ export const DashboardGuests: React.FC = () => {
     ? Math.ceil((new Date(weddingSiteInfo.wedding_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
+
+  const issueCountForGuest = (guest: GuestWithRSVP) => {
+    let issues = 0;
+    const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+    if (guest.rsvp_status === 'pending') issues += 1;
+    if (guest.rsvp?.attending && !guest.rsvp?.meal_choice) issues += 1;
+    if (guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name) issues += 1;
+    if (guest.rsvp_status === 'pending' && !guest.email && !guest.phone) issues += 1;
+    if (ev?.ceremony === false || ev?.reception === false) issues += 1;
+    return issues;
+  };
+
   const priorityScore = (guest: GuestWithRSVP) => {
     let score = 0;
     const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
@@ -1446,6 +1458,7 @@ export const DashboardGuests: React.FC = () => {
                 <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
                 <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
                 <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
+                <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
                 <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
               </div>
 
@@ -1540,12 +1553,15 @@ export const DashboardGuests: React.FC = () => {
 
             <div className="flex gap-2 flex-wrap items-center justify-between">
               <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setSortByPriority(v => !v)}
-                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
-                >
-                  {sortByPriority ? 'Priority sort: On' : 'Priority sort: Off'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSortByPriority(v => !v)}
+                    className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                  >
+                    {sortByPriority ? 'Priority sort: On' : 'Priority sort: Off'}
+                  </button>
+                  {sortByPriority && <span className="text-[11px] text-text-tertiary">Ranks by pending/meal/plus-one/contact gaps</span>}
+                </div>
                 {([
                   { id: 'all', label: `All (${stats.total})` },
                   { id: 'confirmed', label: `Confirmed (${stats.confirmed})` },
@@ -1742,6 +1758,15 @@ export const DashboardGuests: React.FC = () => {
                                   {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>
                               )}
+                              {(() => {
+                                const issues = issueCountForGuest(guest);
+                                if (issues <= 0) return null;
+                                return (
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${issues >= 3 ? 'bg-warning/10 text-warning border-warning/30' : 'bg-primary/5 text-primary border-primary/20'}`}>
+                                    {issues >= 3 ? 'High risk' : 'Needs review'} · {issues}
+                                  </span>
+                                );
+                              })()}
                               {(() => {
                                 const events = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
                                 if (!events) return null;
