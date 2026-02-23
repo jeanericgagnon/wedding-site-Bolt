@@ -81,7 +81,7 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
@@ -886,11 +886,11 @@ export const DashboardGuests: React.FC = () => {
             <span className="text-xs text-text-tertiary">Action-focused follow up</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-            <button onClick={() => { setSearchQuery(''); setFilterStatus('all'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
               <p className="text-xs text-text-tertiary">Missing meal choice</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
             </button>
-            <button onClick={() => { setSearchQuery(''); setFilterStatus('all'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
               <p className="text-xs text-text-tertiary">Plus-one missing name</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
             </button>
@@ -984,6 +984,8 @@ export const DashboardGuests: React.FC = () => {
                   { id: 'pending', label: `Pending (${stats.pending})` },
                   { id: 'ceremony-no', label: `Ceremony No (${rsvpOps.ceremonyNo})` },
                   { id: 'reception-no', label: `Reception No (${rsvpOps.receptionNo})` },
+                  { id: 'missing-meal', label: `Missing Meal (${rsvpOps.missingMeal})` },
+                  { id: 'plusone-missing', label: `Plus-One Missing (${rsvpOps.plusOneMissingName})` },
                 ] as const).map(({ id, label }) => (
                   <button
                     key={id}
