@@ -57,6 +57,7 @@ export const DashboardRegistry: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<RegistryItem | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [showAlertsOnly, setShowAlertsOnly] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkImportBusy, setBulkImportBusy] = useState(false);
@@ -408,7 +409,13 @@ export const DashboardRegistry: React.FC = () => {
       (item.merchant ?? '').toLowerCase().includes(q) ||
       (item.store_name ?? '').toLowerCase().includes(q);
     const matchesFilter = filter === 'all' || item.purchase_status === filter;
-    return matchesSearch && matchesFilter;
+    const hasAlert =
+      !item.metadata_last_checked_at ||
+      (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24 ||
+      ((item.availability || '').toLowerCase().includes('out')) ||
+      (item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount);
+    const matchesAlerts = !showAlertsOnly || hasAlert;
+    return matchesSearch && matchesFilter && matchesAlerts;
   });
 
 
@@ -427,6 +434,13 @@ export const DashboardRegistry: React.FC = () => {
     available: items.filter(i => i.purchase_status === 'available').length,
     totalValue: items.reduce((s, i) => s + (i.price_amount ?? 0), 0),
   };
+
+  const alertCounts = {
+    stale: items.filter((i) => !i.metadata_last_checked_at || (Date.now() - new Date(i.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24).length,
+    priceChanged: items.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
+    outOfStock: items.filter((i) => (i.availability || '').toLowerCase().includes('out')).length,
+  };
+
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return counts.total;
@@ -512,6 +526,18 @@ export const DashboardRegistry: React.FC = () => {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+            <button
+              onClick={() => setShowAlertsOnly((v) => !v)}
+              className={`px-2.5 py-1 rounded-full border ${showAlertsOnly ? 'border-warning/40 bg-warning/10 text-warning' : 'border-border text-text-tertiary'}`}
+            >
+              {showAlertsOnly ? 'Showing alerts only' : 'Show alerts only'}
+            </button>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Stale: {alertCounts.stale}</span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Price changed: {alertCounts.priceChanged}</span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Out of stock: {alertCounts.outOfStock}</span>
           </div>
 
           {loading ? (
