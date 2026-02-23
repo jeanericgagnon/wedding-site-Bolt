@@ -250,8 +250,8 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
   return (
     <Card variant="bordered" padding="lg" className={!config.is_enabled ? 'opacity-60' : ''}>
-      <div className="flex items-start justify-between gap-4 mb-1">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
           <div className={`p-2.5 rounded-xl flex-shrink-0 ${isUnlocked && config.is_enabled ? 'bg-success-light' : 'bg-surface-subtle'}`}>
             {isUnlocked && config.is_enabled
               ? <Unlock className="w-5 h-5 text-success" />
@@ -276,8 +276,8 @@ const VaultCard: React.FC<VaultCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="text-xs text-text-tertiary">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
+        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap self-start sm:self-auto">
+          <span className="text-xs text-text-tertiary px-2 py-1 rounded-md bg-surface-subtle border border-border">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
 
           {siteSlug && config.is_enabled && (
             <button
