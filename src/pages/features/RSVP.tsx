@@ -31,7 +31,7 @@ export const RSVPFeature: React.FC = () => {
               RSVP Engine
             </h1>
             <p className="text-xl md:text-2xl text-ink/70 mb-10 leading-relaxed">
-              Household-aware RSVP flow that prevents confusion, handles multi-event permissions, and collects exactly what you need.
+              Household-aware RSVP flow that prevents confusion and collects exactly what you need. Advanced automation features are being rolled out in phases.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
@@ -127,7 +127,7 @@ export const RSVPFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Deadline Handling</h3>
               <p className="text-ink/70 mb-4">
-                Set clear RSVP deadlines with automatic reminders. Guests see countdown. You can override for late responses.
+                Set clear RSVP deadlines with guest-facing cutoffs. Reminder and override automation are in staged rollout.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Per-event deadlines</li>
@@ -170,9 +170,9 @@ export const RSVPFeature: React.FC = () => {
                     <Mail className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Automatic Reminders</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Reminder Automation (Rollout)</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Send automatic reminder emails to guests who haven't responded as the deadline approaches. Customizable timing and messaging.
+                      Automated RSVP reminder campaigns are in rollout. Core RSVP flow is live today; reminder scheduling is being enabled in phases.
                     </p>
                   </div>
                 </div>
