@@ -66,6 +66,8 @@ interface WeddingSiteInfo {
 }
 
 const RSVP_CAMPAIGN_LOG_KEY = 'dayof_rsvp_campaign_log_v1';
+const RSVP_FOLLOWUP_TASKS_KEY = 'dayof_rsvp_followup_tasks_v1';
+const RSVP_CAMPAIGN_PRESET_KEY = 'dayof_rsvp_campaign_preset_v1';
 
 interface ItineraryEvent {
   id: string;
@@ -92,6 +94,44 @@ export const DashboardGuests: React.FC = () => {
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [campaignPreset, setCampaignPreset] = useState<'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email'>('pending');
   const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
+
+
+  useEffect(() => {
+    try {
+      const rawPreset = localStorage.getItem(RSVP_CAMPAIGN_PRESET_KEY);
+      if (rawPreset) {
+        const preset = rawPreset as typeof campaignPreset;
+        setCampaignPreset(preset);
+        setFilterStatus(preset);
+      }
+    } catch {
+      // noop
+    }
+
+    try {
+      const rawTasks = localStorage.getItem(RSVP_FOLLOWUP_TASKS_KEY);
+      const parsed = rawTasks ? JSON.parse(rawTasks) : [];
+      if (Array.isArray(parsed)) setFollowUpTasks(parsed.slice(0, 12));
+    } catch {
+      // noop
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RSVP_CAMPAIGN_PRESET_KEY, campaignPreset);
+    } catch {
+      // noop
+    }
+  }, [campaignPreset]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RSVP_FOLLOWUP_TASKS_KEY, JSON.stringify(followUpTasks.slice(0, 12)));
+    } catch {
+      // noop
+    }
+  }, [followUpTasks]);
 
 
   useEffect(() => {
@@ -438,7 +478,7 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const addFollowUpTask = (text: string) => {
-    const task = { id: Date.now(), text, createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+    const task = { id: Date.now(), text, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
     setFollowUpTasks((prev) => [task, ...prev].slice(0, 6));
     toast('Follow-up task captured', 'success');
   };
@@ -1245,12 +1285,12 @@ export const DashboardGuests: React.FC = () => {
                   onChange={(e) => applyCampaignPreset(e.target.value as any)}
                   className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
                 >
-                  <option value="pending">Pending responses</option>
-                  <option value="missing-meal">Missing meal</option>
-                  <option value="plusone-missing">Missing plus-one name</option>
-                  <option value="ceremony-no">Ceremony: No</option>
-                  <option value="reception-no">Reception: No</option>
-                  <option value="pending-no-email">Pending, no email</option>
+                  <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
+                  <option value="missing-meal">Missing meal ({rsvpOps.missingMeal})</option>
+                  <option value="plusone-missing">Missing plus-one name ({rsvpOps.plusOneMissingName})</option>
+                  <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
+                  <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
+                  <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
                 </select>
               </div>
 
