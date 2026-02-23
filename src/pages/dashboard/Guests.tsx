@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, Button, Badge, Input } from '../../components/ui';
+import { Card, Button, Badge, Input, Select } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -97,6 +97,25 @@ const RSVP_FOLLOWUP_TASKS_KEY = 'dayof_rsvp_followup_tasks_v1';
 const RSVP_CAMPAIGN_PRESET_KEY = 'dayof_rsvp_campaign_preset_v1';
 const RSVP_SAVED_SEGMENTS_KEY = 'dayof_rsvp_saved_segments_v1';
 
+
+interface RSVPQuestionSetting {
+  id: string;
+  label: string;
+  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
+  required: boolean;
+  appliesTo: 'all' | 'ceremony' | 'reception';
+  options?: string[];
+}
+
+const makeRsvpQuestion = (): RSVPQuestionSetting => ({
+  id: `q_${Math.random().toString(36).slice(2, 10)}`,
+  label: '',
+  type: 'short_text',
+  required: false,
+  appliesTo: 'all',
+  options: [],
+});
+
 interface ItineraryEvent {
   id: string;
   event_name: string;
@@ -124,6 +143,11 @@ export const DashboardGuests: React.FC = () => {
   const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
   const [sortByPriority, setSortByPriority] = useState(true);
   const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
+  const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
+  const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
+  const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
+  const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
+  const [rsvpConfigSaving, setRsvpConfigSaving] = useState(false);
 
 
   useEffect(() => {
@@ -227,12 +251,23 @@ export const DashboardGuests: React.FC = () => {
 
     if (isDemoMode) {
       setWeddingSiteId(demoWeddingSite.id);
+      try {
+        const rawQ = localStorage.getItem('dayof_demo_rsvp_custom_questions_v1');
+        const parsedQ = rawQ ? JSON.parse(rawQ) : [];
+        if (Array.isArray(parsedQ)) setRsvpQuestions(parsedQ as RSVPQuestionSetting[]);
+        const rawM = localStorage.getItem('dayof_demo_rsvp_meal_config_v1');
+        const parsedM = rawM ? JSON.parse(rawM) : null;
+        if (parsedM && typeof parsedM === 'object') {
+          setRsvpMealEnabled(typeof parsedM.enabled === 'boolean' ? parsedM.enabled : true);
+          setRsvpMealOptions(Array.isArray(parsedM.options) ? parsedM.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+        }
+      } catch {}
       return;
     }
 
     const { data } = await supabase
       .from('wedding_sites')
-      .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url')
+      .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, rsvp_custom_questions, rsvp_meal_config')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -246,6 +281,22 @@ export const DashboardGuests: React.FC = () => {
         venue_address: data.venue_address ?? null,
         site_url: data.site_url ?? null,
       });
+      const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions) ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || []) : [];
+      const normalized = loadedQuestions
+        .map((q) => q as Partial<RSVPQuestionSetting>)
+        .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
+        .map((q) => ({
+          id: q.id as string,
+          label: (q.label as string) || '',
+          type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
+          required: !!q.required,
+          appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+          options: Array.isArray(q.options) ? q.options.filter((x): x is string => typeof x === 'string') : [],
+        }));
+      setRsvpQuestions(normalized);
+      const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
+      setRsvpMealEnabled(typeof mealCfg?.enabled === 'boolean' ? mealCfg.enabled : true);
+      setRsvpMealOptions(Array.isArray(mealCfg?.options) ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
     }
   }, [user, isDemoMode]);
 
@@ -305,6 +356,52 @@ export const DashboardGuests: React.FC = () => {
       fetchGuests();
     }
   }, [weddingSiteId, fetchGuests]);
+
+
+  const handleSaveRsvpConfig = async () => {
+    setRsvpConfigSaving(true);
+    try {
+      const cleanedQuestions = rsvpQuestions
+        .map((q) => ({
+          ...q,
+          label: q.label.trim(),
+          options: (q.type === 'single_choice' || q.type === 'multi_choice') ? (q.options ?? []).map((o) => o.trim()).filter(Boolean) : [],
+        }))
+        .filter((q) => q.label.length > 0);
+
+      const missingOptions = cleanedQuestions.find((q) => (q.type === 'single_choice' || q.type === 'multi_choice') && (q.options?.length ?? 0) < 2);
+      if (missingOptions) {
+        toast(`Choice question "${missingOptions.label}" needs at least 2 options.`, 'error');
+        return;
+      }
+
+      const mealOptions = rsvpMealOptions.map((o) => o.trim()).filter(Boolean);
+      if (rsvpMealEnabled && mealOptions.length < 2) {
+        toast('Meal choices need at least 2 options when enabled.', 'error');
+        return;
+      }
+
+      if (isDemoMode || !weddingSiteId) {
+        localStorage.setItem('dayof_demo_rsvp_custom_questions_v1', JSON.stringify(cleanedQuestions));
+        localStorage.setItem('dayof_demo_rsvp_meal_config_v1', JSON.stringify({ enabled: rsvpMealEnabled, options: mealOptions }));
+        setRsvpQuestions(cleanedQuestions);
+        toast('RSVP config saved (demo).', 'success');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ rsvp_custom_questions: cleanedQuestions, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+      setRsvpQuestions(cleanedQuestions);
+      toast('RSVP config saved.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to save RSVP config.', 'error');
+    } finally {
+      setRsvpConfigSaving(false);
+    }
+  };
 
   const generateSecureToken = async (): Promise<string> => {
     const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
@@ -1329,6 +1426,10 @@ Proceed with send?`)) return;
         <div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
           <p className="text-text-secondary">Manage your guest list and track responses</p>
+          <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
+            <button className={`px-3 py-1.5 text-sm rounded-md ${guestsTab === 'ops' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary'}`} onClick={() => setGuestsTab('ops')}>Guest Ops</button>
+            <button className={`px-3 py-1.5 text-sm rounded-md ${guestsTab === 'rsvp-config' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary'}`} onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
