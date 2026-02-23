@@ -30,6 +30,7 @@ interface RSVP {
   meal_choice: string | null;
   plus_one_name: string | null;
   notes: string | null;
+  custom_answers?: Record<string, string> | null;
 }
 
 interface GuestWithRSVP extends Guest {
@@ -54,6 +55,20 @@ function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; r
     ceremony: map.ceremony,
     reception: map.reception,
   };
+}
+
+
+function formatCustomAnswers(customAnswers: Record<string, string> | null | undefined): string {
+  if (!customAnswers || typeof customAnswers !== 'object') return '';
+  const entries = Object.entries(customAnswers)
+    .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : String(value ?? '').trim()] as const)
+    .filter(([, value]) => value.length > 0);
+
+  if (entries.length === 0) return '';
+
+  return entries
+    .map(([key, value]) => `${key.replace(/^q_/, 'question_')}: ${value}`)
+    .join(' | ');
 }
 
 interface WeddingSiteInfo {
@@ -825,6 +840,7 @@ Proceed with send?`)) return;
       guest.rsvp?.meal_choice || '',
       guest.rsvp_received_at ? new Date(guest.rsvp_received_at).toLocaleDateString() : '',
       guest.invite_token || '',
+      formatCustomAnswers(guest.rsvp?.custom_answers || null),
     ]);
 
     const csvContent = [headers, ...rows]
@@ -1985,6 +2001,15 @@ Proceed with send?`)) return;
                                       </span>
                                     )}
                                   </div>
+                                );
+                              })()}
+                              {(() => {
+                                const custom = formatCustomAnswers(guest.rsvp?.custom_answers || null);
+                                if (!custom) return null;
+                                return (
+                                  <p className="text-[11px] text-text-tertiary pt-1 truncate" title={custom}>
+                                    Custom answers saved
+                                  </p>
                                 );
                               })()}
                             </div>
