@@ -1517,7 +1517,7 @@ Proceed with send?`)) return;
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2 flex-wrap items-start [&>*]:whitespace-nowrap">
                 <label className="cursor-pointer">
                   <input
                     type="file"
