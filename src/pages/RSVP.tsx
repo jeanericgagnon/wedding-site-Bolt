@@ -478,7 +478,7 @@ export default function RSVP() {
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Final review & submit'}</p>
+              <p className="mt-2 text-xs text-gray-500">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Final review & submit'} · {Math.round((formStep / 3) * 100)}% complete</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -590,6 +590,11 @@ export default function RSVP() {
 
               {formStep === 3 && (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-3">
+                  {formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception && (
+                    <div className="text-xs text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
+                      Please review: attending is on, but no events are selected.
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600 font-medium">Attendance</span>
                     <span className={`font-semibold px-2.5 py-1 rounded-full text-xs ${formData.attending ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -653,7 +658,7 @@ export default function RSVP() {
                     onClick={goToNextFormStep}
                     className="flex-1"
                   >
-                    Continue
+                    {formStep === 1 ? 'Continue to details' : 'Continue to review'}
                   </Button>
                 ) : (
                   <Button

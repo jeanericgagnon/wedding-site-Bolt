@@ -474,6 +474,28 @@ export const DashboardGuests: React.FC = () => {
   };
 
 
+
+  const handleCopyOpsSummary = async () => {
+    const summary = [
+      `RSVP Ops Summary (${new Date().toLocaleString()})`,
+      `Segment: ${segmentLabelMap[filterStatus] || filterStatus}`,
+      `Eligible reminders: ${reminderCandidates.length}`,
+      `No response: ${rsvpOps.noResponse}`,
+      `Missing meal: ${rsvpOps.missingMeal}`,
+      `Plus-one missing: ${rsvpOps.plusOneMissingName}`,
+      `Pending no email: ${rsvpOps.pendingNoEmail}`,
+      `No contact: ${contactStats.withNoContact}`,
+    ].join('
+');
+
+    try {
+      await navigator.clipboard.writeText(summary);
+      toast('Copied RSVP ops summary', 'success');
+    } catch {
+      window.prompt('Copy RSVP ops summary:', summary);
+    }
+  };
+
   const handleCopyFilteredEmails = async () => {
     const emails = reminderCandidates.map(g => g.email).filter(Boolean) as string[];
     if (emails.length === 0) {
@@ -1389,6 +1411,10 @@ Proceed with send?`)) return;
                   <Download className="w-4 h-4 mr-2" />
                   Export Filtered
                 </Button>
+                <Button variant="outline" size="md" onClick={handleCopyOpsSummary}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Ops Summary
+                </Button>
                 <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
                   <UserPlus className="w-4 h-4 mr-2" />
                   Add Guest
@@ -1401,7 +1427,7 @@ Proceed with send?`)) return;
                   <Copy className="w-4 h-4 mr-2" />
                   Copy Emails
                 </Button>
-                <Button variant="outline" size="md" onClick={() => window.alert(`Dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`)} disabled={reminderCandidates.length === 0}>
+                <Button variant="outline" size="md" onClick={() => window.alert(`Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`)} disabled={reminderCandidates.length === 0}>
                   Dry Run
                 </Button>
               </div>
