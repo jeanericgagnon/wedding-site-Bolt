@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
@@ -337,7 +337,12 @@ export default function RSVP() {
         attending: foundRsvp.attending,
         attendCeremony: parsed.attendCeremony,
         attendReception: parsed.attendReception,
-        meal_choice: foundRsvp.meal_choice || '',
+        meal_choice: (() => {
+          const current = foundRsvp.meal_choice || '';
+          if (!current) return '';
+          const match = meal.options.find((opt) => opt.toLowerCase() === current.toLowerCase());
+          return match ?? current;
+        })(),
         plus_one_name: foundRsvp.plus_one_name || '',
         notes: parsed.cleanNotes,
       });
@@ -496,6 +501,18 @@ export default function RSVP() {
       setFormStep(3);
     }
   };
+  const availableMealValues = useMemo(() => new Set(mealConfig.options.map((o) => o.toLowerCase())), [mealConfig.options]);
+
+  useEffect(() => {
+    if (!mealConfig.enabled) {
+      if (formData.meal_choice) setFormData((prev) => ({ ...prev, meal_choice: '' }));
+      return;
+    }
+    if (formData.meal_choice && !availableMealValues.has(formData.meal_choice.toLowerCase())) {
+      setFormData((prev) => ({ ...prev, meal_choice: '' }));
+    }
+  }, [mealConfig.enabled, availableMealValues, formData.meal_choice]);
+
   const invitedEvents = [
     guest?.invited_to_ceremony ? 'Ceremony' : null,
     guest?.invited_to_reception ? 'Reception' : null,
@@ -748,7 +765,7 @@ export default function RSVP() {
                             onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
                             options={[
                               { value: '', label: 'Select a meal option' },
-                              ...mealConfig.options.map((opt) => ({ value: opt.toLowerCase(), label: opt })),
+                              ...mealConfig.options.map((opt) => ({ value: opt, label: opt })),
                             ]}
                           />
                         </div>
