@@ -232,6 +232,20 @@ const VaultCard: React.FC<VaultCardProps> = ({
     ? unlockDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'Set your wedding date to calculate unlock date';
 
+  const nowMs = Date.now();
+  const getEntryUnlockDate = (entry: VaultEntry) => {
+    if (entry.unlock_at) {
+      const parsed = new Date(entry.unlock_at);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    return unlockDate;
+  };
+  const isEntryUnlocked = (entry: VaultEntry) => {
+    if (!config.is_enabled) return false;
+    const d = getEntryUnlockDate(entry);
+    return d ? d.getTime() <= nowMs : false;
+  };
+
   function handleCopyLink() {
     if (!siteSlug) return;
 
@@ -347,70 +361,88 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </div>
           )}
 
-          {isUnlocked && config.is_enabled && entries.map(entry => (
-            <div key={entry.id} className="p-4 bg-surface-subtle rounded-xl border border-border">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex-1 min-w-0">
-                  {entry.title && <p className="font-semibold text-text-primary text-sm mb-0.5">{entry.title}</p>}
-                  <p className="text-xs text-text-tertiary">
-                    From {entry.author_name} · {new Date(entry.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (confirmDeleteId === entry.id) {
-                      onDeleteEntry(entry.id);
-                      setConfirmDeleteId(null);
-                    } else {
-                      setConfirmDeleteId(entry.id);
-                      setTimeout(() => setConfirmDeleteId(null), 3000);
-                    }
-                  }}
-                  className={`flex-shrink-0 p-1.5 rounded-lg border text-xs transition-colors ${
-                    confirmDeleteId === entry.id
-                      ? 'border-error text-error bg-error-light'
-                      : 'border-transparent text-text-tertiary hover:border-error/40 hover:text-error'
-                  }`}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
-              {entry.attachment_url && (() => {
-                const kind = inferAttachmentKind(entry.attachment_url, entry.attachment_name, entry.media_type);
-                return (
-                  <div className="mt-2 space-y-2">
-                    {kind === 'image' && (
-                      <a href={entry.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
-                        <img src={entry.attachment_url} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" />
-                      </a>
-                    )}
-                    {kind === 'video' && (
-                      <video controls preload="metadata" className="w-full max-h-56 rounded-lg border border-border bg-black/80">
-                        <source src={entry.attachment_url} />
-                      </video>
-                    )}
-                    {kind === 'audio' && (
-                      <audio controls preload="metadata" className="w-full">
-                        <source src={entry.attachment_url} />
-                      </audio>
-                    )}
-                    <a
-                      href={entry.attachment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-                    >
-                      <Paperclip className="w-3 h-3" />
-                      {entry.attachment_name || 'View attachment'}
-                    </a>
-                  </div>
-                );
-              })()}
-            </div>
-          ))}
+          {entries.map(entry => {
+            const unlocked = isEntryUnlocked(entry);
+            const entryUnlockDate = getEntryUnlockDate(entry);
+            const entryUnlockLabel = entryUnlockDate
+              ? entryUnlockDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+              : unlockLabel;
 
-          {(!isUnlocked || !config.is_enabled) && entries.length > 0 && (
+            return (
+              <div key={entry.id} className="p-4 bg-surface-subtle rounded-xl border border-border">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex-1 min-w-0">
+                    {entry.title && <p className="font-semibold text-text-primary text-sm mb-0.5">{entry.title}</p>}
+                    <p className="text-xs text-text-tertiary">
+                      From {entry.author_name} · {new Date(entry.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (confirmDeleteId === entry.id) {
+                        onDeleteEntry(entry.id);
+                        setConfirmDeleteId(null);
+                      } else {
+                        setConfirmDeleteId(entry.id);
+                        setTimeout(() => setConfirmDeleteId(null), 3000);
+                      }
+                    }}
+                    className={`flex-shrink-0 p-1.5 rounded-lg border text-xs transition-colors ${
+                      confirmDeleteId === entry.id
+                        ? 'border-error text-error bg-error-light'
+                        : 'border-transparent text-text-tertiary hover:border-error/40 hover:text-error'
+                    }`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {!unlocked ? (
+                  <div className="p-3 rounded-lg border border-dashed border-border bg-surface text-center">
+                    <Lock className="w-4 h-4 text-text-tertiary mx-auto mb-1" />
+                    <p className="text-xs text-text-secondary">Entry sealed until {entryUnlockLabel}</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
+                    {entry.attachment_url && (() => {
+                      const kind = inferAttachmentKind(entry.attachment_url, entry.attachment_name, entry.media_type);
+                      return (
+                        <div className="mt-2 space-y-2">
+                          {kind === 'image' && (
+                            <a href={entry.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+                              <img src={entry.attachment_url} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" />
+                            </a>
+                          )}
+                          {kind === 'video' && (
+                            <video controls preload="metadata" className="w-full max-h-56 rounded-lg border border-border bg-black/80">
+                              <source src={entry.attachment_url} />
+                            </video>
+                          )}
+                          {kind === 'audio' && (
+                            <audio controls preload="metadata" className="w-full">
+                              <source src={entry.attachment_url} />
+                            </audio>
+                          )}
+                          <a
+                            href={entry.attachment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                          >
+                            <Paperclip className="w-3 h-3" />
+                            {entry.attachment_name || 'View attachment'}
+                          </a>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+            );
+          })}
+
+          {entries.length > 0 && entries.every((entry) => !isEntryUnlocked(entry)) && (
             <div className="p-4 bg-surface-subtle rounded-xl border border-dashed border-border text-center space-y-1">
               <Lock className="w-5 h-5 text-text-tertiary mx-auto mb-1" />
               <p className="text-sm font-medium text-text-secondary">
