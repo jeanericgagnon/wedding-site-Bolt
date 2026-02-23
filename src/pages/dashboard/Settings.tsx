@@ -333,7 +333,9 @@ export const DashboardSettings: React.FC = () => {
         .map((q) => ({
           ...q,
           label: q.label.trim(),
-          options: q.type === 'single_choice' ? (q.options ?? []).map((o) => o.trim()).filter(Boolean) : [],
+          options: (q.type === 'single_choice' || q.type === 'multi_choice')
+            ? (q.options ?? []).map((o) => o.trim()).filter(Boolean)
+            : [],
         }))
         .filter((q) => q.label.length > 0);
 
