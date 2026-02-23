@@ -1534,6 +1534,15 @@ Proceed with send?`)) return;
                 }}>
                   Copy Checklist
                 </Button>
+                <Button variant="outline" size="md" onClick={selectUnresolvedGuests}>
+                  Select unresolved
+                </Button>
+                <Button variant="outline" size="md" onClick={handleSendSelectedInvitations} disabled={bulkSending || selectedGuestIds.size === 0}>
+                  {bulkSending ? 'Sending…' : `Remind Selected (${selectedGuestIds.size})`}
+                </Button>
+                <Button variant="ghost" size="md" onClick={clearGuestSelection} disabled={selectedGuestIds.size === 0}>
+                  Clear Selection
+                </Button>
                 <Button variant="outline" size="md" onClick={() => { if (nextUnresolvedGuest) { setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name); setViewMode('list'); } }} disabled={!nextUnresolvedGuest}>
                   Next unresolved
                 </Button>
