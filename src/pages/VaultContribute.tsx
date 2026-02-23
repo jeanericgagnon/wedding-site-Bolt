@@ -114,6 +114,42 @@ export const VaultContribute: React.FC = () => {
   }
 
 
+  function persistDemoEntries(vault: VaultConfigInfo, rows: Array<{ content: string; author_name: string; title: string | null; attachment_url: string | null; attachment_name: string | null; media_type: 'text' | 'photo' | 'video' | 'voice'; mime_type?: string | null; size_bytes?: number | null }>) {
+    try {
+      const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[]; entries?: Array<Record<string, unknown>> } : {};
+      const existingConfigs = (parsed.vaultConfigs ?? []).filter(Boolean) as VaultConfigInfo[];
+      const existingEntries = Array.isArray(parsed.entries) ? parsed.entries : [];
+
+      const hasConfig = existingConfigs.some((v) => v.id === vault.id);
+      const nextConfigs = hasConfig ? existingConfigs : [...existingConfigs, vault].sort((a, b) => a.duration_years - b.duration_years);
+
+      const now = Date.now();
+      const mapped = rows.map((r, i) => ({
+        id: `demo-public-${now}-${i}`,
+        vault_config_id: vault.id,
+        vault_year: vault.duration_years,
+        title: r.title,
+        content: r.content,
+        author_name: r.author_name,
+        attachment_url: r.attachment_url,
+        attachment_name: r.attachment_name,
+        media_type: r.media_type,
+        mime_type: r.mime_type ?? null,
+        size_bytes: r.size_bytes ?? null,
+        created_at: new Date(now + i).toISOString(),
+      }));
+
+      localStorage.setItem(DEMO_VAULT_STORAGE_KEY, JSON.stringify({
+        vaultConfigs: nextConfigs,
+        entries: [...existingEntries, ...mapped],
+      }));
+    } catch {
+      // noop
+    }
+  }
+
+
   async function startVoiceRecording() {
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -430,6 +466,17 @@ export const VaultContribute: React.FC = () => {
     }
 
     if (DEMO_MODE && site.id === 'demo-site-id') {
+      const demoRows = uploadedItems.map((item, idx) => ({
+        title: form.title.trim() || null,
+        content: form.content.trim(),
+        author_name: form.author_name.trim(),
+        attachment_url: item.url,
+        attachment_name: item.name || form.attachment_name.trim() || (form.media_type !== 'text' ? `${form.media_type} attachment ${uploadedItems.length > 1 ? `#${idx + 1}` : ''}`.trim() : null),
+        media_type: form.media_type,
+        mime_type: item.mime,
+        size_bytes: item.size,
+      }));
+      persistDemoEntries(vaultConfig, demoRows);
       setSubmitting(false);
       setUploadProgress(null);
       setCompressionStatus(null);
