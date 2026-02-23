@@ -20,6 +20,9 @@ export const rsvpMultiEventSchema = z.object({
   confirmationMessage: z.string().default('Thank you! We look forward to celebrating with you.'),
   declineMessage: z.string().default('We\'re sorry you can\'t make it. You\'ll be missed!'),
   guestNote: z.string().default(''),
+  mode: z.enum(['form', 'embed']).default('form'),
+  embedUrl: z.string().default(''),
+  embedHeight: z.number().min(360).max(1400).default(760),
 });
 
 export type RsvpMultiEventData = z.infer<typeof rsvpMultiEventSchema>;
@@ -31,6 +34,9 @@ export const defaultRsvpMultiEventData: RsvpMultiEventData = {
   confirmationMessage: 'Thank you! We can\'t wait to celebrate with you.',
   declineMessage: 'We\'re sorry you can\'t make it. You\'ll be missed!',
   guestNote: 'If you have any dietary restrictions or accessibility needs, please let us know.',
+  mode: 'form',
+  embedUrl: '',
+  embedHeight: 760,
   events: [
     {
       id: '1',
@@ -92,6 +98,8 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
     }
   };
 
+  const useEmbed = data.mode === 'embed' && !!data.embedUrl?.trim();
+
   if (status === 'success') {
     const message = attending === 'yes' ? data.confirmationMessage : data.declineMessage;
     return (
@@ -134,6 +142,19 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
           </div>
         )}
 
+        {useEmbed ? (
+          <div className="space-y-4">
+            <iframe
+              src={data.embedUrl}
+              title="RSVP form"
+              className="w-full rounded-xl border border-stone-200 bg-white"
+              style={{ height: `${data.embedHeight}px` }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+            <p className="text-xs text-stone-400">Embedded RSVP is enabled for this section.</p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
@@ -233,6 +254,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
             {status === 'submitting' ? 'Submitting…' : 'Send RSVP'}
           </button>
         </form>
+        )}
       </div>
     </section>
   );
