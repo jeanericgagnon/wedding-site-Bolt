@@ -788,6 +788,16 @@ export const DashboardVault: React.FC = () => {
     }
   }
 
+
+  function handleSeedDemoVaults() {
+    if (!isDemoMode) return;
+    const seeded = createSeedDemoState();
+    setVaultConfigs(seeded.vaultConfigs);
+    setEntries(seeded.entries);
+    saveDemoState(seeded.vaultConfigs, seeded.entries);
+    toast('Demo vault set loaded (1/5/10)');
+  }
+
   async function handleToggleEnabled(configId: string, enabled: boolean) {
     if (isDemoMode) {
       const nextConfigs = vaultConfigs.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c);
@@ -957,10 +967,17 @@ export const DashboardVault: React.FC = () => {
               <p className="text-sm text-text-secondary mb-5 max-w-sm mx-auto">
                 Create up to {MAX_VAULTS} time capsule vaults, each unlocking on a different anniversary. Share vault links with guests so they can leave messages.
               </p>
-              <Button variant="primary" onClick={handleAddVault} disabled={addingVault}>
-                {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
-                Create Your First Vault
-              </Button>
+              {isDemoMode ? (
+                <Button variant="primary" onClick={handleSeedDemoVaults}>
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Load Demo Vault Set (1/5/10)
+                </Button>
+              ) : (
+                <Button variant="primary" onClick={handleAddVault} disabled={addingVault}>
+                  {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
+                  Create Your First Vault
+                </Button>
+              )}
             </div>
           </Card>
         )}
