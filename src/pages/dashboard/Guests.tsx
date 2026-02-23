@@ -68,6 +68,7 @@ interface WeddingSiteInfo {
 const RSVP_CAMPAIGN_LOG_KEY = 'dayof_rsvp_campaign_log_v1';
 const RSVP_FOLLOWUP_TASKS_KEY = 'dayof_rsvp_followup_tasks_v1';
 const RSVP_CAMPAIGN_PRESET_KEY = 'dayof_rsvp_campaign_preset_v1';
+const RSVP_SAVED_SEGMENTS_KEY = 'dayof_rsvp_saved_segments_v1';
 
 interface ItineraryEvent {
   id: string;
@@ -95,6 +96,7 @@ export const DashboardGuests: React.FC = () => {
   const [campaignPreset, setCampaignPreset] = useState<'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email'>('pending');
   const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
   const [sortByPriority, setSortByPriority] = useState(true);
+  const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
 
 
   useEffect(() => {
@@ -116,6 +118,14 @@ export const DashboardGuests: React.FC = () => {
     } catch {
       // noop
     }
+
+    try {
+      const rawSeg = localStorage.getItem(RSVP_SAVED_SEGMENTS_KEY);
+      const parsed = rawSeg ? JSON.parse(rawSeg) : [];
+      if (Array.isArray(parsed)) setSavedSegments(parsed.slice(0, 12));
+    } catch {
+      // noop
+    }
   }, []);
 
   useEffect(() => {
@@ -133,6 +143,14 @@ export const DashboardGuests: React.FC = () => {
       // noop
     }
   }, [followUpTasks]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RSVP_SAVED_SEGMENTS_KEY, JSON.stringify(savedSegments.slice(0, 12)));
+    } catch {
+      // noop
+    }
+  }, [savedSegments]);
 
 
   useEffect(() => {
@@ -476,6 +494,14 @@ export const DashboardGuests: React.FC = () => {
     setFilterStatus(preset);
     setViewMode('list');
     setSearchQuery('');
+  };
+
+
+  const saveCurrentSegment = () => {
+    const label = `${segmentLabelMap[filterStatus] || filterStatus} (${filteredGuests.length})`;
+    const seg = { id: Date.now(), label, filter: filterStatus, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
+    setSavedSegments((prev) => [seg, ...prev.filter((x) => x.filter !== filterStatus)].slice(0, 12));
+    toast('Segment saved', 'success');
   };
 
   const addFollowUpTask = (text: string) => {
@@ -1423,6 +1449,27 @@ export const DashboardGuests: React.FC = () => {
                 <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
               </div>
 
+              {savedSegments.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-text-tertiary">Saved segments</p>
+                    <button
+                      onClick={() => setSavedSegments([])}
+                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                    >
+                      Clear segments
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {savedSegments.map((seg) => (
+                      <button key={seg.id} onClick={() => { setFilterStatus(seg.filter as any); setViewMode('list'); setSearchQuery(''); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">
+                        {seg.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {followUpTasks.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -1469,12 +1516,20 @@ export const DashboardGuests: React.FC = () => {
                 Active segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span>
                 {searchQuery ? <> · Search: <span className="font-semibold text-text-primary">“{searchQuery}”</span></> : null}
               </p>
-              <button
-                onClick={() => { setFilterStatus('all'); setSearchQuery(''); setViewMode('list'); }}
-                className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
-              >
-                Clear filters
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={saveCurrentSegment}
+                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                >
+                  Save segment
+                </button>
+                <button
+                  onClick={() => { setFilterStatus('all'); setSearchQuery(''); setViewMode('list'); }}
+                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                >
+                  Clear filters
+                </button>
+              </div>
             </div>
 
             {filterStatus === 'no-contact' && (
