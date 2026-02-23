@@ -54,6 +54,10 @@ export const DashboardRegistry: React.FC = () => {
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [weddingDate, setWeddingDate] = useState<string | null>(null);
+  const [refreshEnabledUntil, setRefreshEnabledUntil] = useState<string | null>(null);
+  const [monthlyRefreshCap, setMonthlyRefreshCap] = useState(100);
+  const [monthlyRefreshCount, setMonthlyRefreshCount] = useState(0);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RegistryFilter>('all');
   const [showForm, setShowForm] = useState(false);
@@ -131,11 +135,18 @@ export const DashboardRegistry: React.FC = () => {
         if (!user) return;
         const { data: site } = await supabase
           .from('wedding_sites')
-          .select('id')
+          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month')
           .eq('user_id', user.id)
           .maybeSingle();
         if (site?.id) {
           setWeddingSiteId(site.id);
+          setWeddingDate((site as { wedding_date?: string | null }).wedding_date ?? null);
+          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; wedding_date?: string | null };
+          const monthKey = new Date().toISOString().slice(0, 7);
+          const resetCount = typedSite.registry_monthly_refresh_month !== monthKey;
+          setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
+          setMonthlyRefreshCap(typedSite.registry_monthly_refresh_cap ?? 100);
+          setMonthlyRefreshCount(resetCount ? 0 : (typedSite.registry_monthly_refresh_count ?? 0));
           await loadItems(site.id);
         }
       } catch {
@@ -302,6 +313,14 @@ export const DashboardRegistry: React.FC = () => {
 
   async function handleAutoRefreshStale(silent = false, alertsOnly = false) {
     if (isDemoMode || autoRefreshing) return;
+    if (!refreshWindowOpen) {
+      if (!silent) toast('Auto-refresh window is closed (post-wedding).');
+      return;
+    }
+    if (refreshBudgetRemaining <= 0) {
+      if (!silent) toast('Monthly refresh budget reached for this registry.');
+      return;
+    }
     const staleCandidates = items
       .filter((item) => !!(item.item_url || item.canonical_url))
       .filter((item) => {
@@ -310,7 +329,7 @@ export const DashboardRegistry: React.FC = () => {
         const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
         return alertsOnly ? (stale || outOfStock || priceChanged) : stale;
       })
-      .slice(0, 12);
+      .slice(0, Math.min(12, refreshBudgetRemaining));
 
     if (staleCandidates.length === 0) {
       if (!silent) toast('Registry metadata is already fresh.');
@@ -350,6 +369,16 @@ export const DashboardRegistry: React.FC = () => {
       }
     }
     setAutoRefreshing(false);
+    if (updatedCount > 0) {
+      const nextCount = monthlyRefreshCount + updatedCount;
+      setMonthlyRefreshCount(nextCount);
+      if (weddingSiteId && !isDemoMode) {
+        await supabase
+          .from('wedding_sites')
+          .update({ registry_monthly_refresh_count: nextCount, registry_monthly_refresh_month: todayMonthKey })
+          .eq('id', weddingSiteId);
+      }
+    }
     if (!silent) toast(`Refreshed ${updatedCount} ${alertsOnly ? 'alert ' : ''}item${updatedCount === 1 ? '' : 's'}.`);
   }
 
@@ -434,6 +463,14 @@ export const DashboardRegistry: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, isDemoMode, items.length]);
 
+
+  const todayMonthKey = new Date().toISOString().slice(0, 7);
+  const refreshWindowUntil = refreshEnabledUntil
+    ? new Date(refreshEnabledUntil)
+    : (weddingDate ? new Date(new Date(weddingDate).getTime() + 1000 * 60 * 60 * 24 * 30) : null);
+  const refreshWindowOpen = !refreshWindowUntil || refreshWindowUntil.getTime() >= Date.now();
+  const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
+
   const counts = {
     total: items.length,
     purchased: items.filter(i => i.purchase_status === 'purchased').length,
@@ -466,6 +503,9 @@ export const DashboardRegistry: React.FC = () => {
             <h1 className="text-3xl font-bold text-text-primary mb-1">Gift Registry</h1>
             <p className="text-sm text-text-secondary">
               Paste any product URL to import items from any store · prices auto-refresh weekly
+            </p>
+            <p className="text-xs text-text-tertiary mt-1">
+              Auto-refresh window: {refreshWindowOpen ? 'Open' : 'Closed'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
