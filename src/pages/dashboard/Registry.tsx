@@ -58,6 +58,9 @@ export const DashboardRegistry: React.FC = () => {
   const [refreshEnabledUntil, setRefreshEnabledUntil] = useState<string | null>(null);
   const [monthlyRefreshCap, setMonthlyRefreshCap] = useState(100);
   const [monthlyRefreshCount, setMonthlyRefreshCount] = useState(0);
+  const [refreshCapDraft, setRefreshCapDraft] = useState(100);
+  const [refreshWindowDraft, setRefreshWindowDraft] = useState('');
+  const [savingRefreshPolicy, setSavingRefreshPolicy] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RegistryFilter>('all');
   const [showForm, setShowForm] = useState(false);
@@ -145,7 +148,9 @@ export const DashboardRegistry: React.FC = () => {
           const monthKey = new Date().toISOString().slice(0, 7);
           const resetCount = typedSite.registry_monthly_refresh_month !== monthKey;
           setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
+          setRefreshWindowDraft((typedSite.registry_refresh_enabled_until ?? '').slice(0, 10));
           setMonthlyRefreshCap(typedSite.registry_monthly_refresh_cap ?? 100);
+          setRefreshCapDraft(typedSite.registry_monthly_refresh_cap ?? 100);
           setMonthlyRefreshCount(resetCount ? 0 : (typedSite.registry_monthly_refresh_count ?? 0));
           await loadItems(site.id);
         }
@@ -427,6 +432,41 @@ export const DashboardRegistry: React.FC = () => {
     toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} from URLs.`);
   }
 
+
+  async function handleSaveRefreshPolicy() {
+    if (!weddingSiteId || isDemoMode) return;
+    const cap = Math.max(10, Math.min(2000, Number(refreshCapDraft) || 100));
+    const untilIso = refreshWindowDraft ? new Date(`${refreshWindowDraft}T23:59:59.000Z`).toISOString() : null;
+
+    setSavingRefreshPolicy(true);
+    try {
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({
+          registry_monthly_refresh_cap: cap,
+          registry_refresh_enabled_until: untilIso,
+        })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+
+      setMonthlyRefreshCap(cap);
+      setRefreshEnabledUntil(untilIso);
+      toast('Refresh policy saved.');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to save refresh policy.', 'error');
+    } finally {
+      setSavingRefreshPolicy(false);
+    }
+  }
+
+  function setDefaultRefreshWindowFromWedding() {
+    if (!weddingDate) return;
+    const d = new Date(weddingDate);
+    d.setDate(d.getDate() + 30);
+    const iso = d.toISOString().slice(0, 10);
+    setRefreshWindowDraft(iso);
+  }
+
   function handleEdit(item: RegistryItem) {
     setEditItem(item);
     setShowForm(true);
@@ -507,6 +547,30 @@ export const DashboardRegistry: React.FC = () => {
             <p className="text-xs text-text-tertiary mt-1">
               Auto-refresh window: {refreshWindowOpen ? 'Open' : 'Closed'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month
             </p>
+            <div className="mt-2 flex flex-wrap items-end gap-2">
+              <label className="text-xs text-text-secondary">
+                Monthly cap
+                <input
+                  type="number"
+                  min={10}
+                  max={2000}
+                  value={refreshCapDraft}
+                  onChange={(e) => setRefreshCapDraft(Number(e.target.value))}
+                  className="ml-2 w-24 px-2 py-1 bg-surface-subtle border border-border rounded-md text-xs"
+                />
+              </label>
+              <label className="text-xs text-text-secondary">
+                Enabled until
+                <input
+                  type="date"
+                  value={refreshWindowDraft}
+                  onChange={(e) => setRefreshWindowDraft(e.target.value)}
+                  className="ml-2 px-2 py-1 bg-surface-subtle border border-border rounded-md text-xs"
+                />
+              </label>
+              <Button variant="ghost" size="sm" onClick={setDefaultRefreshWindowFromWedding} disabled={!weddingDate}>Use wedding + 30d</Button>
+              <Button variant="outline" size="sm" onClick={handleSaveRefreshPolicy} disabled={savingRefreshPolicy || isDemoMode}>{savingRefreshPolicy ? 'Saving…' : 'Save policy'}</Button>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="md" onClick={() => setBulkImportOpen(true)} disabled={!weddingSiteId}>
