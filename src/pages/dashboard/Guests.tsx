@@ -1043,6 +1043,21 @@ Proceed with send?`)) return;
   )));
 
 
+  const campaignReadiness = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        (guests.length === 0
+          ? 100
+          : ((guests.length - contactStats.withNoContact) / guests.length) * 100) * 0.5 +
+        (100 - Math.min(100, rsvpOps.pendingNoEmail * 12)) * 0.25 +
+        (100 - Math.min(100, rsvpOps.noResponse * 4)) * 0.25
+      )
+    )
+  );
+
+
   const opsQueue = guests.flatMap((g) => {
     const items: Array<{ guestId: string; guestName: string; issue: string; filter: typeof filterStatus }> = [];
     const guestName = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
@@ -1215,7 +1230,7 @@ Proceed with send?`)) return;
           <p className="text-text-secondary">Manage your guest list and track responses</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-success-light rounded-lg flex-shrink-0">
@@ -1284,6 +1299,17 @@ Proceed with send?`)) return;
               <div>
                 <p className="text-2xl font-bold text-text-primary">{contactStats.contactCoverage}%</p>
                 <p className="text-sm text-text-secondary">Contact coverage</p>
+              </div>
+            </div>
+          </Card>
+          <Card variant="bordered" padding="md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{campaignReadiness}%</p>
+                <p className="text-sm text-text-secondary">Campaign readiness</p>
               </div>
             </div>
           </Card>
@@ -1446,6 +1472,13 @@ Proceed with send?`)) return;
                 <Button variant="outline" size="md" onClick={generateChecklistTasks}>
                   Generate Checklist
                 </Button>
+                <Button variant="outline" size="md" onClick={() => {
+                  const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
+                  const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
+                  navigator.clipboard.writeText(text).then(() => toast('Copied checklist markdown', 'success')).catch(() => window.prompt('Copy checklist:', text));
+                }}>
+                  Copy Checklist
+                </Button>
                 <Button variant="outline" size="md" onClick={() => { if (nextUnresolvedGuest) { setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name); setViewMode('list'); } }} disabled={!nextUnresolvedGuest}>
                   Next unresolved
                 </Button>
@@ -1477,7 +1510,8 @@ Proceed with send?`)) return;
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <p className="text-xs text-text-secondary">
                   Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
-                  Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span>
+                  Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span> ·
+                  Campaign readiness: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
                 </p>
                 <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
                   <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
