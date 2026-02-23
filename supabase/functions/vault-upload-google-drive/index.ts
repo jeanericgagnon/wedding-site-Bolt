@@ -83,10 +83,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const siteId = typeof body.siteId === "string" ? body.siteId : null;
     const vaultYear = typeof body.vaultYear === "number" ? body.vaultYear : null;
     const fileName = typeof body.fileName === "string" ? body.fileName : null;
@@ -98,33 +95,37 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const {
-      data: { user },
-    } = await userClient.auth.getUser();
-    if (!user) return json({ error: "Unauthorized" }, 401);
-
     const adminClient = createClient(supabaseUrl, serviceRole);
+
+    // public-safe gate: site must be published and have an enabled vault for this year
     const { data: site } = await adminClient
       .from("wedding_sites")
-      .select("id, user_id, site_slug, vault_google_drive_access_token, vault_google_drive_refresh_token, vault_google_drive_token_expires_at, vault_google_drive_root_folder_id")
+      .select("id, is_published, site_slug, vault_storage_provider, vault_google_drive_connected, vault_google_drive_access_token, vault_google_drive_refresh_token, vault_google_drive_token_expires_at, vault_google_drive_root_folder_id")
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.user_id !== user.id) return json({ error: "Forbidden" }, 403);
+    if (!site || !site.is_published) return json({ error: "Site not available for public contributions." }, 403);
+    if (site.vault_storage_provider !== "google_drive") return json({ error: "Vault is not configured for Google Drive uploads." }, 400);
+    if (!site.vault_google_drive_connected) return json({ error: "Google Drive is not connected for this site." }, 400);
+
+    const { data: config } = await adminClient
+      .from("vault_configs")
+      .select("id, is_enabled")
+      .eq("wedding_site_id", siteId)
+      .eq("duration_years", vaultYear)
+      .maybeSingle();
+
+    if (!config || !config.is_enabled) {
+      return json({ error: "Target vault is not enabled for contributions." }, 400);
+    }
 
     let accessToken = site.vault_google_drive_access_token as string | null;
     const refreshToken = site.vault_google_drive_refresh_token as string | null;
     const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
 
     if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
-      if (!refreshToken) return json({ error: "Google Drive is not fully connected. Reconnect required." }, 400);
+      if (!refreshToken) return json({ error: "Google Drive connection needs reconnect." }, 400);
       const refreshed = await refreshAccessToken(refreshToken);
       accessToken = refreshed.accessToken;
       await adminClient
