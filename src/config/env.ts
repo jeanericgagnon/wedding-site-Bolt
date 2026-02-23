@@ -1,8 +1,8 @@
 const demoModeRaw = String(import.meta.env.VITE_DEMO_MODE ?? '').trim().toLowerCase();
 export const DEMO_MODE = demoModeRaw === 'true' || demoModeRaw === '1' || demoModeRaw === 'yes';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
+const supabaseAnon = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 const isPlaceholderSupabase =
   !supabaseUrl ||
   !supabaseAnon ||

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link2, Loader2, X, ImageOff, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { Button } from '../../../components/ui';
 import { fetchUrlPreview, findDuplicateItem } from './registryService';
@@ -45,6 +45,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const [urlInput, setUrlInput] = useState(initial?.item_url ?? '');
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const autoFetchTimerRef = useRef<number | null>(null);
+  const lastAutoFetchedUrlRef = useRef<string>('');
   const [fetchDone, setFetchDone] = useState(false);
   const [fetchConfidence, setFetchConfidence] = useState<MetadataConfidence | null>(null);
   const [lastPreview, setLastPreview] = useState<RegistryPreview | null>(null);

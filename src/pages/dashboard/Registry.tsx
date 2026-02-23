@@ -51,7 +51,7 @@ const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
 ];
 
 export const DashboardRegistry: React.FC = () => {
-  const { isDemoMode } = useAuth();
+  const { isDemoMode, user } = useAuth();
   const [items, setItems] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
@@ -66,6 +66,8 @@ export const DashboardRegistry: React.FC = () => {
   const [savingRefreshPolicy, setSavingRefreshPolicy] = useState(false);
   const [refreshPreset, setRefreshPreset] = useState<'lean' | 'balanced' | 'aggressive'>('balanced');
   const [refreshIncludePurchased, setRefreshIncludePurchased] = useState(false);
+  const [policyUpdatedAt, setPolicyUpdatedAt] = useState<string | null>(null);
+  const [policyUpdatedBy, setPolicyUpdatedBy] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RegistryFilter>('all');
   const [showForm, setShowForm] = useState(false);
@@ -146,13 +148,13 @@ export const DashboardRegistry: React.FC = () => {
         if (!user) return;
         const { data: site } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased')
+          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by')
           .eq('user_id', user.id)
           .maybeSingle();
         if (site?.id) {
           setWeddingSiteId(site.id);
           setWeddingDate((site as { wedding_date?: string | null }).wedding_date ?? null);
-          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; registry_refresh_include_purchased?: boolean | null; wedding_date?: string | null };
+          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; registry_refresh_include_purchased?: boolean | null; registry_refresh_policy_updated_at?: string | null; registry_refresh_policy_updated_by?: string | null; wedding_date?: string | null };
           const monthKey = new Date().toISOString().slice(0, 7);
           const loadedMonth = typedSite.registry_monthly_refresh_month ?? monthKey;
           setMonthlyRefreshMonth(loadedMonth);
@@ -160,6 +162,8 @@ export const DashboardRegistry: React.FC = () => {
           setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
           setAutoRefreshEnabled(typedSite.registry_auto_refresh_enabled ?? true);
           setRefreshIncludePurchased(typedSite.registry_refresh_include_purchased ?? false);
+          setPolicyUpdatedAt(typedSite.registry_refresh_policy_updated_at ?? null);
+          setPolicyUpdatedBy(typedSite.registry_refresh_policy_updated_by ?? null);
           setRefreshWindowDraft((typedSite.registry_refresh_enabled_until ?? '').slice(0, 10));
           const loadedCap = typedSite.registry_monthly_refresh_cap ?? 100;
           setMonthlyRefreshCap(loadedCap);
@@ -489,12 +493,16 @@ export const DashboardRegistry: React.FC = () => {
           registry_refresh_enabled_until: untilIso,
           registry_auto_refresh_enabled: autoRefreshEnabled,
           registry_refresh_include_purchased: refreshIncludePurchased,
+          registry_refresh_policy_updated_at: new Date().toISOString(),
+          registry_refresh_policy_updated_by: user?.id ?? null,
         })
         .eq('id', weddingSiteId);
       if (error) throw error;
 
       setMonthlyRefreshCap(cap);
       setRefreshEnabledUntil(untilIso);
+      setPolicyUpdatedAt(new Date().toISOString());
+      setPolicyUpdatedBy(user?.id ?? null);
       toast('Refresh policy saved.');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to save refresh policy.', 'error');
@@ -527,10 +535,12 @@ export const DashboardRegistry: React.FC = () => {
     const monthKey = new Date().toISOString().slice(0, 7);
     await supabase
       .from('wedding_sites')
-      .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: monthKey })
+      .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: monthKey, registry_refresh_policy_updated_at: new Date().toISOString(), registry_refresh_policy_updated_by: user?.id ?? null })
       .eq('id', weddingSiteId);
     setMonthlyRefreshCount(0);
     setMonthlyRefreshMonth(monthKey);
+    setPolicyUpdatedAt(new Date().toISOString());
+    setPolicyUpdatedBy(user?.id ?? null);
     toast('Monthly refresh counter reset.');
   }
 
@@ -644,6 +654,11 @@ export const DashboardRegistry: React.FC = () => {
             <p className="text-xs text-text-tertiary mt-1">
               Projection: ~{projectedMonthlyCalls} item checks/month · coverage {projectedRefreshCoverage}% of {eligibleItemCount} eligible items
             </p>
+            {policyUpdatedAt && (
+              <p className="text-[11px] text-text-tertiary mt-1">
+                Policy last updated {new Date(policyUpdatedAt).toLocaleString()}{policyUpdatedBy && user?.id === policyUpdatedBy ? ' by you' : ''}
+              </p>
+            )}
             {daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14 && (
               <p className="text-xs text-warning mt-1">Near expiry: auto-lean recommended to minimize late-cycle compute.</p>
             )}

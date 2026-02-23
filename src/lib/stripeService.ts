@@ -26,8 +26,8 @@ export async function createCheckoutSession(
 ): Promise<string> {
   const session = await requireSession();
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string).trim();
+  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string).trim();
 
   const res = await fetch(`${supabaseUrl}/functions/v1/stripe-create-checkout`, {
     method: 'POST',
@@ -64,8 +64,8 @@ export async function createSubscriptionSession(
 ): Promise<string> {
   const session = await requireSession();
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string).trim();
+  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string).trim();
 
   const res = await fetch(`${supabaseUrl}/functions/v1/stripe-create-subscription`, {
     method: 'POST',
