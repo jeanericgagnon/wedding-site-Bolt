@@ -476,15 +476,15 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'loading') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex items-center justify-center">
-        <Loader2 className="w-7 h-7 animate-spin text-amber-700" />
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center">
+        <Loader2 className="w-7 h-7 animate-spin text-primary" />
       </div>
     );
   }
 
   if (step === 'invalid') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <div className="w-14 h-14 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-stone-200">
             <Lock className="w-6 h-6 text-stone-400" />
@@ -499,12 +499,12 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'hub') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex flex-col">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex flex-col">
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-3xl">
             <div className="text-center mb-8">
               <div className="w-14 h-14 bg-white border border-amber-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <Lock className="w-6 h-6 text-amber-700" />
+                <Lock className="w-6 h-6 text-primary" />
               </div>
               {coupleName && <p className="text-sm text-stone-500 mb-1 tracking-wide uppercase font-medium">{coupleName}</p>}
               <h1 className="text-2xl font-bold text-stone-800">Choose an Anniversary Vault</h1>
@@ -518,14 +518,14 @@ export const VaultContribute: React.FC = () => {
                   <Link
                     key={v.id}
                     to={`/vault/${siteSlug}/${v.duration_years}`}
-                    className="group bg-white/95 backdrop-blur rounded-2xl border border-amber-100 p-5 hover:border-amber-300 hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm"
+                    className="group bg-white/95 backdrop-blur rounded-2xl border border-border-subtle p-5 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-stone-800">{v.label || `${v.duration_years}-Year Anniversary Vault`}</p>
                       {done && <CheckCircle className="w-5 h-5 text-green-600" />}
                     </div>
                     <p className="text-xs text-stone-500 mt-2">Opens on the {ordinalLabel(v.duration_years)} anniversary.</p>
-                    <p className={`text-xs mt-3 font-semibold tracking-wide ${done ? 'text-emerald-700' : 'text-amber-700'}`}>{done ? 'Submitted ✓' : 'Add message →'}</p>
+                    <p className={`text-xs mt-3 font-semibold tracking-wide ${done ? 'text-emerald-700' : 'text-primary'}`}>{done ? 'Submitted ✓' : 'Add message →'}</p>
                   </Link>
                 );
               })}
@@ -538,7 +538,7 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'success') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-green-200">
             <CheckCircle className="w-8 h-8 text-green-600" />
@@ -552,10 +552,10 @@ export const VaultContribute: React.FC = () => {
               It will be opened in {unlockYear}.
             </p>
           )}
-          <div className="mt-8 p-4 bg-amber-50 border border-amber-200/60 rounded-xl text-sm text-amber-800">
+          <div className="mt-8 p-4 bg-primary/5 border border-primary/20 rounded-xl text-sm text-primary">
             <Heart className="w-4 h-4 inline-block mr-1.5 mb-0.5" />
             Thank you for being part of this moment.
-            {hasYearParam && <p className="mt-2 text-xs text-amber-700">Returning to vault list…</p>}
+            {hasYearParam && <p className="mt-2 text-xs text-primary">Returning to vault list…</p>}
           </div>
         </div>
       </div>
@@ -564,7 +564,7 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'error') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200">
             <AlertCircle className="w-6 h-6 text-red-500" />
@@ -573,7 +573,7 @@ export const VaultContribute: React.FC = () => {
           <p className="text-stone-500 text-sm mb-6">Your message couldn't be saved. Please try again.</p>
           <button
             onClick={() => setStep('form')}
-            className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 text-white rounded-xl text-sm font-semibold hover:from-amber-600 hover:to-rose-600 transition-all shadow"
+            className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-hover text-white rounded-xl text-sm font-semibold hover:from-primary-hover hover:to-primary transition-all shadow"
           >
             Try again
           </button>
@@ -583,12 +583,12 @@ export const VaultContribute: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex flex-col">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex flex-col">
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-white border border-amber-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <Lock className="w-6 h-6 text-amber-700" />
+              <Lock className="w-6 h-6 text-primary" />
             </div>
             {coupleName && (
               <p className="text-sm text-stone-500 mb-1 tracking-wide uppercase font-medium">
@@ -604,7 +604,7 @@ export const VaultContribute: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-amber-100 p-5 sm:p-6 md:p-8">
+          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-1.5">
@@ -615,7 +615,7 @@ export const VaultContribute: React.FC = () => {
                   value={form.author_name}
                   onChange={e => setForm({ ...form, author_name: e.target.value })}
                   placeholder="e.g. Aunt Sarah, The Johnsons, Your college roommate"
-                  className={`w-full px-4 py-2.5 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition ${
+                  className={`w-full px-4 py-2.5 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 transition ${
                     errors.author_name ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   }`}
                 />
@@ -633,7 +633,7 @@ export const VaultContribute: React.FC = () => {
                   value={form.title}
                   onChange={e => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. Advice for year one, My wish for you…"
-                  className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
                 />
               </div>
 
@@ -646,7 +646,7 @@ export const VaultContribute: React.FC = () => {
                   onChange={e => setForm({ ...form, content: e.target.value })}
                   rows={6}
                   placeholder={`Write something heartfelt for ${coupleName || 'the couple'} to read on their ${ordinal} anniversary…`}
-                  className={`w-full px-4 py-3 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none transition ${
+                  className={`w-full px-4 py-3 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 resize-none transition ${
                     errors.content ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   }`}
                 />
@@ -664,7 +664,7 @@ export const VaultContribute: React.FC = () => {
                   <select
                     value={form.media_type}
                     onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); if (isRecordingVoice) stopVoiceRecording(); }}
-                    className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                    className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
                   >
                     <option value="text">Text only</option>
                     <option value="photo">Photo</option>
@@ -730,7 +730,7 @@ export const VaultContribute: React.FC = () => {
                       setSubmitError(null);
                       setSelectedFiles(files);
                     }}
-                    className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:text-amber-800 file:px-3 file:py-1.5 hover:file:bg-amber-200"
+                    className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:text-primary file:px-3 file:py-1.5 hover:file:bg-primary/15"
                   />
                   {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
                   {form.media_type === 'video' && (
@@ -772,7 +772,7 @@ export const VaultContribute: React.FC = () => {
                   value={form.attachment_name}
                   onChange={e => setForm({ ...form, attachment_name: e.target.value })}
                   placeholder="e.g. Engagement video, Voice memo"
-                  className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
                 />
               </div>
 
@@ -805,7 +805,7 @@ export const VaultContribute: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600 text-white font-semibold rounded-xl text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" />Uploading and saving to vault…</>
