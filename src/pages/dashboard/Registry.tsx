@@ -40,6 +40,8 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
   </div>
 );
 
+const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
+
 const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'available', label: 'Available' },
@@ -303,7 +305,7 @@ export const DashboardRegistry: React.FC = () => {
     const staleCandidates = items
       .filter((item) => !!(item.item_url || item.canonical_url))
       .filter((item) => {
-        const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24;
+        const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS;
         const outOfStock = (item.availability || '').toLowerCase().includes('out');
         const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
         return alertsOnly ? (stale || outOfStock || priceChanged) : stale;
@@ -416,7 +418,7 @@ export const DashboardRegistry: React.FC = () => {
     const matchesFilter = filter === 'all' || item.purchase_status === filter;
     const hasAlert =
       !item.metadata_last_checked_at ||
-      (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24 ||
+      (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS ||
       ((item.availability || '').toLowerCase().includes('out')) ||
       (item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount);
     const matchesAlerts = !showAlertsOnly || hasAlert;
@@ -426,7 +428,7 @@ export const DashboardRegistry: React.FC = () => {
 
   useEffect(() => {
     if (loading || isDemoMode || items.length === 0) return;
-    const hasStale = items.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24);
+    const hasStale = items.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);
     if (!hasStale) return;
     handleAutoRefreshStale(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -463,7 +465,7 @@ export const DashboardRegistry: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-1">Gift Registry</h1>
             <p className="text-sm text-text-secondary">
-              Paste any product URL to import items from any store
+              Paste any product URL to import items from any store · prices auto-refresh weekly
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -471,7 +473,7 @@ export const DashboardRegistry: React.FC = () => {
               Bulk Import URLs
             </Button>
             <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false)} disabled={!weddingSiteId || autoRefreshing}>
-              {autoRefreshing ? 'Refreshing…' : 'Refresh stale metadata'}
+              {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
             </Button>
             <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false, true)} disabled={!weddingSiteId || autoRefreshing}>
               {autoRefreshing ? 'Refreshing…' : 'Refresh alert items'}
@@ -543,7 +545,7 @@ export const DashboardRegistry: React.FC = () => {
             >
               {showAlertsOnly ? 'Showing alerts only' : 'Show alerts only'}
             </button>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Stale: {alertCounts.stale}</span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Weekly stale: {alertCounts.stale}</span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Price changed: {alertCounts.priceChanged}</span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Out of stock: {alertCounts.outOfStock}</span>
           </div>

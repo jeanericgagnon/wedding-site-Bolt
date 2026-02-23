@@ -102,9 +102,12 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const merchant = item.merchant ?? item.store_name ?? null;
   const isPurchased = item.purchase_status === 'purchased';
   const canMarkPurchased = !isPurchased && !!onMarkPurchased;
-  const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24;
+  const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24 * 7;
   const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
   const outOfStock = (item.availability || '').toLowerCase().includes('out');
+  const asOfLabel = item.metadata_last_checked_at
+    ? new Date(item.metadata_last_checked_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
 
   function handleDeleteClick() {
     if (confirmDelete) {
