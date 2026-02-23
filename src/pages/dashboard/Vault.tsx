@@ -688,7 +688,7 @@ export const DashboardVault: React.FC = () => {
         .from('vault_configs')
         .select('*')
         .eq('wedding_site_id', site.id)
-        .order('vault_index', { ascending: true });
+        .order('duration_years', { ascending: true });
 
       const configs = (configData ?? []) as VaultConfig[];
       setVaultConfigs(configs);
@@ -788,7 +788,7 @@ export const DashboardVault: React.FC = () => {
         .single();
 
       if (error) throw error;
-      setVaultConfigs(prev => [...prev, data as VaultConfig]);
+      setVaultConfigs(prev => [...prev, data as VaultConfig].sort((a, b) => a.duration_years - b.duration_years));
       toast('Vault added');
     } catch {
       toast('Failed to add vault', 'error');
@@ -958,6 +958,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   const totalEntries = entries.length;
+  const orderedVaultConfigs = [...vaultConfigs].sort((a, b) => a.duration_years - b.duration_years);
 
   return (
     <DashboardLayout currentPage="vault">
@@ -1024,7 +1025,7 @@ export const DashboardVault: React.FC = () => {
 
         {vaultConfigs.length > 0 && (
           <div className="space-y-5">
-            {vaultConfigs.map(config => (
+            {orderedVaultConfigs.map(config => (
               <div key={config.id} className="group relative">
                 <VaultCard
                   config={config}
