@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge, Textarea } from '../../components/ui';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -9,6 +9,25 @@ import { LayoutConfigV1 } from '../../types/layoutConfig';
 import { regenerateLayout } from '../../lib/generateInitialLayout';
 import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
+
+
+interface RSVPQuestionSetting {
+  id: string;
+  label: string;
+  type: 'short_text' | 'long_text' | 'single_choice';
+  required: boolean;
+  appliesTo: 'all' | 'ceremony' | 'reception';
+  options?: string[];
+}
+
+const makeQuestion = (): RSVPQuestionSetting => ({
+  id: `q_${Math.random().toString(36).slice(2, 10)}`,
+  label: '',
+  type: 'short_text',
+  required: false,
+  appliesTo: 'all',
+  options: [],
+});
 
 export const DashboardSettings: React.FC = () => {
   const { user } = useAuth();
@@ -40,6 +59,10 @@ export const DashboardSettings: React.FC = () => {
   const [sitePassword, setSitePassword] = useState('');
   const [showSitePassword, setShowSitePassword] = useState(false);
   const [guestAccessToken, setGuestAccessToken] = useState<string | null>(null);
+  const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
+  const [rsvpQuestionsSaving, setRsvpQuestionsSaving] = useState(false);
+  const [rsvpQuestionsSuccess, setRsvpQuestionsSuccess] = useState<string | null>(null);
+  const [rsvpQuestionsError, setRsvpQuestionsError] = useState<string | null>(null);
   const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [visibilitySuccess, setVisibilitySuccess] = useState<string | null>(null);
@@ -84,7 +107,7 @@ export const DashboardSettings: React.FC = () => {
     try {
       const { data } = await supabase
         .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token, default_language')
+        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token, default_language, rsvp_custom_questions')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -107,6 +130,24 @@ export const DashboardSettings: React.FC = () => {
           setNotifDigest(prefs.digest ?? false);
           setNotifUpdates(prefs.updates ?? false);
         }
+
+        const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions)
+          ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || [])
+          : [];
+
+        const normalized = loadedQuestions
+          .map((q) => q as Partial<RSVPQuestionSetting>)
+          .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
+          .map((q) => ({
+            id: q.id as string,
+            label: (q.label as string) || '',
+            type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
+            required: !!q.required,
+            appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+            options: Array.isArray(q.options) ? q.options.filter((x) => typeof x === 'string') as string[] : [],
+          }));
+        setRsvpQuestions(normalized);
+
       } else {
         setAccountEmail(user.email ?? '');
       }
@@ -251,6 +292,45 @@ export const DashboardSettings: React.FC = () => {
     await navigator.clipboard.writeText(url);
     setPrivacyCopied(true);
     setTimeout(() => setPrivacyCopied(false), 2000);
+  };
+
+
+  const handleSaveRsvpQuestions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!weddingSiteId) return;
+
+    setRsvpQuestionsSaving(true);
+    setRsvpQuestionsSuccess(null);
+    setRsvpQuestionsError(null);
+
+    try {
+      const cleaned = rsvpQuestions
+        .map((q) => ({
+          ...q,
+          label: q.label.trim(),
+          options: q.type === 'single_choice' ? (q.options ?? []).map((o) => o.trim()).filter(Boolean) : [],
+        }))
+        .filter((q) => q.label.length > 0);
+
+      const missingOptions = cleaned.find((q) => q.type === 'single_choice' && (q.options?.length ?? 0) < 2);
+      if (missingOptions) {
+        setRsvpQuestionsError(`Single-choice question "${missingOptions.label}" needs at least 2 options.`);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ rsvp_custom_questions: cleaned })
+        .eq('id', weddingSiteId);
+
+      if (error) throw error;
+      setRsvpQuestions(cleaned);
+      setRsvpQuestionsSuccess('RSVP custom questions saved.');
+    } catch (err) {
+      setRsvpQuestionsError(err instanceof Error ? err.message : 'Failed to save RSVP custom questions.');
+    } finally {
+      setRsvpQuestionsSaving(false);
+    }
   };
 
   const handleSaveNotifications = async (e: React.FormEvent) => {
@@ -524,6 +604,112 @@ export const DashboardSettings: React.FC = () => {
                     <p className="text-sm text-text-secondary">
                       Custom domain support is in development. You will be able to connect your own domain once it launches.
                     </p>
+                  </CardContent>
+                </Card>
+
+                <Card variant="bordered" padding="lg">
+                  <CardHeader>
+                    <CardTitle>RSVP Custom Questions</CardTitle>
+                    <CardDescription>Add optional questions to collect extra details from guests</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleSaveRsvpQuestions} className="space-y-4">
+                      {rsvpQuestionsSuccess && (
+                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{rsvpQuestionsSuccess}</div>
+                      )}
+                      {rsvpQuestionsError && (
+                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{rsvpQuestionsError}</div>
+                      )}
+
+                      <div className="space-y-3">
+                        {rsvpQuestions.length === 0 && (
+                          <p className="text-sm text-text-secondary">No custom questions yet. Add one below.</p>
+                        )}
+
+                        {rsvpQuestions.map((q, idx) => (
+                          <div key={q.id} className="p-4 border border-border rounded-xl space-y-3 bg-surface-subtle">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold text-text-primary">Question {idx + 1}</p>
+                              <button
+                                type="button"
+                                onClick={() => setRsvpQuestions((prev) => prev.filter((item) => item.id !== q.id))}
+                                className="text-error hover:text-error/80"
+                                aria-label="Remove question"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            <Input
+                              label="Prompt"
+                              value={q.label}
+                              onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, label: e.target.value } : item))}
+                              placeholder="e.g., Song request"
+                            />
+
+                            <div className="grid md:grid-cols-3 gap-3">
+                              <Select
+                                label="Type"
+                                value={q.type}
+                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, type: e.target.value as RSVPQuestionSetting['type'] } : item))}
+                                options={[
+                                  { value: 'short_text', label: 'Short text' },
+                                  { value: 'long_text', label: 'Long text' },
+                                  { value: 'single_choice', label: 'Single choice' },
+                                ]}
+                              />
+
+                              <Select
+                                label="Applies to"
+                                value={q.appliesTo}
+                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : item))}
+                                options={[
+                                  { value: 'all', label: 'All attendees' },
+                                  { value: 'ceremony', label: 'Ceremony attendees' },
+                                  { value: 'reception', label: 'Reception attendees' },
+                                ]}
+                              />
+
+                              <label className="flex items-center gap-2 mt-7 text-sm text-text-primary">
+                                <input
+                                  type="checkbox"
+                                  checked={q.required}
+                                  onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, required: e.target.checked } : item))}
+                                  className="w-4 h-4 rounded border-border text-primary"
+                                />
+                                Required
+                              </label>
+                            </div>
+
+                            {q.type === 'single_choice' && (
+                              <Textarea
+                                label="Choices (one per line)"
+                                rows={3}
+                                value={(q.options ?? []).join('\n')}
+                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, options: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) } : item))}
+                                placeholder={'Chicken\\nBeef\\nVegetarian'}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 justify-between pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setRsvpQuestions((prev) => [...prev, makeQuestion()])}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Question
+                        </Button>
+
+                        <Button variant="primary" size="md" type="submit" disabled={rsvpQuestionsSaving}>
+                          {rsvpQuestionsSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                          Save RSVP Questions
+                        </Button>
+                      </div>
+                    </form>
                   </CardContent>
                 </Card>
 

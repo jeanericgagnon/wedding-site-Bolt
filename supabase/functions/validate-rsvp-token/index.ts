@@ -20,6 +20,7 @@ interface SubmitPayload {
   mealChoice?: string | null;
   plusOneName?: string | null;
   notes?: string | null;
+  customAnswers?: Record<string, unknown> | null;
   website?: string;
   hp_field?: string;
 }
@@ -74,21 +75,36 @@ Deno.serve(async (req: Request) => {
         .eq("invite_token", trimmed)
         .maybeSingle();
 
-      const fetchDeadline = async (siteId: string): Promise<string | null> => {
+      const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[] }> => {
         const { data } = await adminClient
           .from("wedding_sites")
-          .select("rsvp_deadline")
+          .select("rsvp_deadline, rsvp_custom_questions")
           .eq("id", siteId)
           .maybeSingle();
-        return (data as { rsvp_deadline?: string | null } | null)?.rsvp_deadline ?? null;
+
+        const typed = data as { rsvp_deadline?: string | null; rsvp_custom_questions?: unknown } | null;
+        const parsedQuestions = Array.isArray(typed?.rsvp_custom_questions)
+          ? typed?.rsvp_custom_questions
+          : [];
+
+        return {
+          rsvpDeadline: typed?.rsvp_deadline ?? null,
+          rsvpQuestions: parsedQuestions,
+        };
       };
 
       if (byToken) {
-        const [existingRsvpResult, deadline] = await Promise.all([
-          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes").eq("guest_id", byToken.id).maybeSingle(),
-          fetchDeadline(byToken.wedding_site_id),
+        const [existingRsvpResult, config] = await Promise.all([
+          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes, custom_answers").eq("guest_id", byToken.id).maybeSingle(),
+          fetchRsvpConfig(byToken.wedding_site_id),
         ]);
-        return json({ guest: byToken, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: deadline });
+        return json({
+          guest: byToken,
+          existingRsvp: existingRsvpResult.data,
+          guests: null,
+          rsvpDeadline: config.rsvpDeadline,
+          rsvpQuestions: config.rsvpQuestions,
+        });
       }
 
       const lower = trimmed.toLowerCase();
@@ -104,14 +120,20 @@ Deno.serve(async (req: Request) => {
 
       if (byName.length === 1) {
         const guest = byName[0];
-        const [existingRsvpResult, deadline] = await Promise.all([
-          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes").eq("guest_id", guest.id).maybeSingle(),
-          fetchDeadline(guest.wedding_site_id),
+        const [existingRsvpResult, config] = await Promise.all([
+          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes, custom_answers").eq("guest_id", guest.id).maybeSingle(),
+          fetchRsvpConfig(guest.wedding_site_id),
         ]);
-        return json({ guest, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: deadline });
+        return json({
+          guest,
+          existingRsvp: existingRsvpResult.data,
+          guests: null,
+          rsvpDeadline: config.rsvpDeadline,
+          rsvpQuestions: config.rsvpQuestions,
+        });
       }
 
-      return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null });
+      return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null, rsvpQuestions: [] });
     }
 
     if (payload.action === "submit") {
@@ -121,7 +143,7 @@ Deno.serve(async (req: Request) => {
         return json({ success: true });
       }
 
-      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes } = submitPayload;
+      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes, customAnswers } = submitPayload;
 
       if (!guestId || !inviteToken) {
         return json({ error: "guestId and inviteToken are required" }, 400);
@@ -186,6 +208,7 @@ Deno.serve(async (req: Request) => {
         meal_choice: mealChoice ?? null,
         plus_one_name: plusOneName ?? null,
         notes: notes ?? null,
+        custom_answers: (customAnswers && typeof customAnswers === "object" && !Array.isArray(customAnswers)) ? customAnswers : {},
         responded_at: new Date().toISOString(),
       };
 
