@@ -29,8 +29,10 @@ const makeQuestion = (): RSVPQuestionSetting => ({
   options: [],
 });
 
+const LOCAL_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
+
 export const DashboardSettings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [activeTab, setActiveTab] = useState<'account' | 'site' | 'notifications' | 'billing'>('account');
 
   const [coupleNames, setCoupleNames] = useState('');
@@ -90,7 +92,7 @@ export const DashboardSettings: React.FC = () => {
 
   useEffect(() => {
     loadSiteData();
-  }, [user]);
+  }, [user, isDemoMode]);
 
   useEffect(() => {
     if (activeTab === 'billing' && user && !billingInfo) {
@@ -104,6 +106,30 @@ export const DashboardSettings: React.FC = () => {
 
   const loadSiteData = async () => {
     if (!user) return;
+
+    if (isDemoMode) {
+      try {
+        const raw = localStorage.getItem(LOCAL_RSVP_QUESTIONS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(parsed)) {
+          const normalized = parsed
+            .map((q) => q as Partial<RSVPQuestionSetting>)
+            .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
+            .map((q) => ({
+              id: q.id as string,
+              label: (q.label as string) || '',
+              type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
+              required: !!q.required,
+              appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+              options: Array.isArray(q.options) ? q.options.filter((x) => typeof x === 'string') as string[] : [],
+            }));
+          setRsvpQuestions(normalized);
+        }
+      } catch {
+        // ignore local parse issues
+      }
+    }
+
     try {
       const { data } = await supabase
         .from('wedding_sites')
@@ -297,7 +323,6 @@ export const DashboardSettings: React.FC = () => {
 
   const handleSaveRsvpQuestions = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!weddingSiteId) return;
 
     setRsvpQuestionsSaving(true);
     setRsvpQuestionsSuccess(null);
@@ -315,6 +340,18 @@ export const DashboardSettings: React.FC = () => {
       const missingOptions = cleaned.find((q) => q.type === 'single_choice' && (q.options?.length ?? 0) < 2);
       if (missingOptions) {
         setRsvpQuestionsError(`Single-choice question "${missingOptions.label}" needs at least 2 options.`);
+        return;
+      }
+
+      if (!weddingSiteId) {
+        if (isDemoMode) {
+          localStorage.setItem(LOCAL_RSVP_QUESTIONS_KEY, JSON.stringify(cleaned));
+          setRsvpQuestions(cleaned);
+          setRsvpQuestionsSuccess('RSVP custom questions saved (demo).');
+          return;
+        }
+
+        setRsvpQuestionsError('Could not find your wedding site record. Refresh and try again.');
         return;
       }
 
