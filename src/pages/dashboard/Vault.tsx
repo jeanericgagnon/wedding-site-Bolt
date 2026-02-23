@@ -11,6 +11,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
+const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
 
 interface VaultConfig {
   id: string;
@@ -640,6 +641,40 @@ export const DashboardVault: React.FC = () => {
   }, [user, isDemoMode]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!weddingDate || vaultConfigs.length === 0) return;
+
+    const notified = (() => {
+      try {
+        const raw = localStorage.getItem(VAULT_RELEASE_NOTICE_KEY);
+        return raw ? JSON.parse(raw) as string[] : [];
+      } catch {
+        return [] as string[];
+      }
+    })();
+
+    const newlyUnlocked = vaultConfigs.filter((cfg) => {
+      const unlockDate = new Date(weddingDate);
+      unlockDate.setFullYear(unlockDate.getFullYear() + cfg.duration_years);
+      const key = `${cfg.id}:${unlockDate.toISOString().slice(0, 10)}`;
+      return cfg.is_enabled && new Date() >= unlockDate && !notified.includes(key);
+    });
+
+    if (newlyUnlocked.length === 0) return;
+
+    newlyUnlocked.forEach((cfg) => {
+      toast(`Vault unlocked: ${cfg.label || `${cfg.duration_years}-Year Anniversary Vault`} ✨`);
+    });
+
+    const next = [...notified, ...newlyUnlocked.map((cfg) => {
+      const unlockDate = new Date(weddingDate);
+      unlockDate.setFullYear(unlockDate.getFullYear() + cfg.duration_years);
+      return `${cfg.id}:${unlockDate.toISOString().slice(0, 10)}`;
+    })];
+
+    localStorage.setItem(VAULT_RELEASE_NOTICE_KEY, JSON.stringify(Array.from(new Set(next))));
+  }, [vaultConfigs, weddingDate]);
 
   async function handleAddVault() {
     if (!weddingSiteId || vaultConfigs.length >= MAX_VAULTS || addingVault) return;

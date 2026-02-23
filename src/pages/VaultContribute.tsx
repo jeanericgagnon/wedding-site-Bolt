@@ -23,6 +23,26 @@ const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
 const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
 
+function getContributionWindow(weddingDateRaw: string | null): { canSubmit: boolean; message: string | null } {
+  if (!weddingDateRaw) return { canSubmit: true, message: null };
+  const weddingDate = new Date(weddingDateRaw);
+  if (Number.isNaN(weddingDate.getTime())) return { canSubmit: true, message: null };
+
+  const openAt = new Date(weddingDate);
+  openAt.setDate(openAt.getDate() - 3);
+  const closeAt = new Date(weddingDate);
+  closeAt.setDate(closeAt.getDate() + 3);
+
+  const now = new Date();
+  if (now < openAt) {
+    return { canSubmit: false, message: `Vault uploads open 3 days before the wedding (${openAt.toLocaleDateString()}).` };
+  }
+  if (now > closeAt) {
+    return { canSubmit: false, message: `Vault uploads closed on ${closeAt.toLocaleDateString()} (7-day upload window complete).` };
+  }
+  return { canSubmit: true, message: `Uploads are open now (window closes ${closeAt.toLocaleDateString()}).` };
+}
+
 function ordinalLabel(years: number): string {
   if (years === 1) return 'first';
   if (years === 2) return 'second';
@@ -356,6 +376,13 @@ export const VaultContribute: React.FC = () => {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate() || !site || !vaultConfig) return;
+
+    const liveWindow = getContributionWindow(site.wedding_date);
+    if (!liveWindow.canSubmit) {
+      setSubmitError(liveWindow.message || 'Uploads are currently closed for this vault.');
+      return;
+    }
+
     setSubmitting(true);
 
     const uploadedItems: Array<{ url: string | null; name: string | null; mime: string | null; size: number | null }> = [];
@@ -473,6 +500,7 @@ export const VaultContribute: React.FC = () => {
   const description = vaultConfig
     ? `Leave a message to be opened on the couple's ${ordinal} anniversary.`
     : 'Choose a vault and leave a message for a future anniversary.';
+  const contributionWindow = getContributionWindow(site?.wedding_date ?? null);
 
   if (step === 'loading') {
     return (
@@ -606,6 +634,11 @@ export const VaultContribute: React.FC = () => {
 
           <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {contributionWindow.message && (
+                <div className={`text-xs rounded-xl px-3 py-2 border ${contributionWindow.canSubmit ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-warning/10 border-warning/30 text-warning'}`}>
+                  {contributionWindow.message}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-1.5">
                   Your name <span className="text-red-500">*</span>
@@ -804,7 +837,7 @@ export const VaultContribute: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !contributionWindow.canSubmit}
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
