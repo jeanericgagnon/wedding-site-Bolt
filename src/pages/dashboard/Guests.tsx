@@ -681,7 +681,14 @@ export const DashboardGuests: React.FC = () => {
       guest.last_name?.toLowerCase().includes(searchTerm) ||
       guest.name.toLowerCase().includes(searchTerm) ||
       guest.email?.toLowerCase().includes(searchTerm);
-    const matchesFilter = filterStatus === 'all' || guest.rsvp_status === filterStatus;
+
+    const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+    const matchesFilter =
+      filterStatus === 'all' ||
+      guest.rsvp_status === filterStatus ||
+      (filterStatus === 'ceremony-no' && eventSelections?.ceremony === false) ||
+      (filterStatus === 'reception-no' && eventSelections?.reception === false);
+
     return matchesSearch && matchesFilter;
   });
 
@@ -691,6 +698,14 @@ export const DashboardGuests: React.FC = () => {
     declined: guests.filter(g => g.rsvp_status === 'declined').length,
     pending: guests.filter(g => g.rsvp_status === 'pending').length,
     rsvpRate: guests.length > 0 ? Math.round(((guests.filter(g => g.rsvp_status !== 'pending').length) / guests.length) * 100) : 0,
+  };
+
+  const rsvpOps = {
+    missingMeal: guests.filter(g => g.rsvp?.attending && !g.rsvp?.meal_choice).length,
+    plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
+    ceremonyNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.ceremony === false).length,
+    receptionNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.reception === false).length,
+    noResponse: guests.filter(g => g.rsvp_status === 'pending').length,
   };
 
   const getStatusBadge = (status: string) => {
@@ -865,6 +880,35 @@ export const DashboardGuests: React.FC = () => {
           </Card>
         </div>
 
+        <Card variant="bordered" padding="md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+            <h3 className="text-sm font-semibold text-text-primary">RSVP Ops Panel</h3>
+            <span className="text-xs text-text-tertiary">Action-focused follow up</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('all'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Missing meal choice</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('all'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Plus-one missing name</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('ceremony-no'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Ceremony: No</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.ceremonyNo}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('reception-no'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Reception: No</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.receptionNo}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('pending'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">No response yet</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.noResponse}</p>
+            </button>
+          </div>
+        </Card>
+
         {(() => {
           const conflicts: string[] = [];
           const emailsSeen = new Map<string, string>();
@@ -938,6 +982,8 @@ export const DashboardGuests: React.FC = () => {
                   { id: 'confirmed', label: `Confirmed (${stats.confirmed})` },
                   { id: 'declined', label: `Declined (${stats.declined})` },
                   { id: 'pending', label: `Pending (${stats.pending})` },
+                  { id: 'ceremony-no', label: `Ceremony No (${rsvpOps.ceremonyNo})` },
+                  { id: 'reception-no', label: `Reception No (${rsvpOps.receptionNo})` },
                 ] as const).map(({ id, label }) => (
                   <button
                     key={id}
