@@ -619,11 +619,28 @@ export default function RSVP() {
                                 placeholder="Your answer"
                               />
                             ) : q.type === 'single_choice' ? (
-                              <Select
-                                value={customAnswers[q.id] ?? ''}
-                                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-                                options={[{ value: '', label: 'Select an option' }, ...((q.options ?? []).map((opt) => ({ value: opt, label: opt })))]}
-                              />
+                              <div className="space-y-2">
+                                {(q.options ?? []).map((opt) => {
+                                  const checked = (customAnswers[q.id] ?? '') === opt;
+                                  return (
+                                    <label key={`${q.id}-${opt}`} className="flex items-center gap-2 text-sm text-gray-800">
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setCustomAnswers((prev) => ({ ...prev, [q.id]: opt }));
+                                          } else {
+                                            setCustomAnswers((prev) => ({ ...prev, [q.id]: '' }));
+                                          }
+                                        }}
+                                        className="w-4 h-4"
+                                      />
+                                      <span>{opt}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
                             ) : (
                               <Input
                                 type="text"

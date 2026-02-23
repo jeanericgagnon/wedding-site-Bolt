@@ -688,7 +688,15 @@ export const DashboardSettings: React.FC = () => {
                               <Select
                                 label="Type"
                                 value={q.type}
-                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, type: e.target.value as RSVPQuestionSetting['type'] } : item))}
+                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => {
+                                  if (item.id !== q.id) return item;
+                                  const nextType = e.target.value as RSVPQuestionSetting['type'];
+                                  if (nextType === 'single_choice') {
+                                    const current = item.options ?? [];
+                                    return { ...item, type: nextType, options: current.length > 0 ? current : ['', ''] };
+                                  }
+                                  return { ...item, type: nextType, options: [] };
+                                }))}
                                 options={[
                                   { value: 'short_text', label: 'Short text' },
                                   { value: 'long_text', label: 'Long text' },
