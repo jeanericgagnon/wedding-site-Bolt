@@ -61,6 +61,7 @@ export const DashboardRegistry: React.FC = () => {
   const [refreshCapDraft, setRefreshCapDraft] = useState(100);
   const [refreshWindowDraft, setRefreshWindowDraft] = useState('');
   const [savingRefreshPolicy, setSavingRefreshPolicy] = useState(false);
+  const [refreshPreset, setRefreshPreset] = useState<'lean' | 'balanced' | 'aggressive'>('balanced');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RegistryFilter>('all');
   const [showForm, setShowForm] = useState(false);
@@ -149,8 +150,10 @@ export const DashboardRegistry: React.FC = () => {
           const resetCount = typedSite.registry_monthly_refresh_month !== monthKey;
           setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
           setRefreshWindowDraft((typedSite.registry_refresh_enabled_until ?? '').slice(0, 10));
-          setMonthlyRefreshCap(typedSite.registry_monthly_refresh_cap ?? 100);
-          setRefreshCapDraft(typedSite.registry_monthly_refresh_cap ?? 100);
+          const loadedCap = typedSite.registry_monthly_refresh_cap ?? 100;
+          setMonthlyRefreshCap(loadedCap);
+          setRefreshCapDraft(loadedCap);
+          setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
           setMonthlyRefreshCount(resetCount ? 0 : (typedSite.registry_monthly_refresh_count ?? 0));
           await loadItems(site.id);
         }
@@ -467,6 +470,17 @@ export const DashboardRegistry: React.FC = () => {
     setRefreshWindowDraft(iso);
   }
 
+  function applyRefreshPreset(preset: 'lean' | 'balanced' | 'aggressive') {
+    setRefreshPreset(preset);
+    const cap = preset === 'lean' ? 60 : preset === 'balanced' ? 120 : 240;
+    setRefreshCapDraft(cap);
+    if (weddingDate) {
+      const d = new Date(weddingDate);
+      d.setDate(d.getDate() + 30);
+      setRefreshWindowDraft(d.toISOString().slice(0, 10));
+    }
+  }
+
   function handleEdit(item: RegistryItem) {
     setEditItem(item);
     setShowForm(true);
@@ -548,6 +562,11 @@ export const DashboardRegistry: React.FC = () => {
               Auto-refresh window: {refreshWindowOpen ? 'Open' : 'Closed'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month
             </p>
             <div className="mt-2 flex flex-wrap items-end gap-2">
+              <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
+                <button className={`px-2 py-1 ${refreshPreset === 'lean' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('lean')}>Lean</button>
+                <button className={`px-2 py-1 border-l border-border ${refreshPreset === 'balanced' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('balanced')}>Balanced</button>
+                <button className={`px-2 py-1 border-l border-border ${refreshPreset === 'aggressive' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('aggressive')}>Aggressive</button>
+              </div>
               <label className="text-xs text-text-secondary">
                 Monthly cap
                 <input
@@ -570,6 +589,7 @@ export const DashboardRegistry: React.FC = () => {
               </label>
               <Button variant="ghost" size="sm" onClick={setDefaultRefreshWindowFromWedding} disabled={!weddingDate}>Use wedding + 30d</Button>
               <Button variant="outline" size="sm" onClick={handleSaveRefreshPolicy} disabled={savingRefreshPolicy || isDemoMode}>{savingRefreshPolicy ? 'Saving…' : 'Save policy'}</Button>
+              <span className="text-[11px] text-text-tertiary">Lean=60 · Balanced=120 · Aggressive=240 refreshes/month</span>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
