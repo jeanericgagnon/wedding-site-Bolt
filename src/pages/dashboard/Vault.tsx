@@ -12,6 +12,7 @@ import { useAuth } from '../../hooks/useAuth';
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
+const DEMO_WEDDING_DATE = '2026-02-23';
 
 interface VaultConfig {
   id: string;
@@ -690,7 +691,8 @@ export const DashboardVault: React.FC = () => {
 
         if (demoSite) {
           setWeddingSiteId(demoSite.id);
-          if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
+if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
+          else setWeddingDate(new Date(DEMO_WEDDING_DATE));
 
           const { data: configData } = await supabase
             .from('vault_configs')
@@ -715,7 +717,8 @@ export const DashboardVault: React.FC = () => {
           return;
         }
 
-        setWeddingSiteId('demo-site-id');
+setWeddingSiteId('demo-site-id');
+        setWeddingDate(new Date(DEMO_WEDDING_DATE));
         const demoState = loadDemoState();
         setVaultConfigs(demoState.vaultConfigs);
         setEntries(demoState.entries);

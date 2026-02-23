@@ -22,6 +22,7 @@ type Step = 'loading' | 'hub' | 'form' | 'success' | 'error' | 'invalid';
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
 const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
+const DEMO_WEDDING_DATE = '2026-02-23';
 
 function getContributionWindow(weddingDateRaw: string | null): { canSubmit: boolean; message: string | null } {
   if (!weddingDateRaw) return { canSubmit: true, message: null };
@@ -238,7 +239,7 @@ export const VaultContribute: React.FC = () => {
 
     if (siteError || !siteData || (!(siteData as Record<string, unknown>).is_published && !(DEMO_MODE && siteSlug === 'alex-jordan-demo'))) {
       if (DEMO_MODE && siteSlug === 'alex-jordan-demo') {
-        setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: null });
+        setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: DEMO_WEDDING_DATE });
 
         if (hasYearParam && vaultYear) {
           const cfg = { id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true } as VaultConfigInfo;
