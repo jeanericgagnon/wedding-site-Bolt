@@ -280,6 +280,31 @@ export default function RSVP() {
   const deadlinePassed = rsvpDeadline ? new Date(rsvpDeadline) < new Date() : false;
 
   const canSubmit = !!guest?.invite_token && !(deadlinePassed && !existingRsvp);
+
+  const goToNextFormStep = () => {
+    if (formStep === 1) {
+      if (formData.attending && guest && !guest.invited_to_ceremony && !guest.invited_to_reception) {
+        setError('You are marked attending, but no event invitations are enabled for this guest.');
+        return;
+      }
+      setError('');
+      setFormStep(2);
+      return;
+    }
+
+    if (formStep === 2) {
+      if (formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception) {
+        setError('Please select at least one event before continuing.');
+        return;
+      }
+      if (formData.attending && !formData.meal_choice) {
+        setError('Please choose a meal option before review.');
+        return;
+      }
+      setError('');
+      setFormStep(3);
+    }
+  };
   const invitedEvents = [
     guest?.invited_to_ceremony ? 'Ceremony' : null,
     guest?.invited_to_reception ? 'Reception' : null,
@@ -453,7 +478,7 @@ export default function RSVP() {
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Review & submit'}</p>
+              <p className="mt-2 text-xs text-gray-500">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Final review & submit'}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -625,7 +650,7 @@ export default function RSVP() {
                 {formStep < 3 ? (
                   <Button
                     type="button"
-                    onClick={() => setFormStep((formStep + 1) as 1 | 2 | 3)}
+                    onClick={goToNextFormStep}
                     className="flex-1"
                   >
                     Continue

@@ -518,7 +518,12 @@ export const DashboardGuests: React.FC = () => {
 
     const previewNames = reminderCandidates.slice(0, 3).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name);
     const previewText = previewNames.length ? `\n\nFirst recipients: ${previewNames.join(', ')}${reminderCandidates.length > 3 ? ` +${reminderCandidates.length - 3} more` : ''}` : '';
-    if (!window.confirm(`Send reminders to ${reminderCandidates.length} guest(s) in "${segmentLabelMap[filterStatus] || filterStatus}"?${previewText}`)) return;
+    if (!window.confirm(`Reminder dry-run:
+Segment: ${segmentLabelMap[filterStatus] || filterStatus}
+Recipients: ${reminderCandidates.length}
+Skip recent (24h): ${skipRecentlyInvited ? "On" : "Off"}${previewText}
+
+Proceed with send?`)) return;
 
     if (isDemoMode) {
       const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1136,6 +1141,9 @@ export const DashboardGuests: React.FC = () => {
     return (Date.now() - invitedAt.getTime()) > 24 * 60 * 60 * 1000;
   });
 
+  const dryRunRecipientPreview = reminderCandidates.slice(0, 8).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ""} ${g.last_name ?? ""}`.trim() : g.name);
+
+
   if (loading) {
     return (
       <DashboardLayout currentPage="guests">
@@ -1393,6 +1401,9 @@ export const DashboardGuests: React.FC = () => {
                   <Copy className="w-4 h-4 mr-2" />
                   Copy Emails
                 </Button>
+                <Button variant="outline" size="md" onClick={() => window.alert(`Dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`)} disabled={reminderCandidates.length === 0}>
+                  Dry Run
+                </Button>
               </div>
             </div>
 
@@ -1551,7 +1562,7 @@ export const DashboardGuests: React.FC = () => {
               </div>
             )}
 
-            <div className="flex gap-2 flex-wrap items-center justify-between">
+            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-center justify-between bg-white/90 backdrop-blur p-2 rounded-lg border border-border-subtle">
               <div className="flex gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   <button
@@ -1561,6 +1572,7 @@ export const DashboardGuests: React.FC = () => {
                     {sortByPriority ? 'Priority sort: On' : 'Priority sort: Off'}
                   </button>
                   {sortByPriority && <span className="text-[11px] text-text-tertiary">Ranks by pending/meal/plus-one/contact gaps</span>}
+                  <span className="text-[11px] text-text-tertiary">Issue legend: pending, meal, plus-one, contact, event-decline</span>
                 </div>
                 {([
                   { id: 'all', label: `All (${stats.total})` },
