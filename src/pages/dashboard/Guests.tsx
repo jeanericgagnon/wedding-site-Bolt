@@ -434,7 +434,9 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`Send reminders to ${reminderCandidates.length} guest(s) in "${segmentLabelMap[filterStatus] || filterStatus}"?`)) return;
+    const previewNames = reminderCandidates.slice(0, 3).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name);
+    const previewText = previewNames.length ? `\n\nFirst recipients: ${previewNames.join(', ')}${reminderCandidates.length > 3 ? ` +${reminderCandidates.length - 3} more` : ''}` : '';
+    if (!window.confirm(`Send reminders to ${reminderCandidates.length} guest(s) in "${segmentLabelMap[filterStatus] || filterStatus}"?${previewText}`)) return;
 
     if (isDemoMode) {
       const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -820,6 +822,39 @@ export const DashboardGuests: React.FC = () => {
     pendingNoEmail: guests.filter(g => g.rsvp_status === 'pending' && !g.email).length,
   };
 
+
+  const recommendedAction = (() => {
+    if (rsvpOps.pendingNoEmail > 0) {
+      return {
+        filter: 'pending-no-email' as const,
+        title: 'Collect missing email addresses',
+        detail: `${rsvpOps.pendingNoEmail} pending guests can’t receive reminders yet.`,
+      };
+    }
+    if (rsvpOps.noResponse > 0) {
+      return {
+        filter: 'pending' as const,
+        title: 'Send reminder to pending guests',
+        detail: `${rsvpOps.noResponse} guests still haven’t responded.`,
+      };
+    }
+    if (rsvpOps.missingMeal > 0) {
+      return {
+        filter: 'missing-meal' as const,
+        title: 'Collect missing meal choices',
+        detail: `${rsvpOps.missingMeal} attending guests are missing meal picks.`,
+      };
+    }
+    if (rsvpOps.plusOneMissingName > 0) {
+      return {
+        filter: 'plusone-missing' as const,
+        title: 'Collect plus-one names',
+        detail: `${rsvpOps.plusOneMissingName} RSVPs allow plus-ones but names are missing.`,
+      };
+    }
+    return null;
+  })();
+
   const rsvpCompleteness = Math.max(0, 100 - Math.min(100, (
     (rsvpOps.noResponse * 0.55) +
     (rsvpOps.missingMeal * 0.25) +
@@ -1107,6 +1142,21 @@ export const DashboardGuests: React.FC = () => {
 
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">
+            {recommendedAction && (
+              <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Recommended next action: {recommendedAction.title}</p>
+                  <p className="text-xs text-text-secondary mt-0.5">{recommendedAction.detail}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setFilterStatus(recommendedAction.filter); setViewMode('list'); setSearchQuery(''); }}
+                >
+                  Focus now
+                </Button>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <Input
