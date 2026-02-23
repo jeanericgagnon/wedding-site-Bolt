@@ -249,7 +249,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   }
 
   return (
-    <Card variant="bordered" padding="lg" className={!config.is_enabled ? 'opacity-60' : ''}>
+    <Card variant="bordered" padding="lg" className={`transition-all shadow-sm hover:shadow-md border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <div className={`p-2.5 rounded-xl flex-shrink-0 ${isUnlocked && config.is_enabled ? 'bg-success-light' : 'bg-surface-subtle'}`}>
@@ -259,8 +259,9 @@ const VaultCard: React.FC<VaultCardProps> = ({
             }
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-text-primary truncate">{config.label || `Vault ${config.vault_index}`}</h3>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 flex-shrink-0">{config.duration_years}yr</span>
               {!config.is_enabled && (
                 <span className="text-xs bg-surface-subtle text-text-tertiary px-2 py-0.5 rounded-full border border-border flex-shrink-0">Disabled</span>
               )}
@@ -282,10 +283,10 @@ const VaultCard: React.FC<VaultCardProps> = ({
           {siteSlug && config.is_enabled && (
             <button
               onClick={handleCopyLink}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm ${
                 copied
                   ? 'border-success/40 bg-success-light text-success'
-                  : 'border-border bg-surface-subtle text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'
+                  : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'
               }`}
               title="Copy shareable link for guests"
             >
@@ -919,14 +920,16 @@ export const DashboardVault: React.FC = () => {
   return (
     <DashboardLayout currentPage="vault">
       <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
-            <p className="text-text-secondary">
-              Time capsule messages sealed until each anniversary milestone. Up to {MAX_VAULTS} vaults supported.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+        <div className="rounded-2xl border border-primary/15 bg-[linear-gradient(135deg,rgba(59,130,246,0.07),rgba(255,255,255,0.95))] p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.16em] text-primary/80 font-semibold mb-2">Time Capsule</p>
+              <h1 className="text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
+              <p className="text-text-secondary">
+                Time capsule messages sealed until each anniversary milestone. Up to {MAX_VAULTS} vaults supported.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
             {totalEntries > 0 && (
               <div className="text-right">
                 <p className="text-2xl font-bold text-text-primary leading-none">{totalEntries}</p>
@@ -946,6 +949,7 @@ export const DashboardVault: React.FC = () => {
             )}
           </div>
         </div>
+      </div>
 
         {!weddingDate && (
           <div className="flex items-start gap-3 p-4 bg-warning-light border border-warning/20 rounded-xl text-sm text-warning">
