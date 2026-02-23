@@ -890,6 +890,16 @@ export const DashboardGuests: React.FC = () => {
     rsvpRate: guests.length > 0 ? Math.round(((guests.filter(g => g.rsvp_status !== 'pending').length) / guests.length) * 100) : 0,
   };
 
+
+  const contactStats = {
+    withEmail: guests.filter(g => !!g.email).length,
+    withPhone: guests.filter(g => !!g.phone).length,
+    withNoContact: guests.filter(g => !g.email && !g.phone).length,
+    contactCoverage: guests.length > 0
+      ? Math.round((guests.filter(g => !!g.email || !!g.phone).length / guests.length) * 100)
+      : 0,
+  };
+
   const rsvpOps = {
     missingMeal: guests.filter(g => g.rsvp?.attending && !g.rsvp?.meal_choice).length,
     plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
@@ -1107,7 +1117,7 @@ export const DashboardGuests: React.FC = () => {
           <p className="text-text-secondary">Manage your guest list and track responses</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-success-light rounded-lg flex-shrink-0">
@@ -1164,6 +1174,18 @@ export const DashboardGuests: React.FC = () => {
               <div>
                 <p className="text-2xl font-bold text-text-primary">{Math.round(rsvpCompleteness)}%</p>
                 <p className="text-sm text-text-secondary">Completeness</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card variant="bordered" padding="md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{contactStats.contactCoverage}%</p>
+                <p className="text-sm text-text-secondary">Contact coverage</p>
               </div>
             </div>
           </Card>
@@ -1335,7 +1357,7 @@ export const DashboardGuests: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle space-y-2">
-              <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span></div>
+              <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
               {daysToWedding !== null && (
                 <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
                   Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
@@ -1396,6 +1418,7 @@ export const DashboardGuests: React.FC = () => {
                 <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
                 <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
                 <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
+                <button onClick={() => { setSearchQuery(''); setFilterStatus('all'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
               </div>
 
               {followUpTasks.length > 0 && (
