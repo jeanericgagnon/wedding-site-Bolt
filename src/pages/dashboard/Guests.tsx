@@ -86,6 +86,7 @@ export const DashboardGuests: React.FC = () => {
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
   const [bulkSending, setBulkSending] = useState(false);
+  const [campaignLog, setCampaignLog] = useState<Array<{ id: number; segment: string; count: number; sentAt: string }>>([]);
 
   const [viewMode, setViewMode] = useState<'list' | 'households'>('list');
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
@@ -391,15 +392,17 @@ export const DashboardGuests: React.FC = () => {
 
 
   const handleSendBulkInvitations = async () => {
-    if (emailableFilteredGuests.length === 0) {
-      toast('No guests with email + invite token in this filtered view.', 'error');
+    if (reminderCandidates.length === 0) {
+      toast('No reminder recipients in this filtered view.', 'error');
       return;
     }
 
-    if (!window.confirm(`Send reminders to ${emailableFilteredGuests.length} guest(s) in current filter?`)) return;
+    if (!window.confirm(`Send reminders to ${reminderCandidates.length} guest(s) in current filter?`)) return;
 
     if (isDemoMode) {
-      toast(`Demo: simulated reminders for ${emailableFilteredGuests.length} guests`, 'success');
+      const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: reminderCandidates.length, sentAt }, ...prev].slice(0, 6));
+      toast(`Demo: simulated reminders for ${reminderCandidates.length} guests`, 'success');
       return;
     }
 
@@ -407,7 +410,7 @@ export const DashboardGuests: React.FC = () => {
     let successCount = 0;
 
     try {
-      for (const guest of emailableFilteredGuests) {
+      for (const guest of reminderCandidates) {
         if (!guest.email) continue;
         const guestName = guest.first_name && guest.last_name
           ? `${guest.first_name} ${guest.last_name}`
@@ -438,6 +441,8 @@ export const DashboardGuests: React.FC = () => {
       }
 
       if (successCount > 0) {
+        const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(`Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`, 'success');
       } else {
         toast('No reminders were sent. Please try again.', 'error');
@@ -771,6 +776,18 @@ export const DashboardGuests: React.FC = () => {
     noResponse: guests.filter(g => g.rsvp_status === 'pending').length,
   };
 
+
+  const segmentLabelMap: Record<string, string> = {
+    all: 'All Guests',
+    confirmed: 'Confirmed',
+    declined: 'Declined',
+    pending: 'Pending',
+    'ceremony-no': 'Ceremony: No',
+    'reception-no': 'Reception: No',
+    'missing-meal': 'Missing Meal',
+    'plusone-missing': 'Plus-one Missing Name',
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'success' | 'error' | 'warning'> = {
       confirmed: 'success',
@@ -871,6 +888,15 @@ export const DashboardGuests: React.FC = () => {
       </div>
     </>
   );
+
+  const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
+
+  const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
+    if (!skipRecentlyInvited) return true;
+    const invitedAt = (g as any).invitation_sent_at ? new Date((g as any).invitation_sent_at) : null;
+    if (!invitedAt || Number.isNaN(invitedAt.getTime())) return true;
+    return (Date.now() - invitedAt.getTime()) > 24 * 60 * 60 * 1000;
+  });
 
   if (loading) {
     return (
@@ -1035,11 +1061,33 @@ export const DashboardGuests: React.FC = () => {
                   <UserPlus className="w-4 h-4 mr-2" />
                   Add Guest
                 </Button>
-                <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || emailableFilteredGuests.length === 0}>
+                <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || reminderCandidates.length === 0}>
                   <Mail className="w-4 h-4 mr-2" />
-                  {bulkSending ? 'Sending…' : `Remind Filtered (${emailableFilteredGuests.length})`}
+                  {bulkSending ? 'Sending…' : `Remind Filtered (${reminderCandidates.length})`}
                 </Button>
               </div>
+            </div>
+
+            <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <p className="text-xs text-text-secondary">
+                  Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
+                  Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span>
+                </p>
+                <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
+                  <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
+                  Skip guests invited in last 24h
+                </label>
+              </div>
+              {campaignLog.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {campaignLog.map((log) => (
+                    <span key={log.id} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary">
+                      {log.segment}: {log.count} sent · {log.sentAt}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 flex-wrap items-center justify-between">
