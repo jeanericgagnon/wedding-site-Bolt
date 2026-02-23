@@ -776,6 +776,12 @@ export const DashboardGuests: React.FC = () => {
     noResponse: guests.filter(g => g.rsvp_status === 'pending').length,
   };
 
+  const rsvpCompleteness = Math.max(0, 100 - Math.min(100, (
+    (rsvpOps.noResponse * 0.55) +
+    (rsvpOps.missingMeal * 0.25) +
+    (rsvpOps.plusOneMissingName * 0.2)
+  )));
+
 
   const segmentLabelMap: Record<string, string> = {
     all: 'All Guests',
@@ -919,7 +925,7 @@ export const DashboardGuests: React.FC = () => {
           <p className="text-text-secondary">Manage your guest list and track responses</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-success-light rounded-lg flex-shrink-0">
@@ -964,6 +970,18 @@ export const DashboardGuests: React.FC = () => {
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.total}</p>
                 <p className="text-sm text-text-secondary">Total ({stats.rsvpRate}% responded)</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card variant="bordered" padding="md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <CheckCircle2 className="w-6 h-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{Math.round(rsvpCompleteness)}%</p>
+                <p className="text-sm text-text-secondary">Completeness</p>
               </div>
             </div>
           </Card>
@@ -1069,6 +1087,7 @@ export const DashboardGuests: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle space-y-2">
+              <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span></div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <p className="text-xs text-text-secondary">
                   Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
