@@ -95,7 +95,25 @@ Deno.serve(async (req: Request) => {
     }
 
     if (entry.storage_provider !== "google_drive") {
-      return json({ url: entry.attachment_url ?? null });
+      const rawUrl = (entry.attachment_url as string | null) ?? null;
+      if (!rawUrl) return json({ url: null });
+
+      let path: string | null = null;
+      const marker = '/storage/v1/object/public/vault-attachments/';
+      const idx = rawUrl.indexOf(marker);
+      if (idx >= 0) {
+        path = decodeURIComponent(rawUrl.slice(idx + marker.length));
+      } else if (rawUrl.startsWith('public/')) {
+        path = rawUrl;
+      }
+
+      if (!path) return json({ url: rawUrl });
+
+      const { data: signed, error: signedErr } = await adminClient.storage
+        .from('vault-attachments')
+        .createSignedUrl(path, 60 * 5);
+      if (signedErr) return json({ error: signedErr.message }, 400);
+      return json({ url: signed?.signedUrl ?? null });
     }
 
     if (!entry.external_file_id) {

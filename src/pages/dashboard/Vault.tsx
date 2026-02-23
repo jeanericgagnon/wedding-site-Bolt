@@ -252,7 +252,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
   };
 
   async function resolveEntryLink(entry: VaultEntry): Promise<string | null> {
-    if (entry.storage_provider !== 'google_drive') return entry.attachment_url ?? null;
     if (resolvedEntryLinks[entry.id]) return resolvedEntryLinks[entry.id];
 
     setResolvingEntryId(entry.id);
@@ -432,7 +431,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
                   <>
                     <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
                     {(entry.attachment_url || entry.external_file_id || entry.external_file_url) && (() => {
-                      const attachmentUrl = resolvedEntryLinks[entry.id] || entry.external_file_url || entry.attachment_url;
+                      const attachmentUrl = resolvedEntryLinks[entry.id] || null;
                       if (!attachmentUrl) {
                         return (
                           <div className="mt-2">
