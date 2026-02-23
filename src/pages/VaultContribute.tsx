@@ -56,7 +56,6 @@ export const VaultContribute: React.FC = () => {
     content: '',
     author_name: '',
     media_type: 'text' as 'text' | 'photo' | 'video' | 'voice',
-    attachment_url: '',
     attachment_name: '',
   });
   const [errors, setErrors] = useState<{ content?: string; author_name?: string; attachment_url?: string }>({});
@@ -271,7 +270,7 @@ export const VaultContribute: React.FC = () => {
     const newErrors: typeof errors = {};
     if (!form.content.trim()) newErrors.content = 'Please write a message.';
     if (!form.author_name.trim()) newErrors.author_name = 'Please enter your name.';
-    if (form.media_type !== 'text' && !form.attachment_url.trim() && selectedFiles.length === 0) newErrors.attachment_url = 'Please add a media URL or upload at least one file.';
+    if (form.media_type !== 'text' && selectedFiles.length === 0) newErrors.attachment_url = 'Please upload at least one file.';
     setErrors(newErrors);
     setSubmitError(null);
     return Object.keys(newErrors).length === 0;
@@ -331,8 +330,6 @@ export const VaultContribute: React.FC = () => {
         uploadedItems.push({ url: publicData.publicUrl, name: file.name, mime: file.type || null, size: file.size || null });
         setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
       }
-    } else if (form.attachment_url.trim()) {
-      uploadedItems.push({ url: form.attachment_url.trim(), name: form.attachment_name.trim() || null, mime: null, size: null });
     } else {
       uploadedItems.push({ url: null, name: null, mime: null, size: null });
     }
@@ -596,88 +593,9 @@ export const VaultContribute: React.FC = () => {
                     <option value="voice">Voice note</option>
                   </select>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                    Media URL {form.media_type !== 'text' ? <span className="text-red-500">*</span> : <span className="text-stone-400 font-normal">(optional)</span>}
-                  </label>
-                  <input
-                    type="url"
-                    value={form.attachment_url}
-                    onChange={e => setForm({ ...form, attachment_url: e.target.value })}
-                    placeholder={form.media_type === 'text' ? 'https://… (optional)' : 'https://… (required for media)'}
-                    className={`w-full px-4 py-2.5 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition ${
-                      errors.attachment_url ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
-                    }`}
-                  />
-                  {errors.attachment_url && <p className="text-red-500 text-xs mt-1">{errors.attachment_url}</p>}
-                  {form.media_type !== 'text' && (
-                    <div className="mt-2">
-                      <label className="block text-xs text-stone-500 mb-1">or upload file</label>
-                      <input
-                        type="file"
-                        multiple={form.media_type === 'photo' || form.media_type === 'video'}
-                        accept={form.media_type === 'photo' ? 'image/*' : form.media_type === 'video' ? 'video/*' : 'audio/*'}
-                        onChange={e => {
-                          const files = Array.from(e.target.files ?? []);
-                          if (files.length === 0) {
-                            setSelectedFiles([]);
-                            return;
-                          }
+                              </div>
 
-                          if ((form.media_type === 'photo' || form.media_type === 'video') && files.length > 3) {
-                            setSubmitError('You can upload up to 3 photos or videos per submission.');
-                            setSelectedFiles([]);
-                            return;
-                          }
 
-                          const mediaType = form.media_type;
-                          const maxMb = MAX_UPLOAD_MB_BY_TYPE[mediaType as 'photo' | 'video' | 'voice'];
-
-                          for (const file of files) {
-                            if (mediaType === 'photo' && !file.type.startsWith('image/')) {
-                              setSubmitError('Please choose only image files for Photo type.');
-                              setSelectedFiles([]);
-                              return;
-                            }
-                            if (mediaType === 'video' && !file.type.startsWith('video/')) {
-                              setSubmitError('Please choose only video files for Video type.');
-                              setSelectedFiles([]);
-                              return;
-                            }
-                            if (mediaType === 'voice' && !file.type.startsWith('audio/')) {
-                              setSubmitError('Please choose an audio file for Voice type.');
-                              setSelectedFiles([]);
-                              return;
-                            }
-                            const effectiveMaxMb = mediaType === 'video' && compressVideo ? 200 : maxMb;
-                            if (file.size > effectiveMaxMb * 1024 * 1024) {
-                              setSubmitError(
-                                mediaType === 'video' && compressVideo
-                                  ? 'This video is too large to process here (max 200MB source). Please trim/compress it first, then try again.'
-                                  : `This file is too large (max ${maxMb}MB for ${mediaType}). Please compress or trim it and re-upload.`
-                              );
-                              setSelectedFiles([]);
-                              return;
-                            }
-                          }
-
-                          setSubmitError(null);
-                          setSelectedFiles(files);
-                        }}
-                        className="w-full text-sm"
-                      />
-                      {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
-                      {form.media_type === 'video' && (
-                        <label className="mt-1 inline-flex items-center gap-2 text-xs text-stone-600">
-                          <input type="checkbox" checked={compressVideo} onChange={e => setCompressVideo(e.target.checked)} />
-                          Compress to 720p before upload (recommended)
-                        </label>
-                      )}
-                      <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each. If larger, compress first.' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (auto-compressed to 720p).' : 'Up to 3 videos, 35MB each. If larger, compress/trim first.') : 'Single voice file, 12MB max. If larger, trim/compress first.'}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-1.5">
