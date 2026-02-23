@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2 } from 'lucide-react';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -65,6 +65,7 @@ export const DashboardSettings: React.FC = () => {
   const [rsvpQuestionsSaving, setRsvpQuestionsSaving] = useState(false);
   const [rsvpQuestionsSuccess, setRsvpQuestionsSuccess] = useState<string | null>(null);
   const [rsvpQuestionsError, setRsvpQuestionsError] = useState<string | null>(null);
+  const [collapsedQuestionIds, setCollapsedQuestionIds] = useState<Set<string>>(new Set());
   const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [visibilitySuccess, setVisibilitySuccess] = useState<string | null>(null);
@@ -665,13 +666,33 @@ export const DashboardSettings: React.FC = () => {
                           <p className="text-sm text-text-secondary">No custom questions yet. Add one below.</p>
                         )}
 
-                        {rsvpQuestions.map((q, idx) => (
+                        {rsvpQuestions.map((q, idx) => {
+                          const isCollapsed = collapsedQuestionIds.has(q.id);
+                          return (
                           <div key={q.id} className="p-4 border border-border rounded-xl space-y-3 bg-surface-subtle">
                             <div className="flex items-center justify-between">
-                              <p className="text-sm font-semibold text-text-primary">Question {idx + 1}</p>
                               <button
                                 type="button"
-                                onClick={() => setRsvpQuestions((prev) => prev.filter((item) => item.id !== q.id))}
+                                onClick={() => setCollapsedQuestionIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(q.id)) next.delete(q.id); else next.add(q.id);
+                                  return next;
+                                })}
+                                className="inline-flex items-center gap-2 text-sm font-semibold text-text-primary"
+                              >
+                                <ChevronDown className={`w-4 h-4 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                                Question {idx + 1}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRsvpQuestions((prev) => prev.filter((item) => item.id !== q.id));
+                                  setCollapsedQuestionIds((prev) => {
+                                    const next = new Set(prev);
+                                    next.delete(q.id);
+                                    return next;
+                                  });
+                                }}
                                 className="text-error hover:text-error/80"
                                 aria-label="Remove question"
                               >
@@ -679,6 +700,8 @@ export const DashboardSettings: React.FC = () => {
                               </button>
                             </div>
 
+                            {!isCollapsed && (
+                              <>
                             <Input
                               label="Prompt"
                               value={q.label}
@@ -772,15 +795,18 @@ export const DashboardSettings: React.FC = () => {
                                 <p className="text-xs text-text-tertiary">At least 2 non-empty choices required.</p>
                               </div>
                             )}
+                              </>
+                            )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
 
                       <div className="flex flex-wrap gap-2 justify-between pt-2">
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setRsvpQuestions((prev) => [...prev, makeQuestion()])}
+                          onClick={() => { const q = makeQuestion(); setRsvpQuestions((prev) => [...prev, q]); setCollapsedQuestionIds((prev) => { const next = new Set(prev); next.delete(q.id); return next; }); }}
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Add Question
