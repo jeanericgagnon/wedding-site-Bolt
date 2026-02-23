@@ -232,7 +232,15 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
   function handleCopyLink() {
     if (!siteSlug) return;
-    const url = `${window.location.origin}/vault/${siteSlug}`;
+
+    const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    const vaultPath = `/vault/${siteSlug}`;
+    const isGitHubPages = window.location.hostname.includes('github.io');
+
+    const url = isGitHubPages
+      ? `${window.location.origin}${basePath || ''}/?oc_redirect=${encodeURIComponent(vaultPath)}`
+      : `${window.location.origin}${basePath}${vaultPath}`;
+
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
