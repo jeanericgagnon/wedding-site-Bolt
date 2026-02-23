@@ -89,6 +89,7 @@ export const DashboardGuests: React.FC = () => {
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
   const [bulkSending, setBulkSending] = useState(false);
   const [campaignLog, setCampaignLog] = useState<Array<{ id: number; segment: string; count: number; sentAt: string }>>([]);
+  const [showRecipientPreview, setShowRecipientPreview] = useState(false);
 
 
   useEffect(() => {
@@ -1108,7 +1109,7 @@ export const DashboardGuests: React.FC = () => {
                   <UserPlus className="w-4 h-4 mr-2" />
                   Add Guest
                 </Button>
-                <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || reminderCandidates.length === 0}>
+                <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || reminderCandidates.length === 0} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>
                   <Mail className="w-4 h-4 mr-2" />
                   {bulkSending ? 'Sending…' : `Remind Filtered (${reminderCandidates.length})`}
                 </Button>
@@ -1129,9 +1130,26 @@ export const DashboardGuests: React.FC = () => {
               </div>
 
               {reminderCandidates.length > 0 && (
-                <div className="text-xs text-text-tertiary">
-                  Preview: {reminderCandidates.slice(0, 5).map((g) => `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || g.name).join(', ')}
-                  {reminderCandidates.length > 5 ? ` +${reminderCandidates.length - 5} more` : ''}
+                <div className="space-y-1">
+                  <button
+                    onClick={() => setShowRecipientPreview(v => !v)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    {showRecipientPreview ? 'Hide' : 'Show'} recipient preview ({reminderCandidates.length})
+                  </button>
+                  {showRecipientPreview && (
+                    <div className="max-h-28 overflow-auto rounded-lg border border-border bg-white p-2 text-xs text-text-secondary">
+                      {reminderCandidates.slice(0, 20).map((g) => (
+                        <div key={g.id} className="py-0.5">
+                          {(g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name}
+                          {g.email ? ` · ${g.email}` : ''}
+                        </div>
+                      ))}
+                      {reminderCandidates.length > 20 && (
+                        <div className="pt-1 text-text-tertiary">+{reminderCandidates.length - 20} more</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               <div className="flex flex-wrap gap-2">
