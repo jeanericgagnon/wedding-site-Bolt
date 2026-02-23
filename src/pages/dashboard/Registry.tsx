@@ -60,6 +60,7 @@ export const DashboardRegistry: React.FC = () => {
   const [monthlyRefreshCap, setMonthlyRefreshCap] = useState(100);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [monthlyRefreshCount, setMonthlyRefreshCount] = useState(0);
+  const [monthlyRefreshMonth, setMonthlyRefreshMonth] = useState<string | null>(null);
   const [refreshCapDraft, setRefreshCapDraft] = useState(100);
   const [refreshWindowDraft, setRefreshWindowDraft] = useState('');
   const [savingRefreshPolicy, setSavingRefreshPolicy] = useState(false);
@@ -152,7 +153,9 @@ export const DashboardRegistry: React.FC = () => {
           setWeddingDate((site as { wedding_date?: string | null }).wedding_date ?? null);
           const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; wedding_date?: string | null };
           const monthKey = new Date().toISOString().slice(0, 7);
-          const resetCount = typedSite.registry_monthly_refresh_month !== monthKey;
+          const loadedMonth = typedSite.registry_monthly_refresh_month ?? monthKey;
+          setMonthlyRefreshMonth(loadedMonth);
+          const resetCount = loadedMonth !== monthKey;
           setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
           setAutoRefreshEnabled(typedSite.registry_auto_refresh_enabled ?? true);
           setRefreshWindowDraft((typedSite.registry_refresh_enabled_until ?? '').slice(0, 10));
@@ -411,6 +414,7 @@ export const DashboardRegistry: React.FC = () => {
     if (updatedCount > 0) {
       const nextCount = budgetState.count + updatedCount;
       setMonthlyRefreshCount(nextCount);
+      setMonthlyRefreshMonth(budgetState.monthKey);
       if (weddingSiteId && !isDemoMode) {
         await supabase
           .from('wedding_sites')
@@ -563,12 +567,13 @@ export const DashboardRegistry: React.FC = () => {
   async function ensureMonthlyBudgetState() {
     const monthKey = new Date().toISOString().slice(0, 7);
     if (!weddingSiteId || isDemoMode) return { monthKey, count: monthlyRefreshCount };
-    if (todayMonthKey === monthKey && monthlyRefreshCount >= 0) return { monthKey, count: monthlyRefreshCount };
+    if (monthlyRefreshMonth === monthKey && monthlyRefreshCount >= 0) return { monthKey, count: monthlyRefreshCount };
 
     // local reset if month key drifted
     const shouldReset = monthKey !== todayMonthKey;
     if (shouldReset) {
       setMonthlyRefreshCount(0);
+      setMonthlyRefreshMonth(monthKey);
       await supabase
         .from('wedding_sites')
         .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: monthKey })
@@ -615,7 +620,7 @@ export const DashboardRegistry: React.FC = () => {
               Paste any product URL to import items from any store · prices auto-refresh weekly
             </p>
             <p className="text-xs text-text-tertiary mt-1">
-              Auto-refresh: {autoRefreshEnabled ? (refreshWindowOpen ? 'Open' : 'Closed (window)') : 'Paused'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month
+              Auto-refresh: {autoRefreshEnabled ? (refreshWindowOpen ? 'Open' : 'Closed (window)') : 'Paused'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month{monthlyRefreshMonth ? ` (${monthlyRefreshMonth})` : ''}
             </p>
             {daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14 && (
               <p className="text-xs text-warning mt-1">Near expiry: auto-lean recommended to minimize late-cycle compute.</p>
