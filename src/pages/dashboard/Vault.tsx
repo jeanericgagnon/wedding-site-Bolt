@@ -448,11 +448,12 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
 interface EditVaultModalProps {
   config: VaultConfig;
+  hasEntries: boolean;
   onSave: (id: string, label: string, durationYears: number) => Promise<void>;
   onClose: () => void;
 }
 
-const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose }) => {
+const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onSave, onClose }) => {
   const [label, setLabel] = useState(config.label);
   const [durationYears, setDurationYears] = useState(config.duration_years);
   const [labelManuallyEdited, setLabelManuallyEdited] = useState(false);
@@ -500,6 +501,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
               <label className="block text-sm font-medium text-text-primary mb-1.5">Opens After</label>
               <select
                 value={isCustom ? 'custom' : String(durationYears)}
+                disabled={hasEntries}
                 onChange={e => {
                   if (e.target.value !== 'custom') {
                     const newYears = Number(e.target.value);
@@ -511,7 +513,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
                     setDurationYears(durationYears);
                   }
                 }}
-                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {DURATION_OPTIONS.map(o => (
                   <option key={o.value} value={String(o.value)}>{o.label}</option>
@@ -525,14 +527,17 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
                     min={1}
                     max={100}
                     value={durationYears}
+                    disabled={hasEntries}
                     onChange={e => setDurationYears(Math.max(1, Math.min(100, Number(e.target.value))))}
-                    className="w-24 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-24 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   <span className="text-sm text-text-secondary">years after wedding date</span>
                 </div>
               )}
               <p className="text-xs text-text-tertiary mt-1.5">
-                Guests can contribute at any time, but content stays sealed until this date.
+                {hasEntries
+                  ? 'This vault already has submissions, so its anniversary year is locked.'
+                  : 'Guests can contribute at any time, but content stays sealed until this date.'}
               </p>
             </div>
 
@@ -896,6 +901,13 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleEditSave(id: string, label: string, durationYears: number) {
+    const current = vaultConfigs.find(c => c.id === id);
+    const hasEntriesForVault = entries.some(e => e.vault_config_id === id);
+    if (hasEntriesForVault && current && current.duration_years !== durationYears) {
+      toast('This vault already has submissions, so you cannot change its anniversary year.', 'error');
+      throw new Error('Locked anniversary year');
+    }
+
     const hasDuplicateYear = vaultConfigs.some(c => c.id !== id && c.duration_years === durationYears);
     if (hasDuplicateYear) {
       toast(`You already have a ${durationYears}-year vault. Choose a different anniversary.`, 'error');
@@ -1132,6 +1144,7 @@ export const DashboardVault: React.FC = () => {
       {editingConfig && (
         <EditVaultModal
           config={editingConfig}
+          hasEntries={entries.some(e => e.vault_config_id === editingConfig.id)}
           onSave={handleEditSave}
           onClose={() => setEditingConfig(null)}
         />
