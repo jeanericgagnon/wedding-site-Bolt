@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2, Mic, Square } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE } from '../config/env';
 
@@ -50,6 +50,11 @@ export const VaultContribute: React.FC = () => {
   const [compressionStatus, setCompressionStatus] = useState<string | null>(null);
   const [submittedYears, setSubmittedYears] = useState<number[]>([]);
   const [compressVideo, setCompressVideo] = useState(true);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const voiceChunksRef = useRef<BlobPart[]>([]);
 
   const [form, setForm] = useState({
     title: '',
@@ -87,6 +92,73 @@ export const VaultContribute: React.FC = () => {
       // ignore
     }
   }
+
+
+  async function startVoiceRecording() {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setSubmitError('Voice recording is not supported on this browser.');
+        return;
+      }
+      setSubmitError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      const mimeCandidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+      const mimeType = mimeCandidates.find((m) => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(m)) || '';
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = recorder;
+      voiceChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size) voiceChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        const file = new File([blob], `voice-note-${Date.now()}.${(recorder.mimeType || '').includes('mp4') ? 'm4a' : 'webm'}`, { type: blob.type });
+        const maxMb = MAX_UPLOAD_MB_BY_TYPE.voice;
+        if (file.size > maxMb * 1024 * 1024) {
+          setSubmitError(`Voice note is too large (max ${maxMb}MB). Please keep it shorter.`);
+          setSelectedFiles([]);
+        } else {
+          setSelectedFiles([file]);
+          setSubmitError(null);
+        }
+
+        mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+      };
+
+      recorder.start(500);
+      setRecordSeconds(0);
+      setIsRecordingVoice(true);
+    } catch {
+      setSubmitError('Could not start microphone recording. Please allow mic access or upload audio file.');
+    }
+  }
+
+  function stopVoiceRecording() {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecordingVoice(false);
+  }
+
+  useEffect(() => {
+    if (isRecordingVoice) {
+      const t = window.setInterval(() => setRecordSeconds((v) => v + 1), 1000);
+      return () => window.clearInterval(t);
+    }
+    return;
+  }, [isRecordingVoice]);
+
+  useEffect(() => {
+    return () => {
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (!siteSlug) {
@@ -591,7 +663,7 @@ export const VaultContribute: React.FC = () => {
                   <label className="block text-sm font-medium text-stone-700 mb-1.5">Message type</label>
                   <select
                     value={form.media_type}
-                    onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); }}
+                    onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); if (isRecordingVoice) stopVoiceRecording(); }}
                     className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
                   >
                     <option value="text">Text only</option>
@@ -666,6 +738,24 @@ export const VaultContribute: React.FC = () => {
                       <input type="checkbox" checked={compressVideo} onChange={e => setCompressVideo(e.target.checked)} />
                       Compress to 720p before upload (recommended)
                     </label>
+                  )}
+
+                  {form.media_type === 'voice' && (
+                    <div className="mt-2 border border-stone-200 rounded-lg p-3 bg-stone-50">
+                      <p className="text-xs text-stone-600 mb-2">Or record directly:</p>
+                      {!isRecordingVoice ? (
+                        <button type="button" onClick={startVoiceRecording} className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-stone-300 hover:border-amber-400">
+                          <Mic className="w-3.5 h-3.5" /> Record voice note
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-red-600">Recording… {recordSeconds}s</span>
+                          <button type="button" onClick={stopVoiceRecording} className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-red-300 text-red-700 hover:bg-red-50">
+                            <Square className="w-3.5 h-3.5" /> Stop
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                   <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each. If larger, compress first.' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (auto-compressed to 720p).' : 'Up to 3 videos, 35MB each. If larger, compress/trim first.') : 'Single voice file, 12MB max. If larger, trim/compress first.'}</p>
                   {errors.attachment_url && <p className="text-red-500 text-xs mt-1">{errors.attachment_url}</p>}
