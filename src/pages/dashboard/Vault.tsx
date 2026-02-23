@@ -32,6 +32,7 @@ interface VaultEntry {
   attachment_url: string | null;
   attachment_name: string | null;
   media_type?: 'text' | 'photo' | 'video' | 'voice' | null;
+  unlock_at?: string | null;
   created_at: string;
 }
 
@@ -225,7 +226,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const unlockDate = weddingDate
     ? new Date(new Date(weddingDate).setFullYear(weddingDate.getFullYear() + config.duration_years))
     : null;
-  const isUnlocked = unlockDate ? new Date() >= unlockDate : true;
+  const isUnlocked = unlockDate ? new Date() >= unlockDate : false;
 
   const unlockLabel = unlockDate
     ? unlockDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -1194,7 +1195,7 @@ setWeddingSiteId('demo-site-id');
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-medium">No wedding date set</p>
-              <p className="mt-0.5 text-warning/80">Set your wedding date in Settings to enable vault lock/unlock dates. You can still add entries now.</p>
+              <p className="mt-0.5 text-warning/80">Set your wedding date in Settings. Vault entries stay locked until an unlock date can be calculated.</p>
             </div>
           </div>
         )}
