@@ -32,6 +32,9 @@ interface VaultEntry {
   attachment_url: string | null;
   attachment_name: string | null;
   media_type?: 'text' | 'photo' | 'video' | 'voice' | null;
+  storage_provider?: 'supabase' | 'google_drive' | null;
+  external_file_id?: string | null;
+  external_file_url?: string | null;
   unlock_at?: string | null;
   created_at: string;
 }
@@ -222,6 +225,8 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [resolvedEntryLinks, setResolvedEntryLinks] = useState<Record<string, string>>({});
+  const [resolvingEntryId, setResolvingEntryId] = useState<string | null>(null);
 
   const unlockDate = weddingDate
     ? new Date(new Date(weddingDate).setFullYear(weddingDate.getFullYear() + config.duration_years))
@@ -245,6 +250,27 @@ const VaultCard: React.FC<VaultCardProps> = ({
     const d = getEntryUnlockDate(entry);
     return d ? d.getTime() <= nowMs : false;
   };
+
+  async function resolveEntryLink(entry: VaultEntry): Promise<string | null> {
+    if (entry.storage_provider !== 'google_drive') return entry.attachment_url ?? null;
+    if (resolvedEntryLinks[entry.id]) return resolvedEntryLinks[entry.id];
+
+    setResolvingEntryId(entry.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('vault-resolve-entry-link', {
+        body: { entryId: entry.id },
+      });
+      if (error) throw error;
+      const url = (data as { url?: string | null } | null)?.url ?? null;
+      if (url) setResolvedEntryLinks((prev) => ({ ...prev, [entry.id]: url }));
+      return url;
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Could not resolve attachment link.');
+      return null;
+    } finally {
+      setResolvingEntryId(null);
+    }
+  }
 
   function handleCopyLink() {
     if (!siteSlug) return;
@@ -405,27 +431,43 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 ) : (
                   <>
                     <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
-                    {entry.attachment_url && (() => {
-                      const kind = inferAttachmentKind(entry.attachment_url, entry.attachment_name, entry.media_type);
+                    {(entry.attachment_url || entry.external_file_id || entry.external_file_url) && (() => {
+                      const attachmentUrl = resolvedEntryLinks[entry.id] || entry.external_file_url || entry.attachment_url;
+                      if (!attachmentUrl) {
+                        return (
+                          <div className="mt-2">
+                            <button
+                              onClick={async () => { await resolveEntryLink(entry); }}
+                              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                              disabled={resolvingEntryId === entry.id}
+                            >
+                              {resolvingEntryId === entry.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />}
+                              {resolvingEntryId === entry.id ? 'Resolving link…' : (entry.attachment_name || 'Open attachment')}
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      const kind = inferAttachmentKind(attachmentUrl, entry.attachment_name, entry.media_type);
                       return (
                         <div className="mt-2 space-y-2">
                           {kind === 'image' && (
-                            <a href={entry.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
-                              <img src={entry.attachment_url} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" />
+                            <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="block">
+                              <img src={attachmentUrl} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" />
                             </a>
                           )}
                           {kind === 'video' && (
                             <video controls preload="metadata" className="w-full max-h-56 rounded-lg border border-border bg-black/80">
-                              <source src={entry.attachment_url} />
+                              <source src={attachmentUrl} />
                             </video>
                           )}
                           {kind === 'audio' && (
                             <audio controls preload="metadata" className="w-full">
-                              <source src={entry.attachment_url} />
+                              <source src={attachmentUrl} />
                             </audio>
                           )}
                           <a
-                            href={entry.attachment_url}
+                            href={attachmentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
@@ -659,6 +701,7 @@ export const DashboardVault: React.FC = () => {
     setVaultStorageProvider(next);
     toast(`Vault storage set to ${next === 'google_drive' ? 'Google Drive' : 'Supabase Storage'}.`);
   }
+
 
   async function handleConnectGoogleDrive() {
     if (!weddingSiteId) return;

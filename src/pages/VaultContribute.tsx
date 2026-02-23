@@ -487,7 +487,7 @@ export const VaultContribute: React.FC = () => {
 
           const drive = driveData as { fileId?: string; webViewLink?: string | null; webContentLink?: string | null } | null;
           uploadedItems.push({
-            url: drive?.webViewLink ?? drive?.webContentLink ?? null,
+            url: null,
             name: file.name,
             mime: file.type || null,
             size: file.size || null,
