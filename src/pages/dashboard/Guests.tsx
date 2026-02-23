@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input, Select } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown } from 'lucide-react';
@@ -116,6 +116,8 @@ const makeRsvpQuestion = (): RSVPQuestionSetting => ({
   options: [],
 });
 
+const toTitleCase = (value: string) => value.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
 interface ItineraryEvent {
   id: string;
   event_name: string;
@@ -148,6 +150,9 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [rsvpConfigSaving, setRsvpConfigSaving] = useState(false);
+  const [rsvpAutoSaveState, setRsvpAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [rsvpConfigDirty, setRsvpConfigDirty] = useState(false);
+  const rsvpConfigLoadedRef = useRef(false);
 
 
   useEffect(() => {
@@ -262,6 +267,7 @@ export const DashboardGuests: React.FC = () => {
           setRsvpMealOptions(Array.isArray(parsedM.options) ? parsedM.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
         }
       } catch {}
+      rsvpConfigLoadedRef.current = true;
       return;
     }
 
@@ -297,6 +303,7 @@ export const DashboardGuests: React.FC = () => {
       const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
       setRsvpMealEnabled(typeof mealCfg?.enabled === 'boolean' ? mealCfg.enabled : true);
       setRsvpMealOptions(Array.isArray(mealCfg?.options) ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+      rsvpConfigLoadedRef.current = true;
     }
   }, [user, isDemoMode]);
 
@@ -375,7 +382,7 @@ export const DashboardGuests: React.FC = () => {
         return;
       }
 
-      const mealOptions = rsvpMealOptions.map((o) => o.trim()).filter(Boolean);
+      const mealOptions = rsvpMealOptions.map((o) => toTitleCase(o.trim())).filter(Boolean);
       if (rsvpMealEnabled && mealOptions.length < 2) {
         toast('Meal choices need at least 2 options when enabled.', 'error');
         return;
@@ -386,6 +393,8 @@ export const DashboardGuests: React.FC = () => {
         localStorage.setItem('dayof_demo_rsvp_meal_config_v1', JSON.stringify({ enabled: rsvpMealEnabled, options: mealOptions }));
         setRsvpQuestions(cleanedQuestions);
         toast('RSVP config saved (demo).', 'success');
+        setRsvpAutoSaveState('saved');
+        setRsvpConfigDirty(false);
         return;
       }
 
@@ -396,12 +405,34 @@ export const DashboardGuests: React.FC = () => {
       if (error) throw error;
       setRsvpQuestions(cleanedQuestions);
       toast('RSVP config saved.', 'success');
+      setRsvpAutoSaveState('saved');
+      setRsvpConfigDirty(false);
     } catch (err) {
+      setRsvpAutoSaveState('error');
       toast(err instanceof Error ? err.message : 'Failed to save RSVP config.', 'error');
     } finally {
       setRsvpConfigSaving(false);
     }
   };
+
+
+  const autoSaveTimer = useRef<number | null>(null);
+  useEffect(() => {
+    if (guestsTab !== 'rsvp-config') return;
+    if (!rsvpConfigLoadedRef.current) return;
+    if (!rsvpConfigDirty) return;
+
+    setRsvpAutoSaveState('saving');
+
+    if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = window.setTimeout(() => {
+      handleSaveRsvpConfig();
+    }, 700);
+
+    return () => {
+      if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
+    };
+  }, [guestsTab, rsvpConfigDirty, rsvpQuestions, rsvpMealEnabled, rsvpMealOptions]);
 
   const generateSecureToken = async (): Promise<string> => {
     const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
@@ -1443,18 +1474,18 @@ Proceed with send?`)) return;
 
               <div className="space-y-3 p-4 border border-border rounded-xl">
                 <label className="flex items-center gap-2 text-sm text-text-primary">
-                  <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => setRsvpMealEnabled(e.target.checked)} className="w-4 h-4" />
+                  <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => { setRsvpMealEnabled(e.target.checked); setRsvpConfigDirty(true); }} className="w-4 h-4" />
                   Collect meal choice on RSVP form
                 </label>
                 {rsvpMealEnabled && (
                   <div className="space-y-2">
                     {rsvpMealOptions.map((opt, idx) => (
                       <div key={`meal-${idx}`} className="flex items-center gap-2">
-                        <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=e.target.value; return n; })} placeholder={`Meal option ${idx+1}`} />
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx))}>Remove</Button>
+                        <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=toTitleCase(e.target.value); return n; })} placeholder={`Meal option ${idx+1}`} />
+                        <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx)); setRsvpConfigDirty(true); }}>Remove</Button>
                       </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => setRsvpMealOptions((prev) => [...prev, ''])}>Add meal option</Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => { setRsvpMealOptions((prev) => [...prev, '']); setRsvpConfigDirty(true); }}>Add meal option</Button>
                   </div>
                 )}
               </div>
@@ -1464,30 +1495,33 @@ Proceed with send?`)) return;
                   <div key={q.id} className="p-4 border border-border rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">Question {idx + 1}</p>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id))}>Remove</Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id)); setRsvpConfigDirty(true); }}>Remove</Button>
                     </div>
-                    <Input value={q.label} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, label: e.target.value } : x))} placeholder="Question prompt" />
+                    <Input value={q.label} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, label: e.target.value } : x)); setRsvpConfigDirty(true); }} placeholder="Question prompt" />
                     <div className="grid md:grid-cols-3 gap-3">
-                      <Select value={q.type} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, type: e.target.value as RSVPQuestionSetting['type'], options: (e.target.value === 'single_choice' || e.target.value === 'multi_choice') ? (x.options?.length ? x.options : ['', '']) : [] } : x))} options={[{ value:'short_text', label:'Short text' },{ value:'long_text', label:'Long text' },{ value:'single_choice', label:'Single choice' },{ value:'multi_choice', label:'Multiple choice' }]} />
-                      <Select value={q.appliesTo} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : x))} options={[{ value:'all', label:'All attendees' },{ value:'ceremony', label:'Ceremony attendees' },{ value:'reception', label:'Reception attendees' }]} />
-                      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={q.required} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, required: e.target.checked } : x))} />Required</label>
+                      <Select value={q.type} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, type: e.target.value as RSVPQuestionSetting['type'], options: (e.target.value === 'single_choice' || e.target.value === 'multi_choice') ? (x.options?.length ? x.options : ['', '']) : [] } : x)); setRsvpConfigDirty(true); }} options={[{ value:'short_text', label:'Short text' },{ value:'long_text', label:'Long text' },{ value:'single_choice', label:'Single choice' },{ value:'multi_choice', label:'Multiple choice' }]} />
+                      <Select value={q.appliesTo} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : x)); setRsvpConfigDirty(true); }} options={[{ value:'all', label:'All attendees' },{ value:'ceremony', label:'Ceremony attendees' },{ value:'reception', label:'Reception attendees' }]} />
+                      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={q.required} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, required: e.target.checked } : x)); setRsvpConfigDirty(true); }} />Required</label>
                     </div>
                     {(q.type === 'single_choice' || q.type === 'multi_choice') && (
                       <div className="space-y-2">
                         {(q.options ?? []).map((opt, optIdx) => (
                           <div key={`${q.id}-opt-${optIdx}`} className="flex items-center gap-2">
-                            <Input value={opt} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n[optIdx]=e.target.value; return { ...x, options:n }; }))} placeholder={`Option ${optIdx+1}`} />
-                            <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n.splice(optIdx,1); return { ...x, options:n }; }))}>Remove</Button>
+                            <Input value={opt} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n[optIdx]=toTitleCase(e.target.value); return { ...x, options:n }; })); setRsvpConfigDirty(true); }} placeholder={`Option ${optIdx+1}`} />
+                            <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n.splice(optIdx,1); return { ...x, options:n }; })); setRsvpConfigDirty(true); }}>Remove</Button>
                           </div>
                         ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, options: [...(x.options ?? []), ''] } : x))}>Add choice</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, options: [...(x.options ?? []), ''] } : x)); setRsvpConfigDirty(true); }}>Add choice</Button>
                       </div>
                     )}
                   </div>
                 ))}
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={() => setRsvpQuestions((prev) => [...prev, makeRsvpQuestion()])}>Add Question</Button>
-                  <Button type="button" variant="primary" onClick={handleSaveRsvpConfig} disabled={rsvpConfigSaving}>{rsvpConfigSaving ? 'Saving…' : 'Save RSVP Config'}</Button>
+                  <Button type="button" variant="outline" onClick={() => { setRsvpQuestions((prev) => [...prev, makeRsvpQuestion()]); setRsvpConfigDirty(true); }}>Add Question</Button>
+                  <div className="flex items-center gap-3">
+                    <Button type="button" variant="primary" onClick={handleSaveRsvpConfig} disabled={rsvpConfigSaving}>{rsvpConfigSaving ? 'Saving…' : 'Save Now'}</Button>
+                    <span className="text-xs text-text-tertiary">{rsvpAutoSaveState === 'saving' ? 'Auto-saving…' : rsvpAutoSaveState === 'saved' ? 'Auto-saved' : rsvpAutoSaveState === 'error' ? 'Auto-save failed' : 'Auto-save on'}</span>
+                  </div>
                 </div>
               </div>
             </div>

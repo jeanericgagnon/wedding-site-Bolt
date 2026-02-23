@@ -463,6 +463,18 @@ export default function RSVP() {
 
   const canSubmit = !!guest?.invite_token && !(deadlinePassed && !existingRsvp);
 
+  const guestPredictions = useMemo(() => {
+    if (!DEMO_MODE) return [] as string[];
+    const q = searchValue.trim().toLowerCase();
+    if (q.length < 2) return [] as string[];
+    return demoGuests
+      .map((g) => g.name)
+      .filter((name, idx, arr) => arr.indexOf(name) === idx)
+      .filter((name) => name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [searchValue]);
+
+
   const goToNextFormStep = () => {
     if (formStep === 1) {
       if (formData.attending && guest && !guest.invited_to_ceremony && !guest.invited_to_reception) {
@@ -557,6 +569,20 @@ export default function RSVP() {
                 <p className="text-xs text-gray-500 mt-1.5">
                   Use the invitation code from your email for the fastest lookup
                 </p>
+                {guestPredictions.length > 0 && (
+                  <div className="mt-2 border border-gray-200 rounded-lg bg-white overflow-hidden">
+                    {guestPredictions.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => setSearchValue(name)}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {error && (
