@@ -790,6 +790,40 @@ export const DashboardVault: React.FC = () => {
   }
 
 
+  async function handleSeedStarterVaults() {
+    if (isDemoMode) {
+      handleSeedDemoVaults();
+      return;
+    }
+    if (!weddingSiteId || addingVault) return;
+
+    setAddingVault(true);
+    try {
+      const starter = [
+        { vault_index: 1, label: '1-Year Anniversary Vault', duration_years: 1 },
+        { vault_index: 2, label: '5-Year Anniversary Vault', duration_years: 5 },
+        { vault_index: 3, label: '10-Year Anniversary Vault', duration_years: 10 },
+      ];
+
+      const { data, error } = await supabase
+        .from('vault_configs')
+        .upsert(
+          starter.map((v) => ({ ...v, wedding_site_id: weddingSiteId, is_enabled: true })),
+          { onConflict: 'wedding_site_id,vault_index' }
+        )
+        .select('*');
+
+      if (error) throw error;
+      setVaultConfigs((data ?? []) as VaultConfig[]);
+      toast('Starter vault set loaded (1/5/10)');
+      await loadData();
+    } catch {
+      toast('Failed to load starter vault set', 'error');
+    } finally {
+      setAddingVault(false);
+    }
+  }
+
   function handleSeedDemoVaults() {
     if (!isDemoMode) return;
     const seeded = createSeedDemoState();
@@ -971,17 +1005,11 @@ export const DashboardVault: React.FC = () => {
               <p className="text-sm text-text-secondary mb-5 max-w-sm mx-auto">
                 Create up to {MAX_VAULTS} time capsule vaults, each unlocking on a different anniversary. Share vault links with guests so they can leave messages.
               </p>
-              {isDemoMode ? (
-                <Button variant="primary" onClick={handleSeedDemoVaults}>
-                  <Plus className="w-4 h-4 mr-1.5" />
-                  Load Demo Vault Set (1/5/10)
-                </Button>
-              ) : (
-                <Button variant="primary" onClick={handleAddVault} disabled={addingVault}>
-                  {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
-                  Create Your First Vault
-                </Button>
-              )}
+              <Button variant="primary" onClick={handleSeedStarterVaults} disabled={addingVault}>
+                {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
+                Load Starter Vault Set (1/5/10)
+              </Button>
+              <p className="text-[11px] text-text-tertiary mt-2">Creates a ready-to-demo vault set in one tap.</p>
             </div>
           </Card>
         )}
