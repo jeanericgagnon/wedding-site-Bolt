@@ -234,7 +234,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
     if (!siteSlug) return;
 
     const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-    const vaultPath = `/vault/${siteSlug}`;
+    const vaultPath = `/vault/${siteSlug}/${config.duration_years}`;
     const isGitHubPages = window.location.hostname.includes('github.io');
 
     const url = isGitHubPages
