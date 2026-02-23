@@ -1055,10 +1055,18 @@ export const DashboardGuests: React.FC = () => {
           });
           if (conflicts.length === 0) return null;
           return (
-            <div className="p-4 bg-warning-light border border-warning/20 rounded-xl space-y-1">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
-                <p className="text-sm font-medium text-warning">{conflicts.length} RSVP {conflicts.length === 1 ? 'issue' : 'issues'} detected</p>
+            <div className="p-4 bg-warning-light border border-warning/20 rounded-xl space-y-2">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
+                  <p className="text-sm font-medium text-warning">{conflicts.length} RSVP {conflicts.length === 1 ? 'issue' : 'issues'} detected</p>
+                </div>
+                <button
+                  onClick={() => { setFilterStatus('pending'); setViewMode('list'); }}
+                  className="text-xs px-2 py-1 rounded-md border border-warning/30 text-warning hover:bg-warning/10"
+                >
+                  Review pending
+                </button>
               </div>
               <ul className="space-y-0.5">
                 {conflicts.map((c, i) => (
@@ -1126,6 +1134,12 @@ export const DashboardGuests: React.FC = () => {
                   {reminderCandidates.length > 5 ? ` +${reminderCandidates.length - 5} more` : ''}
                 </div>
               )}
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => { setFilterStatus('pending'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
+                <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
+                <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
+              </div>
+
               {campaignLog.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
