@@ -65,14 +65,14 @@ const DURATION_OPTIONS = [
 ];
 
 const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
-  <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
+  <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80] space-y-2 pointer-events-none w-[min(92vw,680px)]">
     {toasts.map(t => (
       <div
         key={t.id}
-        className={`px-4 py-3 rounded-xl shadow-lg text-sm font-medium border ${
+        className={`px-4 py-3.5 rounded-xl shadow-xl text-sm sm:text-[15px] font-semibold border ${
           t.type === 'error'
-            ? 'bg-error-light text-error border-error/20'
-            : 'bg-success-light text-success border-success/20'
+            ? 'bg-error-light text-error border-error/30'
+            : 'bg-success-light text-success border-success/30'
         }`}
       >
         {t.message}
@@ -232,10 +232,20 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
   function handleCopyLink() {
     if (!siteSlug) return;
-    const url = `${window.location.origin}/vault/${siteSlug}`;
+
+    const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    const vaultPath = `/vault/${siteSlug}`;
+    const isGitHubPages = window.location.hostname.includes('github.io');
+
+    const url = isGitHubPages
+      ? `${window.location.origin}${basePath || ''}/?oc_redirect=${encodeURIComponent(vaultPath)}`
+      : `${window.location.origin}${basePath}${vaultPath}`;
+
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      window.prompt('Copy this vault link:', url);
     });
   }
 
@@ -288,7 +298,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
                   ? 'border-success/40 bg-success-light text-success'
                   : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'
               }`}
-              title="Copy shareable link for guests"
+              title="Copy shareable hub link (all enabled vaults)"
             >
               {copied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
               {copied ? 'Copied!' : 'Share'}
@@ -438,22 +448,27 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
 interface EditVaultModalProps {
   config: VaultConfig;
+  hasEntries: boolean;
   onSave: (id: string, label: string, durationYears: number) => Promise<void>;
   onClose: () => void;
 }
 
-const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose }) => {
+const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onSave, onClose }) => {
   const [label, setLabel] = useState(config.label);
   const [durationYears, setDurationYears] = useState(config.duration_years);
   const [labelManuallyEdited, setLabelManuallyEdited] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setLocalError(null);
     setSaving(true);
     try {
       await onSave(config.id, label, durationYears);
       onClose();
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : 'Could not save vault changes.');
     } finally {
       setSaving(false);
     }
@@ -474,6 +489,11 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {localError && (
+              <div className="p-3 rounded-xl border border-error/30 bg-error-light text-error text-sm font-semibold">
+                {localError}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1.5">Vault Name</label>
               <input
@@ -490,6 +510,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
               <label className="block text-sm font-medium text-text-primary mb-1.5">Opens After</label>
               <select
                 value={isCustom ? 'custom' : String(durationYears)}
+                disabled={hasEntries}
                 onChange={e => {
                   if (e.target.value !== 'custom') {
                     const newYears = Number(e.target.value);
@@ -501,7 +522,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
                     setDurationYears(durationYears);
                   }
                 }}
-                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {DURATION_OPTIONS.map(o => (
                   <option key={o.value} value={String(o.value)}>{o.label}</option>
@@ -515,14 +536,17 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, onSave, onClose
                     min={1}
                     max={100}
                     value={durationYears}
+                    disabled={hasEntries}
                     onChange={e => setDurationYears(Math.max(1, Math.min(100, Number(e.target.value))))}
-                    className="w-24 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-24 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   <span className="text-sm text-text-secondary">years after wedding date</span>
                 </div>
               )}
               <p className="text-xs text-text-tertiary mt-1.5">
-                Guests can contribute at any time, but content stays sealed until this date.
+                {hasEntries
+                  ? 'This vault already has submissions, so its anniversary year is locked.'
+                  : 'Guests can contribute at any time, but content stays sealed until this date.'}
               </p>
             </div>
 
@@ -656,8 +680,42 @@ export const DashboardVault: React.FC = () => {
     setLoading(true);
     try {
       if (isDemoMode) {
-        setWeddingSiteId('demo-site-id');
         setSiteSlug('alex-jordan-demo');
+
+        const { data: demoSite } = await supabase
+          .from('wedding_sites')
+          .select('id, wedding_date, site_slug')
+          .eq('site_slug', 'alex-jordan-demo')
+          .maybeSingle();
+
+        if (demoSite) {
+          setWeddingSiteId(demoSite.id);
+          if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
+
+          const { data: configData } = await supabase
+            .from('vault_configs')
+            .select('*')
+            .eq('wedding_site_id', demoSite.id)
+            .order('duration_years', { ascending: true });
+
+          const configs = (configData ?? []) as VaultConfig[];
+          setVaultConfigs(configs);
+
+          if (configs.length > 0) {
+            const configIds = configs.map(c => c.id);
+            const { data: entryData } = await supabase
+              .from('vault_entries')
+              .select('*')
+              .in('vault_config_id', configIds)
+              .order('created_at', { ascending: true });
+            setEntries((entryData ?? []) as VaultEntry[]);
+          } else {
+            setEntries([]);
+          }
+          return;
+        }
+
+        setWeddingSiteId('demo-site-id');
         const demoState = loadDemoState();
         setVaultConfigs(demoState.vaultConfigs);
         setEntries(demoState.entries);
@@ -680,7 +738,7 @@ export const DashboardVault: React.FC = () => {
         .from('vault_configs')
         .select('*')
         .eq('wedding_site_id', site.id)
-        .order('vault_index', { ascending: true });
+        .order('duration_years', { ascending: true });
 
       const configs = (configData ?? []) as VaultConfig[];
       setVaultConfigs(configs);
@@ -780,7 +838,7 @@ export const DashboardVault: React.FC = () => {
         .single();
 
       if (error) throw error;
-      setVaultConfigs(prev => [...prev, data as VaultConfig]);
+      setVaultConfigs(prev => [...prev, data as VaultConfig].sort((a, b) => a.duration_years - b.duration_years));
       toast('Vault added');
     } catch {
       toast('Failed to add vault', 'error');
@@ -791,7 +849,7 @@ export const DashboardVault: React.FC = () => {
 
 
   async function handleSeedStarterVaults() {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       handleSeedDemoVaults();
       return;
     }
@@ -834,7 +892,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleToggleEnabled(configId: string, enabled: boolean) {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const nextConfigs = vaultConfigs.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c);
       setVaultConfigs(nextConfigs);
       saveDemoState(nextConfigs, entries);
@@ -852,27 +910,51 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleEditSave(id: string, label: string, durationYears: number) {
-    if (isDemoMode) {
-      const nextConfigs = vaultConfigs.map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c);
+    const current = vaultConfigs.find(c => c.id === id);
+    const hasEntriesForVault = entries.some(e => e.vault_config_id === id);
+    if (hasEntriesForVault && current && current.duration_years !== durationYears) {
+      toast('This vault already has submissions, so you cannot change its anniversary year.', 'error');
+      throw new Error('Anniversary year is locked after submissions start.');
+    }
+
+    const hasDuplicateYear = vaultConfigs.some(c => c.id !== id && c.duration_years === durationYears);
+    if (hasDuplicateYear) {
+      toast(`You already have a ${durationYears}-year vault. Choose a different anniversary.`, 'error');
+      throw new Error(`You already have a ${durationYears}-year vault.`);
+    }
+
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
+      const nextConfigs = vaultConfigs
+        .map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c)
+        .sort((a, b) => a.duration_years - b.duration_years);
       setVaultConfigs(nextConfigs);
       saveDemoState(nextConfigs, entries);
       toast('Vault updated');
       return;
     }
+
     const { error } = await supabase
       .from('vault_configs')
       .update({ label, duration_years: durationYears, updated_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (error) throw new Error(error.message);
-    setVaultConfigs(prev => prev.map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c));
+    if (error) {
+      if (error.message?.toLowerCase().includes('duplicate') || error.message?.toLowerCase().includes('unique')) {
+        toast(`You already have a ${durationYears}-year vault.`, 'error');
+      }
+      throw new Error(error.message);
+    }
+
+    setVaultConfigs(prev => prev
+      .map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c)
+      .sort((a, b) => a.duration_years - b.duration_years));
     toast('Vault updated');
   }
 
   async function handleSaveEntry(entry: { vault_config_id: string; vault_year: number; title: string; content: string; author_name: string; attachment_url: string | null; attachment_name: string | null }) {
     if (!weddingSiteId) throw new Error('No wedding site found');
 
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const demoEntry: VaultEntry = {
         id: `demo-entry-${Date.now()}`,
         vault_config_id: entry.vault_config_id,
@@ -906,7 +988,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleDeleteEntry(id: string) {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const nextEntries = entries.filter(e => e.id !== id);
       setEntries(nextEntries);
       saveDemoState(vaultConfigs, nextEntries);
@@ -920,7 +1002,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleDeleteVault(configId: string) {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const remaining = vaultConfigs.filter(c => c.id !== configId).map((c, i) => ({ ...c, vault_index: i + 1 }));
       const nextEntries = entries.filter(e => e.vault_config_id !== configId);
       setVaultConfigs(remaining);
@@ -950,6 +1032,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   const totalEntries = entries.length;
+  const orderedVaultConfigs = [...vaultConfigs].sort((a, b) => a.duration_years - b.duration_years);
 
   return (
     <DashboardLayout currentPage="vault">
@@ -1016,7 +1099,7 @@ export const DashboardVault: React.FC = () => {
 
         {vaultConfigs.length > 0 && (
           <div className="space-y-5">
-            {vaultConfigs.map(config => (
+            {orderedVaultConfigs.map(config => (
               <div key={config.id} className="group relative">
                 <VaultCard
                   config={config}
@@ -1070,6 +1153,7 @@ export const DashboardVault: React.FC = () => {
       {editingConfig && (
         <EditVaultModal
           config={editingConfig}
+          hasEntries={entries.some(e => e.vault_config_id === editingConfig.id)}
           onSave={handleEditSave}
           onClose={() => setEditingConfig(null)}
         />

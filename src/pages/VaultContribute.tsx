@@ -114,6 +114,42 @@ export const VaultContribute: React.FC = () => {
   }
 
 
+  function persistDemoEntries(vault: VaultConfigInfo, rows: Array<{ content: string; author_name: string; title: string | null; attachment_url: string | null; attachment_name: string | null; media_type: 'text' | 'photo' | 'video' | 'voice'; mime_type?: string | null; size_bytes?: number | null }>) {
+    try {
+      const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[]; entries?: Array<Record<string, unknown>> } : {};
+      const existingConfigs = (parsed.vaultConfigs ?? []).filter(Boolean) as VaultConfigInfo[];
+      const existingEntries = Array.isArray(parsed.entries) ? parsed.entries : [];
+
+      const hasConfig = existingConfigs.some((v) => v.id === vault.id);
+      const nextConfigs = hasConfig ? existingConfigs : [...existingConfigs, vault].sort((a, b) => a.duration_years - b.duration_years);
+
+      const now = Date.now();
+      const mapped = rows.map((r, i) => ({
+        id: `demo-public-${now}-${i}`,
+        vault_config_id: vault.id,
+        vault_year: vault.duration_years,
+        title: r.title,
+        content: r.content,
+        author_name: r.author_name,
+        attachment_url: r.attachment_url,
+        attachment_name: r.attachment_name,
+        media_type: r.media_type,
+        mime_type: r.mime_type ?? null,
+        size_bytes: r.size_bytes ?? null,
+        created_at: new Date(now + i).toISOString(),
+      }));
+
+      localStorage.setItem(DEMO_VAULT_STORAGE_KEY, JSON.stringify({
+        vaultConfigs: nextConfigs,
+        entries: [...existingEntries, ...mapped],
+      }));
+    } catch {
+      // noop
+    }
+  }
+
+
   async function startVoiceRecording() {
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -194,52 +230,50 @@ export const VaultContribute: React.FC = () => {
   }, [siteSlug, year]);
 
   async function loadData() {
-    if (DEMO_MODE && siteSlug === 'alex-jordan-demo') {
-      setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: null });
-
-      if (hasYearParam && vaultYear) {
-        const cfg = { id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true } as VaultConfigInfo;
-        setVaultOptions([cfg]);
-        setVaultConfig(cfg);
-        setStep('form');
-        return;
-      }
-
-      try {
-        const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
-        const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[] } : { vaultConfigs: [] };
-        const enabled = (parsed.vaultConfigs ?? []).filter(v => v.is_enabled);
-        const seeded = [
-          { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
-          { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
-          { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
-        ] as VaultConfigInfo[];
-        const byYear = new Map<number, VaultConfigInfo>();
-        [...seeded, ...enabled].forEach(v => byYear.set(v.duration_years, v));
-        const fallback = Array.from(byYear.values()).sort((a, b) => a.duration_years - b.duration_years);
-        setVaultOptions(fallback);
-        setVaultConfig(fallback[0]);
-        setStep(hasYearParam ? 'form' : 'hub');
-      } catch {
-        const fallback = [
-          { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
-          { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
-          { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
-        ] as VaultConfigInfo[];
-        setVaultOptions(fallback.sort((a, b) => a.duration_years - b.duration_years));
-        setVaultConfig(fallback[0]);
-        setStep(hasYearParam ? 'form' : 'hub');
-      }
-      return;
-    }
-
     const { data: siteData, error: siteError } = await supabase
       .from('wedding_sites')
       .select('id, couple_name_1, couple_name_2, wedding_date, is_published')
       .eq('site_slug', siteSlug)
       .maybeSingle();
 
-    if (siteError || !siteData || !(siteData as Record<string, unknown>).is_published) {
+    if (siteError || !siteData || (!(siteData as Record<string, unknown>).is_published && !(DEMO_MODE && siteSlug === 'alex-jordan-demo'))) {
+      if (DEMO_MODE && siteSlug === 'alex-jordan-demo') {
+        setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: null });
+
+        if (hasYearParam && vaultYear) {
+          const cfg = { id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true } as VaultConfigInfo;
+          setVaultOptions([cfg]);
+          setVaultConfig(cfg);
+          setStep('form');
+          return;
+        }
+
+        try {
+          const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[] } : { vaultConfigs: [] };
+          const enabled = (parsed.vaultConfigs ?? []).filter(v => v.is_enabled);
+          const seeded = [
+            { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+            { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+            { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+          ] as VaultConfigInfo[];
+          const fallback = (enabled.length > 0 ? enabled : seeded).sort((a, b) => a.duration_years - b.duration_years);
+          setVaultOptions(fallback);
+          setVaultConfig(fallback[0]);
+          setStep(hasYearParam ? 'form' : 'hub');
+        } catch {
+          const fallback = [
+            { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+            { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+            { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+          ] as VaultConfigInfo[];
+          setVaultOptions(fallback.sort((a, b) => a.duration_years - b.duration_years));
+          setVaultConfig(fallback[0]);
+          setStep(hasYearParam ? 'form' : 'hub');
+        }
+        return;
+      }
+
       setStep('invalid');
       return;
     }
@@ -279,23 +313,13 @@ export const VaultContribute: React.FC = () => {
       return;
     }
 
-    let options = configList as VaultConfigInfo[];
-
-    if (siteSlug === 'alex-jordan-demo') {
-      const seeded = [
-        { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
-        { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
-        { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
-      ] as VaultConfigInfo[];
-      const byYear = new Map<number, VaultConfigInfo>();
-      [...seeded, ...options].forEach(v => byYear.set(v.duration_years, v));
-      options = Array.from(byYear.values()).sort((a, b) => a.duration_years - b.duration_years);
-    }
+    const options = (configList as VaultConfigInfo[]).sort((a, b) => a.duration_years - b.duration_years);
 
     setVaultOptions(options);
     setVaultConfig(options[0]);
-    setStep('form');
+    setStep('hub');
   }
+
 
   async function compressVideoTo720p(input: File): Promise<File> {
     const testCanvas = document.createElement('canvas') as HTMLCanvasElement & { captureStream?: (frameRate?: number) => MediaStream };
@@ -441,6 +465,17 @@ export const VaultContribute: React.FC = () => {
     }
 
     if (DEMO_MODE && site.id === 'demo-site-id') {
+      const demoRows = uploadedItems.map((item, idx) => ({
+        title: form.title.trim() || null,
+        content: form.content.trim(),
+        author_name: form.author_name.trim(),
+        attachment_url: item.url,
+        attachment_name: item.name || form.attachment_name.trim() || (form.media_type !== 'text' ? `${form.media_type} attachment ${uploadedItems.length > 1 ? `#${idx + 1}` : ''}`.trim() : null),
+        media_type: form.media_type,
+        mime_type: item.mime,
+        size_bytes: item.size,
+      }));
+      persistDemoEntries(vaultConfig, demoRows);
       setSubmitting(false);
       setUploadProgress(null);
       setCompressionStatus(null);
