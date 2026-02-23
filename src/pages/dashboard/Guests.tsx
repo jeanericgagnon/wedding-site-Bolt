@@ -90,6 +90,8 @@ export const DashboardGuests: React.FC = () => {
   const [bulkSending, setBulkSending] = useState(false);
   const [campaignLog, setCampaignLog] = useState<Array<{ id: number; segment: string; count: number; sentAt: string }>>([]);
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
+  const [campaignPreset, setCampaignPreset] = useState<'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email'>('pending');
+  const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
 
 
   useEffect(() => {
@@ -426,6 +428,19 @@ export const DashboardGuests: React.FC = () => {
     } catch {
       window.prompt('Copy filtered emails:', payload);
     }
+  };
+
+  const applyCampaignPreset = (preset: 'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email') => {
+    setCampaignPreset(preset);
+    setFilterStatus(preset);
+    setViewMode('list');
+    setSearchQuery('');
+  };
+
+  const addFollowUpTask = (text: string) => {
+    const task = { id: Date.now(), text, createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+    setFollowUpTasks((prev) => [task, ...prev].slice(0, 6));
+    toast('Follow-up task captured', 'success');
   };
 
   const handleSendBulkInvitations = async () => {
@@ -1148,13 +1163,22 @@ export const DashboardGuests: React.FC = () => {
                   <p className="text-sm font-semibold text-text-primary">Recommended next action: {recommendedAction.title}</p>
                   <p className="text-xs text-text-secondary mt-0.5">{recommendedAction.detail}</p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { setFilterStatus(recommendedAction.filter); setViewMode('list'); setSearchQuery(''); }}
-                >
-                  Focus now
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setFilterStatus(recommendedAction.filter); setViewMode('list'); setSearchQuery(''); }}
+                  >
+                    Focus now
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => addFollowUpTask(`${recommendedAction.title}`)}
+                  >
+                    Save task
+                  </Button>
+                </div>
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-4">
@@ -1214,6 +1238,22 @@ export const DashboardGuests: React.FC = () => {
                 </label>
               </div>
 
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <label className="text-xs text-text-secondary w-28">Campaign preset</label>
+                <select
+                  value={campaignPreset}
+                  onChange={(e) => applyCampaignPreset(e.target.value as any)}
+                  className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
+                >
+                  <option value="pending">Pending responses</option>
+                  <option value="missing-meal">Missing meal</option>
+                  <option value="plusone-missing">Missing plus-one name</option>
+                  <option value="ceremony-no">Ceremony: No</option>
+                  <option value="reception-no">Reception: No</option>
+                  <option value="pending-no-email">Pending, no email</option>
+                </select>
+              </div>
+
               {reminderCandidates.length > 0 && (
                 <div className="space-y-1">
                   <button
@@ -1243,6 +1283,25 @@ export const DashboardGuests: React.FC = () => {
                 <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
                 <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
               </div>
+
+              {followUpTasks.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-text-tertiary">Saved follow-up tasks</p>
+                    <button
+                      onClick={() => setFollowUpTasks([])}
+                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                    >
+                      Clear tasks
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {followUpTasks.map((task) => (
+                      <span key={task.id} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary">{task.text} · {task.createdAt}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {campaignLog.length > 0 && (
                 <div className="space-y-2">
