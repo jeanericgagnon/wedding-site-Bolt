@@ -571,17 +571,79 @@ export const DashboardVault: React.FC = () => {
   }
 
 
+  function createSeedDemoState(): { vaultConfigs: VaultConfig[]; entries: VaultEntry[] } {
+    const now = Date.now();
+    const vaultConfigs: VaultConfig[] = [
+      { id: 'demo-vault-1', vault_index: 1, label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+      { id: 'demo-vault-5', vault_index: 2, label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+      { id: 'demo-vault-10', vault_index: 3, label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+    ];
+
+    const entries: VaultEntry[] = [
+      {
+        id: `demo-entry-${now}-1`,
+        vault_config_id: 'demo-vault-1',
+        vault_year: 1,
+        title: 'A first-year note',
+        content: 'Congrats on your first year! Keep choosing each other every day.',
+        author_name: 'The Johnsons',
+        attachment_url: null,
+        attachment_name: null,
+        media_type: 'text',
+        created_at: new Date(now - 1000 * 60 * 60 * 24 * 3).toISOString(),
+      },
+      {
+        id: `demo-entry-${now}-2`,
+        vault_config_id: 'demo-vault-5',
+        vault_year: 5,
+        title: 'For year five',
+        content: 'Five years in, may your adventures be even bigger than your plans today.',
+        author_name: 'College Crew',
+        attachment_url: null,
+        attachment_name: null,
+        media_type: 'text',
+        created_at: new Date(now - 1000 * 60 * 60 * 20).toISOString(),
+      },
+      {
+        id: `demo-entry-${now}-3`,
+        vault_config_id: 'demo-vault-10',
+        vault_year: 10,
+        title: 'A decade from now',
+        content: 'When you open this, we hope you are still laughing at the same inside jokes.',
+        author_name: 'Future You',
+        attachment_url: null,
+        attachment_name: null,
+        media_type: 'text',
+        created_at: new Date(now - 1000 * 60 * 45).toISOString(),
+      },
+    ];
+
+    return { vaultConfigs, entries };
+  }
+
   function loadDemoState(): { vaultConfigs: VaultConfig[]; entries: VaultEntry[] } {
     try {
       const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
-      if (!raw) return { vaultConfigs: [], entries: [] };
+      if (!raw) {
+        const seeded = createSeedDemoState();
+        saveDemoState(seeded.vaultConfigs, seeded.entries);
+        return seeded;
+      }
       const parsed = JSON.parse(raw) as { vaultConfigs?: VaultConfig[]; entries?: VaultEntry[] };
-      return {
-        vaultConfigs: parsed.vaultConfigs ?? [],
-        entries: parsed.entries ?? [],
-      };
+      const vaultConfigs = parsed.vaultConfigs ?? [];
+      const entries = parsed.entries ?? [];
+
+      if (vaultConfigs.length === 0) {
+        const seeded = createSeedDemoState();
+        saveDemoState(seeded.vaultConfigs, seeded.entries);
+        return seeded;
+      }
+
+      return { vaultConfigs, entries };
     } catch {
-      return { vaultConfigs: [], entries: [] };
+      const seeded = createSeedDemoState();
+      saveDemoState(seeded.vaultConfigs, seeded.entries);
+      return seeded;
     }
   }
 
