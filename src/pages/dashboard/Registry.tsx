@@ -65,6 +65,7 @@ export const DashboardRegistry: React.FC = () => {
   const [refreshWindowDraft, setRefreshWindowDraft] = useState('');
   const [savingRefreshPolicy, setSavingRefreshPolicy] = useState(false);
   const [refreshPreset, setRefreshPreset] = useState<'lean' | 'balanced' | 'aggressive'>('balanced');
+  const [refreshIncludePurchased, setRefreshIncludePurchased] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RegistryFilter>('all');
   const [showForm, setShowForm] = useState(false);
@@ -145,19 +146,20 @@ export const DashboardRegistry: React.FC = () => {
         if (!user) return;
         const { data: site } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled')
+          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased')
           .eq('user_id', user.id)
           .maybeSingle();
         if (site?.id) {
           setWeddingSiteId(site.id);
           setWeddingDate((site as { wedding_date?: string | null }).wedding_date ?? null);
-          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; wedding_date?: string | null };
+          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; registry_refresh_include_purchased?: boolean | null; wedding_date?: string | null };
           const monthKey = new Date().toISOString().slice(0, 7);
           const loadedMonth = typedSite.registry_monthly_refresh_month ?? monthKey;
           setMonthlyRefreshMonth(loadedMonth);
           const resetCount = loadedMonth !== monthKey;
           setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
           setAutoRefreshEnabled(typedSite.registry_auto_refresh_enabled ?? true);
+          setRefreshIncludePurchased(typedSite.registry_refresh_include_purchased ?? false);
           setRefreshWindowDraft((typedSite.registry_refresh_enabled_until ?? '').slice(0, 10));
           const loadedCap = typedSite.registry_monthly_refresh_cap ?? 100;
           setMonthlyRefreshCap(loadedCap);
@@ -349,6 +351,7 @@ export const DashboardRegistry: React.FC = () => {
 
     const staleCandidates = items
       .filter((item) => !!(item.item_url || item.canonical_url))
+      .filter((item) => refreshIncludePurchased || (item.purchase_status !== 'purchased' && !item.hide_when_purchased))
       .filter((item) => {
         const dueBySchedule = !item.next_refresh_at || new Date(item.next_refresh_at).getTime() <= Date.now();
         const failCount = item.refresh_fail_count ?? 0;
@@ -485,6 +488,7 @@ export const DashboardRegistry: React.FC = () => {
           registry_monthly_refresh_cap: cap,
           registry_refresh_enabled_until: untilIso,
           registry_auto_refresh_enabled: autoRefreshEnabled,
+          registry_refresh_include_purchased: refreshIncludePurchased,
         })
         .eq('id', weddingSiteId);
       if (error) throw error;
@@ -622,7 +626,7 @@ export const DashboardRegistry: React.FC = () => {
               Paste any product URL to import items from any store · prices auto-refresh weekly
             </p>
             <p className="text-xs text-text-tertiary mt-1">
-              Auto-refresh: {autoRefreshEnabled ? (refreshWindowOpen ? 'Open' : 'Closed (window)') : 'Paused'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month{monthlyRefreshMonth ? ` (${monthlyRefreshMonth})` : ''}
+              Auto-refresh: {autoRefreshEnabled ? (refreshWindowOpen ? 'Open' : 'Closed (window)') : 'Paused'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month{monthlyRefreshMonth ? ` (${monthlyRefreshMonth})` : ''} · Scope: {refreshIncludePurchased ? 'All items' : 'Active only'}
             </p>
             <p className="text-xs text-text-tertiary mt-1">
               Projection: ~{projectedMonthlyCalls} item checks/month · coverage {projectedRefreshCoverage}% of {items.length} items
@@ -646,6 +650,15 @@ export const DashboardRegistry: React.FC = () => {
                   onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
                 />
                 Auto refresh enabled
+              </label>
+
+              <label className="text-xs text-text-secondary inline-flex items-center gap-2 mr-1">
+                <input
+                  type="checkbox"
+                  checked={refreshIncludePurchased}
+                  onChange={(e) => setRefreshIncludePurchased(e.target.checked)}
+                />
+                Include purchased/hidden items
               </label>
               <label className="text-xs text-text-secondary">
                 Monthly cap
