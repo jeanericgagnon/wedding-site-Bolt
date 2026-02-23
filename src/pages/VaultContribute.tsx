@@ -725,6 +725,11 @@ export const VaultContribute: React.FC = () => {
                 <> The vault opens in <strong className="text-stone-700">{unlockYear}</strong>.</>
               )}
             </p>
+            {DEMO_MODE && (
+              <p className="text-[11px] mt-2 inline-flex items-center px-2 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning font-medium">
+                Demo mode: uploads and provider actions may be simulated
+              </p>
+            )}
           </div>
 
           <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8 relative overflow-hidden transition-shadow duration-300 hover:shadow-2xl">

@@ -1285,8 +1285,14 @@ setWeddingSiteId('demo-site-id');
         <Card variant="bordered" padding="md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-text-primary">Vault Storage Provider</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-text-primary">Vault Storage Provider</p>
+                {isDemoMode && <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border border-warning/30 bg-warning/10 text-warning">Demo Mode</span>}
+              </div>
               <p className="text-xs text-text-secondary mt-1">Use Supabase storage now, or connect Google Drive for external archive flow and time-lock orchestration.</p>
+              {isDemoMode && (
+                <p className="text-xs text-warning mt-2">Provider actions are simulated in demo mode.</p>
+              )}
               {driveHealthMessage && (
                 <p className={`text-xs mt-2 ${driveNeedsReconnect ? 'text-error' : 'text-success'}`}>
                   {driveHealthMessage}
@@ -1312,12 +1318,10 @@ setWeddingSiteId('demo-site-id');
                 {connectingDrive ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
                 {googleDriveConnected ? 'Reconnect Drive' : 'Connect Drive'}
               </Button>
-              {googleDriveConnected && (
-                <Button variant="ghost" size="sm" onClick={checkGoogleDriveHealth} disabled={driveHealthChecking}>
-                  {driveHealthChecking ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
-                  Check Health
-                </Button>
-              )}
+              <Button variant="ghost" size="sm" onClick={checkGoogleDriveHealth} disabled={driveHealthChecking || (!googleDriveConnected && !isDemoMode)}>
+                {driveHealthChecking ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                Check Health
+              </Button>
             </div>
           </div>
         </Card>
