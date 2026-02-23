@@ -476,7 +476,7 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'loading') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex items-center justify-center">
         <Loader2 className="w-7 h-7 animate-spin text-amber-700" />
       </div>
     );
@@ -484,7 +484,7 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'invalid') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <div className="w-14 h-14 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-stone-200">
             <Lock className="w-6 h-6 text-stone-400" />
@@ -499,7 +499,7 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'hub') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex flex-col">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex flex-col">
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-3xl">
             <div className="text-center mb-8">
@@ -518,14 +518,14 @@ export const VaultContribute: React.FC = () => {
                   <Link
                     key={v.id}
                     to={`/vault/${siteSlug}/${v.duration_years}`}
-                    className="bg-white rounded-2xl border border-stone-200 p-5 hover:border-amber-300 transition-colors shadow-sm"
+                    className="group bg-white/95 backdrop-blur rounded-2xl border border-amber-100 p-5 hover:border-amber-300 hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-stone-800">{v.label || `${v.duration_years}-Year Anniversary Vault`}</p>
                       {done && <CheckCircle className="w-5 h-5 text-green-600" />}
                     </div>
                     <p className="text-xs text-stone-500 mt-2">Opens on the {ordinalLabel(v.duration_years)} anniversary.</p>
-                    <p className="text-xs mt-3 text-amber-700 font-medium">{done ? 'Submitted ✓' : 'Add message →'}</p>
+                    <p className={`text-xs mt-3 font-semibold tracking-wide ${done ? 'text-emerald-700' : 'text-amber-700'}`}>{done ? 'Submitted ✓' : 'Add message →'}</p>
                   </Link>
                 );
               })}
@@ -538,12 +538,12 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'success') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-green-200">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold text-stone-800 mb-2">Saved to vault ✅</h1>
+          <h1 className="text-2xl font-bold text-stone-800 mb-2">Sealed in the vault ✨</h1>
           <p className="text-stone-600 mb-1">
             Your note has been tucked away in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {ordinal} anniversary vault.
           </p>
@@ -564,7 +564,7 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'error') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200">
             <AlertCircle className="w-6 h-6 text-red-500" />
@@ -573,7 +573,7 @@ export const VaultContribute: React.FC = () => {
           <p className="text-stone-500 text-sm mb-6">Your message couldn't be saved. Please try again.</p>
           <button
             onClick={() => setStep('form')}
-            className="px-5 py-2.5 bg-stone-800 text-white rounded-xl text-sm font-medium hover:bg-stone-900 transition-colors"
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 text-white rounded-xl text-sm font-semibold hover:from-amber-600 hover:to-rose-600 transition-all shadow"
           >
             Try again
           </button>
@@ -583,7 +583,7 @@ export const VaultContribute: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50 flex flex-col">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.16),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,114,182,0.12),transparent_38%),linear-gradient(135deg,#fafaf9,#fff7ed)] flex flex-col">
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
           <div className="text-center mb-8">
@@ -604,7 +604,7 @@ export const VaultContribute: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 md:p-8">
+          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-amber-100 p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-1.5">
@@ -730,7 +730,7 @@ export const VaultContribute: React.FC = () => {
                       setSubmitError(null);
                       setSelectedFiles(files);
                     }}
-                    className="w-full text-sm"
+                    className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:text-amber-800 file:px-3 file:py-1.5 hover:file:bg-amber-200"
                   />
                   {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
                   {form.media_type === 'video' && (
@@ -797,7 +797,7 @@ export const VaultContribute: React.FC = () => {
               )}
 
               {!submitting && form.media_type !== 'text' && selectedFiles.length > 0 && (
-                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 font-medium">
                   Ready to save: {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} will be uploaded to this vault.
                 </p>
               )}
@@ -805,7 +805,7 @@ export const VaultContribute: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 py-3 px-6 bg-stone-800 hover:bg-stone-900 text-white font-medium rounded-xl text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3 px-6 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600 text-white font-semibold rounded-xl text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" />Uploading and saving to vault…</>
