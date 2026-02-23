@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input, Select } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -1396,6 +1396,7 @@ Proceed with send?`)) return;
   );
 
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
@@ -1432,7 +1433,19 @@ Proceed with send?`)) return;
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card variant="bordered" padding="md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <Users className="w-6 h-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{stats.total}</p>
+                <p className="text-sm text-text-secondary">Invited</p>
+              </div>
+            </div>
+          </Card>
+
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-success-light rounded-lg flex-shrink-0">
@@ -1440,7 +1453,7 @@ Proceed with send?`)) return;
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.confirmed}</p>
-                <p className="text-sm text-text-secondary">Confirmed</p>
+                <p className="text-sm text-text-secondary">RSVP Yes</p>
               </div>
             </div>
           </Card>
@@ -1452,7 +1465,7 @@ Proceed with send?`)) return;
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.declined}</p>
-                <p className="text-sm text-text-secondary">Declined</p>
+                <p className="text-sm text-text-secondary">RSVP No</p>
               </div>
             </div>
           </Card>
@@ -1465,53 +1478,6 @@ Proceed with send?`)) return;
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.pending}</p>
                 <p className="text-sm text-text-secondary">Pending</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <Users className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.total}</p>
-                <p className="text-sm text-text-secondary">Total ({stats.rsvpRate}% responded)</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <CheckCircle2 className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{Math.round(rsvpCompleteness)}%</p>
-                <p className="text-sm text-text-secondary">Completeness</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{contactStats.contactCoverage}%</p>
-                <p className="text-sm text-text-secondary">Contact coverage</p>
-              </div>
-            </div>
-          </Card>
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{campaignReadiness}%</p>
-                <p className="text-sm text-text-secondary">Campaign readiness</p>
               </div>
             </div>
           </Card>
