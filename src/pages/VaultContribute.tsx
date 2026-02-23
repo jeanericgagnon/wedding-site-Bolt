@@ -511,7 +511,7 @@ export const VaultContribute: React.FC = () => {
               <p className="text-stone-500 text-sm mt-2">Pick a vault to leave a message. Completed vaults are marked.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               {vaultOptions.map((v) => {
                 const done = submittedYears.includes(v.duration_years);
                 return (
@@ -543,7 +543,7 @@ export const VaultContribute: React.FC = () => {
           <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-green-200">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold text-stone-800 mb-2">Sealed in the vault ✨</h1>
+          <h1 className="text-[26px] leading-tight font-bold text-stone-800 mb-2">Sealed in the vault ✨</h1>
           <p className="text-stone-600 mb-1">
             Your note has been tucked away in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {ordinal} anniversary vault.
           </p>
@@ -604,7 +604,7 @@ export const VaultContribute: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-amber-100 p-6 md:p-8">
+          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-amber-100 p-5 sm:p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-1.5">
@@ -633,7 +633,7 @@ export const VaultContribute: React.FC = () => {
                   value={form.title}
                   onChange={e => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. Advice for year one, My wish for you…"
-                  className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
                 />
               </div>
 
@@ -664,7 +664,7 @@ export const VaultContribute: React.FC = () => {
                   <select
                     value={form.media_type}
                     onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); if (isRecordingVoice) stopVoiceRecording(); }}
-                    className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                    className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
                   >
                     <option value="text">Text only</option>
                     <option value="photo">Photo</option>
@@ -772,7 +772,7 @@ export const VaultContribute: React.FC = () => {
                   value={form.attachment_name}
                   onChange={e => setForm({ ...form, attachment_name: e.target.value })}
                   placeholder="e.g. Engagement video, Voice memo"
-                  className="w-full px-4 py-2.5 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white transition"
                 />
               </div>
 
@@ -805,7 +805,7 @@ export const VaultContribute: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 py-3 px-6 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600 text-white font-semibold rounded-xl text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600 text-white font-semibold rounded-xl text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" />Uploading and saving to vault…</>
