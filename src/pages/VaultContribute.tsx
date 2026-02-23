@@ -587,6 +587,8 @@ export const VaultContribute: React.FC = () => {
   const unlockYear = site?.wedding_date && vaultConfig
     ? new Date(site.wedding_date).getFullYear() + vaultConfig.duration_years
     : null;
+  const storageProvider = site?.vault_storage_provider ?? 'supabase';
+  const usingGoogleDrive = storageProvider === 'google_drive';
 
   const ordinal = vaultConfig ? ordinalLabel(vaultConfig.duration_years) : '';
   const vaultLabel = vaultConfig?.label || (vaultConfig ? `${vaultConfig.duration_years}-Year Anniversary Vault` : 'Anniversary Vault');
@@ -728,6 +730,12 @@ export const VaultContribute: React.FC = () => {
           <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8 relative overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/20 via-primary/60 to-primary/20" />
             <form onSubmit={handleSubmit} className="space-y-5 md:space-y-5.5">
+              <div className="text-xs rounded-xl px-3 py-2 border bg-stone-50 border-stone-200 text-stone-600">
+                Storage destination: <strong className="text-stone-800">{usingGoogleDrive ? 'Google Drive' : 'Secure Vault Storage'}</strong>
+                {usingGoogleDrive && !site?.vault_google_drive_connected && (
+                  <span className="text-red-600"> · Not connected yet (ask the couple to connect Google Drive in Vault settings).</span>
+                )}
+              </div>
               {contributionWindow.message && (
                 <div className={`text-xs rounded-xl px-3 py-2 border ${contributionWindow.canSubmit ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-warning/10 border-warning/30 text-warning'}`}>
                   {contributionWindow.message}
@@ -925,21 +933,24 @@ export const VaultContribute: React.FC = () => {
 
               {!submitting && form.media_type !== 'text' && selectedFiles.length > 0 && (
                 <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 font-medium">
-                  Ready to save: {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} will be uploaded to this vault.
+                  Ready to save: {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} will be uploaded to {usingGoogleDrive ? 'Google Drive' : 'vault storage'}.
                 </p>
               )}
 
               <button
                 type="submit"
-                disabled={submitting || !contributionWindow.canSubmit}
+                disabled={submitting || !contributionWindow.canSubmit || (usingGoogleDrive && !site?.vault_google_drive_connected)}
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl text-sm transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-[1px] disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />Uploading and saving to vault…</>
+                  <><Loader2 className="w-4 h-4 animate-spin" />Uploading and saving to {usingGoogleDrive ? 'Google Drive vault' : 'vault'}…</>
                 ) : (
                   <><Send className="w-4 h-4" />Seal in vault</>
                 )}
               </button>
+              {usingGoogleDrive && !site?.vault_google_drive_connected && (
+                <p className="text-xs text-red-600 mt-2">Submissions are temporarily paused until the couple reconnects Google Drive.</p>
+              )}
             </form>
           </div>
 
