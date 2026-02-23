@@ -896,20 +896,37 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleEditSave(id: string, label: string, durationYears: number) {
+    const hasDuplicateYear = vaultConfigs.some(c => c.id !== id && c.duration_years === durationYears);
+    if (hasDuplicateYear) {
+      toast(`You already have a ${durationYears}-year vault. Choose a different anniversary.`, 'error');
+      throw new Error('Duplicate anniversary year');
+    }
+
     if (isDemoMode && weddingSiteId === 'demo-site-id') {
-      const nextConfigs = vaultConfigs.map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c);
+      const nextConfigs = vaultConfigs
+        .map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c)
+        .sort((a, b) => a.duration_years - b.duration_years);
       setVaultConfigs(nextConfigs);
       saveDemoState(nextConfigs, entries);
       toast('Vault updated');
       return;
     }
+
     const { error } = await supabase
       .from('vault_configs')
       .update({ label, duration_years: durationYears, updated_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (error) throw new Error(error.message);
-    setVaultConfigs(prev => prev.map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c));
+    if (error) {
+      if (error.message?.toLowerCase().includes('duplicate') || error.message?.toLowerCase().includes('unique')) {
+        toast(`You already have a ${durationYears}-year vault.`, 'error');
+      }
+      throw new Error(error.message);
+    }
+
+    setVaultConfigs(prev => prev
+      .map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c)
+      .sort((a, b) => a.duration_years - b.duration_years));
     toast('Vault updated');
   }
 
