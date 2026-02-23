@@ -973,6 +973,7 @@ setWeddingSiteId('demo-site-id');
       toast('Google Drive connected successfully.');
       setGoogleDriveConnected(true);
       setVaultStorageProvider('google_drive');
+      checkGoogleDriveHealth();
       loadData();
     });
   }, [loadData]);
