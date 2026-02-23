@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge, Textarea } from '../../components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
 import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
@@ -727,13 +727,47 @@ export const DashboardSettings: React.FC = () => {
                             </div>
 
                             {q.type === 'single_choice' && (
-                              <Textarea
-                                label="Choices (one per line)"
-                                rows={3}
-                                value={(q.options ?? []).join('\n')}
-                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, options: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) } : item))}
-                                placeholder={'Chicken\\nBeef\\nVegetarian'}
-                              />
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-text-primary">Choices</label>
+                                {(q.options ?? []).map((opt, optIdx) => (
+                                  <div key={`${q.id}-opt-${optIdx}`} className="flex items-center gap-2">
+                                    <Input
+                                      value={opt}
+                                      onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => {
+                                        if (item.id !== q.id) return item;
+                                        const next = [...(item.options ?? [])];
+                                        next[optIdx] = e.target.value;
+                                        return { ...item, options: next };
+                                      }))}
+                                      placeholder={`Option ${optIdx + 1}`}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setRsvpQuestions((prev) => prev.map((item) => {
+                                        if (item.id !== q.id) return item;
+                                        const next = [...(item.options ?? [])];
+                                        next.splice(optIdx, 1);
+                                        return { ...item, options: next };
+                                      }))}
+                                      aria-label="Remove choice"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, options: [...(item.options ?? []), ''] } : item))}
+                                >
+                                  <Plus className="w-4 h-4 mr-1" />
+                                  Add choice
+                                </Button>
+                                <p className="text-xs text-text-tertiary">At least 2 non-empty choices required.</p>
+                              </div>
                             )}
                           </div>
                         ))}
