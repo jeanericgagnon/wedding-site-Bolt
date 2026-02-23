@@ -85,7 +85,7 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
@@ -854,7 +854,8 @@ export const DashboardGuests: React.FC = () => {
       (filterStatus === 'reception-no' && eventSelections?.reception === false) ||
       (filterStatus === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
       (filterStatus === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
-      (filterStatus === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email);
+      (filterStatus === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
+      (filterStatus === 'no-contact' && !guest.email && !guest.phone);
 
     return matchesSearch && matchesFilter;
   });
@@ -984,6 +985,7 @@ export const DashboardGuests: React.FC = () => {
     'missing-meal': 'Missing Meal',
     'plusone-missing': 'Plus-one Missing Name',
     'pending-no-email': 'Pending, No Email',
+    'no-contact': 'No Contact Info',
   };
 
   const getStatusBadge = (status: string) => {
@@ -1418,7 +1420,7 @@ export const DashboardGuests: React.FC = () => {
                 <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
                 <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
                 <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
-                <button onClick={() => { setSearchQuery(''); setFilterStatus('all'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
+                <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
               </div>
 
               {followUpTasks.length > 0 && (
@@ -1475,6 +1477,12 @@ export const DashboardGuests: React.FC = () => {
               </button>
             </div>
 
+            {filterStatus === 'no-contact' && (
+              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs">
+                These guests have no email or phone. Add contact info before reminder campaigns.
+              </div>
+            )}
+
             <div className="flex gap-2 flex-wrap items-center justify-between">
               <div className="flex gap-2 flex-wrap">
                 <button
@@ -1493,6 +1501,7 @@ export const DashboardGuests: React.FC = () => {
                   { id: 'missing-meal', label: `Missing Meal (${rsvpOps.missingMeal})` },
                   { id: 'plusone-missing', label: `Plus-One Missing (${rsvpOps.plusOneMissingName})` },
                   { id: 'pending-no-email', label: `Pending No Email (${rsvpOps.pendingNoEmail})` },
+                  { id: 'no-contact', label: `No Contact (${contactStats.withNoContact})` },
                 ] as const).map(({ id, label }) => (
                   <button
                     key={id}
