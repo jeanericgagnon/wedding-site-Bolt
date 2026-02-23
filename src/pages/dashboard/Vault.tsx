@@ -249,9 +249,9 @@ const VaultCard: React.FC<VaultCardProps> = ({
   }
 
   return (
-    <Card variant="bordered" padding="lg" className={!config.is_enabled ? 'opacity-60' : ''}>
-      <div className="flex items-start justify-between gap-4 mb-1">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+    <Card variant="bordered" padding="lg" className={`transition-all shadow-sm hover:shadow-md border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
           <div className={`p-2.5 rounded-xl flex-shrink-0 ${isUnlocked && config.is_enabled ? 'bg-success-light' : 'bg-surface-subtle'}`}>
             {isUnlocked && config.is_enabled
               ? <Unlock className="w-5 h-5 text-success" />
@@ -259,8 +259,9 @@ const VaultCard: React.FC<VaultCardProps> = ({
             }
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-text-primary truncate">{config.label || `Vault ${config.vault_index}`}</h3>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 flex-shrink-0">{config.duration_years}yr</span>
               {!config.is_enabled && (
                 <span className="text-xs bg-surface-subtle text-text-tertiary px-2 py-0.5 rounded-full border border-border flex-shrink-0">Disabled</span>
               )}
@@ -276,16 +277,16 @@ const VaultCard: React.FC<VaultCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="text-xs text-text-tertiary">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
+        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap self-start sm:self-auto">
+          <span className="text-xs text-text-tertiary px-2 py-1 rounded-md bg-surface-subtle border border-border">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
 
           {siteSlug && config.is_enabled && (
             <button
               onClick={handleCopyLink}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm ${
                 copied
                   ? 'border-success/40 bg-success-light text-success'
-                  : 'border-border bg-surface-subtle text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'
+                  : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'
               }`}
               title="Copy shareable link for guests"
             >
@@ -571,17 +572,79 @@ export const DashboardVault: React.FC = () => {
   }
 
 
+  function createSeedDemoState(): { vaultConfigs: VaultConfig[]; entries: VaultEntry[] } {
+    const now = Date.now();
+    const vaultConfigs: VaultConfig[] = [
+      { id: 'demo-vault-1', vault_index: 1, label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+      { id: 'demo-vault-5', vault_index: 2, label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+      { id: 'demo-vault-10', vault_index: 3, label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+    ];
+
+    const entries: VaultEntry[] = [
+      {
+        id: `demo-entry-${now}-1`,
+        vault_config_id: 'demo-vault-1',
+        vault_year: 1,
+        title: 'A first-year note',
+        content: 'Congrats on your first year! Keep choosing each other every day.',
+        author_name: 'The Johnsons',
+        attachment_url: null,
+        attachment_name: null,
+        media_type: 'text',
+        created_at: new Date(now - 1000 * 60 * 60 * 24 * 3).toISOString(),
+      },
+      {
+        id: `demo-entry-${now}-2`,
+        vault_config_id: 'demo-vault-5',
+        vault_year: 5,
+        title: 'For year five',
+        content: 'Five years in, may your adventures be even bigger than your plans today.',
+        author_name: 'College Crew',
+        attachment_url: null,
+        attachment_name: null,
+        media_type: 'text',
+        created_at: new Date(now - 1000 * 60 * 60 * 20).toISOString(),
+      },
+      {
+        id: `demo-entry-${now}-3`,
+        vault_config_id: 'demo-vault-10',
+        vault_year: 10,
+        title: 'A decade from now',
+        content: 'When you open this, we hope you are still laughing at the same inside jokes.',
+        author_name: 'Future You',
+        attachment_url: null,
+        attachment_name: null,
+        media_type: 'text',
+        created_at: new Date(now - 1000 * 60 * 45).toISOString(),
+      },
+    ];
+
+    return { vaultConfigs, entries };
+  }
+
   function loadDemoState(): { vaultConfigs: VaultConfig[]; entries: VaultEntry[] } {
     try {
       const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
-      if (!raw) return { vaultConfigs: [], entries: [] };
+      if (!raw) {
+        const seeded = createSeedDemoState();
+        saveDemoState(seeded.vaultConfigs, seeded.entries);
+        return seeded;
+      }
       const parsed = JSON.parse(raw) as { vaultConfigs?: VaultConfig[]; entries?: VaultEntry[] };
-      return {
-        vaultConfigs: parsed.vaultConfigs ?? [],
-        entries: parsed.entries ?? [],
-      };
+      const vaultConfigs = parsed.vaultConfigs ?? [];
+      const entries = parsed.entries ?? [];
+
+      if (vaultConfigs.length === 0) {
+        const seeded = createSeedDemoState();
+        saveDemoState(seeded.vaultConfigs, seeded.entries);
+        return seeded;
+      }
+
+      return { vaultConfigs, entries };
     } catch {
-      return { vaultConfigs: [], entries: [] };
+      const seeded = createSeedDemoState();
+      saveDemoState(seeded.vaultConfigs, seeded.entries);
+      return seeded;
     }
   }
 
@@ -726,6 +789,50 @@ export const DashboardVault: React.FC = () => {
     }
   }
 
+
+  async function handleSeedStarterVaults() {
+    if (isDemoMode) {
+      handleSeedDemoVaults();
+      return;
+    }
+    if (!weddingSiteId || addingVault) return;
+
+    setAddingVault(true);
+    try {
+      const starter = [
+        { vault_index: 1, label: '1-Year Anniversary Vault', duration_years: 1 },
+        { vault_index: 2, label: '5-Year Anniversary Vault', duration_years: 5 },
+        { vault_index: 3, label: '10-Year Anniversary Vault', duration_years: 10 },
+      ];
+
+      const { data, error } = await supabase
+        .from('vault_configs')
+        .upsert(
+          starter.map((v) => ({ ...v, wedding_site_id: weddingSiteId, is_enabled: true })),
+          { onConflict: 'wedding_site_id,vault_index' }
+        )
+        .select('*');
+
+      if (error) throw error;
+      setVaultConfigs((data ?? []) as VaultConfig[]);
+      toast('Starter vault set loaded (1/5/10)');
+      await loadData();
+    } catch {
+      toast('Failed to load starter vault set', 'error');
+    } finally {
+      setAddingVault(false);
+    }
+  }
+
+  function handleSeedDemoVaults() {
+    if (!isDemoMode) return;
+    const seeded = createSeedDemoState();
+    setVaultConfigs(seeded.vaultConfigs);
+    setEntries(seeded.entries);
+    saveDemoState(seeded.vaultConfigs, seeded.entries);
+    toast('Demo vault set loaded (1/5/10)');
+  }
+
   async function handleToggleEnabled(configId: string, enabled: boolean) {
     if (isDemoMode) {
       const nextConfigs = vaultConfigs.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c);
@@ -847,14 +954,16 @@ export const DashboardVault: React.FC = () => {
   return (
     <DashboardLayout currentPage="vault">
       <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
-            <p className="text-text-secondary">
-              Time capsule messages sealed until each anniversary milestone. Up to {MAX_VAULTS} vaults supported.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+        <div className="rounded-2xl border border-primary/15 bg-[linear-gradient(135deg,rgba(59,130,246,0.07),rgba(255,255,255,0.95))] p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.16em] text-primary/80 font-semibold mb-2">Time Capsule</p>
+              <h1 className="text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
+              <p className="text-text-secondary">
+                Time capsule messages sealed until each anniversary milestone. Up to {MAX_VAULTS} vaults supported.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
             {totalEntries > 0 && (
               <div className="text-right">
                 <p className="text-2xl font-bold text-text-primary leading-none">{totalEntries}</p>
@@ -874,6 +983,7 @@ export const DashboardVault: React.FC = () => {
             )}
           </div>
         </div>
+      </div>
 
         {!weddingDate && (
           <div className="flex items-start gap-3 p-4 bg-warning-light border border-warning/20 rounded-xl text-sm text-warning">
@@ -895,10 +1005,11 @@ export const DashboardVault: React.FC = () => {
               <p className="text-sm text-text-secondary mb-5 max-w-sm mx-auto">
                 Create up to {MAX_VAULTS} time capsule vaults, each unlocking on a different anniversary. Share vault links with guests so they can leave messages.
               </p>
-              <Button variant="primary" onClick={handleAddVault} disabled={addingVault}>
+              <Button variant="primary" onClick={handleSeedStarterVaults} disabled={addingVault}>
                 {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
-                Create Your First Vault
+                Load Starter Vault Set (1/5/10)
               </Button>
+              <p className="text-[11px] text-text-tertiary mt-2">Creates a ready-to-demo vault set in one tap.</p>
             </div>
           </Card>
         )}
