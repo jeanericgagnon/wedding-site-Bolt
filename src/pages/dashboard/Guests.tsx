@@ -418,7 +418,7 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`Send reminders to ${reminderCandidates.length} guest(s) in current filter?`)) return;
+    if (!window.confirm(`Send reminders to ${reminderCandidates.length} guest(s) in "${segmentLabelMap[filterStatus] || filterStatus}"?`)) return;
 
     if (isDemoMode) {
       const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1119,6 +1119,13 @@ export const DashboardGuests: React.FC = () => {
                   Skip guests invited in last 24h
                 </label>
               </div>
+
+              {reminderCandidates.length > 0 && (
+                <div className="text-xs text-text-tertiary">
+                  Preview: {reminderCandidates.slice(0, 5).map((g) => `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || g.name).join(', ')}
+                  {reminderCandidates.length > 5 ? ` +${reminderCandidates.length - 5} more` : ''}
+                </div>
+              )}
               {campaignLog.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
