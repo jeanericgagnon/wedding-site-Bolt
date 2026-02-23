@@ -1247,6 +1247,9 @@ setWeddingSiteId('demo-site-id');
 
   const totalEntries = entries.length;
   const orderedVaultConfigs = [...vaultConfigs].sort((a, b) => a.duration_years - b.duration_years);
+  const setupStepConnectDone = googleDriveConnected;
+  const setupStepHealthDone = !!googleDriveConnected && !!driveHealthMessage && !driveNeedsReconnect;
+  const setupStepProviderDone = vaultStorageProvider === 'google_drive';
 
   return (
     <DashboardLayout currentPage="vault">
@@ -1290,6 +1293,11 @@ setWeddingSiteId('demo-site-id');
                 {isDemoMode && <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border border-warning/30 bg-warning/10 text-warning">Demo Mode</span>}
               </div>
               <p className="text-xs text-text-secondary mt-1">Use Supabase storage now, or connect Google Drive for external archive flow and time-lock orchestration.</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                <span className={`px-2 py-1 rounded-full border ${setupStepConnectDone ? 'border-success/30 bg-success/10 text-success' : 'border-border text-text-tertiary'}`}>1. Connect Drive</span>
+                <span className={`px-2 py-1 rounded-full border ${setupStepHealthDone ? 'border-success/30 bg-success/10 text-success' : 'border-border text-text-tertiary'}`}>2. Check Health</span>
+                <span className={`px-2 py-1 rounded-full border ${setupStepProviderDone ? 'border-success/30 bg-success/10 text-success' : 'border-border text-text-tertiary'}`}>3. Switch Provider</span>
+              </div>
               {isDemoMode && (
                 <p className="text-xs text-warning mt-2">Provider actions are simulated in demo mode.</p>
               )}
