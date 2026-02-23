@@ -58,6 +58,18 @@ function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; r
 }
 
 
+
+function getCustomAnswerEntries(customAnswers: Record<string, string> | null | undefined): Array<{ key: string; value: string }> {
+  if (!customAnswers || typeof customAnswers !== 'object') return [];
+
+  return Object.entries(customAnswers)
+    .map(([key, value]) => ({
+      key: key.replace(/^q_/, 'question_'),
+      value: (typeof value === 'string' ? value : String(value ?? '')).trim(),
+    }))
+    .filter((entry) => entry.value.length > 0);
+}
+
 function formatCustomAnswers(customAnswers: Record<string, string> | null | undefined): string {
   if (!customAnswers || typeof customAnswers !== 'object') return '';
   const entries = Object.entries(customAnswers)
@@ -2128,6 +2140,44 @@ Proceed with send?`)) return;
             </div>
 
             <div className="flex-1 overflow-y-auto p-5">
+              {(() => {
+                const entries = getCustomAnswerEntries(itineraryDrawerGuest.rsvp?.custom_answers || null);
+                const status = itineraryDrawerGuest.rsvp_status;
+                const meal = itineraryDrawerGuest.rsvp?.meal_choice;
+                const plusOne = itineraryDrawerGuest.rsvp?.plus_one_name;
+
+                return (
+                  <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-text-tertiary">RSVP details</p>
+                    <div className="text-sm text-text-primary">
+                      <span className="font-medium">Status:</span>{' '}
+                      <span className="capitalize">{status}</span>
+                    </div>
+                    {meal && (
+                      <div className="text-sm text-text-primary">
+                        <span className="font-medium">Meal:</span> <span className="capitalize">{meal}</span>
+                      </div>
+                    )}
+                    {plusOne && (
+                      <div className="text-sm text-text-primary">
+                        <span className="font-medium">Plus one:</span> {plusOne}
+                      </div>
+                    )}
+                    {entries.length > 0 && (
+                      <div className="pt-1 space-y-1.5">
+                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Custom answers</p>
+                        {entries.map((entry) => (
+                          <div key={entry.key} className="text-sm text-text-primary flex items-start justify-between gap-3">
+                            <span className="text-text-secondary truncate">{entry.key}</span>
+                            <span className="text-right">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {loadingDrawer ? (
                 <div className="flex items-center justify-center h-32">
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />
