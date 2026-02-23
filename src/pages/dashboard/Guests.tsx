@@ -85,6 +85,7 @@ export const DashboardGuests: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
+  const [bulkSending, setBulkSending] = useState(false);
 
   const [viewMode, setViewMode] = useState<'list' | 'households'>('list');
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
@@ -388,6 +389,64 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+
+  const handleSendBulkInvitations = async () => {
+    if (emailableFilteredGuests.length === 0) {
+      toast('No guests with email + invite token in this filtered view.', 'error');
+      return;
+    }
+
+    if (!window.confirm(`Send reminders to ${emailableFilteredGuests.length} guest(s) in current filter?`)) return;
+
+    if (isDemoMode) {
+      toast(`Demo: simulated reminders for ${emailableFilteredGuests.length} guests`, 'success');
+      return;
+    }
+
+    setBulkSending(true);
+    let successCount = 0;
+
+    try {
+      for (const guest of emailableFilteredGuests) {
+        if (!guest.email) continue;
+        const guestName = guest.first_name && guest.last_name
+          ? `${guest.first_name} ${guest.last_name}`
+          : guest.name;
+
+        try {
+          await sendWeddingInvitation({
+            guestEmail: guest.email,
+            guestName,
+            coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
+            coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
+            weddingDate: weddingSiteInfo?.wedding_date ?? null,
+            venueName: weddingSiteInfo?.venue_name ?? null,
+            venueAddress: weddingSiteInfo?.venue_address ?? null,
+            siteUrl: weddingSiteInfo?.site_url ?? null,
+            inviteToken: guest.invite_token ?? null,
+          });
+
+          await supabase
+            .from('guests')
+            .update({ invitation_sent_at: new Date().toISOString() })
+            .eq('id', guest.id);
+
+          successCount += 1;
+        } catch {
+          // continue sending others
+        }
+      }
+
+      if (successCount > 0) {
+        toast(`Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`, 'success');
+      } else {
+        toast('No reminders were sent. Please try again.', 'error');
+      }
+    } finally {
+      setBulkSending(false);
+    }
+  };
+
   async function handleMergeIntoHousehold() {
     if (selectedGuestIds.size < 2 || !weddingSiteId || isDemoMode) return;
     setHouseholdBusy(true);
@@ -687,10 +746,14 @@ export const DashboardGuests: React.FC = () => {
       filterStatus === 'all' ||
       guest.rsvp_status === filterStatus ||
       (filterStatus === 'ceremony-no' && eventSelections?.ceremony === false) ||
-      (filterStatus === 'reception-no' && eventSelections?.reception === false);
+      (filterStatus === 'reception-no' && eventSelections?.reception === false) ||
+      (filterStatus === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
+      (filterStatus === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name);
 
     return matchesSearch && matchesFilter;
   });
+
+  const emailableFilteredGuests = filteredGuests.filter(g => !!g.email && !!g.invite_token);
 
   const stats = {
     total: guests.length,
@@ -971,6 +1034,10 @@ export const DashboardGuests: React.FC = () => {
                 <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
                   <UserPlus className="w-4 h-4 mr-2" />
                   Add Guest
+                </Button>
+                <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || emailableFilteredGuests.length === 0}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  {bulkSending ? 'Sending…' : `Remind Filtered (${emailableFilteredGuests.length})`}
                 </Button>
               </div>
             </div>
