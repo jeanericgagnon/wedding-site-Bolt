@@ -593,8 +593,77 @@ export const VaultContribute: React.FC = () => {
                     <option value="voice">Voice note</option>
                   </select>
                 </div>
-                              </div>
+              </div>
 
+              {form.media_type !== 'text' && (
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Upload files <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="file"
+                    multiple={form.media_type === 'photo' || form.media_type === 'video'}
+                    accept={form.media_type === 'photo' ? 'image/*' : form.media_type === 'video' ? 'video/*' : 'audio/*'}
+                    onChange={e => {
+                      const files = Array.from(e.target.files ?? []);
+                      if (files.length === 0) {
+                        setSelectedFiles([]);
+                        return;
+                      }
+
+                      if ((form.media_type === 'photo' || form.media_type === 'video') && files.length > 3) {
+                        setSubmitError('You can upload up to 3 photos or videos per submission.');
+                        setSelectedFiles([]);
+                        return;
+                      }
+
+                      const mediaType = form.media_type;
+                      const maxMb = MAX_UPLOAD_MB_BY_TYPE[mediaType as 'photo' | 'video' | 'voice'];
+
+                      for (const file of files) {
+                        if (mediaType === 'photo' && !file.type.startsWith('image/')) {
+                          setSubmitError('Please choose only image files for Photo type.');
+                          setSelectedFiles([]);
+                          return;
+                        }
+                        if (mediaType === 'video' && !file.type.startsWith('video/')) {
+                          setSubmitError('Please choose only video files for Video type.');
+                          setSelectedFiles([]);
+                          return;
+                        }
+                        if (mediaType === 'voice' && !file.type.startsWith('audio/')) {
+                          setSubmitError('Please choose an audio file for Voice type.');
+                          setSelectedFiles([]);
+                          return;
+                        }
+                        const effectiveMaxMb = mediaType === 'video' && compressVideo ? 200 : maxMb;
+                        if (file.size > effectiveMaxMb * 1024 * 1024) {
+                          setSubmitError(
+                            mediaType === 'video' && compressVideo
+                              ? 'This video is too large to process here (max 200MB source). Please trim/compress it first, then try again.'
+                              : `This file is too large (max ${maxMb}MB for ${mediaType}). Please compress or trim it and re-upload.`
+                          );
+                          setSelectedFiles([]);
+                          return;
+                        }
+                      }
+
+                      setSubmitError(null);
+                      setSelectedFiles(files);
+                    }}
+                    className="w-full text-sm"
+                  />
+                  {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
+                  {form.media_type === 'video' && (
+                    <label className="mt-1 inline-flex items-center gap-2 text-xs text-stone-600">
+                      <input type="checkbox" checked={compressVideo} onChange={e => setCompressVideo(e.target.checked)} />
+                      Compress to 720p before upload (recommended)
+                    </label>
+                  )}
+                  <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each. If larger, compress first.' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (auto-compressed to 720p).' : 'Up to 3 videos, 35MB each. If larger, compress/trim first.') : 'Single voice file, 12MB max. If larger, trim/compress first.'}</p>
+                  {errors.attachment_url && <p className="text-red-500 text-xs mt-1">{errors.attachment_url}</p>}
+                </div>
+              )}
 
 
               <div>
