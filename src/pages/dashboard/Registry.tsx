@@ -57,6 +57,7 @@ export const DashboardRegistry: React.FC = () => {
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
   const [refreshEnabledUntil, setRefreshEnabledUntil] = useState<string | null>(null);
   const [monthlyRefreshCap, setMonthlyRefreshCap] = useState(100);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [monthlyRefreshCount, setMonthlyRefreshCount] = useState(0);
   const [refreshCapDraft, setRefreshCapDraft] = useState(100);
   const [refreshWindowDraft, setRefreshWindowDraft] = useState('');
@@ -139,16 +140,17 @@ export const DashboardRegistry: React.FC = () => {
         if (!user) return;
         const { data: site } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month')
+          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled')
           .eq('user_id', user.id)
           .maybeSingle();
         if (site?.id) {
           setWeddingSiteId(site.id);
           setWeddingDate((site as { wedding_date?: string | null }).wedding_date ?? null);
-          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; wedding_date?: string | null };
+          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; wedding_date?: string | null };
           const monthKey = new Date().toISOString().slice(0, 7);
           const resetCount = typedSite.registry_monthly_refresh_month !== monthKey;
           setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
+          setAutoRefreshEnabled(typedSite.registry_auto_refresh_enabled ?? true);
           setRefreshWindowDraft((typedSite.registry_refresh_enabled_until ?? '').slice(0, 10));
           const loadedCap = typedSite.registry_monthly_refresh_cap ?? 100;
           setMonthlyRefreshCap(loadedCap);
@@ -452,6 +454,7 @@ export const DashboardRegistry: React.FC = () => {
         .update({
           registry_monthly_refresh_cap: cap,
           registry_refresh_enabled_until: untilIso,
+          registry_auto_refresh_enabled: autoRefreshEnabled,
         })
         .eq('id', weddingSiteId);
       if (error) throw error;
@@ -526,7 +529,7 @@ export const DashboardRegistry: React.FC = () => {
   const refreshWindowUntil = refreshEnabledUntil
     ? new Date(refreshEnabledUntil)
     : (weddingDate ? new Date(new Date(weddingDate).getTime() + 1000 * 60 * 60 * 24 * 30) : null);
-  const refreshWindowOpen = !refreshWindowUntil || refreshWindowUntil.getTime() >= Date.now();
+  const refreshWindowOpen = autoRefreshEnabled && (!refreshWindowUntil || refreshWindowUntil.getTime() >= Date.now());
   const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
   const budgetUtilization = monthlyRefreshCap > 0 ? monthlyRefreshCount / monthlyRefreshCap : 0;
   const nearBudgetCap = budgetUtilization >= 0.8;
@@ -586,7 +589,7 @@ export const DashboardRegistry: React.FC = () => {
               Paste any product URL to import items from any store · prices auto-refresh weekly
             </p>
             <p className="text-xs text-text-tertiary mt-1">
-              Auto-refresh window: {refreshWindowOpen ? 'Open' : 'Closed'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month
+              Auto-refresh: {autoRefreshEnabled ? (refreshWindowOpen ? 'Open' : 'Closed (window)') : 'Paused'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month
             </p>
             {daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14 && (
               <p className="text-xs text-warning mt-1">Near expiry: auto-lean recommended to minimize late-cycle compute.</p>
@@ -600,6 +603,14 @@ export const DashboardRegistry: React.FC = () => {
                 <button className={`px-2 py-1 border-l border-border ${refreshPreset === 'balanced' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('balanced')}>Balanced{recommendedPreset === 'balanced' ? ' ★' : ''}</button>
                 <button className={`px-2 py-1 border-l border-border ${refreshPreset === 'aggressive' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('aggressive')}>Aggressive{recommendedPreset === 'aggressive' ? ' ★' : ''}</button>
               </div>
+              <label className="text-xs text-text-secondary inline-flex items-center gap-2 mr-1">
+                <input
+                  type="checkbox"
+                  checked={autoRefreshEnabled}
+                  onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                />
+                Auto refresh enabled
+              </label>
               <label className="text-xs text-text-secondary">
                 Monthly cap
                 <input
