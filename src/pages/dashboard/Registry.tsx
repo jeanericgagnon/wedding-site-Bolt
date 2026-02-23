@@ -325,10 +325,14 @@ export const DashboardRegistry: React.FC = () => {
       if (!silent) toast('Auto-refresh window is closed (post-wedding).');
       return;
     }
-    if (refreshBudgetRemaining <= 0) {
+
+    const budgetState = await ensureMonthlyBudgetState();
+    const remaining = Math.max(0, monthlyRefreshCap - budgetState.count);
+    if (remaining <= 0) {
       if (!silent) toast('Monthly refresh budget reached for this registry.');
       return;
     }
+
     const staleCandidates = items
       .filter((item) => !!(item.item_url || item.canonical_url))
       .filter((item) => {
@@ -337,7 +341,7 @@ export const DashboardRegistry: React.FC = () => {
         const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
         return alertsOnly ? (stale || outOfStock || priceChanged) : stale;
       })
-      .slice(0, Math.min(12, refreshBudgetRemaining));
+      .slice(0, Math.min(12, remaining));
 
     if (staleCandidates.length === 0) {
       if (!silent) toast('Registry metadata is already fresh.');
@@ -378,12 +382,12 @@ export const DashboardRegistry: React.FC = () => {
     }
     setAutoRefreshing(false);
     if (updatedCount > 0) {
-      const nextCount = monthlyRefreshCount + updatedCount;
+      const nextCount = budgetState.count + updatedCount;
       setMonthlyRefreshCount(nextCount);
       if (weddingSiteId && !isDemoMode) {
         await supabase
           .from('wedding_sites')
-          .update({ registry_monthly_refresh_count: nextCount, registry_monthly_refresh_month: todayMonthKey })
+          .update({ registry_monthly_refresh_count: nextCount, registry_monthly_refresh_month: budgetState.monthKey })
           .eq('id', weddingSiteId);
       }
     }
@@ -525,6 +529,24 @@ export const DashboardRegistry: React.FC = () => {
   const refreshWindowOpen = !refreshWindowUntil || refreshWindowUntil.getTime() >= Date.now();
   const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
   const daysUntilRefreshWindowEnd = refreshWindowUntil ? Math.ceil((refreshWindowUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+  async function ensureMonthlyBudgetState() {
+    const monthKey = new Date().toISOString().slice(0, 7);
+    if (!weddingSiteId || isDemoMode) return { monthKey, count: monthlyRefreshCount };
+    if (todayMonthKey === monthKey && monthlyRefreshCount >= 0) return { monthKey, count: monthlyRefreshCount };
+
+    // local reset if month key drifted
+    const shouldReset = monthKey !== todayMonthKey;
+    if (shouldReset) {
+      setMonthlyRefreshCount(0);
+      await supabase
+        .from('wedding_sites')
+        .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: monthKey })
+        .eq('id', weddingSiteId);
+      return { monthKey, count: 0 };
+    }
+    return { monthKey, count: monthlyRefreshCount };
+  }
+
   const baseRecommendedPreset: 'lean' | 'balanced' | 'aggressive' = items.length <= 40 ? 'lean' : items.length <= 120 ? 'balanced' : 'aggressive';
   const recommendedPreset: 'lean' | 'balanced' | 'aggressive' = (daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14) ? 'lean' : baseRecommendedPreset;
 
@@ -603,10 +625,10 @@ export const DashboardRegistry: React.FC = () => {
             <Button variant="outline" size="md" onClick={() => setBulkImportOpen(true)} disabled={!weddingSiteId}>
               Bulk Import URLs
             </Button>
-            <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false)} disabled={!weddingSiteId || autoRefreshing}>
+            <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false)} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
               {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
             </Button>
-            <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false, true)} disabled={!weddingSiteId || autoRefreshing}>
+            <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false, true)} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
               {autoRefreshing ? 'Refreshing…' : 'Refresh alert items'}
             </Button>
             <Button variant="primary" size="md" onClick={handleAddNew} disabled={!weddingSiteId}>
@@ -679,6 +701,7 @@ export const DashboardRegistry: React.FC = () => {
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Weekly stale: {alertCounts.stale}</span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Price changed: {alertCounts.priceChanged}</span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Out of stock: {alertCounts.outOfStock}</span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Remaining budget: {refreshBudgetRemaining}</span>
           </div>
 
           {loading ? (
