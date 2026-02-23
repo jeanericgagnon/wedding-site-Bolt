@@ -528,6 +528,8 @@ export const DashboardRegistry: React.FC = () => {
     : (weddingDate ? new Date(new Date(weddingDate).getTime() + 1000 * 60 * 60 * 24 * 30) : null);
   const refreshWindowOpen = !refreshWindowUntil || refreshWindowUntil.getTime() >= Date.now();
   const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
+  const budgetUtilization = monthlyRefreshCap > 0 ? monthlyRefreshCount / monthlyRefreshCap : 0;
+  const nearBudgetCap = budgetUtilization >= 0.8;
   const daysUntilRefreshWindowEnd = refreshWindowUntil ? Math.ceil((refreshWindowUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   async function ensureMonthlyBudgetState() {
     const monthKey = new Date().toISOString().slice(0, 7);
@@ -589,6 +591,9 @@ export const DashboardRegistry: React.FC = () => {
             {daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14 && (
               <p className="text-xs text-warning mt-1">Near expiry: auto-lean recommended to minimize late-cycle compute.</p>
             )}
+            {nearBudgetCap && (
+              <p className="text-xs text-warning mt-1">You are above 80% of monthly refresh budget. Consider switching to Lean.</p>
+            )}
             <div className="mt-2 flex flex-wrap items-end gap-2">
               <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
                 <button className={`px-2 py-1 ${refreshPreset === 'lean' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('lean')}>Lean{recommendedPreset === 'lean' ? ' ★' : ''}</button>
@@ -616,7 +621,7 @@ export const DashboardRegistry: React.FC = () => {
                 />
               </label>
               <Button variant="ghost" size="sm" onClick={setDefaultRefreshWindowFromWedding} disabled={!weddingDate}>Use wedding + 30d</Button>
-              <Button variant="ghost" size="sm" onClick={() => applyRefreshPreset(recommendedPreset)}>Apply recommended</Button>
+              <Button variant={nearBudgetCap && refreshPreset !== 'lean' ? 'outline' : 'ghost'} size="sm" onClick={() => applyRefreshPreset(recommendedPreset)}>{nearBudgetCap && refreshPreset !== 'lean' ? 'Switch to Lean' : 'Apply recommended'}</Button>
               <Button variant="outline" size="sm" onClick={handleSaveRefreshPolicy} disabled={savingRefreshPolicy || isDemoMode}>{savingRefreshPolicy ? 'Saving…' : 'Save policy'}</Button>
               <span className="text-[11px] text-text-tertiary">Lean=60 · Balanced=120 · Aggressive=240 refreshes/month · Recommended: {recommendedPreset}{items.length > 0 ? ` (${items.length} items)` : ''}</span>
             </div>
@@ -702,6 +707,7 @@ export const DashboardRegistry: React.FC = () => {
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Price changed: {alertCounts.priceChanged}</span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Out of stock: {alertCounts.outOfStock}</span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Remaining budget: {refreshBudgetRemaining}</span>
+            <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>Used: {Math.round(budgetUtilization * 100)}%</span>
           </div>
 
           {loading ? (
