@@ -1391,31 +1391,31 @@ Proceed with send?`)) return;
         <Card variant="bordered" padding="md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
             <h3 className="text-sm font-semibold text-text-primary">RSVP Ops Panel</h3>
-            <span className="text-xs text-text-tertiary">Action-focused follow up</span>
+            <span className="text-xs text-text-tertiary break-words">Action-focused follow up</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
             <button onClick={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary">Missing meal choice</p>
+              <p className="text-xs text-text-tertiary break-words">Missing meal choice</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
             </button>
             <button onClick={() => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary">Plus-one missing name</p>
+              <p className="text-xs text-text-tertiary break-words">Plus-one missing name</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
             </button>
             <button onClick={() => { setSearchQuery(''); setFilterStatus('ceremony-no'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary">Ceremony: No</p>
+              <p className="text-xs text-text-tertiary break-words">Ceremony: No</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.ceremonyNo}</p>
             </button>
             <button onClick={() => { setSearchQuery(''); setFilterStatus('reception-no'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary">Reception: No</p>
+              <p className="text-xs text-text-tertiary break-words">Reception: No</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.receptionNo}</p>
             </button>
             <button onClick={() => { setSearchQuery(''); setFilterStatus('pending'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary">No response yet</p>
+              <p className="text-xs text-text-tertiary break-words">No response yet</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.noResponse}</p>
             </button>
             <button onClick={() => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary">Pending, no email</p>
+              <p className="text-xs text-text-tertiary break-words">Pending, no email</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.pendingNoEmail}</p>
             </button>
           </div>
@@ -1441,7 +1441,7 @@ Proceed with send?`)) return;
           return (
             <div className="p-4 bg-warning-light border border-warning/20 rounded-xl space-y-2">
               <div className="flex items-center justify-between gap-2 mb-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
                   <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
                   <p className="text-sm font-medium text-warning">{conflicts.length} RSVP {conflicts.length === 1 ? 'issue' : 'issues'} detected</p>
                 </div>
@@ -1493,7 +1493,7 @@ Proceed with send?`)) return;
               <div className="p-3.5 rounded-xl border border-border-subtle bg-white space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-text-primary">Priority RSVP queue</p>
-                  <span className="text-xs text-text-tertiary">Top {opsQueue.length}</span>
+                  <span className="text-xs text-text-tertiary break-words">Top {opsQueue.length}</span>
                 </div>
                 <div className="space-y-1.5">
                   {opsQueue.map((item, idx) => (
@@ -1741,8 +1741,8 @@ Proceed with send?`)) return;
               </div>
             )}
 
-            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-center justify-between bg-white/90 backdrop-blur p-2 rounded-lg border border-border-subtle">
-              <div className="flex gap-2 flex-wrap">
+            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/90 backdrop-blur p-2 rounded-lg border border-border-subtle overflow-hidden">
+              <div className="flex gap-2 flex-wrap min-w-0">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setSortByPriority(v => !v)}
@@ -1768,7 +1768,7 @@ Proceed with send?`)) return;
                   <button
                     key={id}
                     onClick={() => { setFilterStatus(id); setViewMode('list'); }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                       filterStatus === id && viewMode === 'list'
                         ? 'bg-primary text-text-inverse'
                         : 'bg-surface-subtle text-text-secondary hover:bg-surface hover:text-text-primary'
@@ -1780,7 +1780,7 @@ Proceed with send?`)) return;
               </div>
               <button
                 onClick={() => setViewMode(v => v === 'households' ? 'list' : 'households')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors border whitespace-nowrap shrink-0 ${
                   viewMode === 'households'
                     ? 'bg-primary text-text-inverse border-primary'
                     : 'text-text-secondary border-border hover:border-primary hover:text-primary'
@@ -1846,7 +1846,7 @@ Proceed with send?`)) return;
                         <div className="flex items-center gap-2">
                           <Home className="w-4 h-4 text-text-tertiary" />
                           <span className="font-semibold text-text-primary text-sm">{headName} household</span>
-                          <span className="text-xs text-text-tertiary">({members.length} guests)</span>
+                          <span className="text-xs text-text-tertiary break-words">({members.length} guests)</span>
                         </div>
                       </div>
                       <div className="divide-y divide-border-subtle">
@@ -1856,7 +1856,7 @@ Proceed with send?`)) return;
                             <div key={guest.id} className="flex items-center justify-between px-5 py-3">
                               <div>
                                 <p className="text-sm font-medium text-text-primary">{name}</p>
-                                <p className="text-xs text-text-tertiary">{guest.email || 'No email'}</p>
+                                <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
                               </div>
                               <div className="flex items-center gap-3">
                                 {getStatusBadge(guest.rsvp_status)}
@@ -1883,9 +1883,9 @@ Proceed with send?`)) return;
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-text-tertiary" />
                         <span className="font-semibold text-text-primary text-sm">Ungrouped guests</span>
-                        <span className="text-xs text-text-tertiary">({households.ungrouped.length})</span>
+                        <span className="text-xs text-text-tertiary break-words">({households.ungrouped.length})</span>
                       </div>
-                      <p className="text-xs text-text-tertiary">Select guests to merge into households</p>
+                      <p className="text-xs text-text-tertiary break-words">Select guests to merge into households</p>
                     </div>
                     <div className="divide-y divide-border-subtle">
                       {households.ungrouped.map(guest => {
@@ -1910,7 +1910,7 @@ Proceed with send?`)) return;
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-text-primary">{name}</p>
-                              <p className="text-xs text-text-tertiary">{guest.email || 'No email'}</p>
+                              <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
                             </div>
                             {getStatusBadge(guest.rsvp_status)}
                           </div>
@@ -1956,7 +1956,7 @@ Proceed with send?`)) return;
                             <div className="flex flex-col gap-1">
                               {getStatusBadge(guest.rsvp_status)}
                               {guest.rsvp_received_at && guest.rsvp_status !== 'pending' && (
-                                <span className="text-xs text-text-tertiary">
+                                <span className="text-xs text-text-tertiary break-words">
                                   {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>
                               )}
@@ -2111,7 +2111,7 @@ Proceed with send?`)) return;
                 <div className="text-center py-12">
                   <CalendarDays className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
                   <p className="text-sm font-medium text-text-secondary mb-1">No events on the itinerary</p>
-                  <p className="text-xs text-text-tertiary">Add events on the Itinerary page first.</p>
+                  <p className="text-xs text-text-tertiary break-words">Add events on the Itinerary page first.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
