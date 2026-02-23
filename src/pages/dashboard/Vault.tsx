@@ -65,14 +65,14 @@ const DURATION_OPTIONS = [
 ];
 
 const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
-  <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
+  <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80] space-y-2 pointer-events-none w-[min(92vw,680px)]">
     {toasts.map(t => (
       <div
         key={t.id}
-        className={`px-4 py-3 rounded-xl shadow-lg text-sm font-medium border ${
+        className={`px-4 py-3.5 rounded-xl shadow-xl text-sm sm:text-[15px] font-semibold border ${
           t.type === 'error'
-            ? 'bg-error-light text-error border-error/20'
-            : 'bg-success-light text-success border-success/20'
+            ? 'bg-error-light text-error border-error/30'
+            : 'bg-success-light text-success border-success/30'
         }`}
       >
         {t.message}
@@ -458,13 +458,17 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
   const [durationYears, setDurationYears] = useState(config.duration_years);
   const [labelManuallyEdited, setLabelManuallyEdited] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setLocalError(null);
     setSaving(true);
     try {
       await onSave(config.id, label, durationYears);
       onClose();
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : 'Could not save vault changes.');
     } finally {
       setSaving(false);
     }
@@ -485,6 +489,11 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {localError && (
+              <div className="p-3 rounded-xl border border-error/30 bg-error-light text-error text-sm font-semibold">
+                {localError}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1.5">Vault Name</label>
               <input
@@ -905,13 +914,13 @@ export const DashboardVault: React.FC = () => {
     const hasEntriesForVault = entries.some(e => e.vault_config_id === id);
     if (hasEntriesForVault && current && current.duration_years !== durationYears) {
       toast('This vault already has submissions, so you cannot change its anniversary year.', 'error');
-      throw new Error('Locked anniversary year');
+      throw new Error('Anniversary year is locked after submissions start.');
     }
 
     const hasDuplicateYear = vaultConfigs.some(c => c.id !== id && c.duration_years === durationYears);
     if (hasDuplicateYear) {
       toast(`You already have a ${durationYears}-year vault. Choose a different anniversary.`, 'error');
-      throw new Error('Duplicate anniversary year');
+      throw new Error(`You already have a ${durationYears}-year vault.`);
     }
 
     if (isDemoMode && weddingSiteId === 'demo-site-id') {
