@@ -298,11 +298,16 @@ export const DashboardRegistry: React.FC = () => {
   }
 
 
-  async function handleAutoRefreshStale(silent = false) {
+  async function handleAutoRefreshStale(silent = false, alertsOnly = false) {
     if (isDemoMode || autoRefreshing) return;
     const staleCandidates = items
       .filter((item) => !!(item.item_url || item.canonical_url))
-      .filter((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24)
+      .filter((item) => {
+        const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24;
+        const outOfStock = (item.availability || '').toLowerCase().includes('out');
+        const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
+        return alertsOnly ? (stale || outOfStock || priceChanged) : stale;
+      })
       .slice(0, 12);
 
     if (staleCandidates.length === 0) {
@@ -343,7 +348,7 @@ export const DashboardRegistry: React.FC = () => {
       }
     }
     setAutoRefreshing(false);
-    if (!silent) toast(`Refreshed ${updatedCount} item${updatedCount === 1 ? '' : 's'}.`);
+    if (!silent) toast(`Refreshed ${updatedCount} ${alertsOnly ? 'alert ' : ''}item${updatedCount === 1 ? '' : 's'}.`);
   }
 
   async function handleBulkImport() {
@@ -467,6 +472,9 @@ export const DashboardRegistry: React.FC = () => {
             </Button>
             <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false)} disabled={!weddingSiteId || autoRefreshing}>
               {autoRefreshing ? 'Refreshing…' : 'Refresh stale metadata'}
+            </Button>
+            <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false, true)} disabled={!weddingSiteId || autoRefreshing}>
+              {autoRefreshing ? 'Refreshing…' : 'Refresh alert items'}
             </Button>
             <Button variant="primary" size="md" onClick={handleAddNew} disabled={!weddingSiteId}>
               <Plus className="w-4 h-4" />
