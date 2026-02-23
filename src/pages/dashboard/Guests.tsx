@@ -83,7 +83,7 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
@@ -780,7 +780,8 @@ export const DashboardGuests: React.FC = () => {
       (filterStatus === 'ceremony-no' && eventSelections?.ceremony === false) ||
       (filterStatus === 'reception-no' && eventSelections?.reception === false) ||
       (filterStatus === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
-      (filterStatus === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name);
+      (filterStatus === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
+      (filterStatus === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email);
 
     return matchesSearch && matchesFilter;
   });
@@ -801,6 +802,7 @@ export const DashboardGuests: React.FC = () => {
     ceremonyNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.ceremony === false).length,
     receptionNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.reception === false).length,
     noResponse: guests.filter(g => g.rsvp_status === 'pending').length,
+    pendingNoEmail: guests.filter(g => g.rsvp_status === 'pending' && !g.email).length,
   };
 
   const rsvpCompleteness = Math.max(0, 100 - Math.min(100, (
@@ -819,6 +821,7 @@ export const DashboardGuests: React.FC = () => {
     'reception-no': 'Reception: No',
     'missing-meal': 'Missing Meal',
     'plusone-missing': 'Plus-one Missing Name',
+    'pending-no-email': 'Pending, No Email',
   };
 
   const getStatusBadge = (status: string) => {
@@ -1019,7 +1022,7 @@ export const DashboardGuests: React.FC = () => {
             <h3 className="text-sm font-semibold text-text-primary">RSVP Ops Panel</h3>
             <span className="text-xs text-text-tertiary">Action-focused follow up</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
             <button onClick={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
               <p className="text-xs text-text-tertiary">Missing meal choice</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
@@ -1039,6 +1042,10 @@ export const DashboardGuests: React.FC = () => {
             <button onClick={() => { setSearchQuery(''); setFilterStatus('pending'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
               <p className="text-xs text-text-tertiary">No response yet</p>
               <p className="text-lg font-semibold text-text-primary">{rsvpOps.noResponse}</p>
+            </button>
+            <button onClick={() => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+              <p className="text-xs text-text-tertiary">Pending, no email</p>
+              <p className="text-lg font-semibold text-text-primary">{rsvpOps.pendingNoEmail}</p>
             </button>
           </div>
         </Card>
@@ -1126,7 +1133,7 @@ export const DashboardGuests: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle space-y-2">
-              <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span></div>
+              <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span></div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <p className="text-xs text-text-secondary">
                   Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
@@ -1165,6 +1172,7 @@ export const DashboardGuests: React.FC = () => {
                 <button onClick={() => { setFilterStatus('pending'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
                 <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
                 <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
+                <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
               </div>
 
               {campaignLog.length > 0 && (
@@ -1213,6 +1221,7 @@ export const DashboardGuests: React.FC = () => {
                   { id: 'reception-no', label: `Reception No (${rsvpOps.receptionNo})` },
                   { id: 'missing-meal', label: `Missing Meal (${rsvpOps.missingMeal})` },
                   { id: 'plusone-missing', label: `Plus-One Missing (${rsvpOps.plusOneMissingName})` },
+                  { id: 'pending-no-email', label: `Pending No Email (${rsvpOps.pendingNoEmail})` },
                 ] as const).map(({ id, label }) => (
                   <button
                     key={id}
