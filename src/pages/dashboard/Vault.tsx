@@ -907,25 +907,45 @@ setWeddingSiteId('demo-site-id');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get('error');
     const googleCode = params.get('google_drive_code') || params.get('code');
     const googleState = params.get('state');
+
+    if (oauthError) {
+      toast(`Google Drive OAuth was cancelled or failed: ${oauthError}`, 'error');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('error');
+      url.searchParams.delete('state');
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+
     if (!googleCode || !googleState) return;
 
     supabase.functions.invoke('google-drive-auth-callback', {
       body: { code: googleCode, state: googleState },
-    }).then(({ error }) => {
-      if (error) {
-        toast('Google Drive connection failed. Please try again.', 'error');
-        return;
-      }
-      toast('Google Drive connected successfully.');
-      setGoogleDriveConnected(true);
-      setVaultStorageProvider('google_drive');
+    }).then(({ error, data }) => {
       const url = new URL(window.location.href);
       url.searchParams.delete('google_drive_code');
       url.searchParams.delete('code');
       url.searchParams.delete('state');
+      url.searchParams.delete('error');
       window.history.replaceState({}, '', url.toString());
+
+      if (error) {
+        toast(`Google Drive connection failed: ${error.message}`, 'error');
+        return;
+      }
+
+      const ok = (data as { success?: boolean } | null)?.success;
+      if (!ok) {
+        toast('Google Drive connection did not complete. Please reconnect.', 'error');
+        return;
+      }
+
+      toast('Google Drive connected successfully.');
+      setGoogleDriveConnected(true);
+      setVaultStorageProvider('google_drive');
       loadData();
     });
   }, [loadData]);

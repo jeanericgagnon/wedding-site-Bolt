@@ -1,23 +1,55 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
+
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
 Deno.serve(async (req: Request) => {
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST" && req.method !== "GET") return json({ error: "Method not allowed" }, 405);
 
   try {
-    const body = await req.json();
-    const code = typeof body.code === "string" ? body.code : null;
-    const stateRaw = typeof body.state === "string" ? body.state : null;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    let code: string | null = null;
+    let stateRaw: string | null = null;
+
+    if (req.method === "GET") {
+      const url = new URL(req.url);
+      code = url.searchParams.get("code");
+      stateRaw = url.searchParams.get("state");
+
+      const oauthErr = url.searchParams.get("error");
+      if (oauthErr) {
+        return json({ error: `Google OAuth error: ${oauthErr}` }, 400);
+      }
+    } else {
+      const body = await req.json().catch(() => ({}));
+      code = typeof body.code === "string" ? body.code : null;
+      stateRaw = typeof body.state === "string" ? body.state : null;
+    }
+
     if (!code || !stateRaw) return json({ error: "code and state are required" }, 400);
 
     const state = JSON.parse(atob(stateRaw)) as { siteId: string; userId: string; ts: number };
-    if (!state?.siteId || !state?.userId) return json({ error: "Invalid state" }, 400);
+    if (!state?.siteId || !state?.userId || typeof state.ts !== "number") {
+      return json({ error: "Invalid state" }, 400);
+    }
+
+    // 15 minute max state age
+    if (Date.now() - state.ts > 15 * 60 * 1000) {
+      return json({ error: "OAuth session expired. Please reconnect Google Drive." }, 400);
+    }
 
     const googleClientId = Deno.env.get("GOOGLE_DRIVE_CLIENT_ID");
     const googleClientSecret = Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET");
@@ -43,13 +75,22 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Failed to exchange code for Google token", details: tokenJson }, 400);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRole);
+
+    const { data: site } = await adminClient
+      .from("wedding_sites")
+      .select("id, user_id, vault_google_drive_refresh_token")
+      .eq("id", state.siteId)
+      .eq("user_id", state.userId)
+      .maybeSingle();
+
+    if (!site) return json({ error: "Site not found or unauthorized" }, 403);
 
     const expiresAt = tokenJson.expires_in
       ? new Date(Date.now() + Number(tokenJson.expires_in) * 1000).toISOString()
       : null;
+
+    const nextRefreshToken = tokenJson.refresh_token ?? site.vault_google_drive_refresh_token ?? null;
 
     const { error } = await adminClient
       .from("wedding_sites")
@@ -57,7 +98,7 @@ Deno.serve(async (req: Request) => {
         vault_storage_provider: "google_drive",
         vault_google_drive_connected: true,
         vault_google_drive_access_token: tokenJson.access_token,
-        vault_google_drive_refresh_token: tokenJson.refresh_token ?? null,
+        vault_google_drive_refresh_token: nextRefreshToken,
         vault_google_drive_token_expires_at: expiresAt,
       })
       .eq("id", state.siteId)
@@ -65,7 +106,7 @@ Deno.serve(async (req: Request) => {
 
     if (error) throw error;
 
-    return json({ success: true });
+    return json({ success: true, connected: true });
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
   }
