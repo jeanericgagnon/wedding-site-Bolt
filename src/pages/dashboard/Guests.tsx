@@ -617,9 +617,9 @@ export const DashboardGuests: React.FC = () => {
     });
   };
 
-  const exportCSV = () => {
+  const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = 'guests') => {
     const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Plus One', 'Meal Choice', 'RSVP Date', 'Invite Token'];
-    const rows = guests.map(guest => [
+    const rows = rowsSource.map(guest => [
       guest.first_name || '',
       guest.last_name || '',
       guest.email || '',
@@ -639,9 +639,14 @@ export const DashboardGuests: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `guests_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `${suffix}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportFilteredCSV = () => {
+    const segment = (segmentLabelMap[filterStatus] || filterStatus).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    exportCSV(filteredGuests, `guests-${segment}`);
   };
 
   const importCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1101,9 +1106,13 @@ export const DashboardGuests: React.FC = () => {
                     Import CSV
                   </span>
                 </label>
-                <Button variant="outline" size="md" onClick={exportCSV}>
+                <Button variant="outline" size="md" onClick={() => exportCSV()}>
                   <Download className="w-4 h-4 mr-2" />
-                  Export
+                  Export All
+                </Button>
+                <Button variant="outline" size="md" onClick={exportFilteredCSV}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Filtered
                 </Button>
                 <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
                   <UserPlus className="w-4 h-4 mr-2" />
