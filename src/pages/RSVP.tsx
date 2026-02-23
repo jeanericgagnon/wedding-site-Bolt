@@ -15,6 +15,7 @@ const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const DEMO_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 const DEMO_RSVP_RESPONSES_KEY = 'dayof_demo_rsvp_responses_v1';
+const DEMO_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 
 async function rsvpCall(body: object): Promise<{ data?: unknown; error?: string }> {
   const res = await fetch(RSVP_FN_URL, {
@@ -52,6 +53,11 @@ interface ExistingRSVP {
   plus_one_name: string | null;
   notes: string | null;
   custom_answers?: Record<string, string | string[]> | null;
+}
+
+interface RSVPMealConfig {
+  enabled: boolean;
+  options: string[];
 }
 
 interface RSVPQuestion {
@@ -110,6 +116,21 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
 }
 
 
+
+function getDemoMealConfig(): RSVPMealConfig {
+  try {
+    const raw = localStorage.getItem(DEMO_RSVP_MEAL_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || typeof parsed !== 'object') return { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
+    return {
+      enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : true,
+      options: Array.isArray(parsed.options) ? parsed.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'],
+    };
+  } catch {
+    return { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
+  }
+}
+
 function getDemoQuestions(): RSVPQuestion[] {
   try {
     const raw = localStorage.getItem(DEMO_RSVP_QUESTIONS_KEY);
@@ -147,9 +168,10 @@ function mapDemoGuest(g: (typeof demoGuests)[number]): Guest {
   };
 }
 
-function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions: RSVPQuestion[] } {
+function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions: RSVPQuestion[]; rsvpMealConfig: RSVPMealConfig } {
   const trimmed = searchValue.trim().toLowerCase();
   const questions = getDemoQuestions();
+  const meal = getDemoMealConfig();
   const stored = getDemoStoredResponses();
 
   const tokenMatch = demoGuests.find((g) => (g.invite_token || '').toLowerCase() === trimmed);
@@ -165,11 +187,11 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
           custom_answers: null,
         }
       : null);
-    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions };
+    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal };
   }
 
   const matches = demoGuests.filter((g) => g.name.toLowerCase().includes(trimmed) || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim().toLowerCase().includes(trimmed));
-  if (matches.length === 0) return { guest: null, existingRsvp: null, guests: null, rsvpDeadline: null, rsvpQuestions: questions };
+  if (matches.length === 0) return { guest: null, existingRsvp: null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal };
   if (matches.length === 1) {
     const g = matches[0];
     const mapped = mapDemoGuest(g);
@@ -183,10 +205,10 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
           custom_answers: null,
         }
       : null);
-    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions };
+    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal };
   }
 
-  return { guest: null, existingRsvp: null, guests: matches.slice(0, 10).map(mapDemoGuest), rsvpDeadline: null, rsvpQuestions: questions };
+  return { guest: null, existingRsvp: null, guests: matches.slice(0, 10).map(mapDemoGuest), rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal };
 }
 
 export default function RSVP() {
@@ -204,6 +226,7 @@ export default function RSVP() {
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
   const [customAnswers, setCustomAnswers] = useState<Record<string, string | string[]>>({});
+  const [mealConfig, setMealConfig] = useState<RSVPMealConfig>({ enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -226,13 +249,15 @@ export default function RSVP() {
           setTokenAutoLoading(false);
           return;
         }
-        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null };
+        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null };
         if (result.guest) {
-          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? []);
+          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
         } else if (result.guests && result.guests.length > 1) {
           setAmbiguousGuests(result.guests);
           setRsvpDeadline(result.rsvpDeadline);
           setRsvpQuestions(result.rsvpQuestions ?? []);
+        setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+          setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
           setStep('pick');
         } else {
           setError('Invitation not recognized. Please search by name below.');
@@ -259,18 +284,19 @@ export default function RSVP() {
         return;
       }
 
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null };
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null };
 
       if (result.guests && result.guests.length > 1) {
         setAmbiguousGuests(result.guests);
         setRsvpDeadline(result.rsvpDeadline);
         setRsvpQuestions(result.rsvpQuestions ?? []);
+          setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
         setStep('pick');
         return;
       }
 
       const foundGuest = result.guest!;
-      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? []);
+      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
     } catch {
       setError('An error occurred. Please try again.');
     } finally {
@@ -278,10 +304,11 @@ export default function RSVP() {
     }
   };
 
-  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = []) => {
+  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }) => {
     setGuest(foundGuest);
     setRsvpDeadline(deadline);
     setRsvpQuestions(questions);
+    setMealConfig(meal);
     if (foundRsvp) {
       setExistingRsvp(foundRsvp);
       const parsed = parseEventSelectionsFromNotes(foundRsvp.notes, foundGuest);
@@ -324,8 +351,8 @@ export default function RSVP() {
         selectGuest(picked, null, rsvpDeadline);
         return;
       }
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null };
-      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? []);
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null };
+      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
     } catch {
       selectGuest(picked, null, rsvpDeadline);
     } finally {
@@ -424,7 +451,7 @@ export default function RSVP() {
         setError('Please select at least one event before continuing.');
         return;
       }
-      if (formData.attending && !formData.meal_choice) {
+      if (formData.attending && mealConfig.enabled && !formData.meal_choice) {
         setError('Please choose a meal option before review.');
         return;
       }
@@ -682,21 +709,19 @@ export default function RSVP() {
                         </div>
                       )}
 
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Meal Choice</label>
-                        <Select
-                          value={formData.meal_choice}
-                          onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
-                          options={[
-                            { value: '', label: 'Select a meal option' },
-                            { value: 'chicken', label: 'Chicken' },
-                            { value: 'beef', label: 'Beef' },
-                            { value: 'fish', label: 'Fish' },
-                            { value: 'vegetarian', label: 'Vegetarian' },
-                            { value: 'vegan', label: 'Vegan' },
-                          ]}
-                        />
-                      </div>
+                      {mealConfig.enabled && (
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Meal Choice</label>
+                          <Select
+                            value={formData.meal_choice}
+                            onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
+                            options={[
+                              { value: '', label: 'Select a meal option' },
+                              ...mealConfig.options.map((opt) => ({ value: opt.toLowerCase(), label: opt })),
+                            ]}
+                          />
+                        </div>
+                      )}
 
                       {guest.plus_one_allowed && (
                         <div>

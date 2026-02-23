@@ -75,21 +75,26 @@ Deno.serve(async (req: Request) => {
         .eq("invite_token", trimmed)
         .maybeSingle();
 
-      const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[] }> => {
+      const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] } }> => {
         const { data } = await adminClient
           .from("wedding_sites")
-          .select("rsvp_deadline, rsvp_custom_questions")
+          .select("rsvp_deadline, rsvp_custom_questions, rsvp_meal_config")
           .eq("id", siteId)
           .maybeSingle();
 
-        const typed = data as { rsvp_deadline?: string | null; rsvp_custom_questions?: unknown } | null;
+        const typed = data as { rsvp_deadline?: string | null; rsvp_custom_questions?: unknown; rsvp_meal_config?: unknown } | null;
         const parsedQuestions = Array.isArray(typed?.rsvp_custom_questions)
           ? typed?.rsvp_custom_questions
           : [];
 
+        const mealRaw = typed?.rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
         return {
           rsvpDeadline: typed?.rsvp_deadline ?? null,
           rsvpQuestions: parsedQuestions,
+          rsvpMealConfig: {
+            enabled: typeof mealRaw?.enabled === 'boolean' ? mealRaw.enabled : true,
+            options: Array.isArray(mealRaw?.options) ? mealRaw!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'],
+          },
         };
       };
 
@@ -104,6 +109,8 @@ Deno.serve(async (req: Request) => {
           guests: null,
           rsvpDeadline: config.rsvpDeadline,
           rsvpQuestions: config.rsvpQuestions,
+          rsvpMealConfig: config.rsvpMealConfig,
+          rsvpMealConfig: config.rsvpMealConfig,
         });
       }
 
@@ -130,10 +137,11 @@ Deno.serve(async (req: Request) => {
           guests: null,
           rsvpDeadline: config.rsvpDeadline,
           rsvpQuestions: config.rsvpQuestions,
+          rsvpMealConfig: config.rsvpMealConfig,
         });
       }
 
-      return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null, rsvpQuestions: [] });
+      return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null, rsvpQuestions: [], rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] } });
     }
 
     if (payload.action === "submit") {
