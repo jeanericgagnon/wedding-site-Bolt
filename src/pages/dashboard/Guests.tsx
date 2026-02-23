@@ -556,7 +556,53 @@ export const DashboardGuests: React.FC = () => {
     toast(`Generated ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
   };
 
-  const handleSendBulkInvitations = async () => {
+  const handleSendSelectedInvitations = async () => {
+    const selectedRecipients = guests.filter(g => selectedGuestIds.includes(g.id) && !!g.email && !!g.invite_token);
+    if (selectedRecipients.length === 0) {
+      toast('No selected guests with email + invite token.', 'error');
+      return;
+    }
+
+    if (!window.confirm(`Send reminders to ${selectedRecipients.length} selected guest(s)?`)) return;
+
+    if (isDemoMode) {
+      toast(`Demo: simulated reminders for ${selectedRecipients.length} selected guests`, 'success');
+      return;
+    }
+
+    setBulkSending(true);
+    let successCount = 0;
+    try {
+      for (const guest of selectedRecipients) {
+        if (!guest.email) continue;
+        const guestName = (guest.first_name || guest.last_name)
+          ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
+          : guest.name;
+        try {
+          await sendWeddingInvitation({
+            guestEmail: guest.email,
+            guestName,
+            coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
+            coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
+            weddingDate: weddingSiteInfo?.wedding_date ?? null,
+            venueName: weddingSiteInfo?.venue_name ?? null,
+            venueAddress: weddingSiteInfo?.venue_address ?? null,
+            siteUrl: weddingSiteInfo?.site_url ?? null,
+            inviteToken: guest.invite_token ?? null,
+          });
+          await supabase.from('guests').update({ invitation_sent_at: new Date().toISOString() }).eq('id', guest.id);
+          successCount += 1;
+        } catch {
+          // continue
+        }
+      }
+      toast(successCount > 0 ? `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}` : 'No selected reminders were sent.', successCount > 0 ? 'success' : 'error');
+    } finally {
+      setBulkSending(false);
+    }
+  };
+
+const handleSendBulkInvitations = async () => {
     if (reminderCandidates.length === 0) {
       toast('No reminder recipients in this filtered view.', 'error');
       return;
@@ -975,6 +1021,16 @@ Proceed with send?`)) return;
 
 
   const nextUnresolvedGuest = displayedGuests.find((g) => issueCountForGuest(g) > 0);
+
+  const selectUnresolvedGuests = () => {
+    const ids = displayedGuests.filter((g) => issueCountForGuest(g) > 0).map((g) => g.id);
+    setSelectedGuestIds(ids);
+    toast(ids.length > 0 ? `Selected ${ids.length} unresolved guest${ids.length === 1 ? '' : 's'}` : 'No unresolved guests in current view', ids.length > 0 ? 'success' : 'error');
+  };
+
+  const clearGuestSelection = () => {
+    setSelectedGuestIds([]);
+  };
 
   const stats = {
     total: guests.length,
