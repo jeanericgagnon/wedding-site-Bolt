@@ -30,7 +30,7 @@ interface RSVP {
   meal_choice: string | null;
   plus_one_name: string | null;
   notes: string | null;
-  custom_answers?: Record<string, string> | null;
+  custom_answers?: Record<string, string | string[]> | null;
 }
 
 interface GuestWithRSVP extends Guest {
@@ -59,18 +59,18 @@ function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; r
 
 
 
-function getCustomAnswerEntries(customAnswers: Record<string, string> | null | undefined): Array<{ key: string; value: string }> {
+function getCustomAnswerEntries(customAnswers: Record<string, string | string[]> | null | undefined): Array<{ key: string; value: string }> {
   if (!customAnswers || typeof customAnswers !== 'object') return [];
 
   return Object.entries(customAnswers)
     .map(([key, value]) => ({
       key: key.replace(/^q_/, 'question_'),
-      value: (typeof value === 'string' ? value : String(value ?? '')).trim(),
+      value: Array.isArray(value) ? value.join(', ').trim() : (typeof value === 'string' ? value : String(value ?? '')).trim(),
     }))
     .filter((entry) => entry.value.length > 0);
 }
 
-function formatCustomAnswers(customAnswers: Record<string, string> | null | undefined): string {
+function formatCustomAnswers(customAnswers: Record<string, string | string[]> | null | undefined): string {
   if (!customAnswers || typeof customAnswers !== 'object') return '';
   const entries = Object.entries(customAnswers)
     .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : String(value ?? '').trim()] as const)

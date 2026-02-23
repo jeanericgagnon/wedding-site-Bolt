@@ -47,13 +47,13 @@ interface ExistingRSVP {
   meal_choice: string | null;
   plus_one_name: string | null;
   notes: string | null;
-  custom_answers?: Record<string, string> | null;
+  custom_answers?: Record<string, string | string[]> | null;
 }
 
 interface RSVPQuestion {
   id: string;
   label: string;
-  type: 'short_text' | 'long_text' | 'single_choice';
+  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
   required?: boolean;
   options?: string[];
   appliesTo?: 'all' | 'ceremony' | 'reception';
@@ -119,7 +119,7 @@ export default function RSVP() {
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
-  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string | string[]>>({});
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -323,7 +323,11 @@ export default function RSVP() {
       const requiredMissing = rsvpQuestions
         .filter((q) => q.required)
         .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
-        .find((q) => !(customAnswers[q.id] || '').trim());
+        .find((q) => {
+          const v = customAnswers[q.id];
+          if (Array.isArray(v)) return v.length === 0;
+          return !(v || '').toString().trim();
+        });
 
       if (requiredMissing) {
         setError(`Please answer: ${requiredMissing.label}`);
@@ -618,20 +622,36 @@ export default function RSVP() {
                                 rows={3}
                                 placeholder="Your answer"
                               />
-                            ) : q.type === 'single_choice' ? (
+                            ) : (q.type === 'single_choice' || q.type === 'multi_choice') ? (
                               <div className="space-y-2">
                                 {(q.options ?? []).map((opt) => {
-                                  const checked = (customAnswers[q.id] ?? '') === opt;
+                                  const current = customAnswers[q.id];
+                                  const checked = q.type === 'multi_choice'
+                                    ? (Array.isArray(current) ? current.includes(opt) : false)
+                                    : (current ?? '') === opt;
                                   return (
                                     <label key={`${q.id}-${opt}`} className="flex items-center gap-2 text-sm text-gray-800">
                                       <input
                                         type="checkbox"
                                         checked={checked}
                                         onChange={(e) => {
-                                          if (e.target.checked) {
-                                            setCustomAnswers((prev) => ({ ...prev, [q.id]: opt }));
+                                          if (q.type === 'multi_choice') {
+                                            setCustomAnswers((prev) => {
+                                              const curr = Array.isArray(prev[q.id]) ? [...(prev[q.id] as string[])] : [];
+                                              if (e.target.checked) {
+                                                if (!curr.includes(opt)) curr.push(opt);
+                                              } else {
+                                                const i = curr.indexOf(opt);
+                                                if (i >= 0) curr.splice(i, 1);
+                                              }
+                                              return { ...prev, [q.id]: curr };
+                                            });
                                           } else {
-                                            setCustomAnswers((prev) => ({ ...prev, [q.id]: '' }));
+                                            if (e.target.checked) {
+                                              setCustomAnswers((prev) => ({ ...prev, [q.id]: opt }));
+                                            } else {
+                                              setCustomAnswers((prev) => ({ ...prev, [q.id]: '' }));
+                                            }
                                           }
                                         }}
                                         className="w-4 h-4"
@@ -703,10 +723,10 @@ export default function RSVP() {
                   {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
                     <div className="space-y-2">
                       <p className="text-xs uppercase tracking-wide text-gray-500">Custom answers</p>
-                      {rsvpQuestions.filter((q) => (customAnswers[q.id] || '').trim()).map((q) => (
+                      {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
                         <div key={q.id} className="flex items-start justify-between text-sm gap-4">
                           <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>
-                          <span className="text-gray-900 text-right">{customAnswers[q.id]}</span>
+                          <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
                         </div>
                       ))}
                     </div>
@@ -715,10 +735,10 @@ export default function RSVP() {
                   {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
                     <div className="space-y-2">
                       <p className="text-xs uppercase tracking-wide text-gray-500">Custom answers</p>
-                      {rsvpQuestions.filter((q) => (customAnswers[q.id] || '').trim()).map((q) => (
+                      {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
                         <div key={q.id} className="flex items-start justify-between text-sm gap-4">
                           <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>
-                          <span className="text-gray-900 text-right">{customAnswers[q.id]}</span>
+                          <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
                         </div>
                       ))}
                     </div>

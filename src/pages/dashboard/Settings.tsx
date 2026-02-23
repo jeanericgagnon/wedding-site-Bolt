@@ -14,7 +14,7 @@ import { useAuth } from '../../hooks/useAuth';
 interface RSVPQuestionSetting {
   id: string;
   label: string;
-  type: 'short_text' | 'long_text' | 'single_choice';
+  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
   required: boolean;
   appliesTo: 'all' | 'ceremony' | 'reception';
   options?: string[];
@@ -337,9 +337,9 @@ export const DashboardSettings: React.FC = () => {
         }))
         .filter((q) => q.label.length > 0);
 
-      const missingOptions = cleaned.find((q) => q.type === 'single_choice' && (q.options?.length ?? 0) < 2);
+      const missingOptions = cleaned.find((q) => (q.type === 'single_choice' || q.type === 'multi_choice') && (q.options?.length ?? 0) < 2);
       if (missingOptions) {
-        setRsvpQuestionsError(`Single-choice question "${missingOptions.label}" needs at least 2 options.`);
+        setRsvpQuestionsError(`Choice question "${missingOptions.label}" needs at least 2 options.`);
         return;
       }
 
@@ -691,7 +691,7 @@ export const DashboardSettings: React.FC = () => {
                                 onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => {
                                   if (item.id !== q.id) return item;
                                   const nextType = e.target.value as RSVPQuestionSetting['type'];
-                                  if (nextType === 'single_choice') {
+                                  if (nextType === 'single_choice' || nextType === 'multi_choice') {
                                     const current = item.options ?? [];
                                     return { ...item, type: nextType, options: current.length > 0 ? current : ['', ''] };
                                   }
@@ -701,6 +701,7 @@ export const DashboardSettings: React.FC = () => {
                                   { value: 'short_text', label: 'Short text' },
                                   { value: 'long_text', label: 'Long text' },
                                   { value: 'single_choice', label: 'Single choice' },
+                                  { value: 'multi_choice', label: 'Multiple choice' },
                                 ]}
                               />
 
@@ -726,7 +727,7 @@ export const DashboardSettings: React.FC = () => {
                               </label>
                             </div>
 
-                            {q.type === 'single_choice' && (
+                            {(q.type === 'single_choice' || q.type === 'multi_choice') && (
                               <div className="space-y-2">
                                 <label className="block text-sm font-medium text-text-primary">Choices</label>
                                 {(q.options ?? []).map((opt, optIdx) => (
