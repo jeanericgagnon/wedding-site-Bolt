@@ -664,8 +664,42 @@ export const DashboardVault: React.FC = () => {
     setLoading(true);
     try {
       if (isDemoMode) {
-        setWeddingSiteId('demo-site-id');
         setSiteSlug('alex-jordan-demo');
+
+        const { data: demoSite } = await supabase
+          .from('wedding_sites')
+          .select('id, wedding_date, site_slug')
+          .eq('site_slug', 'alex-jordan-demo')
+          .maybeSingle();
+
+        if (demoSite) {
+          setWeddingSiteId(demoSite.id);
+          if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
+
+          const { data: configData } = await supabase
+            .from('vault_configs')
+            .select('*')
+            .eq('wedding_site_id', demoSite.id)
+            .order('duration_years', { ascending: true });
+
+          const configs = (configData ?? []) as VaultConfig[];
+          setVaultConfigs(configs);
+
+          if (configs.length > 0) {
+            const configIds = configs.map(c => c.id);
+            const { data: entryData } = await supabase
+              .from('vault_entries')
+              .select('*')
+              .in('vault_config_id', configIds)
+              .order('created_at', { ascending: true });
+            setEntries((entryData ?? []) as VaultEntry[]);
+          } else {
+            setEntries([]);
+          }
+          return;
+        }
+
+        setWeddingSiteId('demo-site-id');
         const demoState = loadDemoState();
         setVaultConfigs(demoState.vaultConfigs);
         setEntries(demoState.entries);
@@ -799,7 +833,7 @@ export const DashboardVault: React.FC = () => {
 
 
   async function handleSeedStarterVaults() {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       handleSeedDemoVaults();
       return;
     }
@@ -842,7 +876,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleToggleEnabled(configId: string, enabled: boolean) {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const nextConfigs = vaultConfigs.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c);
       setVaultConfigs(nextConfigs);
       saveDemoState(nextConfigs, entries);
@@ -860,7 +894,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleEditSave(id: string, label: string, durationYears: number) {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const nextConfigs = vaultConfigs.map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c);
       setVaultConfigs(nextConfigs);
       saveDemoState(nextConfigs, entries);
@@ -880,7 +914,7 @@ export const DashboardVault: React.FC = () => {
   async function handleSaveEntry(entry: { vault_config_id: string; vault_year: number; title: string; content: string; author_name: string; attachment_url: string | null; attachment_name: string | null }) {
     if (!weddingSiteId) throw new Error('No wedding site found');
 
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const demoEntry: VaultEntry = {
         id: `demo-entry-${Date.now()}`,
         vault_config_id: entry.vault_config_id,
@@ -914,7 +948,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleDeleteEntry(id: string) {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const nextEntries = entries.filter(e => e.id !== id);
       setEntries(nextEntries);
       saveDemoState(vaultConfigs, nextEntries);
@@ -928,7 +962,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   async function handleDeleteVault(configId: string) {
-    if (isDemoMode) {
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const remaining = vaultConfigs.filter(c => c.id !== configId).map((c, i) => ({ ...c, vault_index: i + 1 }));
       const nextEntries = entries.filter(e => e.vault_config_id !== configId);
       setVaultConfigs(remaining);

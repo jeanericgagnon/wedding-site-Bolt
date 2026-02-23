@@ -230,50 +230,50 @@ export const VaultContribute: React.FC = () => {
   }, [siteSlug, year]);
 
   async function loadData() {
-    if (DEMO_MODE && siteSlug === 'alex-jordan-demo') {
-      setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: null });
-
-      if (hasYearParam && vaultYear) {
-        const cfg = { id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true } as VaultConfigInfo;
-        setVaultOptions([cfg]);
-        setVaultConfig(cfg);
-        setStep('form');
-        return;
-      }
-
-      try {
-        const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
-        const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[] } : { vaultConfigs: [] };
-        const enabled = (parsed.vaultConfigs ?? []).filter(v => v.is_enabled);
-        const seeded = [
-          { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
-          { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
-          { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
-        ] as VaultConfigInfo[];
-        const fallback = (enabled.length > 0 ? enabled : seeded).sort((a, b) => a.duration_years - b.duration_years);
-        setVaultOptions(fallback);
-        setVaultConfig(fallback[0]);
-        setStep(hasYearParam ? 'form' : 'hub');
-      } catch {
-        const fallback = [
-          { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
-          { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
-          { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
-        ] as VaultConfigInfo[];
-        setVaultOptions(fallback.sort((a, b) => a.duration_years - b.duration_years));
-        setVaultConfig(fallback[0]);
-        setStep(hasYearParam ? 'form' : 'hub');
-      }
-      return;
-    }
-
     const { data: siteData, error: siteError } = await supabase
       .from('wedding_sites')
       .select('id, couple_name_1, couple_name_2, wedding_date, is_published')
       .eq('site_slug', siteSlug)
       .maybeSingle();
 
-    if (siteError || !siteData || !(siteData as Record<string, unknown>).is_published) {
+    if (siteError || !siteData || (!(siteData as Record<string, unknown>).is_published && !(DEMO_MODE && siteSlug === 'alex-jordan-demo'))) {
+      if (DEMO_MODE && siteSlug === 'alex-jordan-demo') {
+        setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: null });
+
+        if (hasYearParam && vaultYear) {
+          const cfg = { id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true } as VaultConfigInfo;
+          setVaultOptions([cfg]);
+          setVaultConfig(cfg);
+          setStep('form');
+          return;
+        }
+
+        try {
+          const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[] } : { vaultConfigs: [] };
+          const enabled = (parsed.vaultConfigs ?? []).filter(v => v.is_enabled);
+          const seeded = [
+            { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+            { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+            { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+          ] as VaultConfigInfo[];
+          const fallback = (enabled.length > 0 ? enabled : seeded).sort((a, b) => a.duration_years - b.duration_years);
+          setVaultOptions(fallback);
+          setVaultConfig(fallback[0]);
+          setStep(hasYearParam ? 'form' : 'hub');
+        } catch {
+          const fallback = [
+            { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+            { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+            { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+          ] as VaultConfigInfo[];
+          setVaultOptions(fallback.sort((a, b) => a.duration_years - b.duration_years));
+          setVaultConfig(fallback[0]);
+          setStep(hasYearParam ? 'form' : 'hub');
+        }
+        return;
+      }
+
       setStep('invalid');
       return;
     }
@@ -313,14 +313,13 @@ export const VaultContribute: React.FC = () => {
       return;
     }
 
-    let options = configList as VaultConfigInfo[];
-
-    options = options.sort((a, b) => a.duration_years - b.duration_years);
+    const options = (configList as VaultConfigInfo[]).sort((a, b) => a.duration_years - b.duration_years);
 
     setVaultOptions(options);
     setVaultConfig(options[0]);
-    setStep('form');
+    setStep('hub');
   }
+
 
   async function compressVideoTo720p(input: File): Promise<File> {
     const testCanvas = document.createElement('canvas') as HTMLCanvasElement & { captureStream?: (frameRate?: number) => MediaStream };
