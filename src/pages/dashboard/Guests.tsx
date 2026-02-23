@@ -1162,6 +1162,19 @@ export const DashboardGuests: React.FC = () => {
               )}
             </div>
 
+            <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border-subtle bg-surface-subtle">
+              <p className="text-xs text-text-secondary">
+                Active segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span>
+                {searchQuery ? <> · Search: <span className="font-semibold text-text-primary">“{searchQuery}”</span></> : null}
+              </p>
+              <button
+                onClick={() => { setFilterStatus('all'); setSearchQuery(''); setViewMode('list'); }}
+                className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+              >
+                Clear filters
+              </button>
+            </div>
+
             <div className="flex gap-2 flex-wrap items-center justify-between">
               <div className="flex gap-2 flex-wrap">
                 {([
@@ -1200,7 +1213,17 @@ export const DashboardGuests: React.FC = () => {
               </button>
             </div>
 
-            {viewMode === 'households' ? (
+            {filteredGuests.length === 0 && viewMode === 'list' ? (
+              <div className="p-6 border border-dashed border-border rounded-xl text-center bg-surface-subtle">
+                <p className="text-sm text-text-secondary">No guests in this segment right now.</p>
+                <button
+                  onClick={() => { setFilterStatus('all'); setSearchQuery(''); }}
+                  className="mt-2 text-xs text-primary hover:underline"
+                >
+                  Clear filters to view all guests
+                </button>
+              </div>
+            ) : viewMode === 'households' ? (
               <div className="space-y-4">
                 {selectedGuestIds.size >= 2 && (
                   <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border border-primary/20 rounded-xl">
