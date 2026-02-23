@@ -563,6 +563,8 @@ export const DashboardRegistry: React.FC = () => {
   const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
   const budgetUtilization = monthlyRefreshCap > 0 ? monthlyRefreshCount / monthlyRefreshCap : 0;
   const nearBudgetCap = budgetUtilization >= 0.8;
+  const projectedMonthlyCalls = Math.min(items.length, monthlyRefreshCap);
+  const projectedRefreshCoverage = items.length > 0 ? Math.round((projectedMonthlyCalls / items.length) * 100) : 100;
   const daysUntilRefreshWindowEnd = refreshWindowUntil ? Math.ceil((refreshWindowUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   async function ensureMonthlyBudgetState() {
     const monthKey = new Date().toISOString().slice(0, 7);
@@ -621,6 +623,9 @@ export const DashboardRegistry: React.FC = () => {
             </p>
             <p className="text-xs text-text-tertiary mt-1">
               Auto-refresh: {autoRefreshEnabled ? (refreshWindowOpen ? 'Open' : 'Closed (window)') : 'Paused'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month{monthlyRefreshMonth ? ` (${monthlyRefreshMonth})` : ''}
+            </p>
+            <p className="text-xs text-text-tertiary mt-1">
+              Projection: ~{projectedMonthlyCalls} item checks/month · coverage {projectedRefreshCoverage}% of {items.length} items
             </p>
             {daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14 && (
               <p className="text-xs text-warning mt-1">Near expiry: auto-lean recommended to minimize late-cycle compute.</p>
@@ -751,6 +756,7 @@ export const DashboardRegistry: React.FC = () => {
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Remaining budget: {refreshBudgetRemaining}</span>
             <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>Used: {Math.round(budgetUtilization * 100)}%</span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Retry backlog: {items.filter((i) => (i.refresh_fail_count ?? 0) > 0).length}</span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Projected checks: {projectedMonthlyCalls}/mo</span>
           </div>
 
           {loading ? (
