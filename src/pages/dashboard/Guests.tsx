@@ -36,6 +36,26 @@ interface GuestWithRSVP extends Guest {
   rsvp?: RSVP;
 }
 
+function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; reception?: boolean } | null {
+  if (!notes) return null;
+  const match = notes.match(/\[Events\s+([^\]]+)\]/i);
+  if (!match) return null;
+
+  const pairs = match[1]
+    .split(',')
+    .map((part) => part.trim())
+    .map((part) => {
+      const [k, v] = part.split(':').map((x) => (x || '').trim().toLowerCase());
+      return [k, v === 'yes'] as const;
+    });
+
+  const map = Object.fromEntries(pairs) as Record<string, boolean>;
+  return {
+    ceremony: map.ceremony,
+    reception: map.reception,
+  };
+}
+
 interface WeddingSiteInfo {
   couple_name_1: string;
   couple_name_2: string;
@@ -1093,6 +1113,24 @@ export const DashboardGuests: React.FC = () => {
                                   {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>
                               )}
+                              {(() => {
+                                const events = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+                                if (!events) return null;
+                                return (
+                                  <div className="flex flex-wrap gap-1 pt-1">
+                                    {typeof events.ceremony === 'boolean' && (
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${events.ceremony ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
+                                        Ceremony: {events.ceremony ? 'Yes' : 'No'}
+                                      </span>
+                                    )}
+                                    {typeof events.reception === 'boolean' && (
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${events.reception ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
+                                        Reception: {events.reception ? 'Yes' : 'No'}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-text-secondary hidden md:table-cell">
