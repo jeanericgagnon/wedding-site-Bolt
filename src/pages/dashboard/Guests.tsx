@@ -532,6 +532,30 @@ export const DashboardGuests: React.FC = () => {
     toast('Follow-up task captured', 'success');
   };
 
+
+  const generateChecklistTasks = () => {
+    const tasks: string[] = [];
+    if (rsvpOps.noResponse > 0) tasks.push(`Follow up ${rsvpOps.noResponse} pending RSVP(s)`);
+    if (rsvpOps.missingMeal > 0) tasks.push(`Collect ${rsvpOps.missingMeal} missing meal choice(s)`);
+    if (rsvpOps.plusOneMissingName > 0) tasks.push(`Collect ${rsvpOps.plusOneMissingName} plus-one name(s)`);
+    if (rsvpOps.pendingNoEmail > 0) tasks.push(`Add contact details for ${rsvpOps.pendingNoEmail} pending guest(s)`);
+    if (contactStats.withNoContact > 0) tasks.push(`Resolve no-contact info for ${contactStats.withNoContact} guest(s)`);
+
+    if (tasks.length === 0) {
+      toast('No blockers right now. Great shape!', 'success');
+      return;
+    }
+
+    const stamped = tasks.map((text, i) => ({
+      id: Date.now() + i,
+      text,
+      createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    }));
+
+    setFollowUpTasks((prev) => [...stamped, ...prev].slice(0, 12));
+    toast(`Generated ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
+  };
+
   const handleSendBulkInvitations = async () => {
     if (reminderCandidates.length === 0) {
       toast('No reminder recipients in this filtered view.', 'error');
@@ -540,10 +564,11 @@ export const DashboardGuests: React.FC = () => {
 
     const previewNames = reminderCandidates.slice(0, 3).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name);
     const previewText = previewNames.length ? `\n\nFirst recipients: ${previewNames.join(', ')}${reminderCandidates.length > 3 ? ` +${reminderCandidates.length - 3} more` : ''}` : '';
+    const noContactWarning = contactStats.withNoContact > 0 ? `\nNo-contact guests in database: ${contactStats.withNoContact} (not included in send)` : '';
     if (!window.confirm(`Reminder dry-run:
 Segment: ${segmentLabelMap[filterStatus] || filterStatus}
 Recipients: ${reminderCandidates.length}
-Skip recent (24h): ${skipRecentlyInvited ? "On" : "Off"}${previewText}
+Skip recent (24h): ${skipRecentlyInvited ? "On" : "Off"}${noContactWarning}${previewText}
 
 Proceed with send?`)) return;
 
@@ -947,6 +972,9 @@ Proceed with send?`)) return;
   const displayedGuests = sortByPriority
     ? [...filteredGuests].sort((a, b) => priorityScore(b) - priorityScore(a))
     : filteredGuests;
+
+
+  const nextUnresolvedGuest = displayedGuests.find((g) => issueCountForGuest(g) > 0);
 
   const stats = {
     total: guests.length,
@@ -1414,6 +1442,12 @@ Proceed with send?`)) return;
                 <Button variant="outline" size="md" onClick={handleCopyOpsSummary}>
                   <Copy className="w-4 h-4 mr-2" />
                   Copy Ops Summary
+                </Button>
+                <Button variant="outline" size="md" onClick={generateChecklistTasks}>
+                  Generate Checklist
+                </Button>
+                <Button variant="outline" size="md" onClick={() => { if (nextUnresolvedGuest) { setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name); setViewMode('list'); } }} disabled={!nextUnresolvedGuest}>
+                  Next unresolved
                 </Button>
                 <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
                   <UserPlus className="w-4 h-4 mr-2" />
