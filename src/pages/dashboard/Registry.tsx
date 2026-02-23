@@ -57,6 +57,10 @@ export const DashboardRegistry: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<RegistryItem | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [bulkUrls, setBulkUrls] = useState('');
+  const [bulkImportBusy, setBulkImportBusy] = useState(false);
+  const [autoRefreshing, setAutoRefreshing] = useState(false);
 
   function toast(message: string, type: 'success' | 'error' = 'success') {
     const id = Date.now();
@@ -90,6 +94,12 @@ export const DashboardRegistry: React.FC = () => {
       hide_when_purchased: false,
       sort_order: index,
       priority: item.priority,
+      availability: null,
+      metadata_last_checked_at: null,
+      metadata_fetch_status: null,
+      metadata_confidence_score: null,
+      previous_price_amount: null,
+      price_last_changed_at: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -149,6 +159,7 @@ export const DashboardRegistry: React.FC = () => {
       notes: draft.notes || null,
       quantity_needed: parseInt(draft.desired_quantity) || 1,
       hide_when_purchased: draft.hide_when_purchased,
+      metadata_last_checked_at: new Date().toISOString(),
     };
 
     if (isDemoMode) {
@@ -176,6 +187,12 @@ export const DashboardRegistry: React.FC = () => {
           hide_when_purchased: fields.hide_when_purchased ?? false,
           sort_order: items.length,
           priority: 'medium',
+          availability: null,
+          metadata_last_checked_at: new Date().toISOString(),
+          metadata_fetch_status: 'manual',
+          metadata_confidence_score: null,
+          previous_price_amount: null,
+          price_last_changed_at: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -249,10 +266,21 @@ export const DashboardRegistry: React.FC = () => {
     }
     try {
       const preview = await fetchUrlPreview(url, true);
-      const fields: Partial<RegistryItem> = {};
+      const fields: Partial<RegistryItem> = {
+        metadata_last_checked_at: new Date().toISOString(),
+        metadata_fetch_status: preview.fetch_status ?? 'success',
+        metadata_confidence_score: preview.confidence_score ?? null,
+        availability: preview.availability ?? null,
+      };
       if (preview.title && !item.item_name) fields.item_name = preview.title;
       if (preview.price_label) fields.price_label = preview.price_label;
-      if (preview.price_amount != null) fields.price_amount = preview.price_amount;
+      if (preview.price_amount != null) {
+        if (item.price_amount != null && item.price_amount !== preview.price_amount) {
+          fields.previous_price_amount = item.price_amount;
+          fields.price_last_changed_at = new Date().toISOString();
+        }
+        fields.price_amount = preview.price_amount;
+      }
       if (preview.image_url) fields.image_url = preview.image_url;
       if (preview.merchant ?? preview.brand) fields.merchant = (preview.merchant ?? preview.brand)!;
       if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
@@ -266,6 +294,100 @@ export const DashboardRegistry: React.FC = () => {
     } catch {
       toast('Failed to refresh product details', 'error');
     }
+  }
+
+
+  async function handleAutoRefreshStale(silent = false) {
+    if (isDemoMode || autoRefreshing) return;
+    const staleCandidates = items
+      .filter((item) => !!(item.item_url || item.canonical_url))
+      .filter((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24)
+      .slice(0, 12);
+
+    if (staleCandidates.length === 0) {
+      if (!silent) toast('Registry metadata is already fresh.');
+      return;
+    }
+
+    setAutoRefreshing(true);
+    let updatedCount = 0;
+    for (const item of staleCandidates) {
+      const url = item.item_url ?? item.canonical_url;
+      if (!url) continue;
+      try {
+        const preview = await fetchUrlPreview(url, true);
+        const fields: Partial<RegistryItem> = {
+          metadata_last_checked_at: new Date().toISOString(),
+          metadata_fetch_status: preview.fetch_status ?? 'success',
+          metadata_confidence_score: preview.confidence_score ?? null,
+          availability: preview.availability ?? null,
+        };
+        if (preview.price_label) fields.price_label = preview.price_label;
+        if (preview.price_amount != null) {
+          if (item.price_amount != null && item.price_amount !== preview.price_amount) {
+            fields.previous_price_amount = item.price_amount;
+            fields.price_last_changed_at = new Date().toISOString();
+          }
+          fields.price_amount = preview.price_amount;
+        }
+        if (preview.image_url) fields.image_url = preview.image_url;
+        if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
+        if (preview.merchant ?? preview.brand) fields.merchant = (preview.merchant ?? preview.brand)!;
+
+        const updated = await updateRegistryItem(item.id, fields);
+        setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+        updatedCount += 1;
+      } catch {
+        // keep going item-by-item
+      }
+    }
+    setAutoRefreshing(false);
+    if (!silent) toast(`Refreshed ${updatedCount} item${updatedCount === 1 ? '' : 's'}.`);
+  }
+
+  async function handleBulkImport() {
+    if (!weddingSiteId) return;
+    const urls = Array.from(new Set(bulkUrls.split('\n').map((u) => u.trim()).filter(Boolean)));
+    if (urls.length === 0) {
+      toast('Paste at least one URL to import.', 'error');
+      return;
+    }
+
+    setBulkImportBusy(true);
+    let createdCount = 0;
+    for (const url of urls.slice(0, 30)) {
+      try {
+        const preview = await fetchUrlPreview(url, false);
+        const itemName = preview.title?.trim() || new URL(url).hostname;
+        const fields: Partial<RegistryItem> = {
+          item_name: itemName,
+          price_label: preview.price_label ?? null,
+          price_amount: preview.price_amount ?? null,
+          merchant: (preview.merchant ?? preview.store_name ?? preview.brand) ?? null,
+          store_name: (preview.merchant ?? preview.store_name ?? preview.brand) ?? null,
+          item_url: preview.canonical_url ?? url,
+          canonical_url: preview.canonical_url ?? null,
+          image_url: preview.image_url ?? null,
+          notes: preview.description ?? null,
+          quantity_needed: 1,
+          hide_when_purchased: false,
+          metadata_last_checked_at: new Date().toISOString(),
+          metadata_fetch_status: preview.fetch_status ?? 'success',
+          metadata_confidence_score: preview.confidence_score ?? null,
+          availability: preview.availability ?? null,
+        };
+        const created = await createRegistryItem(weddingSiteId, fields);
+        setItems(prev => [...prev, created]);
+        createdCount += 1;
+      } catch {
+        // continue importing
+      }
+    }
+
+    setBulkImportBusy(false);
+    setBulkImportOpen(false);
+    setBulkUrls('');
+    toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} from URLs.`);
   }
 
   function handleEdit(item: RegistryItem) {
@@ -288,6 +410,15 @@ export const DashboardRegistry: React.FC = () => {
     const matchesFilter = filter === 'all' || item.purchase_status === filter;
     return matchesSearch && matchesFilter;
   });
+
+
+  useEffect(() => {
+    if (loading || isDemoMode || items.length === 0) return;
+    const hasStale = items.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24);
+    if (!hasStale) return;
+    handleAutoRefreshStale(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, isDemoMode, items.length]);
 
   const counts = {
     total: items.length,
@@ -316,10 +447,18 @@ export const DashboardRegistry: React.FC = () => {
               Paste any product URL to import items from any store
             </p>
           </div>
-          <Button variant="primary" size="md" onClick={handleAddNew} disabled={!weddingSiteId}>
-            <Plus className="w-4 h-4" />
-            Add Item
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="md" onClick={() => setBulkImportOpen(true)} disabled={!weddingSiteId}>
+              Bulk Import URLs
+            </Button>
+            <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false)} disabled={!weddingSiteId || autoRefreshing}>
+              {autoRefreshing ? 'Refreshing…' : 'Refresh stale metadata'}
+            </Button>
+            <Button variant="primary" size="md" onClick={handleAddNew} disabled={!weddingSiteId}>
+              <Plus className="w-4 h-4" />
+              Add Item
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -431,6 +570,31 @@ export const DashboardRegistry: React.FC = () => {
           onSave={handleSave}
           onCancel={() => { setShowForm(false); setEditItem(null); }}
         />
+      )}
+
+      {bulkImportOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-surface rounded-2xl border border-border shadow-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-text-primary">Bulk import registry URLs</h3>
+              <button className="text-text-tertiary hover:text-text-primary" onClick={() => setBulkImportOpen(false)}>Close</button>
+            </div>
+            <p className="text-sm text-text-secondary">Paste one URL per line (up to 30). We'll auto-fetch metadata and add items.</p>
+            <textarea
+              value={bulkUrls}
+              onChange={(e) => setBulkUrls(e.target.value)}
+              rows={10}
+              placeholder="https://www.amazon.com/...\nhttps://www.target.com/..."
+              className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setBulkImportOpen(false)}>Cancel</Button>
+              <Button variant="primary" size="sm" onClick={handleBulkImport} disabled={bulkImportBusy}>
+                {bulkImportBusy ? 'Importing…' : 'Import URLs'}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       <ToastList toasts={toasts} />

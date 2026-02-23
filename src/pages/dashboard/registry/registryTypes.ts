@@ -20,6 +20,12 @@ export interface RegistryItem {
   hide_when_purchased: boolean;
   sort_order: number;
   priority: string;
+  availability?: string | null;
+  metadata_last_checked_at?: string | null;
+  metadata_fetch_status?: string | null;
+  metadata_confidence_score?: number | null;
+  previous_price_amount?: number | null;
+  price_last_changed_at?: string | null;
   created_at: string;
   updated_at: string;
 }

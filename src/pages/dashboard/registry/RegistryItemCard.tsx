@@ -102,6 +102,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const merchant = item.merchant ?? item.store_name ?? null;
   const isPurchased = item.purchase_status === 'purchased';
   const canMarkPurchased = !isPurchased && !!onMarkPurchased;
+  const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24;
+  const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
+  const outOfStock = (item.availability || '').toLowerCase().includes('out');
 
   function handleDeleteClick() {
     if (confirmDelete) {
@@ -200,6 +203,12 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
               Want {item.quantity_needed}
             </span>
           )}
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {outOfStock && <Badge variant="warning">Out of stock</Badge>}
+          {priceChanged && <Badge variant="success">Price changed</Badge>}
+          {stale && <Badge variant="neutral">Needs refresh</Badge>}
         </div>
 
         {item.purchaser_name && item.purchase_status !== 'available' && (
