@@ -32,6 +32,10 @@ interface VaultEntry {
   attachment_url: string | null;
   attachment_name: string | null;
   media_type?: 'text' | 'photo' | 'video' | 'voice' | null;
+  storage_provider?: 'supabase' | 'google_drive' | null;
+  external_file_id?: string | null;
+  external_file_url?: string | null;
+  unlock_at?: string | null;
   created_at: string;
 }
 
@@ -221,15 +225,51 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [resolvedEntryLinks, setResolvedEntryLinks] = useState<Record<string, string>>({});
+  const [resolvingEntryId, setResolvingEntryId] = useState<string | null>(null);
 
   const unlockDate = weddingDate
     ? new Date(new Date(weddingDate).setFullYear(weddingDate.getFullYear() + config.duration_years))
     : null;
-  const isUnlocked = unlockDate ? new Date() >= unlockDate : true;
+  const isUnlocked = unlockDate ? new Date() >= unlockDate : false;
 
   const unlockLabel = unlockDate
     ? unlockDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'Set your wedding date to calculate unlock date';
+
+  const nowMs = Date.now();
+  const getEntryUnlockDate = (entry: VaultEntry) => {
+    if (entry.unlock_at) {
+      const parsed = new Date(entry.unlock_at);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    return unlockDate;
+  };
+  const isEntryUnlocked = (entry: VaultEntry) => {
+    if (!config.is_enabled) return false;
+    const d = getEntryUnlockDate(entry);
+    return d ? d.getTime() <= nowMs : false;
+  };
+
+  async function resolveEntryLink(entry: VaultEntry): Promise<string | null> {
+    if (resolvedEntryLinks[entry.id]) return resolvedEntryLinks[entry.id];
+
+    setResolvingEntryId(entry.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('vault-resolve-entry-link', {
+        body: { entryId: entry.id },
+      });
+      if (error) throw error;
+      const url = (data as { url?: string | null } | null)?.url ?? null;
+      if (url) setResolvedEntryLinks((prev) => ({ ...prev, [entry.id]: url }));
+      return url;
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Could not resolve attachment link.');
+      return null;
+    } finally {
+      setResolvingEntryId(null);
+    }
+  }
 
   function handleCopyLink() {
     if (!siteSlug) return;
@@ -346,70 +386,104 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </div>
           )}
 
-          {isUnlocked && config.is_enabled && entries.map(entry => (
-            <div key={entry.id} className="p-4 bg-surface-subtle rounded-xl border border-border">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex-1 min-w-0">
-                  {entry.title && <p className="font-semibold text-text-primary text-sm mb-0.5">{entry.title}</p>}
-                  <p className="text-xs text-text-tertiary">
-                    From {entry.author_name} · {new Date(entry.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (confirmDeleteId === entry.id) {
-                      onDeleteEntry(entry.id);
-                      setConfirmDeleteId(null);
-                    } else {
-                      setConfirmDeleteId(entry.id);
-                      setTimeout(() => setConfirmDeleteId(null), 3000);
-                    }
-                  }}
-                  className={`flex-shrink-0 p-1.5 rounded-lg border text-xs transition-colors ${
-                    confirmDeleteId === entry.id
-                      ? 'border-error text-error bg-error-light'
-                      : 'border-transparent text-text-tertiary hover:border-error/40 hover:text-error'
-                  }`}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
-              {entry.attachment_url && (() => {
-                const kind = inferAttachmentKind(entry.attachment_url, entry.attachment_name, entry.media_type);
-                return (
-                  <div className="mt-2 space-y-2">
-                    {kind === 'image' && (
-                      <a href={entry.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
-                        <img src={entry.attachment_url} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" />
-                      </a>
-                    )}
-                    {kind === 'video' && (
-                      <video controls preload="metadata" className="w-full max-h-56 rounded-lg border border-border bg-black/80">
-                        <source src={entry.attachment_url} />
-                      </video>
-                    )}
-                    {kind === 'audio' && (
-                      <audio controls preload="metadata" className="w-full">
-                        <source src={entry.attachment_url} />
-                      </audio>
-                    )}
-                    <a
-                      href={entry.attachment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-                    >
-                      <Paperclip className="w-3 h-3" />
-                      {entry.attachment_name || 'View attachment'}
-                    </a>
-                  </div>
-                );
-              })()}
-            </div>
-          ))}
+          {entries.map(entry => {
+            const unlocked = isEntryUnlocked(entry);
+            const entryUnlockDate = getEntryUnlockDate(entry);
+            const entryUnlockLabel = entryUnlockDate
+              ? entryUnlockDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+              : unlockLabel;
 
-          {(!isUnlocked || !config.is_enabled) && entries.length > 0 && (
+            return (
+              <div key={entry.id} className="p-4 bg-surface-subtle rounded-xl border border-border">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex-1 min-w-0">
+                    {entry.title && <p className="font-semibold text-text-primary text-sm mb-0.5">{entry.title}</p>}
+                    <p className="text-xs text-text-tertiary">
+                      From {entry.author_name} · {new Date(entry.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (confirmDeleteId === entry.id) {
+                        onDeleteEntry(entry.id);
+                        setConfirmDeleteId(null);
+                      } else {
+                        setConfirmDeleteId(entry.id);
+                        setTimeout(() => setConfirmDeleteId(null), 3000);
+                      }
+                    }}
+                    className={`flex-shrink-0 p-1.5 rounded-lg border text-xs transition-colors ${
+                      confirmDeleteId === entry.id
+                        ? 'border-error text-error bg-error-light'
+                        : 'border-transparent text-text-tertiary hover:border-error/40 hover:text-error'
+                    }`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {!unlocked ? (
+                  <div className="p-3 rounded-lg border border-dashed border-border bg-surface text-center">
+                    <Lock className="w-4 h-4 text-text-tertiary mx-auto mb-1" />
+                    <p className="text-xs text-text-secondary">Entry sealed until {entryUnlockLabel}</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
+                    {(entry.attachment_url || entry.external_file_id || entry.external_file_url) && (() => {
+                      const attachmentUrl = resolvedEntryLinks[entry.id] || null;
+                      if (!attachmentUrl) {
+                        return (
+                          <div className="mt-2">
+                            <button
+                              onClick={async () => { await resolveEntryLink(entry); }}
+                              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                              disabled={resolvingEntryId === entry.id}
+                            >
+                              {resolvingEntryId === entry.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Paperclip className="w-3 h-3" />}
+                              {resolvingEntryId === entry.id ? 'Resolving link…' : (entry.attachment_name || 'Open attachment')}
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      const kind = inferAttachmentKind(attachmentUrl, entry.attachment_name, entry.media_type);
+                      return (
+                        <div className="mt-2 space-y-2">
+                          {kind === 'image' && (
+                            <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="block">
+                              <img src={attachmentUrl} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" />
+                            </a>
+                          )}
+                          {kind === 'video' && (
+                            <video controls preload="metadata" className="w-full max-h-56 rounded-lg border border-border bg-black/80">
+                              <source src={attachmentUrl} />
+                            </video>
+                          )}
+                          {kind === 'audio' && (
+                            <audio controls preload="metadata" className="w-full">
+                              <source src={attachmentUrl} />
+                            </audio>
+                          )}
+                          <a
+                            href={attachmentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                          >
+                            <Paperclip className="w-3 h-3" />
+                            {entry.attachment_name || 'View attachment'}
+                          </a>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+            );
+          })}
+
+          {entries.length > 0 && entries.every((entry) => !isEntryUnlocked(entry)) && (
             <div className="p-4 bg-surface-subtle rounded-xl border border-dashed border-border text-center space-y-1">
               <Lock className="w-5 h-5 text-text-tertiary mx-auto mb-1" />
               <p className="text-sm font-medium text-text-secondary">
@@ -589,11 +663,70 @@ export const DashboardVault: React.FC = () => {
   const [editingConfig, setEditingConfig] = useState<VaultConfig | null>(null);
   const [addingVault, setAddingVault] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [vaultStorageProvider, setVaultStorageProvider] = useState<'supabase' | 'google_drive'>('supabase');
+  const [googleDriveConnected, setGoogleDriveConnected] = useState(false);
+  const [connectingDrive, setConnectingDrive] = useState(false);
 
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }
+
+  async function handleStorageProviderChange(next: 'supabase' | 'google_drive') {
+    if (!weddingSiteId) return;
+
+    if (next === 'google_drive' && !googleDriveConnected) {
+      toast('Connect Google Drive first, then switch storage provider.', 'error');
+      return;
+    }
+
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
+      setVaultStorageProvider(next);
+      toast('Demo: storage provider updated locally.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('wedding_sites')
+      .update({ vault_storage_provider: next })
+      .eq('id', weddingSiteId);
+
+    if (error) {
+      toast('Failed to update vault storage provider.', 'error');
+      return;
+    }
+
+    setVaultStorageProvider(next);
+    toast(`Vault storage set to ${next === 'google_drive' ? 'Google Drive' : 'Supabase Storage'}.`);
+  }
+
+
+  async function handleConnectGoogleDrive() {
+    if (!weddingSiteId) return;
+
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
+      setGoogleDriveConnected(true);
+      setVaultStorageProvider('google_drive');
+      toast('Demo: simulated Google Drive connection.');
+      return;
+    }
+
+    setConnectingDrive(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-drive-auth-start', {
+        body: { siteId: weddingSiteId },
+      });
+
+      if (error) throw error;
+      const authUrl = (data as { authUrl?: string } | null)?.authUrl;
+      if (!authUrl) throw new Error('Missing Google OAuth URL.');
+      window.location.href = authUrl;
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to start Google Drive connection.', 'error');
+    } finally {
+      setConnectingDrive(false);
+    }
   }
 
 
@@ -685,12 +818,14 @@ export const DashboardVault: React.FC = () => {
 
         const { data: demoSite } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_date, site_slug')
+          .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected')
           .eq('site_slug', 'alex-jordan-demo')
           .maybeSingle();
 
         if (demoSite) {
           setWeddingSiteId(demoSite.id);
+          setVaultStorageProvider(((demoSite as { vault_storage_provider?: 'supabase' | 'google_drive' }).vault_storage_provider) ?? 'supabase');
+          setGoogleDriveConnected(!!(demoSite as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
 if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
           else setWeddingDate(new Date(DEMO_WEDDING_DATE));
 
@@ -718,6 +853,8 @@ if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
         }
 
 setWeddingSiteId('demo-site-id');
+        setVaultStorageProvider('supabase');
+        setGoogleDriveConnected(false);
         setWeddingDate(new Date(DEMO_WEDDING_DATE));
         const demoState = loadDemoState();
         setVaultConfigs(demoState.vaultConfigs);
@@ -728,12 +865,14 @@ setWeddingSiteId('demo-site-id');
       if (!user) return;
       const { data: site } = await supabase
         .from('wedding_sites')
-        .select('id, wedding_date, site_slug')
+        .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!site) return;
       setWeddingSiteId(site.id);
+      setVaultStorageProvider(((site as { vault_storage_provider?: 'supabase' | 'google_drive' }).vault_storage_provider) ?? 'supabase');
+      setGoogleDriveConnected(!!(site as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
       if (site.wedding_date) setWeddingDate(new Date(site.wedding_date));
       if (site.site_slug) setSiteSlug(site.site_slug as string);
 
@@ -765,6 +904,31 @@ setWeddingSiteId('demo-site-id');
   }, [user, isDemoMode]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleCode = params.get('google_drive_code') || params.get('code');
+    const googleState = params.get('state');
+    if (!googleCode || !googleState) return;
+
+    supabase.functions.invoke('google-drive-auth-callback', {
+      body: { code: googleCode, state: googleState },
+    }).then(({ error }) => {
+      if (error) {
+        toast('Google Drive connection failed. Please try again.', 'error');
+        return;
+      }
+      toast('Google Drive connected successfully.');
+      setGoogleDriveConnected(true);
+      setVaultStorageProvider('google_drive');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('google_drive_code');
+      url.searchParams.delete('code');
+      url.searchParams.delete('state');
+      window.history.replaceState({}, '', url.toString());
+      loadData();
+    });
+  }, [loadData]);
 
   useEffect(() => {
     if (!weddingDate || vaultConfigs.length === 0) return;
@@ -1071,12 +1235,41 @@ setWeddingSiteId('demo-site-id');
         </div>
       </div>
 
+        <Card variant="bordered" padding="md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Vault Storage Provider</p>
+              <p className="text-xs text-text-secondary mt-1">Use Supabase storage now, or connect Google Drive for external archive flow and time-lock orchestration.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => handleStorageProviderChange('supabase')}
+                className={`px-3 py-2 rounded-lg text-sm border ${vaultStorageProvider === 'supabase' ? 'bg-primary/10 border-primary text-primary' : 'border-border text-text-secondary'}`}
+              >
+                Supabase
+              </button>
+              <button
+                onClick={() => handleStorageProviderChange('google_drive')}
+                disabled={!googleDriveConnected}
+                className={`px-3 py-2 rounded-lg text-sm border ${vaultStorageProvider === 'google_drive' ? 'bg-primary/10 border-primary text-primary' : 'border-border text-text-secondary'} disabled:opacity-60`}
+                title={!googleDriveConnected ? 'Connect Google Drive first' : undefined}
+              >
+                Google Drive
+              </button>
+              <Button variant="outline" size="sm" onClick={handleConnectGoogleDrive} disabled={connectingDrive}>
+                {connectingDrive ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                {googleDriveConnected ? 'Reconnect Drive' : 'Connect Drive'}
+              </Button>
+            </div>
+          </div>
+        </Card>
+
         {!weddingDate && (
           <div className="flex items-start gap-3 p-4 bg-warning-light border border-warning/20 rounded-xl text-sm text-warning">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-medium">No wedding date set</p>
-              <p className="mt-0.5 text-warning/80">Set your wedding date in Settings to enable vault lock/unlock dates. You can still add entries now.</p>
+              <p className="mt-0.5 text-warning/80">Set your wedding date in Settings. Vault entries stay locked until an unlock date can be calculated.</p>
             </div>
           </div>
         )}

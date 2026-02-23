@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck } from 'lucide-react';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -10,9 +10,31 @@ import { regenerateLayout } from '../../lib/generateInitialLayout';
 import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
 
+
+interface RSVPQuestionSetting {
+  id: string;
+  label: string;
+  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
+  required: boolean;
+  appliesTo: 'all' | 'ceremony' | 'reception';
+  options?: string[];
+}
+
+const makeQuestion = (): RSVPQuestionSetting => ({
+  id: `q_${Math.random().toString(36).slice(2, 10)}`,
+  label: '',
+  type: 'short_text',
+  required: false,
+  appliesTo: 'all',
+  options: [],
+});
+
+const LOCAL_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
+const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
+
 export const DashboardSettings: React.FC = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'account' | 'site' | 'notifications' | 'billing'>('account');
+  const { user, isDemoMode } = useAuth();
+  const [activeTab, setActiveTab] = useState<'account' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
 
   const [coupleNames, setCoupleNames] = useState('');
   const [accountEmail, setAccountEmail] = useState('');
@@ -40,6 +62,13 @@ export const DashboardSettings: React.FC = () => {
   const [sitePassword, setSitePassword] = useState('');
   const [showSitePassword, setShowSitePassword] = useState(false);
   const [guestAccessToken, setGuestAccessToken] = useState<string | null>(null);
+  const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
+  const [rsvpQuestionsSaving, setRsvpQuestionsSaving] = useState(false);
+  const [rsvpQuestionsSuccess, setRsvpQuestionsSuccess] = useState<string | null>(null);
+  const [rsvpQuestionsError, setRsvpQuestionsError] = useState<string | null>(null);
+  const [collapsedQuestionIds, setCollapsedQuestionIds] = useState<Set<string>>(new Set());
+  const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
+  const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [visibilitySuccess, setVisibilitySuccess] = useState<string | null>(null);
@@ -67,7 +96,7 @@ export const DashboardSettings: React.FC = () => {
 
   useEffect(() => {
     loadSiteData();
-  }, [user]);
+  }, [user, isDemoMode]);
 
   useEffect(() => {
     if (activeTab === 'billing' && user && !billingInfo) {
@@ -81,10 +110,41 @@ export const DashboardSettings: React.FC = () => {
 
   const loadSiteData = async () => {
     if (!user) return;
+
+    if (isDemoMode) {
+      try {
+        const raw = localStorage.getItem(LOCAL_RSVP_QUESTIONS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(parsed)) {
+          const normalized = parsed
+            .map((q) => q as Partial<RSVPQuestionSetting>)
+            .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
+            .map((q) => ({
+              id: q.id as string,
+              label: (q.label as string) || '',
+              type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
+              required: !!q.required,
+              appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+              options: Array.isArray(q.options) ? q.options.filter((x) => typeof x === 'string') as string[] : [],
+            }));
+          setRsvpQuestions(normalized);
+        }
+
+        const rawMeal = localStorage.getItem(LOCAL_RSVP_MEAL_KEY);
+        const parsedMeal = rawMeal ? JSON.parse(rawMeal) : null;
+        if (parsedMeal && typeof parsedMeal === 'object') {
+          setRsvpMealEnabled(typeof parsedMeal.enabled === 'boolean' ? parsedMeal.enabled : true);
+          setRsvpMealOptions(Array.isArray(parsedMeal.options) ? parsedMeal.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+        }
+      } catch {
+        // ignore local parse issues
+      }
+    }
+
     try {
       const { data } = await supabase
         .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token, default_language')
+        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token, default_language, rsvp_custom_questions, rsvp_meal_config')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -107,6 +167,28 @@ export const DashboardSettings: React.FC = () => {
           setNotifDigest(prefs.digest ?? false);
           setNotifUpdates(prefs.updates ?? false);
         }
+
+        const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions)
+          ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || [])
+          : [];
+
+        const normalized = loadedQuestions
+          .map((q) => q as Partial<RSVPQuestionSetting>)
+          .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
+          .map((q) => ({
+            id: q.id as string,
+            label: (q.label as string) || '',
+            type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
+            required: !!q.required,
+            appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+            options: Array.isArray(q.options) ? q.options.filter((x) => typeof x === 'string') as string[] : [],
+          }));
+        setRsvpQuestions(normalized);
+
+        const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
+        setRsvpMealEnabled(mealCfg?.enabled ?? true);
+        setRsvpMealOptions(Array.isArray(mealCfg?.options) ? mealCfg!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+
       } else {
         setAccountEmail(user.email ?? '');
       }
@@ -253,6 +335,65 @@ export const DashboardSettings: React.FC = () => {
     setTimeout(() => setPrivacyCopied(false), 2000);
   };
 
+
+  const handleSaveRsvpQuestions = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setRsvpQuestionsSaving(true);
+    setRsvpQuestionsSuccess(null);
+    setRsvpQuestionsError(null);
+
+    try {
+      const cleaned = rsvpQuestions
+        .map((q) => ({
+          ...q,
+          label: q.label.trim(),
+          options: (q.type === 'single_choice' || q.type === 'multi_choice')
+            ? (q.options ?? []).map((o) => o.trim()).filter(Boolean)
+            : [],
+        }))
+        .filter((q) => q.label.length > 0);
+
+      const missingOptions = cleaned.find((q) => (q.type === 'single_choice' || q.type === 'multi_choice') && (q.options?.length ?? 0) < 2);
+      if (missingOptions) {
+        setRsvpQuestionsError(`Choice question "${missingOptions.label}" needs at least 2 options.`);
+        return;
+      }
+
+      const mealOptions = rsvpMealOptions.map((o) => o.trim()).filter(Boolean);
+      if (rsvpMealEnabled && mealOptions.length < 2) {
+        setRsvpQuestionsError('Meal choices need at least 2 options when enabled.');
+        return;
+      }
+
+      if (!weddingSiteId) {
+        if (isDemoMode) {
+          localStorage.setItem(LOCAL_RSVP_QUESTIONS_KEY, JSON.stringify(cleaned));
+          localStorage.setItem(LOCAL_RSVP_MEAL_KEY, JSON.stringify({ enabled: rsvpMealEnabled, options: mealOptions }));
+          setRsvpQuestions(cleaned);
+          setRsvpQuestionsSuccess('RSVP settings saved (demo).');
+          return;
+        }
+
+        setRsvpQuestionsError('Could not find your wedding site record. Refresh and try again.');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ rsvp_custom_questions: cleaned, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })
+        .eq('id', weddingSiteId);
+
+      if (error) throw error;
+      setRsvpQuestions(cleaned);
+      setRsvpQuestionsSuccess('RSVP settings saved.');
+    } catch (err) {
+      setRsvpQuestionsError(err instanceof Error ? err.message : 'Failed to save RSVP custom questions.');
+    } finally {
+      setRsvpQuestionsSaving(false);
+    }
+  };
+
   const handleSaveNotifications = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!weddingSiteId) return;
@@ -328,6 +469,7 @@ export const DashboardSettings: React.FC = () => {
   const tabs = [
     { id: 'account' as const, label: 'Account', icon: User },
     { id: 'site' as const, label: 'Site Settings', icon: Globe },
+    { id: 'rsvp' as const, label: 'RSVP', icon: Calendar },
     { id: 'notifications' as const, label: 'Notifications', icon: Bell },
     { id: 'billing' as const, label: 'Billing', icon: CreditCard },
   ];
@@ -731,6 +873,209 @@ export const DashboardSettings: React.FC = () => {
                         Your wedding information will be preserved when switching templates.
                       </p>
                     </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {activeTab === 'rsvp' && (
+              <>
+                <Card variant="bordered" padding="lg">
+                  <CardHeader>
+                    <CardTitle>Meal Choice</CardTitle>
+                    <CardDescription>Toggle meal collection and customize options shown on RSVP</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <label className="flex items-center gap-2 text-sm text-text-primary">
+                      <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => setRsvpMealEnabled(e.target.checked)} className="w-4 h-4 rounded border-border text-primary" />
+                      Collect meal choice on RSVP form
+                    </label>
+                    {rsvpMealEnabled && (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-text-primary">Meal options</label>
+                        {rsvpMealOptions.map((opt, idx) => (
+                          <div key={`meal-opt-${idx}`} className="flex items-center gap-2">
+                            <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=e.target.value; return n; })} placeholder={`Meal option ${idx+1}`} />
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>
+                          </div>
+                        ))}
+                        <Button type="button" variant="outline" size="sm" onClick={() => setRsvpMealOptions((prev) => [...prev, ''])}><Plus className="w-4 h-4 mr-1" />Add meal option</Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card variant="bordered" padding="lg">
+                  <CardHeader>
+                    <CardTitle>RSVP Custom Questions</CardTitle>
+                    <CardDescription>Add optional questions to collect extra details from guests</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleSaveRsvpQuestions} className="space-y-4">
+                      {rsvpQuestionsSuccess && (
+                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{rsvpQuestionsSuccess}</div>
+                      )}
+                      {rsvpQuestionsError && (
+                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{rsvpQuestionsError}</div>
+                      )}
+
+                      <div className="space-y-3">
+                        {rsvpQuestions.length === 0 && (
+                          <p className="text-sm text-text-secondary">No custom questions yet. Add one below.</p>
+                        )}
+
+                        {rsvpQuestions.map((q, idx) => {
+                          const isCollapsed = collapsedQuestionIds.has(q.id);
+                          return (
+                          <div key={q.id} className="p-4 border border-border rounded-xl space-y-3 bg-surface-subtle">
+                            <div className="flex items-center justify-between">
+                              <button
+                                type="button"
+                                onClick={() => setCollapsedQuestionIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(q.id)) next.delete(q.id); else next.add(q.id);
+                                  return next;
+                                })}
+                                className="inline-flex items-center gap-2 text-sm font-semibold text-text-primary"
+                              >
+                                <ChevronDown className={`w-4 h-4 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                                Question {idx + 1}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRsvpQuestions((prev) => prev.filter((item) => item.id !== q.id));
+                                  setCollapsedQuestionIds((prev) => {
+                                    const next = new Set(prev);
+                                    next.delete(q.id);
+                                    return next;
+                                  });
+                                }}
+                                className="text-error hover:text-error/80"
+                                aria-label="Remove question"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            {!isCollapsed && (
+                              <>
+                            <Input
+                              label="Prompt"
+                              value={q.label}
+                              onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, label: e.target.value } : item))}
+                              placeholder="e.g., Song request"
+                            />
+
+                            <div className="grid md:grid-cols-3 gap-3">
+                              <Select
+                                label="Type"
+                                value={q.type}
+                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => {
+                                  if (item.id !== q.id) return item;
+                                  const nextType = e.target.value as RSVPQuestionSetting['type'];
+                                  if (nextType === 'single_choice' || nextType === 'multi_choice') {
+                                    const current = item.options ?? [];
+                                    return { ...item, type: nextType, options: current.length > 0 ? current : ['', ''] };
+                                  }
+                                  return { ...item, type: nextType, options: [] };
+                                }))}
+                                options={[
+                                  { value: 'short_text', label: 'Short text' },
+                                  { value: 'long_text', label: 'Long text' },
+                                  { value: 'single_choice', label: 'Single choice' },
+                                  { value: 'multi_choice', label: 'Multiple choice' },
+                                ]}
+                              />
+
+                              <Select
+                                label="Applies to"
+                                value={q.appliesTo}
+                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : item))}
+                                options={[
+                                  { value: 'all', label: 'All attendees' },
+                                  { value: 'ceremony', label: 'Ceremony attendees' },
+                                  { value: 'reception', label: 'Reception attendees' },
+                                ]}
+                              />
+
+                              <label className="flex items-center gap-2 mt-7 text-sm text-text-primary">
+                                <input
+                                  type="checkbox"
+                                  checked={q.required}
+                                  onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, required: e.target.checked } : item))}
+                                  className="w-4 h-4 rounded border-border text-primary"
+                                />
+                                Required
+                              </label>
+                            </div>
+
+                            {(q.type === 'single_choice' || q.type === 'multi_choice') && (
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-text-primary">Choices</label>
+                                {(q.options ?? []).map((opt, optIdx) => (
+                                  <div key={`${q.id}-opt-${optIdx}`} className="flex items-center gap-2">
+                                    <Input
+                                      value={opt}
+                                      onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => {
+                                        if (item.id !== q.id) return item;
+                                        const next = [...(item.options ?? [])];
+                                        next[optIdx] = e.target.value;
+                                        return { ...item, options: next };
+                                      }))}
+                                      placeholder={`Option ${optIdx + 1}`}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setRsvpQuestions((prev) => prev.map((item) => {
+                                        if (item.id !== q.id) return item;
+                                        const next = [...(item.options ?? [])];
+                                        next.splice(optIdx, 1);
+                                        return { ...item, options: next };
+                                      }))}
+                                      aria-label="Remove choice"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, options: [...(item.options ?? []), ''] } : item))}
+                                >
+                                  <Plus className="w-4 h-4 mr-1" />
+                                  Add choice
+                                </Button>
+                                <p className="text-xs text-text-tertiary">At least 2 non-empty choices required.</p>
+                              </div>
+                            )}
+                              </>
+                            )}
+                          </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 justify-between pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => { const q = makeQuestion(); setRsvpQuestions((prev) => [...prev, q]); setCollapsedQuestionIds((prev) => { const next = new Set(prev); next.delete(q.id); return next; }); }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Question
+                        </Button>
+
+                        <Button variant="primary" size="md" type="submit" disabled={rsvpQuestionsSaving}>
+                          {rsvpQuestionsSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                          Save RSVP Settings
+                        </Button>
+                      </div>
+                    </form>
                   </CardContent>
                 </Card>
               </>

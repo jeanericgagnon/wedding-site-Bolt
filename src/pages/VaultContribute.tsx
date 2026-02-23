@@ -9,6 +9,8 @@ interface SiteInfo {
   couple_name_1: string | null;
   couple_name_2: string | null;
   wedding_date: string | null;
+  vault_storage_provider?: 'supabase' | 'google_drive';
+  vault_google_drive_connected?: boolean;
 }
 
 interface VaultConfigInfo {
@@ -233,7 +235,7 @@ export const VaultContribute: React.FC = () => {
   async function loadData() {
     const { data: siteData, error: siteError } = await supabase
       .from('wedding_sites')
-      .select('id, couple_name_1, couple_name_2, wedding_date, is_published')
+      .select('id, couple_name_1, couple_name_2, wedding_date, is_published, vault_storage_provider, vault_google_drive_connected')
       .eq('site_slug', siteSlug)
       .maybeSingle();
 
@@ -410,7 +412,10 @@ export const VaultContribute: React.FC = () => {
 
     setSubmitting(true);
 
-    const uploadedItems: Array<{ url: string | null; name: string | null; mime: string | null; size: number | null }> = [];
+    const uploadedItems: Array<{ url: string | null; name: string | null; mime: string | null; size: number | null; externalFileId?: string | null; storageProvider?: 'supabase' | 'google_drive' }> = [];
+
+    const storageProvider = site.vault_storage_provider ?? 'supabase';
+    const useGoogleDrive = storageProvider === 'google_drive';
 
     if (selectedFiles.length > 0 && form.media_type !== 'text') {
       setUploadProgress(3);
@@ -439,27 +444,75 @@ export const VaultContribute: React.FC = () => {
         const path = `public/${site.id}/${vaultConfig.id}/${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
         if (DEMO_MODE && site.id === 'demo-site-id') {
-          uploadedItems.push({ url: `demo-upload://${safeType}/${file.name}`, name: file.name, mime: file.type || null, size: file.size || null });
+          uploadedItems.push({ url: `demo-upload://${safeType}/${file.name}`, name: file.name, mime: file.type || null, size: file.size || null, storageProvider: useGoogleDrive ? 'google_drive' : 'supabase' });
           setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
           continue;
         }
 
-        const { error: uploadError } = await supabase.storage
-          .from('vault-attachments')
-          .upload(path, file, { upsert: false, contentType: file.type || undefined });
+        if (useGoogleDrive) {
+          if (!site.vault_google_drive_connected) {
+            setUploadProgress(null);
+            setSubmitting(false);
+            setSubmitError('Google Drive is not connected for this vault yet. Ask the couple to connect Drive in Vault settings.');
+            return;
+          }
 
-        if (uploadError) {
-          setUploadProgress(null);
-          setSubmitting(false);
-          setSubmitError(uploadError.message?.includes('bucket')
-            ? 'Media upload is not configured yet (missing vault-attachments bucket or policy).'
-            : `Upload failed: ${uploadError.message}`);
-          return;
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = String(reader.result || '');
+              const idx = result.indexOf(',');
+              resolve(idx >= 0 ? result.slice(idx + 1) : result);
+            };
+            reader.onerror = () => reject(new Error('Failed to read file for Google Drive upload.'));
+            reader.readAsDataURL(file);
+          });
+
+          const { data: driveData, error: driveError } = await supabase.functions.invoke('vault-upload-google-drive', {
+            body: {
+              siteId: site.id,
+              vaultYear: vaultConfig.duration_years,
+              fileName: file.name,
+              mimeType: file.type || 'application/octet-stream',
+              base64,
+            },
+          });
+
+          if (driveError) {
+            setUploadProgress(null);
+            setSubmitting(false);
+            setSubmitError(`Google Drive upload failed: ${driveError.message}`);
+            return;
+          }
+
+          const drive = driveData as { fileId?: string; webViewLink?: string | null; webContentLink?: string | null } | null;
+          uploadedItems.push({
+            url: null,
+            name: file.name,
+            mime: file.type || null,
+            size: file.size || null,
+            externalFileId: drive?.fileId ?? null,
+            storageProvider: 'google_drive',
+          });
+          setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
+        } else {
+          const { error: uploadError } = await supabase.storage
+            .from('vault-attachments')
+            .upload(path, file, { upsert: false, contentType: file.type || undefined });
+
+          if (uploadError) {
+            setUploadProgress(null);
+            setSubmitting(false);
+            setSubmitError(uploadError.message?.includes('bucket')
+              ? 'Media upload is not configured yet (missing vault-attachments bucket or policy).'
+              : `Upload failed: ${uploadError.message}`);
+            return;
+          }
+
+          const { data: publicData } = supabase.storage.from('vault-attachments').getPublicUrl(path);
+          uploadedItems.push({ url: publicData.publicUrl, name: file.name, mime: file.type || null, size: file.size || null, storageProvider: 'supabase' });
+          setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         }
-
-        const { data: publicData } = supabase.storage.from('vault-attachments').getPublicUrl(path);
-        uploadedItems.push({ url: publicData.publicUrl, name: file.name, mime: file.type || null, size: file.size || null });
-        setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
       }
     } else {
       uploadedItems.push({ url: null, name: null, mime: null, size: null });
@@ -497,6 +550,10 @@ export const VaultContribute: React.FC = () => {
       media_type: form.media_type,
       mime_type: item.mime,
       size_bytes: item.size,
+      storage_provider: item.storageProvider ?? storageProvider,
+      external_file_id: item.externalFileId ?? null,
+      external_file_url: item.storageProvider === 'google_drive' ? item.url : null,
+      unlock_at: site.wedding_date ? new Date(new Date(site.wedding_date).setFullYear(new Date(site.wedding_date).getFullYear() + vaultConfig.duration_years)).toISOString() : null,
     }));
 
     const { error } = await supabase.from('vault_entries').insert(rows);

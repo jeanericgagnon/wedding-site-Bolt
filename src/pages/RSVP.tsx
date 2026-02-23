@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
@@ -8,9 +8,14 @@ import { Textarea } from '../components/ui/Textarea';
 import { Card } from '../components/ui/Card';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
+import { demoGuests, demoRSVPs } from '../lib/demoData';
+import { DEMO_MODE } from '../config/env';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const DEMO_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
+const DEMO_RSVP_RESPONSES_KEY = 'dayof_demo_rsvp_responses_v1';
+const DEMO_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 
 async function rsvpCall(body: object): Promise<{ data?: unknown; error?: string }> {
   const res = await fetch(RSVP_FN_URL, {
@@ -47,6 +52,29 @@ interface ExistingRSVP {
   meal_choice: string | null;
   plus_one_name: string | null;
   notes: string | null;
+  custom_answers?: Record<string, string | string[]> | null;
+}
+
+interface HouseholdGuest {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  name: string;
+  invite_token: string | null;
+}
+
+interface RSVPMealConfig {
+  enabled: boolean;
+  options: string[];
+}
+
+interface RSVPQuestion {
+  id: string;
+  label: string;
+  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
+  required?: boolean;
+  options?: string[];
+  appliesTo?: 'all' | 'ceremony' | 'reception';
 }
 
 function maskEmail(email: string | null): string {
@@ -95,6 +123,103 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
   };
 }
 
+
+
+function getDemoMealConfig(): RSVPMealConfig {
+  try {
+    const raw = localStorage.getItem(DEMO_RSVP_MEAL_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || typeof parsed !== 'object') return { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
+    return {
+      enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : true,
+      options: Array.isArray(parsed.options) ? parsed.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'],
+    };
+  } catch {
+    return { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
+  }
+}
+
+function getDemoQuestions(): RSVPQuestion[] {
+  try {
+    const raw = localStorage.getItem(DEMO_RSVP_QUESTIONS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function getDemoStoredResponses(): Record<string, ExistingRSVP> {
+  try {
+    const raw = localStorage.getItem(DEMO_RSVP_RESPONSES_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return (parsed && typeof parsed === 'object') ? parsed as Record<string, ExistingRSVP> : {};
+  } catch {
+    return {};
+  }
+}
+
+function mapDemoGuest(g: (typeof demoGuests)[number]): Guest {
+  return {
+    id: g.id,
+    first_name: g.first_name ?? null,
+    last_name: g.last_name ?? null,
+    name: g.name,
+    email: g.email ?? null,
+    phone: null,
+    group_name: null,
+    wedding_site_id: g.wedding_site_id,
+    plus_one_allowed: false,
+    invited_to_ceremony: !!g.invited_to_ceremony,
+    invited_to_reception: !!g.invited_to_reception,
+    invite_token: g.invite_token ?? null,
+  };
+}
+
+function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions: RSVPQuestion[]; rsvpMealConfig: RSVPMealConfig; householdGuests: HouseholdGuest[] } {
+  const trimmed = searchValue.trim().toLowerCase();
+  const questions = getDemoQuestions();
+  const meal = getDemoMealConfig();
+  const householdFor = (g: (typeof demoGuests)[number]): HouseholdGuest[] => demoGuests.filter((x) => x.household_id === g.household_id && x.id !== g.id).map((x) => ({ id: x.id, first_name: x.first_name ?? null, last_name: x.last_name ?? null, name: x.name, invite_token: x.invite_token ?? null }));
+  const stored = getDemoStoredResponses();
+
+  const tokenMatch = demoGuests.find((g) => (g.invite_token || '').toLowerCase() === trimmed);
+  if (tokenMatch) {
+    const mapped = mapDemoGuest(tokenMatch);
+    const existing = stored[tokenMatch.id] ?? (demoRSVPs.find((r) => r.guest_id === tokenMatch.id)
+      ? {
+          id: `demo-rsvp-${tokenMatch.id}`,
+          attending: !!demoRSVPs.find((r) => r.guest_id === tokenMatch.id)?.attending,
+          meal_choice: demoRSVPs.find((r) => r.guest_id === tokenMatch.id)?.meal_choice ?? null,
+          plus_one_name: demoRSVPs.find((r) => r.guest_id === tokenMatch.id)?.plus_one_name ?? null,
+          notes: demoRSVPs.find((r) => r.guest_id === tokenMatch.id)?.notes ?? null,
+          custom_answers: null,
+        }
+      : null);
+    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, householdGuests: householdFor(tokenMatch) };
+  }
+
+  const matches = demoGuests.filter((g) => g.name.toLowerCase().includes(trimmed) || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim().toLowerCase().includes(trimmed));
+  if (matches.length === 0) return { guest: null, existingRsvp: null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, householdGuests: [] };
+  if (matches.length === 1) {
+    const g = matches[0];
+    const mapped = mapDemoGuest(g);
+    const existing = stored[g.id] ?? (demoRSVPs.find((r) => r.guest_id === g.id)
+      ? {
+          id: `demo-rsvp-${g.id}`,
+          attending: !!demoRSVPs.find((r) => r.guest_id === g.id)?.attending,
+          meal_choice: demoRSVPs.find((r) => r.guest_id === g.id)?.meal_choice ?? null,
+          plus_one_name: demoRSVPs.find((r) => r.guest_id === g.id)?.plus_one_name ?? null,
+          notes: demoRSVPs.find((r) => r.guest_id === g.id)?.notes ?? null,
+          custom_answers: null,
+        }
+      : null);
+    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, householdGuests: householdFor(g) };
+  }
+
+  return { guest: null, existingRsvp: null, guests: matches.slice(0, 10).map(mapDemoGuest), rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, householdGuests: [] };
+}
+
 export default function RSVP() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -107,7 +232,13 @@ export default function RSVP() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
+  const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
+  const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string | string[]>>({});
+  const [mealConfig, setMealConfig] = useState<RSVPMealConfig>({ enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+  const [householdGuests, setHouseholdGuests] = useState<HouseholdGuest[]>([]);
+  const [applyToHousehold, setApplyToHousehold] = useState(true);
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -123,19 +254,28 @@ export default function RSVP() {
     if (!token) return;
     setTokenAutoLoading(true);
     setSearchValue(token);
-    rsvpCall({ action: 'lookup', searchValue: token })
+    (DEMO_MODE ? Promise.resolve({ data: demoLookup(token) as unknown, error: undefined as string | undefined }) : rsvpCall({ action: 'lookup', searchValue: token }))
       .then(({ data, error: err }) => {
         if (err || !data) {
           setError(err ?? 'Invalid invitation link. Please search by name below.');
           setTokenAutoLoading(false);
           return;
         }
-        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
+        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; householdGuests?: HouseholdGuest[] | null };
         if (result.guest) {
-          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline);
+          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? []);
         } else if (result.guests && result.guests.length > 1) {
           setAmbiguousGuests(result.guests);
           setRsvpDeadline(result.rsvpDeadline);
+          setRsvpQuestions(result.rsvpQuestions ?? []);
+        setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+        setHouseholdGuests(result.householdGuests ?? []);
+        setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
+          setHouseholdGuests(result.householdGuests ?? []);
+          setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
+          setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+          setHouseholdGuests(result.householdGuests ?? []);
+          setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
           setStep('pick');
         } else {
           setError('Invitation not recognized. Please search by name below.');
@@ -152,23 +292,31 @@ export default function RSVP() {
     setError('');
 
     try {
-      const { data, error: err } = await rsvpCall({ action: 'lookup', searchValue: searchValue.trim() });
+      const lookupResp: { data?: unknown; error?: string } = DEMO_MODE
+        ? { data: demoLookup(searchValue.trim()) as unknown }
+        : await rsvpCall({ action: 'lookup', searchValue: searchValue.trim() });
+      const data = lookupResp.data;
+      const err = lookupResp.error;
       if (err) {
         setError(err);
         return;
       }
 
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; householdGuests?: HouseholdGuest[] | null };
 
       if (result.guests && result.guests.length > 1) {
         setAmbiguousGuests(result.guests);
         setRsvpDeadline(result.rsvpDeadline);
+        setRsvpQuestions(result.rsvpQuestions ?? []);
+          setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+          setHouseholdGuests(result.householdGuests ?? []);
+          setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
         setStep('pick');
         return;
       }
 
       const foundGuest = result.guest!;
-      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline);
+      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? []);
     } catch {
       setError('An error occurred. Please try again.');
     } finally {
@@ -176,9 +324,13 @@ export default function RSVP() {
     }
   };
 
-  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null) => {
+  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = []) => {
     setGuest(foundGuest);
     setRsvpDeadline(deadline);
+    setRsvpQuestions(questions);
+    setMealConfig(meal);
+    setHouseholdGuests(household);
+    setApplyToHousehold(household.length > 0);
     if (foundRsvp) {
       setExistingRsvp(foundRsvp);
       const parsed = parseEventSelectionsFromNotes(foundRsvp.notes, foundGuest);
@@ -186,10 +338,16 @@ export default function RSVP() {
         attending: foundRsvp.attending,
         attendCeremony: parsed.attendCeremony,
         attendReception: parsed.attendReception,
-        meal_choice: foundRsvp.meal_choice || '',
+        meal_choice: (() => {
+          const current = foundRsvp.meal_choice || '';
+          if (!current) return '';
+          const match = meal.options.find((opt) => opt.toLowerCase() === current.toLowerCase());
+          return match ?? current;
+        })(),
         plus_one_name: foundRsvp.plus_one_name || '',
         notes: parsed.cleanNotes,
       });
+      setCustomAnswers((foundRsvp.custom_answers && typeof foundRsvp.custom_answers === 'object') ? foundRsvp.custom_answers : {});
     }
     if (!foundRsvp) {
       setFormData(prev => ({
@@ -201,6 +359,7 @@ export default function RSVP() {
         plus_one_name: '',
         notes: '',
       }));
+      setCustomAnswers({});
     }
     setFormStep(1);
     setStep('form');
@@ -210,13 +369,17 @@ export default function RSVP() {
     setLoading(true);
     setError('');
     try {
-      const { data, error: err } = await rsvpCall({ action: 'lookup', searchValue: picked.invite_token ?? picked.id });
+      const lookupResp: { data?: unknown; error?: string } = DEMO_MODE
+        ? { data: demoLookup(picked.invite_token ?? picked.id) as unknown }
+        : await rsvpCall({ action: 'lookup', searchValue: picked.invite_token ?? picked.id });
+      const data = lookupResp.data;
+      const err = lookupResp.error;
       if (err || !data) {
         selectGuest(picked, null, rsvpDeadline);
         return;
       }
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
-      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline);
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; householdGuests?: HouseholdGuest[] | null };
+      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? []);
     } catch {
       selectGuest(picked, null, rsvpDeadline);
     } finally {
@@ -248,6 +411,24 @@ export default function RSVP() {
       const eventTag = eventSelections.length ? `[Events ${eventSelections.join(', ')}]` : '';
       const notesPayload = [formData.notes?.trim() || '', eventTag].filter(Boolean).join('\n').trim();
 
+      if (DEMO_MODE) {
+        const stored = getDemoStoredResponses();
+        const payload: ExistingRSVP = {
+          id: `demo-rsvp-${guest.id}`,
+          attending: formData.attending,
+          meal_choice: formData.meal_choice || null,
+          plus_one_name: formData.plus_one_name || null,
+          notes: notesPayload || null,
+          custom_answers: customAnswers,
+        };
+        const targetIds = applyToHousehold ? [guest.id, ...householdGuests.map((h) => h.id)] : [guest.id];
+        targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
+        localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify(stored));
+        setExistingRsvp(payload);
+        setStep('success');
+        return;
+      }
+
       const { data, error: err } = await rsvpCall({
         action: 'submit',
         guestId: guest.id,
@@ -256,6 +437,8 @@ export default function RSVP() {
         mealChoice: formData.meal_choice || null,
         plusOneName: formData.plus_one_name || null,
         notes: notesPayload || null,
+        customAnswers,
+        applyToHousehold,
       });
 
       if (err) {
@@ -281,6 +464,23 @@ export default function RSVP() {
 
   const canSubmit = !!guest?.invite_token && !(deadlinePassed && !existingRsvp);
 
+
+  useEffect(() => {
+    setActivePredictionIndex(-1);
+  }, [searchValue]);
+
+  const guestPredictions = useMemo(() => {
+    if (!DEMO_MODE) return [] as string[];
+    const q = searchValue.trim().toLowerCase();
+    if (q.length < 2) return [] as string[];
+    return demoGuests
+      .map((g) => g.name)
+      .filter((name, idx, arr) => arr.indexOf(name) === idx)
+      .filter((name) => name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [searchValue]);
+
+
   const goToNextFormStep = () => {
     if (formStep === 1) {
       if (formData.attending && guest && !guest.invited_to_ceremony && !guest.invited_to_reception) {
@@ -297,14 +497,40 @@ export default function RSVP() {
         setError('Please select at least one event before continuing.');
         return;
       }
-      if (formData.attending && !formData.meal_choice) {
+      if (formData.attending && mealConfig.enabled && !formData.meal_choice) {
         setError('Please choose a meal option before review.');
+        return;
+      }
+
+      const requiredMissing = rsvpQuestions
+        .filter((q) => q.required)
+        .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
+        .find((q) => {
+          const v = customAnswers[q.id];
+          if (Array.isArray(v)) return v.length === 0;
+          return !(v || '').toString().trim();
+        });
+
+      if (requiredMissing) {
+        setError(`Please answer: ${requiredMissing.label}`);
         return;
       }
       setError('');
       setFormStep(3);
     }
   };
+  const availableMealValues = useMemo(() => new Set(mealConfig.options.map((o) => o.toLowerCase())), [mealConfig.options]);
+
+  useEffect(() => {
+    if (!mealConfig.enabled) {
+      if (formData.meal_choice) setFormData((prev) => ({ ...prev, meal_choice: '' }));
+      return;
+    }
+    if (formData.meal_choice && !availableMealValues.has(formData.meal_choice.toLowerCase())) {
+      setFormData((prev) => ({ ...prev, meal_choice: '' }));
+    }
+  }, [mealConfig.enabled, availableMealValues, formData.meal_choice]);
+
   const invitedEvents = [
     guest?.invited_to_ceremony ? 'Ceremony' : null,
     guest?.invited_to_reception ? 'Reception' : null,
@@ -343,12 +569,49 @@ export default function RSVP() {
                   type="text"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (guestPredictions.length === 0) return;
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setActivePredictionIndex((idx) => (idx + 1) % guestPredictions.length);
+                      return;
+                    }
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setActivePredictionIndex((idx) => (idx <= 0 ? guestPredictions.length - 1 : idx - 1));
+                      return;
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setActivePredictionIndex(-1);
+                      return;
+                    }
+                    if (e.key === 'Enter' && activePredictionIndex >= 0) {
+                      e.preventDefault();
+                      setSearchValue(guestPredictions[activePredictionIndex]);
+                    }
+                  }}
                   placeholder={t('rsvp.search_placeholder')}
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1.5">
                   Use the invitation code from your email for the fastest lookup
                 </p>
+                {guestPredictions.length > 0 && (
+                  <div className="mt-2 border border-gray-200 rounded-lg bg-white overflow-hidden">
+                    {guestPredictions.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => setSearchValue(name)}
+                        onMouseEnter={() => setActivePredictionIndex(guestPredictions.indexOf(name))}
+                        className={`w-full text-left px-3 py-2 text-sm ${guestPredictions[activePredictionIndex] === name ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {error && (
@@ -505,6 +768,14 @@ export default function RSVP() {
                       </ul>
                     </div>
                   )}
+                  {householdGuests.length > 0 && (
+                    <label className="flex items-start gap-2 text-sm p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <input type="checkbox" checked={applyToHousehold} onChange={(e) => setApplyToHousehold(e.target.checked)} className="w-4 h-4 mt-0.5" />
+                      <span>
+                        Apply this RSVP to household too ({householdGuests.map((h) => h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name).join(', ')})
+                      </span>
+                    </label>
+                  )}
                 </>
               )}
 
@@ -541,21 +812,19 @@ export default function RSVP() {
                         </div>
                       )}
 
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Meal Choice</label>
-                        <Select
-                          value={formData.meal_choice}
-                          onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
-                          options={[
-                            { value: '', label: 'Select a meal option' },
-                            { value: 'chicken', label: 'Chicken' },
-                            { value: 'beef', label: 'Beef' },
-                            { value: 'fish', label: 'Fish' },
-                            { value: 'vegetarian', label: 'Vegetarian' },
-                            { value: 'vegan', label: 'Vegan' },
-                          ]}
-                        />
-                      </div>
+                      {mealConfig.enabled && (
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Meal Choice</label>
+                          <Select
+                            value={formData.meal_choice}
+                            onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
+                            options={[
+                              { value: '', label: 'Select a meal option' },
+                              ...mealConfig.options.map((opt) => ({ value: opt, label: opt })),
+                            ]}
+                          />
+                        </div>
+                      )}
 
                       {guest.plus_one_allowed && (
                         <div>
@@ -572,6 +841,74 @@ export default function RSVP() {
                         </div>
                       )}
                     </>
+                  )}
+
+
+                  {rsvpQuestions.length > 0 && (
+                    <div className="space-y-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm font-medium text-gray-800">A few quick questions from the couple</p>
+                      {rsvpQuestions
+                        .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
+                        .map((q) => (
+                          <div key={q.id} className="space-y-1">
+                            <label className="block text-sm font-medium">{q.label}{q.required ? ' *' : ''}</label>
+                            {q.type === 'long_text' ? (
+                              <Textarea
+                                value={customAnswers[q.id] ?? ''}
+                                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                                rows={3}
+                                placeholder="Your answer"
+                              />
+                            ) : (q.type === 'single_choice' || q.type === 'multi_choice') ? (
+                              <div className="space-y-2">
+                                {(q.options ?? []).map((opt) => {
+                                  const current = customAnswers[q.id];
+                                  const checked = q.type === 'multi_choice'
+                                    ? (Array.isArray(current) ? current.includes(opt) : false)
+                                    : (current ?? '') === opt;
+                                  return (
+                                    <label key={`${q.id}-${opt}`} className="flex items-center gap-2 text-sm text-gray-800">
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          if (q.type === 'multi_choice') {
+                                            setCustomAnswers((prev) => {
+                                              const curr = Array.isArray(prev[q.id]) ? [...(prev[q.id] as string[])] : [];
+                                              if (e.target.checked) {
+                                                if (!curr.includes(opt)) curr.push(opt);
+                                              } else {
+                                                const i = curr.indexOf(opt);
+                                                if (i >= 0) curr.splice(i, 1);
+                                              }
+                                              return { ...prev, [q.id]: curr };
+                                            });
+                                          } else {
+                                            if (e.target.checked) {
+                                              setCustomAnswers((prev) => ({ ...prev, [q.id]: opt }));
+                                            } else {
+                                              setCustomAnswers((prev) => ({ ...prev, [q.id]: '' }));
+                                            }
+                                          }
+                                        }}
+                                        className="w-4 h-4"
+                                      />
+                                      <span>{opt}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <Input
+                                type="text"
+                                value={customAnswers[q.id] ?? ''}
+                                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                                placeholder="Your answer"
+                              />
+                            )}
+                          </div>
+                        ))}
+                    </div>
                   )}
 
                   <div>
@@ -619,7 +956,31 @@ export default function RSVP() {
                       <span className="text-gray-900">{formData.plus_one_name}</span>
                     </div>
                   )}
-                  {formData.notes && (
+
+                  {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Custom answers</p>
+                      {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
+                        <div key={q.id} className="flex items-start justify-between text-sm gap-4">
+                          <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>
+                          <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+    
+                  {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Custom answers</p>
+                      {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
+                        <div key={q.id} className="flex items-start justify-between text-sm gap-4">
+                          <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>
+                          <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+              {formData.notes && (
                     <div className="flex items-start justify-between text-sm gap-4">
                       <span className="text-gray-600 font-medium flex-shrink-0">Notes</span>
                       <span className="text-gray-900 text-right">{formData.notes}</span>
@@ -742,6 +1103,8 @@ export default function RSVP() {
                 setAmbiguousGuests([]);
                 setRsvpDeadline(null);
                 setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+                setCustomAnswers({});
+                setRsvpQuestions([]);
                 setFormStep(1);
               }}
               className="w-full"

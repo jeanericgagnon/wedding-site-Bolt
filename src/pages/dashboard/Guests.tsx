@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card, Button, Badge, Input } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy } from 'lucide-react';
+import { Card, Button, Badge, Input, Select } from '../../components/ui';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -30,6 +30,7 @@ interface RSVP {
   meal_choice: string | null;
   plus_one_name: string | null;
   notes: string | null;
+  custom_answers?: Record<string, string | string[]> | null;
 }
 
 interface GuestWithRSVP extends Guest {
@@ -56,6 +57,32 @@ function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; r
   };
 }
 
+
+
+function getCustomAnswerEntries(customAnswers: Record<string, string | string[]> | null | undefined): Array<{ key: string; value: string }> {
+  if (!customAnswers || typeof customAnswers !== 'object') return [];
+
+  return Object.entries(customAnswers)
+    .map(([key, value]) => ({
+      key: key.replace(/^q_/, 'question_'),
+      value: Array.isArray(value) ? value.join(', ').trim() : (typeof value === 'string' ? value : String(value ?? '')).trim(),
+    }))
+    .filter((entry) => entry.value.length > 0);
+}
+
+function formatCustomAnswers(customAnswers: Record<string, string | string[]> | null | undefined): string {
+  if (!customAnswers || typeof customAnswers !== 'object') return '';
+  const entries = Object.entries(customAnswers)
+    .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : String(value ?? '').trim()] as const)
+    .filter(([, value]) => value.length > 0);
+
+  if (entries.length === 0) return '';
+
+  return entries
+    .map(([key, value]) => `${key.replace(/^q_/, 'question_')}: ${value}`)
+    .join(' | ');
+}
+
 interface WeddingSiteInfo {
   couple_name_1: string;
   couple_name_2: string;
@@ -69,6 +96,27 @@ const RSVP_CAMPAIGN_LOG_KEY = 'dayof_rsvp_campaign_log_v1';
 const RSVP_FOLLOWUP_TASKS_KEY = 'dayof_rsvp_followup_tasks_v1';
 const RSVP_CAMPAIGN_PRESET_KEY = 'dayof_rsvp_campaign_preset_v1';
 const RSVP_SAVED_SEGMENTS_KEY = 'dayof_rsvp_saved_segments_v1';
+
+
+interface RSVPQuestionSetting {
+  id: string;
+  label: string;
+  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
+  required: boolean;
+  appliesTo: 'all' | 'ceremony' | 'reception';
+  options?: string[];
+}
+
+const makeRsvpQuestion = (): RSVPQuestionSetting => ({
+  id: `q_${Math.random().toString(36).slice(2, 10)}`,
+  label: '',
+  type: 'short_text',
+  required: false,
+  appliesTo: 'all',
+  options: [],
+});
+
+const toTitleCase = (value: string) => value.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
 
 interface ItineraryEvent {
   id: string;
@@ -97,6 +145,14 @@ export const DashboardGuests: React.FC = () => {
   const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
   const [sortByPriority, setSortByPriority] = useState(true);
   const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
+  const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
+  const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
+  const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
+  const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
+  const [rsvpConfigSaving, setRsvpConfigSaving] = useState(false);
+  const [rsvpAutoSaveState, setRsvpAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [rsvpConfigDirty, setRsvpConfigDirty] = useState(false);
+  const rsvpConfigLoadedRef = useRef(false);
 
 
   useEffect(() => {
@@ -200,12 +256,24 @@ export const DashboardGuests: React.FC = () => {
 
     if (isDemoMode) {
       setWeddingSiteId(demoWeddingSite.id);
+      try {
+        const rawQ = localStorage.getItem('dayof_demo_rsvp_custom_questions_v1');
+        const parsedQ = rawQ ? JSON.parse(rawQ) : [];
+        if (Array.isArray(parsedQ)) setRsvpQuestions(parsedQ as RSVPQuestionSetting[]);
+        const rawM = localStorage.getItem('dayof_demo_rsvp_meal_config_v1');
+        const parsedM = rawM ? JSON.parse(rawM) : null;
+        if (parsedM && typeof parsedM === 'object') {
+          setRsvpMealEnabled(typeof parsedM.enabled === 'boolean' ? parsedM.enabled : true);
+          setRsvpMealOptions(Array.isArray(parsedM.options) ? parsedM.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+        }
+      } catch {}
+      rsvpConfigLoadedRef.current = true;
       return;
     }
 
     const { data } = await supabase
       .from('wedding_sites')
-      .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url')
+      .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, rsvp_custom_questions, rsvp_meal_config')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -219,6 +287,23 @@ export const DashboardGuests: React.FC = () => {
         venue_address: data.venue_address ?? null,
         site_url: data.site_url ?? null,
       });
+      const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions) ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || []) : [];
+      const normalized = loadedQuestions
+        .map((q) => q as Partial<RSVPQuestionSetting>)
+        .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
+        .map((q) => ({
+          id: q.id as string,
+          label: (q.label as string) || '',
+          type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
+          required: !!q.required,
+          appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+          options: Array.isArray(q.options) ? q.options.filter((x): x is string => typeof x === 'string') : [],
+        }));
+      setRsvpQuestions(normalized);
+      const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
+      setRsvpMealEnabled(typeof mealCfg?.enabled === 'boolean' ? mealCfg.enabled : true);
+      setRsvpMealOptions(Array.isArray(mealCfg?.options) ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+      rsvpConfigLoadedRef.current = true;
     }
   }, [user, isDemoMode]);
 
@@ -278,6 +363,76 @@ export const DashboardGuests: React.FC = () => {
       fetchGuests();
     }
   }, [weddingSiteId, fetchGuests]);
+
+
+  const handleSaveRsvpConfig = async () => {
+    setRsvpConfigSaving(true);
+    try {
+      const cleanedQuestions = rsvpQuestions
+        .map((q) => ({
+          ...q,
+          label: q.label.trim(),
+          options: (q.type === 'single_choice' || q.type === 'multi_choice') ? (q.options ?? []).map((o) => o.trim()).filter(Boolean) : [],
+        }))
+        .filter((q) => q.label.length > 0);
+
+      const missingOptions = cleanedQuestions.find((q) => (q.type === 'single_choice' || q.type === 'multi_choice') && (q.options?.length ?? 0) < 2);
+      if (missingOptions) {
+        toast(`Choice question "${missingOptions.label}" needs at least 2 options.`, 'error');
+        return;
+      }
+
+      const mealOptions = rsvpMealOptions.map((o) => toTitleCase(o.trim())).filter(Boolean);
+      if (rsvpMealEnabled && mealOptions.length < 2) {
+        toast('Meal choices need at least 2 options when enabled.', 'error');
+        return;
+      }
+
+      if (isDemoMode || !weddingSiteId) {
+        localStorage.setItem('dayof_demo_rsvp_custom_questions_v1', JSON.stringify(cleanedQuestions));
+        localStorage.setItem('dayof_demo_rsvp_meal_config_v1', JSON.stringify({ enabled: rsvpMealEnabled, options: mealOptions }));
+        setRsvpQuestions(cleanedQuestions);
+        toast('RSVP config saved (demo).', 'success');
+        setRsvpAutoSaveState('saved');
+        setRsvpConfigDirty(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ rsvp_custom_questions: cleanedQuestions, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+      setRsvpQuestions(cleanedQuestions);
+      toast('RSVP config saved.', 'success');
+      setRsvpAutoSaveState('saved');
+      setRsvpConfigDirty(false);
+    } catch (err) {
+      setRsvpAutoSaveState('error');
+      toast(err instanceof Error ? err.message : 'Failed to save RSVP config.', 'error');
+    } finally {
+      setRsvpConfigSaving(false);
+    }
+  };
+
+
+  const autoSaveTimer = useRef<number | null>(null);
+  useEffect(() => {
+    if (guestsTab !== 'rsvp-config') return;
+    if (!rsvpConfigLoadedRef.current) return;
+    if (!rsvpConfigDirty) return;
+
+    setRsvpAutoSaveState('saving');
+
+    if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = window.setTimeout(() => {
+      handleSaveRsvpConfig();
+    }, 700);
+
+    return () => {
+      if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
+    };
+  }, [guestsTab, rsvpConfigDirty, rsvpQuestions, rsvpMealEnabled, rsvpMealOptions]);
 
   const generateSecureToken = async (): Promise<string> => {
     const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
@@ -825,6 +980,7 @@ Proceed with send?`)) return;
       guest.rsvp?.meal_choice || '',
       guest.rsvp_received_at ? new Date(guest.rsvp_received_at).toLocaleDateString() : '',
       guest.invite_token || '',
+      formatCustomAnswers(guest.rsvp?.custom_answers || null),
     ]);
 
     const csvContent = [headers, ...rows]
@@ -1271,6 +1427,7 @@ Proceed with send?`)) return;
   );
 
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
@@ -1295,15 +1452,110 @@ Proceed with send?`)) return;
     );
   }
 
+  if (guestsTab === 'rsvp-config') {
+    return (
+      <DashboardLayout currentPage="guests">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
+            <p className="text-text-secondary">Manage your guest list and track responses</p>
+            <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
+              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
+              <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+            </div>
+          </div>
+
+          <Card variant="bordered" padding="lg">
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary">RSVP Questions & Meal Choices</h3>
+                <p className="text-sm text-text-secondary">Configure what attendees answer on the RSVP page.</p>
+              </div>
+
+              <div className="space-y-3 p-4 border border-border rounded-xl">
+                <label className="flex items-center gap-2 text-sm text-text-primary">
+                  <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => { setRsvpMealEnabled(e.target.checked); setRsvpConfigDirty(true); }} className="w-4 h-4" />
+                  Collect meal choice on RSVP form
+                </label>
+                {rsvpMealEnabled && (
+                  <div className="space-y-2">
+                    {rsvpMealOptions.map((opt, idx) => (
+                      <div key={`meal-${idx}`} className="flex items-center gap-2">
+                        <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=toTitleCase(e.target.value); return n; })} placeholder={`Meal option ${idx+1}`} />
+                        <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx)); setRsvpConfigDirty(true); }}>Remove</Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={() => { setRsvpMealOptions((prev) => [...prev, '']); setRsvpConfigDirty(true); }}>Add meal option</Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {rsvpQuestions.map((q, idx) => (
+                  <div key={q.id} className="p-4 border border-border rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold">Question {idx + 1}</p>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id)); setRsvpConfigDirty(true); }}>Remove</Button>
+                    </div>
+                    <Input value={q.label} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, label: e.target.value } : x)); setRsvpConfigDirty(true); }} placeholder="Question prompt" />
+                    <div className="grid md:grid-cols-3 gap-3">
+                      <Select value={q.type} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, type: e.target.value as RSVPQuestionSetting['type'], options: (e.target.value === 'single_choice' || e.target.value === 'multi_choice') ? (x.options?.length ? x.options : ['', '']) : [] } : x)); setRsvpConfigDirty(true); }} options={[{ value:'short_text', label:'Short text' },{ value:'long_text', label:'Long text' },{ value:'single_choice', label:'Single choice' },{ value:'multi_choice', label:'Multiple choice' }]} />
+                      <Select value={q.appliesTo} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : x)); setRsvpConfigDirty(true); }} options={[{ value:'all', label:'All attendees' },{ value:'ceremony', label:'Ceremony attendees' },{ value:'reception', label:'Reception attendees' }]} />
+                      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={q.required} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, required: e.target.checked } : x)); setRsvpConfigDirty(true); }} />Required</label>
+                    </div>
+                    {(q.type === 'single_choice' || q.type === 'multi_choice') && (
+                      <div className="space-y-2">
+                        {(q.options ?? []).map((opt, optIdx) => (
+                          <div key={`${q.id}-opt-${optIdx}`} className="flex items-center gap-2">
+                            <Input value={opt} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n[optIdx]=toTitleCase(e.target.value); return { ...x, options:n }; })); setRsvpConfigDirty(true); }} placeholder={`Option ${optIdx+1}`} />
+                            <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n.splice(optIdx,1); return { ...x, options:n }; })); setRsvpConfigDirty(true); }}>Remove</Button>
+                          </div>
+                        ))}
+                        <Button type="button" variant="outline" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, options: [...(x.options ?? []), ''] } : x)); setRsvpConfigDirty(true); }}>Add choice</Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => { setRsvpQuestions((prev) => [...prev, makeRsvpQuestion()]); setRsvpConfigDirty(true); }}>Add Question</Button>
+                  <div className="flex items-center gap-3">
+                    <Button type="button" variant="primary" onClick={handleSaveRsvpConfig} disabled={rsvpConfigSaving}>{rsvpConfigSaving ? 'Saving…' : 'Save Now'}</Button>
+                    <span className="text-xs text-text-tertiary">{rsvpAutoSaveState === 'saving' ? 'Auto-saving…' : rsvpAutoSaveState === 'saved' ? 'Auto-saved' : rsvpAutoSaveState === 'error' ? 'Auto-save failed' : 'Auto-save on'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout currentPage="guests">
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
           <p className="text-text-secondary">Manage your guest list and track responses</p>
+          <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
+            <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
+            <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card variant="bordered" padding="md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
+                <Users className="w-6 h-6 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{stats.total}</p>
+                <p className="text-sm text-text-secondary">Invited</p>
+              </div>
+            </div>
+          </Card>
+
           <Card variant="bordered" padding="md">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-success-light rounded-lg flex-shrink-0">
@@ -1311,7 +1563,7 @@ Proceed with send?`)) return;
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.confirmed}</p>
-                <p className="text-sm text-text-secondary">Confirmed</p>
+                <p className="text-sm text-text-secondary">RSVP Yes</p>
               </div>
             </div>
           </Card>
@@ -1323,7 +1575,7 @@ Proceed with send?`)) return;
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.declined}</p>
-                <p className="text-sm text-text-secondary">Declined</p>
+                <p className="text-sm text-text-secondary">RSVP No</p>
               </div>
             </div>
           </Card>
@@ -1336,53 +1588,6 @@ Proceed with send?`)) return;
               <div>
                 <p className="text-2xl font-bold text-text-primary">{stats.pending}</p>
                 <p className="text-sm text-text-secondary">Pending</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <Users className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.total}</p>
-                <p className="text-sm text-text-secondary">Total ({stats.rsvpRate}% responded)</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <CheckCircle2 className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{Math.round(rsvpCompleteness)}%</p>
-                <p className="text-sm text-text-secondary">Completeness</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{contactStats.contactCoverage}%</p>
-                <p className="text-sm text-text-secondary">Contact coverage</p>
-              </div>
-            </div>
-          </Card>
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <Mail className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{campaignReadiness}%</p>
-                <p className="text-sm text-text-secondary">Campaign readiness</p>
               </div>
             </div>
           </Card>
@@ -1987,6 +2192,15 @@ Proceed with send?`)) return;
                                   </div>
                                 );
                               })()}
+                              {(() => {
+                                const custom = formatCustomAnswers(guest.rsvp?.custom_answers || null);
+                                if (!custom) return null;
+                                return (
+                                  <p className="text-[11px] text-text-tertiary pt-1 truncate" title={custom}>
+                                    Custom answers saved
+                                  </p>
+                                );
+                              })()}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-text-secondary hidden md:table-cell">
@@ -2103,6 +2317,44 @@ Proceed with send?`)) return;
             </div>
 
             <div className="flex-1 overflow-y-auto p-5">
+              {(() => {
+                const entries = getCustomAnswerEntries(itineraryDrawerGuest.rsvp?.custom_answers || null);
+                const status = itineraryDrawerGuest.rsvp_status;
+                const meal = itineraryDrawerGuest.rsvp?.meal_choice;
+                const plusOne = itineraryDrawerGuest.rsvp?.plus_one_name;
+
+                return (
+                  <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-text-tertiary">RSVP details</p>
+                    <div className="text-sm text-text-primary">
+                      <span className="font-medium">Status:</span>{' '}
+                      <span className="capitalize">{status}</span>
+                    </div>
+                    {meal && (
+                      <div className="text-sm text-text-primary">
+                        <span className="font-medium">Meal:</span> <span className="capitalize">{meal}</span>
+                      </div>
+                    )}
+                    {plusOne && (
+                      <div className="text-sm text-text-primary">
+                        <span className="font-medium">Plus one:</span> {plusOne}
+                      </div>
+                    )}
+                    {entries.length > 0 && (
+                      <div className="pt-1 space-y-1.5">
+                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Custom answers</p>
+                        {entries.map((entry) => (
+                          <div key={entry.key} className="text-sm text-text-primary flex items-start justify-between gap-3">
+                            <span className="text-text-secondary truncate">{entry.key}</span>
+                            <span className="text-right">{entry.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {loadingDrawer ? (
                 <div className="flex items-center justify-center h-32">
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />

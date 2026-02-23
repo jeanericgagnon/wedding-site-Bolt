@@ -20,6 +20,8 @@ interface SubmitPayload {
   mealChoice?: string | null;
   plusOneName?: string | null;
   notes?: string | null;
+  customAnswers?: Record<string, unknown> | null;
+  applyToHousehold?: boolean;
   website?: string;
   hp_field?: string;
 }
@@ -70,31 +72,66 @@ Deno.serve(async (req: Request) => {
 
       const { data: byToken } = await adminClient
         .from("guests")
-        .select("id, first_name, last_name, name, email, plus_one_allowed, invited_to_ceremony, invited_to_reception, invite_token, wedding_site_id")
+        .select("id, first_name, last_name, name, email, plus_one_allowed, invited_to_ceremony, invited_to_reception, invite_token, wedding_site_id, household_id")
         .eq("invite_token", trimmed)
         .maybeSingle();
 
-      const fetchDeadline = async (siteId: string): Promise<string | null> => {
+      const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] } }> => {
         const { data } = await adminClient
           .from("wedding_sites")
-          .select("rsvp_deadline")
+          .select("rsvp_deadline, rsvp_custom_questions, rsvp_meal_config")
           .eq("id", siteId)
           .maybeSingle();
-        return (data as { rsvp_deadline?: string | null } | null)?.rsvp_deadline ?? null;
+
+        const typed = data as { rsvp_deadline?: string | null; rsvp_custom_questions?: unknown; rsvp_meal_config?: unknown } | null;
+        const parsedQuestions = Array.isArray(typed?.rsvp_custom_questions)
+          ? typed?.rsvp_custom_questions
+          : [];
+
+        const mealRaw = typed?.rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
+        return {
+          rsvpDeadline: typed?.rsvp_deadline ?? null,
+          rsvpQuestions: parsedQuestions,
+          rsvpMealConfig: {
+            enabled: typeof mealRaw?.enabled === 'boolean' ? mealRaw.enabled : true,
+            options: Array.isArray(mealRaw?.options) ? mealRaw!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'],
+          },
+        };
       };
 
+
+      const fetchHouseholdGuests = async (siteId: string, householdId: string | null | undefined, guestId: string) => {
+        if (!householdId) return [] as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invite_token: string | null }>;
+        const { data } = await adminClient
+          .from("guests")
+          .select("id, first_name, last_name, name, invite_token")
+          .eq("wedding_site_id", siteId)
+          .eq("household_id", householdId)
+          .neq("id", guestId)
+          .limit(8);
+        return (data || []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invite_token: string | null }>;
+      };
       if (byToken) {
-        const [existingRsvpResult, deadline] = await Promise.all([
-          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes").eq("guest_id", byToken.id).maybeSingle(),
-          fetchDeadline(byToken.wedding_site_id),
+        const [existingRsvpResult, config, householdGuests] = await Promise.all([
+          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes, custom_answers").eq("guest_id", byToken.id).maybeSingle(),
+          fetchRsvpConfig(byToken.wedding_site_id),
+          fetchHouseholdGuests(byToken.wedding_site_id, (byToken as { household_id?: string | null }).household_id, byToken.id),
         ]);
-        return json({ guest: byToken, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: deadline });
+        return json({
+          guest: byToken,
+          existingRsvp: existingRsvpResult.data,
+          guests: null,
+          rsvpDeadline: config.rsvpDeadline,
+          rsvpQuestions: config.rsvpQuestions,
+          rsvpMealConfig: config.rsvpMealConfig,
+          householdGuests,
+        });
       }
 
       const lower = trimmed.toLowerCase();
       const { data: byName } = await adminClient
         .from("guests")
-        .select("id, first_name, last_name, name, email, plus_one_allowed, invited_to_ceremony, invited_to_reception, invite_token, wedding_site_id")
+        .select("id, first_name, last_name, name, email, plus_one_allowed, invited_to_ceremony, invited_to_reception, invite_token, wedding_site_id, household_id")
         .or(`name.ilike.%${lower}%,first_name.ilike.%${lower}%,last_name.ilike.%${lower}%`)
         .limit(10);
 
@@ -104,14 +141,23 @@ Deno.serve(async (req: Request) => {
 
       if (byName.length === 1) {
         const guest = byName[0];
-        const [existingRsvpResult, deadline] = await Promise.all([
-          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes").eq("guest_id", guest.id).maybeSingle(),
-          fetchDeadline(guest.wedding_site_id),
+        const [existingRsvpResult, config, householdGuests] = await Promise.all([
+          adminClient.from("rsvps").select("id, attending, meal_choice, plus_one_name, notes, custom_answers").eq("guest_id", guest.id).maybeSingle(),
+          fetchRsvpConfig(guest.wedding_site_id),
+          fetchHouseholdGuests(guest.wedding_site_id, (guest as { household_id?: string | null }).household_id, guest.id),
         ]);
-        return json({ guest, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: deadline });
+        return json({
+          guest,
+          existingRsvp: existingRsvpResult.data,
+          guests: null,
+          rsvpDeadline: config.rsvpDeadline,
+          rsvpQuestions: config.rsvpQuestions,
+          rsvpMealConfig: config.rsvpMealConfig,
+          householdGuests,
+        });
       }
 
-      return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null });
+      return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null, rsvpQuestions: [], rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, householdGuests: [] });
     }
 
     if (payload.action === "submit") {
@@ -121,7 +167,7 @@ Deno.serve(async (req: Request) => {
         return json({ success: true });
       }
 
-      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes } = submitPayload;
+      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes, customAnswers, applyToHousehold } = submitPayload;
 
       if (!guestId || !inviteToken) {
         return json({ error: "guestId and inviteToken are required" }, 400);
@@ -164,7 +210,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: guest, error: guestErr } = await adminClient
         .from("guests")
-        .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, token_expires_at")
+        .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, token_expires_at, household_id")
         .eq("id", guestId)
         .maybeSingle();
 
@@ -180,32 +226,47 @@ Deno.serve(async (req: Request) => {
         return json({ error: "This RSVP link has expired. Please reach out to the couple to receive a new invitation link." }, 403);
       }
 
-      const rsvpPayload = {
-        guest_id: guestId,
-        attending,
-        meal_choice: mealChoice ?? null,
-        plus_one_name: plusOneName ?? null,
-        notes: notes ?? null,
-        responded_at: new Date().toISOString(),
-      };
+      const targetGuestIds: string[] = [guestId];
+      if (applyToHousehold && guest.household_id) {
+        const { data: sameHousehold } = await adminClient
+          .from("guests")
+          .select("id")
+          .eq("wedding_site_id", guest.wedding_site_id)
+          .eq("household_id", guest.household_id);
+        for (const g of sameHousehold || []) {
+          if (!targetGuestIds.includes(g.id)) targetGuestIds.push(g.id);
+        }
+      }
 
-      const { data: existingRsvp } = await adminClient
-        .from("rsvps")
-        .select("id")
-        .eq("guest_id", guestId)
-        .maybeSingle();
+      for (const targetGuestId of targetGuestIds) {
+        const rsvpPayload = {
+          guest_id: targetGuestId,
+          attending,
+          meal_choice: mealChoice ?? null,
+          plus_one_name: plusOneName ?? null,
+          notes: notes ?? null,
+          custom_answers: (customAnswers && typeof customAnswers === "object" && !Array.isArray(customAnswers)) ? customAnswers : {},
+          responded_at: new Date().toISOString(),
+        };
 
-      if (existingRsvp) {
-        const { error: updateErr } = await adminClient
+        const { data: existingRsvp } = await adminClient
           .from("rsvps")
-          .update(rsvpPayload)
-          .eq("id", existingRsvp.id);
-        if (updateErr) throw updateErr;
-      } else {
-        const { error: insertErr } = await adminClient
-          .from("rsvps")
-          .insert([rsvpPayload]);
-        if (insertErr) throw insertErr;
+          .select("id")
+          .eq("guest_id", targetGuestId)
+          .maybeSingle();
+
+        if (existingRsvp) {
+          const { error: updateErr } = await adminClient
+            .from("rsvps")
+            .update(rsvpPayload)
+            .eq("id", existingRsvp.id);
+          if (updateErr) throw updateErr;
+        } else {
+          const { error: insertErr } = await adminClient
+            .from("rsvps")
+            .insert([rsvpPayload]);
+          if (insertErr) throw insertErr;
+        }
       }
 
       await adminClient
@@ -214,7 +275,7 @@ Deno.serve(async (req: Request) => {
           rsvp_status: attending ? "confirmed" : "declined",
           rsvp_received_at: new Date().toISOString(),
         })
-        .eq("id", guestId);
+        .in("id", targetGuestIds);
 
       const { data: siteData } = await adminClient
         .from("wedding_sites")
