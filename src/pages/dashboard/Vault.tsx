@@ -244,6 +244,8 @@ const VaultCard: React.FC<VaultCardProps> = ({
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      window.prompt('Copy this vault link:', url);
     });
   }
 
