@@ -589,11 +589,69 @@ export const DashboardVault: React.FC = () => {
   const [editingConfig, setEditingConfig] = useState<VaultConfig | null>(null);
   const [addingVault, setAddingVault] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [vaultStorageProvider, setVaultStorageProvider] = useState<'supabase' | 'google_drive'>('supabase');
+  const [googleDriveConnected, setGoogleDriveConnected] = useState(false);
+  const [connectingDrive, setConnectingDrive] = useState(false);
 
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }
+
+  async function handleStorageProviderChange(next: 'supabase' | 'google_drive') {
+    if (!weddingSiteId) return;
+
+    if (next === 'google_drive' && !googleDriveConnected) {
+      toast('Connect Google Drive first, then switch storage provider.', 'error');
+      return;
+    }
+
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
+      setVaultStorageProvider(next);
+      toast('Demo: storage provider updated locally.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('wedding_sites')
+      .update({ vault_storage_provider: next })
+      .eq('id', weddingSiteId);
+
+    if (error) {
+      toast('Failed to update vault storage provider.', 'error');
+      return;
+    }
+
+    setVaultStorageProvider(next);
+    toast(`Vault storage set to ${next === 'google_drive' ? 'Google Drive' : 'Supabase Storage'}.`);
+  }
+
+  async function handleConnectGoogleDrive() {
+    if (!weddingSiteId) return;
+
+    if (isDemoMode && weddingSiteId === 'demo-site-id') {
+      setGoogleDriveConnected(true);
+      setVaultStorageProvider('google_drive');
+      toast('Demo: simulated Google Drive connection.');
+      return;
+    }
+
+    setConnectingDrive(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-drive-auth-start', {
+        body: { siteId: weddingSiteId },
+      });
+
+      if (error) throw error;
+      const authUrl = (data as { authUrl?: string } | null)?.authUrl;
+      if (!authUrl) throw new Error('Missing Google OAuth URL.');
+      window.location.href = authUrl;
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to start Google Drive connection.', 'error');
+    } finally {
+      setConnectingDrive(false);
+    }
   }
 
 
@@ -685,12 +743,14 @@ export const DashboardVault: React.FC = () => {
 
         const { data: demoSite } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_date, site_slug')
+          .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected')
           .eq('site_slug', 'alex-jordan-demo')
           .maybeSingle();
 
         if (demoSite) {
           setWeddingSiteId(demoSite.id);
+          setVaultStorageProvider(((demoSite as { vault_storage_provider?: 'supabase' | 'google_drive' }).vault_storage_provider) ?? 'supabase');
+          setGoogleDriveConnected(!!(demoSite as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
 if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
           else setWeddingDate(new Date(DEMO_WEDDING_DATE));
 
@@ -718,6 +778,8 @@ if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
         }
 
 setWeddingSiteId('demo-site-id');
+        setVaultStorageProvider('supabase');
+        setGoogleDriveConnected(false);
         setWeddingDate(new Date(DEMO_WEDDING_DATE));
         const demoState = loadDemoState();
         setVaultConfigs(demoState.vaultConfigs);
@@ -728,12 +790,14 @@ setWeddingSiteId('demo-site-id');
       if (!user) return;
       const { data: site } = await supabase
         .from('wedding_sites')
-        .select('id, wedding_date, site_slug')
+        .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!site) return;
       setWeddingSiteId(site.id);
+      setVaultStorageProvider(((site as { vault_storage_provider?: 'supabase' | 'google_drive' }).vault_storage_provider) ?? 'supabase');
+      setGoogleDriveConnected(!!(site as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
       if (site.wedding_date) setWeddingDate(new Date(site.wedding_date));
       if (site.site_slug) setSiteSlug(site.site_slug as string);
 
@@ -765,6 +829,31 @@ setWeddingSiteId('demo-site-id');
   }, [user, isDemoMode]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleCode = params.get('google_drive_code') || params.get('code');
+    const googleState = params.get('state');
+    if (!googleCode || !googleState) return;
+
+    supabase.functions.invoke('google-drive-auth-callback', {
+      body: { code: googleCode, state: googleState },
+    }).then(({ error }) => {
+      if (error) {
+        toast('Google Drive connection failed. Please try again.', 'error');
+        return;
+      }
+      toast('Google Drive connected successfully.');
+      setGoogleDriveConnected(true);
+      setVaultStorageProvider('google_drive');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('google_drive_code');
+      url.searchParams.delete('code');
+      url.searchParams.delete('state');
+      window.history.replaceState({}, '', url.toString());
+      loadData();
+    });
+  }, [loadData]);
 
   useEffect(() => {
     if (!weddingDate || vaultConfigs.length === 0) return;
@@ -1070,6 +1159,35 @@ setWeddingSiteId('demo-site-id');
           </div>
         </div>
       </div>
+
+        <Card variant="bordered" padding="md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Vault Storage Provider</p>
+              <p className="text-xs text-text-secondary mt-1">Use Supabase storage now, or connect Google Drive for external archive flow and time-lock orchestration.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => handleStorageProviderChange('supabase')}
+                className={`px-3 py-2 rounded-lg text-sm border ${vaultStorageProvider === 'supabase' ? 'bg-primary/10 border-primary text-primary' : 'border-border text-text-secondary'}`}
+              >
+                Supabase
+              </button>
+              <button
+                onClick={() => handleStorageProviderChange('google_drive')}
+                disabled={!googleDriveConnected}
+                className={`px-3 py-2 rounded-lg text-sm border ${vaultStorageProvider === 'google_drive' ? 'bg-primary/10 border-primary text-primary' : 'border-border text-text-secondary'} disabled:opacity-60`}
+                title={!googleDriveConnected ? 'Connect Google Drive first' : undefined}
+              >
+                Google Drive
+              </button>
+              <Button variant="outline" size="sm" onClick={handleConnectGoogleDrive} disabled={connectingDrive}>
+                {connectingDrive ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                {googleDriveConnected ? 'Reconnect Drive' : 'Connect Drive'}
+              </Button>
+            </div>
+          </div>
+        </Card>
 
         {!weddingDate && (
           <div className="flex items-start gap-3 p-4 bg-warning-light border border-warning/20 rounded-xl text-sm text-warning">
