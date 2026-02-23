@@ -65,6 +65,8 @@ interface WeddingSiteInfo {
   site_url: string | null;
 }
 
+const RSVP_CAMPAIGN_LOG_KEY = 'dayof_rsvp_campaign_log_v1';
+
 interface ItineraryEvent {
   id: string;
   event_name: string;
@@ -87,6 +89,25 @@ export const DashboardGuests: React.FC = () => {
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
   const [bulkSending, setBulkSending] = useState(false);
   const [campaignLog, setCampaignLog] = useState<Array<{ id: number; segment: string; count: number; sentAt: string }>>([]);
+
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RSVP_CAMPAIGN_LOG_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) setCampaignLog(parsed.slice(0, 12));
+    } catch {
+      // noop
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RSVP_CAMPAIGN_LOG_KEY, JSON.stringify(campaignLog.slice(0, 12)));
+    } catch {
+      // noop
+    }
+  }, [campaignLog]);
 
   const [viewMode, setViewMode] = useState<'list' | 'households'>('list');
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
@@ -1099,12 +1120,23 @@ export const DashboardGuests: React.FC = () => {
                 </label>
               </div>
               {campaignLog.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {campaignLog.map((log) => (
-                    <span key={log.id} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary">
-                      {log.segment}: {log.count} sent · {log.sentAt}
-                    </span>
-                  ))}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-text-tertiary">Recent reminder sends</p>
+                    <button
+                      onClick={() => setCampaignLog([])}
+                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                    >
+                      Clear log
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {campaignLog.map((log) => (
+                      <span key={log.id} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary">
+                        {log.segment}: {log.count} sent · {log.sentAt}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
