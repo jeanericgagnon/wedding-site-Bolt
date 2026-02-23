@@ -111,6 +111,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const nextCheckLabel = item.next_refresh_at
     ? new Date(item.next_refresh_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null;
+  const failCount = item.refresh_fail_count ?? 0;
 
   function handleDeleteClick() {
     if (confirmDelete) {
@@ -215,6 +216,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           {outOfStock && <Badge variant="warning">Out of stock</Badge>}
           {priceChanged && <Badge variant="success">Price changed</Badge>}
           {stale && <Badge variant="neutral">Needs refresh</Badge>}
+          {failCount > 0 && <Badge variant="error">Retry {failCount}</Badge>}
         </div>
 
         {item.purchaser_name && item.purchase_status !== 'available' && (

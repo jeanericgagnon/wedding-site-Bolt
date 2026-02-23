@@ -41,6 +41,7 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
 );
 
 const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
+const getBackoffMs = (failCount: number) => Math.min(WEEKLY_REFRESH_MS * 4, Math.max(6 * 60 * 60 * 1000, (2 ** Math.min(5, failCount)) * 60 * 60 * 1000));
 
 const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -347,10 +348,12 @@ export const DashboardRegistry: React.FC = () => {
       .filter((item) => !!(item.item_url || item.canonical_url))
       .filter((item) => {
         const dueBySchedule = !item.next_refresh_at || new Date(item.next_refresh_at).getTime() <= Date.now();
+        const failCount = item.refresh_fail_count ?? 0;
+        const backoffDue = !item.last_auto_refreshed_at || (Date.now() - new Date(item.last_auto_refreshed_at).getTime()) >= getBackoffMs(failCount);
         const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS;
         const outOfStock = (item.availability || '').toLowerCase().includes('out');
         const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
-        return alertsOnly ? (dueBySchedule || stale || outOfStock || priceChanged) : (dueBySchedule || stale);
+        return alertsOnly ? ((dueBySchedule || stale || outOfStock || priceChanged) && backoffDue) : ((dueBySchedule || stale) && backoffDue);
       })
       .slice(0, Math.min(12, remaining));
 
@@ -389,7 +392,19 @@ export const DashboardRegistry: React.FC = () => {
         setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
         updatedCount += 1;
       } catch {
-        // keep going item-by-item
+        const nextFail = (item.refresh_fail_count ?? 0) + 1;
+        const retryAt = new Date(Date.now() + getBackoffMs(nextFail)).toISOString();
+        try {
+          const updated = await updateRegistryItem(item.id, {
+            refresh_fail_count: nextFail,
+            metadata_fetch_status: 'error',
+            last_auto_refreshed_at: new Date().toISOString(),
+            next_refresh_at: retryAt,
+          });
+          setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+        } catch {
+          // ignore secondary update errors
+        }
       }
     }
     setAutoRefreshing(false);
@@ -730,6 +745,7 @@ export const DashboardRegistry: React.FC = () => {
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Out of stock: {alertCounts.outOfStock}</span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Remaining budget: {refreshBudgetRemaining}</span>
             <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>Used: {Math.round(budgetUtilization * 100)}%</span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Retry backlog: {items.filter((i) => (i.refresh_fail_count ?? 0) > 0).length}</span>
           </div>
 
           {loading ? (
