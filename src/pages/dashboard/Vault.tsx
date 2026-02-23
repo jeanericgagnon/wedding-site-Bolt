@@ -666,6 +666,9 @@ export const DashboardVault: React.FC = () => {
   const [vaultStorageProvider, setVaultStorageProvider] = useState<'supabase' | 'google_drive'>('supabase');
   const [googleDriveConnected, setGoogleDriveConnected] = useState(false);
   const [connectingDrive, setConnectingDrive] = useState(false);
+  const [driveHealthChecking, setDriveHealthChecking] = useState(false);
+  const [driveHealthMessage, setDriveHealthMessage] = useState<string | null>(null);
+  const [driveNeedsReconnect, setDriveNeedsReconnect] = useState(false);
 
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
@@ -701,6 +704,26 @@ export const DashboardVault: React.FC = () => {
     toast(`Vault storage set to ${next === 'google_drive' ? 'Google Drive' : 'Supabase Storage'}.`);
   }
 
+
+  async function checkGoogleDriveHealth() {
+    if (!weddingSiteId || (isDemoMode && weddingSiteId === 'demo-site-id')) return;
+    setDriveHealthChecking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-drive-health', {
+        body: { siteId: weddingSiteId },
+      });
+      if (error) throw error;
+      const result = data as { healthy?: boolean; needsReconnect?: boolean; message?: string } | null;
+      setDriveHealthMessage(result?.message ?? null);
+      setDriveNeedsReconnect(!!result?.needsReconnect);
+      if (result?.healthy) setGoogleDriveConnected(true);
+    } catch (err) {
+      setDriveHealthMessage(err instanceof Error ? err.message : 'Drive health check failed.');
+      setDriveNeedsReconnect(true);
+    } finally {
+      setDriveHealthChecking(false);
+    }
+  }
 
   async function handleConnectGoogleDrive() {
     if (!weddingSiteId) return;
@@ -904,6 +927,10 @@ setWeddingSiteId('demo-site-id');
   }, [user, isDemoMode]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (googleDriveConnected) checkGoogleDriveHealth();
+  }, [googleDriveConnected, weddingSiteId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1260,6 +1287,11 @@ setWeddingSiteId('demo-site-id');
             <div>
               <p className="text-sm font-semibold text-text-primary">Vault Storage Provider</p>
               <p className="text-xs text-text-secondary mt-1">Use Supabase storage now, or connect Google Drive for external archive flow and time-lock orchestration.</p>
+              {driveHealthMessage && (
+                <p className={`text-xs mt-2 ${driveNeedsReconnect ? 'text-error' : 'text-success'}`}>
+                  {driveHealthMessage}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -1280,6 +1312,12 @@ setWeddingSiteId('demo-site-id');
                 {connectingDrive ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
                 {googleDriveConnected ? 'Reconnect Drive' : 'Connect Drive'}
               </Button>
+              {googleDriveConnected && (
+                <Button variant="ghost" size="sm" onClick={checkGoogleDriveHealth} disabled={driveHealthChecking}>
+                  {driveHealthChecking ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                  Check Health
+                </Button>
+              )}
             </div>
           </div>
         </Card>
