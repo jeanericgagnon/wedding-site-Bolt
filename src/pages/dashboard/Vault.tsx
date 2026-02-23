@@ -234,7 +234,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
     if (!siteSlug) return;
 
     const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-    const vaultPath = `/vault/${siteSlug}/${config.duration_years}`;
+    const vaultPath = `/vault/${siteSlug}`;
     const isGitHubPages = window.location.hostname.includes('github.io');
 
     const url = isGitHubPages
@@ -296,7 +296,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
                   ? 'border-success/40 bg-success-light text-success'
                   : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'
               }`}
-              title="Copy shareable link for guests"
+              title="Copy shareable hub link (all enabled vaults)"
             >
               {copied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
               {copied ? 'Copied!' : 'Share'}
