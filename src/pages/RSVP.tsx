@@ -47,6 +47,16 @@ interface ExistingRSVP {
   meal_choice: string | null;
   plus_one_name: string | null;
   notes: string | null;
+  custom_answers?: Record<string, string> | null;
+}
+
+interface RSVPQuestion {
+  id: string;
+  label: string;
+  type: 'short_text' | 'long_text' | 'single_choice';
+  required?: boolean;
+  options?: string[];
+  appliesTo?: 'all' | 'ceremony' | 'reception';
 }
 
 function maskEmail(email: string | null): string {
@@ -108,6 +118,8 @@ export default function RSVP() {
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
+  const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
+  const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -130,12 +142,13 @@ export default function RSVP() {
           setTokenAutoLoading(false);
           return;
         }
-        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
+        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null };
         if (result.guest) {
-          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline);
+          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? []);
         } else if (result.guests && result.guests.length > 1) {
           setAmbiguousGuests(result.guests);
           setRsvpDeadline(result.rsvpDeadline);
+          setRsvpQuestions(result.rsvpQuestions ?? []);
           setStep('pick');
         } else {
           setError('Invitation not recognized. Please search by name below.');
@@ -158,17 +171,18 @@ export default function RSVP() {
         return;
       }
 
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null };
 
       if (result.guests && result.guests.length > 1) {
         setAmbiguousGuests(result.guests);
         setRsvpDeadline(result.rsvpDeadline);
+        setRsvpQuestions(result.rsvpQuestions ?? []);
         setStep('pick');
         return;
       }
 
       const foundGuest = result.guest!;
-      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline);
+      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? []);
     } catch {
       setError('An error occurred. Please try again.');
     } finally {
@@ -176,9 +190,10 @@ export default function RSVP() {
     }
   };
 
-  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null) => {
+  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = []) => {
     setGuest(foundGuest);
     setRsvpDeadline(deadline);
+    setRsvpQuestions(questions);
     if (foundRsvp) {
       setExistingRsvp(foundRsvp);
       const parsed = parseEventSelectionsFromNotes(foundRsvp.notes, foundGuest);
@@ -190,6 +205,7 @@ export default function RSVP() {
         plus_one_name: foundRsvp.plus_one_name || '',
         notes: parsed.cleanNotes,
       });
+      setCustomAnswers((foundRsvp.custom_answers && typeof foundRsvp.custom_answers === 'object') ? foundRsvp.custom_answers : {});
     }
     if (!foundRsvp) {
       setFormData(prev => ({
@@ -201,6 +217,7 @@ export default function RSVP() {
         plus_one_name: '',
         notes: '',
       }));
+      setCustomAnswers({});
     }
     setFormStep(1);
     setStep('form');
@@ -215,8 +232,8 @@ export default function RSVP() {
         selectGuest(picked, null, rsvpDeadline);
         return;
       }
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null };
-      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline);
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null };
+      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? []);
     } catch {
       selectGuest(picked, null, rsvpDeadline);
     } finally {
@@ -256,6 +273,7 @@ export default function RSVP() {
         mealChoice: formData.meal_choice || null,
         plusOneName: formData.plus_one_name || null,
         notes: notesPayload || null,
+        customAnswers,
       });
 
       if (err) {
@@ -299,6 +317,16 @@ export default function RSVP() {
       }
       if (formData.attending && !formData.meal_choice) {
         setError('Please choose a meal option before review.');
+        return;
+      }
+
+      const requiredMissing = rsvpQuestions
+        .filter((q) => q.required)
+        .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
+        .find((q) => !(customAnswers[q.id] || '').trim());
+
+      if (requiredMissing) {
+        setError(`Please answer: ${requiredMissing.label}`);
         return;
       }
       setError('');
@@ -574,6 +602,41 @@ export default function RSVP() {
                     </>
                   )}
 
+
+                  {rsvpQuestions.length > 0 && (
+                    <div className="space-y-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm font-medium text-gray-800">A few quick questions from the couple</p>
+                      {rsvpQuestions
+                        .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
+                        .map((q) => (
+                          <div key={q.id} className="space-y-1">
+                            <label className="block text-sm font-medium">{q.label}{q.required ? ' *' : ''}</label>
+                            {q.type === 'long_text' ? (
+                              <Textarea
+                                value={customAnswers[q.id] ?? ''}
+                                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                                rows={3}
+                                placeholder="Your answer"
+                              />
+                            ) : q.type === 'single_choice' ? (
+                              <Select
+                                value={customAnswers[q.id] ?? ''}
+                                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                                options={[{ value: '', label: 'Select an option' }, ...((q.options ?? []).map((opt) => ({ value: opt, label: opt })))]}
+                              />
+                            ) : (
+                              <Input
+                                type="text"
+                                value={customAnswers[q.id] ?? ''}
+                                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                                placeholder="Your answer"
+                              />
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       Additional Notes (Optional)
@@ -619,7 +682,31 @@ export default function RSVP() {
                       <span className="text-gray-900">{formData.plus_one_name}</span>
                     </div>
                   )}
-                  {formData.notes && (
+
+                  {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Custom answers</p>
+                      {rsvpQuestions.filter((q) => (customAnswers[q.id] || '').trim()).map((q) => (
+                        <div key={q.id} className="flex items-start justify-between text-sm gap-4">
+                          <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>
+                          <span className="text-gray-900 text-right">{customAnswers[q.id]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+    
+                  {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Custom answers</p>
+                      {rsvpQuestions.filter((q) => (customAnswers[q.id] || '').trim()).map((q) => (
+                        <div key={q.id} className="flex items-start justify-between text-sm gap-4">
+                          <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>
+                          <span className="text-gray-900 text-right">{customAnswers[q.id]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+              {formData.notes && (
                     <div className="flex items-start justify-between text-sm gap-4">
                       <span className="text-gray-600 font-medium flex-shrink-0">Notes</span>
                       <span className="text-gray-900 text-right">{formData.notes}</span>
@@ -742,6 +829,8 @@ export default function RSVP() {
                 setAmbiguousGuests([]);
                 setRsvpDeadline(null);
                 setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+                setCustomAnswers({});
+                setRsvpQuestions([]);
                 setFormStep(1);
               }}
               className="w-full"
