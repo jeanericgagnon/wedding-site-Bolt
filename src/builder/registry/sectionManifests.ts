@@ -250,6 +250,18 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
         { key: 'title', label: 'Section Title', type: 'text', defaultValue: 'RSVP' },
         { key: 'deadlineText', label: 'Deadline Text', type: 'text' },
         { key: 'confirmationMessage', label: 'Confirmation Message', type: 'textarea' },
+        {
+          key: 'mode',
+          label: 'RSVP Mode',
+          type: 'select',
+          defaultValue: 'form',
+          options: [
+            { label: 'Native Form', value: 'form' },
+            { label: 'Embed (iframe)', value: 'embed' },
+          ],
+        },
+        { key: 'embedUrl', label: 'Embed URL (https://...)', type: 'text', placeholder: 'https://example.com/form' },
+        { key: 'embedHeight', label: 'Embed Height (px)', type: 'number', defaultValue: 760 },
       ],
     },
     bindingsSchema: { slots: [] },
