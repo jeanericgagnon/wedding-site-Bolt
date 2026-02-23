@@ -206,6 +206,11 @@ export const VaultContribute: React.FC = () => {
   }
 
   async function compressVideoTo720p(input: File): Promise<File> {
+    const testCanvas = document.createElement('canvas') as HTMLCanvasElement & { captureStream?: (frameRate?: number) => MediaStream };
+    if (typeof MediaRecorder === 'undefined' || typeof testCanvas.captureStream !== 'function') {
+      throw new Error('Video compression is not supported on this device/browser.');
+    }
+
     const url = URL.createObjectURL(input);
     const video = document.createElement('video');
     video.src = url;
@@ -296,10 +301,12 @@ export const VaultContribute: React.FC = () => {
             setCompressionStatus(null);
           } catch (err) {
             setCompressionStatus(null);
-            setUploadProgress(null);
-            setSubmitting(false);
-            setSubmitError(err instanceof Error ? err.message : 'Video compression failed');
-            return;
+            // Fallback: keep original file upload instead of blocking submit.
+            setSubmitError(
+              err instanceof Error
+                ? `${err.message} Uploading original video instead.`
+                : 'Compression failed. Uploading original video instead.'
+            );
           }
         }
 
