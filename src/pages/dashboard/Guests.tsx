@@ -1421,6 +1421,82 @@ Proceed with send?`)) return;
     );
   }
 
+  if (guestsTab === 'rsvp-config') {
+    return (
+      <DashboardLayout currentPage="guests">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
+            <p className="text-text-secondary">Manage your guest list and track responses</p>
+            <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
+              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
+              <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+            </div>
+          </div>
+
+          <Card variant="bordered" padding="lg">
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary">RSVP Questions & Meal Choices</h3>
+                <p className="text-sm text-text-secondary">Configure what attendees answer on the RSVP page.</p>
+              </div>
+
+              <div className="space-y-3 p-4 border border-border rounded-xl">
+                <label className="flex items-center gap-2 text-sm text-text-primary">
+                  <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => setRsvpMealEnabled(e.target.checked)} className="w-4 h-4" />
+                  Collect meal choice on RSVP form
+                </label>
+                {rsvpMealEnabled && (
+                  <div className="space-y-2">
+                    {rsvpMealOptions.map((opt, idx) => (
+                      <div key={`meal-${idx}`} className="flex items-center gap-2">
+                        <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=e.target.value; return n; })} placeholder={`Meal option ${idx+1}`} />
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx))}>Remove</Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={() => setRsvpMealOptions((prev) => [...prev, ''])}>Add meal option</Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {rsvpQuestions.map((q, idx) => (
+                  <div key={q.id} className="p-4 border border-border rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold">Question {idx + 1}</p>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id))}>Remove</Button>
+                    </div>
+                    <Input value={q.label} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, label: e.target.value } : x))} placeholder="Question prompt" />
+                    <div className="grid md:grid-cols-3 gap-3">
+                      <Select value={q.type} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, type: e.target.value as RSVPQuestionSetting['type'], options: (e.target.value === 'single_choice' || e.target.value === 'multi_choice') ? (x.options?.length ? x.options : ['', '']) : [] } : x))} options={[{ value:'short_text', label:'Short text' },{ value:'long_text', label:'Long text' },{ value:'single_choice', label:'Single choice' },{ value:'multi_choice', label:'Multiple choice' }]} />
+                      <Select value={q.appliesTo} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : x))} options={[{ value:'all', label:'All attendees' },{ value:'ceremony', label:'Ceremony attendees' },{ value:'reception', label:'Reception attendees' }]} />
+                      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={q.required} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, required: e.target.checked } : x))} />Required</label>
+                    </div>
+                    {(q.type === 'single_choice' || q.type === 'multi_choice') && (
+                      <div className="space-y-2">
+                        {(q.options ?? []).map((opt, optIdx) => (
+                          <div key={`${q.id}-opt-${optIdx}`} className="flex items-center gap-2">
+                            <Input value={opt} onChange={(e) => setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n[optIdx]=e.target.value; return { ...x, options:n }; }))} placeholder={`Option ${optIdx+1}`} />
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n.splice(optIdx,1); return { ...x, options:n }; }))}>Remove</Button>
+                          </div>
+                        ))}
+                        <Button type="button" variant="outline" size="sm" onClick={() => setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, options: [...(x.options ?? []), ''] } : x))}>Add choice</Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => setRsvpQuestions((prev) => [...prev, makeRsvpQuestion()])}>Add Question</Button>
+                  <Button type="button" variant="primary" onClick={handleSaveRsvpConfig} disabled={rsvpConfigSaving}>{rsvpConfigSaving ? 'Saving…' : 'Save RSVP Config'}</Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout currentPage="guests">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -1428,8 +1504,8 @@ Proceed with send?`)) return;
           <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
           <p className="text-text-secondary">Manage your guest list and track responses</p>
           <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
-            <button className={`px-3 py-1.5 text-sm rounded-md ${guestsTab === 'ops' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary'}`} onClick={() => setGuestsTab('ops')}>Guest Ops</button>
-            <button className={`px-3 py-1.5 text-sm rounded-md ${guestsTab === 'rsvp-config' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary'}`} onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+            <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
+            <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
           </div>
         </div>
 
