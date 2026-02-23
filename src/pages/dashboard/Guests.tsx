@@ -1037,6 +1037,18 @@ Proceed with send?`)) return;
     toast(ids.length > 0 ? `Selected ${ids.length} guest${ids.length === 1 ? '' : 's'} in current filter` : 'No guests in current filter', ids.length > 0 ? 'success' : 'error');
   };
 
+  const keepOnlyVisibleSelection = () => {
+    const visibleIds = new Set(filteredGuests.map((g) => g.id));
+    setSelectedGuestIds((prev) => {
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) next.add(id);
+      });
+      return next;
+    });
+    toast('Selection trimmed to current filter', 'success');
+  };
+
   const stats = {
     total: guests.length,
     confirmed: guests.filter(g => g.rsvp_status === 'confirmed').length,
@@ -1782,8 +1794,9 @@ Proceed with send?`)) return;
 
             {selectedGuestIds.size > 0 && viewMode === 'list' && (
               <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-xl">
-                <span className="text-sm font-medium text-primary">{selectedGuestIds.size} selected</span>
+                <span className="text-sm font-medium text-primary">{selectedGuestIds.size} selected · {filteredGuests.filter((g) => selectedGuestIds.has(g.id)).length} visible</span>
                 <div className="flex items-center gap-2">
+                  <button onClick={keepOnlyVisibleSelection} className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Keep visible only</button>
                   <button onClick={clearGuestSelection} className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Clear</button>
                 </div>
               </div>
