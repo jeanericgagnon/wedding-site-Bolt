@@ -917,6 +917,31 @@ export const DashboardGuests: React.FC = () => {
   )));
 
 
+  const opsQueue = guests.flatMap((g) => {
+    const items: Array<{ guestId: string; guestName: string; issue: string; filter: typeof filterStatus }> = [];
+    const guestName = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
+    const eventSelections = parseRsvpEventSelections(g.rsvp?.notes ?? null);
+
+    if (g.rsvp_status === 'pending') {
+      items.push({ guestId: g.id, guestName, issue: 'No RSVP response yet', filter: 'pending' });
+    }
+    if (g.rsvp?.attending && !g.rsvp?.meal_choice) {
+      items.push({ guestId: g.id, guestName, issue: 'Missing meal choice', filter: 'missing-meal' });
+    }
+    if (g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name) {
+      items.push({ guestId: g.id, guestName, issue: 'Missing plus-one name', filter: 'plusone-missing' });
+    }
+    if (eventSelections?.ceremony === false) {
+      items.push({ guestId: g.id, guestName, issue: 'Ceremony declined', filter: 'ceremony-no' });
+    }
+    if (eventSelections?.reception === false) {
+      items.push({ guestId: g.id, guestName, issue: 'Reception declined', filter: 'reception-no' });
+    }
+
+    return items;
+  }).slice(0, 8);
+
+
   const segmentLabelMap: Record<string, string> = {
     all: 'All Guests',
     confirmed: 'Confirmed',
@@ -1197,6 +1222,7 @@ export const DashboardGuests: React.FC = () => {
 
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">
+
             {recommendedAction && (
               <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
@@ -1218,6 +1244,27 @@ export const DashboardGuests: React.FC = () => {
                   >
                     Save task
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {opsQueue.length > 0 && (
+              <div className="p-3.5 rounded-xl border border-border-subtle bg-white space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-text-primary">Priority RSVP queue</p>
+                  <span className="text-xs text-text-tertiary">Top {opsQueue.length}</span>
+                </div>
+                <div className="space-y-1.5">
+                  {opsQueue.map((item, idx) => (
+                    <button
+                      key={`${item.guestId}-${idx}`}
+                      onClick={() => { setFilterStatus(item.filter); setViewMode('list'); setSearchQuery(item.guestName); }}
+                      className="w-full text-left px-2.5 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                    >
+                      <p className="text-xs font-semibold text-text-primary">{item.guestName}</p>
+                      <p className="text-[11px] text-text-tertiary">{item.issue}</p>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
