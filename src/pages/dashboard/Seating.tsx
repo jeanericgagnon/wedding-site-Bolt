@@ -267,31 +267,70 @@ function TableCard({
               </div>
             ) : (
               <div className="relative mb-2">
-                <div
-                  className="mx-auto border border-border-subtle rounded-xl bg-surface-subtle p-2 relative"
-                  style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}
-                >
-                  <div className="absolute left-2 top-1 text-[10px] text-text-tertiary">{rectSize.width}×{rectSize.height}</div>
-                  <div className="h-full w-full grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-4">
-                    {Array.from({ length: table.capacity }).map((_, idx) => {
-                      const seatNumber = idx + 1;
-                      const seatAssignment = bySeat.get(seatNumber);
+                <div className="mx-auto relative" style={{ width: `${rectSize.width + 110}px`, height: `${rectSize.height + 110}px` }}>
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border border-border-subtle rounded-xl bg-surface-subtle"
+                    style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}
+                  >
+                    <div className="absolute left-2 top-1 text-[10px] text-text-tertiary">{rectSize.width}×{rectSize.height}</div>
+                    <div className="absolute inset-0 flex items-center justify-center text-[11px] text-text-tertiary font-medium pointer-events-none">{table.table_name}</div>
+                    <button
+                      type="button"
+                      onMouseDown={startRectResize}
+                      className="absolute -bottom-2 -right-2 w-4 h-4 rounded bg-primary border border-white shadow"
+                      title="Drag to resize"
+                    />
+                  </div>
+
+                  {(() => {
+                    const total = Math.max(1, table.capacity);
+                    const seatsTop = Math.ceil(total / 4);
+                    const seatsRight = Math.ceil((total - seatsTop) / 3);
+                    const seatsBottom = Math.ceil((total - seatsTop - seatsRight) / 2);
+                    const seatsLeft = total - seatsTop - seatsRight - seatsBottom;
+                    const slotW = 74;
+                    const slotH = 34;
+                    const edgeGap = 20;
+                    const centerX = (rectSize.width + 110) / 2;
+                    const centerY = (rectSize.height + 110) / 2;
+                    const left = centerX - rectSize.width / 2;
+                    const right = centerX + rectSize.width / 2;
+                    const top = centerY - rectSize.height / 2;
+                    const bottom = centerY + rectSize.height / 2;
+
+                    const positions = [] as Array<{seatNumber:number,x:number,y:number}>;
+                    let seat = 1;
+                    for (let i=0;i<seatsTop;i++,seat++) {
+                      const x = left + ((i+1)/(seatsTop+1))*rectSize.width;
+                      positions.push({seatNumber: seat, x, y: top - edgeGap});
+                    }
+                    for (let i=0;i<seatsRight;i++,seat++) {
+                      const y = top + ((i+1)/(seatsRight+1))*rectSize.height;
+                      positions.push({seatNumber: seat, x: right + edgeGap, y});
+                    }
+                    for (let i=0;i<seatsBottom;i++,seat++) {
+                      const x = right - ((i+1)/(seatsBottom+1))*rectSize.width;
+                      positions.push({seatNumber: seat, x, y: bottom + edgeGap});
+                    }
+                    for (let i=0;i<seatsLeft;i++,seat++) {
+                      const y = bottom - ((i+1)/(seatsLeft+1))*rectSize.height;
+                      positions.push({seatNumber: seat, x: left - edgeGap, y});
+                    }
+
+                    return positions.map((pos) => {
+                      const seatAssignment = bySeat.get(pos.seatNumber);
                       return (
                         <SeatDropSlot
-                          key={`${table.id}-seat-${seatNumber}`}
+                          key={`${table.id}-seat-${pos.seatNumber}`}
                           tableId={table.id}
-                          seatIndex={seatNumber}
+                          seatIndex={pos.seatNumber}
                           guest={seatAssignment?.guest}
+                          className="absolute w-[74px] h-[34px] -ml-[37px] -mt-[17px] shadow-sm"
+                          style={{ left: `${pos.x}px`, top: `${pos.y}px` }}
                         />
                       );
-                    })}
-                  </div>
-                  <button
-                    type="button"
-                    onMouseDown={startRectResize}
-                    className="absolute -bottom-2 -right-2 w-4 h-4 rounded bg-primary border border-white shadow"
-                    title="Drag to resize"
-                  />
+                    });
+                  })()}
                 </div>
               </div>
             )}
@@ -620,12 +659,8 @@ export const DashboardSeating: React.FC = () => {
     if (!targetTable) return;
 
     const existingForGuest = assignments.find(a => a.guest_id === guestId);
-    const currentOccupants = assignments
-      .filter(a => a.table_id === targetTable.id && a.guest_id !== guestId).length;
-    if (currentOccupants >= targetTable.capacity) {
-      toast(`${targetTable.table_name} is full`, 'error');
-      return;
-    }
+    const targetAssignments = assignments.filter(a => a.table_id === targetTable.id && a.guest_id !== guestId);
+    const currentOccupants = targetAssignments.length;
 
     // if dropping onto an occupied seat, do a true swap (target occupant gets source seat)
     let occupiedAssignment: SeatingAssignment | null = null;
@@ -633,6 +668,27 @@ export const DashboardSeating: React.FC = () => {
     const sourceSeatIndex = sourceSeatValue ?? undefined;
     if (targetSeatIndex != null) {
       occupiedAssignment = assignments.find(a => a.table_id === targetTable.id && a.seat_index === targetSeatIndex && a.guest_id !== guestId) ?? null;
+    }
+
+    // table-full block should not prevent explicit occupied-seat swap
+    if (currentOccupants >= targetTable.capacity && !(targetSeatIndex != null && occupiedAssignment)) {
+      toast(`${targetTable.table_name} is full`, 'error');
+      return;
+    }
+
+    // If dropped on table (not seat), auto-fill first open seat
+    if (targetSeatIndex == null) {
+      const used = new Set(targetAssignments.map(a => a.seat_index).filter((v): v is number => v != null));
+      for (let i = 1; i <= targetTable.capacity; i++) {
+        if (!used.has(i)) {
+          targetSeatIndex = i;
+          break;
+        }
+      }
+      if (targetSeatIndex == null) {
+        // No open seat index left; keep source if moving inside same table, else fallback null
+        targetSeatIndex = existingForGuest?.table_id === targetTable.id ? (existingForGuest?.seat_index ?? undefined) : undefined;
+      }
     }
 
     try {
@@ -1194,6 +1250,9 @@ export const DashboardSeating: React.FC = () => {
               </div>
 
               <div className="flex-1 min-w-0">
+                {layoutMode === 'visual' && (
+                  <div className="mb-3 rounded-xl border border-border-subtle bg-gradient-to-b from-surface-subtle to-surface p-2 text-xs text-text-tertiary">Canvas mode: arrange tables and seats visually.</div>
+                )}
                 {tables.length === 0 ? (
                   <div className="text-center py-16 border-2 border-dashed border-border-subtle rounded-xl">
                     <TableProperties className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
