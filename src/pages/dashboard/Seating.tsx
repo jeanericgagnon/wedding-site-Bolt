@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties } from 'lucide-react';
+import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2 } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -25,7 +25,7 @@ import {
   loadTables, createTable, updateTable, deleteTable, loadAssignments,
   assignGuestToTable, unassignGuest, resetSeating, getEligibleGuests,
   getEventCounters, autoCreateTables, autoSeatGuests, exportSeatingCSV,
-  exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments,
+  exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments, setGuestCheckedIn,
 } from './seating/seatingService';
 
 const UNASSIGNED_DROPPABLE = 'unassigned-pool';
@@ -104,6 +104,8 @@ function TableCard({
   onEdit,
   onDelete,
   onRemoveGuest,
+  checkInMode,
+  onToggleCheckIn,
 }: {
   table: SeatingTable;
   guests: EligibleGuest[];
@@ -112,6 +114,8 @@ function TableCard({
   onEdit: (table: SeatingTable) => void;
   onDelete: (id: string) => void;
   onRemoveGuest: (guestId: string) => void;
+  checkInMode: boolean;
+  onToggleCheckIn: (guestId: string, checkedIn: boolean) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: table.id });
   const occupied = guests.length;
@@ -154,12 +158,22 @@ function TableCard({
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {assignedGuests.map(({ assignment, guest }) => (
-              <DraggableGuestChip
-                key={guest.id}
-                guest={guest}
-                isInvalid={!assignment.is_valid}
-                onRemove={() => onRemoveGuest(guest.id)}
-              />
+              <div key={guest.id} className="flex items-center gap-1">
+                <DraggableGuestChip
+                  guest={guest}
+                  isInvalid={!assignment.is_valid}
+                  onRemove={() => onRemoveGuest(guest.id)}
+                />
+                {checkInMode && (
+                  <button
+                    onClick={() => onToggleCheckIn(guest.id, !assignment.checked_in_at)}
+                    className={`p-1 rounded border transition-colors ${assignment.checked_in_at ? 'bg-success/10 border-success/40 text-success' : 'bg-surface border-border-subtle text-text-tertiary hover:text-success hover:border-success/40'}`}
+                    title={assignment.checked_in_at ? 'Mark not arrived' : 'Mark arrived'}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -236,6 +250,8 @@ export const DashboardSeating: React.FC = () => {
   const [showAutoTablesModal, setShowAutoTablesModal] = useState(false);
   const [autoCapacity, setAutoCapacity] = useState(8);
   const [invalidCount, setInvalidCount] = useState(0);
+  const [checkInMode, setCheckInMode] = useState(false);
+  const [checkInQuery, setCheckInQuery] = useState('');
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -557,6 +573,23 @@ export const DashboardSeating: React.FC = () => {
     }
   }
 
+  async function handleToggleCheckIn(guestId: string, checkedIn: boolean) {
+    if (!seatingEvent) return;
+    try {
+      if (isDemoMode) {
+        setAssignments(prev => prev.map(a => (
+          a.guest_id === guestId ? { ...a, checked_in_at: checkedIn ? new Date().toISOString() : null } : a
+        )));
+      } else {
+        await setGuestCheckedIn(seatingEvent.id, guestId, checkedIn);
+        await loadSeatingData();
+      }
+      toast(checkedIn ? 'Guest marked arrived' : 'Arrival removed', 'success');
+    } catch {
+      toast('Failed to update check-in', 'error');
+    }
+  }
+
   function handleExportCSV() {
     const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
     const csv = exportSeatingCSV(allGuests, tables, assignments, selectedEvent?.event_name ?? 'Event');
@@ -573,6 +606,12 @@ export const DashboardSeating: React.FC = () => {
   }
 
   const selectedItineraryEvent = itineraryEvents.find(e => e.id === selectedEventId);
+  const arrivedGuestIds = new Set(assignments.filter(a => !!a.checked_in_at).map(a => a.guest_id));
+  const arrivedCount = allGuests.filter(g => g.is_attending && arrivedGuestIds.has(g.id)).length;
+  const checkInCandidates = allGuests
+    .filter(g => g.is_attending)
+    .filter(g => g.full_name.toLowerCase().includes(checkInQuery.toLowerCase().trim()))
+    .slice(0, 8);
 
   if (loading) {
     return (
@@ -628,6 +667,9 @@ export const DashboardSeating: React.FC = () => {
             <Button variant="outline" size="sm" onClick={handleCheckDrift}>
               <RefreshCw className="w-4 h-4 mr-1" /> Check RSVP Drift
             </Button>
+            <Button variant={checkInMode ? 'primary' : 'outline'} size="sm" onClick={() => setCheckInMode(v => !v)}>
+              <CheckCircle2 className="w-4 h-4 mr-1" /> {checkInMode ? 'Exit Check-in' : 'Check-in Mode'}
+            </Button>
           </div>
         </div>
 
@@ -649,10 +691,11 @@ export const DashboardSeating: React.FC = () => {
         </div>
 
         {counters && (
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
             {[
               { label: 'Invited', value: counters.invited, color: 'text-text-primary' },
               { label: 'Attending', value: counters.attending, color: 'text-success' },
+              { label: 'Arrived', value: arrivedCount, color: 'text-success' },
               { label: 'Declined', value: counters.declined, color: 'text-error' },
               { label: 'Pending', value: counters.pending, color: 'text-warning' },
               { label: 'Seated', value: counters.seated, color: 'text-primary' },
@@ -693,6 +736,38 @@ export const DashboardSeating: React.FC = () => {
             </Button>
           )}
         </div>
+
+        {checkInMode && (
+          <div className="p-3 bg-surface-subtle border border-border-subtle rounded-xl space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={checkInQuery}
+                onChange={(e) => setCheckInQuery(e.target.value)}
+                placeholder="Search attendee name for quick check-in"
+                className="flex-1 min-w-[220px] px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <span className="text-xs text-text-tertiary">{arrivedCount}/{counters?.attending ?? 0} arrived</span>
+            </div>
+            {checkInQuery.trim().length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {checkInCandidates.length === 0 ? (
+                  <p className="text-xs text-text-tertiary">No attendees match that search.</p>
+                ) : checkInCandidates.map((guest) => {
+                  const checked = arrivedGuestIds.has(guest.id);
+                  return (
+                    <button
+                      key={guest.id}
+                      onClick={() => handleToggleCheckIn(guest.id, !checked)}
+                      className={`px-2.5 py-1.5 rounded-lg border text-xs transition-colors ${checked ? 'bg-success/10 border-success/40 text-success' : 'bg-surface border-border-subtle text-text-secondary hover:border-success/40 hover:text-success'}`}
+                    >
+                      {guest.full_name} {checked ? '• Arrived' : '• Mark arrived'}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {addingTable && (
           <TableForm
@@ -788,6 +863,8 @@ export const DashboardSeating: React.FC = () => {
                           onEdit={setEditingTable}
                           onDelete={handleDeleteTable}
                           onRemoveGuest={handleRemoveGuest}
+                          checkInMode={checkInMode}
+                          onToggleCheckIn={handleToggleCheckIn}
                         />
                       )
                     ))}

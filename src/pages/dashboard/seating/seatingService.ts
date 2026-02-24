@@ -33,6 +33,8 @@ export interface SeatingAssignment {
   guest_id: string;
   seat_index: number | null;
   is_valid: boolean;
+  checked_in_at?: string | null;
+  checked_in_by?: string | null;
 }
 
 export interface EligibleGuest {
@@ -190,6 +192,24 @@ export async function unassignGuest(seatingEventId: string, guestId: string): Pr
     .delete()
     .eq('seating_event_id', seatingEventId)
     .eq('guest_id', guestId);
+  if (error) throw error;
+}
+
+export async function setGuestCheckedIn(
+  seatingEventId: string,
+  guestId: string,
+  checkedIn: boolean
+): Promise<void> {
+  const payload = checkedIn
+    ? { checked_in_at: new Date().toISOString() }
+    : { checked_in_at: null };
+
+  const { error } = await supabase
+    .from('seating_assignments')
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq('seating_event_id', seatingEventId)
+    .eq('guest_id', guestId);
+
   if (error) throw error;
 }
 
@@ -360,7 +380,7 @@ export function exportSeatingCSV(
   const tableMap = new Map(tables.map(t => [t.id, t]));
   const assignmentMap = new Map(assignments.map(a => [a.guest_id, a]));
 
-  const rows = [['Guest Name', 'Email', 'Table', 'Seat', 'Event']];
+  const rows = [['Guest Name', 'Email', 'Table', 'Seat', 'Checked In', 'Event']];
   for (const guest of guests) {
     if (!guest.is_attending) continue;
     const assignment = assignmentMap.get(guest.id);
@@ -370,6 +390,7 @@ export function exportSeatingCSV(
       guest.email ?? '',
       table?.table_name ?? 'Unassigned',
       assignment?.seat_index != null ? String(assignment.seat_index) : '',
+      assignment?.checked_in_at ? 'Yes' : 'No',
       eventName,
     ]);
   }
