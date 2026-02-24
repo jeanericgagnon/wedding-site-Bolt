@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2 } from 'lucide-react';
+import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2 } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -290,11 +290,26 @@ function TableCard({
             </span>
             {isSelected && (
               <>
-                <button onClick={(e) => { e.stopPropagation(); onRotate(-15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate left">
-                  <RotateCcw className="w-3 h-3" />
+                <button
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(-15); }}
+                  className="px-1.5 py-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors text-[11px]"
+                  title="Rotate -15°"
+                >
+                  −15°
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); onRotate(15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate right">
-                  <RotateCw className="w-3 h-3" />
+                <button
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(15); }}
+                  className="px-1.5 py-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors text-[11px]"
+                  title="Rotate +15°"
+                >
+                  +15°
+                </button>
+                <button
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); const current = table.rotation_deg ?? 0; if (current !== 0) onRotate(-current); }}
+                  className="px-1.5 py-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors text-[11px]"
+                  title="Reset rotation"
+                >
+                  0°
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); onEdit(table); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
                   <Edit2 className="w-3 h-3" />
