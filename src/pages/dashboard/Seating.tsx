@@ -15,7 +15,7 @@ import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCc
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
-import { demoWeddingSite, demoGuests } from '../../lib/demoData';
+import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -587,39 +587,69 @@ export const DashboardSeating: React.FC = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
+  function loadDemoItineraryEventsFromStorage() {
+    const fallbackEvents: ItineraryEvent[] = demoEvents.map((e: any) => ({
+      id: e.id,
+      event_name: e.event_name,
+      event_date: e.event_date,
+      start_time: e.start_time || '18:00',
+      location_name: e.location_name || '',
+    }));
+
+    let parsedEvents: ItineraryEvent[] = [];
+    try {
+      const raw = localStorage.getItem(DEMO_ITINERARY_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Array<any>;
+        parsedEvents = (Array.isArray(parsed) ? parsed : []).map((e) => ({
+          id: e.id,
+          event_name: e.event_name,
+          event_date: e.event_date,
+          start_time: e.start_time || '18:00',
+          location_name: e.location_name || '',
+        })).filter((e) => e.id && e.event_name && e.event_date);
+      }
+    } catch {}
+
+    return parsedEvents.length > 0 ? parsedEvents : fallbackEvents;
+  }
+
   useEffect(() => {
     loadInitial();
   }, []);
+
+  useEffect(() => {
+    if (!isDemoMode) return;
+
+    const syncDemoItinerary = () => {
+      const events = loadDemoItineraryEventsFromStorage();
+      setItineraryEvents(events);
+      setSelectedEventId((prev) => (prev && events.some((e) => e.id === prev) ? prev : events[0]?.id ?? null));
+    };
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === DEMO_ITINERARY_STORAGE_KEY) syncDemoItinerary();
+    };
+
+    const onFocus = () => syncDemoItinerary();
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [isDemoMode]);
 
   async function loadInitial() {
     try {
       if (isDemoMode) {
         setSiteId(demoWeddingSite.id);
 
-        const fallbackEvent: ItineraryEvent = {
-          id: DEMO_EVENT_ID,
-          event_name: 'Reception',
-          event_date: new Date().toISOString().slice(0, 10),
-          start_time: '18:00',
-          location_name: 'Grand Ballroom',
-        };
-
-        let demoEventsFromItinerary: ItineraryEvent[] = [];
-        try {
-          const raw = localStorage.getItem(DEMO_ITINERARY_STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw) as Array<any>;
-            demoEventsFromItinerary = (Array.isArray(parsed) ? parsed : []).map((e) => ({
-              id: e.id,
-              event_name: e.event_name,
-              event_date: e.event_date,
-              start_time: e.start_time || '18:00',
-              location_name: e.location_name || '',
-            })).filter((e) => e.id && e.event_name && e.event_date);
-          }
-        } catch {}
-
-        const usableEvents = demoEventsFromItinerary.length > 0 ? demoEventsFromItinerary : [fallbackEvent];
+        const usableEvents = loadDemoItineraryEventsFromStorage();
         setItineraryEvents(usableEvents);
         setSelectedEventId(usableEvents[0].id);
         return;
