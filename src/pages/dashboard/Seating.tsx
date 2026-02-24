@@ -203,7 +203,7 @@ function TableCard({
                 {Array.from({ length: table.capacity }).map((_, idx) => {
                   const seatNumber = idx + 1;
                   const angle = (idx / table.capacity) * Math.PI * 2 - Math.PI / 2;
-                  const radius = 102;
+                  const radius = Math.max(88, Math.min(112, 78 + table.capacity * 2));
                   const x = Math.cos(angle) * radius;
                   const y = Math.sin(angle) * radius;
                   const seatAssignment = bySeat.get(seatNumber);
@@ -213,7 +213,7 @@ function TableCard({
                       tableId={table.id}
                       seatIndex={seatNumber}
                       guest={seatAssignment?.guest}
-                      className="absolute w-20 h-10 -ml-10 -mt-5"
+                      className="absolute w-20 h-10 -ml-10 -mt-5 shadow-sm"
                       style={{ left: '50%', top: '50%', transform: `translate(${x}px, ${y}px)` }}
                     />
                   );
@@ -881,15 +881,15 @@ export const DashboardSeating: React.FC = () => {
             <Button variant={checkInMode ? 'primary' : 'outline'} size="sm" onClick={() => setCheckInMode(v => !v)}>
               <CheckCircle2 className="w-4 h-4 mr-1" /> {checkInMode ? 'Exit Check-in' : 'Check-in Mode'}
             </Button>
-            <div className="inline-flex rounded-lg border border-border overflow-hidden">
+            <div className="inline-flex rounded-xl border border-border bg-surface-subtle p-0.5">
               <button
-                className={`px-3 py-1.5 text-xs ${layoutMode === 'visual' ? 'bg-primary/10 text-primary' : 'bg-surface text-text-tertiary'}`}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${layoutMode === 'visual' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-tertiary hover:text-text-primary'}`}
                 onClick={() => setLayoutMode('visual')}
               >
                 Visual
               </button>
               <button
-                className={`px-3 py-1.5 text-xs border-l border-border ${layoutMode === 'list' ? 'bg-primary/10 text-primary' : 'bg-surface text-text-tertiary'}`}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${layoutMode === 'list' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-tertiary hover:text-text-primary'}`}
                 onClick={() => setLayoutMode('list')}
               >
                 List
@@ -914,6 +914,14 @@ export const DashboardSeating: React.FC = () => {
             </select>
           </div>
         </div>
+
+        {layoutMode === 'visual' && (
+          <div className="flex flex-wrap items-center gap-3 text-xs text-text-tertiary bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2">
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-surface border border-border-subtle" /> Empty seat</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary-light border border-primary/40" /> Active drop zone</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-success/10 border border-success/40" /> Arrived (check-in)</span>
+          </div>
+        )}
 
         {counters && (
           <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
