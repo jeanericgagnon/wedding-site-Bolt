@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2 } from 'lucide-react';
+import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2 } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -290,26 +290,11 @@ function TableCard({
             </span>
             {isSelected && (
               <>
-                <button
-                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(-15); }}
-                  className="px-1.5 py-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors text-[11px]"
-                  title="Rotate -15°"
-                >
-                  −15°
+                <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(-15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate left">
+                  <RotateCcw className="w-3 h-3" />
                 </button>
-                <button
-                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(15); }}
-                  className="px-1.5 py-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors text-[11px]"
-                  title="Rotate +15°"
-                >
-                  +15°
-                </button>
-                <button
-                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); const current = table.rotation_deg ?? 0; if (current !== 0) onRotate(-current); }}
-                  className="px-1.5 py-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors text-[11px]"
-                  title="Reset rotation"
-                >
-                  0°
+                <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate right">
+                  <RotateCw className="w-3 h-3" />
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); onEdit(table); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
                   <Edit2 className="w-3 h-3" />
@@ -586,7 +571,11 @@ function TableForm({ initial, onSave, onCancel }: {
         </>
       )}
       <div className="flex gap-2">
-        <Button type="submit" size="sm">{initial?.id ? 'Done' : 'Save'}</Button>
+        {initial?.id ? (
+          <Button type="button" size="sm" onClick={onCancel}>Done</Button>
+        ) : (
+          <Button type="submit" size="sm">Save</Button>
+        )}
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
       </div>
     </form>
@@ -971,8 +960,6 @@ export const DashboardSeating: React.FC = () => {
         await updateTable(id, tableData);
       }
       setTables(prev => prev.map(t => t.id === id ? { ...t, ...tableData } : t));
-      setEditingTable(null);
-      toast('Table updated', 'success');
     } catch {
       toast('Failed to update table', 'error');
     }
