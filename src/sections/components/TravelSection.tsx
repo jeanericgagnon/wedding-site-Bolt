@@ -8,9 +8,64 @@ interface Props {
   instance: SectionInstance;
 }
 
+function toIcsDateTime(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+}
+
+function escapeIcs(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+}
+
+function downloadIcs(data: WeddingDataV1, onlyEventId?: string) {
+  const scheduleItems = (onlyEventId ? data.schedule.filter(s => s.id === onlyEventId) : data.schedule)
+    .filter(s => !!s.startTimeISO);
+  if (!scheduleItems.length) return;
+
+  const venueMap = new Map(data.venues.map(v => [v.id, v]));
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//DayOf//Wedding Calendar//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ];
+
+  for (const item of scheduleItems) {
+    const venue = item.venueId ? venueMap.get(item.venueId) : undefined;
+    const uid = `${item.id}@dayof.love`;
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:${uid}`);
+    lines.push(`DTSTAMP:${toIcsDateTime(new Date().toISOString())}`);
+    lines.push(`DTSTART:${toIcsDateTime(item.startTimeISO!)}`);
+    if (item.endTimeISO) lines.push(`DTEND:${toIcsDateTime(item.endTimeISO)}`);
+    lines.push(`SUMMARY:${escapeIcs(item.label)}`);
+    if (venue?.name) lines.push(`LOCATION:${escapeIcs([venue.name, venue.address].filter(Boolean).join(' — '))}`);
+    if (item.notes) lines.push(`DESCRIPTION:${escapeIcs(item.notes)}`);
+    lines.push('END:VEVENT');
+  }
+
+  lines.push('END:VCALENDAR');
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = onlyEventId ? 'event.ics' : 'wedding-weekend.ics';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function TimezoneBadge({ tz }: { tz: string }) {
+  return <span className="inline-flex items-center px-2 py-1 text-xs rounded-full border border-border bg-surface-subtle text-text-secondary">Times shown in {tz}</span>;
+}
+
 export const TravelSection: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const { venues, travel } = data;
+  const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
   const hasContent = venues.length > 0 || travel?.notes || travel?.flightInfo || travel?.hotelInfo || travel?.parkingInfo;
 
   return (
@@ -21,6 +76,17 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
             {settings.title || 'Travel & Accommodations'}
           </h2>
         )}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+          <TimezoneBadge tz={timezone} />
+          {data.schedule.length > 0 && (
+            <button
+              onClick={() => downloadIcs(data)}
+              className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
+            >
+              Add all events to calendar (.ics)
+            </button>
+          )}
+        </div>
         {!hasContent ? (
           <div className="text-center">
             <p className="text-text-secondary">Travel and accommodation details will appear here once added.</p>
@@ -98,6 +164,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
 export const TravelCards: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const { venues, travel } = data;
+  const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
 
   return (
     <section className="py-20 px-4 bg-surface">
@@ -110,6 +177,17 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+          <TimezoneBadge tz={timezone} />
+          {data.schedule.length > 0 && (
+            <button
+              onClick={() => downloadIcs(data)}
+              className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
+            >
+              Add all events to calendar (.ics)
+            </button>
+          )}
+        </div>
         {venues.length > 0 && (
           <div className="space-y-4 mb-10">
             {venues.map(venue => (
@@ -180,6 +258,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
 export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const { venues, travel } = data;
+  const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
 
   const localTips = (travel?.notes || '')
     .split(/\n+/)
@@ -197,6 +276,18 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
+
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+          <TimezoneBadge tz={timezone} />
+          {data.schedule.length > 0 && (
+            <button
+              onClick={() => downloadIcs(data)}
+              className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
+            >
+              Add all events to calendar (.ics)
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="rounded-2xl border border-border bg-surface p-6">

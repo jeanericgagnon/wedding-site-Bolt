@@ -379,7 +379,7 @@ export const Product: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                  <p className="text-sm text-text-tertiary">Add-to-calendar ICS · Timezone/DST-safe times — coming soon</p>
+                  <p className="text-sm text-text-tertiary">Add-to-calendar ICS · Timezone-aware event times</p>
                   <Link to="/features/travel"><Button variant="primary">Full travel docs <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
                 </>
               )}
@@ -627,8 +627,8 @@ export const Product: React.FC = () => {
                   { icon: Map,       label: 'Venue addresses with embedded maps',             done: true },
                   { icon: Hotel,     label: 'Hotel block info with booking codes',            done: true },
                   { icon: Globe,     label: 'Transportation and logistics notes',             done: true },
-                  { icon: Download,  label: 'Add-to-calendar ICS generation',                done: false },
-                  { icon: Globe,     label: 'Timezone/DST-safe display',                     done: false },
+                  { icon: Download,  label: 'Add-to-calendar ICS generation',                done: true },
+                  { icon: Globe,     label: 'Timezone/DST-safe display',                     done: true },
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <f.icon className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
