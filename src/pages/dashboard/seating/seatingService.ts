@@ -24,6 +24,7 @@ export interface SeatingTable {
   capacity: number;
   sort_order: number;
   notes: string;
+  table_shape?: 'round' | 'rectangle';
 }
 
 export interface SeatingAssignment {

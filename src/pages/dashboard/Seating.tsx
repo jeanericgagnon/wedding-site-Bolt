@@ -96,6 +96,34 @@ function UnassignedPool({ guests }: { guests: EligibleGuest[] }) {
   );
 }
 
+function SeatDropSlot({
+  tableId,
+  seatIndex,
+  guest,
+  isOver,
+}: {
+  tableId: string;
+  seatIndex: number;
+  guest?: EligibleGuest;
+  isOver?: boolean;
+}) {
+  const { setNodeRef, isOver: overSelf } = useDroppable({ id: `seat:${tableId}:${seatIndex}` });
+  const active = isOver ?? overSelf;
+  return (
+    <div
+      ref={setNodeRef}
+      className={`h-10 rounded-lg border text-[11px] px-1 flex items-center justify-center text-center ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
+      title={`Seat ${seatIndex}`}
+    >
+      {guest ? (
+        <span className="truncate max-w-[90px]">{guest.full_name}</span>
+      ) : (
+        <span className="text-text-tertiary">Seat {seatIndex}</span>
+      )}
+    </div>
+  );
+}
+
 function TableCard({
   table,
   guests,
@@ -139,6 +167,7 @@ function TableCard({
         <div className="flex items-center gap-2 min-w-0">
           <TableProperties className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
           <span className="text-sm font-semibold text-text-primary truncate">{table.table_name}</span>
+          <span className="text-[10px] uppercase text-text-tertiary">{table.table_shape ?? 'round'}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
@@ -153,8 +182,24 @@ function TableCard({
         </div>
       </div>
       <div className={`p-2 min-h-[80px] ${isOver && !isFull ? 'bg-primary-light/20' : ''}`}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2">
+          {Array.from({ length: table.capacity }).map((_, idx) => {
+            const seatNumber = idx + 1;
+            const seatAssignment = assignedGuests.find(({ assignment }) => assignment.seat_index === seatNumber)
+              ?? assignedGuests.find(({ assignment }) => assignment.seat_index == null && idx === 0);
+            return (
+              <SeatDropSlot
+                key={`${table.id}-seat-${seatNumber}`}
+                tableId={table.id}
+                seatIndex={seatNumber}
+                guest={seatAssignment?.guest}
+              />
+            );
+          })}
+        </div>
+
         {assignedGuests.length === 0 ? (
-          <p className="text-xs text-text-tertiary text-center py-3">Drop guests here</p>
+          <p className="text-xs text-text-tertiary text-center py-1">Drop guests on seats</p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {assignedGuests.map(({ assignment, guest }) => (
@@ -164,6 +209,7 @@ function TableCard({
                   isInvalid={!assignment.is_valid}
                   onRemove={() => onRemoveGuest(guest.id)}
                 />
+                <span className="text-[10px] text-text-tertiary">S{assignment.seat_index ?? '—'}</span>
                 {checkInMode && (
                   <button
                     onClick={() => onToggleCheckIn(guest.id, !assignment.checked_in_at)}
@@ -189,11 +235,12 @@ function TableForm({ initial, onSave, onCancel }: {
 }) {
   const [name, setName] = useState(initial?.table_name ?? '');
   const [capacity, setCapacity] = useState(initial?.capacity ?? 8);
+  const [shape, setShape] = useState<'round' | 'rectangle'>((initial?.table_shape as 'round' | 'rectangle') ?? 'round');
   const [notes, setNotes] = useState(initial?.notes ?? '');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave({ table_name: name, capacity: Number(capacity), notes });
+    onSave({ table_name: name, capacity: Number(capacity), table_shape: shape, notes });
   }
 
   return (
@@ -219,6 +266,17 @@ function TableForm({ initial, onSave, onCancel }: {
           value={capacity}
           onChange={e => setCapacity(Number(e.target.value))}
         />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-text-secondary mb-1">Shape</label>
+        <select
+          className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          value={shape}
+          onChange={e => setShape(e.target.value as 'round' | 'rectangle')}
+        >
+          <option value="round">Round</option>
+          <option value="rectangle">Rectangle</option>
+        </select>
       </div>
       <div className="flex gap-2">
         <Button type="submit" size="sm">Save</Button>
@@ -391,13 +449,33 @@ export const DashboardSeating: React.FC = () => {
       return;
     }
 
-    const targetTable = tables.find(t => t.id === dropId);
+    let targetTableId: string | null = null;
+    let targetSeatIndex: number | undefined;
+
+    if (dropId.startsWith('seat:')) {
+      const [, tableId, seatRaw] = dropId.split(':');
+      targetTableId = tableId;
+      targetSeatIndex = Number(seatRaw);
+    } else {
+      targetTableId = dropId;
+    }
+
+    const targetTable = tables.find(t => t.id === targetTableId);
     if (!targetTable) return;
 
-    const currentOccupants = assignments.filter(a => a.table_id === targetTable.id).length;
+    const existingForGuest = assignments.find(a => a.guest_id === guestId);
+    const currentOccupants = assignments
+      .filter(a => a.table_id === targetTable.id && a.guest_id !== guestId).length;
     if (currentOccupants >= targetTable.capacity) {
       toast(`${targetTable.table_name} is full`, 'error');
       return;
+    }
+
+    // if dropping onto an occupied seat, bump that guest to unseated at same table
+    let bumpedGuestId: string | null = null;
+    if (targetSeatIndex != null) {
+      const occupied = assignments.find(a => a.table_id === targetTable.id && a.seat_index === targetSeatIndex && a.guest_id !== guestId);
+      if (occupied) bumpedGuestId = occupied.guest_id;
     }
 
     try {
@@ -407,13 +485,18 @@ export const DashboardSeating: React.FC = () => {
             seating_event_id: seatingEvent.id,
             table_id: targetTable.id,
             guest_id: guestId,
-            seat_index: null,
+            seat_index: targetSeatIndex ?? existingForGuest?.seat_index ?? null,
             is_valid: true,
+            checked_in_at: null,
           }
-        : await assignGuestToTable(seatingEvent.id, targetTable.id, guestId);
+        : await assignGuestToTable(seatingEvent.id, targetTable.id, guestId, targetSeatIndex);
       setAssignments(prev => {
-        const filtered = prev.filter(a => a.guest_id !== guestId);
-        return [...filtered, assignment];
+        let next = prev.filter(a => a.guest_id !== guestId).map(a => {
+          if (bumpedGuestId && a.guest_id === bumpedGuestId) return { ...a, seat_index: null };
+          return a;
+        });
+        next = [...next, assignment];
+        return next;
       });
     } catch {
       toast('Failed to assign guest', 'error');
@@ -444,6 +527,7 @@ export const DashboardSeating: React.FC = () => {
             capacity: tableData.capacity || 8,
             sort_order: sortOrder,
             notes: tableData.notes || '',
+            table_shape: (tableData.table_shape as 'round' | 'rectangle') || 'round',
           }
         : await createTable({ ...tableData, seating_event_id: seatingEvent.id, sort_order: sortOrder });
       setTables(prev => [...prev, created]);
@@ -505,6 +589,7 @@ export const DashboardSeating: React.FC = () => {
             capacity: autoCapacity,
             sort_order: tables.length + idx,
             notes: '',
+            table_shape: 'round' as const,
           }))
         : await autoCreateTables(seatingEvent.id, counters.attending, autoCapacity);
       setTables(prev => [...prev, ...created]);
