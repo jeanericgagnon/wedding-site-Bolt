@@ -179,24 +179,26 @@ export const Signup: React.FC = () => {
         user_id: authData.user.id,
         couple_name_1: formData.firstName,
         couple_name_2: formData.secondName,
+        site_url: subdomain,
+      };
+
+      const extendedSitePayload = {
+        ...baseSitePayload,
         couple_first_name: formData.firstName,
         couple_second_name: formData.secondName,
         couple_last_name: formData.lastName && formData.secondLastName
           ? `${formData.lastName} & ${formData.secondLastName}`
           : formData.lastName || formData.secondLastName || '',
-        site_url: subdomain,
+        couple_email: coupleEmail,
       };
 
       let { error: siteError } = await supabase
         .from('wedding_sites')
-        .insert({
-          ...baseSitePayload,
-          couple_email: coupleEmail,
-        });
+        .insert(extendedSitePayload);
 
       // Some environments can temporarily serve a stale PostgREST schema cache.
-      // Retry without couple_email so signup is never blocked by that single column.
-      if (siteError && /couple_email/i.test(siteError.message)) {
+      // Retry with a minimal payload so signup is never blocked by optional columns.
+      if (siteError && /Could not find the 'couple_/i.test(siteError.message)) {
         const retry = await supabase
           .from('wedding_sites')
           .insert(baseSitePayload);
