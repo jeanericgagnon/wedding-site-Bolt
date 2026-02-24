@@ -1,5 +1,30 @@
 import { supabase } from './supabase';
 
+async function getFunctionErrorMessage(error: any, fallback: string): Promise<string> {
+  const base = error?.message || '';
+  const ctx = error?.context;
+
+  if (ctx) {
+    try {
+      const clone = typeof ctx.clone === 'function' ? ctx.clone() : ctx;
+      const text = typeof clone.text === 'function' ? await clone.text() : '';
+      if (text) {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed?.error) return String(parsed.error);
+        } catch {
+          // not json
+        }
+        return text;
+      }
+    } catch {
+      // ignore context parsing errors
+    }
+  }
+
+  return base || fallback;
+}
+
 export class SessionExpiredError extends Error {
   constructor() {
     super('Your session expired. Please sign in again.');
@@ -49,11 +74,11 @@ export async function createCheckoutSession(
   }
 
   if (error) {
-    const message = (error as any)?.message || '';
+    const message = await getFunctionErrorMessage(error, 'Could not start checkout. Please try again.');
     if (/401|unauthorized|jwt|session/i.test(message)) {
       throw new SessionExpiredError();
     }
-    throw new Error(message || 'Could not start checkout. Please try again.');
+    throw new Error(message);
   }
 
   const json = (data ?? {}) as { url?: string; error?: string };
@@ -92,11 +117,11 @@ export async function createSubscriptionSession(
   }
 
   if (error) {
-    const message = (error as any)?.message || '';
+    const message = await getFunctionErrorMessage(error, 'Could not start subscription checkout. Please try again.');
     if (/401|unauthorized|jwt|session/i.test(message)) {
       throw new SessionExpiredError();
     }
-    throw new Error(message || 'Could not start subscription checkout. Please try again.');
+    throw new Error(message);
   }
 
   const json = (data ?? {}) as { url?: string; error?: string };
@@ -201,11 +226,11 @@ export async function createSmsCreditsSession(
   }
 
   if (error) {
-    const message = (error as any)?.message || '';
+    const message = await getFunctionErrorMessage(error, 'Could not start SMS credits checkout. Please try again.');
     if (/401|unauthorized|jwt|session/i.test(message)) {
       throw new SessionExpiredError();
     }
-    throw new Error(message || 'Could not start SMS credits checkout. Please try again.');
+    throw new Error(message);
   }
 
   const json = (data ?? {}) as { url?: string; error?: string };
