@@ -117,7 +117,7 @@ function SeatDropSlot({
     <div
       ref={setNodeRef}
       style={style}
-      className={`h-10 rounded-lg border text-[11px] px-1 flex items-center justify-center text-center ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'} ${className ?? ''}`}
+      className={`h-9 sm:h-10 rounded-lg border text-[10px] sm:text-[11px] px-1 flex items-center justify-center text-center ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'} ${className ?? ''}`}
       title={`Seat ${seatIndex}`}
     >
       {guest ? (
@@ -196,7 +196,7 @@ function TableCard({
         {layoutMode === 'visual' ? (
           <>
             {(table.table_shape ?? 'round') === 'round' ? (
-              <div className="relative h-60 mb-2">
+              <div className="relative h-52 sm:h-60 mb-2">
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border border-border bg-surface-subtle flex items-center justify-center text-[11px] text-text-tertiary">
                   {table.table_name}
                 </div>
@@ -213,7 +213,7 @@ function TableCard({
                       tableId={table.id}
                       seatIndex={seatNumber}
                       guest={seatAssignment?.guest}
-                      className="absolute w-20 h-10 -ml-10 -mt-5 shadow-sm"
+                      className="absolute w-16 sm:w-20 h-9 sm:h-10 -ml-8 sm:-ml-10 -mt-4 sm:-mt-5 shadow-sm"
                       style={{ left: '50%', top: '50%', transform: `translate(${x}px, ${y}px)` }}
                     />
                   );
@@ -916,7 +916,7 @@ export const DashboardSeating: React.FC = () => {
         </div>
 
         {layoutMode === 'visual' && (
-          <div className="flex flex-wrap items-center gap-3 text-xs text-text-tertiary bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2">
+          <div className="hidden sm:flex flex-wrap items-center gap-3 text-xs text-text-tertiary bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2">
             <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-surface border border-border-subtle" /> Empty seat</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary-light border border-primary/40" /> Active drop zone</span>
             <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-success/10 border border-success/40" /> Arrived (check-in)</span>
