@@ -236,37 +236,39 @@ function TableCard({
                 : 'border-2 border-border-subtle bg-surface hover:border-border')}
       `}
     >
-      <div className={`flex items-center justify-between px-3 py-2 ${isCanvas ? 'bg-transparent' : 'border-b border-border-subtle'}`}>
-        <div className="flex items-center gap-2 min-w-0">
-          <TableProperties className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
-          <span className="text-sm font-semibold text-text-primary truncate">{table.table_name}</span>
-          <span className="text-[10px] uppercase text-text-tertiary px-1.5 py-0.5 rounded bg-surface-subtle border border-border-subtle">{table.table_shape ?? 'round'}</span>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
-            {occupied}/{table.capacity}
-          </span>
-          {isSelected && isCanvas && (
-            <button
-              onMouseDown={onStartMove}
-              className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors cursor-move"
-              title="Drag table"
-            >
-              <GripVertical className="w-3 h-3" />
-            </button>
-          )}
-          {isSelected && (
-            <>
-              <button onClick={(e) => { e.stopPropagation(); onEdit(table); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
-                <Edit2 className="w-3 h-3" />
+      {(!isCanvas || isSelected) && (
+        <div className={`flex items-center justify-between px-3 py-2 ${isCanvas ? 'bg-transparent' : 'border-b border-border-subtle'}`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <TableProperties className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
+            <span className="text-sm font-semibold text-text-primary truncate">{table.table_name}</span>
+            <span className="text-[10px] uppercase text-text-tertiary px-1.5 py-0.5 rounded bg-surface-subtle border border-border-subtle">{table.table_shape ?? 'round'}</span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
+              {occupied}/{table.capacity}
+            </span>
+            {isSelected && isCanvas && (
+              <button
+                onMouseDown={onStartMove}
+                className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors cursor-move"
+                title="Drag table"
+              >
+                <GripVertical className="w-3 h-3" />
               </button>
-              <button onClick={(e) => { e.stopPropagation(); onDelete(table.id); }} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </>
-          )}
+            )}
+            {isSelected && (
+              <>
+                <button onClick={(e) => { e.stopPropagation(); onEdit(table); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
+                  <Edit2 className="w-3 h-3" />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onDelete(table.id); }} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <div className={`p-2 min-h-[80px] ${isOver && !isFull ? 'bg-primary-light/20' : ''} ${isCanvas ? 'bg-transparent p-0' : ''}`}>
         {layoutMode === 'visual' ? (
           <>
