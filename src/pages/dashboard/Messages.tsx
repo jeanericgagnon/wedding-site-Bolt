@@ -866,6 +866,7 @@ export const DashboardMessages: React.FC = () => {
                     <p className="text-xs text-text-tertiary mb-1">Includes itinerary segments (look for “Itinerary • ...” in the dropdown).</p>
                   )}
                   <select
+                    key={`aud-${audienceOptions.length}`}
                     value={formData.audience}
                     onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
                     className="w-full px-4 py-2.5 border border-border rounded-lg bg-surface-subtle text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
