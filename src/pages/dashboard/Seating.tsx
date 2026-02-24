@@ -984,7 +984,7 @@ export const DashboardSeating: React.FC = () => {
     setTables(prev => prev.map(t => {
       if (t.id !== id) return t;
       const current = t.rotation_deg ?? 0;
-      next = ((current + deltaDeg) % 360 + 360) % 360;
+      next = current + deltaDeg; // unbounded so users can spin freely
       return { ...t, rotation_deg: next };
     }));
 
