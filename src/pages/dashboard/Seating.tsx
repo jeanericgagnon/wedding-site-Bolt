@@ -327,7 +327,7 @@ function TableCard({
           <div style={{ transform: `rotate(${table.rotation_deg ?? 0}deg)`, transformOrigin: '50% 50%' }}>
             {(['bar', 'dj_booth', 'dance_floor'] as TableShape[]).includes((table.table_shape ?? 'round') as TableShape) ? (
               <div className="relative mb-2">
-                <div className={`mx-auto rounded-xl flex items-center justify-center text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'border-2 border-dashed shadow-sm' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
+                <div className={`mx-auto rounded-xl flex items-center justify-center text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'border-2 border-dashed shadow-sm pointer-events-none select-none' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
                   {table.table_name || ''}
                 </div>
               </div>
