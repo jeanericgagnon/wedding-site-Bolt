@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2, FileDown, GripVertical } from 'lucide-react';
+import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2, FileDown } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -71,7 +71,7 @@ function DraggableGuestChip({ guest, isInvalid, onRemove }: {
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: guest.id });
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes}>
+    <div ref={setNodeRef} data-no-table-drag="true" {...listeners} {...attributes}>
       <GuestChip guest={guest} isDragging={isDragging} isInvalid={isInvalid} onRemove={onRemove} />
     </div>
   );
@@ -117,6 +117,7 @@ function SeatDropSlot({
   return (
     <div
       ref={setNodeRef}
+      data-no-table-drag="true"
       style={style}
       className={`h-9 sm:h-10 rounded-lg border text-[10px] sm:text-[11px] px-1 flex items-center justify-center text-center ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'} ${className ?? ''}`}
       title={`Seat ${seatIndex}`}
@@ -225,6 +226,13 @@ function TableCard({
     <div
       ref={setNodeRef}
       onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      onMouseDown={(e) => {
+        if (!isCanvas || e.button !== 0) return;
+        const target = e.target as HTMLElement;
+        if (target.closest('[data-no-table-drag="true"],button,input,textarea,select,a')) return;
+        onSelect();
+        onStartMove(e);
+      }}
       className={`
         rounded-xl transition-all cursor-pointer
         ${isCanvas
@@ -247,15 +255,6 @@ function TableCard({
             <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
               {occupied}/{table.capacity}
             </span>
-            {isSelected && isCanvas && (
-              <button
-                onMouseDown={onStartMove}
-                className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors cursor-move"
-                title="Drag table"
-              >
-                <GripVertical className="w-3 h-3" />
-              </button>
-            )}
             {isSelected && (
               <>
                 <button onClick={(e) => { e.stopPropagation(); onEdit(table); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
