@@ -402,7 +402,7 @@ function TableCard({
             )}
 
             {(table.table_shape === 'bar' || table.table_shape === 'dj_booth' || table.table_shape === 'dance_floor') ? null : (assignedGuests.length === 0 ? (
-              <p className="text-xs text-text-tertiary text-center py-1">Drop guests on seats</p>
+              (!isCanvas || isSelected) ? <p className="text-xs text-text-tertiary text-center py-1">Drop guests on seats</p> : null
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {assignedGuests.map(({ assignment, guest }) => (
@@ -471,12 +471,31 @@ function TableForm({ initial, onSave, onCancel }: {
   const [layoutWidth, setLayoutWidth] = useState(initial?.layout_width ?? 260);
   const [layoutHeight, setLayoutHeight] = useState(initial?.layout_height ?? 150);
   const [notes, setNotes] = useState(initial?.notes ?? '');
+  const autoSaveTimerRef = useRef<number | null>(null);
+
+  function buildPayload() {
+    const tableName = name.trim() || (shape === 'round' || shape === 'rectangle' ? 'Table' : '');
+    const seatCap = (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') ? 0 : Number(capacity);
+    return { table_name: tableName, capacity: seatCap, table_shape: shape, layout_width: Number(layoutWidth), layout_height: Number(layoutHeight), notes };
+  }
+
+  useEffect(() => {
+    // Auto-save only while editing an existing table
+    if (!initial?.id) return;
+    if (autoSaveTimerRef.current) window.clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      onSave(buildPayload());
+    }, 450);
+
+    return () => {
+      if (autoSaveTimerRef.current) window.clearTimeout(autoSaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, capacity, shape, layoutWidth, layoutHeight, notes]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const tableName = name.trim() || (shape === 'round' || shape === 'rectangle' ? 'Table' : '');
-    const seatCap = (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') ? 0 : Number(capacity);
-    onSave({ table_name: tableName, capacity: seatCap, table_shape: shape, layout_width: Number(layoutWidth), layout_height: Number(layoutHeight), notes });
+    onSave(buildPayload());
   }
 
   return (
@@ -543,7 +562,7 @@ function TableForm({ initial, onSave, onCancel }: {
         </>
       )}
       <div className="flex gap-2">
-        <Button type="submit" size="sm">Save</Button>
+        <Button type="submit" size="sm">{initial?.id ? 'Done' : 'Save'}</Button>
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
       </div>
     </form>
