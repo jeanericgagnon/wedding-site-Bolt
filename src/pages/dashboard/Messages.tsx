@@ -4,6 +4,7 @@ import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { demoGuests, demoWeddingSite } from '../../lib/demoData';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 
@@ -261,7 +262,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
 };
 
 export const DashboardMessages: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -287,17 +288,36 @@ export const DashboardMessages: React.FC = () => {
   }
 
   const fetchWeddingSite = useCallback(async () => {
-    if (!user) return;
+    if (isDemoMode) {
+      setWeddingSite({
+        id: demoWeddingSite.id,
+        couple_first_name: (demoWeddingSite as any).couple_first_name ?? (demoWeddingSite as any).couple_name_1 ?? null,
+        couple_second_name: (demoWeddingSite as any).couple_second_name ?? (demoWeddingSite as any).couple_name_2 ?? null,
+        couple_email: (demoWeddingSite as any).couple_email ?? null,
+      });
+      return;
+    }
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     const { data } = await supabase
       .from('wedding_sites')
       .select('id, couple_first_name, couple_second_name, couple_email')
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) setWeddingSite(data);
-  }, [user]);
+  }, [user, isDemoMode]);
 
   const fetchMessages = useCallback(async () => {
     if (!weddingSite) return;
+    if (isDemoMode) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -311,16 +331,27 @@ export const DashboardMessages: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [weddingSite]);
+  }, [weddingSite, isDemoMode]);
 
   const fetchGuests = useCallback(async () => {
     if (!weddingSite) return;
+    if (isDemoMode) {
+      setGuests(demoGuests.map((g) => ({
+        id: g.id,
+        email: g.email ?? null,
+        rsvp_status: g.rsvp_status ?? 'pending',
+        first_name: g.first_name ?? null,
+        last_name: g.last_name ?? null,
+        name: g.name,
+      })));
+      return;
+    }
     const { data } = await supabase
       .from('guests')
       .select('id, email, rsvp_status, first_name, last_name, name')
       .eq('wedding_site_id', weddingSite.id);
     setGuests(data || []);
-  }, [weddingSite]);
+  }, [weddingSite, isDemoMode]);
 
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
   useEffect(() => {
