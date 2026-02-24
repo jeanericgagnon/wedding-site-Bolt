@@ -627,11 +627,12 @@ export const DashboardSeating: React.FC = () => {
       return;
     }
 
-    // if dropping onto an occupied seat, bump that guest to unseated at same table
-    let bumpedGuestId: string | null = null;
+    // if dropping onto an occupied seat, do a true swap (target occupant gets source seat)
+    let occupiedAssignment: SeatingAssignment | null = null;
+    const sourceSeatValue: number | null = existingForGuest?.seat_index ?? null;
+    const sourceSeatIndex = sourceSeatValue ?? undefined;
     if (targetSeatIndex != null) {
-      const occupied = assignments.find(a => a.table_id === targetTable.id && a.seat_index === targetSeatIndex && a.guest_id !== guestId);
-      if (occupied) bumpedGuestId = occupied.guest_id;
+      occupiedAssignment = assignments.find(a => a.table_id === targetTable.id && a.seat_index === targetSeatIndex && a.guest_id !== guestId) ?? null;
     }
 
     try {
@@ -641,16 +642,33 @@ export const DashboardSeating: React.FC = () => {
             seating_event_id: seatingEvent.id,
             table_id: targetTable.id,
             guest_id: guestId,
-            seat_index: targetSeatIndex ?? existingForGuest?.seat_index ?? null,
+            seat_index: targetSeatIndex ?? sourceSeatValue,
             is_valid: true,
             checked_in_at: null,
           }
         : await assignGuestToTable(seatingEvent.id, targetTable.id, guestId, targetSeatIndex);
+
+      if (!isDemoMode && occupiedAssignment) {
+        await assignGuestToTable(
+          seatingEvent.id,
+          occupiedAssignment.table_id,
+          occupiedAssignment.guest_id,
+          sourceSeatIndex
+        );
+      }
+
       setAssignments(prev => {
-        let next = prev.filter(a => a.guest_id !== guestId).map(a => {
-          if (bumpedGuestId && a.guest_id === bumpedGuestId) return { ...a, seat_index: null };
-          return a;
-        });
+        let next = prev.filter(a => a.guest_id !== guestId);
+
+        if (occupiedAssignment) {
+          next = next.map(a => {
+            if (a.guest_id === occupiedAssignment!.guest_id) {
+              return { ...a, seat_index: sourceSeatValue };
+            }
+            return a;
+          });
+        }
+
         next = [...next, assignment];
         return next;
       });
