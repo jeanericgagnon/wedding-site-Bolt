@@ -1220,6 +1220,9 @@ export const DashboardSeating: React.FC = () => {
                 List Layout
               </button>
             </div>
+            <div className="px-3 py-2 rounded-lg border border-border-subtle bg-surface text-xs text-text-secondary">
+              Current Event: <span className="font-medium text-text-primary">{selectedItineraryEvent?.event_name ?? '—'}</span>
+            </div>
           </div>
         </div>
 
