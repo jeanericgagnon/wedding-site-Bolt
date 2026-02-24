@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { demoGuests, demoWeddingSite } from '../lib/demoData';
 
 type Match = {
   id: string;
@@ -26,6 +27,7 @@ async function callPublicFn(name: string, body: unknown) {
 export const GuestContactUpdate: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
   const siteRef = token; // now interpreted as site id/slug
+  const isDemoSiteRef = siteRef === demoWeddingSite.id || siteRef.toLowerCase() === 'demo';
 
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);
@@ -56,7 +58,20 @@ export const GuestContactUpdate: React.FC = () => {
         setSelectedHouseholdSize(rows[0].household_size ?? 1);
       }
     } catch (err) {
-      setResult({ ok: false, message: err instanceof Error ? err.message : 'Search failed' });
+      if (isDemoSiteRef) {
+        const q = query.trim().toLowerCase();
+        const rows = demoGuests
+          .filter((g) => (g.name || '').toLowerCase().includes(q))
+          .slice(0, 10)
+          .map((g) => ({ id: g.id, name: g.name, household_id: (g as any).household_id ?? null, household_size: ((g as any).household_size as number | undefined) ?? 1 }));
+        setMatches(rows);
+        if (rows.length > 0) {
+          setSelectedGuestId(rows[0].id);
+          setSelectedHouseholdSize(rows[0].household_size ?? 1);
+        }
+      } else {
+        setResult({ ok: false, message: err instanceof Error ? err.message : 'Search failed' });
+      }
     } finally {
       setSearching(false);
     }
@@ -68,16 +83,18 @@ export const GuestContactUpdate: React.FC = () => {
     setLoading(true);
     setResult(null);
     try {
-      const data = await callPublicFn('guest-contact-submit', {
-        site_ref: siteRef,
-        guest_id: selectedGuestId,
-        apply_household: applyHousehold,
-        email: email.trim() || null,
-        phone: phone.trim() || null,
-        rsvp_status: rsvpStatus || null,
-        sms_consent: smsConsent,
-      });
-      if ((data as any)?.error) throw new Error((data as any).error);
+      if (!isDemoSiteRef) {
+        const data = await callPublicFn('guest-contact-submit', {
+          site_ref: siteRef,
+          guest_id: selectedGuestId,
+          apply_household: applyHousehold,
+          email: email.trim() || null,
+          phone: phone.trim() || null,
+          rsvp_status: rsvpStatus || null,
+          sms_consent: smsConsent,
+        });
+        if ((data as any)?.error) throw new Error((data as any).error);
+      }
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {
       setResult({ ok: false, message: err instanceof Error ? err.message : 'Unable to submit update.' });
