@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2 } from 'lucide-react';
+import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2 } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -175,6 +175,7 @@ function TableCard({
   onStartMove,
   isSelected,
   onSelect,
+  onRotate,
 }: {
   table: SeatingTable;
   guests: EligibleGuest[];
@@ -191,6 +192,7 @@ function TableCard({
   onStartMove: (e: React.MouseEvent) => void;
   isSelected: boolean;
   onSelect: () => void;
+  onRotate: (deltaDeg: number) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: table.id });
   const occupied = guests.length;
@@ -204,6 +206,7 @@ function TableCard({
   const bySeat = new Map<number, { assignment: SeatingAssignment; guest: EligibleGuest }>();
   const shape = (table.table_shape ?? 'round') as TableShape;
   const palette = getShapePalette(shape);
+  const isNonSeatingObject = shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor';
   assignedGuests.forEach((row) => {
     if (row.assignment.seat_index != null) bySeat.set(row.assignment.seat_index, row);
   });
@@ -287,6 +290,12 @@ function TableCard({
             </span>
             {isSelected && (
               <>
+                <button onClick={(e) => { e.stopPropagation(); onRotate(-15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate left">
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onRotate(15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate right">
+                  <RotateCw className="w-3 h-3" />
+                </button>
                 <button onClick={(e) => { e.stopPropagation(); onEdit(table); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
                   <Edit2 className="w-3 h-3" />
                 </button>
@@ -300,10 +309,10 @@ function TableCard({
       )}
       <div className={`p-2 min-h-[80px] ${isOver && !isFull ? 'bg-primary-light/20' : ''} ${isCanvas ? 'bg-transparent p-0' : ''}`}>
         {layoutMode === 'visual' ? (
-          <>
+          <div style={{ transform: `rotate(${table.rotation_deg ?? 0}deg)`, transformOrigin: '50% 50%' }}>
             {(['bar', 'dj_booth', 'dance_floor'] as TableShape[]).includes((table.table_shape ?? 'round') as TableShape) ? (
               <div className="relative mb-2">
-                <div className={`mx-auto border rounded-xl flex items-center justify-center text-xs text-text-tertiary ${palette.fill}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
+                <div className={`mx-auto rounded-xl flex items-center justify-center text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'border-2 border-dashed shadow-sm' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
                   {table.table_name || ''}
                 </div>
               </div>
@@ -426,7 +435,7 @@ function TableCard({
                 ))}
               </div>
             ))}
-          </>
+          </div>
         ) : (
           <>
             {assignedGuests.length === 0 ? (
@@ -930,6 +939,7 @@ export const DashboardSeating: React.FC = () => {
             layout_height: Number(tableData.layout_height) || 150,
             layout_x: 24 + (sortOrder % 3) * 360,
             layout_y: 24 + Math.floor(sortOrder / 3) * 330,
+            rotation_deg: Number(tableData.rotation_deg) || 0,
           }
         : await createTable({ ...tableData, seating_event_id: seatingEvent.id, sort_order: sortOrder });
       setTables(prev => [...prev, created]);
@@ -962,6 +972,21 @@ export const DashboardSeating: React.FC = () => {
       setTables(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
     } catch {
       toast('Failed to resize table', 'error');
+    }
+  }
+
+
+  async function handleRotateTable(id: string, deltaDeg: number) {
+    const current = tables.find(t => t.id === id)?.rotation_deg ?? 0;
+    const next = ((current + deltaDeg) % 360 + 360) % 360;
+    const patch = { rotation_deg: next };
+    try {
+      if (!isDemoMode) {
+        await updateTable(id, patch);
+      }
+      setTables(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+    } catch {
+      toast('Failed to rotate shape', 'error');
     }
   }
 
@@ -1056,6 +1081,7 @@ export const DashboardSeating: React.FC = () => {
             layout_height: 150,
             layout_x: 24 + ((tables.length + idx) % 3) * 360,
             layout_y: 24 + Math.floor((tables.length + idx) / 3) * 330,
+            rotation_deg: 0,
           }))
         : await autoCreateTables(seatingEvent.id, counters.attending, autoCapacity);
       setTables(prev => [...prev, ...created]);
@@ -1573,6 +1599,7 @@ export const DashboardSeating: React.FC = () => {
                                 onStartMove={(e) => startMoveTable(table, idx, e)}
                                 isSelected={selectedTableId === table.id}
                                 onSelect={() => setSelectedTableId(table.id)}
+                              onRotate={(delta) => handleRotateTable(table.id, delta)}
                               />
                             </div>
                           );
@@ -1603,6 +1630,7 @@ export const DashboardSeating: React.FC = () => {
                             onStartMove={(e) => startMoveTable(table, idx, e)}
                             isSelected={selectedTableId === table.id}
                             onSelect={() => setSelectedTableId(table.id)}
+                            onRotate={(delta) => handleRotateTable(table.id, delta)}
                           />
                         )
                       ))}

@@ -29,6 +29,7 @@ export interface SeatingTable {
   layout_height?: number;
   layout_x?: number;
   layout_y?: number;
+  rotation_deg?: number;
 }
 
 export interface SeatingAssignment {
