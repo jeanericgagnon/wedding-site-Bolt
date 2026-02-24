@@ -1452,8 +1452,8 @@ export const DashboardSeating: React.FC = () => {
                       <div className="fixed inset-0 bg-black/35 z-[9998]" onClick={() => setCanvasFullscreen(false)} />
                     )}
                     <div
-                      className={`relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto transition-all duration-300 ${canvasFullscreen ? 'rounded-2xl shadow-2xl bg-surface p-3' : ''}`}
-                      style={canvasFullscreen ? { position: 'fixed', inset: '16px', zIndex: 9999, background: 'var(--surface, #fff)' } : undefined}
+                      className={`relative min-h-[720px] rounded-2xl border border-border-subtle bg-white overflow-auto transition-all duration-300 ${canvasFullscreen ? 'rounded-2xl shadow-2xl bg-white p-3' : ''}`}
+                      style={canvasFullscreen ? { position: 'fixed', inset: '16px', zIndex: 9999, background: '#fff' } : undefined}
                       onWheel={handleCanvasWheelZoom}
                     >
                       {canvasFullscreen && (
@@ -1465,7 +1465,7 @@ export const DashboardSeating: React.FC = () => {
                             >
                               ← Back
                             </button>
-                            <Button size="sm" onClick={() => setAddingTable(true)}>
+                            <Button size="sm" onClick={() => { setCanvasFullscreen(false); setAddingTable(true); }}>
                               <Plus className="w-4 h-4 mr-1" /> Add Table
                             </Button>
                           </div>
