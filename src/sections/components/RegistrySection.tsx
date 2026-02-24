@@ -135,11 +135,45 @@ interface RegistryCardProps {
 }
 
 const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
+  const isCashFund = item.item_type === 'cash_fund';
   const isPurchased = item.purchase_status === 'purchased';
   const isPartial = item.purchase_status === 'partial';
   const displayPrice = item.price_label ?? (item.price_amount != null ? `$${item.price_amount.toFixed(2)}` : null);
   const displayUrl = item.item_url ?? item.canonical_url;
   const merchant = item.merchant ?? item.store_name;
+
+  if (isCashFund) {
+    const goal = item.fund_goal_amount ?? 0;
+    const received = item.fund_received_amount ?? 0;
+    const pct = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
+    return (
+      <div className="bg-surface rounded-2xl border border-border p-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-medium text-text-primary text-sm line-clamp-2">{item.item_name}</h3>
+          <span className="text-[10px] uppercase px-2 py-1 rounded border border-primary/30 text-primary bg-primary/10">Cash Fund</span>
+        </div>
+        {item.notes && <p className="text-xs text-text-secondary leading-relaxed">{item.notes}</p>}
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="p-2 rounded-lg border border-border bg-surface-subtle">Goal: {goal > 0 ? `$${goal.toFixed(0)}` : '—'}</div>
+          <div className="p-2 rounded-lg border border-border bg-surface-subtle">Raised: ${received.toFixed(0)}</div>
+        </div>
+        {pct != null && (
+          <div>
+            <div className="h-2 w-full rounded-full bg-surface-subtle border border-border overflow-hidden">
+              <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1">{pct}% funded</p>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {item.fund_venmo_url && <a href={item.fund_venmo_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">Venmo</a>}
+          {item.fund_paypal_url && <a href={item.fund_paypal_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">PayPal</a>}
+          {item.fund_custom_url && <a href={item.fund_custom_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">{item.fund_custom_label || 'Contribute'}</a>}
+          {item.fund_zelle_handle && <span className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl">Zelle: {item.fund_zelle_handle}</span>}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`bg-surface rounded-2xl border overflow-hidden flex flex-col transition-all duration-200 ${

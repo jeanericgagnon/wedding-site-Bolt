@@ -3,6 +3,7 @@ export type PurchaseStatus = 'available' | 'partial' | 'purchased';
 export interface RegistryItem {
   id: string;
   wedding_site_id: string;
+  item_type?: 'product' | 'cash_fund';
   item_name: string;
   price_label: string | null;
   price_amount: number | null;
@@ -29,6 +30,13 @@ export interface RegistryItem {
   next_refresh_at?: string | null;
   last_auto_refreshed_at?: string | null;
   refresh_fail_count?: number | null;
+  fund_goal_amount?: number | null;
+  fund_received_amount?: number | null;
+  fund_venmo_url?: string | null;
+  fund_paypal_url?: string | null;
+  fund_zelle_handle?: string | null;
+  fund_custom_url?: string | null;
+  fund_custom_label?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -84,6 +92,7 @@ export function getBlockedMessage(preview: RegistryPreview): string | null {
 }
 
 export interface RegistryItemDraft {
+  item_type?: 'product' | 'cash_fund';
   item_name: string;
   price_label: string;
   price_amount: string;
@@ -93,6 +102,13 @@ export interface RegistryItemDraft {
   notes: string;
   desired_quantity: string;
   hide_when_purchased: boolean;
+  fund_goal_amount?: string;
+  fund_received_amount?: string;
+  fund_venmo_url?: string;
+  fund_paypal_url?: string;
+  fund_zelle_handle?: string;
+  fund_custom_url?: string;
+  fund_custom_label?: string;
 }
 
 export const EMPTY_DRAFT: RegistryItemDraft = {
@@ -105,6 +121,14 @@ export const EMPTY_DRAFT: RegistryItemDraft = {
   notes: '',
   desired_quantity: '1',
   hide_when_purchased: false,
+  item_type: 'product',
+  fund_goal_amount: '',
+  fund_received_amount: '',
+  fund_venmo_url: '',
+  fund_paypal_url: '',
+  fund_zelle_handle: '',
+  fund_custom_url: '',
+  fund_custom_label: '',
 };
 
 export type RegistryFilter = 'all' | 'available' | 'partial' | 'purchased';

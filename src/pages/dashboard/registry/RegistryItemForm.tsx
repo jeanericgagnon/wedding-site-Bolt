@@ -15,6 +15,7 @@ interface Props {
 
 function itemToDraft(item: RegistryItem): RegistryItemDraft {
   return {
+    item_type: item.item_type ?? 'product',
     item_name: item.item_name,
     price_label: item.price_label ?? '',
     price_amount: item.price_amount != null ? String(item.price_amount) : '',
@@ -24,12 +25,20 @@ function itemToDraft(item: RegistryItem): RegistryItemDraft {
     notes: item.notes ?? item.description ?? '',
     desired_quantity: String(item.quantity_needed ?? 1),
     hide_when_purchased: item.hide_when_purchased ?? false,
+    fund_goal_amount: item.fund_goal_amount != null ? String(item.fund_goal_amount) : '',
+    fund_received_amount: item.fund_received_amount != null ? String(item.fund_received_amount) : '',
+    fund_venmo_url: item.fund_venmo_url ?? '',
+    fund_paypal_url: item.fund_paypal_url ?? '',
+    fund_zelle_handle: item.fund_zelle_handle ?? '',
+    fund_custom_url: item.fund_custom_url ?? '',
+    fund_custom_label: item.fund_custom_label ?? '',
   };
 }
 
 export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [], onSave, onCancel }) => {
   const [draft, setDraft] = useState<RegistryItemDraft>(() =>
     initial ? itemToDraft(initial) : {
+      item_type: 'product',
       item_name: '',
       price_label: '',
       price_amount: '',
@@ -39,6 +48,13 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       notes: '',
       desired_quantity: '1',
       hide_when_purchased: false,
+      fund_goal_amount: '',
+      fund_received_amount: '',
+      fund_venmo_url: '',
+      fund_paypal_url: '',
+      fund_zelle_handle: '',
+      fund_custom_url: '',
+      fund_custom_label: '',
     }
   );
 
@@ -160,8 +176,16 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">Item Type</label>
+            <div className="inline-flex rounded-lg border border-border overflow-hidden">
+              <button type="button" className={`px-3 py-1.5 text-sm ${draft.item_type !== 'cash_fund' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => set('item_type', 'product')}>Product</button>
+              <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${draft.item_type === 'cash_fund' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => set('item_type', 'cash_fund')}>Cash Fund</button>
+            </div>
+          </div>
+
           {/* URL Import */}
-          <div className="space-y-2">
+          {draft.item_type !== 'cash_fund' && <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="block text-sm font-medium text-text-primary">
                 {isEdit ? 'Product URL' : 'Import from URL'}
@@ -242,11 +266,11 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 <span>{dedupeWarning}</span>
               </div>
             )}
-          </div>
+          </div>}
 
           <div className="grid grid-cols-1 gap-4">
             {/* Image preview + URL */}
-            <div className="flex gap-4">
+            {draft.item_type !== 'cash_fund' && <div className="flex gap-4">
               <div className="w-20 h-20 flex-shrink-0 rounded-xl bg-surface-subtle border border-border overflow-hidden flex items-center justify-center">
                 {draft.image_url ? (
                   <img
@@ -271,7 +295,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
-            </div>
+            </div>}
 
             {/* Name */}
             <div>
@@ -288,6 +312,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               />
             </div>
 
+            {draft.item_type !== 'cash_fund' ? <>
             {/* Price row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -359,6 +384,43 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 </label>
               </div>
             </div>
+            </> : (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Fund Goal Amount</label>
+                    <input type="number" min="0" step="0.01" value={draft.fund_goal_amount ?? ''} onChange={e => set('fund_goal_amount', e.target.value)} placeholder="e.g. 2000" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Amount Received</label>
+                    <input type="number" min="0" step="0.01" value={draft.fund_received_amount ?? ''} onChange={e => set('fund_received_amount', e.target.value)} placeholder="e.g. 350" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Venmo Link</label>
+                    <input type="url" value={draft.fund_venmo_url ?? ''} onChange={e => set('fund_venmo_url', e.target.value)} placeholder="https://venmo.com/yourhandle" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-1">PayPal Link</label>
+                    <input type="url" value={draft.fund_paypal_url ?? ''} onChange={e => set('fund_paypal_url', e.target.value)} placeholder="https://paypal.me/yourname" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Zelle Handle</label>
+                    <input type="text" value={draft.fund_zelle_handle ?? ''} onChange={e => set('fund_zelle_handle', e.target.value)} placeholder="Email or phone for Zelle" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Custom Link Label + URL</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" value={draft.fund_custom_label ?? ''} onChange={e => set('fund_custom_label', e.target.value)} placeholder="Label" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                      <input type="url" value={draft.fund_custom_url ?? ''} onChange={e => set('fund_custom_url', e.target.value)} placeholder="https://..." className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Notes */}
             <div>

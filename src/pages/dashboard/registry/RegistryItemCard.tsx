@@ -92,6 +92,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [refetching, setRefetching] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const isCashFund = item.item_type === 'cash_fund';
   const displayPrice = item.price_label
     ? item.price_label
     : item.price_amount != null
@@ -112,6 +113,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     ? new Date(item.next_refresh_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null;
   const failCount = item.refresh_fail_count ?? 0;
+  const goal = item.fund_goal_amount ?? 0;
+  const received = item.fund_received_amount ?? 0;
+  const fundPct = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
 
   function handleDeleteClick() {
     if (confirmDelete) {
@@ -142,6 +146,49 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     } finally {
       setRefetching(false);
     }
+  }
+
+  if (isCashFund) {
+    return (
+      <div className="group relative bg-surface border border-border rounded-xl overflow-hidden flex flex-col transition-shadow hover:shadow-md p-4 gap-3">
+        <div className="flex items-start justify-between">
+          <h3 className="font-semibold text-text-primary leading-snug">{item.item_name}</h3>
+          <Badge variant="neutral">Cash Fund</Badge>
+        </div>
+        {item.notes && <p className="text-sm text-text-secondary">{item.notes}</p>}
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="p-2 rounded-lg bg-surface-subtle border border-border">
+            <p className="text-xs text-text-tertiary">Goal</p>
+            <p className="font-semibold text-text-primary">{goal > 0 ? `$${goal.toFixed(0)}` : '—'}</p>
+          </div>
+          <div className="p-2 rounded-lg bg-surface-subtle border border-border">
+            <p className="text-xs text-text-tertiary">Received</p>
+            <p className="font-semibold text-text-primary">${received.toFixed(0)}</p>
+          </div>
+        </div>
+        {fundPct != null && (
+          <div>
+            <div className="w-full h-2 rounded-full bg-surface-subtle border border-border overflow-hidden">
+              <div className="h-full bg-primary" style={{ width: `${fundPct}%` }} />
+            </div>
+            <p className="text-xs text-text-tertiary mt-1">{fundPct}% funded</p>
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-2">
+          <input type="number" min="0" step="0.01" value={received} onChange={() => {}} readOnly className="hidden" />
+          <button onClick={() => onEdit(item)} className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" />Edit</button>
+          <button onClick={handleDeleteClick} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors ${confirmDelete ? 'text-error border-error bg-error/5' : 'text-text-secondary border-border hover:border-error hover:text-error'}`}>
+            <Trash2 className="w-3.5 h-3.5" />{confirmDelete ? 'Confirm' : 'Delete'}
+          </button>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {item.fund_venmo_url && <a href={item.fund_venmo_url} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">Venmo</a>}
+          {item.fund_paypal_url && <a href={item.fund_paypal_url} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">PayPal</a>}
+          {item.fund_zelle_handle && <span className="text-xs px-2 py-1 border rounded-lg">Zelle: {item.fund_zelle_handle}</span>}
+          {item.fund_custom_url && <a href={item.fund_custom_url} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">{item.fund_custom_label || 'Link'}</a>}
+        </div>
+      </div>
+    );
   }
 
   return (

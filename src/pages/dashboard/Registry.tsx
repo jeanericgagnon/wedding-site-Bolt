@@ -185,17 +185,29 @@ export const DashboardRegistry: React.FC = () => {
     if (!weddingSiteId) throw new Error('No wedding site found');
 
     const parsedPrice = draft.price_amount ? parseFloat(draft.price_amount) : null;
+    const parsedGoal = draft.fund_goal_amount ? parseFloat(draft.fund_goal_amount) : null;
+    const parsedReceived = draft.fund_received_amount ? parseFloat(draft.fund_received_amount) : null;
+    const isCashFund = draft.item_type === 'cash_fund';
+
     const fields: Partial<RegistryItem> = {
+      item_type: isCashFund ? 'cash_fund' : 'product',
       item_name: draft.item_name.trim(),
-      price_label: draft.price_label || null,
-      price_amount: parsedPrice !== null && !isNaN(parsedPrice) ? parsedPrice : null,
-      merchant: draft.merchant || null,
-      store_name: draft.merchant || null,
-      item_url: draft.item_url || null,
-      image_url: draft.image_url || null,
+      price_label: isCashFund ? null : (draft.price_label || null),
+      price_amount: isCashFund ? null : (parsedPrice !== null && !isNaN(parsedPrice) ? parsedPrice : null),
+      merchant: isCashFund ? null : (draft.merchant || null),
+      store_name: isCashFund ? null : (draft.merchant || null),
+      item_url: isCashFund ? null : (draft.item_url || null),
+      image_url: isCashFund ? null : (draft.image_url || null),
       notes: draft.notes || null,
-      quantity_needed: parseInt(draft.desired_quantity) || 1,
-      hide_when_purchased: draft.hide_when_purchased,
+      quantity_needed: isCashFund ? 1 : (parseInt(draft.desired_quantity) || 1),
+      hide_when_purchased: isCashFund ? false : draft.hide_when_purchased,
+      fund_goal_amount: parsedGoal !== null && !isNaN(parsedGoal) ? parsedGoal : null,
+      fund_received_amount: parsedReceived !== null && !isNaN(parsedReceived) ? parsedReceived : 0,
+      fund_venmo_url: draft.fund_venmo_url || null,
+      fund_paypal_url: draft.fund_paypal_url || null,
+      fund_zelle_handle: draft.fund_zelle_handle || null,
+      fund_custom_url: draft.fund_custom_url || null,
+      fund_custom_label: draft.fund_custom_label || null,
       metadata_last_checked_at: new Date().toISOString(),
       next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
     };
@@ -208,6 +220,7 @@ export const DashboardRegistry: React.FC = () => {
         const created: RegistryItem = {
           id: `demo-registry-${Date.now()}`,
           wedding_site_id: weddingSiteId,
+          item_type: (fields.item_type as 'product' | 'cash_fund') ?? 'product',
           item_name: fields.item_name || 'Untitled item',
           price_label: fields.price_label ?? null,
           price_amount: fields.price_amount ?? null,
@@ -234,6 +247,13 @@ export const DashboardRegistry: React.FC = () => {
           next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
           last_auto_refreshed_at: null,
           refresh_fail_count: 0,
+          fund_goal_amount: fields.fund_goal_amount ?? null,
+          fund_received_amount: fields.fund_received_amount ?? 0,
+          fund_venmo_url: fields.fund_venmo_url ?? null,
+          fund_paypal_url: fields.fund_paypal_url ?? null,
+          fund_zelle_handle: fields.fund_zelle_handle ?? null,
+          fund_custom_url: fields.fund_custom_url ?? null,
+          fund_custom_label: fields.fund_custom_label ?? null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
