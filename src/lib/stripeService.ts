@@ -49,52 +49,56 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
-  const session = await requireSession();
+  let session = await requireSession();
 
-  let { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: {
-      wedding_site_id: weddingSiteId,
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-    },
-  });
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string).trim();
+  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string).trim();
 
-  // If auth/session is stale, refresh once and retry.
-  if (error && /401|unauthorized|jwt|token|expired/i.test((error as any)?.message || '')) {
-    const { error: refreshError } = await supabase.auth.refreshSession();
-    if (!refreshError) {
-      const { data: { session: refreshedSession } } = await supabase.auth.getSession();
-      const retry = await supabase.functions.invoke('stripe-create-checkout', {
-        headers: refreshedSession?.access_token
-          ? { Authorization: `Bearer ${refreshedSession.access_token}` }
-          : undefined,
-        body: {
-          wedding_site_id: weddingSiteId,
-          success_url: successUrl,
-          cancel_url: cancelUrl,
-        },
-      });
-      data = retry.data;
-      error = retry.error;
+  const call = async (token: string) => {
+    const res = await fetch(`${supabaseUrl}/functions/v1/stripe-create-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({
+        wedding_site_id: weddingSiteId,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+      }),
+    });
+
+    const raw = await res.text();
+    let json: { url?: string; error?: string } = {};
+    try {
+      json = raw ? JSON.parse(raw) : {};
+    } catch {
+      // non-json response
+    }
+
+    return { res, json, raw };
+  };
+
+  let out = await call(session.access_token);
+
+  if (out.res.status === 401) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (!refreshError && refreshed.session?.access_token) {
+      session = refreshed.session;
+      out = await call(session.access_token);
     }
   }
 
-  if (error) {
-    const message = await getFunctionErrorMessage(error, 'Could not start checkout. Please try again.');
-    if (/401|unauthorized|jwt|token|expired/i.test(message)) {
-      throw new SessionExpiredError();
-    }
-    throw new Error(message);
+  if (!out.res.ok) {
+    if (out.res.status === 401) throw new SessionExpiredError();
+    throw new Error(out.json.error || out.raw || `Server error (${out.res.status})`);
   }
 
-  const json = (data ?? {}) as { url?: string; error?: string };
-  if (json.error) throw new Error(json.error);
-  if (!json.url) throw new Error('No checkout URL returned. Please try again.');
+  if (out.json.error) throw new Error(out.json.error);
+  if (!out.json.url) throw new Error('No checkout URL returned. Please try again.');
 
-  return json.url;
+  return out.json.url;
 }
 
 export async function createSubscriptionSession(
