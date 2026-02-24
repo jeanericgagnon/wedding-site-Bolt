@@ -143,6 +143,15 @@ interface WeddingSite {
   sms_credits_balance?: number;
 }
 
+interface SmsCreditTransaction {
+  id: string;
+  credits_delta: number;
+  reason: string;
+  created_at: string;
+  expires_at?: string | null;
+  remaining_credits?: number | null;
+}
+
 interface Toast {
   id: number;
   message: string;
@@ -359,6 +368,7 @@ export const DashboardMessages: React.FC = () => {
   const [viewingMessage, setViewingMessage] = useState<Message | null>(null);
   const [buyingPack, setBuyingPack] = useState<'sms_100' | 'sms_500' | 'sms_1000' | null>(null);
   const [smsExpiringSoon, setSmsExpiringSoon] = useState<number>(0);
+  const [smsTransactions, setSmsTransactions] = useState<SmsCreditTransaction[]>([]);
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -464,19 +474,32 @@ export const DashboardMessages: React.FC = () => {
     if (!weddingSite) return;
     if (isDemoMode) {
       setSmsExpiringSoon(40);
+      setSmsTransactions([
+        { id: 'demo-tx-1', credits_delta: 100, reason: 'purchase', created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), expires_at: new Date(Date.now() + 359 * 24 * 60 * 60 * 1000).toISOString(), remaining_credits: 72 },
+        { id: 'demo-tx-2', credits_delta: -28, reason: 'usage', created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+      ]);
       return;
     }
 
     const cutoff = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data } = await supabase
-      .from('sms_credit_transactions')
-      .select('remaining_credits, expires_at')
-      .eq('wedding_site_id', weddingSite.id)
-      .eq('reason', 'purchase')
-      .lte('expires_at', cutoff);
+    const [expiringResult, txResult] = await Promise.all([
+      supabase
+        .from('sms_credit_transactions')
+        .select('remaining_credits, expires_at')
+        .eq('wedding_site_id', weddingSite.id)
+        .eq('reason', 'purchase')
+        .lte('expires_at', cutoff),
+      supabase
+        .from('sms_credit_transactions')
+        .select('id, credits_delta, reason, created_at, expires_at, remaining_credits')
+        .eq('wedding_site_id', weddingSite.id)
+        .order('created_at', { ascending: false })
+        .limit(8),
+    ]);
 
-    const soon = (data ?? []).reduce((sum, row: any) => sum + Number(row.remaining_credits ?? 0), 0);
+    const soon = (expiringResult.data ?? []).reduce((sum, row: any) => sum + Number(row.remaining_credits ?? 0), 0);
     setSmsExpiringSoon(soon);
+    setSmsTransactions((txResult.data ?? []) as SmsCreditTransaction[]);
   }, [weddingSite, isDemoMode]);
 
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
@@ -708,6 +731,31 @@ export const DashboardMessages: React.FC = () => {
           </Card>
         </div>
 
+        <Card variant="bordered" padding="lg">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-text-primary">SMS Credit Activity</h3>
+            <span className="text-xs text-text-tertiary">Recent {smsTransactions.length}</span>
+          </div>
+          {smsTransactions.length === 0 ? (
+            <p className="text-xs text-text-tertiary">No SMS credit activity yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {smsTransactions.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between gap-3 text-xs border border-border rounded-lg px-3 py-2 bg-surface-subtle">
+                  <div>
+                    <p className="text-text-primary capitalize">{tx.reason}</p>
+                    <p className="text-text-tertiary">{new Date(tx.created_at).toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`${tx.credits_delta >= 0 ? 'text-success' : 'text-error'} font-medium`}>{tx.credits_delta >= 0 ? '+' : ''}{tx.credits_delta} credits</p>
+                    {tx.expires_at && tx.reason === 'purchase' && <p className="text-text-tertiary">Expires {new Date(tx.expires_at).toLocaleDateString()}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Card variant="bordered" padding="lg">
@@ -720,7 +768,7 @@ export const DashboardMessages: React.FC = () => {
                     <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>SMS</button>
                   </div>
                   {formData.channel === 'sms' && (
-                    <p className="text-xs text-text-tertiary mt-1">SMS credit wallet is active. Sending pipeline can be enabled once Twilio credentials are configured.</p>
+                    <p className="text-xs text-text-tertiary mt-1">SMS uses credit balance and sends via Twilio when provider credentials are configured.</p>
                   )}
                 </div>
 
