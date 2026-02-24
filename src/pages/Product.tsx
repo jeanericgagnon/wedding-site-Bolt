@@ -417,7 +417,6 @@ export const Product: React.FC = () => {
                       'Assign entire households to tables in one action',
                       'Export seating for caterer and venue (CSV/PDF)',
                       'Day-of check-in mode with arrival tracking',
-                      'QR code check-in for venue staff',
                       'Meal headcount export by table and event',
                     ].map((item, i) => (
                       <li key={i} className="flex items-start gap-3">
@@ -582,8 +581,8 @@ export const Product: React.FC = () => {
                   { icon: Lock,          label: 'Cryptographic per-guest invite tokens',        done: true },
                   { icon: CheckCircle2,  label: 'Multi-event RSVP with separate permissions',   done: true },
                   { icon: Utensils,      label: 'Meal choices + dietary/allergen notes',         done: true },
-                  { icon: MessageSquare, label: 'Custom RSVP questions (rolling out)',           done: false },
-                  { icon: Mail,          label: 'Confirmation email automation (rolling out)',    done: false },
+                  { icon: MessageSquare, label: 'Custom RSVP questions',                         done: true },
+                  { icon: Mail,          label: 'Confirmation email automation',                  done: true },
                   { icon: Clock,         label: 'RSVP deadline enforcement',                    done: true },
                   { icon: Shield,        label: 'Rate limiting + honeypot spam protection',     done: true },
                 ].map((f, i) => (
@@ -671,9 +670,8 @@ export const Product: React.FC = () => {
                   'Visual seating chart builder with drag-and-drop',
                   'Household-aware table assignment (assign whole family at once)',
                   'Caterer export: CSV, Excel, PDF',
-                  'Day-of check-in mode with QR code scanning',
+                  'Day-of check-in mode with arrival tracking',
                   'Meal headcount by table',
-                  'Offline fallback for poor venue connectivity',
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <Clock className="w-4 h-4 flex-shrink-0 text-text-tertiary/50" />
@@ -697,7 +695,6 @@ export const Product: React.FC = () => {
                   { icon: Users,   label: 'Invite-only site with token-gated access',  done: true },
                   { icon: DollarSign, label: 'Clear pricing, no hidden fees',          done: true },
                   { icon: Bell,    label: 'CAN-SPAM compliant messaging consent',      done: true },
-                  { icon: FileText,label: 'GDPR-ready data export',                   done: false },
                 ].map((f, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <f.icon className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
