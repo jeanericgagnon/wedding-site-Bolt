@@ -737,7 +737,7 @@ export const DashboardMessages: React.FC = () => {
             <span className="text-xs text-text-tertiary">Recent {smsTransactions.length}</span>
           </div>
           {smsTransactions.length === 0 ? (
-            <p className="text-xs text-text-tertiary">No SMS credit activity yet.</p>
+            <p className="text-xs text-text-tertiary">No SMS credit activity yet. Buy a credit pack to get started.</p>
           ) : (
             <div className="space-y-2">
               {smsTransactions.map((tx) => (
@@ -795,16 +795,26 @@ export const DashboardMessages: React.FC = () => {
                       {recipientsWithPhone} of {selectedAudience?.count} guests have phone numbers
                     </p>
                   )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center px-2 py-1 text-xs rounded-full border border-border bg-surface-subtle text-text-secondary">
+                      Will reach {activeRecipients} guest{activeRecipients !== 1 ? 's' : ''}
+                    </span>
+                    {formData.channel === 'sms' && (
+                      <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full border ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
+                        {smsCreditsSufficient ? 'Credits available' : `Need ${smsCreditsNeeded - smsCredits} more credits`}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-2">
-                    Subject <span className="text-error">*</span>
+                    {formData.channel === 'sms' ? 'Campaign Name' : 'Subject'} <span className="text-error">*</span>
                   </label>
                   <Input
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    placeholder="e.g., Wedding Day Reminder"
+                    placeholder={formData.channel === 'sms' ? 'e.g., RSVP Reminder SMS' : 'e.g., Wedding Day Reminder'}
                     required
                   />
                 </div>
@@ -946,6 +956,14 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {activeRecipients > 0 && (
+                  <div className="text-xs text-text-tertiary bg-surface-subtle border border-border rounded-lg px-3 py-2">
+                    {formData.scheduleType === 'now'
+                      ? `When you click Send, this ${formData.channel.toUpperCase()} campaign will queue immediately for ${activeRecipients} recipients.`
+                      : `Scheduled campaigns will send at your selected time to the latest matching audience.`}
+                  </div>
+                )}
 
                 {activeRecipients === 0 && !sending && formData.audience !== '' && (
                   <div className="flex items-center gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
