@@ -137,6 +137,7 @@ interface RegistryCardProps {
 const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
   const isCashFund = item.item_type === 'cash_fund';
   const isPurchased = item.purchase_status === 'purchased';
+  const [copiedZelle, setCopiedZelle] = useState(false);
   const isPartial = item.purchase_status === 'partial';
   const displayPrice = item.price_label ?? (item.price_amount != null ? `$${item.price_amount.toFixed(2)}` : null);
   const displayUrl = item.item_url ?? item.canonical_url;
@@ -174,12 +175,14 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(item.fund_zelle_handle || '');
+                  setCopiedZelle(true);
+                  setTimeout(() => setCopiedZelle(false), 1600);
                 } catch {}
               }}
               className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary"
               title={`Copy Zelle: ${item.fund_zelle_handle}`}
             >
-              Zelle: {item.fund_zelle_handle}
+              {copiedZelle ? 'Copied ✓' : `Zelle: ${item.fund_zelle_handle}`}
             </button>
           )}
         </div>
