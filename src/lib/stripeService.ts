@@ -63,7 +63,7 @@ export async function createCheckoutSession(
   });
 
   // If auth/session is stale, refresh once and retry.
-  if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
+  if (error && /401|unauthorized|jwt|token|expired/i.test((error as any)?.message || '')) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();
@@ -84,7 +84,7 @@ export async function createCheckoutSession(
 
   if (error) {
     const message = await getFunctionErrorMessage(error, 'Could not start checkout. Please try again.');
-    if (/401|unauthorized|jwt|session/i.test(message)) {
+    if (/401|unauthorized|jwt|token|expired/i.test(message)) {
       throw new SessionExpiredError();
     }
     throw new Error(message);
@@ -115,7 +115,7 @@ export async function createSubscriptionSession(
     },
   });
 
-  if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
+  if (error && /401|unauthorized|jwt|token|expired/i.test((error as any)?.message || '')) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();
@@ -136,7 +136,7 @@ export async function createSubscriptionSession(
 
   if (error) {
     const message = await getFunctionErrorMessage(error, 'Could not start subscription checkout. Please try again.');
-    if (/401|unauthorized|jwt|session/i.test(message)) {
+    if (/401|unauthorized|jwt|token|expired/i.test(message)) {
       throw new SessionExpiredError();
     }
     throw new Error(message);
@@ -232,7 +232,7 @@ export async function createSmsCreditsSession(
     },
   });
 
-  if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
+  if (error && /401|unauthorized|jwt|token|expired/i.test((error as any)?.message || '')) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();
@@ -254,7 +254,7 @@ export async function createSmsCreditsSession(
 
   if (error) {
     const message = await getFunctionErrorMessage(error, 'Could not start SMS credits checkout. Please try again.');
-    if (/401|unauthorized|jwt|session/i.test(message)) {
+    if (/401|unauthorized|jwt|token|expired/i.test(message)) {
       throw new SessionExpiredError();
     }
     throw new Error(message);
