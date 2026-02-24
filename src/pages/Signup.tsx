@@ -175,20 +175,33 @@ export const Signup: React.FC = () => {
       const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const coupleEmail = `${firstName}-${secondName}@dayof.love`;
 
-      const { error: siteError } = await supabase
+      const baseSitePayload = {
+        user_id: authData.user.id,
+        couple_name_1: formData.firstName,
+        couple_name_2: formData.secondName,
+        couple_first_name: formData.firstName,
+        couple_second_name: formData.secondName,
+        couple_last_name: formData.lastName && formData.secondLastName
+          ? `${formData.lastName} & ${formData.secondLastName}`
+          : formData.lastName || formData.secondLastName || '',
+        site_url: subdomain,
+      };
+
+      let { error: siteError } = await supabase
         .from('wedding_sites')
         .insert({
-          user_id: authData.user.id,
-          couple_name_1: formData.firstName,
-          couple_name_2: formData.secondName,
-          couple_first_name: formData.firstName,
-          couple_second_name: formData.secondName,
-          couple_last_name: formData.lastName && formData.secondLastName
-            ? `${formData.lastName} & ${formData.secondLastName}`
-            : formData.lastName || formData.secondLastName || '',
+          ...baseSitePayload,
           couple_email: coupleEmail,
-          site_url: subdomain,
         });
+
+      // Some environments can temporarily serve a stale PostgREST schema cache.
+      // Retry without couple_email so signup is never blocked by that single column.
+      if (siteError && /couple_email/i.test(siteError.message)) {
+        const retry = await supabase
+          .from('wedding_sites')
+          .insert(baseSitePayload);
+        siteError = retry.error;
+      }
 
       if (siteError) throw siteError;
 
