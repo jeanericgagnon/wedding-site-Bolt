@@ -224,7 +224,7 @@ function TableCard({
   return (
     <div
       ref={setNodeRef}
-      onClick={onSelect}
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
       className={`
         rounded-xl transition-all cursor-pointer
         ${isCanvas
@@ -1123,7 +1123,7 @@ export const DashboardSeating: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="seating">
-      <div className="max-w-7xl mx-auto space-y-5">
+      <div className="max-w-7xl mx-auto space-y-5" onClick={() => setSelectedTableId(null)}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-light rounded-xl">
