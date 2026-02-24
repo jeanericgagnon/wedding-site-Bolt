@@ -23,11 +23,11 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Missing authorization" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -53,8 +53,6 @@ Deno.serve(async (req: Request) => {
     if (!priceId) {
       return new Response(JSON.stringify({ error: `Missing env ${packDef.envKey}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: site, error: siteError } = await supabaseAdmin
       .from("wedding_sites")
