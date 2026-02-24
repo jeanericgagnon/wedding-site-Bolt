@@ -977,14 +977,19 @@ export const DashboardSeating: React.FC = () => {
 
 
   async function handleRotateTable(id: string, deltaDeg: number) {
-    const current = tables.find(t => t.id === id)?.rotation_deg ?? 0;
-    const next = ((current + deltaDeg) % 360 + 360) % 360;
-    const patch = { rotation_deg: next };
+    let next = 0;
+
+    setTables(prev => prev.map(t => {
+      if (t.id !== id) return t;
+      const current = t.rotation_deg ?? 0;
+      next = ((current + deltaDeg) % 360 + 360) % 360;
+      return { ...t, rotation_deg: next };
+    }));
+
     try {
       if (!isDemoMode) {
-        await updateTable(id, patch);
+        await updateTable(id, { rotation_deg: next });
       }
-      setTables(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
     } catch {
       toast('Failed to rotate shape', 'error');
     }
