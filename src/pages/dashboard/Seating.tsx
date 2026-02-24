@@ -29,6 +29,7 @@ import {
 } from './seating/seatingService';
 
 const UNASSIGNED_DROPPABLE = 'unassigned-pool';
+type TableShape = 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
 
 function GuestChip({
   guest,
@@ -143,6 +144,8 @@ function TableCard({
   onResizeTable,
   isCanvas,
   onStartMove,
+  isSelected,
+  onSelect,
 }: {
   table: SeatingTable;
   guests: EligibleGuest[];
@@ -157,6 +160,8 @@ function TableCard({
   onResizeTable: (tableId: string, width: number, height: number) => Promise<void>;
   isCanvas: boolean;
   onStartMove: (e: React.MouseEvent) => void;
+  isSelected: boolean;
+  onSelect: () => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: table.id });
   const occupied = guests.length;
@@ -219,10 +224,11 @@ function TableCard({
   return (
     <div
       ref={setNodeRef}
+      onClick={onSelect}
       className={`
-        rounded-xl transition-all
+        rounded-xl transition-all cursor-pointer
         ${isCanvas
-          ? (isOver && !isFull ? 'bg-transparent ring-2 ring-primary/40' : 'bg-transparent')
+          ? (isOver && !isFull ? 'bg-transparent ring-2 ring-primary/40' : isSelected ? 'bg-transparent ring-1 ring-border' : 'bg-transparent')
           : (isOver && !isFull
               ? 'border-2 border-primary bg-primary-light/30 shadow-md'
               : isFull
@@ -240,7 +246,7 @@ function TableCard({
           <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
             {occupied}/{table.capacity}
           </span>
-          {isCanvas && (
+          {isSelected && isCanvas && (
             <button
               onMouseDown={onStartMove}
               className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors cursor-move"
@@ -249,18 +255,28 @@ function TableCard({
               <GripVertical className="w-3 h-3" />
             </button>
           )}
-          <button onClick={() => onEdit(table)} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
-            <Edit2 className="w-3 h-3" />
-          </button>
-          <button onClick={() => onDelete(table.id)} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
-            <Trash2 className="w-3 h-3" />
-          </button>
+          {isSelected && (
+            <>
+              <button onClick={(e) => { e.stopPropagation(); onEdit(table); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
+                <Edit2 className="w-3 h-3" />
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); onDelete(table.id); }} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </>
+          )}
         </div>
       </div>
       <div className={`p-2 min-h-[80px] ${isOver && !isFull ? 'bg-primary-light/20' : ''} ${isCanvas ? 'bg-transparent p-0' : ''}`}>
         {layoutMode === 'visual' ? (
           <>
-            {(table.table_shape ?? 'round') === 'round' ? (
+            {(['bar', 'dj_booth', 'dance_floor'] as TableShape[]).includes((table.table_shape ?? 'round') as TableShape) ? (
+              <div className="relative mb-2">
+                <div className="mx-auto border border-border-subtle rounded-xl bg-surface-subtle/40 flex items-center justify-center text-xs text-text-tertiary" style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
+                  {table.table_shape === 'bar' ? 'Bar' : table.table_shape === 'dj_booth' ? 'DJ Booth' : 'Dance Floor'}
+                </div>
+              </div>
+            ) : (table.table_shape ?? 'round') === 'round' ? (
               <div className="relative h-52 sm:h-60 mb-2">
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border border-border bg-surface-subtle flex items-center justify-center text-[11px] text-text-tertiary">
                   {table.table_name}
@@ -354,7 +370,7 @@ function TableCard({
               </div>
             )}
 
-            {assignedGuests.length === 0 ? (
+            {(table.table_shape === 'bar' || table.table_shape === 'dj_booth' || table.table_shape === 'dance_floor') ? null : (assignedGuests.length === 0 ? (
               <p className="text-xs text-text-tertiary text-center py-1">Drop guests on seats</p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
@@ -378,7 +394,7 @@ function TableCard({
                   </div>
                 ))}
               </div>
-            )}
+            ))}
           </>
         ) : (
           <>
@@ -420,14 +436,17 @@ function TableForm({ initial, onSave, onCancel }: {
 }) {
   const [name, setName] = useState(initial?.table_name ?? '');
   const [capacity, setCapacity] = useState(initial?.capacity ?? 8);
-  const [shape, setShape] = useState<'round' | 'rectangle'>((initial?.table_shape as 'round' | 'rectangle') ?? 'round');
+  const [shape, setShape] = useState<TableShape>((initial?.table_shape as TableShape) ?? 'round');
   const [layoutWidth, setLayoutWidth] = useState(initial?.layout_width ?? 260);
   const [layoutHeight, setLayoutHeight] = useState(initial?.layout_height ?? 150);
   const [notes, setNotes] = useState(initial?.notes ?? '');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave({ table_name: name, capacity: Number(capacity), table_shape: shape, layout_width: Number(layoutWidth), layout_height: Number(layoutHeight), notes });
+    const defaultName = shape === 'bar' ? 'Bar' : shape === 'dj_booth' ? 'DJ Booth' : shape === 'dance_floor' ? 'Dance Floor' : 'Table';
+    const tableName = name.trim() || defaultName;
+    const seatCap = (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') ? 0 : Number(capacity);
+    onSave({ table_name: tableName, capacity: seatCap, table_shape: shape, layout_width: Number(layoutWidth), layout_height: Number(layoutHeight), notes });
   }
 
   return (
@@ -438,12 +457,11 @@ function TableForm({ initial, onSave, onCancel }: {
           className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary w-36"
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder="Table 1"
-          required
+          placeholder={shape === 'bar' ? 'Bar' : shape === 'dj_booth' ? 'DJ Booth' : shape === 'dance_floor' ? 'Dance Floor' : 'Table 1'}
           autoFocus
         />
       </div>
-      <div>
+      {(shape === 'round' || shape === 'rectangle') && (<div>
         <label className="block text-xs font-medium text-text-secondary mb-1">Capacity</label>
         <input
           type="number"
@@ -453,7 +471,7 @@ function TableForm({ initial, onSave, onCancel }: {
           value={capacity}
           onChange={e => setCapacity(Number(e.target.value))}
         />
-      </div>
+      </div>)}
       <div>
         <label className="block text-xs font-medium text-text-secondary mb-1">Shape</label>
         <select
@@ -463,9 +481,12 @@ function TableForm({ initial, onSave, onCancel }: {
         >
           <option value="round">Round</option>
           <option value="rectangle">Rectangle</option>
+          <option value="bar">Bar</option>
+          <option value="dj_booth">DJ Booth</option>
+          <option value="dance_floor">Dance Floor</option>
         </select>
       </div>
-      {shape === 'rectangle' && (
+      {(shape === 'rectangle' || shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') && (
         <>
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-1">Width</label>
@@ -525,6 +546,7 @@ export const DashboardSeating: React.FC = () => {
   const [checkInQuery, setCheckInQuery] = useState('');
   const [layoutMode, setLayoutMode] = useState<'visual' | 'list'>('visual');
   const [movingTableId, setMovingTableId] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
 
@@ -1365,6 +1387,8 @@ export const DashboardSeating: React.FC = () => {
                               onResizeTable={handleResizeTable}
                               isCanvas
                               onStartMove={(e) => startMoveTable(table, idx, e)}
+                              isSelected={selectedTableId === table.id}
+                              onSelect={() => setSelectedTableId(table.id)}
                             />
                           </div>
                         );
@@ -1391,6 +1415,8 @@ export const DashboardSeating: React.FC = () => {
                             onResizeTable={handleResizeTable}
                             isCanvas={false}
                             onStartMove={(e) => startMoveTable(table, idx, e)}
+                            isSelected={selectedTableId === table.id}
+                            onSelect={() => setSelectedTableId(table.id)}
                           />
                         )
                       ))}

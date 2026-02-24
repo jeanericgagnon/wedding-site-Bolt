@@ -24,7 +24,7 @@ export interface SeatingTable {
   capacity: number;
   sort_order: number;
   notes: string;
-  table_shape?: 'round' | 'rectangle';
+  table_shape?: 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
   layout_width?: number;
   layout_height?: number;
   layout_x?: number;
