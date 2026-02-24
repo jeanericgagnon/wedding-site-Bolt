@@ -24,6 +24,8 @@ interface ItineraryEvent {
   is_visible: boolean;
 }
 
+const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
+
 interface EventWithInvites extends ItineraryEvent {
   invitation_count: number;
   rsvp_count: number;
@@ -56,6 +58,13 @@ export const DashboardItinerary: React.FC = () => {
     loadEvents();
   }, [isDemoMode]);
 
+  useEffect(() => {
+    if (!isDemoMode) return;
+    try {
+      localStorage.setItem(DEMO_ITINERARY_STORAGE_KEY, JSON.stringify(events));
+    } catch {}
+  }, [isDemoMode, events]);
+
   async function loadEvents() {
     try {
       if (isDemoMode) {
@@ -77,6 +86,18 @@ export const DashboardItinerary: React.FC = () => {
           attending_count: [68, 98, 101, 39][idx] ?? 0,
           declined_count: [4, 9, 8, 5][idx] ?? 0,
         }));
+
+        try {
+          const raw = localStorage.getItem(DEMO_ITINERARY_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw) as EventWithInvites[];
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setEvents(parsed);
+              return;
+            }
+          }
+        } catch {}
+
         setEvents(seeded as EventWithInvites[]);
         return;
       }

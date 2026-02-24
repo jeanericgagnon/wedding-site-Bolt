@@ -552,6 +552,7 @@ function TableForm({ initial, onSave, onCancel }: {
 
 const DEMO_EVENT_ID = 'demo-event-reception';
 const DEMO_SEATING_EVENT_ID = 'demo-seating-event';
+const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
 
 export const DashboardSeating: React.FC = () => {
   const { isDemoMode } = useAuth();
@@ -594,15 +595,33 @@ export const DashboardSeating: React.FC = () => {
     try {
       if (isDemoMode) {
         setSiteId(demoWeddingSite.id);
-        const demoEvent: ItineraryEvent = {
+
+        const fallbackEvent: ItineraryEvent = {
           id: DEMO_EVENT_ID,
           event_name: 'Reception',
           event_date: new Date().toISOString().slice(0, 10),
           start_time: '18:00',
           location_name: 'Grand Ballroom',
         };
-        setItineraryEvents([demoEvent]);
-        setSelectedEventId(demoEvent.id);
+
+        let demoEventsFromItinerary: ItineraryEvent[] = [];
+        try {
+          const raw = localStorage.getItem(DEMO_ITINERARY_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw) as Array<any>;
+            demoEventsFromItinerary = (Array.isArray(parsed) ? parsed : []).map((e) => ({
+              id: e.id,
+              event_name: e.event_name,
+              event_date: e.event_date,
+              start_time: e.start_time || '18:00',
+              location_name: e.location_name || '',
+            })).filter((e) => e.id && e.event_name && e.event_date);
+          }
+        } catch {}
+
+        const usableEvents = demoEventsFromItinerary.length > 0 ? demoEventsFromItinerary : [fallbackEvent];
+        setItineraryEvents(usableEvents);
+        setSelectedEventId(usableEvents[0].id);
         return;
       }
 
