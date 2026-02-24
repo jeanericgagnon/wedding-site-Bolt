@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2 } from 'lucide-react';
+import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2, FileDown } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -605,6 +605,61 @@ export const DashboardSeating: React.FC = () => {
     window.print();
   }
 
+  function handleExportPDF() {
+    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
+    const eventName = selectedEvent?.event_name ?? 'Event';
+    const now = new Date().toLocaleString();
+
+    const tableBlocks = tables.map((table) => {
+      const tableGuests = allGuests.filter(g =>
+        assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
+      );
+      const rows = tableGuests.map((g) => {
+        const assignment = assignments.find(a => a.table_id === table.id && a.guest_id === g.id);
+        return `<tr><td>${g.full_name}</td><td>${g.email ?? ''}</td><td>${assignment?.checked_in_at ? 'Yes' : 'No'}</td></tr>`;
+      }).join('');
+
+      return `
+        <section style="margin-bottom:18px; page-break-inside:avoid;">
+          <h3 style="margin:0 0 8px 0;">${table.table_name} (${tableGuests.length}/${table.capacity})</h3>
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr>
+                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Guest</th>
+                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Email</th>
+                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Arrived</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="3" style="padding:8px; color:#666;">No guests assigned</td></tr>'}</tbody>
+          </table>
+        </section>
+      `;
+    }).join('');
+
+    const html = `
+      <html>
+        <head><title>Seating Export - ${eventName}</title></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; padding:24px; color:#111;">
+          <h1 style="margin:0 0 6px 0;">Seating Report — ${eventName}</h1>
+          <p style="margin:0 0 14px 0; color:#555;">Generated ${now}</p>
+          <p style="margin:0 0 20px 0; color:#333;">Attending: ${counters?.attending ?? 0} · Seated: ${counters?.seated ?? 0} · Arrived: ${arrivedCount}</p>
+          ${tableBlocks || '<p>No tables yet.</p>'}
+        </body>
+      </html>
+    `;
+
+    const w = window.open('', '_blank', 'noopener,noreferrer,width=1000,height=900');
+    if (!w) {
+      toast('Popup blocked. Please allow popups to export PDF.', 'error');
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
+  }
+
   const selectedItineraryEvent = itineraryEvents.find(e => e.id === selectedEventId);
   const arrivedGuestIds = new Set(assignments.filter(a => !!a.checked_in_at).map(a => a.guest_id));
   const arrivedCount = allGuests.filter(g => g.is_attending && arrivedGuestIds.has(g.id)).length;
@@ -663,6 +718,9 @@ export const DashboardSeating: React.FC = () => {
             </Button>
             <Button variant="outline" size="sm" onClick={handlePrint}>
               <Printer className="w-4 h-4 mr-1" /> Print
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+              <FileDown className="w-4 h-4 mr-1" /> PDF
             </Button>
             <Button variant="outline" size="sm" onClick={handleCheckDrift}>
               <RefreshCw className="w-4 h-4 mr-1" /> Check RSVP Drift
