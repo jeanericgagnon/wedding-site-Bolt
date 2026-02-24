@@ -31,6 +31,17 @@ import {
 const UNASSIGNED_DROPPABLE = 'unassigned-pool';
 type TableShape = 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
 
+function getShapeLabel(shape: TableShape): string {
+  switch (shape) {
+    case 'round': return 'Round Table';
+    case 'rectangle': return 'Rectangle Table';
+    case 'bar': return 'Service Station';
+    case 'dj_booth': return 'Booth';
+    case 'dance_floor': return 'Open Zone';
+    default: return 'Table';
+  }
+}
+
 function GuestChip({
   guest,
   isDragging = false,
@@ -249,7 +260,7 @@ function TableCard({
           <div className="flex items-center gap-2 min-w-0">
             <TableProperties className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
             <span className="text-sm font-semibold text-text-primary truncate">{table.table_name}</span>
-            <span className="text-[10px] uppercase text-text-tertiary px-1.5 py-0.5 rounded bg-surface-subtle border border-border-subtle">{table.table_shape ?? 'round'}</span>
+            <span className="text-[10px] uppercase text-text-tertiary px-1.5 py-0.5 rounded bg-surface-subtle border border-border-subtle">{getShapeLabel((table.table_shape ?? 'round') as TableShape)}</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
@@ -479,11 +490,11 @@ function TableForm({ initial, onSave, onCancel }: {
           value={shape}
           onChange={e => setShape(e.target.value as TableShape)}
         >
-          <option value="round">Round</option>
-          <option value="rectangle">Rectangle</option>
-          <option value="bar">Bar</option>
-          <option value="dj_booth">DJ Booth</option>
-          <option value="dance_floor">Dance Floor</option>
+          <option value="round">Round Table</option>
+          <option value="rectangle">Rectangle Table</option>
+          <option value="bar">Service Station</option>
+          <option value="dj_booth">Booth</option>
+          <option value="dance_floor">Open Zone</option>
         </select>
       </div>
       {(shape === 'rectangle' || shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') && (
