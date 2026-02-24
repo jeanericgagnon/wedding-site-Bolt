@@ -139,6 +139,7 @@ function TableCard({
   onRemoveGuest,
   checkInMode,
   onToggleCheckIn,
+  layoutMode,
 }: {
   table: SeatingTable;
   guests: EligibleGuest[];
@@ -149,6 +150,7 @@ function TableCard({
   onRemoveGuest: (guestId: string) => void;
   checkInMode: boolean;
   onToggleCheckIn: (guestId: string, checkedIn: boolean) => void;
+  layoutMode: 'visual' | 'list';
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: table.id });
   const occupied = guests.length;
@@ -191,71 +193,102 @@ function TableCard({
         </div>
       </div>
       <div className={`p-2 min-h-[80px] ${isOver && !isFull ? 'bg-primary-light/20' : ''}`}>
-        {(table.table_shape ?? 'round') === 'round' ? (
-          <div className="relative h-60 mb-2">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border border-border bg-surface-subtle flex items-center justify-center text-[11px] text-text-tertiary">
-              {table.table_name}
-            </div>
-            {Array.from({ length: table.capacity }).map((_, idx) => {
-              const seatNumber = idx + 1;
-              const angle = (idx / table.capacity) * Math.PI * 2 - Math.PI / 2;
-              const radius = 102;
-              const x = Math.cos(angle) * radius;
-              const y = Math.sin(angle) * radius;
-              const seatAssignment = bySeat.get(seatNumber);
-              return (
-                <SeatDropSlot
-                  key={`${table.id}-seat-${seatNumber}`}
-                  tableId={table.id}
-                  seatIndex={seatNumber}
-                  guest={seatAssignment?.guest}
-                  className="absolute w-20 h-10 -ml-10 -mt-5"
-                  style={{ left: '50%', top: '50%', transform: `translate(${x}px, ${y}px)` }}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2">
-            {Array.from({ length: table.capacity }).map((_, idx) => {
-              const seatNumber = idx + 1;
-              const seatAssignment = bySeat.get(seatNumber);
-              return (
-                <SeatDropSlot
-                  key={`${table.id}-seat-${seatNumber}`}
-                  tableId={table.id}
-                  seatIndex={seatNumber}
-                  guest={seatAssignment?.guest}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {assignedGuests.length === 0 ? (
-          <p className="text-xs text-text-tertiary text-center py-1">Drop guests on seats</p>
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {assignedGuests.map(({ assignment, guest }) => (
-              <div key={guest.id} className="flex items-center gap-1">
-                <DraggableGuestChip
-                  guest={guest}
-                  isInvalid={!assignment.is_valid}
-                  onRemove={() => onRemoveGuest(guest.id)}
-                />
-                <span className="text-[10px] text-text-tertiary">S{assignment.seat_index ?? '—'}</span>
-                {checkInMode && (
-                  <button
-                    onClick={() => onToggleCheckIn(guest.id, !assignment.checked_in_at)}
-                    className={`p-1 rounded border transition-colors ${assignment.checked_in_at ? 'bg-success/10 border-success/40 text-success' : 'bg-surface border-border-subtle text-text-tertiary hover:text-success hover:border-success/40'}`}
-                    title={assignment.checked_in_at ? 'Mark not arrived' : 'Mark arrived'}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
+        {layoutMode === 'visual' ? (
+          <>
+            {(table.table_shape ?? 'round') === 'round' ? (
+              <div className="relative h-60 mb-2">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border border-border bg-surface-subtle flex items-center justify-center text-[11px] text-text-tertiary">
+                  {table.table_name}
+                </div>
+                {Array.from({ length: table.capacity }).map((_, idx) => {
+                  const seatNumber = idx + 1;
+                  const angle = (idx / table.capacity) * Math.PI * 2 - Math.PI / 2;
+                  const radius = 102;
+                  const x = Math.cos(angle) * radius;
+                  const y = Math.sin(angle) * radius;
+                  const seatAssignment = bySeat.get(seatNumber);
+                  return (
+                    <SeatDropSlot
+                      key={`${table.id}-seat-${seatNumber}`}
+                      tableId={table.id}
+                      seatIndex={seatNumber}
+                      guest={seatAssignment?.guest}
+                      className="absolute w-20 h-10 -ml-10 -mt-5"
+                      style={{ left: '50%', top: '50%', transform: `translate(${x}px, ${y}px)` }}
+                    />
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2">
+                {Array.from({ length: table.capacity }).map((_, idx) => {
+                  const seatNumber = idx + 1;
+                  const seatAssignment = bySeat.get(seatNumber);
+                  return (
+                    <SeatDropSlot
+                      key={`${table.id}-seat-${seatNumber}`}
+                      tableId={table.id}
+                      seatIndex={seatNumber}
+                      guest={seatAssignment?.guest}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {assignedGuests.length === 0 ? (
+              <p className="text-xs text-text-tertiary text-center py-1">Drop guests on seats</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {assignedGuests.map(({ assignment, guest }) => (
+                  <div key={guest.id} className="flex items-center gap-1">
+                    <DraggableGuestChip
+                      guest={guest}
+                      isInvalid={!assignment.is_valid}
+                      onRemove={() => onRemoveGuest(guest.id)}
+                    />
+                    <span className="text-[10px] text-text-tertiary">S{assignment.seat_index ?? '—'}</span>
+                    {checkInMode && (
+                      <button
+                        onClick={() => onToggleCheckIn(guest.id, !assignment.checked_in_at)}
+                        className={`p-1 rounded border transition-colors ${assignment.checked_in_at ? 'bg-success/10 border-success/40 text-success' : 'bg-surface border-border-subtle text-text-tertiary hover:text-success hover:border-success/40'}`}
+                        title={assignment.checked_in_at ? 'Mark not arrived' : 'Mark arrived'}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {assignedGuests.length === 0 ? (
+              <p className="text-xs text-text-tertiary text-center py-3">Drop guests here</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {assignedGuests.map(({ assignment, guest }) => (
+                  <div key={guest.id} className="flex items-center gap-1">
+                    <DraggableGuestChip
+                      guest={guest}
+                      isInvalid={!assignment.is_valid}
+                      onRemove={() => onRemoveGuest(guest.id)}
+                    />
+                    {checkInMode && (
+                      <button
+                        onClick={() => onToggleCheckIn(guest.id, !assignment.checked_in_at)}
+                        className={`p-1 rounded border transition-colors ${assignment.checked_in_at ? 'bg-success/10 border-success/40 text-success' : 'bg-surface border-border-subtle text-text-tertiary hover:text-success hover:border-success/40'}`}
+                        title={assignment.checked_in_at ? 'Mark not arrived' : 'Mark arrived'}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -344,6 +377,7 @@ export const DashboardSeating: React.FC = () => {
   const [invalidCount, setInvalidCount] = useState(0);
   const [checkInMode, setCheckInMode] = useState(false);
   const [checkInQuery, setCheckInQuery] = useState('');
+  const [layoutMode, setLayoutMode] = useState<'visual' | 'list'>('visual');
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -847,6 +881,20 @@ export const DashboardSeating: React.FC = () => {
             <Button variant={checkInMode ? 'primary' : 'outline'} size="sm" onClick={() => setCheckInMode(v => !v)}>
               <CheckCircle2 className="w-4 h-4 mr-1" /> {checkInMode ? 'Exit Check-in' : 'Check-in Mode'}
             </Button>
+            <div className="inline-flex rounded-lg border border-border overflow-hidden">
+              <button
+                className={`px-3 py-1.5 text-xs ${layoutMode === 'visual' ? 'bg-primary/10 text-primary' : 'bg-surface text-text-tertiary'}`}
+                onClick={() => setLayoutMode('visual')}
+              >
+                Visual
+              </button>
+              <button
+                className={`px-3 py-1.5 text-xs border-l border-border ${layoutMode === 'list' ? 'bg-primary/10 text-primary' : 'bg-surface text-text-tertiary'}`}
+                onClick={() => setLayoutMode('list')}
+              >
+                List
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1042,6 +1090,7 @@ export const DashboardSeating: React.FC = () => {
                           onRemoveGuest={handleRemoveGuest}
                           checkInMode={checkInMode}
                           onToggleCheckIn={handleToggleCheckIn}
+                          layoutMode={layoutMode}
                         />
                       )
                     ))}
