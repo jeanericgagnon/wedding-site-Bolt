@@ -76,17 +76,19 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
             {settings.title || 'Travel & Accommodations'}
           </h2>
         )}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-          <TimezoneBadge tz={timezone} />
-          {data.schedule.length > 0 && (
-            <button
-              onClick={() => downloadIcs(data)}
-              className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
-            >
-              Add all events to calendar (.ics)
-            </button>
-          )}
-        </div>
+        {(settings.showTimezoneBadge !== false || settings.showIcsButton !== false) && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+            {settings.showTimezoneBadge !== false && <TimezoneBadge tz={timezone} />}
+            {settings.showIcsButton !== false && data.schedule.length > 0 && (
+              <button
+                onClick={() => downloadIcs(data)}
+                className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
+              >
+                Add all events to calendar (.ics)
+              </button>
+            )}
+          </div>
+        )}
         {!hasContent ? (
           <div className="text-center">
             <p className="text-text-secondary">Travel and accommodation details will appear here once added.</p>
@@ -177,17 +179,19 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
-          <TimezoneBadge tz={timezone} />
-          {data.schedule.length > 0 && (
-            <button
-              onClick={() => downloadIcs(data)}
-              className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
-            >
-              Add all events to calendar (.ics)
-            </button>
-          )}
-        </div>
+        {(settings.showTimezoneBadge !== false || settings.showIcsButton !== false) && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+            {settings.showTimezoneBadge !== false && <TimezoneBadge tz={timezone} />}
+            {settings.showIcsButton !== false && data.schedule.length > 0 && (
+              <button
+                onClick={() => downloadIcs(data)}
+                className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
+              >
+                Add all events to calendar (.ics)
+              </button>
+            )}
+          </div>
+        )}
         {venues.length > 0 && (
           <div className="space-y-4 mb-10">
             {venues.map(venue => (
@@ -277,17 +281,19 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-          <TimezoneBadge tz={timezone} />
-          {data.schedule.length > 0 && (
-            <button
-              onClick={() => downloadIcs(data)}
-              className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
-            >
-              Add all events to calendar (.ics)
-            </button>
-          )}
-        </div>
+        {(settings.showTimezoneBadge !== false || settings.showIcsButton !== false) && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+            {settings.showTimezoneBadge !== false && <TimezoneBadge tz={timezone} />}
+            {settings.showIcsButton !== false && data.schedule.length > 0 && (
+              <button
+                onClick={() => downloadIcs(data)}
+                className="inline-flex items-center px-3 py-1.5 text-xs rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
+              >
+                Add all events to calendar (.ics)
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="rounded-2xl border border-border bg-surface p-6">

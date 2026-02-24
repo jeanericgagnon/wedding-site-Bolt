@@ -164,6 +164,8 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
         { key: 'showTitle', label: 'Show Title', type: 'toggle', defaultValue: true },
         { key: 'title', label: 'Section Title', type: 'text', defaultValue: 'Travel' },
         { key: 'showParking', label: 'Show Parking Info', type: 'toggle', defaultValue: true },
+        { key: 'showTimezoneBadge', label: 'Show Timezone Badge', type: 'toggle', defaultValue: true },
+        { key: 'showIcsButton', label: 'Show Add-to-Calendar Button', type: 'toggle', defaultValue: true },
       ],
     },
     bindingsSchema: { slots: [] },
