@@ -101,18 +101,23 @@ function SeatDropSlot({
   seatIndex,
   guest,
   isOver,
+  className,
+  style,
 }: {
   tableId: string;
   seatIndex: number;
   guest?: EligibleGuest;
   isOver?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
 }) {
   const { setNodeRef, isOver: overSelf } = useDroppable({ id: `seat:${tableId}:${seatIndex}` });
   const active = isOver ?? overSelf;
   return (
     <div
       ref={setNodeRef}
-      className={`h-10 rounded-lg border text-[11px] px-1 flex items-center justify-center text-center ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
+      style={style}
+      className={`h-10 rounded-lg border text-[11px] px-1 flex items-center justify-center text-center ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'} ${className ?? ''}`}
       title={`Seat ${seatIndex}`}
     >
       {guest ? (
@@ -154,6 +159,10 @@ function TableCard({
     .filter(a => a.table_id === table.id)
     .map(a => ({ assignment: a, guest: guestMap.get(a.guest_id) }))
     .filter(x => x.guest) as { assignment: SeatingAssignment; guest: EligibleGuest }[];
+  const bySeat = new Map<number, { assignment: SeatingAssignment; guest: EligibleGuest }>();
+  assignedGuests.forEach((row) => {
+    if (row.assignment.seat_index != null) bySeat.set(row.assignment.seat_index, row);
+  });
 
   return (
     <div
@@ -182,21 +191,46 @@ function TableCard({
         </div>
       </div>
       <div className={`p-2 min-h-[80px] ${isOver && !isFull ? 'bg-primary-light/20' : ''}`}>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2">
-          {Array.from({ length: table.capacity }).map((_, idx) => {
-            const seatNumber = idx + 1;
-            const seatAssignment = assignedGuests.find(({ assignment }) => assignment.seat_index === seatNumber)
-              ?? assignedGuests.find(({ assignment }) => assignment.seat_index == null && idx === 0);
-            return (
-              <SeatDropSlot
-                key={`${table.id}-seat-${seatNumber}`}
-                tableId={table.id}
-                seatIndex={seatNumber}
-                guest={seatAssignment?.guest}
-              />
-            );
-          })}
-        </div>
+        {(table.table_shape ?? 'round') === 'round' ? (
+          <div className="relative h-60 mb-2">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border border-border bg-surface-subtle flex items-center justify-center text-[11px] text-text-tertiary">
+              {table.table_name}
+            </div>
+            {Array.from({ length: table.capacity }).map((_, idx) => {
+              const seatNumber = idx + 1;
+              const angle = (idx / table.capacity) * Math.PI * 2 - Math.PI / 2;
+              const radius = 102;
+              const x = Math.cos(angle) * radius;
+              const y = Math.sin(angle) * radius;
+              const seatAssignment = bySeat.get(seatNumber);
+              return (
+                <SeatDropSlot
+                  key={`${table.id}-seat-${seatNumber}`}
+                  tableId={table.id}
+                  seatIndex={seatNumber}
+                  guest={seatAssignment?.guest}
+                  className="absolute w-20 h-10 -ml-10 -mt-5"
+                  style={{ left: '50%', top: '50%', transform: `translate(${x}px, ${y}px)` }}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2">
+            {Array.from({ length: table.capacity }).map((_, idx) => {
+              const seatNumber = idx + 1;
+              const seatAssignment = bySeat.get(seatNumber);
+              return (
+                <SeatDropSlot
+                  key={`${table.id}-seat-${seatNumber}`}
+                  tableId={table.id}
+                  seatIndex={seatNumber}
+                  guest={seatAssignment?.guest}
+                />
+              );
+            })}
+          </div>
+        )}
 
         {assignedGuests.length === 0 ? (
           <p className="text-xs text-text-tertiary text-center py-1">Drop guests on seats</p>
