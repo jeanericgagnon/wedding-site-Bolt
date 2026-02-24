@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Badge, Input, Select } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -96,6 +96,12 @@ function formatRelativeTime(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function getAuditActionIcon(action: GuestAuditEntry['action']) {
+  if (action === 'insert') return PlusCircle;
+  if (action === 'delete') return Trash2;
+  return Pencil;
 }
 
 function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; reception?: boolean } | null {
@@ -2448,10 +2454,14 @@ Proceed with send?`)) return;
                     {guestAuditEntries.map((entry) => {
                       const absolute = new Date(entry.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
                       const relative = formatRelativeTime(entry.changed_at);
+                      const Icon = getAuditActionIcon(entry.action);
                       return (
                         <div key={entry.id} className="text-xs text-text-primary border border-border-subtle rounded-lg p-2.5 bg-surface">
                           <div className="flex items-start justify-between gap-3">
-                            <span className={`capitalize px-2 py-0.5 rounded border ${getAuditActionTone(entry.action)}`}>{entry.action}</span>
+                            <span className={`capitalize px-2 py-0.5 rounded border inline-flex items-center gap-1.5 ${getAuditActionTone(entry.action)}`}>
+                              <Icon className="w-3 h-3" />
+                              {entry.action}
+                            </span>
                             <div className="text-right leading-tight">
                               <span className="text-text-secondary whitespace-nowrap">{relative}</span>
                               <p className="text-[10px] text-text-tertiary mt-0.5">{absolute}</p>
