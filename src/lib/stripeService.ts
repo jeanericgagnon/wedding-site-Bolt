@@ -24,33 +24,25 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
-  const session = await requireSession();
+  await requireSession();
 
-  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string).trim();
-  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string).trim();
-
-  const res = await fetch(`${supabaseUrl}/functions/v1/stripe-create-checkout`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-      'apikey': supabaseAnonKey,
-    },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
+    body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
       cancel_url: cancelUrl,
-    }),
+    },
   });
 
-  const json = await res.json().catch(() => ({})) as { url?: string; error?: string };
-
-  if (!res.ok) {
-    if (res.status === 401) throw new SessionExpiredError();
-    const msg = json.error || `Server error (${res.status})`;
-    throw new Error(msg);
+  if (error) {
+    const message = (error as any)?.message || '';
+    if (/401|unauthorized|jwt|session/i.test(message)) {
+      throw new SessionExpiredError();
+    }
+    throw new Error(message || 'Could not start checkout. Please try again.');
   }
 
+  const json = (data ?? {}) as { url?: string; error?: string };
   if (json.error) throw new Error(json.error);
   if (!json.url) throw new Error('No checkout URL returned. Please try again.');
 
@@ -62,33 +54,25 @@ export async function createSubscriptionSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
-  const session = await requireSession();
+  await requireSession();
 
-  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string).trim();
-  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string).trim();
-
-  const res = await fetch(`${supabaseUrl}/functions/v1/stripe-create-subscription`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-      'apikey': supabaseAnonKey,
-    },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke('stripe-create-subscription', {
+    body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
       cancel_url: cancelUrl,
-    }),
+    },
   });
 
-  const json = await res.json().catch(() => ({})) as { url?: string; error?: string };
-
-  if (!res.ok) {
-    if (res.status === 401) throw new SessionExpiredError();
-    const msg = json.error || `Server error (${res.status})`;
-    throw new Error(msg);
+  if (error) {
+    const message = (error as any)?.message || '';
+    if (/401|unauthorized|jwt|session/i.test(message)) {
+      throw new SessionExpiredError();
+    }
+    throw new Error(message || 'Could not start subscription checkout. Please try again.');
   }
 
+  const json = (data ?? {}) as { url?: string; error?: string };
   if (json.error) throw new Error(json.error);
   if (!json.url) throw new Error('No subscription checkout URL returned. Please try again.');
 
@@ -164,33 +148,26 @@ export async function createSmsCreditsSession(
   cancelUrl: string,
   pack: 'sms_100' | 'sms_500' | 'sms_1000'
 ): Promise<string> {
-  const session = await requireSession();
+  await requireSession();
 
-  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string).trim();
-  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string).trim();
-
-  const res = await fetch(`${supabaseUrl}/functions/v1/stripe-create-sms-credits`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-      'apikey': supabaseAnonKey,
-    },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke('stripe-create-sms-credits', {
+    body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
       cancel_url: cancelUrl,
       pack,
-    }),
+    },
   });
 
-  const json = await res.json().catch(() => ({})) as { url?: string; error?: string };
-
-  if (!res.ok) {
-    if (res.status === 401) throw new SessionExpiredError();
-    throw new Error(json.error || `Server error (${res.status})`);
+  if (error) {
+    const message = (error as any)?.message || '';
+    if (/401|unauthorized|jwt|session/i.test(message)) {
+      throw new SessionExpiredError();
+    }
+    throw new Error(message || 'Could not start SMS credits checkout. Please try again.');
   }
 
+  const json = (data ?? {}) as { url?: string; error?: string };
   if (json.error) throw new Error(json.error);
   if (!json.url) throw new Error('No checkout URL returned. Please try again.');
 
