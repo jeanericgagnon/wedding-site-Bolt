@@ -37,6 +37,15 @@ interface GuestWithRSVP extends Guest {
   rsvp?: RSVP;
 }
 
+interface GuestAuditEntry {
+  id: string;
+  action: 'insert' | 'update' | 'delete';
+  changed_at: string;
+  changed_by: string | null;
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
+}
+
 function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; reception?: boolean } | null {
   if (!notes) return null;
   const match = notes.match(/\[Events\s+([^\]]+)\]/i);
@@ -240,6 +249,7 @@ export const DashboardGuests: React.FC = () => {
   const [guestEventIds, setGuestEventIds] = useState<Set<string>>(new Set());
   const [loadingDrawer, setLoadingDrawer] = useState(false);
   const [togglingEventId, setTogglingEventId] = useState<string | null>(null);
+  const [guestAuditEntries, setGuestAuditEntries] = useState<GuestAuditEntry[]>([]);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -887,7 +897,15 @@ Proceed with send?`)) return;
     setItineraryDrawerGuest(guest);
     setLoadingDrawer(true);
     try {
-      const [eventsResult, invitesResult] = await Promise.all([
+      if (isDemoMode) {
+        const now = Date.now();
+        setGuestAuditEntries([
+          { id: `${guest.id}-a1`, action: 'update', changed_at: new Date(now - 1000 * 60 * 90).toISOString(), changed_by: null, old_data: { rsvp_status: 'pending' }, new_data: { rsvp_status: guest.rsvp_status } },
+          { id: `${guest.id}-a2`, action: 'update', changed_at: new Date(now - 1000 * 60 * 60 * 26).toISOString(), changed_by: null, old_data: { invited_to_reception: false }, new_data: { invited_to_reception: guest.invited_to_reception } },
+        ]);
+      }
+
+      const [eventsResult, invitesResult, auditResult] = await Promise.all([
         supabase
           .from('itinerary_events')
           .select('id, event_name, event_date, start_time, location_name')
@@ -897,9 +915,20 @@ Proceed with send?`)) return;
           .from('event_invitations')
           .select('event_id')
           .eq('guest_id', guest.id),
+        isDemoMode
+          ? Promise.resolve({ data: [], error: null } as any)
+          : supabase
+              .from('guest_audit_logs')
+              .select('id, action, changed_at, changed_by, old_data, new_data')
+              .eq('guest_id', guest.id)
+              .order('changed_at', { ascending: false })
+              .limit(12),
       ]);
       setItineraryEvents((eventsResult.data ?? []) as ItineraryEvent[]);
       setGuestEventIds(new Set((invitesResult.data ?? []).map((r: { event_id: string }) => r.event_id)));
+      if (!isDemoMode) {
+        setGuestAuditEntries((auditResult.data ?? []) as GuestAuditEntry[]);
+      }
     } finally {
       setLoadingDrawer(false);
     }
@@ -2296,7 +2325,7 @@ Proceed with send?`)) return;
         <>
           <div
             className="fixed inset-0 bg-black/30 z-40"
-            onClick={() => setItineraryDrawerGuest(null)}
+            onClick={() => { setItineraryDrawerGuest(null); setGuestAuditEntries([]); }}
           />
           <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-surface shadow-2xl z-50 flex flex-col border-l border-border">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -2309,7 +2338,7 @@ Proceed with send?`)) return;
                 <p className="text-xs text-text-secondary mt-0.5">Itinerary event invitations</p>
               </div>
               <button
-                onClick={() => setItineraryDrawerGuest(null)}
+                onClick={() => { setItineraryDrawerGuest(null); setGuestAuditEntries([]); }}
                 className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -2354,6 +2383,28 @@ Proceed with send?`)) return;
                   </div>
                 );
               })()}
+
+              <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Guest audit trail</p>
+                  <span className="text-[11px] text-text-tertiary">{guestAuditEntries.length} recent</span>
+                </div>
+                {guestAuditEntries.length === 0 ? (
+                  <p className="text-xs text-text-tertiary">No recent changes logged yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {guestAuditEntries.map((entry) => {
+                      const time = new Date(entry.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                      return (
+                        <div key={entry.id} className="text-xs text-text-primary flex items-start justify-between gap-3">
+                          <span className="capitalize px-2 py-0.5 rounded border bg-surface">{entry.action}</span>
+                          <span className="text-text-tertiary">{time}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
               {loadingDrawer ? (
                 <div className="flex items-center justify-center h-32">
