@@ -1421,7 +1421,15 @@ export const DashboardSeating: React.FC = () => {
                   </div>
                 ) : (
                   layoutMode === 'visual' ? (
-                    <div className={`relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto transition-all duration-300 ${canvasFullscreen ? 'fixed inset-4 z-50 rounded-2xl shadow-2xl bg-surface p-3' : ''}`} onWheel={handleCanvasWheelZoom}>
+                    <>
+                    {canvasFullscreen && (
+                      <div className="fixed inset-0 bg-black/35 z-[9998]" onClick={() => setCanvasFullscreen(false)} />
+                    )}
+                    <div
+                      className={`relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto transition-all duration-300 ${canvasFullscreen ? 'rounded-2xl shadow-2xl bg-surface p-3' : ''}`}
+                      style={canvasFullscreen ? { position: 'fixed', inset: '16px', zIndex: 9999, background: 'var(--surface, #fff)' } : undefined}
+                      onWheel={handleCanvasWheelZoom}
+                    >
                       {canvasFullscreen && (
                         <div className="mb-2 flex items-center justify-between animate-in fade-in duration-200">
                           <button
@@ -1472,6 +1480,7 @@ export const DashboardSeating: React.FC = () => {
                         })}
                       </div>
                     </div>
+                    </>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                       {tables.map((table, idx) => (
