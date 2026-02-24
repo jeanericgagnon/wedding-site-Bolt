@@ -93,12 +93,15 @@ Deno.serve(async (req: Request) => {
 
           const balance = Number(site?.sms_credits_balance ?? 0);
 
+          const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
           const { error: txError } = await supabase
             .from("sms_credit_transactions")
             .insert({
               wedding_site_id: weddingSiteId,
               stripe_checkout_session_id: session.id,
               credits_delta: credits,
+              remaining_credits: credits,
+              expires_at: expiresAt,
               amount_cents: amountCents,
               reason: "purchase",
               metadata: {

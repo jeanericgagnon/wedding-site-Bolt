@@ -358,6 +358,7 @@ export const DashboardMessages: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [viewingMessage, setViewingMessage] = useState<Message | null>(null);
   const [buyingPack, setBuyingPack] = useState<'sms_100' | 'sms_500' | 'sms_1000' | null>(null);
+  const [smsExpiringSoon, setSmsExpiringSoon] = useState<number>(0);
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -459,10 +460,29 @@ export const DashboardMessages: React.FC = () => {
     setGuests(data || []);
   }, [weddingSite, isDemoMode]);
 
+  const fetchSmsExpiryPreview = useCallback(async () => {
+    if (!weddingSite) return;
+    if (isDemoMode) {
+      setSmsExpiringSoon(40);
+      return;
+    }
+
+    const cutoff = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from('sms_credit_transactions')
+      .select('remaining_credits, expires_at')
+      .eq('wedding_site_id', weddingSite.id)
+      .eq('reason', 'purchase')
+      .lte('expires_at', cutoff);
+
+    const soon = (data ?? []).reduce((sum, row: any) => sum + Number(row.remaining_credits ?? 0), 0);
+    setSmsExpiringSoon(soon);
+  }, [weddingSite, isDemoMode]);
+
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
   useEffect(() => {
-    if (weddingSite) { fetchMessages(); fetchGuests(); }
-  }, [weddingSite, fetchMessages, fetchGuests]);
+    if (weddingSite) { fetchMessages(); fetchGuests(); fetchSmsExpiryPreview(); }
+  }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview]);
 
   useEffect(() => {
     if (!isDemoMode) return;
@@ -678,6 +698,7 @@ export const DashboardMessages: React.FC = () => {
                 <p className="text-sm text-text-secondary">SMS Credits</p>
                 <p className="text-2xl font-semibold text-text-primary">{smsCredits}</p>
                 <p className="text-xs text-text-tertiary mt-1">Approx 1 credit per recipient per SMS</p>
+                <p className="text-xs text-text-tertiary">Credits expire 12 months after purchase{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}</p>
               </div>
               <div className="flex flex-col gap-2">
                 <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>

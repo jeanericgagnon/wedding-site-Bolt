@@ -253,23 +253,69 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const { data: siteWallet } = await adminClient
-        .from("wedding_sites")
-        .select("sms_credits_balance")
-        .eq("id", message.wedding_sites.id)
-        .maybeSingle();
+      const nowIso = new Date().toISOString();
+      const { data: purchaseLots, error: lotsError } = await adminClient
+        .from("sms_credit_transactions")
+        .select("id, remaining_credits, expires_at, created_at")
+        .eq("wedding_site_id", message.wedding_sites.id)
+        .eq("reason", "purchase")
+        .order("created_at", { ascending: true });
 
-      const currentCredits = Number(siteWallet?.sms_credits_balance ?? 0);
-      if (currentCredits < eligibleGuests.length) {
-        return new Response(JSON.stringify({ error: `Insufficient SMS credits: need ${eligibleGuests.length}, have ${currentCredits}` }), {
+      if (lotsError) {
+        return new Response(JSON.stringify({ error: lotsError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const lots = (purchaseLots ?? []).map((l: any) => ({
+        id: l.id as string,
+        remaining: Number(l.remaining_credits ?? 0),
+        expiresAt: l.expires_at as string | null,
+      }));
+
+      let expiredCredits = 0;
+      for (const lot of lots) {
+        if (lot.remaining <= 0) continue;
+        if (lot.expiresAt && lot.expiresAt < nowIso) {
+          expiredCredits += lot.remaining;
+          await adminClient.from("sms_credit_transactions").update({ remaining_credits: 0 }).eq("id", lot.id);
+        }
+      }
+
+      const usableLots = lots
+        .filter((l) => l.remaining > 0 && (!l.expiresAt || l.expiresAt >= nowIso))
+        .sort((a, b) => (a.expiresAt || "").localeCompare(b.expiresAt || ""));
+      const availableCredits = usableLots.reduce((sum, l) => sum + l.remaining, 0);
+
+      if (availableCredits < eligibleGuests.length) {
+        return new Response(JSON.stringify({ error: `Insufficient SMS credits: need ${eligibleGuests.length}, have ${availableCredits}` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
+      let remainingToConsume = eligibleGuests.length;
+      for (const lot of usableLots) {
+        if (remainingToConsume <= 0) break;
+        const take = Math.min(lot.remaining, remainingToConsume);
+        if (take > 0) {
+          await adminClient.from("sms_credit_transactions").update({ remaining_credits: lot.remaining - take }).eq("id", lot.id);
+          remainingToConsume -= take;
+        }
+      }
+
+      const { data: siteWallet } = await adminClient
+        .from("wedding_sites")
+        .select("sms_credits_balance")
+        .eq("id", message.wedding_sites.id)
+        .maybeSingle();
+      const currentCredits = Number(siteWallet?.sms_credits_balance ?? 0);
+      const nextCredits = Math.max(currentCredits - eligibleGuests.length - expiredCredits, 0);
+
       await adminClient
         .from("wedding_sites")
-        .update({ sms_credits_balance: currentCredits - eligibleGuests.length })
+        .update({ sms_credits_balance: nextCredits })
         .eq("id", message.wedding_sites.id);
 
       await adminClient.from("sms_credit_transactions").insert({
@@ -278,6 +324,15 @@ Deno.serve(async (req: Request) => {
         reason: "usage",
         metadata: { message_id: messageId, audience, channel },
       });
+
+      if (expiredCredits > 0) {
+        await adminClient.from("sms_credit_transactions").insert({
+          wedding_site_id: message.wedding_sites.id,
+          credits_delta: -expiredCredits,
+          reason: "expiry",
+          metadata: { swept_at: nowIso },
+        });
+      }
     }
 
     const deliveryInserts: Array<{
