@@ -15,6 +15,7 @@ const QuickStart = lazy(() => import('./pages/onboarding/QuickStart').then(m => 
 const GuidedSetup = lazy(() => import('./pages/onboarding/GuidedSetup').then(m => ({ default: m.GuidedSetup })));
 const RSVP = lazy(() => import('./pages/RSVP'));
 const EventRSVP = lazy(() => import('./pages/EventRSVP'));
+const GuestContactUpdate = lazy(() => import('./pages/GuestContactUpdate'));
 const SiteView = lazy(() => import('./pages/SiteView').then(m => ({ default: m.SiteView })));
 const DashboardOverview = lazy(() => import('./pages/dashboard/Overview').then(m => ({ default: m.DashboardOverview })));
 const DashboardGuests = lazy(() => import('./pages/dashboard/Guests').then(m => ({ default: m.DashboardGuests })));
@@ -56,6 +57,7 @@ const AppContent = () => {
         <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
         <Route path="/rsvp" element={<RSVP />} />
         <Route path="/events" element={<EventRSVP />} />
+        <Route path="/guest-contact/:token" element={<GuestContactUpdate />} />
         <Route path="/features/guests" element={<GuestsFeature />} />
         <Route path="/features/rsvp" element={<RSVPFeature />} />
         <Route path="/features/messaging" element={<MessagingFeature />} />

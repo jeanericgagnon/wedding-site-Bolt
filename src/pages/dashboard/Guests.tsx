@@ -950,6 +950,37 @@ Proceed with send?`)) return;
     }
   }
 
+  async function copyContactRequestLink(guest: GuestWithRSVP) {
+    const token = `${crypto.randomUUID().replace(/-/g, '')}${Math.random().toString(36).slice(2, 10)}`;
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    if (!isDemoMode && !weddingSiteId) {
+      toast('Missing wedding site context', 'error');
+      return;
+    }
+
+    if (!isDemoMode) {
+      const { error } = await supabase.from('guest_contact_requests').insert({
+        wedding_site_id: weddingSiteId,
+        guest_id: guest.id,
+        token,
+        expires_at: expiresAt,
+      });
+      if (error) {
+        toast('Failed to create contact link', 'error');
+        return;
+      }
+    }
+
+    const url = `${window.location.origin}/guest-contact/${token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('Contact update link copied', 'success');
+    } catch {
+      window.prompt('Copy contact link:', url);
+    }
+  }
+
   async function openItineraryDrawer(guest: GuestWithRSVP) {
     if (!weddingSiteId) return;
     setItineraryDrawerGuest(guest);
@@ -2394,6 +2425,13 @@ Proceed with send?`)) return;
                     : itineraryDrawerGuest.name}
                 </h2>
                 <p className="text-xs text-text-secondary mt-0.5">Guest activity and itinerary invitations</p>
+                <button
+                  onClick={() => copyContactRequestLink(itineraryDrawerGuest)}
+                  className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy contact update link
+                </button>
               </div>
               <button
                 onClick={() => { setItineraryDrawerGuest(null); setGuestAuditEntries([]); }}
