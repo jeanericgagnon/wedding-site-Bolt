@@ -24,15 +24,29 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
-  await requireSession();
-
-  const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
+  let { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
     body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
       cancel_url: cancelUrl,
     },
   });
+
+  // If auth/session is stale, refresh once and retry.
+  if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (!refreshError) {
+      const retry = await supabase.functions.invoke('stripe-create-checkout', {
+        body: {
+          wedding_site_id: weddingSiteId,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+        },
+      });
+      data = retry.data;
+      error = retry.error;
+    }
+  }
 
   if (error) {
     const message = (error as any)?.message || '';
@@ -54,15 +68,28 @@ export async function createSubscriptionSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
-  await requireSession();
-
-  const { data, error } = await supabase.functions.invoke('stripe-create-subscription', {
+  let { data, error } = await supabase.functions.invoke('stripe-create-subscription', {
     body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
       cancel_url: cancelUrl,
     },
   });
+
+  if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (!refreshError) {
+      const retry = await supabase.functions.invoke('stripe-create-subscription', {
+        body: {
+          wedding_site_id: weddingSiteId,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+        },
+      });
+      data = retry.data;
+      error = retry.error;
+    }
+  }
 
   if (error) {
     const message = (error as any)?.message || '';
@@ -148,9 +175,7 @@ export async function createSmsCreditsSession(
   cancelUrl: string,
   pack: 'sms_100' | 'sms_500' | 'sms_1000'
 ): Promise<string> {
-  await requireSession();
-
-  const { data, error } = await supabase.functions.invoke('stripe-create-sms-credits', {
+  let { data, error } = await supabase.functions.invoke('stripe-create-sms-credits', {
     body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
@@ -158,6 +183,22 @@ export async function createSmsCreditsSession(
       pack,
     },
   });
+
+  if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (!refreshError) {
+      const retry = await supabase.functions.invoke('stripe-create-sms-credits', {
+        body: {
+          wedding_site_id: weddingSiteId,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          pack,
+        },
+      });
+      data = retry.data;
+      error = retry.error;
+    }
+  }
 
   if (error) {
     const message = (error as any)?.message || '';
