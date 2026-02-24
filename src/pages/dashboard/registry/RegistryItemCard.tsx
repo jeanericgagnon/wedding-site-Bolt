@@ -90,6 +90,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
   const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [refetching, setRefetching] = useState(false);
+  const [copiedHint, setCopiedHint] = useState<string | null>(null);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCashFund = item.item_type === 'cash_fund';
@@ -148,6 +149,18 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     }
   }
 
+  async function copyText(label: string, text: string) {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedHint(`${label} copied`);
+      setTimeout(() => setCopiedHint(null), 1800);
+    } catch {
+      setCopiedHint('Copy failed');
+      setTimeout(() => setCopiedHint(null), 1800);
+    }
+  }
+
   if (isCashFund) {
     return (
       <div className="group relative bg-surface border border-border rounded-xl overflow-hidden flex flex-col transition-shadow hover:shadow-md p-4 gap-3">
@@ -186,7 +199,22 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           {item.fund_paypal_url && <a href={item.fund_paypal_url} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">PayPal</a>}
           {item.fund_zelle_handle && <span className="text-xs px-2 py-1 border rounded-lg">Zelle: {item.fund_zelle_handle}</span>}
           {item.fund_custom_url && <a href={item.fund_custom_url} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">{item.fund_custom_label || 'Link'}</a>}
+          {item.fund_zelle_handle && (
+            <button onClick={() => copyText('Zelle', item.fund_zelle_handle || '')} className="text-xs px-2 py-1 border rounded-lg hover:border-primary hover:text-primary">Copy Zelle</button>
+          )}
+          <button
+            onClick={() => copyText('Payout details', [
+              item.fund_venmo_url ? `Venmo: ${item.fund_venmo_url}` : null,
+              item.fund_paypal_url ? `PayPal: ${item.fund_paypal_url}` : null,
+              item.fund_zelle_handle ? `Zelle: ${item.fund_zelle_handle}` : null,
+              item.fund_custom_url ? `${item.fund_custom_label || 'Link'}: ${item.fund_custom_url}` : null,
+            ].filter(Boolean).join('\n'))}
+            className="text-xs px-2 py-1 border rounded-lg hover:border-primary hover:text-primary"
+          >
+            Copy all
+          </button>
         </div>
+        {copiedHint && <p className="text-[11px] text-text-tertiary">{copiedHint}</p>}
       </div>
     );
   }
