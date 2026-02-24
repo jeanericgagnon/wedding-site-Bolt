@@ -274,7 +274,7 @@ function TableCard({
             {(['bar', 'dj_booth', 'dance_floor'] as TableShape[]).includes((table.table_shape ?? 'round') as TableShape) ? (
               <div className="relative mb-2">
                 <div className="mx-auto border border-border-subtle rounded-xl bg-surface-subtle/40 flex items-center justify-center text-xs text-text-tertiary" style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
-                  {table.table_shape === 'bar' ? 'Bar' : table.table_shape === 'dj_booth' ? 'DJ Booth' : 'Dance Floor'}
+                  {table.table_name || ''}
                 </div>
               </div>
             ) : (table.table_shape ?? 'round') === 'round' ? (
@@ -444,8 +444,7 @@ function TableForm({ initial, onSave, onCancel }: {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const defaultName = shape === 'bar' ? 'Bar' : shape === 'dj_booth' ? 'DJ Booth' : shape === 'dance_floor' ? 'Dance Floor' : 'Table';
-    const tableName = name.trim() || defaultName;
+    const tableName = name.trim() || (shape === 'round' || shape === 'rectangle' ? 'Table' : '');
     const seatCap = (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') ? 0 : Number(capacity);
     onSave({ table_name: tableName, capacity: seatCap, table_shape: shape, layout_width: Number(layoutWidth), layout_height: Number(layoutHeight), notes });
   }
@@ -458,7 +457,7 @@ function TableForm({ initial, onSave, onCancel }: {
           className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary w-36"
           value={name}
           onChange={e => setName(e.target.value)}
-          placeholder={shape === 'bar' ? 'Bar' : shape === 'dj_booth' ? 'DJ Booth' : shape === 'dance_floor' ? 'Dance Floor' : 'Table 1'}
+          placeholder="Optional label"
           autoFocus
         />
       </div>
@@ -549,6 +548,7 @@ export const DashboardSeating: React.FC = () => {
   const [movingTableId, setMovingTableId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [canvasZoom, setCanvasZoom] = useState(1);
+  const [canvasFullscreen, setCanvasFullscreen] = useState(false);
   const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
 
@@ -815,7 +815,7 @@ export const DashboardSeating: React.FC = () => {
         ? {
             id: `demo-table-${Date.now()}`,
             seating_event_id: seatingEvent.id,
-            table_name: tableData.table_name || `Table ${sortOrder + 1}`,
+            table_name: tableData.table_name || (((tableData.table_shape as TableShape) === 'round' || (tableData.table_shape as TableShape) === 'rectangle') ? `Table ${sortOrder + 1}` : ''),
             capacity: tableData.capacity || 8,
             sort_order: sortOrder,
             notes: tableData.notes || '',
@@ -1400,6 +1400,13 @@ export const DashboardSeating: React.FC = () => {
                       >
                         100%
                       </button>
+                      <button
+                        className="px-2 py-1 rounded border border-border-subtle bg-surface hover:border-border"
+                        onClick={() => setCanvasFullscreen(true)}
+                        title="Open fullscreen canvas"
+                      >
+                        Fullscreen
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1414,7 +1421,18 @@ export const DashboardSeating: React.FC = () => {
                   </div>
                 ) : (
                   layoutMode === 'visual' ? (
-                    <div className="relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto" onWheel={handleCanvasWheelZoom}>
+                    <div className={`relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto transition-all duration-300 ${canvasFullscreen ? 'fixed inset-4 z-50 rounded-2xl shadow-2xl bg-surface p-3' : ''}`} onWheel={handleCanvasWheelZoom}>
+                      {canvasFullscreen && (
+                        <div className="mb-2 flex items-center justify-between animate-in fade-in duration-200">
+                          <button
+                            className="px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:border-border text-sm"
+                            onClick={() => setCanvasFullscreen(false)}
+                          >
+                            ← Back
+                          </button>
+                          <span className="text-xs text-text-tertiary">Fullscreen canvas</span>
+                        </div>
+                      )}
                       <div
                         className="relative min-h-[720px] min-w-[960px]"
                         style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top left' }}
