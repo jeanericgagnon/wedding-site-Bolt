@@ -586,6 +586,7 @@ function TableForm({ initial, onSave, onCancel }: {
 const DEMO_EVENT_ID = 'demo-event-reception';
 const DEMO_SEATING_EVENT_ID = 'demo-seating-event';
 const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
+const DEMO_SEATING_STORAGE_KEY = 'dayof.demo.seating.state';
 
 export const DashboardSeating: React.FC = () => {
   const { isDemoMode } = useAuth();
@@ -645,6 +646,31 @@ export const DashboardSeating: React.FC = () => {
     } catch {}
 
     return parsedEvents.length > 0 ? parsedEvents : fallbackEvents;
+  }
+
+
+  function readDemoSeatingState(eventId: string): { tables: SeatingTable[]; assignments: SeatingAssignment[] } {
+    try {
+      const raw = localStorage.getItem(DEMO_SEATING_STORAGE_KEY);
+      if (!raw) return { tables: [], assignments: [] };
+      const parsed = JSON.parse(raw) as Record<string, { tables?: SeatingTable[]; assignments?: SeatingAssignment[] }>;
+      const item = parsed?.[eventId];
+      return {
+        tables: Array.isArray(item?.tables) ? item.tables : [],
+        assignments: Array.isArray(item?.assignments) ? item.assignments : [],
+      };
+    } catch {
+      return { tables: [], assignments: [] };
+    }
+  }
+
+  function writeDemoSeatingState(eventId: string, tablesData: SeatingTable[], assignmentsData: SeatingAssignment[]) {
+    try {
+      const raw = localStorage.getItem(DEMO_SEATING_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) as Record<string, any> : {};
+      parsed[eventId] = { tables: tablesData, assignments: assignmentsData };
+      localStorage.setItem(DEMO_SEATING_STORAGE_KEY, JSON.stringify(parsed));
+    } catch {}
   }
 
   useEffect(() => {
@@ -749,13 +775,15 @@ export const DashboardSeating: React.FC = () => {
           };
         });
 
-        setTables([]);
-        setAssignments([]);
+        const saved = readDemoSeatingState(selectedEventId);
+        setTables(saved.tables);
+        setAssignments(saved.assignments);
         setAllGuests(guestsData);
         const attending = guestsData.filter(g => g.is_attending).length;
         const declined = guestsData.filter(g => g.rsvp_status === 'declined' || g.rsvp_status === 'not_attending').length;
         const pending = guestsData.filter(g => !g.rsvp_status || g.rsvp_status === 'pending').length;
-        setCounters({ invited: guestsData.length, attending, declined, pending, seated: 0, unassigned: attending });
+        const seated = new Set(saved.assignments.map(a => a.guest_id)).size;
+        setCounters({ invited: guestsData.length, attending, declined, pending, seated, unassigned: Math.max(attending - seated, 0) });
         setInvalidCount(0);
         return;
       }
@@ -780,6 +808,11 @@ export const DashboardSeating: React.FC = () => {
       setLoadingSeating(false);
     }
   }
+
+  useEffect(() => {
+    if (!isDemoMode || !selectedEventId) return;
+    writeDemoSeatingState(selectedEventId, tables, assignments);
+  }, [isDemoMode, selectedEventId, tables, assignments]);
 
   const assignedGuestIds = new Set(assignments.map(a => a.guest_id));
   const unassignedGuests = allGuests.filter(g => g.is_attending && !assignedGuestIds.has(g.id));
