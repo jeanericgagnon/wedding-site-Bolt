@@ -54,7 +54,7 @@ function formatAuditValue(value: unknown): string {
 
 function summarizeAuditEntry(entry: GuestAuditEntry): string {
   if (entry.action === 'insert') return 'Guest created';
-  if (entry.action === 'delete') return 'Guest deleted';
+  if (entry.action === 'delete') return 'Guest removed';
 
   const oldData = entry.old_data ?? {};
   const newData = entry.new_data ?? {};
@@ -77,8 +77,25 @@ function summarizeAuditEntry(entry: GuestAuditEntry): string {
     .slice(0, 2)
     .map(({ key, label }) => `${label}: ${formatAuditValue(oldData[key])} → ${formatAuditValue(newData[key])}`);
 
-  if (changes.length === 0) return 'Guest updated';
+  if (changes.length === 0) return 'Guest details updated';
   return changes.join(' · ');
+}
+
+function getAuditActionTone(action: GuestAuditEntry['action']): string {
+  if (action === 'insert') return 'bg-success-light text-success border-success/20';
+  if (action === 'delete') return 'bg-error-light text-error border-error/20';
+  return 'bg-primary-light text-primary border-primary/20';
+}
+
+function formatRelativeTime(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
 function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; reception?: boolean } | null {
@@ -2370,7 +2387,7 @@ Proceed with send?`)) return;
                     ? `${itineraryDrawerGuest.first_name} ${itineraryDrawerGuest.last_name}`
                     : itineraryDrawerGuest.name}
                 </h2>
-                <p className="text-xs text-text-secondary mt-0.5">Itinerary event invitations</p>
+                <p className="text-xs text-text-secondary mt-0.5">Guest activity and itinerary invitations</p>
               </div>
               <button
                 onClick={() => { setItineraryDrawerGuest(null); setGuestAuditEntries([]); }}
@@ -2421,22 +2438,26 @@ Proceed with send?`)) return;
 
               <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Guest audit trail</p>
-                  <span className="text-[11px] text-text-tertiary">{guestAuditEntries.length} recent</span>
+                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Guest activity</p>
+                  <span className="text-[11px] text-text-tertiary">Last {guestAuditEntries.length} changes</span>
                 </div>
                 {guestAuditEntries.length === 0 ? (
-                  <p className="text-xs text-text-tertiary">No recent changes logged yet.</p>
+                  <p className="text-xs text-text-tertiary">No recent changes yet. Updates to this guest will appear here automatically.</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {guestAuditEntries.map((entry) => {
-                      const time = new Date(entry.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                      const absolute = new Date(entry.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                      const relative = formatRelativeTime(entry.changed_at);
                       return (
-                        <div key={entry.id} className="text-xs text-text-primary border border-border-subtle rounded-lg p-2 bg-surface">
+                        <div key={entry.id} className="text-xs text-text-primary border border-border-subtle rounded-lg p-2.5 bg-surface">
                           <div className="flex items-start justify-between gap-3">
-                            <span className="capitalize px-2 py-0.5 rounded border bg-surface-subtle">{entry.action}</span>
-                            <span className="text-text-tertiary whitespace-nowrap">{time}</span>
+                            <span className={`capitalize px-2 py-0.5 rounded border ${getAuditActionTone(entry.action)}`}>{entry.action}</span>
+                            <div className="text-right leading-tight">
+                              <span className="text-text-secondary whitespace-nowrap">{relative}</span>
+                              <p className="text-[10px] text-text-tertiary mt-0.5">{absolute}</p>
+                            </div>
                           </div>
-                          <p className="mt-1 text-text-secondary">{summarizeAuditEntry(entry)}</p>
+                          <p className="mt-1.5 text-text-secondary leading-relaxed">{summarizeAuditEntry(entry)}</p>
                         </div>
                       );
                     })}
