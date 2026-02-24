@@ -477,7 +477,7 @@ function TableForm({ initial, onSave, onCancel }: {
         <select
           className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           value={shape}
-          onChange={e => setShape(e.target.value as 'round' | 'rectangle')}
+          onChange={e => setShape(e.target.value as TableShape)}
         >
           <option value="round">Round</option>
           <option value="rectangle">Rectangle</option>
@@ -547,6 +547,7 @@ export const DashboardSeating: React.FC = () => {
   const [layoutMode, setLayoutMode] = useState<'visual' | 'list'>('visual');
   const [movingTableId, setMovingTableId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [canvasZoom, setCanvasZoom] = useState(1);
   const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
 
@@ -701,6 +702,12 @@ export const DashboardSeating: React.FC = () => {
     const targetTable = tables.find(t => t.id === targetTableId);
     if (!targetTable) return;
 
+    const shape = targetTable.table_shape ?? 'round';
+    if (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') {
+      toast('This floor object does not accept seating assignments', 'warning');
+      return;
+    }
+
     const existingForGuest = assignments.find(a => a.guest_id === guestId);
     const targetAssignments = assignments.filter(a => a.table_id === targetTable.id && a.guest_id !== guestId);
     const currentOccupants = targetAssignments.length;
@@ -721,15 +728,26 @@ export const DashboardSeating: React.FC = () => {
 
     // If dropped on table (not seat), auto-fill first open seat
     if (targetSeatIndex == null) {
-      const used = new Set(targetAssignments.map(a => a.seat_index).filter((v): v is number => v != null));
+      if (targetTable.capacity <= 0) {
+        toast('This object has no seats', 'warning');
+        return;
+      }
+
+      const usedSeats = new Set(
+        targetAssignments
+          .map(a => a.seat_index)
+          .filter((v): v is number => typeof v === 'number' && v > 0)
+      );
+
       for (let i = 1; i <= targetTable.capacity; i++) {
-        if (!used.has(i)) {
+        if (!usedSeats.has(i)) {
           targetSeatIndex = i;
           break;
         }
       }
+
       if (targetSeatIndex == null) {
-        // No open seat index left; keep source if moving inside same table, else fallback null
+        // No open seat index left; keep source if moving inside same table, else fallback undefined
         targetSeatIndex = existingForGuest?.table_id === targetTable.id ? (existingForGuest?.seat_index ?? undefined) : undefined;
       }
     }
@@ -800,7 +818,7 @@ export const DashboardSeating: React.FC = () => {
             capacity: tableData.capacity || 8,
             sort_order: sortOrder,
             notes: tableData.notes || '',
-            table_shape: (tableData.table_shape as 'round' | 'rectangle') || 'round',
+            table_shape: (tableData.table_shape as TableShape) || 'round',
             layout_width: Number(tableData.layout_width) || 260,
             layout_height: Number(tableData.layout_height) || 150,
             layout_x: 24 + (sortOrder % 3) * 360,
@@ -1346,7 +1364,33 @@ export const DashboardSeating: React.FC = () => {
 
               <div className="flex-1 min-w-0">
                 {layoutMode === 'visual' && (
-                  <div className="mb-3 rounded-xl border border-border-subtle bg-gradient-to-b from-surface-subtle to-surface p-2 text-xs text-text-tertiary">Canvas mode: arrange tables and seats visually.</div>
+                  <div className="mb-3 rounded-xl border border-border-subtle bg-gradient-to-b from-surface-subtle to-surface p-2 text-xs text-text-tertiary flex items-center justify-between gap-2">
+                    <span>Canvas mode: arrange tables and seats visually.</span>
+                    <div className="inline-flex items-center gap-1">
+                      <button
+                        className="px-2 py-1 rounded border border-border-subtle bg-surface hover:border-border"
+                        onClick={() => setCanvasZoom(z => Math.max(0.6, Number((z - 0.1).toFixed(2))))}
+                        title="Zoom out"
+                      >
+                        −
+                      </button>
+                      <span className="min-w-[52px] text-center">{Math.round(canvasZoom * 100)}%</span>
+                      <button
+                        className="px-2 py-1 rounded border border-border-subtle bg-surface hover:border-border"
+                        onClick={() => setCanvasZoom(z => Math.min(1.6, Number((z + 0.1).toFixed(2))))}
+                        title="Zoom in"
+                      >
+                        +
+                      </button>
+                      <button
+                        className="px-2 py-1 rounded border border-border-subtle bg-surface hover:border-border"
+                        onClick={() => setCanvasZoom(1)}
+                        title="Reset zoom"
+                      >
+                        100%
+                      </button>
+                    </div>
+                  </div>
                 )}
                 {tables.length === 0 ? (
                   <div className="text-center py-16 border-2 border-dashed border-border-subtle rounded-xl">
@@ -1360,39 +1404,44 @@ export const DashboardSeating: React.FC = () => {
                 ) : (
                   layoutMode === 'visual' ? (
                     <div className="relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto">
-                      {tables.map((table, idx) => {
-                        if (editingTable?.id === table.id) return null;
-                        const fallback = getDefaultTablePosition(idx);
-                        const x = table.layout_x ?? fallback.x;
-                        const y = table.layout_y ?? fallback.y;
-                        return (
-                          <div
-                            key={table.id}
-                            className={`absolute w-[340px] ${movingTableId === table.id ? 'z-30' : 'z-10'}`}
-                            style={{ left: `${x}px`, top: `${y}px` }}
-                          >
-                            <TableCard
-                              table={table}
-                              guests={allGuests.filter(g =>
-                                assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
-                              )}
-                              assignments={assignments.filter(a => a.table_id === table.id)}
-                              allGuests={allGuests}
-                              onEdit={setEditingTable}
-                              onDelete={handleDeleteTable}
-                              onRemoveGuest={handleRemoveGuest}
-                              checkInMode={checkInMode}
-                              onToggleCheckIn={handleToggleCheckIn}
-                              layoutMode={layoutMode}
-                              onResizeTable={handleResizeTable}
-                              isCanvas
-                              onStartMove={(e) => startMoveTable(table, idx, e)}
-                              isSelected={selectedTableId === table.id}
-                              onSelect={() => setSelectedTableId(table.id)}
-                            />
-                          </div>
-                        );
-                      })}
+                      <div
+                        className="relative min-h-[720px] min-w-[960px]"
+                        style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top left' }}
+                      >
+                        {tables.map((table, idx) => {
+                          if (editingTable?.id === table.id) return null;
+                          const fallback = getDefaultTablePosition(idx);
+                          const x = table.layout_x ?? fallback.x;
+                          const y = table.layout_y ?? fallback.y;
+                          return (
+                            <div
+                              key={table.id}
+                              className={`absolute w-[340px] ${movingTableId === table.id ? 'z-30' : 'z-10'}`}
+                              style={{ left: `${x}px`, top: `${y}px` }}
+                            >
+                              <TableCard
+                                table={table}
+                                guests={allGuests.filter(g =>
+                                  assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
+                                )}
+                                assignments={assignments.filter(a => a.table_id === table.id)}
+                                allGuests={allGuests}
+                                onEdit={setEditingTable}
+                                onDelete={handleDeleteTable}
+                                onRemoveGuest={handleRemoveGuest}
+                                checkInMode={checkInMode}
+                                onToggleCheckIn={handleToggleCheckIn}
+                                layoutMode={layoutMode}
+                                onResizeTable={handleResizeTable}
+                                isCanvas
+                                onStartMove={(e) => startMoveTable(table, idx, e)}
+                                isSelected={selectedTableId === table.id}
+                                onSelect={() => setSelectedTableId(table.id)}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
