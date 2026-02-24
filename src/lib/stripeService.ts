@@ -49,7 +49,12 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
+  const session = await requireSession();
+
   let { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
     body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
@@ -61,7 +66,11 @@ export async function createCheckoutSession(
   if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
+      const { data: { session: refreshedSession } } = await supabase.auth.getSession();
       const retry = await supabase.functions.invoke('stripe-create-checkout', {
+        headers: refreshedSession?.access_token
+          ? { Authorization: `Bearer ${refreshedSession.access_token}` }
+          : undefined,
         body: {
           wedding_site_id: weddingSiteId,
           success_url: successUrl,
@@ -93,7 +102,12 @@ export async function createSubscriptionSession(
   successUrl: string,
   cancelUrl: string
 ): Promise<string> {
+  const session = await requireSession();
+
   let { data, error } = await supabase.functions.invoke('stripe-create-subscription', {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
     body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
@@ -104,7 +118,11 @@ export async function createSubscriptionSession(
   if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
+      const { data: { session: refreshedSession } } = await supabase.auth.getSession();
       const retry = await supabase.functions.invoke('stripe-create-subscription', {
+        headers: refreshedSession?.access_token
+          ? { Authorization: `Bearer ${refreshedSession.access_token}` }
+          : undefined,
         body: {
           wedding_site_id: weddingSiteId,
           success_url: successUrl,
@@ -200,7 +218,12 @@ export async function createSmsCreditsSession(
   cancelUrl: string,
   pack: 'sms_100' | 'sms_500' | 'sms_1000'
 ): Promise<string> {
+  const session = await requireSession();
+
   let { data, error } = await supabase.functions.invoke('stripe-create-sms-credits', {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
     body: {
       wedding_site_id: weddingSiteId,
       success_url: successUrl,
@@ -212,7 +235,11 @@ export async function createSmsCreditsSession(
   if (error && /401|unauthorized|jwt|session/i.test((error as any)?.message || '')) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
+      const { data: { session: refreshedSession } } = await supabase.auth.getSession();
       const retry = await supabase.functions.invoke('stripe-create-sms-credits', {
+        headers: refreshedSession?.access_token
+          ? { Authorization: `Bearer ${refreshedSession.access_token}` }
+          : undefined,
         body: {
           wedding_site_id: weddingSiteId,
           success_url: successUrl,
