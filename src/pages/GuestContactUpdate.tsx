@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 
 type Match = {
   id: string;
@@ -8,6 +7,21 @@ type Match = {
   household_id?: string | null;
   household_size?: number;
 };
+
+
+async function callPublicFn(name: string, body: unknown) {
+  const base = ((import.meta as any).env?.VITE_SUPABASE_URL as string | undefined)?.trim();
+  if (!base) throw new Error('Missing Supabase URL');
+  const res = await fetch(`${base}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((json as any).error || `Request failed (${res.status})`);
+  if ((json as any)?.error) throw new Error((json as any).error);
+  return json as any;
+}
 
 export const GuestContactUpdate: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
@@ -34,10 +48,7 @@ export const GuestContactUpdate: React.FC = () => {
     setSearching(true);
     setResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('guest-contact-lookup', {
-        body: { site_ref: siteRef, query: query.trim() },
-      });
-      if (error) throw error;
+      const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, query: query.trim() });
       const rows = ((data as any)?.matches ?? []) as Match[];
       setMatches(rows);
       if (rows.length > 0) {
@@ -57,18 +68,15 @@ export const GuestContactUpdate: React.FC = () => {
     setLoading(true);
     setResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('guest-contact-submit', {
-        body: {
-          site_ref: siteRef,
-          guest_id: selectedGuestId,
-          apply_household: applyHousehold,
-          email: email.trim() || null,
-          phone: phone.trim() || null,
-          rsvp_status: rsvpStatus || null,
-          sms_consent: smsConsent,
-        },
+      const data = await callPublicFn('guest-contact-submit', {
+        site_ref: siteRef,
+        guest_id: selectedGuestId,
+        apply_household: applyHousehold,
+        email: email.trim() || null,
+        phone: phone.trim() || null,
+        rsvp_status: rsvpStatus || null,
+        sms_consent: smsConsent,
       });
-      if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {

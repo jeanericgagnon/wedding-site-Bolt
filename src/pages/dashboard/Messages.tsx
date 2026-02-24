@@ -862,6 +862,9 @@ export const DashboardMessages: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-2">Select Audience</label>
+                  {audienceOptions.some((a) => a.value.startsWith('event:')) && (
+                    <p className="text-xs text-text-tertiary mb-1">Includes itinerary segments (look for “Itinerary • ...” in the dropdown).</p>
+                  )}
                   <select
                     value={formData.audience}
                     onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
