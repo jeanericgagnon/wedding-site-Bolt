@@ -178,7 +178,7 @@ function TableCard({
         <div className="flex items-center gap-2 min-w-0">
           <TableProperties className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
           <span className="text-sm font-semibold text-text-primary truncate">{table.table_name}</span>
-          <span className="text-[10px] uppercase text-text-tertiary">{table.table_shape ?? 'round'}</span>
+          <span className="text-[10px] uppercase text-text-tertiary px-1.5 py-0.5 rounded bg-surface-subtle border border-border-subtle">{table.table_shape ?? 'round'}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
@@ -858,11 +858,11 @@ export const DashboardSeating: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-text-primary">Seating</h1>
-              <p className="text-sm text-text-secondary">Drag guests to tables</p>
+              <p className="text-sm text-text-secondary">{layoutMode === 'visual' ? 'Drag guests onto specific seats' : 'Drag guests between tables quickly'}</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center p-2 rounded-xl border border-border-subtle bg-surface-subtle/40">
             <Button variant="outline" size="sm" onClick={handleExportCSV}>
               <Download className="w-4 h-4 mr-1" /> CSV
             </Button>
@@ -951,7 +951,7 @@ export const DashboardSeating: React.FC = () => {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center p-2 rounded-xl border border-border-subtle bg-surface-subtle/40">
           <Button size="sm" onClick={() => setAddingTable(true)}>
             <Plus className="w-4 h-4 mr-1" /> Add Table
           </Button>
@@ -976,7 +976,7 @@ export const DashboardSeating: React.FC = () => {
               <input
                 value={checkInQuery}
                 onChange={(e) => setCheckInQuery(e.target.value)}
-                placeholder="Search attendee name for quick check-in"
+                placeholder="Search attendee for quick check-in"
                 className="flex-1 min-w-[220px] px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <span className="text-xs text-text-tertiary">{arrivedCount}/{counters?.attending ?? 0} arrived</span>
@@ -1062,7 +1062,7 @@ export const DashboardSeating: React.FC = () => {
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="flex flex-col lg:flex-row gap-5">
               <div className="lg:w-64 xl:w-72 flex-shrink-0">
-                <div className="sticky top-24">
+                <div className="sticky top-24 p-3 rounded-xl border border-border-subtle bg-surface-subtle/40">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-sm font-semibold text-text-primary">Unassigned</h2>
                     <span className="text-xs text-text-tertiary">{unassignedGuests.length} guests</span>
