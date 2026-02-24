@@ -290,12 +290,13 @@ function TableCard({
             </span>
             {isSelected && (
               <>
-                <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(-15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate left">
+                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(-15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate left">
                   <RotateCcw className="w-3 h-3" />
                 </button>
-                <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate right">
+                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRotate(15); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors" title="Rotate right">
                   <RotateCw className="w-3 h-3" />
                 </button>
+                <span className="text-[10px] text-text-tertiary">{Math.round(table.rotation_deg ?? 0)}°</span>
                 <button onClick={(e) => { e.stopPropagation(); onEdit(table); }} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
                   <Edit2 className="w-3 h-3" />
                 </button>
