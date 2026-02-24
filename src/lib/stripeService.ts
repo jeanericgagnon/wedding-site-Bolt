@@ -157,3 +157,42 @@ export function daysUntilExpiry(siteExpiresAt: string | null): number | null {
   const ms = new Date(siteExpiresAt).getTime() - Date.now();
   return Math.ceil(ms / (1000 * 60 * 60 * 24));
 }
+
+export async function createSmsCreditsSession(
+  weddingSiteId: string,
+  successUrl: string,
+  cancelUrl: string,
+  pack: 'sms_100' | 'sms_500' | 'sms_1000'
+): Promise<string> {
+  const session = await requireSession();
+
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string).trim();
+  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string).trim();
+
+  const res = await fetch(`${supabaseUrl}/functions/v1/stripe-create-sms-credits`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': supabaseAnonKey,
+    },
+    body: JSON.stringify({
+      wedding_site_id: weddingSiteId,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      pack,
+    }),
+  });
+
+  const json = await res.json().catch(() => ({})) as { url?: string; error?: string };
+
+  if (!res.ok) {
+    if (res.status === 401) throw new SessionExpiredError();
+    throw new Error(json.error || `Server error (${res.status})`);
+  }
+
+  if (json.error) throw new Error(json.error);
+  if (!json.url) throw new Error('No checkout URL returned. Please try again.');
+
+  return json.url;
+}

@@ -5,6 +5,7 @@ import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCir
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoGuests, demoWeddingSite } from '../../lib/demoData';
+import { createSmsCreditsSession } from '../../lib/stripeService';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -127,6 +128,7 @@ interface Message {
 interface Guest {
   id: string;
   email: string | null;
+  phone?: string | null;
   rsvp_status: string;
   first_name: string | null;
   last_name: string | null;
@@ -138,6 +140,7 @@ interface WeddingSite {
   couple_first_name: string | null;
   couple_second_name: string | null;
   couple_email: string | null;
+  sms_credits_balance?: number;
 }
 
 interface Toast {
@@ -354,11 +357,13 @@ export const DashboardMessages: React.FC = () => {
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [viewingMessage, setViewingMessage] = useState<Message | null>(null);
+  const [buyingPack, setBuyingPack] = useState<'sms_100' | 'sms_500' | 'sms_1000' | null>(null);
 
   const [formData, setFormData] = useState({
     subject: '',
     body: '',
     audience: 'all',
+    channel: 'email' as 'email' | 'sms',
     scheduleType: 'now',
     scheduleDate: '',
     scheduleTime: '',
@@ -370,6 +375,22 @@ export const DashboardMessages: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
 
+  async function handleBuySmsPack(pack: 'sms_100' | 'sms_500' | 'sms_1000') {
+    if (!weddingSite) return;
+    setBuyingPack(pack);
+    try {
+      const base = window.location.origin;
+      const success = `${base}/dashboard/messages?smsCredits=success`;
+      const cancel = `${base}/dashboard/messages?smsCredits=cancel`;
+      const url = await createSmsCreditsSession(weddingSite.id, success, cancel, pack);
+      window.location.href = url;
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to open checkout', 'error');
+    } finally {
+      setBuyingPack(null);
+    }
+  }
+
   const fetchWeddingSite = useCallback(async () => {
     if (isDemoMode) {
       setWeddingSite({
@@ -377,6 +398,7 @@ export const DashboardMessages: React.FC = () => {
         couple_first_name: (demoWeddingSite as any).couple_first_name ?? (demoWeddingSite as any).couple_name_1 ?? null,
         couple_second_name: (demoWeddingSite as any).couple_second_name ?? (demoWeddingSite as any).couple_name_2 ?? null,
         couple_email: (demoWeddingSite as any).couple_email ?? null,
+        sms_credits_balance: 250,
       });
       return;
     }
@@ -388,7 +410,7 @@ export const DashboardMessages: React.FC = () => {
 
     const { data } = await supabase
       .from('wedding_sites')
-      .select('id, couple_first_name, couple_second_name, couple_email')
+      .select('id, couple_first_name, couple_second_name, couple_email, sms_credits_balance')
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) setWeddingSite(data);
@@ -422,6 +444,7 @@ export const DashboardMessages: React.FC = () => {
       setGuests(demoGuests.map((g) => ({
         id: g.id,
         email: g.email ?? null,
+        phone: (g as any).phone ?? null,
         rsvp_status: g.rsvp_status ?? 'pending',
         first_name: g.first_name ?? null,
         last_name: g.last_name ?? null,
@@ -431,7 +454,7 @@ export const DashboardMessages: React.FC = () => {
     }
     const { data } = await supabase
       .from('guests')
-      .select('id, email, rsvp_status, first_name, last_name, name')
+      .select('id, email, phone, rsvp_status, first_name, last_name, name')
       .eq('wedding_site_id', weddingSite.id);
     setGuests(data || []);
   }, [weddingSite, isDemoMode]);
@@ -461,12 +484,24 @@ export const DashboardMessages: React.FC = () => {
     setSending(true);
     try {
       const recipients = getRecipients(formData.audience);
-      const recipientCount = recipients.filter(g => g.email).length;
+      const recipientCount = formData.channel === 'sms'
+        ? recipients.filter(g => g.phone).length
+        : recipients.filter(g => g.email).length;
 
       if (recipientCount === 0 && !saveAsDraft) {
-        toast('No recipients have email addresses. Add email addresses to your guests first.', 'error');
+        toast(formData.channel === 'sms'
+          ? 'No recipients have phone numbers. Add phone numbers to your guests first.'
+          : 'No recipients have email addresses. Add email addresses to your guests first.', 'error');
         setSending(false);
         return;
+      }
+
+      if (formData.channel === 'sms' && !saveAsDraft) {
+        if (!smsCreditsSufficient) {
+          toast(`Not enough SMS credits. Need ${smsCreditsNeeded}, have ${smsCredits}.`, 'error');
+          setSending(false);
+          return;
+        }
       }
 
       const isScheduled = !saveAsDraft && formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime;
@@ -486,7 +521,7 @@ export const DashboardMessages: React.FC = () => {
           sent_at: status === 'queued' ? new Date().toISOString() : null,
           scheduled_for: scheduledFor,
           status: status === 'queued' ? 'sent' : status,
-          channel: 'email',
+          channel: formData.channel,
           audience_filter: formData.audience,
           recipient_filter: { audience: formData.audience, recipient_count: recipientCount },
           recipient_count: recipientCount,
@@ -501,7 +536,7 @@ export const DashboardMessages: React.FC = () => {
             wedding_site_id: weddingSite.id,
             subject: formData.subject,
             body: formData.body,
-            channel: 'email',
+            channel: formData.channel,
             status,
             scheduled_for: scheduledFor,
             sent_at: null,
@@ -517,7 +552,7 @@ export const DashboardMessages: React.FC = () => {
       }
 
       setShowRecipientPreview(false);
-      setFormData({ subject: '', body: '', audience: 'all', scheduleType: 'now', scheduleDate: '', scheduleTime: '' });
+      setFormData({ subject: '', body: '', audience: 'all', channel: formData.channel, scheduleType: 'now', scheduleDate: '', scheduleTime: '' });
 
       if (saveAsDraft) {
         toast('Saved as draft', 'info');
@@ -536,6 +571,13 @@ export const DashboardMessages: React.FC = () => {
           toast(`Delivered to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} (demo)`, 'success');
           return;
         }
+
+        if (formData.channel === 'sms') {
+          toast('SMS sending provider not enabled yet. Credits setup is ready.', 'info');
+          await fetchMessages();
+          return;
+        }
+
         toast(`Sending to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}…`, 'info');
         await fetchMessages();
         try {
@@ -593,6 +635,11 @@ export const DashboardMessages: React.FC = () => {
 
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => g.email).length;
+  const recipientsWithPhone = getRecipients(formData.audience).filter(g => g.phone).length;
+  const activeRecipients = formData.channel === 'sms' ? recipientsWithPhone : recipientsWithEmail;
+  const smsCredits = weddingSite?.sms_credits_balance ?? 0;
+  const smsCreditsNeeded = recipientsWithPhone;
+  const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
 
   if (loading) {
     return (
@@ -611,29 +658,56 @@ export const DashboardMessages: React.FC = () => {
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-bold text-text-primary">Messages</h1>
           </div>
-          <p className="text-text-secondary">Compose and send messages directly to your guests via email</p>
+          <p className="text-text-secondary">Compose and send guest campaigns by email, plus SMS credit setup</p>
         </div>
 
-        {weddingSite?.couple_email && (
-          <Card variant="bordered" padding="lg">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary-light rounded-lg">
-                <AtSign className="w-6 h-6 text-primary" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {weddingSite?.couple_email && (
+            <Card variant="bordered" padding="lg">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-primary-light rounded-lg">
+                  <AtSign className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-text-secondary">Your Wedding Email</p>
+                  <p className="text-lg font-semibold text-text-primary">{weddingSite.couple_email}</p>
+                  <p className="text-xs text-text-tertiary mt-1">Messages will appear to come from this address</p>
+                </div>
               </div>
+            </Card>
+          )}
+
+          <Card variant="bordered" padding="lg">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm text-text-secondary">Your Wedding Email</p>
-                <p className="text-lg font-semibold text-text-primary">{weddingSite.couple_email}</p>
-                <p className="text-xs text-text-tertiary mt-1">Messages will appear to come from this address</p>
+                <p className="text-sm text-text-secondary">SMS Credits</p>
+                <p className="text-2xl font-semibold text-text-primary">{smsCredits}</p>
+                <p className="text-xs text-text-tertiary mt-1">Approx 1 credit per recipient per SMS</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
+                <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
               </div>
             </div>
           </Card>
-        )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Card variant="bordered" padding="lg">
               <h2 className="text-xl font-semibold text-text-primary mb-6">Compose Message</h2>
               <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Channel</label>
+                  <div className="inline-flex rounded-lg border border-border overflow-hidden">
+                    <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'email' })}>Email</button>
+                    <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>SMS</button>
+                  </div>
+                  {formData.channel === 'sms' && (
+                    <p className="text-xs text-text-tertiary mt-1">SMS credit wallet is active. Sending pipeline can be enabled once Twilio credentials are configured.</p>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-2">Select Audience</label>
                   <select
@@ -647,9 +721,14 @@ export const DashboardMessages: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                  {recipientsWithEmail < (selectedAudience?.count || 0) && (
+                  {formData.channel === 'email' && activeRecipients < (selectedAudience?.count || 0) && (
                     <p className="text-sm text-warning mt-1">
-                      {recipientsWithEmail} of {selectedAudience?.count} guests have email addresses
+                      {activeRecipients} of {selectedAudience?.count} guests have email addresses
+                    </p>
+                  )}
+                  {formData.channel === 'sms' && recipientsWithPhone < (selectedAudience?.count || 0) && (
+                    <p className="text-sm text-warning mt-1">
+                      {recipientsWithPhone} of {selectedAudience?.count} guests have phone numbers
                     </p>
                   )}
                 </div>
@@ -765,7 +844,7 @@ export const DashboardMessages: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <Eye className="w-4 h-4 text-text-secondary" />
                       <span className="font-medium text-text-primary">
-                        Preview recipients ({recipientsWithEmail} with email)
+                        Preview recipients ({activeRecipients} with {formData.channel === 'sms' ? 'phone' : 'email'})
                       </span>
                     </div>
                     {showRecipientPreview ? <ChevronUp className="w-4 h-4 text-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-text-tertiary" />}
@@ -796,18 +875,27 @@ export const DashboardMessages: React.FC = () => {
                       <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
                           ? isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`)
-                            ? `Will send immediately (scheduled time has passed) — ${recipientsWithEmail} recipient${recipientsWithEmail !== 1 ? 's' : ''}`
-                            : `Scheduled for ${formatScheduledDate(`${formData.scheduleDate}T${formData.scheduleTime}:00`)} — ${recipientsWithEmail} recipient${recipientsWithEmail !== 1 ? 's' : ''}`
-                          : `Email will be sent immediately to ${recipientsWithEmail} guest${recipientsWithEmail !== 1 ? 's' : ''}`}
+                            ? `Will send immediately (scheduled time has passed) — ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}`
+                            : `Scheduled for ${formatScheduledDate(`${formData.scheduleDate}T${formData.scheduleTime}:00`)} — ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}`
+                          : `${formData.channel === 'sms' ? 'SMS' : 'Email'} will be sent immediately to ${activeRecipients} guest${activeRecipients !== 1 ? 's' : ''}`}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {recipientsWithEmail === 0 && !sending && formData.audience !== '' && (
+                {activeRecipients === 0 && !sending && formData.audience !== '' && (
                   <div className="flex items-center gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    No guests in this audience have email addresses. Add emails to guests before sending.
+                    {formData.channel === 'sms'
+                      ? 'No guests in this audience have phone numbers. Add phone numbers before sending SMS.'
+                      : 'No guests in this audience have email addresses. Add emails to guests before sending.'}
+                  </div>
+                )}
+
+                {formData.channel === 'sms' && activeRecipients > 0 && !smsCreditsSufficient && (
+                  <div className="flex items-center justify-between gap-3 p-3 bg-error-light border border-error/20 rounded-lg text-sm text-error">
+                    <span>Not enough SMS credits: need {smsCreditsNeeded}, have {smsCredits}.</span>
+                    <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>Buy credits</Button>
                   </div>
                 )}
 
@@ -816,7 +904,7 @@ export const DashboardMessages: React.FC = () => {
                     type="submit"
                     variant="primary"
                     fullWidth
-                    disabled={sending || recipientsWithEmail === 0}
+                    disabled={sending || activeRecipients === 0}
                   >
                     {sending ? 'Processing...' : (
                       formData.scheduleType === 'later' ? (

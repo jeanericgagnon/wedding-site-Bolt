@@ -57,10 +57,79 @@ Deno.serve(async (req: Request) => {
 
       const weddingSiteId = session.metadata?.wedding_site_id;
       const supabaseUserId = session.metadata?.supabase_user_id;
+      const purchaseType = session.metadata?.purchase_type;
 
       if (!weddingSiteId || !supabaseUserId) {
         return new Response(JSON.stringify({ error: "Missing metadata on session" }), {
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (purchaseType === "sms_credits") {
+        const credits = Number(session.metadata?.sms_credits ?? 0);
+        const amountCents = session.amount_total ?? null;
+
+        if (credits <= 0) {
+          return new Response(JSON.stringify({ error: "Invalid sms credit amount" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: existing } = await supabase
+          .from("sms_credit_transactions")
+          .select("id")
+          .eq("stripe_checkout_session_id", session.id)
+          .maybeSingle();
+
+        if (!existing) {
+          const { data: site } = await supabase
+            .from("wedding_sites")
+            .select("sms_credits_balance")
+            .eq("id", weddingSiteId)
+            .eq("user_id", supabaseUserId)
+            .maybeSingle();
+
+          const balance = Number(site?.sms_credits_balance ?? 0);
+
+          const { error: txError } = await supabase
+            .from("sms_credit_transactions")
+            .insert({
+              wedding_site_id: weddingSiteId,
+              stripe_checkout_session_id: session.id,
+              credits_delta: credits,
+              amount_cents: amountCents,
+              reason: "purchase",
+              metadata: {
+                pack: session.metadata?.sms_pack ?? null,
+                payment_intent: session.payment_intent ?? null,
+              },
+            });
+
+          if (txError) {
+            return new Response(JSON.stringify({ error: txError.message }), {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          const { error: balError } = await supabase
+            .from("wedding_sites")
+            .update({ sms_credits_balance: balance + credits })
+            .eq("id", weddingSiteId)
+            .eq("user_id", supabaseUserId);
+
+          if (balError) {
+            return new Response(JSON.stringify({ error: balError.message }), {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
+
+        return new Response(JSON.stringify({ received: true, type: "sms_credits" }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
