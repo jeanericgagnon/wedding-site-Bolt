@@ -4,7 +4,7 @@ import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
-import { demoGuests, demoWeddingSite } from '../../lib/demoData';
+import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
@@ -152,6 +152,12 @@ interface SmsCreditTransaction {
   remaining_credits?: number | null;
 }
 
+interface AudienceOption {
+  value: string;
+  label: string;
+  count: number;
+}
+
 interface Toast {
   id: number;
   message: string;
@@ -214,6 +220,9 @@ function getStatusBadge(message: Message) {
 
 function getAudienceLabel(message: Message): string {
   const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+  if (typeof audience === 'string' && audience.startsWith('event:')) {
+    return (message.recipient_filter?.audience_label as string) ?? 'Itinerary segment';
+  }
   switch (audience) {
     case 'attending': return 'Attending guests';
     case 'not_responded': return 'Not yet responded';
@@ -369,6 +378,8 @@ export const DashboardMessages: React.FC = () => {
   const [buyingPack, setBuyingPack] = useState<'sms_100' | 'sms_500' | 'sms_1000' | null>(null);
   const [smsExpiringSoon, setSmsExpiringSoon] = useState<number>(0);
   const [smsTransactions, setSmsTransactions] = useState<SmsCreditTransaction[]>([]);
+  const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
+  const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -470,6 +481,60 @@ export const DashboardMessages: React.FC = () => {
     setGuests(data || []);
   }, [weddingSite, isDemoMode]);
 
+  const fetchItinerarySegments = useCallback(async () => {
+    if (!weddingSite) return;
+
+    if (isDemoMode) {
+      const total = demoGuests.length;
+      const options = demoEvents.slice(0, 4).map((e, idx) => ({
+        value: `event:${e.id}`,
+        label: `${e.event_name}${e.event_date ? ` — ${new Date(e.event_date).toLocaleDateString()}` : ''}`,
+        count: Math.max(0, total - idx * 8),
+      }));
+      setItineraryAudienceOptions(options);
+
+      const map: Record<string, Set<string>> = {};
+      for (const e of demoEvents.slice(0, 4)) {
+        map[e.id] = new Set(demoGuests.map((g) => g.id));
+      }
+      setEventGuestIds(map);
+      return;
+    }
+
+    const { data: events } = await supabase
+      .from('itinerary_events')
+      .select('id, event_name, event_date')
+      .eq('wedding_site_id', weddingSite.id)
+      .order('event_date', { ascending: true });
+
+    if (!events || events.length === 0) {
+      setItineraryAudienceOptions([]);
+      setEventGuestIds({});
+      return;
+    }
+
+    const eventIds = events.map((e: any) => e.id);
+    const { data: invites } = await supabase
+      .from('event_invitations')
+      .select('event_id, guest_id')
+      .in('event_id', eventIds);
+
+    const map: Record<string, Set<string>> = {};
+    for (const e of events as any[]) map[e.id] = new Set<string>();
+    for (const row of (invites ?? []) as any[]) {
+      if (!map[row.event_id]) map[row.event_id] = new Set<string>();
+      map[row.event_id].add(row.guest_id);
+    }
+    setEventGuestIds(map);
+
+    const options: AudienceOption[] = (events as any[]).map((e) => ({
+      value: `event:${e.id}`,
+      label: `${e.event_name}${e.event_date ? ` — ${new Date(e.event_date).toLocaleDateString()}` : ''}`,
+      count: map[e.id]?.size ?? 0,
+    }));
+    setItineraryAudienceOptions(options);
+  }, [weddingSite, isDemoMode]);
+
   const fetchSmsExpiryPreview = useCallback(async () => {
     if (!weddingSite) return;
     if (isDemoMode) {
@@ -504,8 +569,8 @@ export const DashboardMessages: React.FC = () => {
 
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
   useEffect(() => {
-    if (weddingSite) { fetchMessages(); fetchGuests(); fetchSmsExpiryPreview(); }
-  }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview]);
+    if (weddingSite) { fetchMessages(); fetchGuests(); fetchSmsExpiryPreview(); fetchItinerarySegments(); }
+  }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview, fetchItinerarySegments]);
 
   useEffect(() => {
     if (!isDemoMode) return;
@@ -513,6 +578,12 @@ export const DashboardMessages: React.FC = () => {
   }, [isDemoMode, messages]);
 
   const getRecipients = (audience: string): Guest[] => {
+    if (audience.startsWith('event:')) {
+      const eventId = audience.replace('event:', '');
+      const ids = eventGuestIds[eventId];
+      if (!ids) return [];
+      return guests.filter((g) => ids.has(g.id));
+    }
     switch (audience) {
       case 'attending': return guests.filter(g => g.rsvp_status === 'confirmed');
       case 'not_responded': return guests.filter(g => g.rsvp_status === 'pending');
@@ -585,7 +656,7 @@ export const DashboardMessages: React.FC = () => {
             sent_at: null,
             audience_filter: formData.audience,
             recipient_count: recipientCount,
-            recipient_filter: { audience: formData.audience, recipient_count: recipientCount },
+            recipient_filter: { audience: formData.audience, audience_label: selectedAudience?.label ?? null, recipient_count: recipientCount },
           }])
           .select('id')
           .single();
