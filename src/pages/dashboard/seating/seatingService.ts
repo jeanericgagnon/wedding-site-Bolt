@@ -27,6 +27,8 @@ export interface SeatingTable {
   table_shape?: 'round' | 'rectangle';
   layout_width?: number;
   layout_height?: number;
+  layout_x?: number;
+  layout_y?: number;
 }
 
 export interface SeatingAssignment {

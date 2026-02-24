@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2, FileDown } from 'lucide-react';
+import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2, FileDown, GripVertical } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -141,6 +141,8 @@ function TableCard({
   onToggleCheckIn,
   layoutMode,
   onResizeTable,
+  isCanvas,
+  onStartMove,
 }: {
   table: SeatingTable;
   guests: EligibleGuest[];
@@ -153,6 +155,8 @@ function TableCard({
   onToggleCheckIn: (guestId: string, checkedIn: boolean) => void;
   layoutMode: 'visual' | 'list';
   onResizeTable: (tableId: string, width: number, height: number) => Promise<void>;
+  isCanvas: boolean;
+  onStartMove: (e: React.MouseEvent) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: table.id });
   const occupied = guests.length;
@@ -230,6 +234,15 @@ function TableCard({
           <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
             {occupied}/{table.capacity}
           </span>
+          {isCanvas && (
+            <button
+              onMouseDown={onStartMove}
+              className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors cursor-move"
+              title="Drag table"
+            >
+              <GripVertical className="w-3 h-3" />
+            </button>
+          )}
           <button onClick={() => onEdit(table)} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
             <Edit2 className="w-3 h-3" />
           </button>
@@ -505,6 +518,8 @@ export const DashboardSeating: React.FC = () => {
   const [checkInMode, setCheckInMode] = useState(false);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [layoutMode, setLayoutMode] = useState<'visual' | 'list'>('visual');
+  const [movingTableId, setMovingTableId] = useState<string | null>(null);
+  const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -760,6 +775,8 @@ export const DashboardSeating: React.FC = () => {
             table_shape: (tableData.table_shape as 'round' | 'rectangle') || 'round',
             layout_width: Number(tableData.layout_width) || 260,
             layout_height: Number(tableData.layout_height) || 150,
+            layout_x: 24 + (sortOrder % 3) * 360,
+            layout_y: 24 + Math.floor(sortOrder / 3) * 330,
           }
         : await createTable({ ...tableData, seating_event_id: seatingEvent.id, sort_order: sortOrder });
       setTables(prev => [...prev, created]);
@@ -793,6 +810,54 @@ export const DashboardSeating: React.FC = () => {
     } catch {
       toast('Failed to resize table', 'error');
     }
+  }
+
+  function getDefaultTablePosition(index: number) {
+    return {
+      x: 24 + (index % 3) * 360,
+      y: 24 + Math.floor(index / 3) * 330,
+    };
+  }
+
+  function startMoveTable(table: SeatingTable, index: number, e: React.MouseEvent) {
+    if (layoutMode !== 'visual') return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const fallback = getDefaultTablePosition(index);
+    const originX = table.layout_x ?? fallback.x;
+    const originY = table.layout_y ?? fallback.y;
+    tableDragRef.current = { id: table.id, startX: e.clientX, startY: e.clientY, originX, originY };
+    setMovingTableId(table.id);
+
+    const onMove = (ev: MouseEvent) => {
+      const ctx = tableDragRef.current;
+      if (!ctx) return;
+      const x = Math.max(8, Math.round(ctx.originX + (ev.clientX - ctx.startX)));
+      const y = Math.max(8, Math.round(ctx.originY + (ev.clientY - ctx.startY)));
+      setTables(prev => prev.map(t => t.id === ctx.id ? { ...t, layout_x: x, layout_y: y } : t));
+    };
+
+    const onUp = async () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      const ctx = tableDragRef.current;
+      tableDragRef.current = null;
+      setMovingTableId(null);
+      if (!ctx || isDemoMode) return;
+      const moved = tables.find(t => t.id === ctx.id);
+      try {
+        await updateTable(ctx.id, {
+          layout_x: moved?.layout_x ?? ctx.originX,
+          layout_y: moved?.layout_y ?? ctx.originY,
+        });
+      } catch {
+        toast('Failed to save table position', 'error');
+      }
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   }
 
   async function handleDeleteTable(id: string) {
@@ -836,6 +901,8 @@ export const DashboardSeating: React.FC = () => {
             table_shape: 'round' as const,
             layout_width: 260,
             layout_height: 150,
+            layout_x: 24 + ((tables.length + idx) % 3) * 360,
+            layout_y: 24 + Math.floor((tables.length + idx) / 3) * 330,
           }))
         : await autoCreateTables(seatingEvent.id, counters.attending, autoCapacity);
       setTables(prev => [...prev, ...created]);
@@ -1263,28 +1330,66 @@ export const DashboardSeating: React.FC = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {tables.map(table => (
-                      editingTable?.id === table.id ? null : (
-                        <TableCard
-                          key={table.id}
-                          table={table}
-                          guests={allGuests.filter(g =>
-                            assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
-                          )}
-                          assignments={assignments.filter(a => a.table_id === table.id)}
-                          allGuests={allGuests}
-                          onEdit={setEditingTable}
-                          onDelete={handleDeleteTable}
-                          onRemoveGuest={handleRemoveGuest}
-                          checkInMode={checkInMode}
-                          onToggleCheckIn={handleToggleCheckIn}
-                          layoutMode={layoutMode}
-                          onResizeTable={handleResizeTable}
-                        />
-                      )
-                    ))}
-                  </div>
+                  layoutMode === 'visual' ? (
+                    <div className="relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto">
+                      {tables.map((table, idx) => {
+                        if (editingTable?.id === table.id) return null;
+                        const fallback = getDefaultTablePosition(idx);
+                        const x = table.layout_x ?? fallback.x;
+                        const y = table.layout_y ?? fallback.y;
+                        return (
+                          <div
+                            key={table.id}
+                            className={`absolute w-[340px] ${movingTableId === table.id ? 'z-30' : 'z-10'}`}
+                            style={{ left: `${x}px`, top: `${y}px` }}
+                          >
+                            <TableCard
+                              table={table}
+                              guests={allGuests.filter(g =>
+                                assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
+                              )}
+                              assignments={assignments.filter(a => a.table_id === table.id)}
+                              allGuests={allGuests}
+                              onEdit={setEditingTable}
+                              onDelete={handleDeleteTable}
+                              onRemoveGuest={handleRemoveGuest}
+                              checkInMode={checkInMode}
+                              onToggleCheckIn={handleToggleCheckIn}
+                              layoutMode={layoutMode}
+                              onResizeTable={handleResizeTable}
+                              isCanvas
+                              onStartMove={(e) => startMoveTable(table, idx, e)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {tables.map((table, idx) => (
+                        editingTable?.id === table.id ? null : (
+                          <TableCard
+                            key={table.id}
+                            table={table}
+                            guests={allGuests.filter(g =>
+                              assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
+                            )}
+                            assignments={assignments.filter(a => a.table_id === table.id)}
+                            allGuests={allGuests}
+                            onEdit={setEditingTable}
+                            onDelete={handleDeleteTable}
+                            onRemoveGuest={handleRemoveGuest}
+                            checkInMode={checkInMode}
+                            onToggleCheckIn={handleToggleCheckIn}
+                            layoutMode={layoutMode}
+                            onResizeTable={handleResizeTable}
+                            isCanvas={false}
+                            onStartMove={(e) => startMoveTable(table, idx, e)}
+                          />
+                        )
+                      ))}
+                    </div>
+                  )
                 )}
               </div>
             </div>
