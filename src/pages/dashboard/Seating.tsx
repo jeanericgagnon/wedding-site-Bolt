@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -140,6 +140,7 @@ function TableCard({
   checkInMode,
   onToggleCheckIn,
   layoutMode,
+  onResizeTable,
 }: {
   table: SeatingTable;
   guests: EligibleGuest[];
@@ -151,6 +152,7 @@ function TableCard({
   checkInMode: boolean;
   onToggleCheckIn: (guestId: string, checkedIn: boolean) => void;
   layoutMode: 'visual' | 'list';
+  onResizeTable: (tableId: string, width: number, height: number) => Promise<void>;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: table.id });
   const occupied = guests.length;
@@ -165,6 +167,50 @@ function TableCard({
   assignedGuests.forEach((row) => {
     if (row.assignment.seat_index != null) bySeat.set(row.assignment.seat_index, row);
   });
+
+  const [rectSize, setRectSize] = useState({ width: table.layout_width ?? 260, height: table.layout_height ?? 150 });
+  const rectSizeRef = useRef(rectSize);
+  const resizeStartRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+
+  useEffect(() => {
+    setRectSize({ width: table.layout_width ?? 260, height: table.layout_height ?? 150 });
+  }, [table.layout_width, table.layout_height]);
+
+  useEffect(() => {
+    rectSizeRef.current = rectSize;
+  }, [rectSize]);
+
+  function clampSize(width: number, height: number) {
+    return {
+      width: Math.max(160, Math.min(520, Math.round(width))),
+      height: Math.max(100, Math.min(320, Math.round(height))),
+    };
+  }
+
+  function startRectResize(e: React.MouseEvent) {
+    e.preventDefault();
+    if ((table.table_shape ?? 'round') !== 'rectangle') return;
+    resizeStartRef.current = { x: e.clientX, y: e.clientY, w: rectSize.width, h: rectSize.height };
+
+    const onMove = (ev: MouseEvent) => {
+      if (!resizeStartRef.current) return;
+      const dx = ev.clientX - resizeStartRef.current.x;
+      const dy = ev.clientY - resizeStartRef.current.y;
+      setRectSize(clampSize(resizeStartRef.current.w + dx, resizeStartRef.current.h + dy));
+    };
+
+    const onUp = async () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      const current = resizeStartRef.current;
+      resizeStartRef.current = null;
+      if (!current) return;
+      await onResizeTable(table.id, rectSizeRef.current.width, rectSizeRef.current.height);
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
 
   return (
     <div
@@ -220,19 +266,33 @@ function TableCard({
                 })}
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2">
-                {Array.from({ length: table.capacity }).map((_, idx) => {
-                  const seatNumber = idx + 1;
-                  const seatAssignment = bySeat.get(seatNumber);
-                  return (
-                    <SeatDropSlot
-                      key={`${table.id}-seat-${seatNumber}`}
-                      tableId={table.id}
-                      seatIndex={seatNumber}
-                      guest={seatAssignment?.guest}
-                    />
-                  );
-                })}
+              <div className="relative mb-2">
+                <div
+                  className="mx-auto border border-border-subtle rounded-xl bg-surface-subtle p-2 relative"
+                  style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}
+                >
+                  <div className="absolute left-2 top-1 text-[10px] text-text-tertiary">{rectSize.width}×{rectSize.height}</div>
+                  <div className="h-full w-full grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-4">
+                    {Array.from({ length: table.capacity }).map((_, idx) => {
+                      const seatNumber = idx + 1;
+                      const seatAssignment = bySeat.get(seatNumber);
+                      return (
+                        <SeatDropSlot
+                          key={`${table.id}-seat-${seatNumber}`}
+                          tableId={table.id}
+                          seatIndex={seatNumber}
+                          guest={seatAssignment?.guest}
+                        />
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onMouseDown={startRectResize}
+                    className="absolute -bottom-2 -right-2 w-4 h-4 rounded bg-primary border border-white shadow"
+                    title="Drag to resize"
+                  />
+                </div>
               </div>
             )}
 
@@ -303,11 +363,13 @@ function TableForm({ initial, onSave, onCancel }: {
   const [name, setName] = useState(initial?.table_name ?? '');
   const [capacity, setCapacity] = useState(initial?.capacity ?? 8);
   const [shape, setShape] = useState<'round' | 'rectangle'>((initial?.table_shape as 'round' | 'rectangle') ?? 'round');
+  const [layoutWidth, setLayoutWidth] = useState(initial?.layout_width ?? 260);
+  const [layoutHeight, setLayoutHeight] = useState(initial?.layout_height ?? 150);
   const [notes, setNotes] = useState(initial?.notes ?? '');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave({ table_name: name, capacity: Number(capacity), table_shape: shape, notes });
+    onSave({ table_name: name, capacity: Number(capacity), table_shape: shape, layout_width: Number(layoutWidth), layout_height: Number(layoutHeight), notes });
   }
 
   return (
@@ -345,6 +407,32 @@ function TableForm({ initial, onSave, onCancel }: {
           <option value="rectangle">Rectangle</option>
         </select>
       </div>
+      {shape === 'rectangle' && (
+        <>
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1">Width</label>
+            <input
+              type="number"
+              min="160"
+              max="520"
+              className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary w-24"
+              value={layoutWidth}
+              onChange={e => setLayoutWidth(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1">Height</label>
+            <input
+              type="number"
+              min="100"
+              max="320"
+              className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary w-24"
+              value={layoutHeight}
+              onChange={e => setLayoutHeight(Number(e.target.value))}
+            />
+          </div>
+        </>
+      )}
       <div className="flex gap-2">
         <Button type="submit" size="sm">Save</Button>
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
@@ -596,6 +684,8 @@ export const DashboardSeating: React.FC = () => {
             sort_order: sortOrder,
             notes: tableData.notes || '',
             table_shape: (tableData.table_shape as 'round' | 'rectangle') || 'round',
+            layout_width: Number(tableData.layout_width) || 260,
+            layout_height: Number(tableData.layout_height) || 150,
           }
         : await createTable({ ...tableData, seating_event_id: seatingEvent.id, sort_order: sortOrder });
       setTables(prev => [...prev, created]);
@@ -616,6 +706,18 @@ export const DashboardSeating: React.FC = () => {
       toast('Table updated', 'success');
     } catch {
       toast('Failed to update table', 'error');
+    }
+  }
+
+  async function handleResizeTable(id: string, width: number, height: number) {
+    const patch = { layout_width: width, layout_height: height };
+    try {
+      if (!isDemoMode) {
+        await updateTable(id, patch);
+      }
+      setTables(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+    } catch {
+      toast('Failed to resize table', 'error');
     }
   }
 
@@ -658,6 +760,8 @@ export const DashboardSeating: React.FC = () => {
             sort_order: tables.length + idx,
             notes: '',
             table_shape: 'round' as const,
+            layout_width: 260,
+            layout_height: 150,
           }))
         : await autoCreateTables(seatingEvent.id, counters.attending, autoCapacity);
       setTables(prev => [...prev, ...created]);
@@ -1099,6 +1203,7 @@ export const DashboardSeating: React.FC = () => {
                           checkInMode={checkInMode}
                           onToggleCheckIn={handleToggleCheckIn}
                           layoutMode={layoutMode}
+                          onResizeTable={handleResizeTable}
                         />
                       )
                     ))}

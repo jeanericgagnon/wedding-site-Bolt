@@ -25,6 +25,8 @@ export interface SeatingTable {
   sort_order: number;
   notes: string;
   table_shape?: 'round' | 'rectangle';
+  layout_width?: number;
+  layout_height?: number;
 }
 
 export interface SeatingAssignment {
