@@ -950,29 +950,13 @@ Proceed with send?`)) return;
     }
   }
 
-  async function copyContactRequestLink(guest: GuestWithRSVP) {
-    const token = `${crypto.randomUUID().replace(/-/g, '')}${Math.random().toString(36).slice(2, 10)}`;
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-    if (!isDemoMode && !weddingSiteId) {
+  async function copyContactRequestLink(_guest: GuestWithRSVP) {
+    if (!weddingSiteId) {
       toast('Missing wedding site context', 'error');
       return;
     }
 
-    if (!isDemoMode) {
-      const { error } = await supabase.from('guest_contact_requests').insert({
-        wedding_site_id: weddingSiteId,
-        guest_id: guest.id,
-        token,
-        expires_at: expiresAt,
-      });
-      if (error) {
-        toast('Failed to create contact link', 'error');
-        return;
-      }
-    }
-
-    const url = `${window.location.origin}/guest-contact/${token}`;
+    const url = `${window.location.origin}/guest-contact/${weddingSiteId}`;
     try {
       await navigator.clipboard.writeText(url);
       toast('Contact update link copied', 'success');

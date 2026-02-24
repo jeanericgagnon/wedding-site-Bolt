@@ -2,16 +2,54 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
+type Match = {
+  id: string;
+  name: string;
+  household_id?: string | null;
+  household_size?: number;
+};
+
 export const GuestContactUpdate: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
+  const siteRef = token; // now interpreted as site id/slug
+
+  const [query, setQuery] = useState('');
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [selectedGuestId, setSelectedGuestId] = useState<string>('');
+  const [selectedHouseholdSize, setSelectedHouseholdSize] = useState<number>(1);
+  const [applyHousehold, setApplyHousehold] = useState(false);
+
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [rsvpStatus, setRsvpStatus] = useState<'pending' | 'confirmed' | 'declined' | ''>('');
   const [smsConsent, setSmsConsent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const canSubmit = useMemo(() => !!email.trim() || !!phone.trim() || !!rsvpStatus, [email, phone, rsvpStatus]);
+  const canSubmit = useMemo(() => !!selectedGuestId && (!!email.trim() || !!phone.trim() || !!rsvpStatus), [selectedGuestId, email, phone, rsvpStatus]);
+
+  async function handleSearch() {
+    if (query.trim().length < 2) return;
+    setSearching(true);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('guest-contact-lookup', {
+        body: { site_ref: siteRef, query: query.trim() },
+      });
+      if (error) throw error;
+      const rows = ((data as any)?.matches ?? []) as Match[];
+      setMatches(rows);
+      if (rows.length > 0) {
+        setSelectedGuestId(rows[0].id);
+        setSelectedHouseholdSize(rows[0].household_size ?? 1);
+      }
+    } catch (err) {
+      setResult({ ok: false, message: err instanceof Error ? err.message : 'Search failed' });
+    } finally {
+      setSearching(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,9 +57,11 @@ export const GuestContactUpdate: React.FC = () => {
     setLoading(true);
     setResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('submit-contact-request', {
+      const { data, error } = await supabase.functions.invoke('guest-contact-submit', {
         body: {
-          token,
+          site_ref: siteRef,
+          guest_id: selectedGuestId,
+          apply_household: applyHousehold,
           email: email.trim() || null,
           phone: phone.trim() || null,
           rsvp_status: rsvpStatus || null,
@@ -30,7 +70,7 @@ export const GuestContactUpdate: React.FC = () => {
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      setResult({ ok: true, message: 'Thanks! Your info was updated successfully.' });
+      setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {
       setResult({ ok: false, message: err instanceof Error ? err.message : 'Unable to submit update.' });
     } finally {
@@ -40,9 +80,47 @@ export const GuestContactUpdate: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-surface border border-border rounded-2xl p-6 space-y-4">
-        <h1 className="text-xl font-semibold text-text-primary">Update your contact info</h1>
-        <p className="text-sm text-text-secondary">You can share your email, phone number, and RSVP status.</p>
+      <div className="w-full max-w-xl bg-surface border border-border rounded-2xl p-6 space-y-4">
+        <h1 className="text-xl font-semibold text-text-primary">Update contact & RSVP</h1>
+        <p className="text-sm text-text-secondary">Search your name, choose your record, then update details for yourself or your party.</p>
+
+        <div className="flex gap-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search your first or last name"
+            className="flex-1 px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+          />
+          <button onClick={handleSearch} disabled={searching || query.trim().length < 2} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+            {searching ? 'Searching…' : 'Find'}
+          </button>
+        </div>
+
+        {matches.length > 0 && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-text-primary">Select your name</label>
+            <select
+              value={selectedGuestId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedGuestId(id);
+                const hit = matches.find((m) => m.id === id);
+                setSelectedHouseholdSize(hit?.household_size ?? 1);
+              }}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+            >
+              {matches.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}{(m.household_size ?? 1) > 1 ? ` (party of ${m.household_size})` : ''}</option>
+              ))}
+            </select>
+            {(selectedHouseholdSize ?? 1) > 1 && (
+              <label className="flex items-center gap-2 text-sm text-text-secondary">
+                <input type="checkbox" checked={applyHousehold} onChange={(e) => setApplyHousehold(e.target.checked)} />
+                Apply these updates to my whole party ({selectedHouseholdSize} guests)
+              </label>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
