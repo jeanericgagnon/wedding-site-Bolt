@@ -221,10 +221,20 @@ function TableCard({
       ref={setNodeRef}
       className={`
         rounded-xl border-2 transition-all
-        ${isOver && !isFull ? 'border-primary bg-primary-light/30 shadow-md' : isFull ? 'border-border-subtle bg-surface' : 'border-border-subtle bg-surface hover:border-border'}
+        ${isCanvas
+          ? (isOver && !isFull
+              ? 'border-primary/70 bg-transparent shadow-md'
+              : isFull
+                ? 'border-border-subtle/80 bg-transparent'
+                : 'border-border-subtle/80 bg-transparent hover:border-border')
+          : (isOver && !isFull
+              ? 'border-primary bg-primary-light/30 shadow-md'
+              : isFull
+                ? 'border-border-subtle bg-surface'
+                : 'border-border-subtle bg-surface hover:border-border')}
       `}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
+      <div className={`flex items-center justify-between px-3 py-2 border-b ${isCanvas ? 'border-border-subtle/70 bg-transparent' : 'border-border-subtle'}`}>
         <div className="flex items-center gap-2 min-w-0">
           <TableProperties className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
           <span className="text-sm font-semibold text-text-primary truncate">{table.table_name}</span>
@@ -251,7 +261,7 @@ function TableCard({
           </button>
         </div>
       </div>
-      <div className={`p-2 min-h-[80px] ${isOver && !isFull ? 'bg-primary-light/20' : ''}`}>
+      <div className={`p-2 min-h-[80px] ${isOver && !isFull ? 'bg-primary-light/20' : ''} ${isCanvas ? 'bg-transparent' : ''}`}>
         {layoutMode === 'visual' ? (
           <>
             {(table.table_shape ?? 'round') === 'round' ? (
