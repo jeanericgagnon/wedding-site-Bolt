@@ -242,6 +242,35 @@ Deno.serve(async (req: Request) => {
     const coupleName2: string = message.wedding_sites?.couple_name_2 ?? "Partner";
     const fromAddress = `${coupleName1} & ${coupleName2} <onboarding@resend.dev>`;
 
+    if (channel === "email") {
+      const { data: sentRows, error: sentErr } = await adminClient
+        .from("messages")
+        .select("recipient_count,status")
+        .eq("wedding_site_id", message.wedding_sites.id)
+        .eq("channel", "email");
+
+      if (sentErr) {
+        return new Response(JSON.stringify({ error: sentErr.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const used = (sentRows ?? [])
+        .filter((r: any) => ["sent", "partial", "queued"].includes(String(r.status ?? "")))
+        .reduce((sum: number, r: any) => sum + Number(r.recipient_count ?? 0), 0);
+
+      const HARD_EMAIL_CAP = 1000;
+      if (used + eligibleGuests.length > HARD_EMAIL_CAP) {
+        return new Response(JSON.stringify({
+          error: `Email send cap reached. This account allows up to ${HARD_EMAIL_CAP} total recipients. Used ${used}, attempted ${eligibleGuests.length}.`,
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     let deliveredCount = 0;
     let failedCount = 0;
 
