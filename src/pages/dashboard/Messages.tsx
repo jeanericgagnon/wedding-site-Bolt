@@ -487,7 +487,15 @@ export const DashboardMessages: React.FC = () => {
 
     if (isDemoMode) {
       const total = demoGuests.length;
-      const options = demoEvents.slice(0, 4).map((e, idx) => ({
+      const demoEventList = (demoEvents && demoEvents.length > 0)
+        ? demoEvents.slice(0, 4)
+        : [
+            { id: 'demo-event-rehearsal', event_name: 'Rehearsal Dinner', event_date: new Date().toISOString().slice(0, 10) },
+            { id: 'demo-event-ceremony', event_name: 'Ceremony', event_date: new Date().toISOString().slice(0, 10) },
+            { id: 'demo-event-reception', event_name: 'Reception', event_date: new Date().toISOString().slice(0, 10) },
+          ];
+
+      const options = demoEventList.map((e, idx) => ({
         value: `event:${e.id}`,
         label: `${e.event_name}${e.event_date ? ` — ${new Date(e.event_date).toLocaleDateString()}` : ''}`,
         count: Math.max(0, total - idx * 8),
@@ -495,7 +503,7 @@ export const DashboardMessages: React.FC = () => {
       setItineraryAudienceOptions(options);
 
       const map: Record<string, Set<string>> = {};
-      for (const e of demoEvents.slice(0, 4)) {
+      for (const e of demoEventList) {
         map[e.id] = new Set(demoGuests.map((g) => g.id));
       }
       setEventGuestIds(map);

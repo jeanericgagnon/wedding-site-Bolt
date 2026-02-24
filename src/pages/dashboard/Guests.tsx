@@ -956,7 +956,9 @@ Proceed with send?`)) return;
       return;
     }
 
-    const url = `${window.location.origin}/guest-contact/${weddingSiteId}`;
+    const base = import.meta.env.BASE_URL || '/';
+    const normalizedBase = base.endsWith('/') ? base : `${base}/`;
+    const url = `${window.location.origin}${normalizedBase}guest-contact/${weddingSiteId}`;
     try {
       await navigator.clipboard.writeText(url);
       toast('Contact update link copied', 'success');
