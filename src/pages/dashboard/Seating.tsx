@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, ChevronDown, Download, Printer, RefreshCw, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2, FileDown } from 'lucide-react';
+import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, TableProperties, CheckCircle2 } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -625,6 +625,14 @@ export const DashboardSeating: React.FC = () => {
   }
 
   useEffect(() => {
+    if (!itineraryEvents.length) return;
+    if (!selectedEventId || !itineraryEvents.some(e => e.id === selectedEventId)) {
+      const fallback = itineraryEvents.find(e => /reception|dinner|ceremony/i.test(e.event_name)) ?? itineraryEvents[0];
+      setSelectedEventId(fallback.id);
+    }
+  }, [itineraryEvents, selectedEventId]);
+
+  useEffect(() => {
     if (siteId && selectedEventId) {
       loadSeatingData();
     }
@@ -1198,33 +1206,18 @@ export const DashboardSeating: React.FC = () => {
             <Button variant="outline" size="sm" onClick={handleExportCSV}>
               <Download className="w-4 h-4 mr-1" /> CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportPlaceCards}>
-              <Download className="w-4 h-4 mr-1" /> Place Cards
-            </Button>
-            <Button variant="outline" size="sm" onClick={handlePrint}>
-              <Printer className="w-4 h-4 mr-1" /> Print
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleExportPDF}>
-              <FileDown className="w-4 h-4 mr-1" /> PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleCheckDrift}>
-              <RefreshCw className="w-4 h-4 mr-1" /> Check RSVP Drift
-            </Button>
-            <Button variant={checkInMode ? 'primary' : 'outline'} size="sm" onClick={() => setCheckInMode(v => !v)}>
-              <CheckCircle2 className="w-4 h-4 mr-1" /> {checkInMode ? 'Exit Check-in' : 'Check-in Mode'}
-            </Button>
             <div className="inline-flex rounded-xl border border-border bg-surface-subtle p-0.5">
               <button
-                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${layoutMode === 'visual' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-tertiary hover:text-text-primary'}`}
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${layoutMode === 'visual' ? 'bg-primary/10 text-primary shadow-sm border border-primary/30' : 'text-text-tertiary hover:text-text-primary'}`}
                 onClick={() => setLayoutMode('visual')}
               >
-                Visual
+                Canvas Layout
               </button>
               <button
-                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${layoutMode === 'list' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-tertiary hover:text-text-primary'}`}
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${layoutMode === 'list' ? 'bg-primary/10 text-primary shadow-sm border border-primary/30' : 'text-text-tertiary hover:text-text-primary'}`}
                 onClick={() => setLayoutMode('list')}
               >
-                List
+                List Layout
               </button>
             </div>
           </div>
@@ -1462,12 +1455,17 @@ export const DashboardSeating: React.FC = () => {
                     >
                       {canvasFullscreen && (
                         <div className="mb-2 flex items-center justify-between animate-in fade-in duration-200">
-                          <button
-                            className="px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:border-border text-sm"
-                            onClick={() => setCanvasFullscreen(false)}
-                          >
-                            ← Back
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              className="px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:border-border text-sm"
+                              onClick={() => setCanvasFullscreen(false)}
+                            >
+                              ← Back
+                            </button>
+                            <Button size="sm" onClick={() => setAddingTable(true)}>
+                              <Plus className="w-4 h-4 mr-1" /> Add Table
+                            </Button>
+                          </div>
                           <span className="text-xs text-text-tertiary">Fullscreen canvas</span>
                         </div>
                       )}
