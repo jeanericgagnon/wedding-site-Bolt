@@ -1035,6 +1035,16 @@ export const DashboardSeating: React.FC = () => {
     }
   }
 
+  function handleCanvasWheelZoom(e: React.WheelEvent<HTMLDivElement>) {
+    // Trackpad pinch on desktop browsers commonly reports wheel + ctrlKey
+    if (layoutMode !== 'visual') return;
+    if (!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    const delta = e.deltaY;
+    const step = delta > 0 ? -0.05 : 0.05;
+    setCanvasZoom(z => Math.max(0.6, Math.min(1.8, Number((z + step).toFixed(2)))));
+  }
+
   function handleExportCSV() {
     const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
     const csv = exportSeatingCSV(allGuests, tables, assignments, selectedEvent?.event_name ?? 'Event');
@@ -1404,7 +1414,7 @@ export const DashboardSeating: React.FC = () => {
                   </div>
                 ) : (
                   layoutMode === 'visual' ? (
-                    <div className="relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto">
+                    <div className="relative min-h-[720px] rounded-2xl border border-border-subtle bg-surface-subtle/50 overflow-auto" onWheel={handleCanvasWheelZoom}>
                       <div
                         className="relative min-h-[720px] min-w-[960px]"
                         style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top left' }}
