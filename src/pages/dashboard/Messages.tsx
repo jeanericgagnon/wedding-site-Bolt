@@ -7,6 +7,89 @@ import { useAuth } from '../../hooks/useAuth';
 import { demoGuests, demoWeddingSite } from '../../lib/demoData';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
+const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
+
+
+
+function buildDemoMessageSeed(): Message[] {
+  const now = Date.now();
+  const iso = (ms: number) => new Date(ms).toISOString();
+  return [
+    {
+      id: 'demo-msg-1',
+      subject: 'Welcome to our wedding week ✨',
+      body: 'Hi everyone! We are so excited to celebrate with you. Please check the itinerary for final timing updates.',
+      sent_at: iso(now - 1000 * 60 * 60 * 24 * 3),
+      scheduled_for: null,
+      status: 'sent',
+      channel: 'email',
+      audience_filter: 'all',
+      recipient_filter: { audience: 'all', recipient_count: 120 },
+      recipient_count: 120,
+      delivered_count: 117,
+      failed_count: 3,
+    },
+    {
+      id: 'demo-msg-2',
+      subject: 'RSVP reminder',
+      body: 'Quick reminder to submit your RSVP by Friday so we can finalize seating and catering. Thank you!',
+      sent_at: iso(now - 1000 * 60 * 60 * 24),
+      scheduled_for: null,
+      status: 'partial',
+      channel: 'email',
+      audience_filter: 'not_responded',
+      recipient_filter: { audience: 'not_responded', recipient_count: 34 },
+      recipient_count: 34,
+      delivered_count: 31,
+      failed_count: 3,
+    },
+    {
+      id: 'demo-msg-3',
+      subject: 'Ceremony starts at 4:30 PM',
+      body: 'Please arrive 15 minutes early. Parking and shuttle details are in the Travel page.',
+      sent_at: null,
+      scheduled_for: iso(now + 1000 * 60 * 60 * 10),
+      status: 'scheduled',
+      channel: 'email',
+      audience_filter: 'all',
+      recipient_filter: { audience: 'all', recipient_count: 120 },
+      recipient_count: 120,
+      delivered_count: 0,
+      failed_count: 0,
+    },
+    {
+      id: 'demo-msg-4',
+      subject: 'Vendor update draft',
+      body: 'Draft for internal coordination: timeline lock by Wednesday noon.',
+      sent_at: null,
+      scheduled_for: null,
+      status: 'draft',
+      channel: 'email',
+      audience_filter: 'all',
+      recipient_filter: { audience: 'all', recipient_count: 0 },
+      recipient_count: 0,
+      delivered_count: 0,
+      failed_count: 0,
+    },
+  ];
+}
+
+function readDemoMessages(): Message[] {
+  try {
+    const raw = localStorage.getItem(DEMO_MESSAGES_STORAGE_KEY);
+    if (!raw) return buildDemoMessageSeed();
+    const parsed = JSON.parse(raw) as Message[];
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : buildDemoMessageSeed();
+  } catch {
+    return buildDemoMessageSeed();
+  }
+}
+
+function writeDemoMessages(items: Message[]) {
+  try {
+    localStorage.setItem(DEMO_MESSAGES_STORAGE_KEY, JSON.stringify(items));
+  } catch {}
+}
 
 async function triggerBulkSend(messageId: string): Promise<{ delivered: number; failed: number; total: number; status: string }> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -314,7 +397,7 @@ export const DashboardMessages: React.FC = () => {
   const fetchMessages = useCallback(async () => {
     if (!weddingSite) return;
     if (isDemoMode) {
-      setMessages([]);
+      setMessages(readDemoMessages());
       setLoading(false);
       return;
     }
@@ -358,6 +441,11 @@ export const DashboardMessages: React.FC = () => {
     if (weddingSite) { fetchMessages(); fetchGuests(); }
   }, [weddingSite, fetchMessages, fetchGuests]);
 
+  useEffect(() => {
+    if (!isDemoMode) return;
+    writeDemoMessages(messages);
+  }, [isDemoMode, messages]);
+
   const getRecipients = (audience: string): Guest[] => {
     switch (audience) {
       case 'attending': return guests.filter(g => g.rsvp_status === 'confirmed');
@@ -387,24 +475,46 @@ export const DashboardMessages: React.FC = () => {
       const status = saveAsDraft ? 'draft' : isScheduled ? 'scheduled' : 'queued';
       const scheduledFor = isScheduled ? `${formData.scheduleDate}T${formData.scheduleTime}:00` : null;
 
-      const { data: inserted, error } = await supabase
-        .from('messages')
-        .insert([{
-          wedding_site_id: weddingSite.id,
+      let inserted: { id: string } | null = null;
+
+      if (isDemoMode) {
+        inserted = { id: `demo-msg-${Date.now()}` };
+        const demoMessage: Message = {
+          id: inserted.id,
           subject: formData.subject,
           body: formData.body,
-          channel: 'email',
-          status,
+          sent_at: status === 'queued' ? new Date().toISOString() : null,
           scheduled_for: scheduledFor,
-          sent_at: null,
+          status: status === 'queued' ? 'sent' : status,
+          channel: 'email',
           audience_filter: formData.audience,
-          recipient_count: recipientCount,
           recipient_filter: { audience: formData.audience, recipient_count: recipientCount },
-        }])
-        .select('id')
-        .single();
+          recipient_count: recipientCount,
+          delivered_count: status === 'queued' ? recipientCount : 0,
+          failed_count: 0,
+        };
+        setMessages(prev => [demoMessage, ...prev]);
+      } else {
+        const { data, error } = await supabase
+          .from('messages')
+          .insert([{
+            wedding_site_id: weddingSite.id,
+            subject: formData.subject,
+            body: formData.body,
+            channel: 'email',
+            status,
+            scheduled_for: scheduledFor,
+            sent_at: null,
+            audience_filter: formData.audience,
+            recipient_count: recipientCount,
+            recipient_filter: { audience: formData.audience, recipient_count: recipientCount },
+          }])
+          .select('id')
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
+        inserted = data;
+      }
 
       setShowRecipientPreview(false);
       setFormData({ subject: '', body: '', audience: 'all', scheduleType: 'now', scheduleDate: '', scheduleTime: '' });
@@ -422,6 +532,10 @@ export const DashboardMessages: React.FC = () => {
       }
 
       if (isSendNow && inserted?.id) {
+        if (isDemoMode) {
+          toast(`Delivered to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} (demo)`, 'success');
+          return;
+        }
         toast(`Sending to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}…`, 'info');
         await fetchMessages();
         try {
