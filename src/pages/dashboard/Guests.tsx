@@ -46,6 +46,41 @@ interface GuestAuditEntry {
   new_data: Record<string, unknown> | null;
 }
 
+function formatAuditValue(value: unknown): string {
+  if (value == null || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  return String(value);
+}
+
+function summarizeAuditEntry(entry: GuestAuditEntry): string {
+  if (entry.action === 'insert') return 'Guest created';
+  if (entry.action === 'delete') return 'Guest deleted';
+
+  const oldData = entry.old_data ?? {};
+  const newData = entry.new_data ?? {};
+
+  const watched: Array<{ key: string; label: string }> = [
+    { key: 'rsvp_status', label: 'RSVP status' },
+    { key: 'first_name', label: 'First name' },
+    { key: 'last_name', label: 'Last name' },
+    { key: 'email', label: 'Email' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'plus_one_allowed', label: 'Plus-one allowed' },
+    { key: 'plus_one_name', label: 'Plus-one name' },
+    { key: 'invited_to_ceremony', label: 'Ceremony invite' },
+    { key: 'invited_to_reception', label: 'Reception invite' },
+    { key: 'household_id', label: 'Household' },
+  ];
+
+  const changes = watched
+    .filter(({ key }) => oldData[key] !== newData[key])
+    .slice(0, 2)
+    .map(({ key, label }) => `${label}: ${formatAuditValue(oldData[key])} → ${formatAuditValue(newData[key])}`);
+
+  if (changes.length === 0) return 'Guest updated';
+  return changes.join(' · ');
+}
+
 function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; reception?: boolean } | null {
   if (!notes) return null;
   const match = notes.match(/\[Events\s+([^\]]+)\]/i);
@@ -2396,9 +2431,12 @@ Proceed with send?`)) return;
                     {guestAuditEntries.map((entry) => {
                       const time = new Date(entry.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
                       return (
-                        <div key={entry.id} className="text-xs text-text-primary flex items-start justify-between gap-3">
-                          <span className="capitalize px-2 py-0.5 rounded border bg-surface">{entry.action}</span>
-                          <span className="text-text-tertiary">{time}</span>
+                        <div key={entry.id} className="text-xs text-text-primary border border-border-subtle rounded-lg p-2 bg-surface">
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="capitalize px-2 py-0.5 rounded border bg-surface-subtle">{entry.action}</span>
+                            <span className="text-text-tertiary whitespace-nowrap">{time}</span>
+                          </div>
+                          <p className="mt-1 text-text-secondary">{summarizeAuditEntry(entry)}</p>
                         </div>
                       );
                     })}
