@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
     if (email) patch.email = email;
     if (phone) patch.phone = phone;
     if (rsvpStatus && ["pending", "confirmed", "declined"].includes(rsvpStatus)) patch.rsvp_status = rsvpStatus;
-    if (phone) patch.sms_consent = smsConsent;
+    // SMS consent will be handled in a dedicated field in a follow-up migration.
 
     if (Object.keys(patch).length === 0) {
       return new Response(JSON.stringify({ error: "No updates provided" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });

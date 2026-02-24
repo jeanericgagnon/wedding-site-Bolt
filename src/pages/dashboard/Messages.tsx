@@ -483,6 +483,7 @@ export const DashboardMessages: React.FC = () => {
 
   const fetchItinerarySegments = useCallback(async () => {
     if (!weddingSite) return;
+    try {
 
     if (isDemoMode) {
       const total = demoGuests.length;
@@ -533,6 +534,10 @@ export const DashboardMessages: React.FC = () => {
       count: map[e.id]?.size ?? 0,
     }));
     setItineraryAudienceOptions(options);
+    } catch {
+      setItineraryAudienceOptions([]);
+      setEventGuestIds({});
+    }
   }, [weddingSite, isDemoMode]);
 
   const fetchSmsExpiryPreview = useCallback(async () => {
@@ -770,7 +775,8 @@ export const DashboardMessages: React.FC = () => {
           <p className="text-text-secondary">Compose and send guest campaigns by email, plus SMS credit setup</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+<div className="space-y-4">
           {weddingSite?.couple_email && (
             <Card variant="bordered" padding="lg">
               <div className="flex items-center gap-3">
@@ -786,46 +792,49 @@ export const DashboardMessages: React.FC = () => {
             </Card>
           )}
 
-          <Card variant="bordered" padding="lg">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm text-text-secondary">SMS Credits</p>
-                <p className="text-2xl font-semibold text-text-primary">{smsCredits}</p>
-                <p className="text-xs text-text-tertiary mt-1">Approx 1 credit per recipient per SMS</p>
-                <p className="text-xs text-text-tertiary">Credits expire 12 months after purchase{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card variant="bordered" padding="lg">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm text-text-secondary">SMS Credits</p>
+                  <p className="text-2xl font-semibold text-text-primary">{smsCredits}</p>
+                  <p className="text-xs text-text-tertiary mt-1">Approx 1 credit per recipient per SMS</p>
+                  <p className="text-xs text-text-tertiary">Credits expire 12 months after purchase{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
-                <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
+            </Card>
+
+            <Card variant="bordered" padding="lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-text-primary">SMS Credit Activity</h3>
+                <span className="text-xs text-text-tertiary">Recent {smsTransactions.length}</span>
               </div>
-            </div>
-          </Card>
+              {smsTransactions.length === 0 ? (
+                <p className="text-xs text-text-tertiary">No SMS credit activity yet. Buy a credit pack to get started.</p>
+              ) : (
+                <div className="space-y-2 max-h-56 overflow-auto pr-1">
+                  {smsTransactions.map((tx) => (
+                    <div key={tx.id} className="flex items-center justify-between gap-3 text-xs border border-border rounded-lg px-3 py-2 bg-surface-subtle">
+                      <div>
+                        <p className="text-text-primary capitalize">{tx.reason}</p>
+                        <p className="text-text-tertiary">{new Date(tx.created_at).toLocaleString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`${tx.credits_delta >= 0 ? 'text-success' : 'text-error'} font-medium`}>{tx.credits_delta >= 0 ? '+' : ''}{tx.credits_delta} credits</p>
+                        {tx.expires_at && tx.reason === 'purchase' && <p className="text-text-tertiary">Expires {new Date(tx.expires_at).toLocaleDateString()}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
 
-        <Card variant="bordered" padding="lg">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-text-primary">SMS Credit Activity</h3>
-            <span className="text-xs text-text-tertiary">Recent {smsTransactions.length}</span>
-          </div>
-          {smsTransactions.length === 0 ? (
-            <p className="text-xs text-text-tertiary">No SMS credit activity yet. Buy a credit pack to get started.</p>
-          ) : (
-            <div className="space-y-2">
-              {smsTransactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between gap-3 text-xs border border-border rounded-lg px-3 py-2 bg-surface-subtle">
-                  <div>
-                    <p className="text-text-primary capitalize">{tx.reason}</p>
-                    <p className="text-text-tertiary">{new Date(tx.created_at).toLocaleString()}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`${tx.credits_delta >= 0 ? 'text-success' : 'text-error'} font-medium`}>{tx.credits_delta >= 0 ? '+' : ''}{tx.credits_delta} credits</p>
-                    {tx.expires_at && tx.reason === 'purchase' && <p className="text-text-tertiary">Expires {new Date(tx.expires_at).toLocaleDateString()}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">

@@ -169,7 +169,19 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
           {item.fund_venmo_url && <a href={item.fund_venmo_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">Venmo</a>}
           {item.fund_paypal_url && <a href={item.fund_paypal_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">PayPal</a>}
           {item.fund_custom_url && <a href={item.fund_custom_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">{item.fund_custom_label || 'Contribute'}</a>}
-          {item.fund_zelle_handle && <span className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl">Zelle: {item.fund_zelle_handle}</span>}
+          {item.fund_zelle_handle && (
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(item.fund_zelle_handle || '');
+                } catch {}
+              }}
+              className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary"
+              title={`Copy Zelle: ${item.fund_zelle_handle}`}
+            >
+              Zelle: {item.fund_zelle_handle}
+            </button>
+          )}
         </div>
       </div>
     );
