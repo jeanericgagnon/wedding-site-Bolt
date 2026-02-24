@@ -42,6 +42,23 @@ function getShapeLabel(shape: TableShape): string {
   }
 }
 
+function getShapePalette(shape: TableShape) {
+  switch (shape) {
+    case 'round':
+      return { chip: 'bg-primary/10 border-primary/30 text-primary', fill: 'bg-primary/5 border-primary/20' };
+    case 'rectangle':
+      return { chip: 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600', fill: 'bg-indigo-500/5 border-indigo-500/20' };
+    case 'bar':
+      return { chip: 'bg-amber-500/10 border-amber-500/30 text-amber-700', fill: 'bg-amber-500/8 border-amber-500/25' };
+    case 'dj_booth':
+      return { chip: 'bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-700', fill: 'bg-fuchsia-500/8 border-fuchsia-500/25' };
+    case 'dance_floor':
+      return { chip: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700', fill: 'bg-emerald-500/8 border-emerald-500/25' };
+    default:
+      return { chip: 'bg-surface-subtle border-border-subtle text-text-tertiary', fill: 'bg-surface-subtle border-border-subtle' };
+  }
+}
+
 function GuestChip({
   guest,
   isDragging = false,
@@ -185,6 +202,8 @@ function TableCard({
     .map(a => ({ assignment: a, guest: guestMap.get(a.guest_id) }))
     .filter(x => x.guest) as { assignment: SeatingAssignment; guest: EligibleGuest }[];
   const bySeat = new Map<number, { assignment: SeatingAssignment; guest: EligibleGuest }>();
+  const shape = (table.table_shape ?? 'round') as TableShape;
+  const palette = getShapePalette(shape);
   assignedGuests.forEach((row) => {
     if (row.assignment.seat_index != null) bySeat.set(row.assignment.seat_index, row);
   });
@@ -260,7 +279,7 @@ function TableCard({
           <div className="flex items-center gap-2 min-w-0">
             <TableProperties className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
             <span className="text-sm font-semibold text-text-primary truncate">{table.table_name}</span>
-            <span className="text-[10px] uppercase text-text-tertiary px-1.5 py-0.5 rounded bg-surface-subtle border border-border-subtle">{getShapeLabel((table.table_shape ?? 'round') as TableShape)}</span>
+            <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${palette.chip}`}>{getShapeLabel((table.table_shape ?? 'round') as TableShape)}</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
@@ -284,13 +303,13 @@ function TableCard({
           <>
             {(['bar', 'dj_booth', 'dance_floor'] as TableShape[]).includes((table.table_shape ?? 'round') as TableShape) ? (
               <div className="relative mb-2">
-                <div className="mx-auto border border-border-subtle rounded-xl bg-surface-subtle/40 flex items-center justify-center text-xs text-text-tertiary" style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
+                <div className={`mx-auto border rounded-xl flex items-center justify-center text-xs text-text-tertiary ${palette.fill}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
                   {table.table_name || ''}
                 </div>
               </div>
             ) : (table.table_shape ?? 'round') === 'round' ? (
               <div className="relative h-52 sm:h-60 mb-2">
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border border-border bg-surface-subtle flex items-center justify-center text-[11px] text-text-tertiary">
+                <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border flex items-center justify-center text-[11px] text-text-tertiary ${palette.fill}`}>
                   {table.table_name}
                 </div>
                 {Array.from({ length: table.capacity }).map((_, idx) => {
@@ -316,7 +335,7 @@ function TableCard({
               <div className="relative mb-2">
                 <div className="mx-auto relative" style={{ width: `${rectSize.width + 110}px`, height: `${rectSize.height + 110}px` }}>
                   <div
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border border-border-subtle rounded-xl bg-surface-subtle"
+                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border rounded-xl ${palette.fill}`}
                     style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}
                   >
                     <div className="absolute left-2 top-1 text-[10px] text-text-tertiary">{rectSize.width}×{rectSize.height}</div>
