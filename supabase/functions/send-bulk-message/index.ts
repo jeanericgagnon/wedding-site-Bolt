@@ -11,6 +11,41 @@ interface SendBulkPayload {
   messageId: string;
 }
 
+async function sendViaTwilio(opts: {
+  accountSid: string;
+  authToken: string;
+  from: string;
+  to: string;
+  body: string;
+}): Promise<{ id?: string; error?: string }> {
+  try {
+    const auth = btoa(`${opts.accountSid}:${opts.authToken}`);
+    const form = new URLSearchParams();
+    form.set("From", opts.from);
+    form.set("To", opts.to);
+    form.set("Body", opts.body);
+
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${opts.accountSid}/Messages.json`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: form,
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      return { error: `Twilio ${res.status}: ${body}` };
+    }
+
+    const data = await res.json();
+    return { id: data.sid };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Network error" };
+  }
+}
+
 function buildEmailHtml(opts: {
   subject: string;
   body: string;
@@ -91,6 +126,9 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const twilioToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const twilioFrom = Deno.env.get("TWILIO_FROM_NUMBER");
 
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
@@ -162,11 +200,17 @@ Deno.serve(async (req: Request) => {
     }
 
     const audience: string = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? "all";
+    const channel: string = message.channel ?? "email";
     let guestQuery = adminClient
       .from("guests")
-      .select("id, first_name, last_name, name, email, rsvp_status")
-      .eq("wedding_site_id", message.wedding_sites.id)
-      .not("email", "is", null);
+      .select("id, first_name, last_name, name, email, phone, rsvp_status")
+      .eq("wedding_site_id", message.wedding_sites.id);
+
+    if (channel === "sms") {
+      guestQuery = guestQuery.not("phone", "is", null);
+    } else {
+      guestQuery = guestQuery.not("email", "is", null);
+    }
 
     if (audience === "attending") {
       guestQuery = guestQuery.eq("rsvp_status", "confirmed");
@@ -184,7 +228,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const eligibleGuests = (guests ?? []).filter((g) => g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email));
+    const eligibleGuests = (guests ?? []).filter((g) => {
+      if (channel === "sms") return !!g.phone;
+      return g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email);
+    });
 
     await adminClient
       .from("messages")
@@ -197,6 +244,41 @@ Deno.serve(async (req: Request) => {
 
     let deliveredCount = 0;
     let failedCount = 0;
+
+    if (channel === "sms") {
+      if (!twilioSid || !twilioToken || !twilioFrom) {
+        return new Response(JSON.stringify({ error: "SMS provider not configured (Twilio env missing)" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: siteWallet } = await adminClient
+        .from("wedding_sites")
+        .select("sms_credits_balance")
+        .eq("id", message.wedding_sites.id)
+        .maybeSingle();
+
+      const currentCredits = Number(siteWallet?.sms_credits_balance ?? 0);
+      if (currentCredits < eligibleGuests.length) {
+        return new Response(JSON.stringify({ error: `Insufficient SMS credits: need ${eligibleGuests.length}, have ${currentCredits}` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await adminClient
+        .from("wedding_sites")
+        .update({ sms_credits_balance: currentCredits - eligibleGuests.length })
+        .eq("id", message.wedding_sites.id);
+
+      await adminClient.from("sms_credit_transactions").insert({
+        wedding_site_id: message.wedding_sites.id,
+        credits_delta: -eligibleGuests.length,
+        reason: "usage",
+        metadata: { message_id: messageId, audience, channel },
+      });
+    }
 
     const deliveryInserts: Array<{
       message_id: string;
@@ -217,41 +299,54 @@ Deno.serve(async (req: Request) => {
 
       const attemptedAt = new Date().toISOString();
 
-      if (!resendApiKey) {
-        deliveryInserts.push({
-          message_id: messageId,
-          guest_id: guest.id,
-          recipient_email: guest.email,
-          recipient_name: guestName,
-          status: "failed",
-          error_message: "Email provider not configured (RESEND_API_KEY missing)",
-          attempted_at: attemptedAt,
+      let result: { id?: string; error?: string };
+      const recipient = channel === "sms" ? guest.phone : guest.email;
+
+      if (channel === "sms") {
+        result = await sendViaTwilio({
+          accountSid: twilioSid!,
+          authToken: twilioToken!,
+          from: twilioFrom!,
+          to: guest.phone,
+          body: message.body,
         });
-        failedCount++;
-        continue;
+      } else {
+        if (!resendApiKey) {
+          deliveryInserts.push({
+            message_id: messageId,
+            guest_id: guest.id,
+            recipient_email: guest.email,
+            recipient_name: guestName,
+            status: "failed",
+            error_message: "Email provider not configured (RESEND_API_KEY missing)",
+            attempted_at: attemptedAt,
+          });
+          failedCount++;
+          continue;
+        }
+
+        const html = buildEmailHtml({
+          subject: message.subject,
+          body: message.body,
+          coupleName1,
+          coupleName2,
+          guestName,
+        });
+
+        result = await sendViaResend({
+          apiKey: resendApiKey,
+          from: fromAddress,
+          to: guest.email,
+          subject: message.subject,
+          html,
+        });
       }
-
-      const html = buildEmailHtml({
-        subject: message.subject,
-        body: message.body,
-        coupleName1,
-        coupleName2,
-        guestName,
-      });
-
-      const result = await sendViaResend({
-        apiKey: resendApiKey,
-        from: fromAddress,
-        to: guest.email,
-        subject: message.subject,
-        html,
-      });
 
       if (result.error) {
         deliveryInserts.push({
           message_id: messageId,
           guest_id: guest.id,
-          recipient_email: guest.email,
+          recipient_email: recipient,
           recipient_name: guestName,
           status: "failed",
           error_message: result.error,
@@ -262,7 +357,7 @@ Deno.serve(async (req: Request) => {
         deliveryInserts.push({
           message_id: messageId,
           guest_id: guest.id,
-          recipient_email: guest.email,
+          recipient_email: recipient,
           recipient_name: guestName,
           status: "sent",
           provider_message_id: result.id,

@@ -572,11 +572,6 @@ export const DashboardMessages: React.FC = () => {
           return;
         }
 
-        if (formData.channel === 'sms') {
-          toast('SMS sending provider not enabled yet. Credits setup is ready.', 'info');
-          await fetchMessages();
-          return;
-        }
 
         toast(`Sending to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}…`, 'info');
         await fetchMessages();
