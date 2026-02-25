@@ -61,8 +61,21 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleGooglePlaceholder = () => {
-    setError('Google sign-in is not available yet. Use email and password or try the demo below.');
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (oauthError) throw oauthError;
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to start Google sign-in. Please try again.');
+      setLoading(false);
+    }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -192,9 +205,9 @@ export const Login: React.FC = () => {
             variant="outline"
             size="lg"
             fullWidth
-            onClick={handleGooglePlaceholder}
+            onClick={handleGoogleSignIn}
             disabled={loading || demoLoading}
-            className="mb-5 opacity-60"
+            className="mb-5"
           >
             <Chrome className="w-5 h-5 mr-2" aria-hidden="true" />
             Continue with Google
