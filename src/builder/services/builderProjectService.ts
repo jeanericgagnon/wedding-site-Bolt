@@ -50,15 +50,17 @@ export const builderProjectService = {
       if (parsed && parsed.version === '1') return parsed;
     }
 
+    const row = data as Record<string, unknown>;
+    const partner1 = (row.couple_name_1 as string) || (row.couple_first_name as string) || '';
+    const partner2 = (row.couple_name_2 as string) || (row.couple_second_name as string) || '';
+
     const now = new Date().toISOString();
     return {
       version: '1',
       couple: {
-        partner1Name: (data.couple_name_1 as string) ?? '',
-        partner2Name: (data.couple_name_2 as string) ?? '',
-        displayName: data.couple_name_1 && data.couple_name_2
-          ? `${data.couple_name_1} & ${data.couple_name_2}`
-          : '',
+        partner1Name: partner1,
+        partner2Name: partner2,
+        displayName: partner1 && partner2 ? `${partner1} & ${partner2}` : '',
       },
       event: {
         weddingDateISO: (data.venue_date || data.wedding_date)
