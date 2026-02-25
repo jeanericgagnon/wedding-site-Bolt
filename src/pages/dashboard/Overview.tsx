@@ -15,6 +15,7 @@ interface OverviewStats {
   daysUntilWedding: number | null;
   weddingDate: string | null;
   siteSlug: string | null;
+  isPublished: boolean;
   siteUpdatedAt: string | null;
   templateName: string | null;
   coupleName1: string | null;
@@ -105,6 +106,7 @@ export const DashboardOverview: React.FC = () => {
           daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
           weddingDate,
           siteSlug: demoWeddingSite.site_url,
+          isPublished: true,
           siteUpdatedAt: new Date().toISOString(),
           templateName: 'classic',
           coupleName1: demoWeddingSite.couple_name_1,
@@ -119,7 +121,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_location')
+        .select('id, site_slug, is_published, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -162,6 +164,13 @@ export const DashboardOverview: React.FC = () => {
           receivedAt: g.rsvp_received_at!,
         }));
 
+      const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
+      const isPublished = Boolean(
+        site?.is_published === true ||
+        siteJson?.publishStatus === 'published' ||
+        (typeof siteJson?.publishedVersion === 'number' && (siteJson.publishedVersion as number) > 0)
+      );
+
       setStats({
         totalGuests: allGuests.length,
         confirmedGuests: confirmed.length,
@@ -170,6 +179,7 @@ export const DashboardOverview: React.FC = () => {
         daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
         weddingDate,
         siteSlug: site?.site_slug ?? null,
+        isPublished,
         siteUpdatedAt: site?.updated_at ?? null,
         templateName,
         coupleName1: site?.couple_name_1 ?? null,
@@ -224,7 +234,7 @@ export const DashboardOverview: React.FC = () => {
         {
           id: 'publish',
           label: 'Publish site once',
-          done: Boolean(stats.siteSlug),
+          done: stats.isPublished,
           actionLabel: 'Open site builder',
           action: () => navigate('/dashboard/builder'),
         },
@@ -398,11 +408,11 @@ export const DashboardOverview: React.FC = () => {
                     <div>
                       <CardTitle>Your wedding site</CardTitle>
                       <CardDescription>
-                        {stats?.siteSlug ? 'Published and live' : 'Not yet published'}
+                        {stats?.isPublished ? 'Published and live' : 'Not yet published'}
                       </CardDescription>
                     </div>
-                    <Badge variant={stats?.siteSlug ? 'success' : 'secondary'}>
-                      {stats?.siteSlug ? 'Live' : 'Draft'}
+                    <Badge variant={stats?.isPublished ? 'success' : 'secondary'}>
+                      {stats?.isPublished ? 'Live' : 'Draft'}
                     </Badge>
                   </div>
                 </CardHeader>
