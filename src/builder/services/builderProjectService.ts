@@ -9,7 +9,7 @@ export const builderProjectService = {
   async loadProject(weddingSiteId: string): Promise<BuilderProject | null> {
     const { data, error } = await supabase
       .from('wedding_sites')
-      .select('id, layout_config, site_json, active_template_id, template_id, wedding_data')
+      .select('*')
       .eq('id', weddingSiteId)
       .maybeSingle();
 
@@ -38,7 +38,7 @@ export const builderProjectService = {
   async loadWeddingData(weddingSiteId: string): Promise<WeddingDataV1> {
     const { data, error } = await supabase
       .from('wedding_sites')
-      .select('wedding_data, couple_name_1, couple_name_2, venue_date, wedding_date, venue_name, wedding_location, venue_location, site_slug')
+      .select('*')
       .eq('id', weddingSiteId)
       .maybeSingle();
 
