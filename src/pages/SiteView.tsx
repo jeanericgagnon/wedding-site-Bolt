@@ -175,6 +175,17 @@ const ComingSoonScreen: React.FC = () => {
 
 export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+
+  const resolvedSlug = React.useMemo(() => {
+    if (slug) return slug;
+    const host = window.location.hostname.toLowerCase();
+    if (!host.endsWith('dayof.love')) return null;
+    const parts = host.split('.');
+    if (parts.length < 3) return null; // dayof.love
+    const sub = parts[0];
+    if (!sub || sub === 'www') return null;
+    return sub;
+  }, [slug]);
   const [searchParams] = useSearchParams();
   const { i18n } = useTranslation();
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
@@ -191,14 +202,14 @@ export const SiteView: React.FC = () => {
   const [passwordGateError, setPasswordGateError] = useState<string | null>(null);
   const [passwordGateChecking, setPasswordGateChecking] = useState(false);
 
-  const STORAGE_KEY = `dayof_pw_unlocked_${slug}`;
+  const STORAGE_KEY = `dayof_pw_unlocked_${resolvedSlug ?? 'unknown'}`;
 
   const handlePasswordSubmit = async (pw: string) => {
     setPasswordGateChecking(true);
     setPasswordGateError(null);
     try {
       const { data } = await supabase.rpc('check_site_password', {
-        p_slug: slug,
+        p_slug: resolvedSlug,
         p_password: pw,
       });
       if (data === true) {
@@ -216,7 +227,7 @@ export const SiteView: React.FC = () => {
 
   useEffect(() => {
     const loadSite = async () => {
-      if (!slug) {
+      if (!resolvedSlug) {
         setError('Invalid site URL');
         setLoading(false);
         return;
@@ -226,7 +237,7 @@ export const SiteView: React.FC = () => {
         const { data, error: fetchError } = await supabase
           .from('wedding_sites')
           .select('id, wedding_data, layout_config, site_json, published_json, active_template_id, is_published, privacy_mode, site_password_hash, hide_from_search, guest_access_token, default_language')
-          .eq('site_slug', slug)
+          .eq('site_slug', resolvedSlug)
           .maybeSingle();
 
         if (fetchError) throw fetchError;
@@ -261,7 +272,7 @@ export const SiteView: React.FC = () => {
         setHideFromSearch(hideSearch);
 
         if (privacyMode === 'password_protected' && pwHash) {
-          const alreadyUnlocked = sessionStorage.getItem(`dayof_pw_unlocked_${slug}`) === '1';
+          const alreadyUnlocked = sessionStorage.getItem(`dayof_pw_unlocked_${resolvedSlug}`) === '1';
           if (!alreadyUnlocked) {
             setPrivacyGate('password_required');
             setLoading(false);
@@ -269,7 +280,7 @@ export const SiteView: React.FC = () => {
           }
         } else if (privacyMode === 'invite_only') {
           const urlToken = searchParams.get('token');
-          const storedToken = sessionStorage.getItem(`dayof_invite_token_${slug}`);
+          const storedToken = sessionStorage.getItem(`dayof_invite_token_${resolvedSlug}`);
           const tokenToCheck = urlToken ?? storedToken;
           if (!tokenToCheck || (guestToken && tokenToCheck !== guestToken)) {
             setPrivacyGate('invite_only');
@@ -277,7 +288,7 @@ export const SiteView: React.FC = () => {
             return;
           }
           if (urlToken) {
-            sessionStorage.setItem(`dayof_invite_token_${slug}`, urlToken);
+            sessionStorage.setItem(`dayof_invite_token_${resolvedSlug}`, urlToken);
           }
         }
 
@@ -351,7 +362,7 @@ export const SiteView: React.FC = () => {
       ];
       resetProps.forEach(p => el.style.removeProperty(p));
     };
-  }, [slug, searchParams]);
+  }, [resolvedSlug, searchParams]);
 
   useEffect(() => {
     if (!hideFromSearch) return;
@@ -409,7 +420,7 @@ export const SiteView: React.FC = () => {
   if (useNewRenderer && weddingSiteId) {
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
-        <PageRendererFromDB siteId={weddingSiteId} siteSlug={slug ?? ''} />
+        <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} />
       </SiteViewContext.Provider>
     );
   }
