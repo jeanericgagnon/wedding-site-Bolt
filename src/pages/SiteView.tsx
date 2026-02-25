@@ -234,11 +234,22 @@ export const SiteView: React.FC = () => {
       }
 
       try {
-        const { data, error: fetchError } = await supabase
+        let { data, error: fetchError } = await supabase
           .from('wedding_sites')
           .select('*')
           .eq('site_slug', resolvedSlug)
           .maybeSingle();
+
+        // Fallback for legacy/incomplete rows where site_slug is missing but site_url exists.
+        if (!data && !fetchError) {
+          const byUrl = await supabase
+            .from('wedding_sites')
+            .select('*')
+            .eq('site_url', `${resolvedSlug}.dayof.love`)
+            .maybeSingle();
+          data = byUrl.data;
+          fetchError = byUrl.error;
+        }
 
         if (fetchError) throw fetchError;
 
