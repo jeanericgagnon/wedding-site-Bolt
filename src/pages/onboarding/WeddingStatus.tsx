@@ -51,8 +51,25 @@ export const WeddingStatus: React.FC = () => {
       return;
     }
 
-    setLoading(true);
     setError('');
+
+    if (selectedStatus === 'venue_booked') {
+      const d = details.venue_booked;
+      if (!d?.venueName?.trim() || !d?.venueAddress?.trim() || !d?.venueDate || !d?.expectedGuestCount) {
+        setError('Please complete venue name, address, date, and guest count.');
+        return;
+      }
+    }
+
+    if (selectedStatus === 'invitations_sent') {
+      const d = details.invitations_sent;
+      if (!d?.venueName?.trim() || !d?.venueAddress?.trim() || !d?.venueDate || !d?.expectedGuestCount || !d?.invitationsSentDate) {
+        setError('Please complete venue details, guest count, and invitations sent date.');
+        return;
+      }
+    }
+
+    setLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
