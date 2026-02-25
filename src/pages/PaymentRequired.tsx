@@ -114,6 +114,7 @@ export const PaymentRequired: React.FC = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const isCanceled = searchParams.get('canceled') === '1';
   const isExpired = searchParams.get('reason') === 'expired';
+  const isNewSignup = searchParams.get('signup') === '1' || searchParams.get('oauth') === 'google';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-surface-subtle to-surface flex items-center justify-center p-4">
@@ -123,12 +124,12 @@ export const PaymentRequired: React.FC = () => {
             <Heart className="w-8 h-8 text-accent" />
           </div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">
-            {isExpired ? 'Your Site Has Expired' : 'Complete Your Purchase'}
+            {isExpired ? 'Your Site Has Expired' : 'Step 2: Complete Your Purchase'}
           </h1>
           <p className="text-text-secondary">
             {isExpired
               ? 'Your 2-year access has ended. Renew below or switch to annual billing.'
-              : 'One-time payment — 2 years of access, no subscriptions required.'}
+              : 'Account created. After payment, you will set names, site URL, and wedding details.'}
           </p>
         </div>
 
@@ -155,6 +156,13 @@ export const PaymentRequired: React.FC = () => {
                 </li>
               ))}
             </ul>
+
+            {isNewSignup && !error && !isCanceled && !isExpired && (
+              <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg text-sm text-success border border-success/20 mb-4">
+                <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Account created successfully. Complete payment to unlock site setup and publishing.</span>
+              </div>
+            )}
 
             {isExpired && !error && !isCanceled && (
               <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20 mb-4">

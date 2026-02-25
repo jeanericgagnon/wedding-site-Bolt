@@ -124,7 +124,7 @@ export const Signup: React.FC = () => {
       }
 
       await ensureMinimalWeddingSite(userId, formData.email);
-      navigate('/payment-required');
+      navigate('/payment-required?signup=1');
     } catch (err: unknown) {
       setError((err as Error).message || 'Failed to create account. Please try again.');
     } finally {
