@@ -4,6 +4,7 @@ import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Downloa
 import { Button, Card, Input, Textarea } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { buildOnboardingUpdateData } from '../../lib/onboardingMapper';
+import * as XLSX from 'xlsx';
 
 type Step =
   | 'welcome'
@@ -210,9 +211,26 @@ export const GuidedSetup: React.FC = () => {
     setCsvError('');
     setCsvImporting(true);
     try {
-      const text = await file.text();
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      if (lines.length < 2) throw new Error('CSV must have a header row and at least one guest row');
+      const lowerName = file.name.toLowerCase();
+
+      let rows: string[][] = [];
+      if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        if (!firstSheetName) throw new Error('Spreadsheet has no sheets');
+        const firstSheet = workbook.Sheets[firstSheetName];
+        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' }) as string[][];
+      } else {
+        const text = await file.text();
+        rows = text
+          .split('\n')
+          .map(l => l.trim())
+          .filter(Boolean)
+          .map(l => l.split(',').map(v => v.trim().replace(/^"|"$/g, '')));
+      }
+
+      if (rows.length < 2) throw new Error('File must have a header row and at least one guest row');
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -224,8 +242,7 @@ export const GuidedSetup: React.FC = () => {
         .maybeSingle();
       if (!site) throw new Error('Wedding site not found');
 
-      const headerLine = lines[0].toLowerCase();
-      const cols = headerLine.split(',').map(h => h.trim());
+      const cols = (rows[0] || []).map((h) => String(h ?? '').toLowerCase().trim());
 
       const findIdx = (...candidates: string[]) => {
         for (const c of candidates) {
@@ -249,8 +266,8 @@ export const GuidedSetup: React.FC = () => {
       let updated = 0;
       let invalid = 0;
 
-      for (const line of lines.slice(1)) {
-        const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      for (const row of rows.slice(1)) {
+        const vals = (row || []).map((v) => String(v ?? '').trim());
 
         let firstName = firstNameIdx >= 0 ? (vals[firstNameIdx] || '') : '';
         let lastName = lastNameIdx >= 0 ? (vals[lastNameIdx] || '') : '';
@@ -330,7 +347,7 @@ export const GuidedSetup: React.FC = () => {
 
       setCsvImportResult({ created, updated, invalid });
     } catch (err: unknown) {
-      setCsvError((err as Error).message || 'Failed to import CSV');
+      setCsvError((err as Error).message || 'Failed to import guest file');
     } finally {
       setCsvImporting(false);
       if (e.target) e.target.value = '';
@@ -783,7 +800,7 @@ export const GuidedSetup: React.FC = () => {
             <div className="space-y-3">
               <h3 className="font-semibold text-text-primary flex items-center gap-2">
                 <Upload className="w-4 h-4 text-primary" aria-hidden="true" />
-                Step 2: Upload your filled-in CSV
+                Step 2: Upload your guest file (CSV or XLSX)
               </h3>
               {csvImportResult ? (
                 <div className="p-4 bg-success/10 border border-success/30 rounded-lg space-y-2">
@@ -815,14 +832,14 @@ export const GuidedSetup: React.FC = () => {
                     ) : (
                       <>
                         <Upload className="w-8 h-8 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
-                        <p className="text-sm font-medium text-text-primary mb-1">Click to upload CSV</p>
-                        <p className="text-xs text-text-tertiary">Supports template CSV or most common guest CSV headers (name/email/phone/group, etc.)</p>
+                        <p className="text-sm font-medium text-text-primary mb-1">Click to upload CSV or XLSX</p>
+                        <p className="text-xs text-text-tertiary">Supports template CSV/XLSX or most common guest file headers (name/email/phone/group, etc.)</p>
                       </>
                     )}
                   </div>
                   <input
                     type="file"
-                    accept=".csv,text/csv"
+                    accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                     className="hidden"
                     onChange={handleCsvUpload}
                     disabled={csvImporting}
