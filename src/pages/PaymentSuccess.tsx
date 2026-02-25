@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
-import { fetchPaymentStatus } from '../lib/stripeService';
+import { fetchPaymentStatus, verifyCheckoutSession } from '../lib/stripeService';
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_ATTEMPTS = 15;
@@ -17,28 +17,49 @@ export const PaymentSuccess: React.FC = () => {
   useEffect(() => {
     if (!user) return;
 
-    const poll = async () => {
-      try {
-        const paymentStatus = await fetchPaymentStatus(user.id);
-        if (paymentStatus === 'active') {
-          setStatus('confirmed');
-          setTimeout(() => navigate('/onboarding/status', { replace: true }), 1500);
-          return;
+    const run = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+
+      // Fast-path: confirm directly with Stripe session id on return URL.
+      if (sessionId) {
+        try {
+          const verified = await verifyCheckoutSession(sessionId);
+          if (verified.paid) {
+            setStatus('confirmed');
+            setTimeout(() => navigate('/onboarding/status', { replace: true }), 1200);
+            return;
+          }
+        } catch {
+          // fall back to polling payment_status
         }
-      } catch {
-        // silent — keep polling
       }
 
-      attemptsRef.current += 1;
-      if (attemptsRef.current >= MAX_ATTEMPTS) {
-        setStatus('timeout');
-        return;
-      }
+      const poll = async () => {
+        try {
+          const paymentStatus = await fetchPaymentStatus(user.id);
+          if (paymentStatus === 'active') {
+            setStatus('confirmed');
+            setTimeout(() => navigate('/onboarding/status', { replace: true }), 1500);
+            return;
+          }
+        } catch {
+          // silent — keep polling
+        }
+
+        attemptsRef.current += 1;
+        if (attemptsRef.current >= MAX_ATTEMPTS) {
+          setStatus('timeout');
+          return;
+        }
+
+        setTimeout(poll, POLL_INTERVAL_MS);
+      };
 
       setTimeout(poll, POLL_INTERVAL_MS);
     };
 
-    setTimeout(poll, POLL_INTERVAL_MS);
+    run();
   }, [user, navigate]);
 
   return (

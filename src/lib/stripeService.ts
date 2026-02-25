@@ -182,6 +182,38 @@ export async function fetchBillingInfo(userId: string): Promise<BillingInfo | nu
   };
 }
 
+export async function verifyCheckoutSession(sessionId: string): Promise<{ paid: boolean; error?: string }> {
+  const session = await requireSession();
+
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string).trim();
+  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string).trim();
+
+  const res = await fetch(`${supabaseUrl}/functions/v1/stripe-verify-checkout-session`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: supabaseAnonKey,
+    },
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+
+  const raw = await res.text();
+  let json: { paid?: boolean; error?: string } = {};
+  try {
+    json = raw ? JSON.parse(raw) : {};
+  } catch {
+    // ignore
+  }
+
+  if (!res.ok) {
+    if (res.status === 401) throw new SessionExpiredError();
+    throw new Error(json.error || raw || `Server error (${res.status})`);
+  }
+
+  return { paid: !!json.paid, error: json.error };
+}
+
 export async function fetchPaymentStatus(userId: string): Promise<'payment_required' | 'active' | 'canceled' | null> {
   const { data, error } = await supabase
     .from('wedding_sites')
