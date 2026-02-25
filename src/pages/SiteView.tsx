@@ -268,15 +268,15 @@ export const SiteView: React.FC = () => {
         }
 
         const row = data as Record<string, unknown>;
-        const siteJson = (row.site_json && typeof row.site_json === 'object')
+        const siteJsonMeta = (row.site_json && typeof row.site_json === 'object')
           ? (row.site_json as Record<string, unknown>)
           : null;
 
         const isPublished = Boolean(
           row.is_published === true ||
-          siteJson?.publishStatus === 'published' ||
-          (typeof siteJson?.publishedVersion === 'number' && (siteJson.publishedVersion as number) > 0) ||
-          (typeof siteJson?.lastPublishedAt === 'string' && (siteJson.lastPublishedAt as string).length > 0)
+          siteJsonMeta?.publishStatus === 'published' ||
+          (typeof siteJsonMeta?.publishedVersion === 'number' && (siteJsonMeta.publishedVersion as number) > 0) ||
+          (typeof siteJsonMeta?.lastPublishedAt === 'string' && (siteJsonMeta.lastPublishedAt as string).length > 0)
         );
 
         if (!isPublished) {
