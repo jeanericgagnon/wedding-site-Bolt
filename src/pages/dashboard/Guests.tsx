@@ -564,8 +564,9 @@ export const DashboardGuests: React.FC = () => {
       setShowAddModal(false);
       resetForm();
       toast(`${formData.first_name} ${formData.last_name} added`, 'success');
-    } catch {
-      toast('Failed to add guest. Please try again.', 'error');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to add guest. Please try again.';
+      toast(msg, 'error');
     }
   };
 
@@ -1493,7 +1494,7 @@ Proceed with send?`)) return;
     return <Badge variant={variants[status] || 'warning'}>{labels[status] || status}</Badge>;
   };
 
-  const GuestFormModal = ({ onSubmit, onClose, title }: { onSubmit: (e: React.FormEvent) => void; onClose: () => void; title: string }) => (
+  const renderGuestFormModal = ({ onSubmit, onClose, title, submitLabel }: { onSubmit: (e: React.FormEvent) => void; onClose: () => void; title: string; submitLabel: string }) => (
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="guest-modal-title">
@@ -1571,7 +1572,7 @@ Proceed with send?`)) return;
                 Cancel
               </Button>
               <Button type="submit" variant="primary" fullWidth>
-                {editingGuest ? 'Update' : 'Add'} Guest
+                {submitLabel}
               </Button>
             </div>
           </form>
@@ -2444,21 +2445,19 @@ Proceed with send?`)) return;
         </Card>
       </div>
 
-      {showAddModal && (
-        <GuestFormModal
-          title="Add New Guest"
-          onSubmit={handleAddGuest}
-          onClose={() => { setShowAddModal(false); resetForm(); }}
-        />
-      )}
+      {showAddModal && renderGuestFormModal({
+        title: 'Add New Guest',
+        submitLabel: 'Add Guest',
+        onSubmit: handleAddGuest,
+        onClose: () => { setShowAddModal(false); resetForm(); },
+      })}
 
-      {editingGuest && (
-        <GuestFormModal
-          title="Edit Guest"
-          onSubmit={handleEditGuest}
-          onClose={() => { setEditingGuest(null); resetForm(); }}
-        />
-      )}
+      {editingGuest && renderGuestFormModal({
+        title: 'Edit Guest',
+        submitLabel: 'Update Guest',
+        onSubmit: handleEditGuest,
+        onClose: () => { setEditingGuest(null); resetForm(); },
+      })}
 
       {itineraryDrawerGuest && (
         <>
