@@ -98,42 +98,23 @@ export const builderProjectService = {
       updatePayload.wedding_data = weddingData;
     }
 
-    let { error } = await supabase
-      .from('wedding_sites')
-      .update(updatePayload)
-      .eq('id', project.weddingId);
+    const payload: Record<string, unknown> = { ...updatePayload };
+    const driftFields = ['active_template_id', 'layout_config', 'site_json', 'wedding_data', 'template_id'];
 
-    if (error?.message?.includes('active_template_id')) {
-      const fallbackPayload = { ...updatePayload };
-      delete fallbackPayload.active_template_id;
+    let error: { message?: string } | null = null;
 
+    for (let i = 0; i <= driftFields.length; i += 1) {
       const result = await supabase
         .from('wedding_sites')
-        .update(fallbackPayload)
+        .update(payload)
         .eq('id', project.weddingId);
+
       error = result.error;
-    }
+      if (!error) break;
 
-    if (error?.message?.includes('layout_config')) {
-      const fallbackPayload = { ...updatePayload };
-      delete fallbackPayload.layout_config;
-
-      const result = await supabase
-        .from('wedding_sites')
-        .update(fallbackPayload)
-        .eq('id', project.weddingId);
-      error = result.error;
-    }
-
-    if (error?.message?.includes('site_json')) {
-      const fallbackPayload = { ...updatePayload };
-      delete fallbackPayload.site_json;
-
-      const result = await supabase
-        .from('wedding_sites')
-        .update(fallbackPayload)
-        .eq('id', project.weddingId);
-      error = result.error;
+      const field = driftFields.find((candidate) => error?.message?.includes(candidate));
+      if (!field || !(field in payload)) break;
+      delete payload[field];
     }
 
     if (error) throw error;
@@ -142,40 +123,49 @@ export const builderProjectService = {
   async publishProject(_projectId: string, weddingSiteId: string): Promise<{ publishedAt: string; version: number }> {
     const publishedAt = new Date().toISOString();
 
-    const { data: current, error: fetchError } = await supabase
-      .from('wedding_sites')
-      .select('site_json')
-      .eq('id', weddingSiteId)
-      .maybeSingle();
-
-    if (fetchError) throw fetchError;
-
-    // Try richest publish payload first, then gracefully degrade for schema-drifted tables.
-    let publishError: { message?: string } | null = null;
+    let currentSiteJson: unknown = null;
 
     {
-      const { error } = await supabase
+      const primary = await supabase
         .from('wedding_sites')
-        .update({
-          is_published: true,
-          published_at: publishedAt,
-          updated_at: publishedAt,
-          published_json: current?.site_json ?? null,
-        })
-        .eq('id', weddingSiteId);
-      publishError = error;
+        .select('site_json')
+        .eq('id', weddingSiteId)
+        .maybeSingle();
+
+      if (!primary.error) {
+        currentSiteJson = primary.data?.site_json ?? null;
+      } else {
+        const fallback = await supabase
+          .from('wedding_sites')
+          .select('id')
+          .eq('id', weddingSiteId)
+          .maybeSingle();
+        if (fallback.error) throw fallback.error;
+      }
     }
 
-    if (publishError?.message?.includes('published_json')) {
+    // Try richest publish payload first, then gracefully degrade for schema-drifted tables.
+    const publishPayload: Record<string, unknown> = {
+      is_published: true,
+      published_at: publishedAt,
+      updated_at: publishedAt,
+      published_json: currentSiteJson,
+    };
+
+    const driftFields = ['published_json', 'published_at', 'is_published'];
+    let publishError: { message?: string } | null = null;
+
+    for (let i = 0; i <= driftFields.length; i += 1) {
       const { error } = await supabase
         .from('wedding_sites')
-        .update({
-          is_published: true,
-          published_at: publishedAt,
-          updated_at: publishedAt,
-        })
+        .update(publishPayload)
         .eq('id', weddingSiteId);
       publishError = error;
+
+      if (!publishError) break;
+      const field = driftFields.find((candidate) => publishError?.message?.includes(candidate));
+      if (!field || !(field in publishPayload)) break;
+      delete publishPayload[field];
     }
 
     if (publishError) throw publishError;
