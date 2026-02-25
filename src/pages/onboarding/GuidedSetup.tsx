@@ -36,6 +36,14 @@ interface FormData {
   colorScheme: string;
 }
 
+const deriveCityFromAddress = (address?: string | null): string => {
+  if (!address) return '';
+  const parts = address.split(',').map(p => p.trim()).filter(Boolean);
+  if (parts.length >= 3) return parts[parts.length - 3] || '';
+  if (parts.length >= 2) return parts[parts.length - 2] || '';
+  return '';
+};
+
 export const GuidedSetup: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<Step>('welcome');
@@ -75,7 +83,7 @@ export const GuidedSetup: React.FC = () => {
 
       const { data } = await supabase
         .from('wedding_sites')
-        .select('couple_name_1, couple_name_2, venue_date, venue_name, wedding_location')
+        .select('couple_name_1, couple_name_2, venue_date, venue_name, venue_address, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -84,11 +92,13 @@ export const GuidedSetup: React.FC = () => {
           name1: data.couple_name_1 || '',
           name2: data.couple_name_2 || '',
         });
+        const hydratedCity = data.wedding_location || deriveCityFromAddress(data.venue_address);
+
         setFormData(prev => ({
           ...prev,
           weddingDate: data.venue_date || '',
           venue: data.venue_name || '',
-          city: data.wedding_location || '',
+          city: hydratedCity || '',
         }));
       }
     };
