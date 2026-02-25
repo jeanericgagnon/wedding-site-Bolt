@@ -276,18 +276,18 @@ export const QuickStart: React.FC = () => {
         </label>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { name: 'Romantic', colors: ['#FFE5E5', '#FF9999', '#FF6B6B'] },
-            { name: 'Ocean', colors: ['#E0F7FA', '#4DD0E1', '#0097A7'] },
-            { name: 'Garden', colors: ['#F1F8E9', '#AED581', '#689F38'] },
-            { name: 'Elegant', colors: ['#F5F5F5', '#9E9E9E', '#424242'] },
-            { name: 'Custom', colors: ['#FFFFFF', '#CCCCCC', '#333333'] },
+            { id: 'romantic', label: 'Romantic', colors: ['#FFE5E5', '#FF9999', '#FF6B6B'] },
+            { id: 'ocean', label: 'Ocean', colors: ['#E0F7FA', '#4DD0E1', '#0097A7'] },
+            { id: 'garden', label: 'Garden', colors: ['#F1F8E9', '#AED581', '#689F38'] },
+            { id: 'elegant', label: 'Elegant', colors: ['#F5F5F5', '#9E9E9E', '#424242'] },
+            { id: 'custom', label: 'Create your own', colors: ['#FFFFFF', '#CCCCCC', '#333333'] },
           ].map((scheme) => (
             <button
-              key={scheme.name}
+              key={scheme.id}
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, colorScheme: scheme.name.toLowerCase() }))}
+              onClick={() => setFormData(prev => ({ ...prev, colorScheme: scheme.id }))}
               className={`p-4 rounded-lg border-2 transition-all ${
-                formData.colorScheme === scheme.name.toLowerCase()
+                formData.colorScheme === scheme.id
                   ? 'border-accent bg-accent/10'
                   : 'border-border hover:border-accent/50'
               }`}
@@ -301,8 +301,8 @@ export const QuickStart: React.FC = () => {
                   />
                 ))}
               </div>
-              <p className="text-sm font-medium text-text-primary">{scheme.name}</p>
-              {scheme.name === 'Custom' && (
+              <p className="text-sm font-medium text-text-primary">{scheme.label}</p>
+              {scheme.id === 'custom' && (
                 <p className="text-xs text-text-secondary mt-1">Customize later</p>
               )}
             </button>

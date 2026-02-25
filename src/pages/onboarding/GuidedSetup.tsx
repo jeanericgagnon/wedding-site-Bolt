@@ -689,20 +689,20 @@ export const GuidedSetup: React.FC = () => {
               </label>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { name: 'Romantic', colors: ['#FFE5E5', '#FF9999', '#FF6B6B'], description: 'Soft pinks & reds' },
-                  { name: 'Ocean', colors: ['#E0F7FA', '#4DD0E1', '#0097A7'], description: 'Blues & aquas' },
-                  { name: 'Garden', colors: ['#F1F8E9', '#AED581', '#689F38'], description: 'Fresh greens' },
-                  { name: 'Elegant', colors: ['#F5F5F5', '#9E9E9E', '#424242'], description: 'Classic neutrals' },
-                  { name: 'Sunset', colors: ['#FFF3E0', '#FFB74D', '#F57C00'], description: 'Warm oranges' },
-                  { name: 'Lavender', colors: ['#F3E5F5', '#BA68C8', '#7B1FA2'], description: 'Purple hues' },
-                  { name: 'Custom', colors: ['#FFFFFF', '#CCCCCC', '#333333'], description: 'Create your own' },
+                  { id: 'romantic', label: 'Romantic', colors: ['#FFE5E5', '#FF9999', '#FF6B6B'], description: 'Soft pinks & reds' },
+                  { id: 'ocean', label: 'Ocean', colors: ['#E0F7FA', '#4DD0E1', '#0097A7'], description: 'Blues & aquas' },
+                  { id: 'garden', label: 'Garden', colors: ['#F1F8E9', '#AED581', '#689F38'], description: 'Fresh greens' },
+                  { id: 'elegant', label: 'Elegant', colors: ['#F5F5F5', '#9E9E9E', '#424242'], description: 'Classic neutrals' },
+                  { id: 'sunset', label: 'Sunset', colors: ['#FFF3E0', '#FFB74D', '#F57C00'], description: 'Warm oranges' },
+                  { id: 'lavender', label: 'Lavender', colors: ['#F3E5F5', '#BA68C8', '#7B1FA2'], description: 'Purple hues' },
+                  { id: 'custom', label: 'Create your own', colors: ['#FFFFFF', '#CCCCCC', '#333333'], description: 'Create your own' },
                 ].map((scheme) => (
                   <button
-                    key={scheme.name}
+                    key={scheme.id}
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, colorScheme: scheme.name.toLowerCase() }))}
+                    onClick={() => setFormData(prev => ({ ...prev, colorScheme: scheme.id }))}
                     className={`p-4 rounded-lg border-2 transition-all ${
-                      formData.colorScheme === scheme.name.toLowerCase()
+                      formData.colorScheme === scheme.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
                     }`}
@@ -716,7 +716,7 @@ export const GuidedSetup: React.FC = () => {
                         />
                       ))}
                     </div>
-                    <p className="text-sm font-medium text-text-primary">{scheme.name}</p>
+                    <p className="text-sm font-medium text-text-primary">{scheme.label}</p>
                     <p className="text-xs text-text-secondary mt-1">{scheme.description}</p>
                   </button>
                 ))}
