@@ -144,12 +144,29 @@ export const builderProjectService = {
       }
     }
 
+    const currentSiteJsonObj = (currentSiteJson && typeof currentSiteJson === 'object')
+      ? (currentSiteJson as Record<string, unknown>)
+      : {};
+
+    const nextPublishedVersion =
+      typeof currentSiteJsonObj.publishedVersion === 'number'
+        ? (currentSiteJsonObj.publishedVersion as number) + 1
+        : 1;
+
+    const nextSiteJson: Record<string, unknown> = {
+      ...currentSiteJsonObj,
+      publishStatus: 'published',
+      lastPublishedAt: publishedAt,
+      publishedVersion: nextPublishedVersion,
+    };
+
     // Try richest publish payload first, then gracefully degrade for schema-drifted tables.
     const publishPayload: Record<string, unknown> = {
       is_published: true,
       published_at: publishedAt,
       updated_at: publishedAt,
       published_json: currentSiteJson,
+      site_json: nextSiteJson,
     };
 
     const driftFields = ['published_json', 'published_at', 'is_published'];
@@ -166,6 +183,17 @@ export const builderProjectService = {
       const field = driftFields.find((candidate) => publishError?.message?.includes(candidate));
       if (!field || !(field in publishPayload)) break;
       delete publishPayload[field];
+    }
+
+    if (publishError) {
+      const fallback = await supabase
+        .from('wedding_sites')
+        .update({
+          site_json: nextSiteJson,
+          updated_at: publishedAt,
+        })
+        .eq('id', weddingSiteId);
+      publishError = fallback.error;
     }
 
     if (publishError) throw publishError;

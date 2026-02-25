@@ -83,7 +83,13 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     mediaService.listAssets(weddingId)
       .then(assets => { dispatch(builderActions.setMediaAssets(assets)); })
       .catch((err) => {
-        const message = err instanceof Error ? err.message : '';
+        const message =
+          err instanceof Error
+            ? err.message
+            : typeof (err as { message?: unknown })?.message === 'string'
+              ? ((err as { message: string }).message)
+              : '';
+
         // Gracefully degrade when media table is not present in older envs.
         if (message.includes('builder_media_assets') || message.includes('relation') || message.includes('404')) {
           dispatch(builderActions.setMediaAssets([]));

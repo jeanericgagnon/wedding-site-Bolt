@@ -267,7 +267,17 @@ export const SiteView: React.FC = () => {
           i18n.changeLanguage(siteLang);
         }
 
-        const isPublished = !!(data.is_published);
+        const row = data as Record<string, unknown>;
+        const siteJson = (row.site_json && typeof row.site_json === 'object')
+          ? (row.site_json as Record<string, unknown>)
+          : null;
+
+        const isPublished = Boolean(
+          row.is_published === true ||
+          siteJson?.publishStatus === 'published' ||
+          (typeof siteJson?.publishedVersion === 'number' && (siteJson.publishedVersion as number) > 0) ||
+          (typeof siteJson?.lastPublishedAt === 'string' && (siteJson.lastPublishedAt as string).length > 0)
+        );
 
         if (!isPublished) {
           setIsComingSoon(true);
