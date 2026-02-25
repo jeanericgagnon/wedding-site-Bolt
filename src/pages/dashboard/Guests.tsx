@@ -1582,6 +1582,7 @@ Proceed with send?`)) return;
 
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showOpsMenu, setShowOpsMenu] = useState(false);
 
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
@@ -1886,61 +1887,74 @@ Proceed with send?`)) return;
                   />
                   <span className="inline-flex items-center px-3 py-2 border border-border rounded-md text-sm font-medium text-text-primary hover:bg-surface-subtle cursor-pointer">
                     <Upload className="w-4 h-4 mr-2" />
-                    Import CSV/XLSX
+                    Import Guests
                   </span>
                 </label>
-                <Button variant="outline" size="md" onClick={() => exportCSV()}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export All
-                </Button>
-                <Button variant="outline" size="md" onClick={exportFilteredCSV}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Filtered
-                </Button>
-                <Button variant="outline" size="md" onClick={handleCopyOpsSummary}>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Ops Summary
-                </Button>
-                <Button variant="outline" size="md" onClick={generateChecklistTasks}>
-                  Generate Checklist
-                </Button>
-                <Button variant="outline" size="md" onClick={() => {
-                  const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
-                  const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
-                  navigator.clipboard.writeText(text).then(() => toast('Copied checklist markdown', 'success')).catch(() => window.prompt('Copy checklist:', text));
-                }}>
-                  Copy Checklist
-                </Button>
-                <Button variant="outline" size="md" onClick={selectUnresolvedGuests}>
-                  Select unresolved
-                </Button>
-                <Button variant="outline" size="md" onClick={selectFilteredGuests}>
-                  Select filtered
-                </Button>
-                <Button variant="outline" size="md" onClick={handleSendSelectedInvitations} disabled={bulkSending || selectedGuestIds.size === 0}>
-                  {bulkSending ? 'Sending…' : `Remind Selected (${selectedGuestIds.size})`}
-                </Button>
-                <Button variant="ghost" size="md" onClick={clearGuestSelection} disabled={selectedGuestIds.size === 0}>
-                  Clear Selection
-                </Button>
-                <Button variant="outline" size="md" onClick={() => { if (nextUnresolvedGuest) { setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name); setViewMode('list'); } }} disabled={!nextUnresolvedGuest}>
-                  Next unresolved
-                </Button>
-                <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Add Guest
-                </Button>
+
+                <div className="relative">
+                  <Button variant="outline" size="md" onClick={() => setShowExportMenu(v => !v)}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                    <ChevronDown className="w-4 h-4 ml-1" />
+                  </Button>
+                  {showExportMenu && (
+                    <div className="absolute z-20 mt-1 w-52 bg-white border border-border rounded-lg shadow-lg p-1">
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowExportMenu(false); }}>
+                        Export all guests
+                      </button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowExportMenu(false); }}>
+                        Export filtered guests
+                      </button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowExportMenu(false); }}>
+                        Copy filtered emails
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || reminderCandidates.length === 0} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>
                   <Mail className="w-4 h-4 mr-2" />
                   {bulkSending ? 'Sending…' : `Remind Filtered (${reminderCandidates.length})`}
                 </Button>
-                <Button variant="outline" size="md" onClick={handleCopyFilteredEmails} disabled={reminderCandidates.length === 0} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Emails
+
+                <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Add Guest
                 </Button>
-                <Button variant="outline" size="md" onClick={() => window.alert(`Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`)} disabled={reminderCandidates.length === 0}>
-                  Dry Run
-                </Button>
+
+                <div className="relative">
+                  <Button variant="outline" size="md" onClick={() => setShowOpsMenu(v => !v)}>
+                    More Actions
+                    <ChevronDown className="w-4 h-4 ml-1" />
+                  </Button>
+                  {showOpsMenu && (
+                    <div className="absolute right-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg shadow-lg p-1 max-h-96 overflow-auto">
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyOpsSummary(); setShowOpsMenu(false); }}>Copy ops summary</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Generate checklist</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
+                        const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
+                        const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
+                        navigator.clipboard.writeText(text).then(() => toast('Copied checklist markdown', 'success')).catch(() => window.prompt('Copy checklist:', text));
+                        setShowOpsMenu(false);
+                      }}>Copy checklist</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { selectUnresolvedGuests(); setShowOpsMenu(false); }}>Select unresolved</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { selectFilteredGuests(); setShowOpsMenu(false); }}>Select filtered</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || selectedGuestIds.size === 0} onClick={() => { handleSendSelectedInvitations(); setShowOpsMenu(false); }}>{bulkSending ? 'Sending…' : `Remind selected (${selectedGuestIds.size})`}</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={selectedGuestIds.size === 0} onClick={() => { clearGuestSelection(); setShowOpsMenu(false); }}>Clear selection</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={!nextUnresolvedGuest} onClick={() => {
+                        if (nextUnresolvedGuest) {
+                          setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name);
+                          setViewMode('list');
+                        }
+                        setShowOpsMenu(false);
+                      }}>Next unresolved</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => {
+                        window.alert(`Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`);
+                        setShowOpsMenu(false);
+                      }}>Dry run</button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
