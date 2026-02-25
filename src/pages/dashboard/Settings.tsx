@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown } from 'lucide-react';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -33,7 +34,8 @@ const LOCAL_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 
 export const DashboardSettings: React.FC = () => {
-  const { user, isDemoMode } = useAuth();
+  const navigate = useNavigate();
+  const { user, isDemoMode, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'account' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
 
   const [coupleNames, setCoupleNames] = useState('');
@@ -107,6 +109,11 @@ export const DashboardSettings: React.FC = () => {
         .finally(() => setBillingLoading(false));
     }
   }, [activeTab, user]);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/', { replace: true });
+  };
 
   const loadSiteData = async () => {
     if (!user) return;
@@ -597,6 +604,19 @@ export const DashboardSettings: React.FC = () => {
                         </Button>
                       </div>
                     </form>
+                  </CardContent>
+                </Card>
+
+                <Card variant="bordered" padding="lg">
+                  <CardHeader>
+                    <CardTitle>Session</CardTitle>
+                    <CardDescription>Log out of your account on this device</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex justify-end">
+                    <Button variant="outline" size="md" onClick={handleLogout}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Log out
+                    </Button>
                   </CardContent>
                 </Card>
               </>
