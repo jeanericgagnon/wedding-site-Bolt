@@ -505,8 +505,12 @@ export const DashboardGuests: React.FC = () => {
 
   const generateSecureToken = async (): Promise<string> => {
     const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
-    if (error || !data) throw new Error('Failed to generate token');
-    return data as string;
+    if (!error && data) return data as string;
+
+    // Fallback for environments where the RPC is missing.
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
   };
 
   const generateLocalInviteToken = () => `demo_${Math.random().toString(36).slice(2, 14)}`;
