@@ -256,7 +256,7 @@ export const GuidedSetup: React.FC = () => {
 
       const firstNameIdx = findIdx('first_name', 'firstname', 'first name', 'given_name', 'given name');
       const lastNameIdx = findIdx('last_name', 'lastname', 'last name', 'surname', 'family_name', 'family name');
-      const fullNameIdx = findIdx('name', 'full_name', 'full name', 'guest_name', 'guest name');
+      const fullNameIdx = findIdx('name', 'full_name', 'full name', 'guest_name', 'guest name', 'last, first', 'last first');
       const emailIdx = findIdx('email', 'email_address', 'email address');
       const phoneIdx = findIdx('phone', 'phone_number', 'phone number', 'mobile', 'cell');
       const groupIdx = findIdx('group_name', 'group', 'household', 'party', 'family');
@@ -275,11 +275,19 @@ export const GuidedSetup: React.FC = () => {
         let lastName = lastNameIdx >= 0 ? (vals[lastNameIdx] || '') : '';
 
         if ((!firstName && !lastName) && fullNameIdx >= 0) {
-          const full = vals[fullNameIdx] || '';
-          const parts = full.split(/\s+/).filter(Boolean);
-          if (parts.length > 0) {
-            firstName = parts[0] || '';
-            lastName = parts.slice(1).join(' ');
+          const full = (vals[fullNameIdx] || '').trim();
+
+          // Support "Last, First" and "First Last" formats.
+          if (full.includes(',')) {
+            const [lastPart, firstPart] = full.split(',').map(p => p.trim());
+            firstName = firstPart || '';
+            lastName = lastPart || '';
+          } else {
+            const parts = full.split(/\s+/).filter(Boolean);
+            if (parts.length > 0) {
+              firstName = parts[0] || '';
+              lastName = parts.slice(1).join(' ');
+            }
           }
         }
 
