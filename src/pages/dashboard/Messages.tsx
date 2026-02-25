@@ -636,6 +636,9 @@ export const DashboardMessages: React.FC = () => {
 
       const status = saveAsDraft ? 'draft' : isScheduled ? 'scheduled' : 'queued';
       const scheduledFor = isScheduled ? `${formData.scheduleDate}T${formData.scheduleTime}:00` : null;
+      const normalizedSubject = formData.channel === 'sms'
+        ? (formData.subject.trim() || `SMS • ${selectedAudience?.label ?? 'All guests'}`)
+        : formData.subject;
 
       let inserted: { id: string } | null = null;
 
@@ -643,7 +646,7 @@ export const DashboardMessages: React.FC = () => {
         inserted = { id: `demo-msg-${Date.now()}` };
         const demoMessage: Message = {
           id: inserted.id,
-          subject: formData.subject,
+          subject: normalizedSubject,
           body: formData.body,
           sent_at: status === 'queued' ? new Date().toISOString() : null,
           scheduled_for: scheduledFor,
@@ -661,7 +664,7 @@ export const DashboardMessages: React.FC = () => {
           .from('messages')
           .insert([{
             wedding_site_id: weddingSite.id,
-            subject: formData.subject,
+            subject: normalizedSubject,
             body: formData.body,
             channel: formData.channel,
             status,
@@ -899,17 +902,19 @@ export const DashboardMessages: React.FC = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">
-                    {formData.channel === 'sms' ? 'Campaign Name' : 'Subject'} <span className="text-error">*</span>
-                  </label>
-                  <Input
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    placeholder={formData.channel === 'sms' ? 'e.g., RSVP Reminder SMS' : 'e.g., Wedding Day Reminder'}
-                    required
-                  />
-                </div>
+                {formData.channel === 'email' && (
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">
+                      Subject <span className="text-error">*</span>
+                    </label>
+                    <Input
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      placeholder="e.g., Wedding Day Reminder"
+                      required
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-2">
