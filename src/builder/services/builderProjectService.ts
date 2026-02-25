@@ -38,7 +38,7 @@ export const builderProjectService = {
   async loadWeddingData(weddingSiteId: string): Promise<WeddingDataV1> {
     const { data, error } = await supabase
       .from('wedding_sites')
-      .select('wedding_data, couple_name_1, couple_name_2, wedding_date, venue_name, venue_location, site_slug')
+      .select('wedding_data, couple_name_1, couple_name_2, venue_date, wedding_date, venue_name, wedding_location, venue_location, site_slug')
       .eq('id', weddingSiteId)
       .maybeSingle();
 
@@ -61,10 +61,12 @@ export const builderProjectService = {
           : '',
       },
       event: {
-        weddingDateISO: data.wedding_date ? new Date(data.wedding_date as string).toISOString() : undefined,
+        weddingDateISO: (data.venue_date || data.wedding_date)
+          ? new Date((data.venue_date || data.wedding_date) as string).toISOString()
+          : undefined,
       },
       venues: data.venue_name
-        ? [{ id: 'primary', name: data.venue_name as string, address: (data.venue_location as string) ?? undefined }]
+        ? [{ id: 'primary', name: data.venue_name as string, address: ((data.wedding_location as string) || (data.venue_location as string) || undefined) }]
         : [],
       schedule: [],
       rsvp: { enabled: true },
