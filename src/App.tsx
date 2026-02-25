@@ -45,11 +45,21 @@ const PageLoader = () => (
 );
 
 const AppContent = () => {
+  const isWeddingSubdomainHost = (() => {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname.toLowerCase();
+    if (!host.endsWith('dayof.love')) return false;
+    const parts = host.split('.');
+    if (parts.length < 3) return false;
+    const sub = parts[0];
+    return Boolean(sub) && sub !== 'www';
+  })();
+
   return (
     <div className="min-h-screen">
       <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={isWeddingSubdomainHost ? <SiteView /> : <Home />} />
         <Route path="/product" element={<Product />} />
         <Route path="/builder-v2-lab" element={<BuilderV2Lab />} />
         <Route path="/site/:slug" element={<SiteView />} />
