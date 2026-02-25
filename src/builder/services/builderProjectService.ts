@@ -98,10 +98,43 @@ export const builderProjectService = {
       updatePayload.wedding_data = weddingData;
     }
 
-    const { error } = await supabase
+    let { error } = await supabase
       .from('wedding_sites')
       .update(updatePayload)
       .eq('id', project.weddingId);
+
+    if (error?.message?.includes('active_template_id')) {
+      const fallbackPayload = { ...updatePayload };
+      delete fallbackPayload.active_template_id;
+
+      const result = await supabase
+        .from('wedding_sites')
+        .update(fallbackPayload)
+        .eq('id', project.weddingId);
+      error = result.error;
+    }
+
+    if (error?.message?.includes('layout_config')) {
+      const fallbackPayload = { ...updatePayload };
+      delete fallbackPayload.layout_config;
+
+      const result = await supabase
+        .from('wedding_sites')
+        .update(fallbackPayload)
+        .eq('id', project.weddingId);
+      error = result.error;
+    }
+
+    if (error?.message?.includes('site_json')) {
+      const fallbackPayload = { ...updatePayload };
+      delete fallbackPayload.site_json;
+
+      const result = await supabase
+        .from('wedding_sites')
+        .update(fallbackPayload)
+        .eq('id', project.weddingId);
+      error = result.error;
+    }
 
     if (error) throw error;
   },
@@ -117,17 +150,35 @@ export const builderProjectService = {
 
     if (fetchError) throw fetchError;
 
-    const { error } = await supabase
-      .from('wedding_sites')
-      .update({
-        is_published: true,
-        published_at: publishedAt,
-        updated_at: publishedAt,
-        published_json: current?.site_json ?? null,
-      })
-      .eq('id', weddingSiteId);
+    // Try richest publish payload first, then gracefully degrade for schema-drifted tables.
+    let publishError: { message?: string } | null = null;
 
-    if (error) throw error;
+    {
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({
+          is_published: true,
+          published_at: publishedAt,
+          updated_at: publishedAt,
+          published_json: current?.site_json ?? null,
+        })
+        .eq('id', weddingSiteId);
+      publishError = error;
+    }
+
+    if (publishError?.message?.includes('published_json')) {
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({
+          is_published: true,
+          published_at: publishedAt,
+          updated_at: publishedAt,
+        })
+        .eq('id', weddingSiteId);
+      publishError = error;
+    }
+
+    if (publishError) throw publishError;
 
     return { publishedAt, version: Date.now() };
   },
