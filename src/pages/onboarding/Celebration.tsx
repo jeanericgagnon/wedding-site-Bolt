@@ -81,7 +81,7 @@ export const Celebration: React.FC = () => {
 
           {!state?.weddingDate && (
             <p className="text-xl text-text-secondary mb-6">
-              Your wedding site is ready to go!
+              You're set up — now choose how you want to build and publish your site.
             </p>
           )}
 
