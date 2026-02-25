@@ -10,11 +10,10 @@ export const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [addSuffix, setAddSuffix] = useState(true);
+  const [slugPattern, setSlugPattern] = useState<'first-second' | 'first-second-s' | 'second-first' | 'initials' | 'initials-reverse' | 'first-second-last1' | 'full-names' | 'custom'>('first-second-s');
   const [urlTaken, setUrlTaken] = useState(false);
   const [checkingUrl, setCheckingUrl] = useState(false);
   const [customUrl, setCustomUrl] = useState('');
-  const [isCustomizing, setIsCustomizing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -25,14 +24,40 @@ export const Signup: React.FC = () => {
     confirmPassword: '',
   });
 
-  const buildAutoSlug = (first: string, second: string, useSuffix: boolean) => {
-    const base = generateWeddingSlug(first, second);
-    if (!base) return '';
-    return useSuffix && !base.endsWith('s') ? `${base}s` : base;
-  };
-
   const cleanCustomSlug = (value: string) => {
     return slugify(value).replace(/^-+|-+$/g, '').slice(0, 40);
+  };
+
+  const buildSuggestedSlug = (
+    first: string,
+    second: string,
+    last1: string,
+    last2: string,
+    pattern: 'first-second' | 'first-second-s' | 'second-first' | 'initials' | 'initials-reverse' | 'first-second-last1' | 'full-names' | 'custom'
+  ) => {
+    const f = cleanCustomSlug(first);
+    const s = cleanCustomSlug(second);
+    const l1 = cleanCustomSlug(last1);
+    const l2 = cleanCustomSlug(last2);
+
+    switch (pattern) {
+      case 'first-second':
+        return `${f}and${s}`;
+      case 'first-second-s':
+        return `${f}and${s}${s.endsWith('s') ? '' : 's'}`;
+      case 'second-first':
+        return `${s}and${f}`;
+      case 'initials':
+        return `${f.charAt(0)}and${s.charAt(0)}`;
+      case 'initials-reverse':
+        return `${s.charAt(0)}and${f.charAt(0)}`;
+      case 'first-second-last1':
+        return `${f}and${s}${l1}`;
+      case 'full-names':
+        return `${f}${l1}and${s}${l2 || l1}`;
+      default:
+        return '';
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,16 +70,21 @@ export const Signup: React.FC = () => {
 
   useEffect(() => {
     const checkUrlAvailability = async () => {
-      if (isCustomizing) return;
-
       if (!formData.firstName || !formData.secondName) {
         setUrlTaken(false);
         return;
       }
 
-      setCheckingUrl(true);
+      const slug = slugPattern === 'custom'
+        ? cleanCustomSlug(customUrl)
+        : buildSuggestedSlug(formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, slugPattern);
 
-      const slug = buildAutoSlug(formData.firstName, formData.secondName, addSuffix);
+      if (!slug) {
+        setUrlTaken(false);
+        return;
+      }
+
+      setCheckingUrl(true);
       const subdomain = `${slug}.dayof.love`;
 
       try {
@@ -80,40 +110,7 @@ export const Signup: React.FC = () => {
 
     const debounceTimer = setTimeout(checkUrlAvailability, 500);
     return () => clearTimeout(debounceTimer);
-  }, [formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, addSuffix, isCustomizing]);
-
-  useEffect(() => {
-    const checkCustomUrlAvailability = async () => {
-      if (!isCustomizing || !customUrl) return;
-
-      setCheckingUrl(true);
-      const cleanUrl = cleanCustomSlug(customUrl);
-      const subdomain = `${cleanUrl}.dayof.love`;
-
-      try {
-        const { data: takenBySlug } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('site_slug', cleanUrl)
-          .maybeSingle();
-
-        const { data: takenByUrl } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('site_url', subdomain)
-          .maybeSingle();
-
-        setUrlTaken(!!takenBySlug || !!takenByUrl);
-      } catch {
-        setUrlTaken(false);
-      } finally {
-        setCheckingUrl(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(checkCustomUrlAvailability, 500);
-    return () => clearTimeout(debounceTimer);
-  }, [customUrl, isCustomizing]);
+  }, [formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, slugPattern, customUrl]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,23 +166,23 @@ export const Signup: React.FC = () => {
         throw new Error('Account created! Check your email to confirm your address, then sign in.');
       }
 
-      let siteSlug: string;
+      let siteSlug = slugPattern === 'custom'
+        ? cleanCustomSlug(customUrl)
+        : buildSuggestedSlug(formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, slugPattern);
 
-      if (isCustomizing && customUrl) {
-        siteSlug = cleanCustomSlug(customUrl);
-      } else {
-        siteSlug = buildAutoSlug(formData.firstName, formData.secondName, addSuffix);
+      if (!siteSlug) {
+        siteSlug = generateWeddingSlug(formData.firstName, formData.secondName);
+      }
 
-        const { data: existingSlug } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('site_slug', siteSlug)
-          .maybeSingle();
+      const { data: existingSlug } = await supabase
+        .from('wedding_sites')
+        .select('id')
+        .eq('site_slug', siteSlug)
+        .maybeSingle();
 
-        if (existingSlug) {
-          const fallbackBase = `${generateWeddingSlug(formData.firstName, formData.secondName)}-${Date.now().toString().slice(-4)}`;
-          siteSlug = slugify(fallbackBase);
-        }
+      if (existingSlug) {
+        const fallbackBase = `${generateWeddingSlug(formData.firstName, formData.secondName)}-${Date.now().toString().slice(-4)}`;
+        siteSlug = slugify(fallbackBase);
       }
 
       const subdomain = `${siteSlug}.dayof.love`;
@@ -302,7 +299,25 @@ export const Signup: React.FC = () => {
                     <p className="text-sm text-text-secondary">Checking availability...</p>
                   ) : (
                     <>
-                      {isCustomizing ? (
+                      <div className="space-y-2">
+                        <label className="text-xs text-text-secondary">URL style</label>
+                        <select
+                          value={slugPattern}
+                          onChange={(e) => setSlugPattern(e.target.value as typeof slugPattern)}
+                          className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="first-second">ericandkara</option>
+                          <option value="first-second-s">ericandkaras</option>
+                          <option value="second-first">karaanderic</option>
+                          <option value="initials">eandk</option>
+                          <option value="initials-reverse">kande</option>
+                          <option value="first-second-last1">ericandkaragagnon</option>
+                          <option value="full-names">ericgagnonandkaragagnon</option>
+                          <option value="custom">Custom...</option>
+                        </select>
+                      </div>
+
+                      {slugPattern === 'custom' ? (
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
@@ -315,37 +330,17 @@ export const Signup: React.FC = () => {
                         </div>
                       ) : (
                         <p className="text-sm font-medium text-primary">
-                          {buildAutoSlug(formData.firstName, formData.secondName, addSuffix)}.dayof.love
+                          {buildSuggestedSlug(formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, slugPattern)}.dayof.love
                         </p>
                       )}
 
-                      {urlTaken && !isCustomizing && (
-                        <div className="mt-2 space-y-2">
-                          {formData.lastName && formData.secondLastName && (
-                            <p className="text-xs text-warning">
-                              First names URL taken, using full names
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsCustomizing(true);
-                              setCustomUrl(buildAutoSlug(formData.firstName, formData.secondName, addSuffix));
-                            }}
-                            className="text-xs text-primary hover:text-primary/80 underline"
-                          >
-                            Customize URL
-                          </button>
-                        </div>
-                      )}
-
-                      {isCustomizing && urlTaken && (
+                      {urlTaken && (
                         <p className="text-xs text-error mt-1">
                           This URL is already taken
                         </p>
                       )}
 
-                      {isCustomizing && !urlTaken && customUrl && (
+                      {!urlTaken && ((slugPattern === 'custom' && customUrl) || slugPattern !== 'custom') && (
                         <p className="text-xs text-success mt-1">
                           This URL is available!
                         </p>
@@ -354,42 +349,7 @@ export const Signup: React.FC = () => {
                   )}
                 </div>
 
-                {!isCustomizing && (
-                  <div className="flex items-center gap-3">
-                    <label className="text-xs text-text-secondary">Add 's' at the end:</label>
-                    <button
-                      type="button"
-                      onClick={() => setAddSuffix(!addSuffix)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                        addSuffix ? 'bg-primary' : 'bg-border'
-                      }`}
-                      role="switch"
-                      aria-checked={addSuffix}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          addSuffix ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                    <span className="text-xs font-medium text-text-primary">
-                      {addSuffix ? 'john-and-janes' : 'john-and-jane'}
-                    </span>
-                  </div>
-                )}
 
-                {isCustomizing && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCustomizing(false);
-                      setCustomUrl('');
-                    }}
-                    className="text-xs text-text-secondary hover:text-text-primary"
-                  >
-                    ← Use auto-generated URL
-                  </button>
-                )}
               </div>
             )}
 
