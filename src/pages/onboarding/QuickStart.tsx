@@ -99,6 +99,7 @@ export const QuickStart: React.FC = () => {
         wedding_location: formData.location || null,
         planning_status: 'quick_start_complete',
         active_template_id: formData.template,
+        template_id: formData.template,
         wedding_data: weddingData,
         layout_config: layoutConfig,
         site_slug: siteSlug,
