@@ -469,7 +469,6 @@ export const DashboardSettings: React.FC = () => {
   const tabs = [
     { id: 'account' as const, label: 'Account', icon: User },
     { id: 'site' as const, label: 'Site Settings', icon: Globe },
-    { id: 'rsvp' as const, label: 'RSVP', icon: Calendar },
     { id: 'notifications' as const, label: 'Notifications', icon: Bell },
     { id: 'billing' as const, label: 'Billing', icon: CreditCard },
   ];
