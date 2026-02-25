@@ -671,46 +671,34 @@ export const DashboardMessages: React.FC = () => {
         };
         setMessages(prev => [demoMessage, ...prev]);
       } else {
-        const payload = {
-          wedding_site_id: weddingSite.id,
-          subject: normalizedSubject,
-          body: formData.body,
-          channel: formData.channel,
-          status,
-          scheduled_for: scheduledFor,
-          sent_at: null,
-          audience_filter: formData.audience,
-          recipient_count: recipientCount,
-          recipient_filter: { audience: formData.audience, audience_label: selectedAudience?.label ?? null, recipient_count: recipientCount },
-        };
-
-        let { data, error } = await supabase
+        // Write with a minimal stable payload first (resilient to schema drift),
+        // then best-effort patch extended analytics columns.
+        const { data, error } = await supabase
           .from('messages')
-          .insert([payload])
+          .insert([{
+            wedding_site_id: weddingSite.id,
+            subject: normalizedSubject,
+            body: formData.body,
+            channel: formData.channel,
+            status,
+            scheduled_for: scheduledFor,
+            sent_at: null,
+          }])
           .select('id')
           .single();
 
-        // Fallback for schema-cache drift: retry with minimal stable columns.
-        if (error && /Could not find the '.*' column of 'messages' in the schema cache/i.test(error.message || '')) {
-          const retry = await supabase
-            .from('messages')
-            .insert([{
-              wedding_site_id: weddingSite.id,
-              subject: normalizedSubject,
-              body: formData.body,
-              channel: formData.channel,
-              status,
-              scheduled_for: scheduledFor,
-              sent_at: null,
-            }])
-            .select('id')
-            .single();
-          data = retry.data;
-          error = retry.error;
-        }
-
         if (error) throw error;
         inserted = data;
+
+        // Non-blocking enrichment for optional columns.
+        void supabase
+          .from('messages')
+          .update({
+            audience_filter: formData.audience,
+            recipient_count: recipientCount,
+            recipient_filter: { audience: formData.audience, audience_label: selectedAudience?.label ?? null, recipient_count: recipientCount },
+          })
+          .eq('id', inserted.id);
       }
 
       setShowRecipientPreview(false);
