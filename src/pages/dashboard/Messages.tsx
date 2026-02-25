@@ -671,22 +671,43 @@ export const DashboardMessages: React.FC = () => {
         };
         setMessages(prev => [demoMessage, ...prev]);
       } else {
-        const { data, error } = await supabase
+        const payload = {
+          wedding_site_id: weddingSite.id,
+          subject: normalizedSubject,
+          body: formData.body,
+          channel: formData.channel,
+          status,
+          scheduled_for: scheduledFor,
+          sent_at: null,
+          audience_filter: formData.audience,
+          recipient_count: recipientCount,
+          recipient_filter: { audience: formData.audience, audience_label: selectedAudience?.label ?? null, recipient_count: recipientCount },
+        };
+
+        let { data, error } = await supabase
           .from('messages')
-          .insert([{
-            wedding_site_id: weddingSite.id,
-            subject: normalizedSubject,
-            body: formData.body,
-            channel: formData.channel,
-            status,
-            scheduled_for: scheduledFor,
-            sent_at: null,
-            audience_filter: formData.audience,
-            recipient_count: recipientCount,
-            recipient_filter: { audience: formData.audience, audience_label: selectedAudience?.label ?? null, recipient_count: recipientCount },
-          }])
+          .insert([payload])
           .select('id')
           .single();
+
+        // Fallback for schema-cache drift: retry with minimal stable columns.
+        if (error && /Could not find the '.*' column of 'messages' in the schema cache/i.test(error.message || '')) {
+          const retry = await supabase
+            .from('messages')
+            .insert([{
+              wedding_site_id: weddingSite.id,
+              subject: normalizedSubject,
+              body: formData.body,
+              channel: formData.channel,
+              status,
+              scheduled_for: scheduledFor,
+              sent_at: null,
+            }])
+            .select('id')
+            .single();
+          data = retry.data;
+          error = retry.error;
+        }
 
         if (error) throw error;
         inserted = data;
