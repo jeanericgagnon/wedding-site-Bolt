@@ -893,6 +893,29 @@ export const GuidedSetup: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-surface-subtle to-surface p-4">
       <div className="w-full max-w-2xl">
+        {currentStep !== 'welcome' && (
+          <div className="mb-4 flex items-center justify-start">
+            <button
+              type="button"
+              onClick={() => {
+                if (currentStep === 'complete') {
+                  navigate('/onboarding/celebration');
+                  return;
+                }
+                if (currentStepIndex <= 1) {
+                  navigate('/onboarding/celebration');
+                  return;
+                }
+                handleBack();
+              }}
+              className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+              Back
+            </button>
+          </div>
+        )}
+
         {currentStep !== 'welcome' && currentStep !== 'complete' && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
