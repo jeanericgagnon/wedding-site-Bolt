@@ -1,116 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Chrome, Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
-import { sendSignupWelcome } from '../lib/emailService';
-import { generateWeddingSlug, slugify } from '../lib/slugify';
+
+const makeBaseSlug = (email: string) => {
+  const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
+  const cleaned = local.replace(/[^a-z0-9]/g, '').slice(0, 20);
+  return cleaned || 'ourwedding';
+};
+
+async function ensureMinimalWeddingSite(userId: string, email: string): Promise<void> {
+  const existing = await supabase
+    .from('wedding_sites')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existing.data?.id) return;
+
+  const base = makeBaseSlug(email);
+
+  for (let i = 0; i < 6; i += 1) {
+    const suffix = i === 0 ? '' : `-${Math.floor(1000 + Math.random() * 9000)}`;
+    const siteSlug = `${base}${suffix}`;
+    const siteUrl = `${siteSlug}.dayof.love`;
+
+    const { error } = await supabase.from('wedding_sites').insert({
+      user_id: userId,
+      couple_name_1: 'You',
+      couple_name_2: 'Partner',
+      site_slug: siteSlug,
+      site_url: siteUrl,
+    });
+
+    if (!error) return;
+
+    const collision = /duplicate key|already exists|unique/i.test(error.message || '');
+    if (!collision) throw error;
+  }
+
+  throw new Error('Could not reserve a site URL. Please try again.');
+}
 
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [slugPattern, setSlugPattern] = useState<'first-second' | 'first-second-s' | 'second-first' | 'initials' | 'initials-reverse' | 'first-second-last1' | 'full-names' | 'custom'>('first-second-s');
-  const [urlTaken, setUrlTaken] = useState(false);
-  const [checkingUrl, setCheckingUrl] = useState(false);
-  const [customUrl, setCustomUrl] = useState('');
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    secondName: '',
-    secondLastName: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
 
-  const cleanCustomSlug = (value: string) => {
-    return slugify(value).replace(/^-+|-+$/g, '').slice(0, 40);
-  };
-
-  const buildSuggestedSlug = (
-    first: string,
-    second: string,
-    last1: string,
-    last2: string,
-    pattern: 'first-second' | 'first-second-s' | 'second-first' | 'initials' | 'initials-reverse' | 'first-second-last1' | 'full-names' | 'custom'
-  ) => {
-    const f = cleanCustomSlug(first);
-    const s = cleanCustomSlug(second);
-    const l1 = cleanCustomSlug(last1);
-    const l2 = cleanCustomSlug(last2);
-
-    switch (pattern) {
-      case 'first-second':
-        return `${f}and${s}`;
-      case 'first-second-s':
-        return `${f}and${s}${s.endsWith('s') ? '' : 's'}`;
-      case 'second-first':
-        return `${s}and${f}`;
-      case 'initials':
-        return `${f.charAt(0)}and${s.charAt(0)}`;
-      case 'initials-reverse':
-        return `${s.charAt(0)}and${f.charAt(0)}`;
-      case 'first-second-last1':
-        return `${f}and${s}${l1}`;
-      case 'full-names':
-        return `${f}${l1}and${s}${l2 || l1}`;
-      default:
-        return '';
-    }
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
   };
 
-  useEffect(() => {
-    const checkUrlAvailability = async () => {
-      if (!formData.firstName || !formData.secondName) {
-        setUrlTaken(false);
-        return;
-      }
-
-      const slug = slugPattern === 'custom'
-        ? cleanCustomSlug(customUrl)
-        : buildSuggestedSlug(formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, slugPattern);
-
-      if (!slug) {
-        setUrlTaken(false);
-        return;
-      }
-
-      setCheckingUrl(true);
-      const subdomain = `${slug}.dayof.love`;
-
-      try {
-        const { data: takenBySlug } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('site_slug', slug)
-          .maybeSingle();
-
-        const { data: takenByUrl } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('site_url', subdomain)
-          .maybeSingle();
-
-        setUrlTaken(!!takenBySlug || !!takenByUrl);
-      } catch {
-        setUrlTaken(false);
-      } finally {
-        setCheckingUrl(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(checkUrlAvailability, 500);
-    return () => clearTimeout(debounceTimer);
-  }, [formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, slugPattern, customUrl]);
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/payment-required?oauth=google`,
+        },
+      });
+      if (oauthError) throw oauthError;
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to start Google sign-in. Please try again.');
+      setLoading(false);
+    }
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,101 +99,31 @@ export const Signup: React.FC = () => {
       });
 
       if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('No user returned from signup');
 
-      let session = authData.session;
+      let userId = authData.user?.id;
 
-      if (!session?.access_token) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      if (!userId) {
+        const signInRes = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
 
-        if (signInError) {
-          const isEmailNotConfirmed =
-            signInError.message.toLowerCase().includes('email not confirmed') ||
-            signInError.message.toLowerCase().includes('email_not_confirmed');
-
-          if (isEmailNotConfirmed) {
-            throw new Error(
-              'Account created! Check your email to confirm your address, then sign in.'
-            );
+        if (signInRes.error) {
+          const msg = signInRes.error.message.toLowerCase();
+          if (msg.includes('email not confirmed') || msg.includes('email_not_confirmed')) {
+            throw new Error('Account created! Check your email to confirm your address, then sign in.');
           }
-          throw new Error('Account created! Please sign in to continue.');
+          throw signInRes.error;
         }
 
-        session = signInData.session;
+        userId = signInRes.data.user?.id;
       }
 
-      if (!session?.access_token) {
-        throw new Error('Account created! Check your email to confirm your address, then sign in.');
+      if (!userId) {
+        throw new Error('Account created! Please sign in to continue.');
       }
 
-      let siteSlug = slugPattern === 'custom'
-        ? cleanCustomSlug(customUrl)
-        : buildSuggestedSlug(formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, slugPattern);
-
-      if (!siteSlug) {
-        siteSlug = generateWeddingSlug(formData.firstName, formData.secondName);
-      }
-
-      const { data: existingSlug } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('site_slug', siteSlug)
-        .maybeSingle();
-
-      if (existingSlug) {
-        const fallbackBase = `${generateWeddingSlug(formData.firstName, formData.secondName)}-${Date.now().toString().slice(-4)}`;
-        siteSlug = slugify(fallbackBase);
-      }
-
-      const subdomain = `${siteSlug}.dayof.love`;
-
-      const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const coupleEmail = `${firstName}-${secondName}@dayof.love`;
-
-      const baseSitePayload = {
-        user_id: authData.user.id,
-        couple_name_1: formData.firstName,
-        couple_name_2: formData.secondName,
-        site_slug: siteSlug,
-        site_url: subdomain,
-      };
-
-      const extendedSitePayload = {
-        ...baseSitePayload,
-        couple_first_name: formData.firstName,
-        couple_second_name: formData.secondName,
-        couple_last_name: formData.lastName && formData.secondLastName
-          ? `${formData.lastName} & ${formData.secondLastName}`
-          : formData.lastName || formData.secondLastName || '',
-        couple_email: coupleEmail,
-      };
-
-      let { error: siteError } = await supabase
-        .from('wedding_sites')
-        .insert(extendedSitePayload);
-
-      // Some environments can temporarily serve a stale PostgREST schema cache.
-      // Retry with a minimal payload so signup is never blocked by optional columns.
-      if (siteError && /Could not find the 'couple_/i.test(siteError.message)) {
-        const retry = await supabase
-          .from('wedding_sites')
-          .insert(baseSitePayload);
-        siteError = retry.error;
-      }
-
-      if (siteError) throw siteError;
-
-      sendSignupWelcome({
-        email: formData.email,
-        coupleName1: formData.firstName,
-        coupleName2: formData.secondName,
-        siteUrl: subdomain,
-      }).catch(() => {});
-
+      await ensureMinimalWeddingSite(userId, formData.email);
       navigate('/payment-required');
     } catch (err: unknown) {
       setError((err as Error).message || 'Failed to create account. Please try again.');
@@ -248,111 +141,32 @@ export const Signup: React.FC = () => {
             <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Create your account</h1>
-          <p className="text-text-secondary">One-time payment of $49 — yours forever</p>
+          <p className="text-text-secondary">Step 1: account setup. Step 2: site details after payment.</p>
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
+          <Button
+            variant="outline"
+            size="lg"
+            fullWidth
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="mb-5"
+          >
+            <Chrome className="w-5 h-5 mr-2" aria-hidden="true" />
+            Continue with Google
+          </Button>
+
+          <div className="relative mb-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border-subtle" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-surface text-text-secondary">or continue with email</span>
+            </div>
+          </div>
+
           <form onSubmit={handleSignup} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="First Name"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                placeholder="John"
-                required
-              />
-              <Input
-                label="Last Name"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                placeholder="Smith"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Partner's Name"
-                name="secondName"
-                value={formData.secondName}
-                onChange={handleChange}
-                placeholder="Jane"
-                required
-              />
-              <Input
-                label="Last Name"
-                name="secondLastName"
-                value={formData.secondLastName}
-                onChange={handleChange}
-                placeholder="Doe"
-                required
-              />
-            </div>
-
-            {formData.firstName && formData.secondName && (
-              <div className="p-4 bg-surface-subtle rounded-lg space-y-3">
-                <div>
-                  <p className="text-xs text-text-secondary mb-1">Your wedding site URL:</p>
-                  {checkingUrl ? (
-                    <p className="text-sm text-text-secondary">Checking availability...</p>
-                  ) : (
-                    <>
-                      <div className="space-y-2">
-                        <label className="text-xs text-text-secondary">URL style</label>
-                        <select
-                          value={slugPattern}
-                          onChange={(e) => setSlugPattern(e.target.value as typeof slugPattern)}
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <option value="first-second">ericandkara</option>
-                          <option value="first-second-s">ericandkaras</option>
-                          <option value="second-first">karaanderic</option>
-                          <option value="initials">eandk</option>
-                          <option value="initials-reverse">kande</option>
-                          <option value="first-second-last1">ericandkaragagnon</option>
-                          <option value="full-names">ericgagnonandkaragagnon</option>
-                          <option value="custom">Custom...</option>
-                        </select>
-                      </div>
-
-                      {slugPattern === 'custom' ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={customUrl}
-                            onChange={(e) => setCustomUrl(e.target.value)}
-                            placeholder="yourcustomurl"
-                            className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                          <span className="text-sm text-text-secondary">.dayof.love</span>
-                        </div>
-                      ) : (
-                        <p className="text-sm font-medium text-primary">
-                          {buildSuggestedSlug(formData.firstName, formData.secondName, formData.lastName, formData.secondLastName, slugPattern)}.dayof.love
-                        </p>
-                      )}
-
-                      {urlTaken && (
-                        <p className="text-xs text-error mt-1">
-                          This URL is already taken
-                        </p>
-                      )}
-
-                      {!urlTaken && ((slugPattern === 'custom' && customUrl) || slugPattern !== 'custom') && (
-                        <p className="text-xs text-success mt-1">
-                          This URL is available!
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-
-
-              </div>
-            )}
-
             <Input
               label="Email"
               type="email"

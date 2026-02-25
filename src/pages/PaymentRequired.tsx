@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, CreditCard, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
 
 const FEATURES = [
@@ -14,6 +15,44 @@ const FEATURES = [
   'Drag-and-drop site builder',
 ];
 
+const makeBaseSlug = (email?: string | null) => {
+  const local = (email?.split('@')[0] || 'ourwedding').toLowerCase();
+  const cleaned = local.replace(/[^a-z0-9]/g, '').slice(0, 20);
+  return cleaned || 'ourwedding';
+};
+
+const ensureMinimalWeddingSite = async (userId: string, email?: string | null): Promise<string> => {
+  const existing = await fetchWeddingSiteId(userId);
+  if (existing) return existing;
+
+  const base = makeBaseSlug(email);
+
+  for (let i = 0; i < 6; i += 1) {
+    const suffix = i === 0 ? '' : `-${Math.floor(1000 + Math.random() * 9000)}`;
+    const siteSlug = `${base}${suffix}`;
+    const siteUrl = `${siteSlug}.dayof.love`;
+
+    const { data, error } = await supabase
+      .from('wedding_sites')
+      .insert({
+        user_id: userId,
+        couple_name_1: 'You',
+        couple_name_2: 'Partner',
+        site_slug: siteSlug,
+        site_url: siteUrl,
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (!error && data?.id) return data.id;
+
+    const collision = /duplicate key|already exists|unique/i.test(error?.message || '');
+    if (!collision) throw error;
+  }
+
+  throw new Error('Could not create your site record. Please refresh and try again.');
+};
+
 export const PaymentRequired: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -24,7 +63,12 @@ export const PaymentRequired: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-    fetchWeddingSiteId(user.id).then(id => setWeddingSiteId(id)).catch(() => {});
+
+    ensureMinimalWeddingSite(user.id, user.email)
+      .then(id => setWeddingSiteId(id))
+      .catch((err: unknown) => {
+        setError((err as Error).message || 'Could not initialize your account.');
+      });
   }, [user]);
 
   const handleCheckout = async () => {
