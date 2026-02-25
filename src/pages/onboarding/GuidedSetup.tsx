@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Download, Upload, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button, Card, Input, Textarea } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
-import { fromOnboarding } from '../../lib/generateWeddingData';
-import { generateInitialLayout } from '../../lib/generateInitialLayout';
-import { generateWeddingSlug } from '../../lib/slugify';
+import { buildOnboardingUpdateData } from '../../lib/onboardingMapper';
 
 type Step =
   | 'welcome'
@@ -153,41 +151,24 @@ export const GuidedSetup: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const weddingData = fromOnboarding({
-        partner1Name: coupleNames.name1,
-        partner2Name: coupleNames.name2,
-        weddingDate: formData.weddingDate || undefined,
-        venueName: formData.venue || undefined,
-        city: formData.city || undefined,
-        ourStory: formData.ourStory || undefined,
-        ceremonyTime: formData.ceremonyTime || undefined,
-        receptionTime: formData.receptionTime || undefined,
-        attire: formData.attire || undefined,
-        hotelRecommendations: formData.hotelRecommendations || undefined,
-        parking: formData.parking || undefined,
-        rsvpDeadline: formData.rsvpDeadline || undefined,
-        registryLinks: formData.registryLinks || undefined,
-        customFaqs: formData.customFaqs || undefined,
+      const updateData = buildOnboardingUpdateData({
+        coupleNames,
+        planningStatus: 'guided_setup_complete',
+        template: formData.template,
         colorScheme: formData.colorScheme,
+        weddingDate: formData.weddingDate,
+        venue: formData.venue,
+        city: formData.city,
+        ourStory: formData.ourStory,
+        ceremonyTime: formData.ceremonyTime,
+        receptionTime: formData.receptionTime,
+        attire: formData.attire,
+        hotelRecommendations: formData.hotelRecommendations,
+        parking: formData.parking,
+        rsvpDeadline: formData.rsvpDeadline,
+        registryLinks: formData.registryLinks,
+        customFaqs: formData.customFaqs,
       });
-
-      const layoutConfig = generateInitialLayout(formData.template, weddingData);
-
-      const siteSlug = generateWeddingSlug(coupleNames.name1, coupleNames.name2);
-
-      const updateData: Record<string, unknown> = {
-        venue_date: formData.weddingDate || null,
-        venue_name: formData.venue || null,
-        wedding_location: formData.city || null,
-        planning_status: 'guided_setup_complete',
-        active_template_id: formData.template,
-        template_id: formData.template,
-        wedding_data: weddingData,
-        layout_config: layoutConfig,
-        site_slug: siteSlug,
-        couple_name_1: coupleNames.name1,
-        couple_name_2: coupleNames.name2,
-      };
 
       const { error: updateError } = await supabase
         .from('wedding_sites')

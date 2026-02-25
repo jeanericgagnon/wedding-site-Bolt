@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Sparkles, Zap, ArrowRight, ArrowLeft, Palette, Layout, Image } from 'lucide-react';
 import { Button, Card, Input } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
-import { fromOnboarding } from '../../lib/generateWeddingData';
-import { generateInitialLayout } from '../../lib/generateInitialLayout';
-import { generateWeddingSlug } from '../../lib/slugify';
+import { buildOnboardingUpdateData } from '../../lib/onboardingMapper';
 
 type Step = 'basics' | 'style';
 
@@ -81,31 +79,14 @@ export const QuickStart: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const weddingData = fromOnboarding({
-        partner1Name: coupleNames.name1,
-        partner2Name: coupleNames.name2,
-        weddingDate: formData.weddingDate || undefined,
-        location: formData.location || undefined,
+      const updateData = buildOnboardingUpdateData({
+        coupleNames,
+        planningStatus: 'quick_start_complete',
         template: formData.template,
         colorScheme: formData.colorScheme,
+        weddingDate: formData.weddingDate,
+        location: formData.location,
       });
-
-      const layoutConfig = generateInitialLayout(formData.template, weddingData);
-
-      const siteSlug = generateWeddingSlug(coupleNames.name1, coupleNames.name2);
-
-      const updateData: Record<string, unknown> = {
-        venue_date: formData.weddingDate || null,
-        wedding_location: formData.location || null,
-        planning_status: 'quick_start_complete',
-        active_template_id: formData.template,
-        template_id: formData.template,
-        wedding_data: weddingData,
-        layout_config: layoutConfig,
-        site_slug: siteSlug,
-        couple_name_1: coupleNames.name1,
-        couple_name_2: coupleNames.name2,
-      };
 
       const { error: updateError } = await supabase
         .from('wedding_sites')
