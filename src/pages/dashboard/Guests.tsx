@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 import { sendWeddingInvitation } from '../../lib/emailService';
+import * as XLSX from 'xlsx';
 
 interface Guest {
   id: string;
@@ -1105,55 +1106,102 @@ Proceed with send?`)) return;
     exportCSV(filteredGuests, `guests-${segment}`);
   };
 
-  const importCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !weddingSiteId) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const rawLines = text.split('\n');
-      if (rawLines.length < 2) {
-        toast('CSV file appears to be empty or missing a header row.', 'error');
+    try {
+      const lowerName = file.name.toLowerCase();
+      let rows: string[][] = [];
+
+      if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        if (!firstSheetName) {
+          toast('Spreadsheet has no sheets to import.', 'error');
+          return;
+        }
+        const firstSheet = workbook.Sheets[firstSheetName];
+        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' }) as string[][];
+      } else {
+        const text = await file.text();
+        rows = text
+          .split('\n')
+          .map(l => l.trim())
+          .filter(Boolean)
+          .map(l => l.split(',').map(v => v.replace(/"/g, '').trim()));
+      }
+
+      if (rows.length < 2) {
+        toast('File appears to be empty or missing a header row.', 'error');
         return;
       }
 
-      const headers = rawLines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-      const hasFirstName = headers.includes('first name');
-      const hasLastName = headers.includes('last name');
+      const headers = (rows[0] || []).map((h) => String(h ?? '').trim().toLowerCase());
 
-      if (!hasFirstName && !hasLastName) {
-        toast('CSV must have "First Name" and "Last Name" columns. Check your file headers and try again.', 'error');
+      const findIdx = (...candidates: string[]) => {
+        for (const c of candidates) {
+          const i = headers.indexOf(c);
+          if (i >= 0) return i;
+        }
+        return -1;
+      };
+
+      const firstNameIdx = findIdx('first name', 'first_name', 'firstname', 'given name', 'given_name');
+      const lastNameIdx = findIdx('last name', 'last_name', 'lastname', 'surname', 'family_name', 'family name');
+      const fullNameIdx = findIdx('name', 'full name', 'full_name', 'guest_name', 'guest name');
+      const emailIdx = findIdx('email', 'email address', 'email_address');
+      const phoneIdx = findIdx('phone', 'phone number', 'phone_number', 'mobile', 'cell');
+      const plusOneIdx = findIdx('plus one', 'plus_one', 'plus_one_allowed');
+
+      if (firstNameIdx < 0 && lastNameIdx < 0 && fullNameIdx < 0) {
+        toast('File must include name columns (First/Last or Full Name).', 'error');
         return;
       }
 
-      const dataLines = rawLines.slice(1).filter(line => line.trim());
+      const dataRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
       const skipped: string[] = [];
       const parsed: Record<string, unknown>[] = [];
 
-      dataLines.forEach((line, idx) => {
-        const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+      dataRows.forEach((row, idx) => {
+        const values = (row || []).map((v) => String(v ?? '').trim());
+        let firstName = firstNameIdx >= 0 ? (values[firstNameIdx] || '') : '';
+        let lastName = lastNameIdx >= 0 ? (values[lastNameIdx] || '') : '';
+
+        if ((!firstName && !lastName) && fullNameIdx >= 0) {
+          const full = (values[fullNameIdx] || '').trim();
+          if (full.includes(',')) {
+            const [lastPart, firstPart] = full.split(',').map((p) => p.trim());
+            firstName = firstPart || '';
+            lastName = lastPart || '';
+          } else {
+            const parts = full.split(/\s+/).filter(Boolean);
+            firstName = parts[0] || '';
+            lastName = parts.slice(1).join(' ');
+          }
+        }
+
+        const email = emailIdx >= 0 ? (values[emailIdx] || null) : null;
+        const phone = phoneIdx >= 0 ? (values[phoneIdx] || null) : null;
+        const plusRaw = plusOneIdx >= 0 ? (values[plusOneIdx] || '') : '';
+        const plusOneAllowed = ['yes', 'true', '1', 'y'].includes(plusRaw.toLowerCase());
+
         const guest: Record<string, unknown> = {
           wedding_site_id: weddingSiteId,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          name: `${firstName || ''} ${lastName || ''}`.trim() || (email || 'Guest'),
+          email,
+          phone,
+          plus_one_allowed: plusOneAllowed,
           rsvp_status: 'pending',
-          plus_one_allowed: false,
           invited_to_ceremony: true,
           invited_to_reception: true,
         };
 
-        headers.forEach((header, i) => {
-          const value = values[i] ?? '';
-          if (header === 'first name') guest.first_name = value;
-          if (header === 'last name') guest.last_name = value;
-          if (header === 'email') guest.email = value || null;
-          if (header === 'phone') guest.phone = value || null;
-          if (header === 'plus one') guest.plus_one_allowed = value.toLowerCase() === 'yes';
-        });
-
-        guest.name = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
-
-        if (!guest.first_name && !guest.last_name) {
-          skipped.push(`Row ${idx + 2}: missing name`);
+        if (!firstName && !lastName && !email) {
+          skipped.push(`Row ${idx + 2}: missing name/email`);
           return;
         }
 
@@ -1167,10 +1215,12 @@ Proceed with send?`)) return;
 
       setCsvPreview(parsed);
       setCsvSkipped(skipped);
-    };
-
-    reader.readAsText(file);
-    e.target.value = '';
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to parse guest file';
+      toast(msg, 'error');
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const confirmCsvImport = async () => {
@@ -1830,13 +1880,13 @@ Proceed with send?`)) return;
                 <label className="cursor-pointer">
                   <input
                     type="file"
-                    accept=".csv"
+                    accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                     onChange={importCSV}
                     className="hidden"
                   />
                   <span className="inline-flex items-center px-3 py-2 border border-border rounded-md text-sm font-medium text-text-primary hover:bg-surface-subtle cursor-pointer">
                     <Upload className="w-4 h-4 mr-2" />
-                    Import CSV
+                    Import CSV/XLSX
                   </span>
                 </label>
                 <Button variant="outline" size="md" onClick={() => exportCSV()}>
