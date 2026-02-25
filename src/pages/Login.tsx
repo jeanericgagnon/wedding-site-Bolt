@@ -23,7 +23,36 @@ export const Login: React.FC = () => {
     if (searchParams.get('reason') === 'session_expired') {
       setNotice('Your session expired. Please sign in again.');
     }
-  }, [searchParams]);
+
+    let mounted = true;
+    const oauthSource = searchParams.get('oauth');
+
+    const primeSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      if (data.session && oauthSource === 'google') {
+        setNotice('Google sign-in successful. Redirecting to your dashboard…');
+        navigate('/dashboard', { replace: true });
+      }
+    };
+
+    primeSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (!mounted) return;
+      if (event === 'SIGNED_IN') {
+        if (oauthSource === 'google') {
+          setNotice('Google sign-in successful. Redirecting to your dashboard…');
+        }
+        navigate('/dashboard', { replace: true });
+      }
+    });
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, [searchParams, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -68,7 +97,7 @@ export const Login: React.FC = () => {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/login?oauth=google`,
         },
       });
       if (oauthError) throw oauthError;
