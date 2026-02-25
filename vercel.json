@@ -1,11 +1,3 @@
 {
-  "rewrites": [
-    {
-      "source": "/",
-      "has": [
-        { "type": "host", "value": "^(?<slug>[^.]+)\\.dayof\\.love$" }
-      ],
-      "destination": "/site/:slug"
-    }
-  ]
+  "rewrites": []
 }
