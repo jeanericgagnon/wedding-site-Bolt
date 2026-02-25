@@ -184,6 +184,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               ) : (
                 <span className="hidden md:block text-sm text-text-tertiary">Preview site</span>
               )}
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors"
+                aria-label="Log out"
+              >
+                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                Log out
+              </button>
               <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-semibold">
                 {getUserInitials()}
               </div>
