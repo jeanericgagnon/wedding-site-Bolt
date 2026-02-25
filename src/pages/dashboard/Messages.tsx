@@ -605,6 +605,17 @@ export const DashboardMessages: React.FC = () => {
     }
   };
 
+  const applyTemplateVariables = (text: string) => {
+    const couple = [weddingSite?.couple_first_name, weddingSite?.couple_second_name].filter(Boolean).join(' & ') || 'our wedding';
+    const rsvpLink = `${window.location.origin}/rsvp`;
+    return text
+      .replace(/\[COUPLE\]/g, couple)
+      .replace(/\[RSVP LINK\]/g, rsvpLink)
+      .replace(/\[DATE\]/g, 'our wedding date')
+      .replace(/\[VENUE\]/g, 'our venue')
+      .replace(/\[ADD DETAILS\]/g, 'timeline, parking, dress code, and arrival instructions');
+  };
+
   const handleSendMessage = async (e: React.FormEvent, saveAsDraft = false) => {
     e.preventDefault();
     if (!weddingSite) return;
@@ -719,8 +730,9 @@ export const DashboardMessages: React.FC = () => {
         }
         await fetchMessages();
       }
-    } catch {
-      toast('Failed to process message. Please try again.', 'error');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to process message. Please try again.';
+      toast(msg, 'error');
     } finally {
       setSending(false);
     }
@@ -1155,7 +1167,7 @@ export const DashboardMessages: React.FC = () => {
                   <button
                     key={tpl.label}
                     type="button"
-                    onClick={() => setFormData({ ...formData, subject: tpl.subject, body: tpl.body })}
+                    onClick={() => setFormData({ ...formData, subject: applyTemplateVariables(tpl.subject), body: applyTemplateVariables(tpl.body) })}
                     className="w-full text-left px-3 py-2 text-sm bg-surface-subtle hover:bg-surface-raised rounded-lg transition-colors text-text-primary border border-transparent hover:border-border"
                   >
                     {tpl.label}
