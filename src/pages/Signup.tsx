@@ -4,6 +4,7 @@ import { Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { sendSignupWelcome } from '../lib/emailService';
+import { generateWeddingSlug, slugify } from '../lib/slugify';
 
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,16 @@ export const Signup: React.FC = () => {
     confirmPassword: '',
   });
 
+  const buildAutoSlug = (first: string, second: string, useSuffix: boolean) => {
+    const base = generateWeddingSlug(first, second);
+    if (!base) return '';
+    return useSuffix && !base.endsWith('s') ? `${base}s` : base;
+  };
+
+  const cleanCustomSlug = (value: string) => {
+    return slugify(value).replace(/^-+|-+$/g, '').slice(0, 40);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -43,18 +54,23 @@ export const Signup: React.FC = () => {
 
       setCheckingUrl(true);
 
-      const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const suffix = addSuffix ? 's' : '';
-      const subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
+      const slug = buildAutoSlug(formData.firstName, formData.secondName, addSuffix);
+      const subdomain = `${slug}.dayof.love`;
 
       try {
-        const { data } = await supabase
+        const { data: takenBySlug } = await supabase
           .from('wedding_sites')
-          .select('site_url')
+          .select('id')
+          .eq('site_slug', slug)
+          .maybeSingle();
+
+        const { data: takenByUrl } = await supabase
+          .from('wedding_sites')
+          .select('id')
           .eq('site_url', subdomain)
           .maybeSingle();
-        setUrlTaken(!!data);
+
+        setUrlTaken(!!takenBySlug || !!takenByUrl);
       } catch {
         setUrlTaken(false);
       } finally {
@@ -71,16 +87,23 @@ export const Signup: React.FC = () => {
       if (!isCustomizing || !customUrl) return;
 
       setCheckingUrl(true);
-      const cleanUrl = customUrl.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanUrl = cleanCustomSlug(customUrl);
       const subdomain = `${cleanUrl}.dayof.love`;
 
       try {
-        const { data } = await supabase
+        const { data: takenBySlug } = await supabase
           .from('wedding_sites')
-          .select('site_url')
+          .select('id')
+          .eq('site_slug', cleanUrl)
+          .maybeSingle();
+
+        const { data: takenByUrl } = await supabase
+          .from('wedding_sites')
+          .select('id')
           .eq('site_url', subdomain)
           .maybeSingle();
-        setUrlTaken(!!data);
+
+        setUrlTaken(!!takenBySlug || !!takenByUrl);
       } catch {
         setUrlTaken(false);
       } finally {
@@ -146,30 +169,26 @@ export const Signup: React.FC = () => {
         throw new Error('Account created! Check your email to confirm your address, then sign in.');
       }
 
-      let subdomain: string;
+      let siteSlug: string;
 
       if (isCustomizing && customUrl) {
-        const cleanUrl = customUrl.toLowerCase().replace(/[^a-z0-9]/g, '');
-        subdomain = `${cleanUrl}.dayof.love`;
+        siteSlug = cleanCustomSlug(customUrl);
       } else {
-        const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const lastName = formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const secondLastName = formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const suffix = addSuffix ? 's' : '';
+        siteSlug = buildAutoSlug(formData.firstName, formData.secondName, addSuffix);
 
-        subdomain = `${firstName}and${secondName}${suffix}.dayof.love`;
-
-        const { data: existingUrl } = await supabase
+        const { data: existingSlug } = await supabase
           .from('wedding_sites')
-          .select('site_url')
-          .eq('site_url', subdomain)
+          .select('id')
+          .eq('site_slug', siteSlug)
           .maybeSingle();
 
-        if (existingUrl) {
-          subdomain = `${firstName}${lastName}and${secondName}${secondLastName}${suffix}.dayof.love`;
+        if (existingSlug) {
+          const fallbackBase = `${generateWeddingSlug(formData.firstName, formData.secondName)}-${Date.now().toString().slice(-4)}`;
+          siteSlug = slugify(fallbackBase);
         }
       }
+
+      const subdomain = `${siteSlug}.dayof.love`;
 
       const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -179,6 +198,7 @@ export const Signup: React.FC = () => {
         user_id: authData.user.id,
         couple_name_1: formData.firstName,
         couple_name_2: formData.secondName,
+        site_slug: siteSlug,
         site_url: subdomain,
       };
 
@@ -295,23 +315,7 @@ export const Signup: React.FC = () => {
                         </div>
                       ) : (
                         <p className="text-sm font-medium text-primary">
-                          {urlTaken && formData.lastName && formData.secondLastName ? (
-                            <>
-                              {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                              {formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                              and
-                              {formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                              {formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                              {addSuffix ? 's' : ''}.dayof.love
-                            </>
-                          ) : (
-                            <>
-                              {formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                              and
-                              {formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '')}
-                              {addSuffix ? 's' : ''}.dayof.love
-                            </>
-                          )}
+                          {buildAutoSlug(formData.firstName, formData.secondName, addSuffix)}.dayof.love
                         </p>
                       )}
 
@@ -326,12 +330,7 @@ export const Signup: React.FC = () => {
                             type="button"
                             onClick={() => {
                               setIsCustomizing(true);
-                              const firstName = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                              const lastName = formData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                              const secondName = formData.secondName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                              const secondLastName = formData.secondLastName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                              const suffix = addSuffix ? 's' : '';
-                              setCustomUrl(`${firstName}${lastName}and${secondName}${secondLastName}${suffix}`);
+                              setCustomUrl(buildAutoSlug(formData.firstName, formData.secondName, addSuffix));
                             }}
                             className="text-xs text-primary hover:text-primary/80 underline"
                           >
@@ -374,7 +373,7 @@ export const Signup: React.FC = () => {
                       />
                     </button>
                     <span className="text-xs font-medium text-text-primary">
-                      {addSuffix ? 'johnandjanes' : 'johnandjane'}
+                      {addSuffix ? 'john-and-janes' : 'john-and-jane'}
                     </span>
                   </div>
                 )}

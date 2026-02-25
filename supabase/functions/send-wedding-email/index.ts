@@ -295,6 +295,11 @@ Deno.serve(async (req: Request) => {
         });
     }
 
+    const fromDomain = Deno.env.get("FROM_EMAIL_DOMAIN");
+    const fromEmail = Deno.env.get("FROM_EMAIL");
+    const fromName = Deno.env.get("FROM_EMAIL_NAME") || "DayOf";
+    const sender = fromEmail || (fromDomain ? `noreply@${fromDomain}` : "onboarding@resend.dev");
+
     const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -302,7 +307,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "DayOf <onboarding@resend.dev>",
+        from: `${fromName} <${sender}>`,
         to: [to],
         subject,
         html,

@@ -164,7 +164,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: message, error: msgErr } = await adminClient
       .from("messages")
-      .select("*, wedding_sites(id, couple_name_1, couple_name_2, user_id)")
+      .select("*, wedding_sites(id, couple_name_1, couple_name_2, site_slug, user_id)")
       .eq("id", messageId)
       .maybeSingle();
 
@@ -240,7 +240,17 @@ Deno.serve(async (req: Request) => {
 
     const coupleName1: string = message.wedding_sites?.couple_name_1 ?? "Partner";
     const coupleName2: string = message.wedding_sites?.couple_name_2 ?? "Partner";
-    const fromAddress = `${coupleName1} & ${coupleName2} <onboarding@resend.dev>`;
+
+    const fromDomain = Deno.env.get("FROM_EMAIL_DOMAIN");
+    const fromEmail = Deno.env.get("FROM_EMAIL");
+    const fromName = Deno.env.get("FROM_EMAIL_NAME") || `${coupleName1} & ${coupleName2}`;
+
+    const slugSource = (message.wedding_sites?.site_slug as string | undefined)
+      || `${coupleName1}-${coupleName2}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+      || "wedding";
+    const derivedFrom = fromDomain ? `noreply+${slugSource}@${fromDomain}` : "onboarding@resend.dev";
+    const sender = fromEmail || derivedFrom;
+    const fromAddress = `${fromName} <${sender}>`;
 
     if (channel === "email") {
       const { data: sentRows, error: sentErr } = await adminClient
@@ -459,17 +469,31 @@ Deno.serve(async (req: Request) => {
     }
 
     const finalStatus = failedCount === 0 ? "sent" : deliveredCount === 0 ? "failed" : "partial";
-    await adminClient
+    const sentAt = new Date().toISOString();
+
+    const fullUpdate = await adminClient
       .from("messages")
       .update({
         status: finalStatus,
-        sent_at: new Date().toISOString(),
-        sending_finished_at: new Date().toISOString(),
+        sent_at: sentAt,
+        sending_finished_at: sentAt,
         delivered_count: deliveredCount,
         failed_count: failedCount,
         recipient_count: eligibleGuests.length,
       })
       .eq("id", messageId);
+
+    if (fullUpdate.error) {
+      // Fallback for schema-cache drift: persist minimal final status fields.
+      await adminClient
+        .from("messages")
+        .update({
+          status: finalStatus,
+          sent_at: sentAt,
+          recipient_count: eligibleGuests.length,
+        })
+        .eq("id", messageId);
+    }
 
     return new Response(
       JSON.stringify({
