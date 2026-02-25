@@ -236,7 +236,7 @@ export const SiteView: React.FC = () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('wedding_sites')
-          .select('id, wedding_data, layout_config, site_json, published_json, active_template_id, is_published, privacy_mode, site_password_hash, hide_from_search, guest_access_token, default_language')
+          .select('*')
           .eq('site_slug', resolvedSlug)
           .maybeSingle();
 
