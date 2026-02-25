@@ -245,7 +245,24 @@ export const GuidedSetup: React.FC = () => {
 
       const headerLine = lines[0].toLowerCase();
       const cols = headerLine.split(',').map(h => h.trim());
-      const idx = (name: string) => cols.indexOf(name);
+
+      const findIdx = (...candidates: string[]) => {
+        for (const c of candidates) {
+          const i = cols.indexOf(c);
+          if (i >= 0) return i;
+        }
+        return -1;
+      };
+
+      const firstNameIdx = findIdx('first_name', 'firstname', 'first name', 'given_name', 'given name');
+      const lastNameIdx = findIdx('last_name', 'lastname', 'last name', 'surname', 'family_name', 'family name');
+      const fullNameIdx = findIdx('name', 'full_name', 'full name', 'guest_name', 'guest name');
+      const emailIdx = findIdx('email', 'email_address', 'email address');
+      const phoneIdx = findIdx('phone', 'phone_number', 'phone number', 'mobile', 'cell');
+      const groupIdx = findIdx('group_name', 'group', 'household', 'party', 'family');
+      const plusOneIdx = findIdx('plus_one_allowed', 'plus_one', 'plus one', 'plusone');
+      const ceremonyIdx = findIdx('invited_to_ceremony', 'ceremony', 'invite_ceremony');
+      const receptionIdx = findIdx('invited_to_reception', 'reception', 'invite_reception');
 
       let created = 0;
       let updated = 0;
@@ -253,14 +270,31 @@ export const GuidedSetup: React.FC = () => {
 
       for (const line of lines.slice(1)) {
         const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-        const firstName = vals[idx('first_name')] || vals[idx('firstname')] || '';
-        const lastName = vals[idx('last_name')] || vals[idx('lastname')] || '';
-        const email = vals[idx('email')] || null;
-        const phone = vals[idx('phone')] || null;
-        const groupName = vals[idx('group_name')] || vals[idx('group')] || null;
-        const plusOne = vals[idx('plus_one_allowed')]?.toLowerCase() === 'true';
-        const toCeremony = vals[idx('invited_to_ceremony')]?.toLowerCase() !== 'false';
-        const toReception = vals[idx('invited_to_reception')]?.toLowerCase() !== 'false';
+
+        let firstName = firstNameIdx >= 0 ? (vals[firstNameIdx] || '') : '';
+        let lastName = lastNameIdx >= 0 ? (vals[lastNameIdx] || '') : '';
+
+        if ((!firstName && !lastName) && fullNameIdx >= 0) {
+          const full = vals[fullNameIdx] || '';
+          const parts = full.split(/\s+/).filter(Boolean);
+          if (parts.length > 0) {
+            firstName = parts[0] || '';
+            lastName = parts.slice(1).join(' ');
+          }
+        }
+
+        const email = emailIdx >= 0 ? (vals[emailIdx] || null) : null;
+        const phone = phoneIdx >= 0 ? (vals[phoneIdx] || null) : null;
+        const groupName = groupIdx >= 0 ? (vals[groupIdx] || null) : null;
+
+        const plusOneRaw = plusOneIdx >= 0 ? (vals[plusOneIdx] || '') : '';
+        const plusOne = ['true', 'yes', 'y', '1'].includes(plusOneRaw.toLowerCase());
+
+        const ceremonyRaw = ceremonyIdx >= 0 ? (vals[ceremonyIdx] || '') : '';
+        const toCeremony = !['false', 'no', 'n', '0'].includes(ceremonyRaw.toLowerCase());
+
+        const receptionRaw = receptionIdx >= 0 ? (vals[receptionIdx] || '') : '';
+        const toReception = !['false', 'no', 'n', '0'].includes(receptionRaw.toLowerCase());
 
         if (!firstName && !lastName && !email) { invalid++; continue; }
 
@@ -793,7 +827,7 @@ export const GuidedSetup: React.FC = () => {
                       <>
                         <Upload className="w-8 h-8 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
                         <p className="text-sm font-medium text-text-primary mb-1">Click to upload CSV</p>
-                        <p className="text-xs text-text-tertiary">Supports the template above or any CSV with matching columns</p>
+                        <p className="text-xs text-text-tertiary">Supports template CSV or most common guest CSV headers (name/email/phone/group, etc.)</p>
                       </>
                     )}
                   </div>
