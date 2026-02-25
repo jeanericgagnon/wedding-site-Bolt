@@ -82,7 +82,15 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     }
     mediaService.listAssets(weddingId)
       .then(assets => { dispatch(builderActions.setMediaAssets(assets)); })
-      .catch(() => { dispatch(builderActions.setError('Could not load media library. Your uploads may not appear.')); });
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : '';
+        // Gracefully degrade when media table is not present in older envs.
+        if (message.includes('builder_media_assets') || message.includes('relation') || message.includes('404')) {
+          dispatch(builderActions.setMediaAssets([]));
+          return;
+        }
+        dispatch(builderActions.setError('Could not load media library. Your uploads may not appear.'));
+      });
   }, [initialProject.weddingId, isDemoMode]);
 
   const handleSave = useCallback(async () => {
