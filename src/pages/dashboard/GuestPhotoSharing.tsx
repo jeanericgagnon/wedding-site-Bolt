@@ -444,11 +444,10 @@ export const GuestPhotoSharing: React.FC = () => {
       setBulkModerating(true);
       setError(null);
       const ids = target.map((u) => u.id);
-      const { error: updateError } = await supabase
-        .from('photo_uploads')
-        .update({ is_hidden: hide })
-        .in('id', ids);
-      if (updateError) throw updateError;
+      const { error: fnError } = await supabase.functions.invoke('photo-upload-moderate', {
+        body: { uploadIds: ids, patch: { is_hidden: hide } },
+      });
+      if (fnError) throw fnError;
       await load();
       setSuccess(`${hide ? 'Hidden' : 'Unhidden'} ${ids.length} upload(s) from current view.`);
     } catch (err: unknown) {
@@ -469,11 +468,10 @@ export const GuestPhotoSharing: React.FC = () => {
       setBulkModerating(true);
       setError(null);
       const ids = target.map((u) => u.id);
-      const { error: updateError } = await supabase
-        .from('photo_uploads')
-        .update({ is_flagged: flagged })
-        .in('id', ids);
-      if (updateError) throw updateError;
+      const { error: fnError } = await supabase.functions.invoke('photo-upload-moderate', {
+        body: { uploadIds: ids, patch: { is_flagged: flagged } },
+      });
+      if (fnError) throw fnError;
       await load();
       setSuccess(`${flagged ? 'Flagged' : 'Unflagged'} ${ids.length} upload(s) from current view.`);
     } catch (err: unknown) {
@@ -514,11 +512,10 @@ export const GuestPhotoSharing: React.FC = () => {
   const moderateUpload = async (uploadId: string, patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged'>>) => {
     try {
       setError(null);
-      const { error: updateError } = await supabase
-        .from('photo_uploads')
-        .update(patch)
-        .eq('id', uploadId);
-      if (updateError) throw updateError;
+      const { error: fnError } = await supabase.functions.invoke('photo-upload-moderate', {
+        body: { uploadIds: [uploadId], patch },
+      });
+      if (fnError) throw fnError;
       await load();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to update upload moderation status.');
