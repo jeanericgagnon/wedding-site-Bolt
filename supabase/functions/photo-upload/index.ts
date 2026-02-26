@@ -1,11 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { corsHeaders, fail, json, sha256Hex, sleep } from "../_shared/photoUtils.ts";
 
 const MAX_FILE_BYTES = 30 * 1024 * 1024;
 const MAX_FILES_PER_REQUEST = 10;
@@ -20,19 +15,6 @@ const HONEYPOT_FIELD = 'website';
 const MAX_ATTEMPTS_PER_10_MIN = 30;
 const MAX_ATTEMPTS_PER_10_MIN_PER_IP = 60;
 
-const json = (data: unknown, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-
-const fail = (code: string, error: string, status = 400) => json({ code, error }, status);
-
-async function sha256Hex(value: string): Promise<string> {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 async function refreshAccessToken(refreshToken: string) {
   const clientId = Deno.env.get("GOOGLE_DRIVE_CLIENT_ID");
@@ -62,8 +44,6 @@ async function refreshAccessToken(refreshToken: string) {
       : null,
   };
 }
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function uploadFileToDrive(accessToken: string, folderId: string, file: File) {
   const metadata = {
