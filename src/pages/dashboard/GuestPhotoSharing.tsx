@@ -258,6 +258,9 @@ export const GuestPhotoSharing: React.FC = () => {
     return events.filter((e) => !linked.has(e.id));
   }, [events, albums]);
 
+  const makeShareMessage = (albumName: string, link: string) =>
+    `Please upload your ${albumName} photos here: ${link}`;
+
   const copyAllKnownLinks = async () => {
     const links = albums
       .map((a) => albumUploadLinks[a.id])
@@ -302,6 +305,38 @@ export const GuestPhotoSharing: React.FC = () => {
     } finally {
       setBulkRegenerating(false);
     }
+  };
+
+  const exportSharePackCsv = () => {
+    const rows = albums
+      .map((a) => {
+        const link = albumUploadLinks[a.id] || '';
+        return {
+          name: a.name,
+          status: a.is_active ? 'active' : 'paused',
+          upload_link: link,
+          suggested_message: link ? makeShareMessage(a.name, link) : '',
+        };
+      })
+      .filter((r) => r.upload_link);
+
+    if (rows.length === 0) return;
+
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const lines = [
+      ['name', 'status', 'upload_link', 'suggested_message'].join(','),
+      ...rows.map((r) => [esc(r.name), esc(r.status), esc(r.upload_link), esc(r.suggested_message)].join(',')),
+    ];
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'photo-share-pack.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   const exportAlbumLinksCsv = () => {
@@ -675,6 +710,9 @@ export const GuestPhotoSharing: React.FC = () => {
               <Button size="sm" variant="outline" onClick={exportAlbumLinksCsv}>
                 Export album links
               </Button>
+              <Button size="sm" variant="outline" onClick={exportSharePackCsv}>
+                Export share pack
+              </Button>
               <Button size="sm" variant="outline" onClick={() => void copyAllKnownLinks()}>
                 {copied === 'all-links' ? 'Copied all' : 'Copy all links'}
               </Button>
@@ -797,10 +835,18 @@ export const GuestPhotoSharing: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={!knownUploadLink}
+                          onClick={() => void copyText(makeShareMessage(album.name, knownUploadLink), `share-msg-${album.id}`)}
+                        >
+                          {copied === `share-msg-${album.id}` ? 'Copied msg' : 'Copy message'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => {
                             const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
                             const subject = encodeURIComponent(`${album.name} photos upload`);
-                            const body = encodeURIComponent(`Please upload your ${album.name} photos here: ${shareUrl}`);
+                            const body = encodeURIComponent(makeShareMessage(album.name, shareUrl));
                             window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
                           }}
                         >
