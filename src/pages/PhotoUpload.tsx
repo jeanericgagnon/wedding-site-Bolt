@@ -9,6 +9,7 @@ export const PhotoUpload: React.FC = () => {
 
   const [token, setToken] = useState(initialToken);
   const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
   const [note, setNote] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -40,6 +41,7 @@ export const PhotoUpload: React.FC = () => {
       const form = new FormData();
       form.append('token', token.trim());
       if (guestName.trim()) form.append('guestName', guestName.trim());
+      if (guestEmail.trim()) form.append('guestEmail', guestEmail.trim());
       if (note.trim()) form.append('note', note.trim());
       form.append('website', ''); // honeypot field for basic bot filtering
       files.forEach((file) => form.append('files', file));
@@ -61,6 +63,7 @@ export const PhotoUpload: React.FC = () => {
       setMessage(`Uploaded ${Array.isArray(data.uploaded) ? data.uploaded.length : files.length} file(s). Thank you!`);
       setFiles([]);
       setNote('');
+      setGuestEmail('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed.');
     } finally {
@@ -93,6 +96,17 @@ export const PhotoUpload: React.FC = () => {
               onChange={(e) => setGuestName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               placeholder="Jane Doe"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Email (optional)</label>
+            <input
+              type="email"
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              placeholder="you@example.com"
             />
           </div>
 
