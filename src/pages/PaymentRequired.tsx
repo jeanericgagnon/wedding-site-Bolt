@@ -100,7 +100,11 @@ export const PaymentRequired: React.FC = () => {
     try {
       const status = await fetchPaymentStatus(user.id);
       if (status === 'active') {
-        navigate('/onboarding/status', { replace: true });
+        if (isNewSignup) {
+          navigate('/builder?openTemplates=1&from=signup', { replace: true });
+        } else {
+          navigate('/onboarding/status', { replace: true });
+        }
       } else {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
       }

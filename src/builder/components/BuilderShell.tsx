@@ -99,6 +99,13 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       });
   }, [initialProject.weddingId, isDemoMode]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openTemplates') === '1') {
+      dispatch(builderActions.openTemplateGallery());
+    }
+  }, []);
+
   const handleSave = useCallback(async () => {
     const currentState = stateRef.current;
     if (!currentState.project || !onSave) return;

@@ -172,6 +172,32 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </div>
       </div>
 
+      <div className="hidden xl:flex items-center gap-1.5 max-w-[520px] overflow-x-auto pr-2">
+        {(activePage?.sections ?? []).slice(0, 8).map((section, idx) => {
+          const isSelected = state.selectedSectionId === section.id;
+          return (
+            <button
+              key={section.id}
+              onClick={() => {
+                dispatch(builderActions.selectSection(section.id));
+                requestAnimationFrame(() => {
+                  const el = document.querySelector(`[data-section-id="${section.id}"]`);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+              }}
+              className={`px-2 py-1 rounded-md text-xs whitespace-nowrap border transition-colors ${
+                isSelected
+                  ? 'bg-rose-50 border-rose-200 text-rose-700'
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+              title={getSectionManifest(section.type).label}
+            >
+              {idx + 1}. {getSectionManifest(section.type).label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="w-full md:w-auto flex items-center justify-end gap-2 flex-wrap">
         {state.isSaving && (
           <span className="hidden sm:flex text-xs text-gray-500 items-center gap-1.5">

@@ -27,7 +27,7 @@ export const PaymentSuccess: React.FC = () => {
           const verified = await verifyCheckoutSession(sessionId);
           if (verified.paid) {
             setStatus('confirmed');
-            setTimeout(() => navigate('/onboarding/status', { replace: true }), 1200);
+            setTimeout(() => navigate('/builder?openTemplates=1&from=checkout', { replace: true }), 1200);
             return;
           }
         } catch {
@@ -40,7 +40,7 @@ export const PaymentSuccess: React.FC = () => {
           const paymentStatus = await fetchPaymentStatus(user.id);
           if (paymentStatus === 'active') {
             setStatus('confirmed');
-            setTimeout(() => navigate('/onboarding/status', { replace: true }), 1500);
+            setTimeout(() => navigate('/builder?openTemplates=1&from=checkout', { replace: true }), 1500);
             return;
           }
         } catch {
