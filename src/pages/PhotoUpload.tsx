@@ -35,11 +35,13 @@ export const PhotoUpload: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [uploadedNames, setUploadedNames] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setMessage(null);
+    setUploadedNames([]);
     setError(null);
 
     if (!supabaseUrl || !supabaseAnonKey) {
@@ -81,7 +83,9 @@ export const PhotoUpload: React.FC = () => {
         throw new Error(mapUploadError(data?.code, data?.error));
       }
 
-      setMessage(`Uploaded ${Array.isArray(data.uploaded) ? data.uploaded.length : files.length} file(s). Thank you!`);
+      const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
+      setUploadedNames(uploaded.map((u: { name?: string }) => u?.name).filter((v: unknown): v is string => typeof v === 'string'));
+      setMessage(`Uploaded ${uploaded.length || files.length} file(s). Thank you!`);
       setFiles([]);
       setNote('');
       setGuestEmail('');
@@ -157,6 +161,12 @@ export const PhotoUpload: React.FC = () => {
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           {message && <p className="text-sm text-green-700">{message}</p>}
+          {uploadedNames.length > 0 && (
+            <ul className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900 space-y-1">
+              {uploadedNames.slice(0, 8).map((name) => <li key={name}>{name}</li>)}
+              {uploadedNames.length > 8 && <li>+{uploadedNames.length - 8} more</li>}
+            </ul>
+          )}
 
           <button
             type="submit"
