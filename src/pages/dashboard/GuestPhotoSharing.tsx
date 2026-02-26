@@ -564,6 +564,26 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
+  const applySuggestedWindow = (albumId: string) => {
+    const album = albums.find((a) => a.id === albumId);
+    if (!album) return;
+
+    const event = events.find((e) => e.id === album.itinerary_event_id);
+    const baseDate = event?.event_date ? new Date(`${event.event_date}T00:00:00`) : new Date();
+    const opens = baseDate;
+    const closes = new Date(baseDate.getTime() + 72 * 60 * 60 * 1000); // +72h
+
+    const toLocal = (d: Date) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    setWindowDrafts((prev) => ({
+      ...prev,
+      [albumId]: { opensAt: toLocal(opens), closesAt: toLocal(closes) },
+    }));
+  };
+
   const saveWindow = async (albumId: string) => {
     try {
       setWorkingAlbumId(albumId);
@@ -901,6 +921,9 @@ export const GuestPhotoSharing: React.FC = () => {
                             onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [album.id]: { ...draft, closesAt: e.target.value } }))}
                           />
                         </div>
+                        <Button size="sm" variant="outline" disabled={workingAlbumId === album.id} onClick={() => applySuggestedWindow(album.id)}>
+                          Auto window
+                        </Button>
                         <Button size="sm" variant="outline" disabled={workingAlbumId === album.id} onClick={() => void saveWindow(album.id)}>
                           {workingAlbumId === album.id ? 'Saving...' : 'Save window'}
                         </Button>
