@@ -198,6 +198,27 @@ export const DashboardItinerary: React.FC = () => {
   async function handleSaveEvent(e: React.FormEvent) {
     e.preventDefault();
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(formData.event_date);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (!formData.event_date || Number.isNaN(selectedDate.getTime()) || selectedDate <= today) {
+      alert('Event date must be in the future.');
+      return;
+    }
+
+    if (formData.start_time && formData.end_time) {
+      const toMinutes = (t: string) => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + (m || 0);
+      };
+      if (toMinutes(formData.end_time) <= toMinutes(formData.start_time)) {
+        alert('End time must be after start time.');
+        return;
+      }
+    }
+
     try {
       if (isDemoMode) {
         if (editingEvent) {
