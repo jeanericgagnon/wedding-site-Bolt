@@ -108,6 +108,17 @@ export const GuestPhotoSharing: React.FC = () => {
     writeStoredAlbumLinks(albumUploadLinks);
   }, [albumUploadLinks]);
 
+  const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke(fnName, { body });
+    if (error) {
+      const maybe = data as { error?: string; code?: string } | null;
+      const code = maybe?.code ? ` (${maybe.code})` : '';
+      const message = maybe?.error || error.message || 'Request failed';
+      throw new Error(`${message}${code}`);
+    }
+    return data;
+  };
+
   async function load() {
     try {
       setLoading(true);
@@ -411,7 +422,12 @@ export const GuestPhotoSharing: React.FC = () => {
           },
         });
 
-        if (fnError) throw fnError;
+        if (fnError) {
+          const maybe = data as { error?: string; code?: string } | null;
+          const msg = maybe?.error || fnError.message || 'Album create failed';
+          const code = maybe?.code ? ` (${maybe.code})` : '';
+          throw new Error(`${msg}${code}`);
+        }
         if (data?.album?.id) {
           created.push(event.event_name);
           if (typeof data.uploadUrl === 'string' && data.uploadUrl) {
@@ -625,7 +641,12 @@ export const GuestPhotoSharing: React.FC = () => {
         },
       });
 
-      if (fnError) throw fnError;
+      if (fnError) {
+        const maybe = data as { error?: string; code?: string } | null;
+        const msg = maybe?.error || fnError.message || 'Album creation failed';
+        const code = maybe?.code ? ` (${maybe.code})` : '';
+        throw new Error(`${msg}${code}`);
+      }
       if (!data?.album?.id) throw new Error('Album creation failed.');
 
       const uploadUrl = (data.uploadUrl as string) ?? '';
