@@ -232,6 +232,42 @@ export const DashboardPlanning: React.FC = () => {
       const created = isDemoMode ? ({ id: `demo-vendor-${Date.now()}`, wedding_site_id: siteId, vendor_type: vendor.vendor_type ?? 'Vendor', name: vendor.name ?? 'New vendor', contact_name: vendor.contact_name ?? '', email: vendor.email ?? '', phone: vendor.phone ?? '', website: vendor.website ?? '', contract_total: vendor.contract_total ?? 0, amount_paid: vendor.amount_paid ?? 0, balance_due: vendor.balance_due ?? 0, next_payment_due: vendor.next_payment_due ?? null, notes: vendor.notes ?? '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as PlanningVendor) : await createVendor(siteId, vendor);
       setVendors(prev => [...prev, created]);
       toast('Vendor added', 'success');
+
+      const shouldAddToBudget = window.confirm('Add this vendor as a budget line item?');
+      if (shouldAddToBudget) {
+        const estimated = Number(created.contract_total) || 0;
+        const paid = Number(created.amount_paid) || 0;
+        const category = created.vendor_type || 'Vendor';
+
+        const createdItem = isDemoMode
+          ? ({
+              id: `demo-budget-${Date.now()}`,
+              wedding_site_id: siteId,
+              category,
+              item_name: created.name,
+              estimated_amount: estimated,
+              actual_amount: paid,
+              paid_amount: paid,
+              due_date: created.next_payment_due || null,
+              vendor_id: created.id,
+              notes: created.notes || '',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            } as PlanningBudgetItem)
+          : await createBudgetItem(siteId, {
+              category,
+              item_name: created.name,
+              estimated_amount: estimated,
+              actual_amount: paid,
+              paid_amount: paid,
+              due_date: created.next_payment_due || null,
+              vendor_id: created.id,
+              notes: created.notes || '',
+            });
+
+        setBudgetItems(prev => [...prev, createdItem]);
+        toast('Vendor also added to budget', 'success');
+      }
     } catch {
       toast('Failed to add vendor', 'error');
     }
