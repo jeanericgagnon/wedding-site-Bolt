@@ -25,6 +25,7 @@ Deno.serve(async (req: Request) => {
     const patch = (body.patch && typeof body.patch === "object") ? body.patch as Record<string, unknown> : {};
 
     if (uploadIds.length === 0) return json({ error: "uploadIds required" }, 400);
+    if (uploadIds.length > 500) return json({ error: "Too many uploadIds (max 500)" }, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -66,7 +67,11 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateErr } = await admin
       .from("photo_uploads")
-      .update(allowedPatch)
+      .update({
+        ...allowedPatch,
+        moderated_at: new Date().toISOString(),
+        moderated_by: user.id,
+      })
       .in("id", uploadIds);
 
     if (updateErr) return json({ error: updateErr.message }, 400);
