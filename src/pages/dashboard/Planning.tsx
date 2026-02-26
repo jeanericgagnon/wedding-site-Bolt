@@ -38,6 +38,7 @@ export const DashboardPlanning: React.FC = () => {
   const [vendors, setVendors] = useState<PlanningVendor[]>([]);
   const [totalBudget, setTotalBudget] = useState(0);
   const [seatingReadiness, setSeatingReadiness] = useState({ attending: 0, seated: 0, unassigned: 0 });
+  const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -226,48 +227,50 @@ export const DashboardPlanning: React.FC = () => {
     }
   }, [toast, isDemoMode]);
 
+  const addVendorToBudget = useCallback(async (vendor: PlanningVendor) => {
+    if (!siteId) return;
+
+    const estimated = Number(vendor.contract_total) || 0;
+    const paid = Number(vendor.amount_paid) || 0;
+    const category = vendor.vendor_type || 'Vendor';
+
+    const createdItem = isDemoMode
+      ? ({
+          id: `demo-budget-${Date.now()}`,
+          wedding_site_id: siteId,
+          category,
+          item_name: vendor.name,
+          estimated_amount: estimated,
+          actual_amount: paid,
+          paid_amount: paid,
+          due_date: vendor.next_payment_due || null,
+          vendor_id: vendor.id,
+          notes: vendor.notes || '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as PlanningBudgetItem)
+      : await createBudgetItem(siteId, {
+          category,
+          item_name: vendor.name,
+          estimated_amount: estimated,
+          actual_amount: paid,
+          paid_amount: paid,
+          due_date: vendor.next_payment_due || null,
+          vendor_id: vendor.id,
+          notes: vendor.notes || '',
+        });
+
+    setBudgetItems(prev => [...prev, createdItem]);
+    toast('Vendor also added to budget', 'success');
+  }, [siteId, toast, isDemoMode]);
+
   const handleAddVendor = useCallback(async (vendor: Partial<PlanningVendor>) => {
     if (!siteId) return;
     try {
       const created = isDemoMode ? ({ id: `demo-vendor-${Date.now()}`, wedding_site_id: siteId, vendor_type: vendor.vendor_type ?? 'Vendor', name: vendor.name ?? 'New vendor', contact_name: vendor.contact_name ?? '', email: vendor.email ?? '', phone: vendor.phone ?? '', website: vendor.website ?? '', contract_total: vendor.contract_total ?? 0, amount_paid: vendor.amount_paid ?? 0, balance_due: vendor.balance_due ?? 0, next_payment_due: vendor.next_payment_due ?? null, notes: vendor.notes ?? '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as PlanningVendor) : await createVendor(siteId, vendor);
       setVendors(prev => [...prev, created]);
+      setPendingVendorForBudget(created);
       toast('Vendor added', 'success');
-
-      const shouldAddToBudget = window.confirm('Add this vendor as a budget line item?');
-      if (shouldAddToBudget) {
-        const estimated = Number(created.contract_total) || 0;
-        const paid = Number(created.amount_paid) || 0;
-        const category = created.vendor_type || 'Vendor';
-
-        const createdItem = isDemoMode
-          ? ({
-              id: `demo-budget-${Date.now()}`,
-              wedding_site_id: siteId,
-              category,
-              item_name: created.name,
-              estimated_amount: estimated,
-              actual_amount: paid,
-              paid_amount: paid,
-              due_date: created.next_payment_due || null,
-              vendor_id: created.id,
-              notes: created.notes || '',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            } as PlanningBudgetItem)
-          : await createBudgetItem(siteId, {
-              category,
-              item_name: created.name,
-              estimated_amount: estimated,
-              actual_amount: paid,
-              paid_amount: paid,
-              due_date: created.next_payment_due || null,
-              vendor_id: created.id,
-              notes: created.notes || '',
-            });
-
-        setBudgetItems(prev => [...prev, createdItem]);
-        toast('Vendor also added to budget', 'success');
-      }
     } catch {
       toast('Failed to add vendor', 'error');
     }
@@ -409,6 +412,39 @@ export const DashboardPlanning: React.FC = () => {
               />
             )}
           </>
+        )}
+
+        {pendingVendorForBudget && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-2xl bg-surface border border-border shadow-xl p-5">
+              <h3 className="text-lg font-semibold text-text-primary mb-2">Add vendor to budget?</h3>
+              <p className="text-sm text-text-secondary mb-4">
+                "{pendingVendorForBudget.name}" was added successfully. Would you like to create a linked budget line item too?
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-3 py-2 rounded-lg border border-border-subtle text-text-secondary hover:text-text-primary"
+                  onClick={() => setPendingVendorForBudget(null)}
+                >
+                  No thanks
+                </button>
+                <button
+                  className="px-3 py-2 rounded-lg bg-primary text-white hover:bg-primary/90"
+                  onClick={async () => {
+                    try {
+                      await addVendorToBudget(pendingVendorForBudget);
+                    } catch {
+                      toast('Failed to add vendor to budget', 'error');
+                    } finally {
+                      setPendingVendorForBudget(null);
+                    }
+                  }}
+                >
+                  Yes, add it
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </DashboardLayout>
