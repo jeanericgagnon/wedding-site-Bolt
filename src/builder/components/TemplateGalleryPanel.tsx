@@ -403,12 +403,18 @@ const FloralGardenPreview = () => (
 
 const TEMPLATE_PREVIEWS: Record<string, React.FC> = {
   'modern-luxe': ModernLuxePreview,
+  'modern-luxe-ivory': ModernLuxePreview,
   'editorial-romance': EditorialRomancePreview,
+  'editorial-romance-ivory': EditorialRomancePreview,
+  'editorial-romance-midnight': EditorialRomancePreview,
   'timeless-classic': TimelessClassicPreview,
+  'timeless-classic-navy': TimelessClassicPreview,
   'destination-minimal': DestinationMinimalPreview,
   'bold-contemporary': BoldContemporaryPreview,
   'photo-storytelling': PhotoStorytellingPreview,
   'floral-garden': FloralGardenPreview,
+  'floral-garden-sage': FloralGardenPreview,
+  'floral-garden-rose': FloralGardenPreview,
 };
 
 function TemplatePreview({ templateId }: { templateId: string }) {
@@ -423,12 +429,18 @@ function TemplatePreview({ templateId }: { templateId: string }) {
 
 const THEME_DOTS: Record<string, string[]> = {
   'modern-luxe': ['#1C1917', '#C8A96E', '#FAF9F7'],
+  'modern-luxe-ivory': ['#2C2722', '#D6B77E', '#F6F2EA'],
   'editorial-romance': ['#2D2926', '#B08860', '#F8F5F1'],
+  'editorial-romance-ivory': ['#3A3029', '#B99679', '#F7F1E8'],
+  'editorial-romance-midnight': ['#1E1C2B', '#A37D8C', '#ECE8F4'],
   'timeless-classic': ['#1A2B4A', '#C4983C', '#FDFBF6'],
+  'timeless-classic-navy': ['#172844', '#D3A94F', '#F7F4ED'],
   'destination-minimal': ['#1E5F6F', '#4BAABC', '#F3F8FA'],
   'bold-contemporary': ['#1C1917', '#C8A96E', '#FAF9F7'],
   'photo-storytelling': ['#B5546A', '#D4956A', '#FDF7F4'],
   'floral-garden': ['#4E7C5F', '#C47A4A', '#F6F8F3'],
+  'floral-garden-sage': ['#537B61', '#C58A63', '#F3F7F1'],
+  'floral-garden-rose': ['#8D5966', '#C98A8E', '#FBF3F4'],
 };
 
 const FONT_LABELS: Record<string, string> = {
