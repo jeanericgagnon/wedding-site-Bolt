@@ -6,6 +6,7 @@ import {
   Palette,
   Users,
   Image,
+  Camera,
   Gift,
   Settings,
   Menu,
@@ -73,6 +74,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
     { id: 'messages', label: 'Messages', icon: Mail, path: '/dashboard/messages' },
     { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
+    { id: 'photos', label: 'Photo Sharing', icon: Camera, path: '/dashboard/photos' },
     { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
   ];

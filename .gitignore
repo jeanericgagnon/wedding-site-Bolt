@@ -23,3 +23,7 @@ dist-ssr
 .env
 .vercel
 vite.config.ts.timestamp-*.mjs
+
+# local temp/artifacts
+backups/
+supabase/.temp/

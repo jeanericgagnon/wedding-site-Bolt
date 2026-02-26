@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2 } from 'lucide-react';
@@ -367,6 +368,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
 
 export const DashboardMessages: React.FC = () => {
   const { user, isDemoMode } = useAuth();
+  const location = useLocation();
   const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -390,6 +392,19 @@ export const DashboardMessages: React.FC = () => {
     scheduleDate: '',
     scheduleTime: '',
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const prefillSubject = params.get('prefillSubject');
+    const prefillBody = params.get('prefillBody');
+    if (!prefillSubject && !prefillBody) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      subject: prefillSubject ?? prev.subject,
+      body: prefillBody ?? prev.body,
+    }));
+  }, [location.search]);
 
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();

@@ -26,6 +26,7 @@ const DashboardMessages = lazy(() => import('./pages/dashboard/Messages').then(m
 const DashboardItinerary = lazy(() => import('./pages/dashboard/Itinerary').then(m => ({ default: m.DashboardItinerary })));
 const DashboardPlanning = lazy(() => import('./pages/dashboard/Planning').then(m => ({ default: m.DashboardPlanning })));
 const DashboardSeating = lazy(() => import('./pages/dashboard/Seating').then(m => ({ default: m.DashboardSeating })));
+const DashboardPhotos = lazy(() => import('./pages/dashboard/GuestPhotoSharing').then(m => ({ default: m.GuestPhotoSharing })));
 const SiteBuilder = lazy(() => import('./builder/BuilderPage').then(m => ({ default: m.BuilderPage })));
 const GuestsFeature = lazy(() => import('./pages/features/Guests').then(m => ({ default: m.GuestsFeature })));
 const RSVPFeature = lazy(() => import('./pages/features/RSVP').then(m => ({ default: m.RSVPFeature })));
@@ -37,6 +38,7 @@ const PaymentRequired = lazy(() => import('./pages/PaymentRequired').then(m => (
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ default: m.PaymentSuccess })));
 const VaultContribute = lazy(() => import('./pages/VaultContribute').then(m => ({ default: m.VaultContribute })));
 const BuilderV2Lab = lazy(() => import('./pages/BuilderV2Lab').then(m => ({ default: m.BuilderV2Lab })));
+const PhotoUpload = lazy(() => import('./pages/PhotoUpload').then(m => ({ default: m.PhotoUpload })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -65,6 +67,7 @@ const AppContent = () => {
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />
         <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
+        <Route path="/photos/upload" element={<PhotoUpload />} />
         <Route path="/rsvp" element={<RSVP />} />
         <Route path="/events" element={<EventRSVP />} />
         <Route path="/guest-contact/:token" element={<GuestContactUpdate />} />
@@ -193,6 +196,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <DashboardVault />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/photos"
+          element={
+            <ProtectedRoute>
+              <DashboardPhotos />
             </ProtectedRoute>
           }
         />
