@@ -109,7 +109,17 @@ export const GuestPhotoSharing: React.FC = () => {
   }, [albumUploadLinks]);
 
   const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke(fnName, { body });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    if (!token) {
+      throw new Error('You are not authenticated. Please log out and log back in, then try again. (AUTH_MISSING_TOKEN)');
+    }
+
+    const { data, error } = await supabase.functions.invoke(fnName, {
+      body,
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (error) {
       let msg = error.message || 'Request failed';
       let code = '';
