@@ -121,7 +121,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, is_published, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_location')
+        .select('id, site_slug, is_published, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, venue_date, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -132,7 +132,7 @@ export const DashboardOverview: React.FC = () => {
 
       if (site) {
         const weddingData = site.wedding_data as Record<string, unknown> | null;
-        weddingDate = (weddingData?.weddingDate as string) ?? null;
+        weddingDate = (weddingData?.weddingDate as string) ?? site.venue_date ?? null;
         templateName = site.template_id ?? null;
       }
 
