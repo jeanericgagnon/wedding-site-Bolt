@@ -1,4 +1,5 @@
 import { BuilderProject } from '../../types/builder/project';
+import { WeddingDataV1 } from '../../types/weddingData';
 import { builderProjectService } from './builderProjectService';
 
 export type PublishResult = {
@@ -29,7 +30,7 @@ export const publishService = {
     }
   },
 
-  async saveDraft(project: BuilderProject): Promise<void> {
-    return builderProjectService.saveDraft(project);
+  async saveDraft(project: BuilderProject, weddingData?: WeddingDataV1): Promise<void> {
+    return builderProjectService.saveDraft(project, weddingData);
   },
 };

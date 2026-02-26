@@ -151,12 +151,14 @@ export const BuilderPage: React.FC = () => {
     }
   };
 
-  const handleSave = async (updatedProject: BuilderProject) => {
+  const handleSave = async (updatedProject: BuilderProject, updatedWeddingData?: WeddingDataV1 | null) => {
     if (isDemoMode) {
       setProject(updatedProject);
+      if (updatedWeddingData) setWeddingData(updatedWeddingData);
       return;
     }
-    await publishService.saveDraft(updatedProject);
+    await publishService.saveDraft(updatedProject, updatedWeddingData ?? undefined);
+    if (updatedWeddingData) setWeddingData(updatedWeddingData);
   };
 
   const handlePublish = async (projectId: string) => {

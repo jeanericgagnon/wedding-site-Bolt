@@ -96,10 +96,35 @@ export const builderProjectService = {
 
     if (weddingData) {
       updatePayload.wedding_data = weddingData;
+
+      const p1 = weddingData.couple?.partner1Name?.trim() || null;
+      const p2 = weddingData.couple?.partner2Name?.trim() || null;
+      const weddingDateISO = weddingData.event?.weddingDateISO || null;
+      const weddingDate = weddingDateISO ? weddingDateISO.slice(0, 10) : null;
+      const primaryVenue = weddingData.venues?.[0];
+
+      updatePayload.couple_name_1 = p1;
+      updatePayload.couple_name_2 = p2;
+      updatePayload.wedding_date = weddingDate;
+      updatePayload.venue_date = weddingDate;
+      updatePayload.venue_name = primaryVenue?.name || null;
+      updatePayload.wedding_location = primaryVenue?.address || null;
     }
 
     const payload: Record<string, unknown> = { ...updatePayload };
-    const driftFields = ['active_template_id', 'layout_config', 'site_json', 'wedding_data', 'template_id'];
+    const driftFields = [
+      'active_template_id',
+      'layout_config',
+      'site_json',
+      'wedding_data',
+      'template_id',
+      'wedding_date',
+      'venue_date',
+      'venue_name',
+      'wedding_location',
+      'couple_name_1',
+      'couple_name_2',
+    ];
 
     let error: { message?: string } | null = null;
 

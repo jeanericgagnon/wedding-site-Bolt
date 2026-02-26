@@ -21,7 +21,7 @@ interface BuilderShellProps {
   initialWeddingData?: WeddingDataV1;
   projectName?: string;
   isDemoMode?: boolean;
-  onSave?: (project: BuilderProject) => Promise<void>;
+  onSave?: (project: BuilderProject, weddingData?: WeddingDataV1 | null) => Promise<void>;
   onPublish?: (projectId: string) => Promise<void>;
 }
 
@@ -105,7 +105,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     setSaveError(null);
     dispatch({ type: 'SET_SAVING', payload: true });
     try {
-      await onSave(currentState.project);
+      await onSave(currentState.project, currentState.weddingData);
       dispatch(builderActions.markSaved(new Date().toISOString()));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save';
