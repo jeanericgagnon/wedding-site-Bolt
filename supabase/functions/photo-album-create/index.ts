@@ -13,6 +13,8 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const fail = (code: string, error: string, status = 400) => json({ code, error }, status);
+
 const slugify = (value: string) =>
   value
     .toLowerCase()
@@ -102,7 +104,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", "Unauthorized", 401);
 
     const body = await req.json().catch(() => ({}));
     const siteId = typeof body.siteId === "string" ? body.siteId : null;
@@ -111,7 +113,7 @@ Deno.serve(async (req: Request) => {
     const opensAt = typeof body.opensAt === "string" ? body.opensAt : null;
     const closesAt = typeof body.closesAt === "string" ? body.closesAt : null;
 
-    if (!siteId || !name) return json({ error: "siteId and name are required." }, 400);
+    if (!siteId || !name) return fail("VALIDATION_ERROR", "siteId and name are required.", 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -126,7 +128,7 @@ Deno.serve(async (req: Request) => {
       data: { user },
     } = await userClient.auth.getUser();
 
-    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!user) return fail("UNAUTHORIZED", "Unauthorized", 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
 
@@ -136,15 +138,15 @@ Deno.serve(async (req: Request) => {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.user_id !== user.id) return json({ error: "Forbidden" }, 403);
-    if (!site.vault_google_drive_connected) return json({ error: "Google Drive is not connected." }, 400);
+    if (!site || site.user_id !== user.id) return fail("FORBIDDEN", "Forbidden", 403);
+    if (!site.vault_google_drive_connected) return fail("DRIVE_NOT_CONNECTED", "Google Drive is not connected.", 400);
 
     let accessToken = site.vault_google_drive_access_token as string | null;
     const refreshToken = site.vault_google_drive_refresh_token as string | null;
     const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
 
     if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
-      if (!refreshToken) return json({ error: "Google Drive connection needs reconnect." }, 400);
+      if (!refreshToken) return fail("DRIVE_RECONNECT_REQUIRED", "Google Drive connection needs reconnect.", 400);
       const refreshed = await refreshAccessToken(refreshToken);
       accessToken = refreshed.accessToken;
       await admin
@@ -190,7 +192,7 @@ Deno.serve(async (req: Request) => {
       .select("id,name,slug,drive_folder_id,drive_folder_url")
       .single();
 
-    if (error) return json({ error: error.message }, 400);
+    if (error) return fail("DB_ERROR", error.message, 400);
 
     const uploadUrl = `${appUrl.replace(/\/$/, "")}/photos/upload?t=${encodeURIComponent(token)}`;
 
@@ -200,6 +202,6 @@ Deno.serve(async (req: Request) => {
       uploadToken: token,
     });
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
   }
 });

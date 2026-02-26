@@ -13,19 +13,21 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const fail = (code: string, error: string, status = 400) => json({ code, error }, status);
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", "Unauthorized", 401);
 
     const body = await req.json().catch(() => ({}));
     const uploadIds = Array.isArray(body.uploadIds) ? body.uploadIds.filter((x) => typeof x === "string") : [];
     const patch = (body.patch && typeof body.patch === "object") ? body.patch as Record<string, unknown> : {};
 
-    if (uploadIds.length === 0) return json({ error: "uploadIds required" }, 400);
-    if (uploadIds.length > 500) return json({ error: "Too many uploadIds (max 500)" }, 400);
+    if (uploadIds.length === 0) return fail("VALIDATION_ERROR", "uploadIds required", 400);
+    if (uploadIds.length > 500) return fail("VALIDATION_ERROR", "Too many uploadIds (max 500)", 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -38,7 +40,7 @@ Deno.serve(async (req: Request) => {
       data: { user },
     } = await userClient.auth.getUser();
 
-    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!user) return fail("UNAUTHORIZED", "Unauthorized", 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
 
@@ -48,7 +50,7 @@ Deno.serve(async (req: Request) => {
       .in("id", uploadIds);
 
     if (uploadsErr || !uploads || uploads.length === 0) {
-      return json({ error: uploadsErr?.message ?? "No uploads found" }, 400);
+      return fail("DB_ERROR", uploadsErr?.message ?? "No uploads found", 400);
     }
 
     const siteIds = [...new Set(uploads.map((u) => u.wedding_site_id))];
@@ -58,12 +60,12 @@ Deno.serve(async (req: Request) => {
       .in("id", siteIds);
 
     const unauthorized = (sites ?? []).some((s) => s.user_id !== user.id);
-    if (unauthorized) return json({ error: "Forbidden" }, 403);
+    if (unauthorized) return fail("FORBIDDEN", "Forbidden", 403);
 
     const allowedPatch: Record<string, unknown> = {};
     if (typeof patch.is_hidden === "boolean") allowedPatch.is_hidden = patch.is_hidden;
     if (typeof patch.is_flagged === "boolean") allowedPatch.is_flagged = patch.is_flagged;
-    if (Object.keys(allowedPatch).length === 0) return json({ error: "No valid patch fields" }, 400);
+    if (Object.keys(allowedPatch).length === 0) return fail("VALIDATION_ERROR", "No valid patch fields", 400);
 
     const { error: updateErr } = await admin
       .from("photo_uploads")
@@ -74,10 +76,10 @@ Deno.serve(async (req: Request) => {
       })
       .in("id", uploadIds);
 
-    if (updateErr) return json({ error: updateErr.message }, 400);
+    if (updateErr) return fail("DB_ERROR", updateErr.message, 400);
 
     return json({ success: true, updated: uploadIds.length });
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
   }
 });
