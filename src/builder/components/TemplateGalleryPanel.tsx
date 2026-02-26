@@ -175,43 +175,31 @@ const ModernLuxePreview = () => (
 );
 
 const EditorialRomancePreview = () => (
-  <div className="absolute inset-0 flex flex-col bg-[#F5F2EE] overflow-hidden">
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#F8F4EF' }}>
     <div className="flex-1 relative">
       <div className="absolute inset-0" style={{
-        background: 'linear-gradient(135deg, #F0EBE3 0%, #F5F2EE 50%, #EDE8E2 100%)',
+        background: 'linear-gradient(145deg, #F6EFE7 0%, #F8F4EF 45%, #EDE3D7 100%)',
       }} />
-      <div className="absolute top-0 right-0 w-24 h-24" style={{
-        background: 'radial-gradient(circle, rgba(176,136,96,0.08) 0%, transparent 70%)',
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(ellipse at 75% 22%, rgba(145,102,68,0.16) 0%, transparent 55%)',
       }} />
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-        <div className="text-[7px] text-[#695E55]/50 tracking-[0.3em] uppercase">Est. 2026</div>
-        <div className="flex gap-1.5">
-          <div className="h-px w-5 bg-[#B08860]/30" />
-          <div className="h-px w-3 bg-[#B08860]/15" />
-        </div>
-      </div>
+      <div className="absolute top-4 left-4 text-[6.5px] uppercase tracking-[0.35em]" style={{ color: '#7E6250' }}>Editorial Romance</div>
+      <div className="absolute top-4 right-4 text-[6px] uppercase tracking-[0.3em]" style={{ color: '#A9876E' }}>No. 03</div>
+
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-        <div className="text-[8px] tracking-[0.4em] uppercase mb-4 font-light" style={{ color: '#B08860' }}>
-          A Celebration of Love
-        </div>
-        <div className="relative">
-          <div className="font-serif text-[26px] leading-none" style={{ color: '#1C1714' }}>Emma</div>
-          <div className="text-[10px] my-1.5 tracking-[0.2em]" style={{ color: '#B08860' }}>——— and ———</div>
-          <div className="font-serif text-[26px] leading-none" style={{ color: '#1C1714' }}>Oliver</div>
-        </div>
-        <div className="mt-4 text-[7px] tracking-[0.3em] uppercase" style={{ color: '#695E55' }}>
-          September 2026
-        </div>
-        <div className="mt-1 text-[6.5px] tracking-wider" style={{ color: '#695E55' }}>
-          Villa Borghese · Rome
-        </div>
+        <div className="text-[7px] uppercase tracking-[0.45em] mb-4" style={{ color: '#A47757' }}>For the hopeless romantics</div>
+        <div className="font-serif text-[30px] leading-none" style={{ color: '#221A16' }}>Emma</div>
+        <div className="text-[10px] my-1 tracking-[0.28em]" style={{ color: '#B08860' }}>&amp;</div>
+        <div className="font-serif text-[30px] leading-none" style={{ color: '#221A16' }}>Oliver</div>
+        <div className="mt-4 text-[7px] tracking-[0.32em] uppercase" style={{ color: '#6C5648' }}>September 18 · 2026</div>
+        <div className="mt-1 text-[6.5px] tracking-[0.18em] uppercase" style={{ color: '#8E7566' }}>Villa Borghese · Rome</div>
       </div>
     </div>
-    <div className="h-12 border-t border-[#DDD7CE]/60 grid grid-cols-4" style={{ background: '#FEFCFA' }}>
-      {['Story', 'Gallery', 'Venue', 'RSVP'].map(s => (
-        <div key={s} className="flex flex-col items-center justify-center gap-1 border-r border-[#DDD7CE]/40 last:border-0">
-          <div className="w-3 h-px bg-[#B08860]/40" />
-          <span className="text-[6px] uppercase tracking-wider" style={{ color: '#695E55' }}>{s}</span>
+
+    <div className="h-11 border-t grid grid-cols-4" style={{ background: '#FCF9F5', borderColor: '#E2D8CB' }}>
+      {['Story', 'Gallery', 'Schedule', 'RSVP'].map(s => (
+        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#E8DFD4' }}>
+          <span className="text-[6px] uppercase tracking-[0.24em]" style={{ color: '#6E5A4B' }}>{s}</span>
         </div>
       ))}
     </div>
@@ -352,83 +340,61 @@ const BoldContemporaryPreview = () => (
 );
 
 const PhotoStorytellingPreview = () => (
-  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#FDF7F4' }}>
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#F9F4F0' }}>
     <div className="flex-1 relative overflow-hidden">
-      <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0.5 p-0.5">
+      <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-1 p-1.5">
         <div
-          className="col-span-2 row-span-2 rounded relative overflow-hidden"
-          style={{ background: 'linear-gradient(160deg, #D4B5A8 0%, #C4A092 100%)' }}
+          className="col-span-2 row-span-2 rounded-xl relative overflow-hidden"
+          style={{ background: 'linear-gradient(160deg, #B88975 0%, #8E5F50 100%)' }}
         >
-          <div className="absolute inset-0 flex flex-col justify-end p-3">
-            <div className="rounded-lg px-2.5 py-1.5" style={{ background: 'rgba(253,247,244,0.92)' }}>
-              <div className="font-serif text-[11px] leading-tight mb-0.5" style={{ color: '#2E1519' }}>
-                Ava &amp; Noah
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="h-px flex-1" style={{ background: '#B5546A', opacity: 0.3 }} />
-                <div className="text-[6px] tracking-wider" style={{ color: '#7A4E55' }}>Oct 2026</div>
-              </div>
-            </div>
+          <div className="absolute inset-0" style={{
+            background: 'radial-gradient(circle at 70% 20%, rgba(255,255,255,0.18) 0%, transparent 45%)',
+          }} />
+          <div className="absolute left-3 right-3 bottom-3 rounded-lg px-2.5 py-2" style={{ background: 'rgba(249,244,240,0.95)' }}>
+            <div className="font-serif text-[11px]" style={{ color: '#2E1D1A' }}>Ava &amp; Noah</div>
+            <div className="text-[6px] uppercase tracking-[0.25em] mt-0.5" style={{ color: '#8D6661' }}>October 2026 · Carmel</div>
           </div>
         </div>
-        <div className="rounded" style={{ background: 'linear-gradient(135deg, #E8C4A8 0%, #D4A88C 100%)' }} />
-        <div className="rounded" style={{ background: 'linear-gradient(135deg, #D4A0A8 0%, #C48490 100%)' }} />
+        <div className="rounded-xl" style={{ background: 'linear-gradient(140deg, #E8C8B1 0%, #DCA68A 100%)' }} />
+        <div className="rounded-xl" style={{ background: 'linear-gradient(140deg, #D3A3A0 0%, #B97B7A 100%)' }} />
       </div>
     </div>
-    <div className="h-11 border-t px-3 flex items-center gap-2" style={{ background: '#FFFFFF', borderColor: '#EDD8DA' }}>
-      <div className="flex-1 h-1.5 rounded-full" style={{ background: '#FBF0F2' }} />
-      <div className="h-1.5 w-8 rounded-full" style={{ background: '#EDD8DA' }} />
-      <div className="rounded-full px-3 h-5 flex items-center justify-center" style={{ background: '#B5546A' }}>
-        <span className="text-[6px] text-white uppercase tracking-wider font-medium">RSVP</span>
+    <div className="h-12 border-t px-3 flex items-center gap-2" style={{ background: '#FFFFFF', borderColor: '#E9DAD3' }}>
+      <div className="text-[6px] uppercase tracking-[0.2em]" style={{ color: '#7A5A54' }}>Photo-first</div>
+      <div className="flex-1 h-1.5 rounded-full" style={{ background: '#F3E6E0' }} />
+      <div className="rounded-full px-3 h-6 flex items-center justify-center" style={{ background: '#9A5D5C' }}>
+        <span className="text-[6px] text-white uppercase tracking-wider font-medium">See details</span>
       </div>
     </div>
   </div>
 );
 
 const FloralGardenPreview = () => (
-  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#F6F8F3' }}>
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#F4F7F1' }}>
     <div className="flex-1 relative overflow-hidden">
-      <div
-        className="absolute -top-6 -left-6 w-24 h-24 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(78,124,95,0.2) 0%, transparent 70%)' }}
-      />
-      <div
-        className="absolute -top-4 -right-4 w-16 h-16 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(196,122,74,0.15) 0%, transparent 70%)' }}
-      />
-      <div
-        className="absolute -bottom-6 -left-4 w-20 h-20 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(78,124,95,0.15) 0%, transparent 70%)' }}
-      />
-      <div
-        className="absolute bottom-0 right-0 w-14 h-14 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(157,184,159,0.2) 0%, transparent 70%)' }}
-      />
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(140deg, #F3F7F0 0%, #EAF1E7 55%, #F8EFE8 100%)',
+      }} />
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(circle at 20% 25%, rgba(92,138,103,0.22) 0%, transparent 40%), radial-gradient(circle at 80% 20%, rgba(201,131,88,0.16) 0%, transparent 38%)',
+      }} />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5">
-        <div className="flex items-center gap-1.5 mb-3">
-          <div className="text-[9px]" style={{ color: '#9DB89F' }}>✿</div>
-          <div className="text-[7px] tracking-[0.35em] uppercase font-light" style={{ color: '#4E7C5F' }}>Garden Wedding</div>
-          <div className="text-[9px]" style={{ color: '#9DB89F' }}>✿</div>
-        </div>
-        <div className="font-serif text-[22px] leading-tight" style={{ color: '#1A2E1E' }}>
+        <div className="text-[7px] tracking-[0.35em] uppercase mb-2" style={{ color: '#51785C' }}>Garden Collection</div>
+        <div className="font-serif text-[24px] leading-tight" style={{ color: '#1C3222' }}>
           Rose
           <span className="text-[14px] mx-1.5" style={{ color: '#C47A4A' }}>&amp;</span>
           Henry
         </div>
-        <div className="mt-3 flex items-center gap-2">
-          <div className="h-px w-5" style={{ background: '#D0DFCE' }} />
-          <div className="text-[7px] tracking-[0.3em] uppercase" style={{ color: '#4A6650' }}>May 2026</div>
-          <div className="h-px w-5" style={{ background: '#D0DFCE' }} />
-        </div>
-        <div className="text-[6.5px] tracking-wider mt-1" style={{ color: '#4A6650' }}>
-          The Walled Garden · Surrey
+        <div className="mt-2 text-[6.5px] uppercase tracking-[0.3em]" style={{ color: '#5A7A61' }}>May 2026 · Surrey</div>
+        <div className="mt-3 rounded-full px-3 py-1 text-[6px] uppercase tracking-[0.25em]" style={{ background: '#E0ECDC', color: '#4E7C5F' }}>
+          Floral · Outdoor · Romantic
         </div>
       </div>
     </div>
-    <div className="h-10 border-t grid grid-cols-4" style={{ background: '#EFF5EC', borderColor: '#D0DFCE' }}>
-      {['Story', 'Gallery', 'Venue', 'RSVP'].map(s => (
-        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#D0DFCE' }}>
-          <span className="text-[6px] uppercase tracking-wider" style={{ color: '#4E7C5F' }}>{s}</span>
+    <div className="h-11 border-t grid grid-cols-4" style={{ background: '#EDF4EA', borderColor: '#CFDDCC' }}>
+      {['Story', 'Photos', 'Venue', 'RSVP'].map(s => (
+        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#CFDDCC' }}>
+          <span className="text-[6px] uppercase tracking-[0.24em]" style={{ color: '#4E7C5F' }}>{s}</span>
         </div>
       ))}
     </div>
