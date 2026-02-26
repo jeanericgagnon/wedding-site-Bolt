@@ -237,73 +237,45 @@ export const DashboardItinerary: React.FC = () => {
         title: formData.event_name,
       };
 
+      const driftFields = ['event_name', 'is_visible', 'dress_code', 'notes', 'location_address', 'end_time'];
+
       if (editingEvent) {
-        let { error } = await supabase
-          .from('itinerary_events')
-          .update(payload)
-          .eq('id', editingEvent.id);
+        const updatePayload: Record<string, unknown> = { ...payload };
+        let error: { message?: string } | null = null;
 
-        if (error?.message?.includes('event_name')) {
-          const fallbackPayload = { ...payload };
-          delete fallbackPayload.event_name;
-
+        for (let i = 0; i <= driftFields.length; i += 1) {
           const result = await supabase
             .from('itinerary_events')
-            .update(fallbackPayload)
+            .update(updatePayload)
             .eq('id', editingEvent.id);
           error = result.error;
-        }
+          if (!error) break;
 
-        if (error?.message?.includes('is_visible')) {
-          const fallbackPayload = { ...payload };
-          delete fallbackPayload.is_visible;
-
-          const result = await supabase
-            .from('itinerary_events')
-            .update(fallbackPayload)
-            .eq('id', editingEvent.id);
-          error = result.error;
+          const field = driftFields.find((candidate) => error?.message?.includes(candidate));
+          if (!field || !(field in updatePayload)) break;
+          delete updatePayload[field];
         }
 
         if (error) throw error;
       } else {
-        let { error } = await supabase
-          .from('itinerary_events')
-          .insert([
-            {
-              ...payload,
-              wedding_site_id: site.id,
-            },
-          ]);
+        const insertPayload: Record<string, unknown> = { ...payload };
+        let error: { message?: string } | null = null;
 
-        if (error?.message?.includes('event_name')) {
-          const fallbackPayload = { ...payload };
-          delete fallbackPayload.event_name;
-
+        for (let i = 0; i <= driftFields.length; i += 1) {
           const result = await supabase
             .from('itinerary_events')
             .insert([
               {
-                ...fallbackPayload,
+                ...insertPayload,
                 wedding_site_id: site.id,
               },
             ]);
           error = result.error;
-        }
+          if (!error) break;
 
-        if (error?.message?.includes('is_visible')) {
-          const fallbackPayload = { ...payload };
-          delete fallbackPayload.is_visible;
-
-          const result = await supabase
-            .from('itinerary_events')
-            .insert([
-              {
-                ...fallbackPayload,
-                wedding_site_id: site.id,
-              },
-            ]);
-          error = result.error;
+          const field = driftFields.find((candidate) => error?.message?.includes(candidate));
+          if (!field || !(field in insertPayload)) break;
+          delete insertPayload[field];
         }
 
         if (error) throw error;
