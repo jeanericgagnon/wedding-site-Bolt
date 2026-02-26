@@ -24,6 +24,8 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const fail = (code: string, error: string, status = 400) => json({ code, error }, status);
+
 async function sha256Hex(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -135,27 +137,27 @@ Deno.serve(async (req: Request) => {
     const honeypot = String(form.get(HONEYPOT_FIELD) ?? '').trim();
     const files = form.getAll("files").filter((v): v is File => v instanceof File);
 
-    if (!token) return json({ error: "token is required" }, 400);
-    if (honeypot) return json({ error: "Request rejected" }, 400);
+    if (!token) return fail("TOKEN_REQUIRED", "token is required", 400);
+    if (honeypot) return fail("BOT_DETECTED", "Request rejected", 400);
     if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
-      return json({ error: "Invalid email address." }, 400);
+      return fail("INVALID_EMAIL", "Invalid email address.", 400);
     }
-    if (files.length === 0) return json({ error: "At least one file is required" }, 400);
-    if (files.length > MAX_FILES_PER_REQUEST) return json({ error: `Too many files (max ${MAX_FILES_PER_REQUEST})` }, 400);
+    if (files.length === 0) return fail("FILES_REQUIRED", "At least one file is required", 400);
+    if (files.length > MAX_FILES_PER_REQUEST) return fail("TOO_MANY_FILES", `Too many files (max ${MAX_FILES_PER_REQUEST})`, 400);
 
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
     if (totalBytes > MAX_TOTAL_BYTES_PER_REQUEST) {
-      return json({ error: `Total upload too large (max ${Math.floor(MAX_TOTAL_BYTES_PER_REQUEST / (1024 * 1024))}MB per request)` }, 400);
+      return fail("TOTAL_TOO_LARGE", `Total upload too large (max ${Math.floor(MAX_TOTAL_BYTES_PER_REQUEST / (1024 * 1024))}MB per request)`, 400);
     }
 
     for (const file of files) {
       const mime = file.type || 'application/octet-stream';
       const allowedByPrefix = ALLOWED_MIME_PREFIXES.some((prefix) => mime.startsWith(prefix));
       if (!allowedByPrefix || DISALLOWED_MIME_TYPES.has(mime)) {
-        return json({ error: `Unsupported file type: ${mime}` }, 400);
+        return fail("UNSUPPORTED_FILE_TYPE", `Unsupported file type: ${mime}`, 400);
       }
       if (file.size > MAX_FILE_BYTES) {
-        return json({ error: `File too large: ${file.name} (max ${Math.floor(MAX_FILE_BYTES / (1024 * 1024))}MB each)` }, 400);
+        return fail("FILE_TOO_LARGE", `File too large: ${file.name} (max ${Math.floor(MAX_FILE_BYTES / (1024 * 1024))}MB each)`, 400);
       }
     }
 
@@ -167,15 +169,15 @@ Deno.serve(async (req: Request) => {
       .eq("upload_token_hash", tokenHash)
       .maybeSingle();
 
-    if (!album) return json({ error: "Invalid upload link." }, 404);
-    if (!album.is_active) return json({ error: "Uploads are disabled for this album." }, 403);
+    if (!album) return fail("INVALID_TOKEN", "Invalid upload link.", 404);
+    if (!album.is_active) return fail("ALBUM_INACTIVE", "Uploads are disabled for this album.", 403);
 
     const now = Date.now();
     if (album.opens_at && new Date(album.opens_at as string).getTime() > now) {
-      return json({ error: "This album is not open yet." }, 403);
+      return fail("ALBUM_NOT_OPEN", "This album is not open yet.", 403);
     }
     if (album.closes_at && new Date(album.closes_at as string).getTime() < now) {
-      return json({ error: "This album is closed." }, 403);
+      return fail("ALBUM_CLOSED", "This album is closed.", 403);
     }
 
     const { data: site } = await admin
@@ -184,15 +186,15 @@ Deno.serve(async (req: Request) => {
       .eq("id", album.wedding_site_id as string)
       .maybeSingle();
 
-    if (!site || !site.is_published) return json({ error: "Site not available for uploads." }, 403);
-    if (!site.vault_google_drive_connected) return json({ error: "Google Drive is not connected." }, 400);
+    if (!site || !site.is_published) return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
+    if (!site.vault_google_drive_connected) return fail("DRIVE_NOT_CONNECTED", "Google Drive is not connected.", 400);
 
     let accessToken = site.vault_google_drive_access_token as string | null;
     const refreshToken = site.vault_google_drive_refresh_token as string | null;
     const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
 
     if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
-      if (!refreshToken) return json({ error: "Google Drive connection needs reconnect." }, 400);
+      if (!refreshToken) return fail("DRIVE_RECONNECT_REQUIRED", "Google Drive connection needs reconnect.", 400);
       const refreshed = await refreshAccessToken(refreshToken);
       accessToken = refreshed.accessToken;
       await admin
@@ -238,6 +240,6 @@ Deno.serve(async (req: Request) => {
       uploaded,
     });
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
   }
 });
