@@ -43,11 +43,13 @@ jobs:
         run: cp dist/index.html dist/404.html
 
       - name: Upload Pages artifact
+        if: ${{ github.actor != 'nektos/act' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
+    if: ${{ github.actor != 'nektos/act' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
