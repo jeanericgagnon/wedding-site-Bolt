@@ -401,12 +401,58 @@ const FloralGardenPreview = () => (
   </div>
 );
 
+const EditorialRomanceMidnightPreview = () => (
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#11131D' }}>
+    <div className="flex-1 relative">
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(140deg, #11131D 0%, #1B1F2F 55%, #2B2234 100%)' }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 80% 18%, rgba(173,133,165,0.2) 0%, transparent 48%)' }} />
+      <div className="absolute top-4 left-4 text-[6.5px] uppercase tracking-[0.35em]" style={{ color: '#C8B1D4' }}>Midnight Edition</div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+        <div className="text-[7px] uppercase tracking-[0.45em] mb-3" style={{ color: '#A58CB2' }}>Editorial Romance</div>
+        <div className="font-serif text-[30px] leading-none" style={{ color: '#F1EAF6' }}>Clara</div>
+        <div className="text-[9px] my-1.5 tracking-[0.3em]" style={{ color: '#A58CB2' }}>&amp;</div>
+        <div className="font-serif text-[30px] leading-none" style={{ color: '#F1EAF6' }}>Elias</div>
+        <div className="mt-4 text-[6.5px] uppercase tracking-[0.3em]" style={{ color: '#C9BAD4' }}>November 2026 · New York</div>
+      </div>
+    </div>
+    <div className="h-11 border-t grid grid-cols-4" style={{ background: '#171A28', borderColor: '#2D3145' }}>
+      {['Story','Gallery','Schedule','RSVP'].map(s => (
+        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#2D3145' }}>
+          <span className="text-[6px] uppercase tracking-[0.24em]" style={{ color: '#B5A6C6' }}>{s}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const FloralGardenRosePreview = () => (
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#FBF3F4' }}>
+    <div className="flex-1 relative">
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(145deg, #FBF3F4 0%, #F5E9EC 60%, #FDEEEF 100%)' }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 20% 22%, rgba(183,122,138,0.18) 0%, transparent 44%), radial-gradient(circle at 82% 24%, rgba(219,162,176,0.18) 0%, transparent 40%)' }} />
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5">
+        <div className="text-[7px] tracking-[0.35em] uppercase mb-2" style={{ color: '#9A6271' }}>Rose Garden</div>
+        <div className="font-serif text-[24px] leading-tight" style={{ color: '#4B2A34' }}>Lily <span className="text-[14px] mx-1" style={{ color: '#B77A8A' }}>&amp;</span> James</div>
+        <div className="mt-2 text-[6.5px] uppercase tracking-[0.3em]" style={{ color: '#9A6271' }}>June 2026 · Sonoma</div>
+        <div className="mt-3 rounded-full px-3 py-1 text-[6px] uppercase tracking-[0.25em]" style={{ background: '#F2DCE2', color: '#8A5665' }}>Floral · Romantic · Outdoor</div>
+      </div>
+    </div>
+    <div className="h-11 border-t grid grid-cols-4" style={{ background: '#F8EAEE', borderColor: '#E6CCD5' }}>
+      {['Story','Photos','Venue','RSVP'].map(s => (
+        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#E6CCD5' }}>
+          <span className="text-[6px] uppercase tracking-[0.24em]" style={{ color: '#8A5665' }}>{s}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const TEMPLATE_PREVIEWS: Record<string, React.FC> = {
   'modern-luxe': ModernLuxePreview,
   'modern-luxe-ivory': ModernLuxePreview,
   'editorial-romance': EditorialRomancePreview,
   'editorial-romance-ivory': EditorialRomancePreview,
-  'editorial-romance-midnight': EditorialRomancePreview,
+  'editorial-romance-midnight': EditorialRomanceMidnightPreview,
   'timeless-classic': TimelessClassicPreview,
   'timeless-classic-navy': TimelessClassicPreview,
   'destination-minimal': DestinationMinimalPreview,
@@ -414,7 +460,7 @@ const TEMPLATE_PREVIEWS: Record<string, React.FC> = {
   'photo-storytelling': PhotoStorytellingPreview,
   'floral-garden': FloralGardenPreview,
   'floral-garden-sage': FloralGardenPreview,
-  'floral-garden-rose': FloralGardenPreview,
+  'floral-garden-rose': FloralGardenRosePreview,
 };
 
 function TemplatePreview({ templateId }: { templateId: string }) {
