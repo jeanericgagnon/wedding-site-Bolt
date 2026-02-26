@@ -17,6 +17,8 @@ const DISALLOWED_MIME_TYPES = new Set([
 ]);
 
 const HONEYPOT_FIELD = 'website';
+const MAX_ATTEMPTS_PER_10_MIN = 30;
+const MAX_ATTEMPTS_PER_10_MIN_PER_IP = 60;
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -128,6 +130,9 @@ Deno.serve(async (req: Request) => {
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(supabaseUrl, serviceRole);
 
+    const forwardedFor = req.headers.get("x-forwarded-for") || "";
+    const requesterIp = forwardedFor.split(",")[0]?.trim() || null;
+
     const form = await req.formData();
     const token = String(form.get("token") ?? "").trim();
     const guestName = String(form.get("guestName") ?? "").trim() || null;
@@ -171,6 +176,37 @@ Deno.serve(async (req: Request) => {
 
     if (!album) return fail("INVALID_TOKEN", "Invalid upload link.", 404);
     if (!album.is_active) return fail("ALBUM_INACTIVE", "Uploads are disabled for this album.", 403);
+
+    const tenMinutesAgoIso = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { count: albumAttemptCount } = await admin
+      .from("photo_upload_attempts")
+      .select("id", { count: "exact", head: true })
+      .eq("photo_album_id", album.id)
+      .gte("attempted_at", tenMinutesAgoIso);
+
+    if ((albumAttemptCount ?? 0) > MAX_ATTEMPTS_PER_10_MIN) {
+      return fail("RATE_LIMITED", "Too many upload attempts. Please try again shortly.", 429);
+    }
+
+    if (requesterIp) {
+      const { count: ipAttemptCount } = await admin
+        .from("photo_upload_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("requester_ip", requesterIp)
+        .gte("attempted_at", tenMinutesAgoIso);
+
+      if ((ipAttemptCount ?? 0) > MAX_ATTEMPTS_PER_10_MIN_PER_IP) {
+        return fail("RATE_LIMITED", "Too many upload attempts from this network. Please try again shortly.", 429);
+      }
+    }
+
+    await admin.from("photo_upload_attempts").insert({
+      photo_album_id: album.id,
+      token_hash: tokenHash,
+      requester_ip: requesterIp,
+      file_count: files.length,
+      total_bytes: totalBytes,
+    });
 
     const now = Date.now();
     if (album.opens_at && new Date(album.opens_at as string).getTime() > now) {
