@@ -91,6 +91,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [workingAlbumId, setWorkingAlbumId] = useState<string>('');
 
   const [windowDrafts, setWindowDrafts] = useState<Record<string, { opensAt: string; closesAt: string }>>({});
+  const [bulkCreating, setBulkCreating] = useState(false);
 
   useEffect(() => {
     void load();
@@ -232,6 +233,57 @@ export const GuestPhotoSharing: React.FC = () => {
     if (!siteSlug) return '';
     return `${window.location.origin}/site/${siteSlug}`;
   }, [siteSlug]);
+
+  const missingItineraryEvents = useMemo(() => {
+    const linked = new Set(albums.map((a) => a.itinerary_event_id).filter(Boolean));
+    return events.filter((e) => !linked.has(e.id));
+  }, [events, albums]);
+
+  const createMissingAlbumsFromItinerary = async () => {
+    if (!siteId) return;
+    if (missingItineraryEvents.length === 0) {
+      setSuccess('All itinerary events already have albums.');
+      return;
+    }
+
+    try {
+      setBulkCreating(true);
+      setError(null);
+      setSuccess(null);
+
+      const created: string[] = [];
+      const links: Record<string, string> = {};
+
+      for (const event of missingItineraryEvents) {
+        const { data, error: fnError } = await supabase.functions.invoke('photo-album-create', {
+          body: {
+            siteId,
+            name: event.event_name,
+            itineraryEventId: event.id,
+          },
+        });
+
+        if (fnError) throw fnError;
+        if (data?.album?.id) {
+          created.push(event.event_name);
+          if (typeof data.uploadUrl === 'string' && data.uploadUrl) {
+            links[String(data.album.id)] = data.uploadUrl;
+          }
+        }
+      }
+
+      if (Object.keys(links).length > 0) {
+        setAlbumUploadLinks((prev) => ({ ...prev, ...links }));
+      }
+
+      await load();
+      setSuccess(`Created ${created.length} album(s) from itinerary events.`);
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Failed to create itinerary albums.');
+    } finally {
+      setBulkCreating(false);
+    }
+  };
 
   const moderateUpload = async (uploadId: string, patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged'>>) => {
     try {
@@ -384,10 +436,17 @@ export const GuestPhotoSharing: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
             <Button onClick={createAlbum} disabled={submitting || loading}>
               <Camera className="w-4 h-4 mr-1" />
               {submitting ? 'Creating...' : 'Create album'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => void createMissingAlbumsFromItinerary()}
+              disabled={bulkCreating || loading || missingItineraryEvents.length === 0}
+            >
+              {bulkCreating ? 'Creating from itinerary...' : `Create missing itinerary albums (${missingItineraryEvents.length})`}
             </Button>
             {uploadLanding && (
               <Button variant="outline" onClick={() => window.open(uploadLanding, '_blank')}>
