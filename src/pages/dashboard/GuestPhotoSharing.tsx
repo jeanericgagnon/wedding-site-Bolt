@@ -42,6 +42,27 @@ const toDatetimeLocal = (iso: string | null): string => {
 
 const fromDatetimeLocal = (v: string): string | null => (v.trim() ? new Date(v).toISOString() : null);
 
+const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoAlbumLinks';
+
+const readStoredAlbumLinks = (): Record<string, string> => {
+  try {
+    const raw = localStorage.getItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeStoredAlbumLinks = (value: Record<string, string>) => {
+  try {
+    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+};
+
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -61,6 +82,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [itineraryEventId, setItineraryEventId] = useState(search.get('eventId') ?? '');
 
   const [latestUploadUrl, setLatestUploadUrl] = useState<string>('');
+  const [albumUploadLinks, setAlbumUploadLinks] = useState<Record<string, string>>(() => readStoredAlbumLinks());
   const [copied, setCopied] = useState<string>('');
   const [workingAlbumId, setWorkingAlbumId] = useState<string>('');
 
@@ -70,6 +92,10 @@ export const GuestPhotoSharing: React.FC = () => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    writeStoredAlbumLinks(albumUploadLinks);
+  }, [albumUploadLinks]);
 
   async function load() {
     try {
@@ -189,6 +215,9 @@ export const GuestPhotoSharing: React.FC = () => {
       if (fnError) throw fnError;
       const uploadUrl = (data?.uploadUrl as string) ?? '';
       setLatestUploadUrl(uploadUrl);
+      if (uploadUrl) {
+        setAlbumUploadLinks((prev) => ({ ...prev, [albumId]: uploadUrl }));
+      }
       setSuccess('Album link regenerated. Old link is now invalid.');
       await load();
     } catch (err: unknown) {
@@ -245,7 +274,11 @@ export const GuestPhotoSharing: React.FC = () => {
       if (fnError) throw fnError;
       if (!data?.album?.id) throw new Error('Album creation failed.');
 
-      setLatestUploadUrl((data.uploadUrl as string) ?? '');
+      const uploadUrl = (data.uploadUrl as string) ?? '';
+      setLatestUploadUrl(uploadUrl);
+      if (uploadUrl && data.album?.id) {
+        setAlbumUploadLinks((prev) => ({ ...prev, [String(data.album.id)]: uploadUrl }));
+      }
       setSuccess(`Album "${data.album.name}" created.`);
       await load();
     } catch (err: unknown) {
@@ -333,6 +366,7 @@ export const GuestPhotoSharing: React.FC = () => {
                 const uploadCount = countsByAlbum.get(album.id) ?? 0;
                 const recents = recentByAlbum.get(album.id) ?? [];
                 const draft = windowDrafts[album.id] ?? { opensAt: '', closesAt: '' };
+                const knownUploadLink = albumUploadLinks[album.id] || '';
 
                 return (
                   <div key={album.id} className="rounded-lg border border-neutral-200 p-4">
@@ -366,6 +400,15 @@ export const GuestPhotoSharing: React.FC = () => {
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
+                          disabled={!knownUploadLink}
+                          onClick={() => void copyText(knownUploadLink, `uplink-${album.id}`)}
+                        >
+                          <Copy className="w-3 h-3 mr-1" />
+                          {copied === `uplink-${album.id}` ? 'Copied' : 'Copy link'}
+                        </Button>
+                        <Button
+                          size="sm"
                           variant={album.is_active ? 'outline' : 'accent'}
                           disabled={workingAlbumId === album.id}
                           onClick={() => void setAlbumActive(album.id, !album.is_active)}
@@ -376,7 +419,8 @@ export const GuestPhotoSharing: React.FC = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            const txt = encodeURIComponent(`Please upload your event photos here: ${latestUploadUrl || `${window.location.origin}/photos/upload`}`);
+                            const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
+                            const txt = encodeURIComponent(`Please upload your event photos here: ${shareUrl}`);
                             window.location.href = `/dashboard/messages?prefillSubject=Photo%20Upload%20Link&prefillBody=${txt}`;
                           }}
                         >
