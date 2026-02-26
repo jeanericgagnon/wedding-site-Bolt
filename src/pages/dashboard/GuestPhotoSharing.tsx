@@ -261,6 +261,24 @@ export const GuestPhotoSharing: React.FC = () => {
   const makeShareMessage = (albumName: string, link: string) =>
     `Please upload your ${albumName} photos here: ${link}`;
 
+  const copyAllShareMessages = async () => {
+    const lines = albums
+      .map((a) => {
+        const link = albumUploadLinks[a.id];
+        if (!link) return null;
+        return `${a.name}: ${makeShareMessage(a.name, link)}`;
+      })
+      .filter((v): v is string => typeof v === 'string');
+
+    if (lines.length === 0) {
+      setError('No share messages available yet. Generate links first.');
+      return;
+    }
+
+    await copyText(lines.join('\n\n'), 'all-share-messages');
+    setSuccess(`Copied ${lines.length} share message(s).`);
+  };
+
   const copyAllKnownLinks = async () => {
     const links = albums
       .map((a) => albumUploadLinks[a.id])
@@ -715,6 +733,9 @@ export const GuestPhotoSharing: React.FC = () => {
               </Button>
               <Button size="sm" variant="outline" onClick={() => void copyAllKnownLinks()}>
                 {copied === 'all-links' ? 'Copied all' : 'Copy all links'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void copyAllShareMessages()}>
+                {copied === 'all-share-messages' ? 'Copied messages' : 'Copy all messages'}
               </Button>
               <Button size="sm" variant="outline" onClick={() => void regenerateAllKnownAlbumLinks()} disabled={bulkRegenerating}>
                 {bulkRegenerating ? 'Rotating links...' : 'Rotate known links'}
