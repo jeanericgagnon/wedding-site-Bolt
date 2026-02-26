@@ -97,6 +97,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bulkCreating, setBulkCreating] = useState(false);
   const [bulkUpdatingStatus, setBulkUpdatingStatus] = useState(false);
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
+  const [bulkModerating, setBulkModerating] = useState(false);
 
   useEffect(() => {
     void load();
@@ -379,6 +380,56 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
+  const setUploadsHiddenByFilter = async (hide: boolean) => {
+    const target = uploads.filter((u) => (showFlaggedOnly ? u.is_flagged : true) && (showHidden || !u.is_hidden));
+    if (target.length === 0) {
+      setSuccess('No uploads match current filters.');
+      return;
+    }
+
+    try {
+      setBulkModerating(true);
+      setError(null);
+      const ids = target.map((u) => u.id);
+      const { error: updateError } = await supabase
+        .from('photo_uploads')
+        .update({ is_hidden: hide })
+        .in('id', ids);
+      if (updateError) throw updateError;
+      await load();
+      setSuccess(`${hide ? 'Hidden' : 'Unhidden'} ${ids.length} upload(s) from current view.`);
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Bulk moderation failed.');
+    } finally {
+      setBulkModerating(false);
+    }
+  };
+
+  const setUploadsFlaggedByFilter = async (flagged: boolean) => {
+    const target = uploads.filter((u) => (showHidden || !u.is_hidden));
+    if (target.length === 0) {
+      setSuccess('No uploads match current filters.');
+      return;
+    }
+
+    try {
+      setBulkModerating(true);
+      setError(null);
+      const ids = target.map((u) => u.id);
+      const { error: updateError } = await supabase
+        .from('photo_uploads')
+        .update({ is_flagged: flagged })
+        .in('id', ids);
+      if (updateError) throw updateError;
+      await load();
+      setSuccess(`${flagged ? 'Flagged' : 'Unflagged'} ${ids.length} upload(s) from current view.`);
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Bulk moderation failed.');
+    } finally {
+      setBulkModerating(false);
+    }
+  };
+
   const setAllAlbumsActive = async (isActive: boolean) => {
     const targetAlbums = albums.filter((a) => a.is_active !== isActive);
     if (targetAlbums.length === 0) {
@@ -637,6 +688,18 @@ export const GuestPhotoSharing: React.FC = () => {
               <Button size="sm" variant="outline" onClick={() => setShowHidden((v) => !v)}>
                 {showHidden ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
                 {showHidden ? 'Hide hidden items' : 'Show hidden items'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void setUploadsFlaggedByFilter(true)} disabled={bulkModerating}>
+                Flag visible
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void setUploadsFlaggedByFilter(false)} disabled={bulkModerating}>
+                Unflag visible
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void setUploadsHiddenByFilter(true)} disabled={bulkModerating}>
+                Hide visible
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void setUploadsHiddenByFilter(false)} disabled={bulkModerating}>
+                Unhide visible
               </Button>
             </div>
           </div>
