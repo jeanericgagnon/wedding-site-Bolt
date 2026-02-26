@@ -97,16 +97,20 @@ Deno.serve(async (req: Request) => {
     if (!siteId || !name) return fail("VALIDATION_ERROR", "siteId and name are required.", 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const appUrl = Deno.env.get("APP_PUBLIC_URL") ?? "https://dayof.love";
 
-    const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
-    const userClient = createClient(supabaseUrl, serviceRole);
+    if (!anonKey) return fail("SERVER_CONFIG_ERROR", "Missing SUPABASE_ANON_KEY in function env", 500);
+
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const {
       data: { user },
       error: userErr,
-    } = await userClient.auth.getUser(jwt);
+    } = await userClient.auth.getUser();
 
     if (userErr || !user) return fail("UNAUTHORIZED", userErr?.message ?? "Unauthorized", 401);
 
