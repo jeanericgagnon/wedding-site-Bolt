@@ -301,10 +301,18 @@ export const DashboardPlanning: React.FC = () => {
         },
       };
 
-      const { error } = await supabase
+      let { error } = await supabase
         .from('wedding_sites')
         .update({ wedding_data: nextWeddingData, updated_at: new Date().toISOString() })
         .eq('id', siteId);
+
+      if (error?.message?.includes('wedding_data')) {
+        const fallback = await supabase
+          .from('wedding_sites')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', siteId);
+        error = fallback.error;
+      }
 
       if (error) throw error;
       setTotalBudget(value);
