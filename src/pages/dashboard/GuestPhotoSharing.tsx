@@ -84,6 +84,8 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const [name, setName] = useState(search.get('eventName') ?? '');
   const [itineraryEventId, setItineraryEventId] = useState(search.get('eventId') ?? '');
+  const [albumSearch, setAlbumSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
 
   const [latestUploadUrl, setLatestUploadUrl] = useState<string>('');
   const [albumUploadLinks, setAlbumUploadLinks] = useState<Record<string, string>>(() => readStoredAlbumLinks());
@@ -234,10 +236,49 @@ export const GuestPhotoSharing: React.FC = () => {
     return `${window.location.origin}/site/${siteSlug}`;
   }, [siteSlug]);
 
+  const filteredAlbums = useMemo(() => {
+    const q = albumSearch.trim().toLowerCase();
+    return albums.filter((a) => {
+      const statusOk = statusFilter === 'all' || (statusFilter === 'active' ? a.is_active : !a.is_active);
+      const searchOk = !q || a.name.toLowerCase().includes(q) || a.slug.toLowerCase().includes(q);
+      return statusOk && searchOk;
+    });
+  }, [albums, albumSearch, statusFilter]);
+
   const missingItineraryEvents = useMemo(() => {
     const linked = new Set(albums.map((a) => a.itinerary_event_id).filter(Boolean));
     return events.filter((e) => !linked.has(e.id));
   }, [events, albums]);
+
+  const exportAlbumLinksCsv = () => {
+    const rows = albums
+      .map((a) => ({
+        name: a.name,
+        slug: a.slug,
+        status: a.is_active ? 'active' : 'paused',
+        upload_link: albumUploadLinks[a.id] || '',
+        drive_folder_url: a.drive_folder_url || '',
+      }))
+      .filter((r) => r.upload_link || r.drive_folder_url);
+
+    if (rows.length === 0) return;
+
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const lines = [
+      ['name', 'slug', 'status', 'upload_link', 'drive_folder_url'].join(','),
+      ...rows.map((r) => [esc(r.name), esc(r.slug), esc(r.status), esc(r.upload_link), esc(r.drive_folder_url)].join(',')),
+    ];
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'photo-album-links.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   const createMissingAlbumsFromItinerary = async () => {
     if (!siteId) return;
@@ -474,19 +515,43 @@ export const GuestPhotoSharing: React.FC = () => {
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-semibold text-neutral-900">Albums</h2>
-            <Button size="sm" variant="outline" onClick={() => setShowHidden((v) => !v)}>
-              {showHidden ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
-              {showHidden ? 'Hide hidden items' : 'Show hidden items'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={exportAlbumLinksCsv}>
+                Export album links
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowHidden((v) => !v)}>
+                {showHidden ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
+                {showHidden ? 'Hide hidden items' : 'Show hidden items'}
+              </Button>
+            </div>
+          </div>
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
+            <Input
+              value={albumSearch}
+              onChange={(e) => setAlbumSearch(e.target.value)}
+              placeholder="Search album name or slug"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'paused')}
+              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active only</option>
+              <option value="paused">Paused only</option>
+            </select>
+            <div className="text-xs text-neutral-500 flex items-center">{filteredAlbums.length} album(s)</div>
           </div>
 
           {loading ? (
             <p className="text-sm text-neutral-500">Loading albums…</p>
           ) : albums.length === 0 ? (
             <p className="text-sm text-neutral-600">No albums yet. Create your first album above.</p>
+          ) : filteredAlbums.length === 0 ? (
+            <p className="text-sm text-neutral-600">No albums match your current filters.</p>
           ) : (
             <div className="space-y-3">
-              {albums.map((album) => {
+              {filteredAlbums.map((album) => {
                 const uploadCount = countsByAlbum.get(album.id) ?? 0;
                 const hiddenCount = hiddenCountsByAlbum.get(album.id) ?? 0;
                 const flaggedCount = flaggedCountsByAlbum.get(album.id) ?? 0;
