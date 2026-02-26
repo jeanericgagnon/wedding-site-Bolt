@@ -256,83 +256,57 @@ const TimelessClassicPreview = () => (
 );
 
 const DestinationMinimalPreview = () => (
-  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#F3F8FA' }}>
-    <div className="h-[55%] relative overflow-hidden">
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#EEF6F8' }}>
+    <div className="h-[58%] relative overflow-hidden">
       <div className="absolute inset-0" style={{
-        background: 'linear-gradient(180deg, #1E5F6F 0%, #2A7A8C 40%, #4BAABC 80%, #E6F6F9 100%)',
+        background: 'linear-gradient(170deg, #124B59 0%, #1F6F82 50%, #49A5B8 100%)',
       }} />
-      <div className="absolute inset-0 opacity-20" style={{
-        backgroundImage: 'radial-gradient(circle at 60% 60%, rgba(255,255,255,0.3) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(75,170,188,0.4) 0%, transparent 40%)',
-      }} />
-      <div className="absolute bottom-0 left-0 right-0 h-8" style={{
-        background: 'linear-gradient(180deg, transparent 0%, #F3F8FA 100%)',
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(circle at 75% 18%, rgba(255,255,255,0.2) 0%, transparent 45%)',
       }} />
       <div className="absolute top-4 left-4">
-        <div className="text-[7px] text-white/70 tracking-[0.4em] uppercase mb-0.5">Destination</div>
-        <div className="text-white font-light text-[18px] leading-tight tracking-tight">
-          Mia &amp; Luca
-        </div>
-        <div className="text-white/50 text-[7px] tracking-widest mt-1">SANTORINI · JULY 2026</div>
+        <div className="text-[6px] text-white/75 tracking-[0.45em] uppercase mb-1">Destination Collection</div>
+        <div className="text-white font-light text-[20px] leading-tight tracking-tight">Mia &amp; Luca</div>
+        <div className="text-white/60 text-[6.5px] tracking-[0.25em] uppercase mt-1">Santorini · July 2026</div>
+      </div>
+      <div className="absolute bottom-3 right-3 rounded-full px-2.5 py-1" style={{ background: 'rgba(255,255,255,0.16)' }}>
+        <span className="text-[5.5px] uppercase tracking-[0.2em] text-white">Ocean View</span>
       </div>
     </div>
-    <div className="flex-1 px-4 py-3 flex flex-col justify-center">
-      <div className="flex gap-2 mb-2.5">
-        <div className="flex-1 rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: '#E4EFF2' }}>
-          <div className="w-4 h-3 rounded-sm" style={{ background: '#4BAABC' }} />
-          <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#356270' }}>Venue</span>
-        </div>
-        <div className="flex-1 rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: '#E4EFF2' }}>
-          <div className="w-4 h-3 rounded-sm" style={{ background: '#1E5F6F' }} />
-          <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#356270' }}>Travel</span>
-        </div>
-        <div className="flex-1 rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: '#E4EFF2' }}>
-          <div className="w-4 h-3 rounded-sm" style={{ background: '#4BAABC' }} />
-          <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#356270' }}>Hotels</span>
-        </div>
+    <div className="flex-1 px-4 py-3 flex flex-col justify-center gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        {['Venue', 'Travel', 'Stay'].map((x, i) => (
+          <div key={x} className="rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: i===1 ? '#DDEEF2' : '#E6F2F5' }}>
+            <div className="w-4 h-3 rounded-sm" style={{ background: i===1 ? '#1F6F82' : '#49A5B8' }} />
+            <span className="text-[5.5px] uppercase tracking-[0.16em]" style={{ color: '#2C5D68' }}>{x}</span>
+          </div>
+        ))}
       </div>
-      <div className="rounded-lg h-5 flex items-center justify-center" style={{ background: '#1E5F6F' }}>
-        <span className="text-[6px] text-white uppercase tracking-wider">RSVP Now</span>
+      <div className="rounded-lg h-6 flex items-center justify-center" style={{ background: '#124B59' }}>
+        <span className="text-[6px] text-white uppercase tracking-[0.22em]">Explore itinerary</span>
       </div>
     </div>
   </div>
 );
 
 const BoldContemporaryPreview = () => (
-  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#0C0A09' }}>
+  <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ background: '#090909' }}>
     <div className="flex-1 relative overflow-hidden">
-      <div className="absolute inset-0" style={{
-        background: 'linear-gradient(135deg, #1C1917 0%, #0C0A09 100%)',
-      }} />
-      <div
-        className="absolute top-0 right-0 bottom-0 w-[55%]"
-        style={{
-          background: 'linear-gradient(135deg, #2C2520 0%, #1C1714 100%)',
-          clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0% 100%)',
-        }}
-      />
-      <div className="absolute inset-0" style={{
-        background: 'radial-gradient(ellipse at 80% 30%, rgba(200,169,110,0.06) 0%, transparent 50%)',
-      }} />
-      <div className="absolute bottom-6 left-4 right-4">
-        <div className="text-[7px] tracking-[0.5em] uppercase mb-1.5" style={{ color: 'rgba(255,255,255,0.2)' }}>NYC · 2026</div>
-        <div className="font-black uppercase leading-none" style={{
-          color: '#FFFFFF',
-          fontSize: '28px',
-          letterSpacing: '-0.02em',
-          lineHeight: 1,
-        }}>
-          JADE<br />&amp; MAX
-        </div>
-        <div className="flex items-center gap-2 mt-2.5">
-          <div className="h-px flex-1" style={{ background: 'rgba(200,169,110,0.3)' }} />
-          <span className="text-[6px] uppercase tracking-[0.3em]" style={{ color: 'rgba(200,169,110,0.5)' }}>Brooklyn · September</span>
-        </div>
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(125deg, #111111 0%, #171717 55%, #0D0D0D 100%)' }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 78% 22%, rgba(255,87,34,0.22) 0%, transparent 40%)' }} />
+      <div className="absolute top-3 left-3 text-[6px] uppercase tracking-[0.42em]" style={{ color: '#FF825C' }}>Bold Series</div>
+      <div className="absolute bottom-5 left-4 right-4">
+        <div className="font-black uppercase leading-[0.92]" style={{ color: '#FFFFFF', fontSize: '30px', letterSpacing: '-0.03em' }}>NOVA<br/>&amp; KAI</div>
+        <div className="mt-2 text-[6px] uppercase tracking-[0.34em]" style={{ color: '#FF9A76' }}>Los Angeles · 2026</div>
+      </div>
+      <div className="absolute top-10 right-3 rounded px-2 py-1" style={{ background: '#FF5F2B' }}>
+        <span className="text-[5.5px] uppercase tracking-[0.2em] text-white">New</span>
       </div>
     </div>
-    <div className="h-11 grid grid-cols-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-      {['Sched.', 'Gallery', 'Venue', 'RSVP'].map(s => (
-        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#111110' }}>
-          <span className="text-[6px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.2)' }}>{s}</span>
+    <div className="h-11 grid grid-cols-4 border-t" style={{ borderColor: '#242424', background: '#111111' }}>
+      {['Plan', 'Photos', 'Venue', 'RSVP'].map(s => (
+        <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#242424' }}>
+          <span className="text-[6px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#B8B8B8' }}>{s}</span>
         </div>
       ))}
     </div>
