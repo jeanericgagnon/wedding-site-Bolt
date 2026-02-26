@@ -736,8 +736,9 @@ export const GuestPhotoSharing: React.FC = () => {
                           variant="outline"
                           onClick={() => {
                             const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
-                            const txt = encodeURIComponent(`Please upload your event photos here: ${shareUrl}`);
-                            window.location.href = `/dashboard/messages?prefillSubject=Photo%20Upload%20Link&prefillBody=${txt}`;
+                            const subject = encodeURIComponent(`${album.name} photos upload`);
+                            const body = encodeURIComponent(`Please upload your ${album.name} photos here: ${shareUrl}`);
+                            window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
                           }}
                         >
                           <Mail className="w-3 h-3 mr-1" /> Share
