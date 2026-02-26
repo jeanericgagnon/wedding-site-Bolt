@@ -111,10 +111,30 @@ export const GuestPhotoSharing: React.FC = () => {
   const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke(fnName, { body });
     if (error) {
-      const maybe = data as { error?: string; code?: string } | null;
-      const code = maybe?.code ? ` (${maybe.code})` : '';
-      const message = maybe?.error || error.message || 'Request failed';
-      throw new Error(`${message}${code}`);
+      let msg = error.message || 'Request failed';
+      let code = '';
+
+      const ctx = (error as unknown as { context?: Response }).context;
+      if (ctx) {
+        try {
+          const payload = await ctx.clone().json() as { error?: string; code?: string; message?: string };
+          msg = payload.error || payload.message || msg;
+          if (payload.code) code = ` (${payload.code})`;
+        } catch {
+          try {
+            const text = await ctx.clone().text();
+            if (text) msg = text;
+          } catch {
+            // ignore
+          }
+        }
+      } else {
+        const maybe = data as { error?: string; code?: string; message?: string } | null;
+        msg = maybe?.error || maybe?.message || msg;
+        if (maybe?.code) code = ` (${maybe.code})`;
+      }
+
+      throw new Error(`${msg}${code}`);
     }
     return data;
   };
@@ -317,10 +337,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const updated: Record<string, string> = {};
 
       for (const album of targetAlbums) {
-        const { data, error: fnError } = await supabase.functions.invoke('photo-album-manage', {
-          body: { action: 'regenerate_link', albumId: album.id },
-        });
-        if (fnError) throw fnError;
+        const data = await invokeOrThrow('photo-album-manage', { action: 'regenerate_link', albumId: album.id });
         const link = typeof data?.uploadUrl === 'string' ? data.uploadUrl : '';
         if (link) updated[album.id] = link;
       }
@@ -414,20 +431,11 @@ export const GuestPhotoSharing: React.FC = () => {
       const links: Record<string, string> = {};
 
       for (const event of missingItineraryEvents) {
-        const { data, error: fnError } = await supabase.functions.invoke('photo-album-create', {
-          body: {
-            siteId,
-            name: event.event_name,
-            itineraryEventId: event.id,
-          },
+        const data = await invokeOrThrow('photo-album-create', {
+          siteId,
+          name: event.event_name,
+          itineraryEventId: event.id,
         });
-
-        if (fnError) {
-          const maybe = data as { error?: string; code?: string } | null;
-          const msg = maybe?.error || fnError.message || 'Album create failed';
-          const code = maybe?.code ? ` (${maybe.code})` : '';
-          throw new Error(`${msg}${code}`);
-        }
         if (data?.album?.id) {
           created.push(event.event_name);
           if (typeof data.uploadUrl === 'string' && data.uploadUrl) {
@@ -460,10 +468,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setBulkModerating(true);
       setError(null);
       const ids = target.map((u) => u.id);
-      const { error: fnError } = await supabase.functions.invoke('photo-upload-moderate', {
-        body: { uploadIds: ids, patch: { is_hidden: hide } },
-      });
-      if (fnError) throw fnError;
+      await invokeOrThrow('photo-upload-moderate', { uploadIds: ids, patch: { is_hidden: hide } });
       await load();
       setSuccess(`${hide ? 'Hidden' : 'Unhidden'} ${ids.length} upload(s) from current view.`);
     } catch (err: unknown) {
@@ -484,10 +489,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setBulkModerating(true);
       setError(null);
       const ids = target.map((u) => u.id);
-      const { error: fnError } = await supabase.functions.invoke('photo-upload-moderate', {
-        body: { uploadIds: ids, patch: { is_flagged: flagged } },
-      });
-      if (fnError) throw fnError;
+      await invokeOrThrow('photo-upload-moderate', { uploadIds: ids, patch: { is_flagged: flagged } });
       await load();
       setSuccess(`${flagged ? 'Flagged' : 'Unflagged'} ${ids.length} upload(s) from current view.`);
     } catch (err: unknown) {
@@ -510,10 +512,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSuccess(null);
 
       for (const album of targetAlbums) {
-        const { error: fnError } = await supabase.functions.invoke('photo-album-manage', {
-          body: { action: 'set_active', albumId: album.id, isActive },
-        });
-        if (fnError) throw fnError;
+        await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId: album.id, isActive });
       }
 
       await load();
@@ -528,10 +527,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const moderateUpload = async (uploadId: string, patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged'>>) => {
     try {
       setError(null);
-      const { error: fnError } = await supabase.functions.invoke('photo-upload-moderate', {
-        body: { uploadIds: [uploadId], patch },
-      });
-      if (fnError) throw fnError;
+      await invokeOrThrow('photo-upload-moderate', { uploadIds: [uploadId], patch });
       await load();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to update upload moderation status.');
@@ -542,10 +538,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setWorkingAlbumId(albumId);
       setError(null);
-      const { error: fnError } = await supabase.functions.invoke('photo-album-manage', {
-        body: { action: 'set_active', albumId, isActive },
-      });
-      if (fnError) throw fnError;
+      await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId, isActive });
       await load();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to update album status.');
@@ -559,10 +552,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setWorkingAlbumId(albumId);
       setError(null);
       setSuccess(null);
-      const { data, error: fnError } = await supabase.functions.invoke('photo-album-manage', {
-        body: { action: 'regenerate_link', albumId },
-      });
-      if (fnError) throw fnError;
+      const data = await invokeOrThrow('photo-album-manage', { action: 'regenerate_link', albumId });
       const uploadUrl = (data?.uploadUrl as string) ?? '';
       setLatestUploadUrl(uploadUrl);
       if (uploadUrl) {
@@ -608,10 +598,7 @@ export const GuestPhotoSharing: React.FC = () => {
       if (opensAt && closesAt && new Date(closesAt) <= new Date(opensAt)) {
         throw new Error('Close time must be after open time.');
       }
-      const { error: fnError } = await supabase.functions.invoke('photo-album-manage', {
-        body: { action: 'set_window', albumId, opensAt, closesAt },
-      });
-      if (fnError) throw fnError;
+      await invokeOrThrow('photo-album-manage', { action: 'set_window', albumId, opensAt, closesAt });
       setSuccess('Upload window saved.');
       await load();
     } catch (err: unknown) {
@@ -633,20 +620,11 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      const { data, error: fnError } = await supabase.functions.invoke('photo-album-create', {
-        body: {
-          siteId,
-          name: name.trim(),
-          itineraryEventId: itineraryEventId || null,
-        },
+      const data = await invokeOrThrow('photo-album-create', {
+        siteId,
+        name: name.trim(),
+        itineraryEventId: itineraryEventId || null,
       });
-
-      if (fnError) {
-        const maybe = data as { error?: string; code?: string } | null;
-        const msg = maybe?.error || fnError.message || 'Album creation failed';
-        const code = maybe?.code ? ` (${maybe.code})` : '';
-        throw new Error(`${msg}${code}`);
-      }
       if (!data?.album?.id) throw new Error('Album creation failed.');
 
       const uploadUrl = (data.uploadUrl as string) ?? '';
