@@ -13,6 +13,7 @@ const WeddingStatus = lazy(() => import('./pages/onboarding/WeddingStatus').then
 const Celebration = lazy(() => import('./pages/onboarding/Celebration').then(m => ({ default: m.Celebration })));
 const QuickStart = lazy(() => import('./pages/onboarding/QuickStart').then(m => ({ default: m.QuickStart })));
 const GuidedSetup = lazy(() => import('./pages/onboarding/GuidedSetup').then(m => ({ default: m.GuidedSetup })));
+const SetupShell = lazy(() => import('./pages/setup/SetupShell').then(m => ({ default: m.SetupShell })));
 const RSVP = lazy(() => import('./pages/RSVP'));
 const EventRSVP = lazy(() => import('./pages/EventRSVP'));
 const GuestContactUpdate = lazy(() => import('./pages/GuestContactUpdate'));
@@ -132,6 +133,22 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <GuidedSetup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup"
+          element={
+            <ProtectedRoute>
+              <SetupShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/:step"
+          element={
+            <ProtectedRoute>
+              <SetupShell />
             </ProtectedRoute>
           }
         />
