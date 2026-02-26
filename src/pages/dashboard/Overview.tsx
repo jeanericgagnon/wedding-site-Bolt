@@ -542,48 +542,6 @@ export const DashboardOverview: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Quick actions</CardTitle>
-                <CardDescription>Jump to key sections of your dashboard</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Button
-                    variant="outline"
-                    size="md"
-                    fullWidth
-                    onClick={() => navigate('/dashboard/guests')}
-                  >
-                    Manage Guests
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="md"
-                    fullWidth
-                    onClick={() => navigate('/dashboard/messages')}
-                  >
-                    Send Message
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="md"
-                    fullWidth
-                    onClick={() => navigate('/dashboard/registry')}
-                  >
-                    Registry
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="md"
-                    fullWidth
-                    onClick={() => navigate('/dashboard/settings')}
-                  >
-                    Settings
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </>
         )}
       </div>

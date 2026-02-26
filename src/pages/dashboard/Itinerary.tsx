@@ -122,8 +122,15 @@ export const DashboardItinerary: React.FC = () => {
 
       if (error) throw error;
 
+      const normalizedEvents = (eventsData || []).map((event: Record<string, unknown>) => ({
+        ...event,
+        event_name: (event.event_name as string) || (event.title as string) || 'Event',
+        display_order: (event.display_order as number) ?? (event.sort_order as number) ?? 0,
+        is_visible: (event.is_visible as boolean) ?? true,
+      }));
+
       const eventsWithCounts = await Promise.all(
-        (eventsData || []).map(async (event) => {
+        normalizedEvents.map(async (event) => {
           const { count: inviteCount } = await supabase
             .from('event_invitations')
             .select('*', { count: 'exact', head: true })
@@ -224,30 +231,89 @@ export const DashboardItinerary: React.FC = () => {
 
       if (!site) return;
 
+      const payload: Record<string, unknown> = {
+        ...formData,
+        event_name: formData.event_name,
+        title: formData.event_name,
+      };
+
       if (editingEvent) {
-        const { error } = await supabase
+        let { error } = await supabase
           .from('itinerary_events')
-          .update(formData)
+          .update(payload)
           .eq('id', editingEvent.id);
+
+        if (error?.message?.includes('event_name')) {
+          const fallbackPayload = { ...payload };
+          delete fallbackPayload.event_name;
+
+          const result = await supabase
+            .from('itinerary_events')
+            .update(fallbackPayload)
+            .eq('id', editingEvent.id);
+          error = result.error;
+        }
+
+        if (error?.message?.includes('is_visible')) {
+          const fallbackPayload = { ...payload };
+          delete fallbackPayload.is_visible;
+
+          const result = await supabase
+            .from('itinerary_events')
+            .update(fallbackPayload)
+            .eq('id', editingEvent.id);
+          error = result.error;
+        }
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        let { error } = await supabase
           .from('itinerary_events')
           .insert([
             {
-              ...formData,
+              ...payload,
               wedding_site_id: site.id,
             },
           ]);
+
+        if (error?.message?.includes('event_name')) {
+          const fallbackPayload = { ...payload };
+          delete fallbackPayload.event_name;
+
+          const result = await supabase
+            .from('itinerary_events')
+            .insert([
+              {
+                ...fallbackPayload,
+                wedding_site_id: site.id,
+              },
+            ]);
+          error = result.error;
+        }
+
+        if (error?.message?.includes('is_visible')) {
+          const fallbackPayload = { ...payload };
+          delete fallbackPayload.is_visible;
+
+          const result = await supabase
+            .from('itinerary_events')
+            .insert([
+              {
+                ...fallbackPayload,
+                wedding_site_id: site.id,
+              },
+            ]);
+          error = result.error;
+        }
 
         if (error) throw error;
       }
 
       setShowEventForm(false);
       loadEvents();
-    } catch {
-      alert('Failed to save event. Please try again.');
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || 'Failed to save event. Please try again.';
+      alert(message);
     }
   }
 
