@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon } from 'lucide-react';
+import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
@@ -21,7 +21,26 @@ type PhotoAlbumRow = {
   is_active: boolean;
   created_at: string;
   itinerary_event_id: string | null;
+  opens_at: string | null;
+  closes_at: string | null;
 };
+
+type PhotoUploadRow = {
+  id: string;
+  photo_album_id: string;
+  original_filename: string;
+  guest_name: string | null;
+  uploaded_at: string;
+};
+
+const toDatetimeLocal = (iso: string | null): string => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const fromDatetimeLocal = (v: string): string | null => (v.trim() ? new Date(v).toISOString() : null);
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -36,6 +55,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [events, setEvents] = useState<ItineraryEvent[]>([]);
   const [albums, setAlbums] = useState<PhotoAlbumRow[]>([]);
+  const [uploads, setUploads] = useState<PhotoUploadRow[]>([]);
 
   const [name, setName] = useState(search.get('eventName') ?? '');
   const [itineraryEventId, setItineraryEventId] = useState(search.get('eventId') ?? '');
@@ -43,6 +63,8 @@ export const GuestPhotoSharing: React.FC = () => {
   const [latestUploadUrl, setLatestUploadUrl] = useState<string>('');
   const [copied, setCopied] = useState<string>('');
   const [workingAlbumId, setWorkingAlbumId] = useState<string>('');
+
+  const [windowDrafts, setWindowDrafts] = useState<Record<string, { opensAt: string; closesAt: string }>>({});
 
   useEffect(() => {
     void load();
@@ -69,7 +91,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSiteId(site.id as string);
       setSiteSlug((site.site_slug as string) ?? null);
 
-      const [{ data: eventsData }, { data: albumData }] = await Promise.all([
+      const [{ data: eventsData }, { data: albumData }, { data: uploadsData }] = await Promise.all([
         supabase
           .from('itinerary_events')
           .select('id,event_name,event_date')
@@ -78,19 +100,52 @@ export const GuestPhotoSharing: React.FC = () => {
           .order('start_time', { ascending: true }),
         supabase
           .from('photo_albums')
-          .select('id,name,slug,drive_folder_url,is_active,created_at,itinerary_event_id')
+          .select('id,name,slug,drive_folder_url,is_active,created_at,itinerary_event_id,opens_at,closes_at')
           .eq('wedding_site_id', site.id)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('photo_uploads')
+          .select('id,photo_album_id,original_filename,guest_name,uploaded_at')
+          .eq('wedding_site_id', site.id)
+          .order('uploaded_at', { ascending: false })
+          .limit(200),
       ]);
 
+      const nextAlbums = (albumData as PhotoAlbumRow[] | null) ?? [];
       setEvents((eventsData as ItineraryEvent[] | null) ?? []);
-      setAlbums((albumData as PhotoAlbumRow[] | null) ?? []);
+      setAlbums(nextAlbums);
+      setUploads((uploadsData as PhotoUploadRow[] | null) ?? []);
+
+      const nextDrafts: Record<string, { opensAt: string; closesAt: string }> = {};
+      nextAlbums.forEach((a) => {
+        nextDrafts[a.id] = {
+          opensAt: toDatetimeLocal(a.opens_at),
+          closesAt: toDatetimeLocal(a.closes_at),
+        };
+      });
+      setWindowDrafts(nextDrafts);
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to load photo sharing.');
     } finally {
       setLoading(false);
     }
   }
+
+  const countsByAlbum = useMemo(() => {
+    const m = new Map<string, number>();
+    uploads.forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
+    return m;
+  }, [uploads]);
+
+  const recentByAlbum = useMemo(() => {
+    const m = new Map<string, PhotoUploadRow[]>();
+    uploads.forEach((u) => {
+      const arr = m.get(u.photo_album_id) ?? [];
+      if (arr.length < 3) arr.push(u);
+      m.set(u.photo_album_id, arr);
+    });
+    return m;
+  }, [uploads]);
 
   const copyText = async (value: string, key: string) => {
     try {
@@ -138,6 +193,30 @@ export const GuestPhotoSharing: React.FC = () => {
       await load();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to regenerate upload link.');
+    } finally {
+      setWorkingAlbumId('');
+    }
+  };
+
+  const saveWindow = async (albumId: string) => {
+    try {
+      setWorkingAlbumId(albumId);
+      setError(null);
+      setSuccess(null);
+      const draft = windowDrafts[albumId] ?? { opensAt: '', closesAt: '' };
+      const opensAt = fromDatetimeLocal(draft.opensAt);
+      const closesAt = fromDatetimeLocal(draft.closesAt);
+      if (opensAt && closesAt && new Date(closesAt) <= new Date(opensAt)) {
+        throw new Error('Close time must be after open time.');
+      }
+      const { error: fnError } = await supabase.functions.invoke('photo-album-manage', {
+        body: { action: 'set_window', albumId, opensAt, closesAt },
+      });
+      if (fnError) throw fnError;
+      setSuccess('Upload window saved.');
+      await load();
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Failed to save upload window.');
     } finally {
       setWorkingAlbumId('');
     }
@@ -230,7 +309,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
           {latestUploadUrl && (
             <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-              <p className="text-sm font-medium text-emerald-900 mb-1">New upload link</p>
+              <p className="text-sm font-medium text-emerald-900 mb-1">Latest upload link</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs text-emerald-800 break-all">{latestUploadUrl}</code>
                 <Button size="sm" variant="outline" onClick={() => copyText(latestUploadUrl, 'latest')}>
@@ -250,54 +329,104 @@ export const GuestPhotoSharing: React.FC = () => {
             <p className="text-sm text-neutral-600">No albums yet. Create your first album above.</p>
           ) : (
             <div className="space-y-3">
-              {albums.map((album) => (
-                <div key={album.id} className="rounded-lg border border-neutral-200 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-neutral-900">{album.name}</p>
-                      <p className="text-xs text-neutral-500">Created {new Date(album.created_at).toLocaleString()}</p>
-                      <div className="mt-1 text-xs text-neutral-500 flex items-center gap-2">
-                        <span className={`inline-flex rounded px-2 py-0.5 ${album.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>
-                          {album.is_active ? 'Active' : 'Paused'}
-                        </span>
-                        <span>slug: {album.slug}</span>
+              {albums.map((album) => {
+                const uploadCount = countsByAlbum.get(album.id) ?? 0;
+                const recents = recentByAlbum.get(album.id) ?? [];
+                const draft = windowDrafts[album.id] ?? { opensAt: '', closesAt: '' };
+
+                return (
+                  <div key={album.id} className="rounded-lg border border-neutral-200 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-neutral-900">{album.name}</p>
+                        <p className="text-xs text-neutral-500">Created {new Date(album.created_at).toLocaleString()}</p>
+                        <div className="mt-1 text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
+                          <span className={`inline-flex rounded px-2 py-0.5 ${album.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>
+                            {album.is_active ? 'Active' : 'Paused'}
+                          </span>
+                          <span>{uploadCount} uploads</span>
+                          <span>slug: {album.slug}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {album.drive_folder_url && (
+                          <Button size="sm" variant="outline" onClick={() => window.open(album.drive_folder_url!, '_blank')}>
+                            <ExternalLink className="w-3 h-3 mr-1" /> Drive
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={workingAlbumId === album.id}
+                          onClick={() => void regenerateLink(album.id)}
+                        >
+                          <LinkIcon className="w-3 h-3 mr-1" />
+                          {workingAlbumId === album.id ? 'Working...' : 'Regenerate link'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={album.is_active ? 'outline' : 'accent'}
+                          disabled={workingAlbumId === album.id}
+                          onClick={() => void setAlbumActive(album.id, !album.is_active)}
+                        >
+                          {workingAlbumId === album.id ? 'Working...' : album.is_active ? 'Pause' : 'Activate'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const txt = encodeURIComponent(`Please upload your event photos here: ${latestUploadUrl || `${window.location.origin}/photos/upload`}`);
+                            window.location.href = `/dashboard/messages?prefillSubject=Photo%20Upload%20Link&prefillBody=${txt}`;
+                          }}
+                        >
+                          <Mail className="w-3 h-3 mr-1" /> Share
+                        </Button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                      {album.drive_folder_url && (
-                        <Button size="sm" variant="outline" onClick={() => window.open(album.drive_folder_url!, '_blank')}>
-                          <ExternalLink className="w-3 h-3 mr-1" /> Drive
+                    <div className="mt-3 rounded-md border border-neutral-200 p-3 bg-neutral-50">
+                      <div className="flex items-center gap-2 mb-2 text-xs font-medium text-neutral-700">
+                        <CalendarClock className="w-3.5 h-3.5" /> Upload window
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+                        <div>
+                          <label className="block text-xs text-neutral-500 mb-1">Opens</label>
+                          <Input
+                            type="datetime-local"
+                            value={draft.opensAt}
+                            onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [album.id]: { ...draft, opensAt: e.target.value } }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-neutral-500 mb-1">Closes</label>
+                          <Input
+                            type="datetime-local"
+                            value={draft.closesAt}
+                            onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [album.id]: { ...draft, closesAt: e.target.value } }))}
+                          />
+                        </div>
+                        <Button size="sm" variant="outline" disabled={workingAlbumId === album.id} onClick={() => void saveWindow(album.id)}>
+                          {workingAlbumId === album.id ? 'Saving...' : 'Save window'}
                         </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => copyText(`${window.location.origin}/photos/upload`, album.id)}
-                      >
-                        <LinkIcon className="w-3 h-3 mr-1" />
-                        {copied === album.id ? 'Copied' : 'Copy upload page'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={workingAlbumId === album.id}
-                        onClick={() => void regenerateLink(album.id)}
-                      >
-                        {workingAlbumId === album.id ? 'Working...' : 'Regenerate link'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={album.is_active ? 'outline' : 'accent'}
-                        disabled={workingAlbumId === album.id}
-                        onClick={() => void setAlbumActive(album.id, !album.is_active)}
-                      >
-                        {workingAlbumId === album.id ? 'Working...' : album.is_active ? 'Pause' : 'Activate'}
-                      </Button>
+                      </div>
                     </div>
+
+                    {recents.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-medium text-neutral-700 mb-1">Recent uploads</p>
+                        <ul className="space-y-1 text-xs text-neutral-600">
+                          {recents.map((u) => (
+                            <li key={u.id}>
+                              {u.original_filename} · {u.guest_name || 'Guest'} · {new Date(u.uploaded_at).toLocaleString()}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>

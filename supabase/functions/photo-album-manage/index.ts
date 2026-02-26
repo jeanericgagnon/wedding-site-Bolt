@@ -36,6 +36,8 @@ Deno.serve(async (req: Request) => {
     const action = typeof body.action === "string" ? body.action : "";
     const albumId = typeof body.albumId === "string" ? body.albumId : "";
     const isActive = typeof body.isActive === "boolean" ? body.isActive : null;
+    const opensAt = typeof body.opensAt === "string" ? body.opensAt : null;
+    const closesAt = typeof body.closesAt === "string" ? body.closesAt : null;
 
     if (!albumId) return json({ error: "albumId is required" }, 400);
 
@@ -80,6 +82,15 @@ Deno.serve(async (req: Request) => {
         .eq("id", albumId);
       if (error) return json({ error: error.message }, 400);
       return json({ success: true, albumId, isActive });
+    }
+
+    if (action === "set_window") {
+      const { error } = await admin
+        .from("photo_albums")
+        .update({ opens_at: opensAt, closes_at: closesAt })
+        .eq("id", albumId);
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true, albumId, opensAt, closesAt });
     }
 
     if (action === "regenerate_link") {
