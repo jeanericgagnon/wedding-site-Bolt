@@ -9,7 +9,7 @@ interface CoupleNames {
 
 interface OnboardingMapperInput {
   coupleNames: CoupleNames;
-  planningStatus: 'guided_setup_complete' | 'quick_start_complete';
+  planningStatus: 'guided_setup_in_progress' | 'guided_setup_complete' | 'quick_start_complete';
   template: string;
   colorScheme?: string;
   weddingDate?: string;

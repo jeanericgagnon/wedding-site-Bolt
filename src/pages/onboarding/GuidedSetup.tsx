@@ -126,10 +126,50 @@ export const GuidedSetup: React.FC = () => {
     setError('');
   };
 
-  const handleNext = () => {
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex < steps.length) {
-      setCurrentStep(steps[nextIndex]);
+  const persistSectionProgress = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const updateData = buildOnboardingUpdateData({
+      coupleNames,
+      planningStatus: 'guided_setup_in_progress',
+      template: formData.template,
+      colorScheme: formData.colorScheme,
+      weddingDate: formData.weddingDate,
+      venue: formData.venue,
+      city: formData.city,
+      ourStory: formData.ourStory,
+      ceremonyTime: formData.ceremonyTime,
+      receptionTime: formData.receptionTime,
+      attire: formData.attire,
+      hotelRecommendations: formData.hotelRecommendations,
+      parking: formData.parking,
+      rsvpDeadline: formData.rsvpDeadline,
+      registryLinks: formData.registryLinks,
+      customFaqs: formData.customFaqs,
+    });
+
+    const { error: updateError } = await supabase
+      .from('wedding_sites')
+      .update(updateData)
+      .eq('user_id', user.id);
+
+    if (updateError) throw updateError;
+  };
+
+  const handleNext = async () => {
+    try {
+      setError('');
+      if (!['welcome', 'complete'].includes(currentStep)) {
+        await persistSectionProgress();
+      }
+
+      const nextIndex = currentStepIndex + 1;
+      if (nextIndex < steps.length) {
+        setCurrentStep(steps[nextIndex]);
+      }
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Could not save this step. Please try again.');
     }
   };
 
@@ -140,8 +180,8 @@ export const GuidedSetup: React.FC = () => {
     }
   };
 
-  const handleSkip = () => {
-    handleNext();
+  const handleSkip = async () => {
+    await handleNext();
   };
 
   const handleComplete = async () => {
