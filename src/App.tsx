@@ -37,6 +37,7 @@ const PaymentRequired = lazy(() => import('./pages/PaymentRequired').then(m => (
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ default: m.PaymentSuccess })));
 const VaultContribute = lazy(() => import('./pages/VaultContribute').then(m => ({ default: m.VaultContribute })));
 const BuilderV2Lab = lazy(() => import('./pages/BuilderV2Lab').then(m => ({ default: m.BuilderV2Lab })));
+const PhotoUpload = lazy(() => import('./pages/PhotoUpload').then(m => ({ default: m.PhotoUpload })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -65,6 +66,7 @@ const AppContent = () => {
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />
         <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
+        <Route path="/photos/upload" element={<PhotoUpload />} />
         <Route path="/rsvp" element={<RSVP />} />
         <Route path="/events" element={<EventRSVP />} />
         <Route path="/guest-contact/:token" element={<GuestContactUpdate />} />
