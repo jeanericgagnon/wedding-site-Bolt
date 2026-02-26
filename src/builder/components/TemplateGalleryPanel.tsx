@@ -46,6 +46,12 @@ const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
 const RECOMMENDED_TEMPLATE_IDS = ['modern-luxe', 'editorial-romance', 'timeless-classic', 'destination-minimal'];
 const TEMPLATE_USAGE_KEY = 'dayof_template_usage_v1';
 
+const COLOR_FILTERS = ['all', 'light', 'dark', 'neutral', 'warm', 'cool'] as const;
+type ColorFilter = (typeof COLOR_FILTERS)[number];
+
+const SEASON_FILTERS = ['all', 'spring', 'summer', 'fall', 'winter'] as const;
+type SeasonFilter = (typeof SEASON_FILTERS)[number];
+
 interface TemplateGalleryPanelProps {
   onSaveRequest?: () => void;
 }
@@ -75,6 +81,46 @@ const bumpTemplateUsage = (templateId: string) => {
   } catch {
     // non-blocking
   }
+};
+
+const hexToRgb = (hex: string) => {
+  const normalized = hex.replace('#', '');
+  const full = normalized.length === 3
+    ? normalized.split('').map((c) => c + c).join('')
+    : normalized;
+  const value = Number.parseInt(full, 16);
+  if (Number.isNaN(value)) return { r: 128, g: 128, b: 128 };
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+};
+
+const classifyColor = (hex: string): ColorFilter => {
+  const { r, g, b } = hexToRgb(hex);
+  const max = Math.max(r, g, b) / 255;
+  const min = Math.min(r, g, b) / 255;
+  const lightness = (max + min) / 2;
+
+  if (lightness >= 0.78) return 'light';
+  if (lightness <= 0.28) return 'dark';
+
+  const chroma = max - min;
+  if (chroma < 0.12) return 'neutral';
+
+  if (r >= g && r >= b) return 'warm';
+  if (b >= r && b >= g) return 'cool';
+  return g >= b ? 'warm' : 'cool';
+};
+
+const inferSeason = (template: BuilderTemplateDefinition): SeasonFilter => {
+  const tags = new Set(template.moodTags);
+  if (tags.has('floral') || tags.has('garden')) return 'spring';
+  if (tags.has('destination') || tags.has('photo')) return 'summer';
+  if (tags.has('classic') || tags.has('editorial') || tags.has('luxe')) return 'fall';
+  if (tags.has('minimal') || tags.has('modern')) return 'winter';
+  return 'all';
 };
 
 const ModernLuxePreview = () => (
@@ -431,6 +477,8 @@ const FONT_LABELS: Record<string, string> = {
 export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSaveRequest }) => {
   const { state, dispatch } = useBuilderContext();
   const [activeFilter, setActiveFilter] = useState<TemplateMoodTag | 'all'>('all');
+  const [activeColorFilter, setActiveColorFilter] = useState<ColorFilter>('all');
+  const [activeSeasonFilter, setActiveSeasonFilter] = useState<SeasonFilter>('all');
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
   const [confirmTemplate, setConfirmTemplate] = useState<BuilderTemplateDefinition | null>(null);
   const [applyResult, setApplyResult] = useState<ApplyResult | null>(null);
@@ -456,10 +504,15 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     return (merged.length > 0 ? merged : templates).slice(0, 4);
   }, [templates]);
 
-  const filtered =
-    activeFilter === 'all'
-      ? templates
-      : templates.filter(t => t.moodTags.includes(activeFilter));
+  const filtered = templates.filter((t) => {
+    const moodOk = activeFilter === 'all' || t.moodTags.includes(activeFilter);
+    const firstDot = (THEME_DOTS[t.id] || ['#999999'])[0];
+    const colorClass = classifyColor(firstDot);
+    const colorOk = activeColorFilter === 'all' || colorClass === activeColorFilter;
+    const seasonClass = inferSeason(t);
+    const seasonOk = activeSeasonFilter === 'all' || seasonClass === activeSeasonFilter;
+    return moodOk && colorOk && seasonOk;
+  });
 
   const currentTemplateId = state.project?.templateId;
   const activePage = selectActivePage(state);
@@ -574,20 +627,56 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </button>
         </div>
 
-        <div className="flex gap-1.5 px-7 py-3 border-b border-gray-50 overflow-x-auto">
-          {MOOD_FILTERS.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setActiveFilter(f.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeFilter === f.id
-                  ? 'bg-gray-900 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="px-7 py-3 border-b border-gray-50 space-y-2">
+          <div className="flex gap-1.5 overflow-x-auto">
+            {MOOD_FILTERS.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setActiveFilter(f.id)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                  activeFilter === f.id
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-gray-500">Color</span>
+            {COLOR_FILTERS.map((f) => (
+              <button
+                key={`color-${f}`}
+                onClick={() => setActiveColorFilter(f)}
+                className={`px-2.5 py-1 rounded-full border transition-colors ${
+                  activeColorFilter === f
+                    ? 'bg-rose-50 border-rose-200 text-rose-700'
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-gray-500">Season</span>
+            {SEASON_FILTERS.map((f) => (
+              <button
+                key={`season-${f}`}
+                onClick={() => setActiveSeasonFilter(f)}
+                className={`px-2.5 py-1 rounded-full border transition-colors ${
+                  activeSeasonFilter === f
+                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-7">
