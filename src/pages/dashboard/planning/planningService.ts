@@ -1,5 +1,48 @@
 import { supabase } from '../../../lib/supabase';
 
+async function insertWithDriftFallback<T extends Record<string, unknown>>(
+  table: string,
+  payload: T,
+  driftFields: string[]
+) {
+  const mutablePayload: Record<string, unknown> = { ...payload };
+  let error: { message?: string } | null = null;
+
+  for (let i = 0; i <= driftFields.length; i += 1) {
+    const result = await supabase.from(table).insert(mutablePayload).select().single();
+    error = result.error;
+    if (!error) return result.data;
+
+    const field = driftFields.find((candidate) => error?.message?.includes(candidate));
+    if (!field || !(field in mutablePayload)) break;
+    delete mutablePayload[field];
+  }
+
+  throw error;
+}
+
+async function updateWithDriftFallback<T extends Record<string, unknown>>(
+  table: string,
+  id: string,
+  payload: T,
+  driftFields: string[]
+) {
+  const mutablePayload: Record<string, unknown> = { ...payload };
+  let error: { message?: string } | null = null;
+
+  for (let i = 0; i <= driftFields.length; i += 1) {
+    const result = await supabase.from(table).update(mutablePayload).eq('id', id);
+    error = result.error;
+    if (!error) return;
+
+    const field = driftFields.find((candidate) => error?.message?.includes(candidate));
+    if (!field || !(field in mutablePayload)) break;
+    delete mutablePayload[field];
+  }
+
+  throw error;
+}
+
 export interface PlanningTask {
   id: string;
   wedding_site_id: string;
@@ -116,21 +159,21 @@ export async function loadVendors(weddingSiteId: string): Promise<PlanningVendor
 }
 
 export async function createVendor(weddingSiteId: string, vendor: Partial<PlanningVendor>): Promise<PlanningVendor> {
-  const { data, error } = await supabase
-    .from('planning_vendors')
-    .insert({ ...vendor, wedding_site_id: weddingSiteId })
-    .select()
-    .single();
-  if (error) throw error;
+  const data = await insertWithDriftFallback(
+    'planning_vendors',
+    { ...vendor, wedding_site_id: weddingSiteId },
+    ['vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'notes', 'phone']
+  );
   return data as PlanningVendor;
 }
 
 export async function updateVendor(id: string, updates: Partial<PlanningVendor>): Promise<void> {
-  const { error } = await supabase
-    .from('planning_vendors')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id);
-  if (error) throw error;
+  await updateWithDriftFallback(
+    'planning_vendors',
+    id,
+    { ...updates, updated_at: new Date().toISOString() },
+    ['vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'notes', 'phone']
+  );
 }
 
 export async function deleteVendor(id: string): Promise<void> {
@@ -150,21 +193,21 @@ export async function loadBudgetItems(weddingSiteId: string): Promise<PlanningBu
 }
 
 export async function createBudgetItem(weddingSiteId: string, item: Partial<PlanningBudgetItem>): Promise<PlanningBudgetItem> {
-  const { data, error } = await supabase
-    .from('planning_budget_items')
-    .insert({ ...item, wedding_site_id: weddingSiteId })
-    .select()
-    .single();
-  if (error) throw error;
+  const data = await insertWithDriftFallback(
+    'planning_budget_items',
+    { ...item, wedding_site_id: weddingSiteId },
+    ['estimated_amount', 'actual_amount', 'vendor_id', 'due_date', 'notes']
+  );
   return data as PlanningBudgetItem;
 }
 
 export async function updateBudgetItem(id: string, updates: Partial<PlanningBudgetItem>): Promise<void> {
-  const { error } = await supabase
-    .from('planning_budget_items')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id);
-  if (error) throw error;
+  await updateWithDriftFallback(
+    'planning_budget_items',
+    id,
+    { ...updates, updated_at: new Date().toISOString() },
+    ['estimated_amount', 'actual_amount', 'vendor_id', 'due_date', 'notes']
+  );
 }
 
 export async function deleteBudgetItem(id: string): Promise<void> {
