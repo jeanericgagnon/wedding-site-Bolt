@@ -36,6 +36,7 @@ export const DashboardPlanning: React.FC = () => {
   const [tasks, setTasks] = useState<PlanningTask[]>([]);
   const [budgetItems, setBudgetItems] = useState<PlanningBudgetItem[]>([]);
   const [vendors, setVendors] = useState<PlanningVendor[]>([]);
+  const [totalBudget, setTotalBudget] = useState(0);
   const [seatingReadiness, setSeatingReadiness] = useState({ attending: 0, seated: 0, unassigned: 0 });
   const { toast } = useToast();
 
@@ -51,6 +52,7 @@ export const DashboardPlanning: React.FC = () => {
         setTasks(demoPlanningTasks as unknown as PlanningTask[]);
         setBudgetItems(demoBudgetItems as unknown as PlanningBudgetItem[]);
         setVendors(demoVendors as unknown as PlanningVendor[]);
+        setTotalBudget(30000);
         setSeatingReadiness({ attending: 68, seated: 52, unassigned: 16 });
         return;
       }
@@ -61,14 +63,19 @@ export const DashboardPlanning: React.FC = () => {
       const wDate = await getWeddingDate();
       setWeddingDate(wDate);
 
-      const [tasksData, budgetData, vendorsData] = await Promise.all([
+      const [tasksData, budgetData, vendorsData, siteMeta] = await Promise.all([
         loadTasks(id),
         loadBudgetItems(id),
         loadVendors(id),
+        supabase.from('wedding_sites').select('wedding_data').eq('id', id).maybeSingle(),
       ]);
       setTasks(tasksData);
       setBudgetItems(budgetData);
       setVendors(vendorsData);
+
+      const weddingData = (siteMeta.data?.wedding_data as Record<string, unknown> | null) ?? null;
+      const planningMeta = (weddingData?.planning as Record<string, unknown> | undefined) ?? {};
+      setTotalBudget(Number(planningMeta.totalBudget) || 0);
 
       await loadSeatingReadiness(id);
     } catch (err) {
@@ -230,6 +237,44 @@ export const DashboardPlanning: React.FC = () => {
     }
   }, [siteId, toast, isDemoMode]);
 
+  const handleSaveTotalBudget = useCallback(async (value: number) => {
+    if (!siteId) return;
+    try {
+      if (isDemoMode) {
+        setTotalBudget(value);
+        toast('Total budget updated', 'success');
+        return;
+      }
+
+      const { data: siteData } = await supabase
+        .from('wedding_sites')
+        .select('wedding_data')
+        .eq('id', siteId)
+        .maybeSingle();
+
+      const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
+      const planning = (weddingData.planning as Record<string, unknown> | undefined) ?? {};
+      const nextWeddingData = {
+        ...weddingData,
+        planning: {
+          ...planning,
+          totalBudget: value,
+        },
+      };
+
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ wedding_data: nextWeddingData, updated_at: new Date().toISOString() })
+        .eq('id', siteId);
+
+      if (error) throw error;
+      setTotalBudget(value);
+      toast('Total budget updated', 'success');
+    } catch {
+      toast('Failed to update total budget', 'error');
+    }
+  }, [siteId, toast, isDemoMode]);
+
   const handleUpdateVendor = useCallback(async (id: string, updates: Partial<PlanningVendor>) => {
     try {
       if (!isDemoMode) await updateVendor(id, updates);
@@ -312,6 +357,8 @@ export const DashboardPlanning: React.FC = () => {
               <BudgetTab
                 items={budgetItems}
                 vendors={vendors}
+                totalBudget={totalBudget}
+                onTotalBudgetChange={handleSaveTotalBudget}
                 onAdd={handleAddBudgetItem}
                 onUpdate={handleUpdateBudgetItem}
                 onDelete={handleDeleteBudgetItem}

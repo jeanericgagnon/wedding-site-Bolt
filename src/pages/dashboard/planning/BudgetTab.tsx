@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -7,6 +7,8 @@ import { PlanningBudgetItem, PlanningVendor } from './planningService';
 interface Props {
   items: PlanningBudgetItem[];
   vendors: PlanningVendor[];
+  totalBudget: number;
+  onTotalBudgetChange: (value: number) => Promise<void>;
   onAdd: (item: Partial<PlanningBudgetItem>) => Promise<void>;
   onUpdate: (id: string, updates: Partial<PlanningBudgetItem>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
@@ -152,9 +154,15 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
   );
 }
 
-export const BudgetTab: React.FC<Props> = ({ items, vendors, onAdd, onUpdate, onDelete }) => {
+export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTotalBudgetChange, onAdd, onUpdate, onDelete }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingItem, setEditingItem] = useState<PlanningBudgetItem | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'sheet'>('cards');
+  const [budgetInput, setBudgetInput] = useState<number>(totalBudget || 0);
+
+  useEffect(() => {
+    setBudgetInput(totalBudget || 0);
+  }, [totalBudget]);
 
   const totalEstimated = items.reduce((s, i) => s + (i.estimated_amount || 0), 0);
   const totalActual = items.reduce((s, i) => s + (i.actual_amount || 0), 0);
@@ -193,10 +201,45 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, onAdd, onUpdate, on
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => setShowAdd(true)}>
-          <Plus className="w-4 h-4 mr-1" /> Add Item
-        </Button>
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+        <div className="flex items-end gap-2">
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1">Total Budget</label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              className="w-40 px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              value={budgetInput}
+              onChange={(e) => setBudgetInput(Number(e.target.value) || 0)}
+            />
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onTotalBudgetChange(budgetInput)}
+          >
+            Save Budget
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('cards')}
+            className={`px-3 py-1.5 rounded-lg text-xs border ${viewMode === 'cards' ? 'bg-surface border-border text-text-primary' : 'bg-surface-subtle border-border-subtle text-text-secondary'}`}
+          >
+            Cards
+          </button>
+          <button
+            onClick={() => setViewMode('sheet')}
+            className={`px-3 py-1.5 rounded-lg text-xs border ${viewMode === 'sheet' ? 'bg-surface border-border text-text-primary' : 'bg-surface-subtle border-border-subtle text-text-secondary'}`}
+          >
+            Spreadsheet
+          </button>
+          <Button size="sm" onClick={() => setShowAdd(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Add Item
+          </Button>
+        </div>
       </div>
 
       {showAdd && (
@@ -211,6 +254,42 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, onAdd, onUpdate, on
         <Card padding="lg" className="text-center">
           <p className="text-text-secondary mb-1">No budget items yet.</p>
           <p className="text-sm text-text-tertiary">Track all your wedding expenses here.</p>
+        </Card>
+      ) : viewMode === 'sheet' ? (
+        <Card variant="bordered" padding="none" className="overflow-auto">
+          <table className="w-full text-sm min-w-[760px]">
+            <thead className="bg-surface-subtle text-text-secondary">
+              <tr>
+                <th className="text-left px-3 py-2">Category</th>
+                <th className="text-left px-3 py-2">Item</th>
+                <th className="text-right px-3 py-2">Estimated</th>
+                <th className="text-right px-3 py-2">Actual</th>
+                <th className="text-right px-3 py-2">Paid</th>
+                <th className="text-right px-3 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map(item => (
+                <tr key={item.id} className="border-t border-border-subtle">
+                  <td className="px-3 py-2">{item.category}</td>
+                  <td className="px-3 py-2">{item.item_name}</td>
+                  <td className="px-3 py-2 text-right">{fmt(item.estimated_amount)}</td>
+                  <td className={`px-3 py-2 text-right ${item.actual_amount > item.estimated_amount && item.estimated_amount > 0 ? 'text-error font-medium' : ''}`}>{fmt(item.actual_amount)}</td>
+                  <td className="px-3 py-2 text-right text-success">{fmt(item.paid_amount)}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setEditingItem(item)} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => onDelete(item.id)} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Card>
       ) : (
         <div className="space-y-6">
