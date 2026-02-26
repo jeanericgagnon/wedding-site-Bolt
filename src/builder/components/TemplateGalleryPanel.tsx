@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { X, Check, Sparkles, Loader2, CheckCircle2, RefreshCw, Crown, Zap } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
@@ -44,6 +44,7 @@ const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
 ];
 
 const RECOMMENDED_TEMPLATE_IDS = ['modern-luxe', 'editorial-romance', 'timeless-classic', 'destination-minimal'];
+const TEMPLATE_USAGE_KEY = 'dayof_template_usage_v1';
 
 interface TemplateGalleryPanelProps {
   onSaveRequest?: () => void;
@@ -54,6 +55,27 @@ interface ApplyResult {
   newSections: string[];
   preservedSections: string[];
 }
+
+const readTemplateUsage = (): Record<string, number> => {
+  try {
+    const raw = localStorage.getItem(TEMPLATE_USAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const bumpTemplateUsage = (templateId: string) => {
+  try {
+    const usage = readTemplateUsage();
+    usage[templateId] = (usage[templateId] || 0) + 1;
+    localStorage.setItem(TEMPLATE_USAGE_KEY, JSON.stringify(usage));
+  } catch {
+    // non-blocking
+  }
+};
 
 const ModernLuxePreview = () => (
   <div className="absolute inset-0 flex flex-col bg-[#0C0A09] overflow-hidden">
@@ -414,10 +436,25 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const [applyResult, setApplyResult] = useState<ApplyResult | null>(null);
 
   const templates = getAllTemplatePacks();
-  const recommended = RECOMMENDED_TEMPLATE_IDS
-    .map(id => templates.find(t => t.id === id))
-    .filter((t): t is BuilderTemplateDefinition => Boolean(t));
-  const recommendedTemplates = recommended.length > 0 ? recommended : templates.slice(0, 4);
+
+  const recommendedTemplates = useMemo(() => {
+    const usage = readTemplateUsage();
+
+    const byUsage = templates
+      .filter((t) => (usage[t.id] || 0) > 0)
+      .sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
+
+    const fallback = RECOMMENDED_TEMPLATE_IDS
+      .map(id => templates.find(t => t.id === id))
+      .filter((t): t is BuilderTemplateDefinition => Boolean(t));
+
+    const merged = [...byUsage, ...fallback].reduce<BuilderTemplateDefinition[]>((acc, t) => {
+      if (!acc.find(x => x.id === t.id)) acc.push(t);
+      return acc;
+    }, []);
+
+    return (merged.length > 0 ? merged : templates).slice(0, 4);
+  }, [templates]);
 
   const filtered =
     activeFilter === 'all'
@@ -448,6 +485,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
       dispatch(builderActions.applyTemplate(template.id, mergedSections));
       dispatch(builderActions.applyTheme(template.defaultThemeId));
+      bumpTemplateUsage(template.id);
       setConfirmTemplate(null);
       setApplyResult({
         templateName: template.displayName,
