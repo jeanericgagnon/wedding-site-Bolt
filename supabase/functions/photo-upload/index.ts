@@ -129,12 +129,17 @@ Deno.serve(async (req: Request) => {
     const form = await req.formData();
     const token = String(form.get("token") ?? "").trim();
     const guestName = String(form.get("guestName") ?? "").trim() || null;
+    const guestEmailRaw = String(form.get("guestEmail") ?? "").trim();
+    const guestEmail = guestEmailRaw ? guestEmailRaw.toLowerCase() : null;
     const note = String(form.get("note") ?? "").trim() || null;
     const honeypot = String(form.get(HONEYPOT_FIELD) ?? '').trim();
     const files = form.getAll("files").filter((v): v is File => v instanceof File);
 
     if (!token) return json({ error: "token is required" }, 400);
     if (honeypot) return json({ error: "Request rejected" }, 400);
+    if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
+      return json({ error: "Invalid email address." }, 400);
+    }
     if (files.length === 0) return json({ error: "At least one file is required" }, 400);
     if (files.length > MAX_FILES_PER_REQUEST) return json({ error: `Too many files (max ${MAX_FILES_PER_REQUEST})` }, 400);
 
@@ -210,6 +215,7 @@ Deno.serve(async (req: Request) => {
           photo_album_id: album.id,
           wedding_site_id: album.wedding_site_id,
           guest_name: guestName,
+          guest_email: guestEmail,
           note,
           original_filename: file.name,
           mime_type: file.type || "application/octet-stream",
