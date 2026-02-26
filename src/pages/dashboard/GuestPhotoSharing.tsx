@@ -795,6 +795,8 @@ export const GuestPhotoSharing: React.FC = () => {
                 const recents = recentByAlbum.get(album.id) ?? [];
                 const draft = windowDrafts[album.id] ?? { opensAt: '', closesAt: '' };
                 const knownUploadLink = albumUploadLinks[album.id] || '';
+                const hasWindow = Boolean(album.opens_at || album.closes_at);
+                const hasLink = Boolean(knownUploadLink);
 
                 return (
                   <div key={album.id} className="rounded-lg border border-neutral-200 p-4">
@@ -807,6 +809,8 @@ export const GuestPhotoSharing: React.FC = () => {
                             {album.is_active ? 'Active' : 'Paused'}
                           </span>
                           <span>{uploadCount} uploads</span>
+                          {!hasLink && <span className="text-rose-700">no saved link</span>}
+                          {!hasWindow && <span className="text-amber-700">no upload window</span>}
                           {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
                           {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
                           <span>slug: {album.slug}</span>
