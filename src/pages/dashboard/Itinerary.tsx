@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle } from 'lucide-react';
+import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui/Button';
@@ -122,9 +122,17 @@ export const DashboardItinerary: React.FC = () => {
 
       if (error) throw error;
 
-      const normalizedEvents = (eventsData || []).map((event: Record<string, unknown>) => ({
-        ...event,
+      const normalizedEvents: ItineraryEvent[] = (eventsData || []).map((event: Record<string, unknown>) => ({
+        id: String(event.id ?? ''),
         event_name: (event.event_name as string) || (event.title as string) || 'Event',
+        description: (event.description as string) || '',
+        event_date: (event.event_date as string) || new Date().toISOString().slice(0, 10),
+        start_time: (event.start_time as string) || '',
+        end_time: (event.end_time as string | null) ?? null,
+        location_name: (event.location_name as string) || '',
+        location_address: (event.location_address as string) || '',
+        dress_code: (event.dress_code as string | null) ?? null,
+        notes: (event.notes as string | null) ?? null,
         display_order: (event.display_order as number) ?? (event.sort_order as number) ?? 0,
         is_visible: (event.is_visible as boolean) ?? true,
       }));
@@ -671,6 +679,17 @@ export const DashboardItinerary: React.FC = () => {
                     >
                       <UserPlus className="w-4 h-4 mr-1" />
                       Manage Guests
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const params = new URLSearchParams({ eventId: event.id, eventName: event.event_name });
+                        window.location.href = `/dashboard/photos?${params.toString()}`;
+                      }}
+                    >
+                      <Camera className="w-4 h-4 mr-1" />
+                      Album
                     </Button>
                     <Button
                       variant="outline"
