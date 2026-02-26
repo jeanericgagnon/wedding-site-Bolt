@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail } from 'lucide-react';
+import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail, EyeOff, Eye, Flag } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
@@ -31,6 +31,8 @@ type PhotoUploadRow = {
   original_filename: string;
   guest_name: string | null;
   guest_email: string | null;
+  is_hidden: boolean;
+  is_flagged: boolean;
   uploaded_at: string;
 };
 
@@ -78,6 +80,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [events, setEvents] = useState<ItineraryEvent[]>([]);
   const [albums, setAlbums] = useState<PhotoAlbumRow[]>([]);
   const [uploads, setUploads] = useState<PhotoUploadRow[]>([]);
+  const [showHidden, setShowHidden] = useState(false);
 
   const [name, setName] = useState(search.get('eventName') ?? '');
   const [itineraryEventId, setItineraryEventId] = useState(search.get('eventId') ?? '');
@@ -132,7 +135,7 @@ export const GuestPhotoSharing: React.FC = () => {
           .order('created_at', { ascending: false }),
         supabase
           .from('photo_uploads')
-          .select('id,photo_album_id,original_filename,guest_name,guest_email,uploaded_at')
+          .select('id,photo_album_id,original_filename,guest_name,guest_email,is_hidden,is_flagged,uploaded_at')
           .eq('wedding_site_id', site.id)
           .order('uploaded_at', { ascending: false })
           .limit(200),
@@ -164,15 +167,29 @@ export const GuestPhotoSharing: React.FC = () => {
     return m;
   }, [uploads]);
 
-  const recentByAlbum = useMemo(() => {
-    const m = new Map<string, PhotoUploadRow[]>();
-    uploads.forEach((u) => {
-      const arr = m.get(u.photo_album_id) ?? [];
-      if (arr.length < 3) arr.push(u);
-      m.set(u.photo_album_id, arr);
-    });
+  const hiddenCountsByAlbum = useMemo(() => {
+    const m = new Map<string, number>();
+    uploads.filter((u) => u.is_hidden).forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
     return m;
   }, [uploads]);
+
+  const flaggedCountsByAlbum = useMemo(() => {
+    const m = new Map<string, number>();
+    uploads.filter((u) => u.is_flagged).forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
+    return m;
+  }, [uploads]);
+
+  const recentByAlbum = useMemo(() => {
+    const m = new Map<string, PhotoUploadRow[]>();
+    uploads
+      .filter((u) => showHidden || !u.is_hidden)
+      .forEach((u) => {
+        const arr = m.get(u.photo_album_id) ?? [];
+        if (arr.length < 5) arr.push(u);
+        m.set(u.photo_album_id, arr);
+      });
+    return m;
+  }, [uploads, showHidden]);
 
   const copyText = async (value: string, key: string) => {
     try {
@@ -215,6 +232,20 @@ export const GuestPhotoSharing: React.FC = () => {
     if (!siteSlug) return '';
     return `${window.location.origin}/site/${siteSlug}`;
   }, [siteSlug]);
+
+  const moderateUpload = async (uploadId: string, patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged'>>) => {
+    try {
+      setError(null);
+      const { error: updateError } = await supabase
+        .from('photo_uploads')
+        .update(patch)
+        .eq('id', uploadId);
+      if (updateError) throw updateError;
+      await load();
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Failed to update upload moderation status.');
+    }
+  };
 
   const setAlbumActive = async (albumId: string, isActive: boolean) => {
     try {
@@ -382,7 +413,13 @@ export const GuestPhotoSharing: React.FC = () => {
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-neutral-900 mb-4">Albums</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-neutral-900">Albums</h2>
+            <Button size="sm" variant="outline" onClick={() => setShowHidden((v) => !v)}>
+              {showHidden ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
+              {showHidden ? 'Hide hidden items' : 'Show hidden items'}
+            </Button>
+          </div>
 
           {loading ? (
             <p className="text-sm text-neutral-500">Loading albums…</p>
@@ -392,6 +429,8 @@ export const GuestPhotoSharing: React.FC = () => {
             <div className="space-y-3">
               {albums.map((album) => {
                 const uploadCount = countsByAlbum.get(album.id) ?? 0;
+                const hiddenCount = hiddenCountsByAlbum.get(album.id) ?? 0;
+                const flaggedCount = flaggedCountsByAlbum.get(album.id) ?? 0;
                 const recents = recentByAlbum.get(album.id) ?? [];
                 const draft = windowDrafts[album.id] ?? { opensAt: '', closesAt: '' };
                 const knownUploadLink = albumUploadLinks[album.id] || '';
@@ -407,6 +446,8 @@ export const GuestPhotoSharing: React.FC = () => {
                             {album.is_active ? 'Active' : 'Paused'}
                           </span>
                           <span>{uploadCount} uploads</span>
+                          {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
+                          {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
                           <span>slug: {album.slug}</span>
                         </div>
                       </div>
@@ -495,10 +536,31 @@ export const GuestPhotoSharing: React.FC = () => {
                     {recents.length > 0 && (
                       <div className="mt-3">
                         <p className="text-xs font-medium text-neutral-700 mb-1">Recent uploads</p>
-                        <ul className="space-y-1 text-xs text-neutral-600">
+                        <ul className="space-y-2 text-xs text-neutral-600">
                           {recents.map((u) => (
-                            <li key={u.id}>
-                              {u.original_filename} · {u.guest_name || 'Guest'}{u.guest_email ? ` (${u.guest_email})` : ''} · {new Date(u.uploaded_at).toLocaleString()}
+                            <li key={u.id} className={`rounded border px-2 py-1 ${u.is_hidden ? 'bg-neutral-100 border-neutral-200' : 'bg-white border-neutral-200'}`}>
+                              <div className="flex items-center justify-between gap-2">
+                                <span>
+                                  {u.original_filename} · {u.guest_name || 'Guest'}{u.guest_email ? ` (${u.guest_email})` : ''} · {new Date(u.uploaded_at).toLocaleString()}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${u.is_flagged ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-white text-neutral-600 border-neutral-300'}`}
+                                    onClick={() => void moderateUpload(u.id, { is_flagged: !u.is_flagged })}
+                                  >
+                                    <Flag className="w-3 h-3 mr-1" /> {u.is_flagged ? 'Unflag' : 'Flag'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center rounded px-1.5 py-0.5 border bg-white text-neutral-600 border-neutral-300"
+                                    onClick={() => void moderateUpload(u.id, { is_hidden: !u.is_hidden })}
+                                  >
+                                    {u.is_hidden ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
+                                    {u.is_hidden ? 'Unhide' : 'Hide'}
+                                  </button>
+                                </div>
+                              </div>
                             </li>
                           ))}
                         </ul>
