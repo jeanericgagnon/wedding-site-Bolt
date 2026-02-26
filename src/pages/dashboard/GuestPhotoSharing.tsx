@@ -42,6 +42,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const [latestUploadUrl, setLatestUploadUrl] = useState<string>('');
   const [copied, setCopied] = useState<string>('');
+  const [workingAlbumId, setWorkingAlbumId] = useState<string>('');
 
   useEffect(() => {
     void load();
@@ -105,6 +106,42 @@ export const GuestPhotoSharing: React.FC = () => {
     if (!siteSlug) return '';
     return `${window.location.origin}/site/${siteSlug}`;
   }, [siteSlug]);
+
+  const setAlbumActive = async (albumId: string, isActive: boolean) => {
+    try {
+      setWorkingAlbumId(albumId);
+      setError(null);
+      const { error: fnError } = await supabase.functions.invoke('photo-album-manage', {
+        body: { action: 'set_active', albumId, isActive },
+      });
+      if (fnError) throw fnError;
+      await load();
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Failed to update album status.');
+    } finally {
+      setWorkingAlbumId('');
+    }
+  };
+
+  const regenerateLink = async (albumId: string) => {
+    try {
+      setWorkingAlbumId(albumId);
+      setError(null);
+      setSuccess(null);
+      const { data, error: fnError } = await supabase.functions.invoke('photo-album-manage', {
+        body: { action: 'regenerate_link', albumId },
+      });
+      if (fnError) throw fnError;
+      const uploadUrl = (data?.uploadUrl as string) ?? '';
+      setLatestUploadUrl(uploadUrl);
+      setSuccess('Album link regenerated. Old link is now invalid.');
+      await load();
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Failed to regenerate upload link.');
+    } finally {
+      setWorkingAlbumId('');
+    }
+  };
 
   const createAlbum = async () => {
     if (!siteId) return;
@@ -227,7 +264,7 @@ export const GuestPhotoSharing: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
                       {album.drive_folder_url && (
                         <Button size="sm" variant="outline" onClick={() => window.open(album.drive_folder_url!, '_blank')}>
                           <ExternalLink className="w-3 h-3 mr-1" /> Drive
@@ -240,6 +277,22 @@ export const GuestPhotoSharing: React.FC = () => {
                       >
                         <LinkIcon className="w-3 h-3 mr-1" />
                         {copied === album.id ? 'Copied' : 'Copy upload page'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={workingAlbumId === album.id}
+                        onClick={() => void regenerateLink(album.id)}
+                      >
+                        {workingAlbumId === album.id ? 'Working...' : 'Regenerate link'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={album.is_active ? 'outline' : 'accent'}
+                        disabled={workingAlbumId === album.id}
+                        onClick={() => void setAlbumActive(album.id, !album.is_active)}
+                      >
+                        {workingAlbumId === album.id ? 'Working...' : album.is_active ? 'Pause' : 'Activate'}
                       </Button>
                     </div>
                   </div>
