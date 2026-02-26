@@ -96,6 +96,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [windowDrafts, setWindowDrafts] = useState<Record<string, { opensAt: string; closesAt: string }>>({});
   const [bulkCreating, setBulkCreating] = useState(false);
   const [bulkUpdatingStatus, setBulkUpdatingStatus] = useState(false);
+  const [bulkRegenerating, setBulkRegenerating] = useState(false);
 
   useEffect(() => {
     void load();
@@ -255,6 +256,52 @@ export const GuestPhotoSharing: React.FC = () => {
     const linked = new Set(albums.map((a) => a.itinerary_event_id).filter(Boolean));
     return events.filter((e) => !linked.has(e.id));
   }, [events, albums]);
+
+  const copyAllKnownLinks = async () => {
+    const links = albums
+      .map((a) => albumUploadLinks[a.id])
+      .filter((v): v is string => typeof v === 'string' && v.length > 0);
+
+    if (links.length === 0) {
+      setError('No known upload links yet. Generate or regenerate links first.');
+      return;
+    }
+
+    await copyText(links.join('\n'), 'all-links');
+    setSuccess(`Copied ${links.length} link(s).`);
+  };
+
+  const regenerateAllKnownAlbumLinks = async () => {
+    const targetAlbums = albums.filter((a) => albumUploadLinks[a.id]);
+    if (targetAlbums.length === 0) {
+      setError('No known album links to rotate yet.');
+      return;
+    }
+
+    try {
+      setBulkRegenerating(true);
+      setError(null);
+      const updated: Record<string, string> = {};
+
+      for (const album of targetAlbums) {
+        const { data, error: fnError } = await supabase.functions.invoke('photo-album-manage', {
+          body: { action: 'regenerate_link', albumId: album.id },
+        });
+        if (fnError) throw fnError;
+        const link = typeof data?.uploadUrl === 'string' ? data.uploadUrl : '';
+        if (link) updated[album.id] = link;
+      }
+
+      if (Object.keys(updated).length > 0) {
+        setAlbumUploadLinks((prev) => ({ ...prev, ...updated }));
+      }
+      setSuccess(`Rotated ${Object.keys(updated).length} link(s).`);
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Failed to rotate links.');
+    } finally {
+      setBulkRegenerating(false);
+    }
+  };
 
   const exportAlbumLinksCsv = () => {
     const rows = albums
@@ -576,6 +623,12 @@ export const GuestPhotoSharing: React.FC = () => {
             <div className="flex items-center gap-2 flex-wrap justify-end">
               <Button size="sm" variant="outline" onClick={exportAlbumLinksCsv}>
                 Export album links
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void copyAllKnownLinks()}>
+                {copied === 'all-links' ? 'Copied all' : 'Copy all links'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void regenerateAllKnownAlbumLinks()} disabled={bulkRegenerating}>
+                {bulkRegenerating ? 'Rotating links...' : 'Rotate known links'}
               </Button>
               <Button size="sm" variant="outline" onClick={() => setShowFlaggedOnly((v) => !v)}>
                 <Flag className="w-3.5 h-3.5 mr-1" />
