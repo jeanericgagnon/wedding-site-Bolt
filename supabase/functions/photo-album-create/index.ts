@@ -97,19 +97,18 @@ Deno.serve(async (req: Request) => {
     if (!siteId || !name) return fail("VALIDATION_ERROR", "siteId and name are required.", 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const appUrl = Deno.env.get("APP_PUBLIC_URL") ?? "https://dayof.love";
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const userClient = createClient(supabaseUrl, serviceRole);
 
     const {
       data: { user },
-    } = await userClient.auth.getUser();
+      error: userErr,
+    } = await userClient.auth.getUser(jwt);
 
-    if (!user) return fail("UNAUTHORIZED", "Unauthorized", 401);
+    if (userErr || !user) return fail("UNAUTHORIZED", userErr?.message ?? "Unauthorized", 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
 
