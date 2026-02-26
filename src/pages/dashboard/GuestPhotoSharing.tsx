@@ -94,6 +94,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const [windowDrafts, setWindowDrafts] = useState<Record<string, { opensAt: string; closesAt: string }>>({});
   const [bulkCreating, setBulkCreating] = useState(false);
+  const [bulkUpdatingStatus, setBulkUpdatingStatus] = useState(false);
 
   useEffect(() => {
     void load();
@@ -236,6 +237,10 @@ export const GuestPhotoSharing: React.FC = () => {
     return `${window.location.origin}/site/${siteSlug}`;
   }, [siteSlug]);
 
+  const totalUploads = useMemo(() => uploads.length, [uploads]);
+  const activeAlbumsCount = useMemo(() => albums.filter((a) => a.is_active).length, [albums]);
+  const pausedAlbumsCount = useMemo(() => albums.filter((a) => !a.is_active).length, [albums]);
+
   const filteredAlbums = useMemo(() => {
     const q = albumSearch.trim().toLowerCase();
     return albums.filter((a) => {
@@ -323,6 +328,34 @@ export const GuestPhotoSharing: React.FC = () => {
       setError((err as Error)?.message || 'Failed to create itinerary albums.');
     } finally {
       setBulkCreating(false);
+    }
+  };
+
+  const setAllAlbumsActive = async (isActive: boolean) => {
+    const targetAlbums = albums.filter((a) => a.is_active !== isActive);
+    if (targetAlbums.length === 0) {
+      setSuccess(isActive ? 'All albums are already active.' : 'All albums are already paused.');
+      return;
+    }
+
+    try {
+      setBulkUpdatingStatus(true);
+      setError(null);
+      setSuccess(null);
+
+      for (const album of targetAlbums) {
+        const { error: fnError } = await supabase.functions.invoke('photo-album-manage', {
+          body: { action: 'set_active', albumId: album.id, isActive },
+        });
+        if (fnError) throw fnError;
+      }
+
+      await load();
+      setSuccess(`${isActive ? 'Activated' : 'Paused'} ${targetAlbums.length} album(s).`);
+    } catch (err: unknown) {
+      setError((err as Error)?.message || 'Failed to update album statuses.');
+    } finally {
+      setBulkUpdatingStatus(false);
     }
   };
 
@@ -446,6 +479,30 @@ export const GuestPhotoSharing: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-neutral-900">Photo Sharing</h1>
           <p className="mt-2 text-neutral-600">Create event albums and share guest upload links backed by Google Drive.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Card className="p-4">
+            <p className="text-xs text-neutral-500">Albums</p>
+            <p className="text-2xl font-semibold text-neutral-900">{albums.length}</p>
+            <p className="text-xs text-neutral-500">{activeAlbumsCount} active · {pausedAlbumsCount} paused</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs text-neutral-500">Uploads</p>
+            <p className="text-2xl font-semibold text-neutral-900">{totalUploads}</p>
+            <p className="text-xs text-neutral-500">Across all albums</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-xs text-neutral-500">Quick actions</p>
+            <div className="mt-2 flex gap-2 flex-wrap">
+              <Button size="sm" variant="outline" onClick={() => void setAllAlbumsActive(true)} disabled={bulkUpdatingStatus}>
+                Activate all
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void setAllAlbumsActive(false)} disabled={bulkUpdatingStatus}>
+                Pause all
+              </Button>
+            </div>
+          </Card>
         </div>
 
         <Card className="p-6">
