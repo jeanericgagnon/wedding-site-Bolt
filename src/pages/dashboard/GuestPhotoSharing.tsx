@@ -81,6 +81,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [albums, setAlbums] = useState<PhotoAlbumRow[]>([]);
   const [uploads, setUploads] = useState<PhotoUploadRow[]>([]);
   const [showHidden, setShowHidden] = useState(false);
+  const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
 
   const [name, setName] = useState(search.get('eventName') ?? '');
   const [itineraryEventId, setItineraryEventId] = useState(search.get('eventId') ?? '');
@@ -186,14 +187,14 @@ export const GuestPhotoSharing: React.FC = () => {
   const recentByAlbum = useMemo(() => {
     const m = new Map<string, PhotoUploadRow[]>();
     uploads
-      .filter((u) => showHidden || !u.is_hidden)
+      .filter((u) => (showHidden || !u.is_hidden) && (!showFlaggedOnly || u.is_flagged))
       .forEach((u) => {
         const arr = m.get(u.photo_album_id) ?? [];
         if (arr.length < 5) arr.push(u);
         m.set(u.photo_album_id, arr);
       });
     return m;
-  }, [uploads, showHidden]);
+  }, [uploads, showHidden, showFlaggedOnly]);
 
   const copyText = async (value: string, key: string) => {
     try {
@@ -572,9 +573,13 @@ export const GuestPhotoSharing: React.FC = () => {
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-semibold text-neutral-900">Albums</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               <Button size="sm" variant="outline" onClick={exportAlbumLinksCsv}>
                 Export album links
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowFlaggedOnly((v) => !v)}>
+                <Flag className="w-3.5 h-3.5 mr-1" />
+                {showFlaggedOnly ? 'Show all uploads' : 'Show flagged only'}
               </Button>
               <Button size="sm" variant="outline" onClick={() => setShowHidden((v) => !v)}>
                 {showHidden ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
