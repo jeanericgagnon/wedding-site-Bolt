@@ -9,6 +9,14 @@ const corsHeaders = {
 
 const MAX_FILE_BYTES = 30 * 1024 * 1024;
 const MAX_FILES_PER_REQUEST = 10;
+const MAX_TOTAL_BYTES_PER_REQUEST = 120 * 1024 * 1024;
+
+const ALLOWED_MIME_PREFIXES = ['image/', 'video/'];
+const DISALLOWED_MIME_TYPES = new Set([
+  'image/svg+xml',
+]);
+
+const HONEYPOT_FIELD = 'website';
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -122,18 +130,27 @@ Deno.serve(async (req: Request) => {
     const token = String(form.get("token") ?? "").trim();
     const guestName = String(form.get("guestName") ?? "").trim() || null;
     const note = String(form.get("note") ?? "").trim() || null;
+    const honeypot = String(form.get(HONEYPOT_FIELD) ?? '').trim();
     const files = form.getAll("files").filter((v): v is File => v instanceof File);
 
     if (!token) return json({ error: "token is required" }, 400);
+    if (honeypot) return json({ error: "Request rejected" }, 400);
     if (files.length === 0) return json({ error: "At least one file is required" }, 400);
     if (files.length > MAX_FILES_PER_REQUEST) return json({ error: `Too many files (max ${MAX_FILES_PER_REQUEST})` }, 400);
 
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    if (totalBytes > MAX_TOTAL_BYTES_PER_REQUEST) {
+      return json({ error: `Total upload too large (max ${Math.floor(MAX_TOTAL_BYTES_PER_REQUEST / (1024 * 1024))}MB per request)` }, 400);
+    }
+
     for (const file of files) {
-      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-        return json({ error: `Unsupported file type: ${file.type || "unknown"}` }, 400);
+      const mime = file.type || 'application/octet-stream';
+      const allowedByPrefix = ALLOWED_MIME_PREFIXES.some((prefix) => mime.startsWith(prefix));
+      if (!allowedByPrefix || DISALLOWED_MIME_TYPES.has(mime)) {
+        return json({ error: `Unsupported file type: ${mime}` }, 400);
       }
       if (file.size > MAX_FILE_BYTES) {
-        return json({ error: `File too large: ${file.name}` }, 400);
+        return json({ error: `File too large: ${file.name} (max ${Math.floor(MAX_FILE_BYTES / (1024 * 1024))}MB each)` }, 400);
       }
     }
 

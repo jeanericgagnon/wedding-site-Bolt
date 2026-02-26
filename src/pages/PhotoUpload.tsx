@@ -41,6 +41,7 @@ export const PhotoUpload: React.FC = () => {
       form.append('token', token.trim());
       if (guestName.trim()) form.append('guestName', guestName.trim());
       if (note.trim()) form.append('note', note.trim());
+      form.append('website', ''); // honeypot field for basic bot filtering
       files.forEach((file) => form.append('files', file));
 
       const res = await fetch(`${supabaseUrl}/functions/v1/photo-upload`, {
@@ -116,6 +117,7 @@ export const PhotoUpload: React.FC = () => {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
             {files.length > 0 && <p className="mt-1 text-xs text-gray-500">{files.length} file(s) selected</p>}
+            <p className="mt-1 text-xs text-gray-500">Up to 10 files per upload, 30MB per file, 120MB total.</p>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
