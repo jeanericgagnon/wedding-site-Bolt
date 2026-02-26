@@ -5,6 +5,7 @@ import { builderActions } from '../state/builderActions';
 import { getAllTemplatePacks } from '../constants/builderTemplatePacks';
 import { BuilderTemplateDefinition, TemplateMoodTag } from '../../types/builder/template';
 import { createBuilderSectionFromLibrary } from '../adapters/layoutAdapter';
+import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { selectActivePage } from '../state/builderSelectors';
 
@@ -481,6 +482,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const [activeSeasonFilter, setActiveSeasonFilter] = useState<SeasonFilter>('all');
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
   const [confirmTemplate, setConfirmTemplate] = useState<BuilderTemplateDefinition | null>(null);
+  const [detailsTemplate, setDetailsTemplate] = useState<BuilderTemplateDefinition | null>(null);
   const [applyResult, setApplyResult] = useState<ApplyResult | null>(null);
 
   const templates = getAllTemplatePacks();
@@ -707,6 +709,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 isCurrent={template.id === currentTemplateId}
                 isApplying={applyingTemplateId === template.id}
                 onApply={() => setConfirmTemplate(template)}
+                onDetails={() => setDetailsTemplate(template)}
               />
             ))}
           </div>
@@ -717,6 +720,17 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           )}
         </div>
       </div>
+
+      {detailsTemplate && (
+        <TemplateDetailsModal
+          template={detailsTemplate}
+          onApply={() => {
+            setDetailsTemplate(null);
+            setConfirmTemplate(detailsTemplate);
+          }}
+          onClose={() => setDetailsTemplate(null)}
+        />
+      )}
 
       {confirmTemplate && (
         <TemplateConfirmModal
@@ -735,9 +749,10 @@ interface TemplateCardProps {
   isCurrent: boolean;
   isApplying: boolean;
   onApply: () => void;
+  onDetails: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isApplying, onApply }) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isApplying, onApply, onDetails }) => {
   const [hovered, setHovered] = useState(false);
   const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
   const fontLabel = FONT_LABELS[template.suggestedFonts.heading] || template.suggestedFonts.heading;
@@ -813,15 +828,22 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
           <div className="text-[10px] text-gray-400 italic">{fontLabel}</div>
         </div>
 
-        <button
-          onClick={e => { e.stopPropagation(); onApply(); }}
-          disabled={isApplying}
-          className={`mt-3 w-full py-2 rounded-xl text-xs font-semibold transition-all ${
-            isCurrent
-              ? 'bg-rose-50 text-rose-500 border border-rose-200/80'
-              : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
-          }`}
-        >
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            onClick={e => { e.stopPropagation(); onDetails(); }}
+            className="w-full py-2 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50"
+          >
+            See details
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onApply(); }}
+            disabled={isApplying}
+            className={`w-full py-2 rounded-xl text-xs font-semibold transition-all ${
+              isCurrent
+                ? 'bg-rose-50 text-rose-500 border border-rose-200/80'
+                : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
+            }`}
+          >
           {isApplying ? (
             <span className="flex items-center justify-center gap-1.5">
               <Loader2 size={11} className="animate-spin" />
@@ -834,6 +856,60 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
             </span>
           ) : 'Apply Template'}
         </button>
+      </div>
+      </div>
+    </div>
+  );
+};
+
+interface TemplateDetailsModalProps {
+  template: BuilderTemplateDefinition;
+  onApply: () => void;
+  onClose: () => void;
+}
+
+const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, onApply, onClose }) => {
+  const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
+  const sections = template.sectionComposition.slice(0, 6).map((s) => getSectionManifest(s.type).label);
+
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
+      <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-2xl w-full mx-4">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{template.displayName}</h3>
+            <p className="text-sm text-gray-500 mt-1">{template.description}</p>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {template.moodTags.map((tag) => (
+                <span key={tag} className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">{tag}</span>
+              ))}
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="rounded-xl border border-gray-100 overflow-hidden bg-gray-50 aspect-[4/3]">
+            <TemplatePreview templateId={template.id} />
+          </div>
+          <div className="space-y-3">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Palette</div>
+              <div className="flex gap-1.5">{dots.map((c, i) => <div key={i} className="w-5 h-5 rounded-full border border-gray-200" style={{ background: c }} />)}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Includes sections</div>
+              <ul className="text-sm text-gray-700 space-y-1">
+                {sections.map((label) => <li key={label}>• {label}</li>)}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm border border-gray-200 text-gray-600 hover:bg-gray-50">Close</button>
+          <button onClick={onApply} className="px-4 py-2 rounded-xl text-sm bg-gray-900 text-white hover:bg-gray-800">Apply template</button>
+        </div>
       </div>
     </div>
   );
