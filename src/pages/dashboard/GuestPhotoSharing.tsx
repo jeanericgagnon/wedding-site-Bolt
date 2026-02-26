@@ -30,6 +30,7 @@ type PhotoUploadRow = {
   photo_album_id: string;
   original_filename: string;
   guest_name: string | null;
+  guest_email: string | null;
   uploaded_at: string;
 };
 
@@ -131,7 +132,7 @@ export const GuestPhotoSharing: React.FC = () => {
           .order('created_at', { ascending: false }),
         supabase
           .from('photo_uploads')
-          .select('id,photo_album_id,original_filename,guest_name,uploaded_at')
+          .select('id,photo_album_id,original_filename,guest_name,guest_email,uploaded_at')
           .eq('wedding_site_id', site.id)
           .order('uploaded_at', { ascending: false })
           .limit(200),
@@ -181,6 +182,33 @@ export const GuestPhotoSharing: React.FC = () => {
     } catch {
       // ignore
     }
+  };
+
+  const exportAlbumCsv = (albumId: string, albumName: string) => {
+    const rows = uploads.filter((u) => u.photo_album_id === albumId);
+    if (rows.length === 0) return;
+
+    const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const header = ['filename', 'guest_name', 'guest_email', 'uploaded_at'];
+    const lines = [
+      header.join(','),
+      ...rows.map((r) => [
+        escapeCsv(r.original_filename),
+        escapeCsv(r.guest_name || ''),
+        escapeCsv(r.guest_email || ''),
+        escapeCsv(new Date(r.uploaded_at).toISOString()),
+      ].join(',')),
+    ];
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${albumName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'album'}-uploads.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   const uploadLanding = useMemo(() => {
@@ -418,6 +446,14 @@ export const GuestPhotoSharing: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => exportAlbumCsv(album.id, album.name)}
+                          disabled={uploadCount === 0}
+                        >
+                          Export CSV
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => {
                             const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
                             const txt = encodeURIComponent(`Please upload your event photos here: ${shareUrl}`);
@@ -462,7 +498,7 @@ export const GuestPhotoSharing: React.FC = () => {
                         <ul className="space-y-1 text-xs text-neutral-600">
                           {recents.map((u) => (
                             <li key={u.id}>
-                              {u.original_filename} · {u.guest_name || 'Guest'} · {new Date(u.uploaded_at).toLocaleString()}
+                              {u.original_filename} · {u.guest_name || 'Guest'}{u.guest_email ? ` (${u.guest_email})` : ''} · {new Date(u.uploaded_at).toLocaleString()}
                             </li>
                           ))}
                         </ul>
