@@ -1186,6 +1186,8 @@ export const DashboardMessages: React.FC = () => {
                   { label: 'Save the Date', subject: 'Save the Date!', body: 'We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.' },
                   { label: 'RSVP Reminder', subject: 'RSVP Reminder', body: 'We hope you can join us for our special day! Please RSVP by [DATE] so we can finalize our guest count. Visit [RSVP LINK] to respond.' },
                   { label: 'Week-Of Details', subject: 'Wedding Week Details', body: 'The big day is almost here! Here are some important details for the wedding week: [ADD DETAILS]' },
+                  { label: 'Photo Upload Request', subject: 'Share your photos with us 📸', body: 'We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]' },
+                  { label: 'Photo Upload Reminder', subject: 'Last call for wedding photos', body: 'If you snapped any photos, we would love to see them. Add yours here: [PHOTO LINK]' },
                   { label: 'Thank You', subject: 'Thank You!', body: 'Thank you so much for celebrating our special day with us! Your presence meant the world to us. We are grateful for your love and support.' },
                 ].map(tpl => (
                   <button
