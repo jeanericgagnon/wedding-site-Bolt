@@ -63,6 +63,8 @@ async function refreshAccessToken(refreshToken: string) {
   };
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function uploadFileToDrive(accessToken: string, folderId: string, file: File) {
   const metadata = {
     name: file.name,
@@ -99,27 +101,39 @@ async function uploadFileToDrive(accessToken: string, folderId: string, file: Fi
     offset += part.length;
   }
 
-  const uploadRes = await fetch(
-    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": `multipart/related; boundary=${boundary}`,
-      },
-      body,
-    },
-  );
+  let attempt = 0;
+  while (attempt < 3) {
+    attempt += 1;
 
-  const uploadJson = await uploadRes.json();
-  if (!uploadRes.ok || !uploadJson.id) {
-    throw new Error(`Google Drive upload failed for ${file.name}`);
+    const uploadRes = await fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`,
+        },
+        body,
+      },
+    );
+
+    const uploadJson = await uploadRes.json().catch(() => ({}));
+    if (uploadRes.ok && uploadJson.id) {
+      return {
+        id: uploadJson.id as string,
+        webViewLink: (uploadJson.webViewLink as string | undefined) ?? null,
+      };
+    }
+
+    const retryable = uploadRes.status === 429 || uploadRes.status >= 500;
+    if (!retryable || attempt >= 3) {
+      throw new Error(`Google Drive upload failed for ${file.name}`);
+    }
+
+    await sleep(250 * attempt);
   }
 
-  return {
-    id: uploadJson.id as string,
-    webViewLink: (uploadJson.webViewLink as string | undefined) ?? null,
-  };
+  throw new Error(`Google Drive upload failed for ${file.name}`);
 }
 
 Deno.serve(async (req: Request) => {
@@ -243,30 +257,43 @@ Deno.serve(async (req: Request) => {
     }
 
     const uploaded: Array<{ id: string; name: string; webViewLink: string | null }> = [];
+    const failed: Array<{ name: string; code: string; error: string }> = [];
 
     for (const file of files) {
-      const drive = await uploadFileToDrive(accessToken!, album.drive_folder_id as string, file);
+      try {
+        const drive = await uploadFileToDrive(accessToken!, album.drive_folder_id as string, file);
 
-      const { data: row, error } = await admin
-        .from("photo_uploads")
-        .insert({
-          photo_album_id: album.id,
-          wedding_site_id: album.wedding_site_id,
-          guest_name: guestName,
-          guest_email: guestEmail,
-          note,
-          original_filename: file.name,
-          mime_type: file.type || "application/octet-stream",
-          size_bytes: file.size,
-          drive_file_id: drive.id,
-          drive_web_view_link: drive.webViewLink,
-        })
-        .select("id")
-        .single();
+        const { data: row, error } = await admin
+          .from("photo_uploads")
+          .insert({
+            photo_album_id: album.id,
+            wedding_site_id: album.wedding_site_id,
+            guest_name: guestName,
+            guest_email: guestEmail,
+            note,
+            original_filename: file.name,
+            mime_type: file.type || "application/octet-stream",
+            size_bytes: file.size,
+            drive_file_id: drive.id,
+            drive_web_view_link: drive.webViewLink,
+          })
+          .select("id")
+          .single();
 
-      if (error) throw new Error(error.message);
+        if (error) throw new Error(error.message);
 
-      uploaded.push({ id: row.id as string, name: file.name, webViewLink: drive.webViewLink });
+        uploaded.push({ id: row.id as string, name: file.name, webViewLink: drive.webViewLink });
+      } catch (error) {
+        failed.push({
+          name: file.name,
+          code: "UPLOAD_FAILED",
+          error: error instanceof Error ? error.message : "Upload failed",
+        });
+      }
+    }
+
+    if (uploaded.length === 0) {
+      return fail("UPLOAD_BATCH_FAILED", "All files failed to upload. Please retry.", 502);
     }
 
     return json({
@@ -274,6 +301,8 @@ Deno.serve(async (req: Request) => {
       albumId: album.id,
       albumName: album.name,
       uploaded,
+      failed,
+      partial: failed.length > 0,
     });
   } catch (err) {
     return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
