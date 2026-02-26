@@ -43,6 +43,8 @@ const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
   { id: 'photo', label: 'Photo-first' },
 ];
 
+const RECOMMENDED_TEMPLATE_IDS = ['modern-luxe', 'editorial-romance', 'timeless-classic', 'destination-minimal'];
+
 interface TemplateGalleryPanelProps {
   onSaveRequest?: () => void;
 }
@@ -412,6 +414,11 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const [applyResult, setApplyResult] = useState<ApplyResult | null>(null);
 
   const templates = getAllTemplatePacks();
+  const recommended = RECOMMENDED_TEMPLATE_IDS
+    .map(id => templates.find(t => t.id === id))
+    .filter((t): t is BuilderTemplateDefinition => Boolean(t));
+  const recommendedTemplates = recommended.length > 0 ? recommended : templates.slice(0, 4);
+
   const filtered =
     activeFilter === 'all'
       ? templates
@@ -546,6 +553,25 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
         </div>
 
         <div className="flex-1 overflow-y-auto p-7">
+          <div className="mb-5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Recommended templates</div>
+            <div className="flex flex-wrap gap-2">
+              {recommendedTemplates.map((template) => (
+                <button
+                  key={`recommended-${template.id}`}
+                  onClick={() => setConfirmTemplate(template)}
+                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                    template.id === currentTemplateId
+                      ? 'bg-rose-50 border-rose-200 text-rose-700'
+                      : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {template.displayName}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-5">
             {filtered.map(template => (
               <TemplateCard
