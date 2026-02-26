@@ -82,6 +82,7 @@ export const WeddingStatus: React.FC = () => {
       if (selectedStatus === 'venue_booked' && details.venue_booked) {
         updateData.venue_name = details.venue_booked.venueName;
         updateData.venue_address = details.venue_booked.venueAddress;
+        updateData.wedding_date = details.venue_booked.venueDate;
         updateData.venue_date = details.venue_booked.venueDate;
         updateData.expected_guest_count = parseInt(details.venue_booked.expectedGuestCount) || null;
         updateData.is_destination_wedding = isDestinationWedding;
@@ -92,6 +93,7 @@ export const WeddingStatus: React.FC = () => {
       } else if (selectedStatus === 'invitations_sent' && details.invitations_sent) {
         updateData.venue_name = details.invitations_sent.venueName;
         updateData.venue_address = details.invitations_sent.venueAddress;
+        updateData.wedding_date = details.invitations_sent.venueDate;
         updateData.venue_date = details.invitations_sent.venueDate;
         updateData.expected_guest_count = parseInt(details.invitations_sent.expectedGuestCount) || null;
         updateData.invitations_sent_date = details.invitations_sent.invitationsSentDate;

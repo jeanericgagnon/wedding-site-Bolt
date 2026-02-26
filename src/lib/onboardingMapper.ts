@@ -52,6 +52,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
   const siteSlug = generateWeddingSlug(input.coupleNames.name1, input.coupleNames.name2);
 
   return {
+    wedding_date: input.weddingDate || null,
     venue_date: input.weddingDate || null,
     venue_name: input.venue || null,
     wedding_location: input.city || input.location || null,

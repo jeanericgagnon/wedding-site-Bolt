@@ -82,7 +82,7 @@ export const GuidedSetup: React.FC = () => {
 
       const { data } = await supabase
         .from('wedding_sites')
-        .select('couple_name_1, couple_name_2, venue_date, venue_name, venue_address, wedding_location')
+        .select('couple_name_1, couple_name_2, wedding_date, venue_date, venue_name, venue_address, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -95,7 +95,7 @@ export const GuidedSetup: React.FC = () => {
 
         setFormData(prev => ({
           ...prev,
-          weddingDate: data.venue_date || '',
+          weddingDate: data.wedding_date || data.venue_date || '',
           venue: data.venue_name || '',
           city: hydratedCity || '',
         }));
