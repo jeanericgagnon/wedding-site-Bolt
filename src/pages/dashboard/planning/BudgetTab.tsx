@@ -167,7 +167,8 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
   const totalEstimated = items.reduce((s, i) => s + (i.estimated_amount || 0), 0);
   const totalActual = items.reduce((s, i) => s + (i.actual_amount || 0), 0);
   const totalPaid = items.reduce((s, i) => s + (i.paid_amount || 0), 0);
-  const remaining = totalActual - totalPaid;
+  const remaining = (totalBudget || 0) - totalActual;
+  const usedPct = totalBudget > 0 ? Math.min(100, Math.max(0, (totalActual / totalBudget) * 100)) : 0;
 
   const categories = Array.from(new Set(items.map(i => i.category))).sort();
   const overBudgetCategories = categories.filter(cat => {
@@ -180,17 +181,30 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
     <div className="space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Estimated', value: totalEstimated, color: 'text-text-primary' },
-          { label: 'Actual', value: totalActual, color: totalActual > totalEstimated ? 'text-error' : 'text-text-primary' },
-          { label: 'Paid', value: totalPaid, color: 'text-success' },
-          { label: 'Remaining', value: remaining, color: remaining > 0 ? 'text-warning' : 'text-text-tertiary' },
+          { label: 'Total Budget', value: totalBudget || 0, color: 'text-text-primary', format: 'currency' },
+          { label: 'Estimated', value: totalEstimated, color: 'text-text-primary', format: 'currency' },
+          { label: 'Actual', value: totalActual, color: totalBudget > 0 && totalActual > totalBudget ? 'text-error' : 'text-text-primary', format: 'currency' },
+          { label: 'Remaining', value: remaining, color: remaining < 0 ? 'text-error' : 'text-success', format: 'currency' },
         ].map(stat => (
           <Card key={stat.label} padding="sm">
             <p className="text-xs text-text-tertiary mb-0.5">{stat.label}</p>
-            <p className={`text-lg font-bold ${stat.color}`}>{fmt(stat.value)}</p>
+            <p className={`text-lg font-bold ${stat.color}`}>{stat.format === 'currency' ? fmt(stat.value) : stat.value}</p>
           </Card>
         ))}
       </div>
+
+      <Card padding="sm" className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-text-secondary">
+          <span>Budget used</span>
+          <span>{usedPct.toFixed(0)}%</span>
+        </div>
+        <div className="h-2 rounded-full bg-surface-subtle overflow-hidden">
+          <div
+            className={`h-full ${usedPct >= 100 ? 'bg-error' : usedPct >= 80 ? 'bg-warning' : 'bg-success'}`}
+            style={{ width: `${usedPct}%` }}
+          />
+        </div>
+      </Card>
 
       {overBudgetCategories.length > 0 && (
         <div className="flex items-start gap-2 p-3 bg-error/5 border border-error/20 rounded-xl text-sm">
