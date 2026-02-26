@@ -36,12 +36,14 @@ export const PhotoUpload: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
+  const [failedNames, setFailedNames] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setMessage(null);
     setUploadedNames([]);
+    setFailedNames([]);
     setError(null);
 
     if (!supabaseUrl || !supabaseAnonKey) {
@@ -84,8 +86,14 @@ export const PhotoUpload: React.FC = () => {
       }
 
       const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
+      const failed = Array.isArray(data.failed) ? data.failed : [];
       setUploadedNames(uploaded.map((u: { name?: string }) => u?.name).filter((v: unknown): v is string => typeof v === 'string'));
-      setMessage(`Uploaded ${uploaded.length || files.length} file(s). Thank you!`);
+      setFailedNames(failed.map((u: { name?: string }) => u?.name).filter((v: unknown): v is string => typeof v === 'string'));
+      setMessage(
+        failed.length > 0
+          ? `Uploaded ${uploaded.length} file(s), ${failed.length} failed. You can retry failed files.`
+          : `Uploaded ${uploaded.length || files.length} file(s). Thank you!`
+      );
       setFiles([]);
       setNote('');
       setGuestEmail('');
@@ -165,6 +173,12 @@ export const PhotoUpload: React.FC = () => {
             <ul className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900 space-y-1">
               {uploadedNames.slice(0, 8).map((name) => <li key={name}>{name}</li>)}
               {uploadedNames.length > 8 && <li>+{uploadedNames.length - 8} more</li>}
+            </ul>
+          )}
+          {failedNames.length > 0 && (
+            <ul className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 space-y-1">
+              {failedNames.slice(0, 8).map((name) => <li key={name}>{name}</li>)}
+              {failedNames.length > 8 && <li>+{failedNames.length - 8} more</li>}
             </ul>
           )}
 
