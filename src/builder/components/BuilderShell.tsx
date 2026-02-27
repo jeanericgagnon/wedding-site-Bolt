@@ -22,7 +22,7 @@ interface BuilderShellProps {
   projectName?: string;
   isDemoMode?: boolean;
   onSave?: (project: BuilderProject, weddingData?: WeddingDataV1 | null) => Promise<void>;
-  onPublish?: (projectId: string) => Promise<void>;
+  onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
 }
 
 export const BuilderShell: React.FC<BuilderShellProps> = ({
@@ -131,11 +131,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     }
     dispatch({ type: 'SET_PUBLISHING', payload: true });
     try {
-      await onPublish(currentState.project.id);
+      const publishMeta = await onPublish(currentState.project.id);
       dispatch(
         builderActions.markPublished(
-          (currentState.project.publishedVersion ?? 0) + 1,
-          new Date().toISOString()
+          publishMeta.version,
+          publishMeta.publishedAt
         )
       );
     } catch (err) {

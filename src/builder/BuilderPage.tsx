@@ -268,11 +268,16 @@ export const BuilderPage: React.FC = () => {
     if (updatedWeddingData) setWeddingData(updatedWeddingData);
   };
 
-  const handlePublish = async (projectId: string) => {
-    if (!project) return;
-    if (isDemoMode) return;
+  const handlePublish = async (projectId: string): Promise<{ version: number; publishedAt: string }> => {
+    if (!project || isDemoMode) {
+      return {
+        version: project?.publishedVersion ?? 0,
+        publishedAt: new Date().toISOString(),
+      };
+    }
     const result = await publishService.publish({ ...project, id: projectId });
     if (!result.success) throw new Error(result.error);
+    return { version: result.version, publishedAt: result.publishedAt };
   };
 
   if (loading) {
