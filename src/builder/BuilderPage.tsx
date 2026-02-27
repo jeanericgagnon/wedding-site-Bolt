@@ -30,6 +30,66 @@ function createDemoBuilderProject(): BuilderProject {
   return project;
 }
 
+type SetupDraft = {
+  partnerOneFirstName?: string;
+  partnerOneLastName?: string;
+  partnerTwoFirstName?: string;
+  partnerTwoLastName?: string;
+  dateKnown?: boolean;
+  weddingDate?: string;
+  weddingCity?: string;
+  weddingRegion?: string;
+  guestEstimateBand?: '' | 'lt50' | '50to100' | '100to200' | '200plus';
+  stylePreferences?: string[];
+};
+
+function readSetupDraft(): SetupDraft | null {
+  try {
+    const raw = localStorage.getItem('dayof.builderV2.setupDraft');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SetupDraft;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function applySetupDraftToWeddingData(source: WeddingDataV1, draft: SetupDraft): WeddingDataV1 {
+  const next = structuredClone(source) as WeddingDataV1;
+
+  const p1 = draft.partnerOneFirstName?.trim() ?? '';
+  const p2 = draft.partnerTwoFirstName?.trim() ?? '';
+  if (p1) next.couple.partner1Name = p1;
+  if (p2) next.couple.partner2Name = p2;
+  if (p1 && p2) next.couple.displayName = `${p1} & ${p2}`;
+
+  if (draft.dateKnown && draft.weddingDate) {
+    next.event.weddingDateISO = new Date(draft.weddingDate).toISOString();
+  }
+
+  const location = [draft.weddingCity?.trim(), draft.weddingRegion?.trim()].filter(Boolean).join(', ');
+  if (location) {
+    if (!next.venues || next.venues.length === 0) {
+      next.venues = [{ id: 'primary', name: 'Main Venue', address: location }];
+    } else {
+      next.venues[0].address = location;
+    }
+  }
+
+  if (Array.isArray(draft.stylePreferences) && draft.stylePreferences.length > 0) {
+    next.theme = {
+      ...next.theme,
+      tokens: {
+        ...(next.theme?.tokens ?? {}),
+        style_preferences: draft.stylePreferences.join(','),
+      },
+    };
+  }
+
+  next.meta.updatedAtISO = new Date().toISOString();
+  return next;
+}
+
 function createDemoWeddingDataFromSite(): WeddingDataV1 {
   const data = createEmptyWeddingData();
   const now = new Date();
@@ -142,8 +202,23 @@ export const BuilderPage: React.FC = () => {
         builderProjectService.loadWeddingData(siteId),
       ]);
 
+      let nextWeddingData = loadedWeddingData;
+      const setupDraft = readSetupDraft();
+      const hasNoCoupleNames = !loadedWeddingData.couple.partner1Name && !loadedWeddingData.couple.partner2Name;
+
+      if (setupDraft && hasNoCoupleNames) {
+        nextWeddingData = applySetupDraftToWeddingData(loadedWeddingData, setupDraft);
+        if (loadedProject) {
+          await publishService.saveDraft(loadedProject, nextWeddingData);
+        }
+      }
+
+      if (nextWeddingData.couple.displayName) {
+        setCoupleName(nextWeddingData.couple.displayName);
+      }
+
       setProject(loadedProject);
-      setWeddingData(loadedWeddingData);
+      setWeddingData(nextWeddingData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load builder');
     } finally {
@@ -191,7 +266,7 @@ export const BuilderPage: React.FC = () => {
             Complete your wedding setup first to start building your site.
           </p>
           <button
-            onClick={() => navigate('/onboarding')}
+            onClick={() => navigate('/setup/names')}
             className="inline-flex items-center px-5 py-2.5 bg-rose-600 text-white text-sm font-medium rounded-xl hover:bg-rose-700 transition-colors"
           >
             Start Setup
