@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
+import { buildPublishReadinessItems, buildSetupChecklist } from './overviewUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
@@ -228,84 +229,34 @@ export const DashboardOverview: React.FC = () => {
   const setupDraftProgressPercent = useMemo(() => setupDraftProgress(readSetupDraft()), []);
 
   const setupChecklist = stats
-    ? [
-        {
-          id: 'names',
-          label: 'Add couple names',
-          done: Boolean(stats.coupleName1 || stats.coupleName2),
-          actionLabel: 'Edit settings',
-          action: () => navigate('/dashboard/settings'),
-        },
-        {
-          id: 'date',
-          label: 'Set wedding date',
-          done: Boolean(stats.weddingDate),
-          actionLabel: 'Edit date',
-          action: () => navigate('/dashboard/settings'),
-        },
-        {
-          id: 'venue',
-          label: 'Add venue/address',
-          done: Boolean(stats.venueName || stats.venueLocation),
-          actionLabel: 'Add venue',
-          action: () => navigate('/dashboard/settings'),
-        },
-        {
-          id: 'registry',
-          label: 'Add at least 1 registry item',
-          done: stats.registryItemCount > 0,
-          actionLabel: 'Open registry',
-          action: () => navigate('/dashboard/registry'),
-        },
-        {
-          id: 'photos',
-          label: 'Create first photo sharing album',
-          done: stats.photoAlbumCount > 0,
-          actionLabel: 'Open photos',
-          action: () => navigate('/dashboard/photos'),
-        },
-        {
-          id: 'publish',
-          label: 'Publish site once',
-          done: stats.isPublished,
-          actionLabel: stats.isPublished ? 'Open site builder' : 'Publish now',
-          action: () => navigate(stats.isPublished ? '/dashboard/builder' : '/dashboard/builder?publishNow=1'),
-        },
-      ]
+    ? buildSetupChecklist({
+        coupleName1: stats.coupleName1 ?? '',
+        coupleName2: stats.coupleName2 ?? '',
+        weddingDate: stats.weddingDate ?? '',
+        venueName: stats.venueName ?? '',
+        venueLocation: stats.venueLocation ?? '',
+        registryItemCount: stats.registryItemCount,
+        photoAlbumCount: stats.photoAlbumCount,
+        isPublished: stats.isPublished,
+        siteSlug: stats.siteSlug ?? '',
+        templateName: stats.templateName ?? '',
+      }).map((item) => ({ ...item, action: () => navigate(item.route) }))
     : [];
 
   const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
   const nextSetupItem = setupChecklist.find((item) => !item.done) ?? null;
-  const publishReadinessItems = [
-    {
-      id: 'slug',
-      label: 'Site URL configured',
-      done: Boolean(stats?.siteSlug),
-      actionLabel: 'Open settings',
-      action: () => navigate('/dashboard/settings'),
-    },
-    {
-      id: 'template',
-      label: 'Template selected',
-      done: Boolean(stats?.templateName),
-      actionLabel: 'Open templates',
-      action: () => navigate('/templates'),
-    },
-    {
-      id: 'date',
-      label: 'Wedding date set',
-      done: Boolean(stats?.weddingDate),
-      actionLabel: 'Set date',
-      action: () => navigate('/dashboard/settings'),
-    },
-    {
-      id: 'published',
-      label: 'Published at least once',
-      done: Boolean(stats?.isPublished),
-      actionLabel: stats?.isPublished ? 'Open builder' : 'Publish now',
-      action: () => navigate(stats?.isPublished ? '/dashboard/builder' : '/dashboard/builder?publishNow=1'),
-    },
-  ];
+  const publishReadinessItems = buildPublishReadinessItems({
+    coupleName1: stats?.coupleName1 ?? '',
+    coupleName2: stats?.coupleName2 ?? '',
+    weddingDate: stats?.weddingDate ?? '',
+    venueName: stats?.venueName ?? '',
+    venueLocation: stats?.venueLocation ?? '',
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    isPublished: stats?.isPublished ?? false,
+    siteSlug: stats?.siteSlug ?? '',
+    templateName: stats?.templateName ?? '',
+  }).map((item) => ({ ...item, action: () => navigate(item.route) }));
   const publishReadyCount = publishReadinessItems.filter((item) => item.done).length;
   const publishBlockers = publishReadinessItems.filter((item) => !item.done);
 
