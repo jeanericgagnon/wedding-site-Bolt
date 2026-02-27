@@ -42,6 +42,44 @@ function hasMeaningfulSetupDraft(draft: SetupDraft): boolean {
   );
 }
 
+function applyTemplateDefaultsToProject(project: BuilderProject, templateId: string): BuilderProject {
+  const template = getTemplatePack(templateId);
+  if (!template) return { ...project, templateId };
+
+  const firstPage = project.pages[0];
+  if (!firstPage) return { ...project, templateId, themeId: template.defaultThemeId };
+
+  const hasExistingSections = firstPage.sections.some((section) =>
+    section.enabled || Object.keys(section.settings ?? {}).length > 1 || Object.keys(section.bindings ?? {}).length > 0
+  );
+
+  if (hasExistingSections) {
+    return {
+      ...project,
+      templateId,
+      themeId: project.themeId || template.defaultThemeId,
+    };
+  }
+
+  return {
+    ...project,
+    templateId,
+    themeId: template.defaultThemeId,
+    pages: project.pages.map((page, pageIndex) => {
+      if (pageIndex !== 0) return page;
+      return {
+        ...page,
+        sections: template.sectionComposition.map((section, index) => ({
+          ...createDefaultSectionInstance(section.type, section.variant, index),
+          enabled: section.enabled,
+          locked: section.locked,
+          settings: { ...section.settings },
+        })),
+      };
+    }),
+  };
+}
+
 function applySetupDraftToWeddingData(source: WeddingDataV1, draft: SetupDraft): WeddingDataV1 {
   const next = structuredClone(source) as WeddingDataV1;
 
@@ -198,11 +236,8 @@ export const BuilderPage: React.FC = () => {
       if (hasMeaningfulSetupDraft(setupDraft) && hasNoCoupleNames) {
         nextWeddingData = applySetupDraftToWeddingData(loadedWeddingData, setupDraft);
 
-        if (nextProject && setupDraft.selectedTemplateId && nextProject.templateId !== setupDraft.selectedTemplateId) {
-          nextProject = {
-            ...nextProject,
-            templateId: setupDraft.selectedTemplateId,
-          };
+        if (nextProject && setupDraft.selectedTemplateId) {
+          nextProject = applyTemplateDefaultsToProject(nextProject, setupDraft.selectedTemplateId);
         }
 
         if (nextProject) {
