@@ -158,6 +158,18 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     goNext();
   };
 
+  const selectedTemplateName = useMemo(() => {
+    const map: Record<string, string> = {
+      'modern-luxe': 'Modern Luxe',
+      'garden-romance': 'Garden Romance',
+      'coastal-breeze': 'Coastal Breeze',
+      'classic-elegance': 'Classic Elegance',
+      'rustic-warmth': 'Rustic Warmth',
+      'bold-minimal': 'Bold Minimal',
+    };
+    return map[draft.selectedTemplateId] ?? draft.selectedTemplateId;
+  }, [draft.selectedTemplateId]);
+
   const saveAndGoBuilder = async () => {
     try {
       setError('');
@@ -320,6 +332,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Location:</strong> {[draft.weddingCity, draft.weddingRegion].filter(Boolean).join(', ') || 'Not set'}</p>
                 <p><strong>Guest estimate:</strong> {draft.guestEstimateBand || 'Not set'}</p>
                 <p><strong>Styles:</strong> {draft.stylePreferences.join(', ') || 'None selected'}</p>
+                <p><strong>Template:</strong> {selectedTemplateName}</p>
               </div>
 
               <div className="flex items-center gap-2">
