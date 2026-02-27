@@ -12,9 +12,19 @@ type SetupPayload = {
   weddingDate?: string;
   weddingCity?: string;
   weddingRegion?: string;
-  guestEstimateBand?: string;
+  guestEstimateBand?: '' | 'lt50' | '50to100' | '100to200' | '200plus';
   stylePreferences?: string[];
 };
+
+const allowedGuestBands = new Set(['', 'lt50', '50to100', '100to200', '200plus']);
+const allowedTemplateIds = new Set([
+  'modern-luxe',
+  'garden-romance',
+  'coastal-breeze',
+  'classic-elegance',
+  'rustic-warmth',
+  'bold-minimal',
+]);
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -28,6 +38,18 @@ Deno.serve(async (req: Request) => {
     const p1 = (body.partnerOneFirstName ?? "").trim();
     const p2 = (body.partnerTwoFirstName ?? "").trim();
     if (!p1 || !p2) return fail("VALIDATION_ERROR", "Both partner first names are required", 400);
+
+    if (!allowedGuestBands.has(body.guestEstimateBand ?? '')) {
+      return fail("VALIDATION_ERROR", "Invalid guest estimate band", 400);
+    }
+
+    const selectedTemplateId = allowedTemplateIds.has(body.selectedTemplateId ?? '')
+      ? body.selectedTemplateId!
+      : 'modern-luxe';
+
+    const stylePreferences = Array.isArray(body.stylePreferences)
+      ? body.stylePreferences.filter((x) => typeof x === 'string').slice(0, 8)
+      : [];
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -78,7 +100,7 @@ Deno.serve(async (req: Request) => {
         ...(currentData.theme as Record<string, unknown> | undefined),
         tokens: {
           ...(((currentData.theme as Record<string, unknown> | undefined)?.tokens as Record<string, string> | undefined) ?? {}),
-          style_preferences: Array.isArray(body.stylePreferences) ? body.stylePreferences.join(",") : "",
+          style_preferences: stylePreferences.join(","),
           guest_estimate_band: body.guestEstimateBand ?? "",
         },
       },
@@ -91,8 +113,8 @@ Deno.serve(async (req: Request) => {
       wedding_date: body.dateKnown && body.weddingDate ? body.weddingDate : null,
       venue_date: body.dateKnown && body.weddingDate ? body.weddingDate : null,
       wedding_location: location || null,
-      active_template_id: body.selectedTemplateId || "modern-luxe",
-      template_id: body.selectedTemplateId || "modern-luxe",
+      active_template_id: selectedTemplateId,
+      template_id: selectedTemplateId,
       updated_at: new Date().toISOString(),
     };
 
