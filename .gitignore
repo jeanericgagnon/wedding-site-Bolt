@@ -27,3 +27,7 @@ vite.config.ts.timestamp-*.mjs
 # local temp/artifacts
 backups/
 supabase/.temp/
+
+# local photo intake (do not commit personal source photos)
+assets/photos/raw-*/
+assets/photos/raw-engagement-*/
