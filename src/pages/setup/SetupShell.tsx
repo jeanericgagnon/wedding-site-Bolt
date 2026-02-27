@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { templateCatalog } from '../../builder/constants/templateCatalog';
 
 const steps = [
   { key: 'names', label: 'Couple names' },
@@ -176,16 +177,23 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     !!draft.guestEstimateBand;
 
   const selectedTemplateName = useMemo(() => {
-    const map: Record<string, string> = {
-      'modern-luxe': 'Modern Luxe',
-      'garden-romance': 'Garden Romance',
-      'coastal-breeze': 'Coastal Breeze',
-      'classic-elegance': 'Classic Elegance',
-      'rustic-warmth': 'Rustic Warmth',
-      'bold-minimal': 'Bold Minimal',
-    };
-    return map[draft.selectedTemplateId] ?? draft.selectedTemplateId;
+    return templateCatalog.find((t) => t.id === draft.selectedTemplateId)?.name ?? draft.selectedTemplateId;
   }, [draft.selectedTemplateId]);
+
+  const recommendedTemplates = useMemo(() => {
+    const prefs = new Set(draft.stylePreferences);
+    if (prefs.size === 0) return templateCatalog.slice(0, 3);
+
+    return [...templateCatalog]
+      .map((t) => ({
+        template: t,
+        score: t.styleTags.filter((tag) => prefs.has(tag)).length,
+      }))
+      .sort((a, b) => b.score - a.score)
+      .filter((x) => x.score > 0)
+      .slice(0, 3)
+      .map((x) => x.template);
+  }, [draft.stylePreferences]);
 
   const saveAndGoBuilder = async () => {
     try {
@@ -349,6 +357,26 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                     </button>
                   );
                 })}
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-neutral-700 mb-2">Recommended templates</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  {recommendedTemplates.map((tpl) => {
+                    const active = draft.selectedTemplateId === tpl.id;
+                    return (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => updateDraft({ selectedTemplateId: tpl.id })}
+                        className={`rounded border p-2 text-left ${active ? 'border-rose-500 bg-rose-50' : 'border-neutral-300 bg-white'}`}
+                      >
+                        <p className="text-sm font-medium text-neutral-900">{tpl.name}</p>
+                        <p className="text-xs text-neutral-500">{tpl.colorwayId}</p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <p className="text-xs text-neutral-500">Optional — helps preselect templates and starter sections.</p>
