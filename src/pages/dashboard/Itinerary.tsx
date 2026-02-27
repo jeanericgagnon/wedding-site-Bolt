@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../hooks/useAuth';
@@ -39,6 +40,7 @@ export const DashboardItinerary: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ItineraryEvent | null>(null);
+  const [autoCreateAlbum, setAutoCreateAlbum] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -173,6 +175,7 @@ export const DashboardItinerary: React.FC = () => {
   function openEventForm(event?: ItineraryEvent) {
     if (event) {
       setEditingEvent(event);
+      setAutoCreateAlbum(false);
       setFormData({
         event_name: event.event_name,
         description: event.description || '',
@@ -187,6 +190,7 @@ export const DashboardItinerary: React.FC = () => {
       });
     } else {
       setEditingEvent(null);
+      setAutoCreateAlbum(true);
       setFormData({
         event_name: '',
         description: '',
@@ -267,6 +271,7 @@ export const DashboardItinerary: React.FC = () => {
       };
 
       const driftFields = ['event_name', 'is_visible', 'dress_code', 'notes', 'location_address', 'end_time'];
+      let createdEvent: { id: string; event_name?: string } | null = null;
 
       if (editingEvent) {
         const updatePayload: Record<string, unknown> = { ...payload };
@@ -298,8 +303,13 @@ export const DashboardItinerary: React.FC = () => {
                 ...insertPayload,
                 wedding_site_id: site.id,
               },
-            ]);
+            ])
+            .select('id,event_name')
+            .single();
           error = result.error;
+          if (!error && result.data) {
+            createdEvent = result.data as { id: string; event_name?: string };
+          }
           if (!error) break;
 
           const field = driftFields.find((candidate) => error?.message?.includes(candidate));
@@ -308,6 +318,18 @@ export const DashboardItinerary: React.FC = () => {
         }
 
         if (error) throw error;
+      }
+
+      if (!editingEvent && autoCreateAlbum && createdEvent?.id) {
+        try {
+          await invokeFunctionOrThrow(supabase, 'photo-album-create', {
+            siteId: site.id,
+            name: createdEvent.event_name || formData.event_name,
+            itineraryEventId: createdEvent.id,
+          });
+        } catch {
+          // best-effort connector; itinerary save should still succeed
+        }
       }
 
       setShowEventForm(false);
@@ -543,6 +565,21 @@ export const DashboardItinerary: React.FC = () => {
                 Show on public wedding website
               </label>
             </div>
+
+            {!editingEvent && (
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="auto_create_album"
+                  checked={autoCreateAlbum}
+                  onChange={(e) => setAutoCreateAlbum(e.target.checked)}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
+                />
+                <label htmlFor="auto_create_album" className="ml-2 block text-sm text-neutral-700">
+                  Auto-create a photo album for this event
+                </label>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <Button type="submit">

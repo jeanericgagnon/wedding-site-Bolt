@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
+import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 
 const steps = [
   { key: 'names', label: 'Couple names' },
@@ -23,79 +25,16 @@ const styleOptions = [
   'Destination',
 ] as const;
 
-type SetupDraft = {
-  partnerOneFirstName: string;
-  partnerOneLastName: string;
-  partnerTwoFirstName: string;
-  partnerTwoLastName: string;
-  dateKnown: boolean;
-  weddingDate: string;
-  weddingCity: string;
-  weddingRegion: string;
-  guestEstimateBand: '' | 'lt50' | '50to100' | '100to200' | '200plus';
-  stylePreferences: string[];
-  selectedTemplateId: string;
-};
-
-const DRAFT_KEY = 'dayof.builderV2.setupDraft';
-
-const emptyDraft: SetupDraft = {
-  partnerOneFirstName: '',
-  partnerOneLastName: '',
-  partnerTwoFirstName: '',
-  partnerTwoLastName: '',
-  dateKnown: true,
-  weddingDate: '',
-  weddingCity: '',
-  weddingRegion: '',
-  guestEstimateBand: '',
-  stylePreferences: [],
-  selectedTemplateId: 'modern-luxe',
-};
-
-const readDraft = (): SetupDraft => {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return emptyDraft;
-    const parsed = JSON.parse(raw) as Partial<SetupDraft>;
-    return {
-      ...emptyDraft,
-      ...parsed,
-      dateKnown: parsed.dateKnown ?? true,
-      weddingDate: parsed.weddingDate ?? '',
-      weddingCity: parsed.weddingCity ?? '',
-      weddingRegion: parsed.weddingRegion ?? '',
-      guestEstimateBand: (parsed.guestEstimateBand as SetupDraft['guestEstimateBand']) ?? '',
-      stylePreferences: Array.isArray(parsed.stylePreferences) ? parsed.stylePreferences : [],
-      selectedTemplateId: parsed.selectedTemplateId ?? localStorage.getItem('dayof.builderV2.selectedTemplate') ?? 'modern-luxe',
-    };
-  } catch {
-    return emptyDraft;
-  }
-};
-
-const writeDraft = (draft: SetupDraft) => {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-};
-
 export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const params = useParams();
   const navigate = useNavigate();
   const activeStep = step ?? params.step ?? 'names';
 
-  const [draft, setDraft] = useState<SetupDraft>(() => readDraft());
+  const [draft, setDraft] = useState<SetupDraft>(() => readSetupDraft());
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
-  const completion = useMemo(() => {
-    let score = 0;
-    if (draft.partnerOneFirstName.trim() && draft.partnerTwoFirstName.trim()) score += 1;
-    if (!draft.dateKnown || !!draft.weddingDate) score += 1;
-    if (draft.weddingCity.trim()) score += 1;
-    if (draft.guestEstimateBand) score += 1;
-    if (draft.stylePreferences.length > 0) score += 1;
-    return Math.round((score / 5) * 100);
-  }, [draft]);
+  const completion = useMemo(() => setupDraftProgress(draft), [draft]);
 
   const nextStep = useMemo(() => {
     const idx = steps.findIndex((s) => s.key === activeStep);
@@ -113,10 +52,18 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     setError('');
     setDraft((prev) => {
       const next = { ...prev, ...patch };
-      writeDraft(next);
+      writeSetupDraft(next);
       return next;
     });
   };
+
+  const firstIncompleteStep = useMemo(() => {
+    if (!draft.partnerOneFirstName.trim() || !draft.partnerTwoFirstName.trim()) return 'names';
+    if (draft.dateKnown && !draft.weddingDate) return 'date';
+    if (!draft.weddingCity.trim()) return 'location';
+    if (!draft.guestEstimateBand) return 'guest-estimate';
+    return 'style';
+  }, [draft]);
 
   const goNext = () => {
     if (nextStep) navigate(`/setup/${nextStep}`);
@@ -195,28 +142,21 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       .map((x) => x.template);
   }, [draft.stylePreferences]);
 
+  const resetSetupDraft = () => {
+    clearSetupDraft();
+    window.location.href = '/setup/names';
+  };
+
   const saveAndGoBuilder = async () => {
     try {
       setError('');
       setSaving(true);
-      writeDraft(draft);
+      writeSetupDraft(draft);
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        throw new Error('Please log in again before continuing.');
-      }
+      await invokeFunctionOrThrow(supabase, 'setup-bootstrap', draft as unknown as Record<string, unknown>);
 
-      const { data, error: fnError } = await supabase.functions.invoke('setup-bootstrap', {
-        body: draft,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (fnError) {
-        const maybe = data as { error?: string; code?: string } | null;
-        throw new Error(`${maybe?.error || fnError.message}${maybe?.code ? ` (${maybe.code})` : ''}`);
-      }
-
+      // draft has been committed server-side; keep selected template key but clear raw draft
+      clearSetupDraftOnly();
       navigate('/builder');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save setup.');
@@ -240,7 +180,24 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/setup/${firstIncompleteStep}`)}
+            className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100"
+          >
+            Jump to next required step
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/templates')}
+            className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100"
+          >
+            Back to templates
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-2">
           {steps.map((s) => {
             const isReviewLocked = s.key === 'review' && !canOpenReview;
             return (
@@ -396,10 +353,13 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Guest estimate:</strong> {draft.guestEstimateBand || 'Not set'}</p>
                 <p><strong>Styles:</strong> {draft.stylePreferences.join(', ') || 'None selected'}</p>
                 <p><strong>Template:</strong> {selectedTemplateName}</p>
+                <p><strong>Template ID:</strong> {draft.selectedTemplateId}</p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
+                <button type="button" onClick={() => navigate('/templates')} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Change template</button>
+                <button type="button" onClick={resetSetupDraft} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Start over</button>
                 <button type="button" onClick={() => void saveAndGoBuilder()} disabled={saving} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60">
                   {saving ? 'Saving...' : 'Save and open builder'}
                 </button>

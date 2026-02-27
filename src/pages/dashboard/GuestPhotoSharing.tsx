@@ -6,6 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
+import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 
 type ItineraryEvent = {
   id: string;
@@ -108,65 +109,8 @@ export const GuestPhotoSharing: React.FC = () => {
     writeStoredAlbumLinks(albumUploadLinks);
   }, [albumUploadLinks]);
 
-  const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {
-    const parseError = async (error: { message?: string; context?: Response }, data: unknown) => {
-      let msg = error.message || 'Request failed';
-      let code = '';
-      const ctx = error.context;
-      if (ctx) {
-        try {
-          const payload = await ctx.clone().json() as { error?: string; code?: string; message?: string };
-          msg = payload.error || payload.message || msg;
-          if (payload.code) code = ` (${payload.code})`;
-        } catch {
-          try {
-            const text = await ctx.clone().text();
-            if (text) msg = text;
-          } catch {
-            // ignore
-          }
-        }
-      } else {
-        const maybe = data as { error?: string; code?: string; message?: string } | null;
-        msg = maybe?.error || maybe?.message || msg;
-        if (maybe?.code) code = ` (${maybe.code})`;
-      }
-      return `${msg}${code}`;
-    };
-
-    const invokeWithToken = async (token: string) => {
-      return supabase.functions.invoke(fnName, {
-        body,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    };
-
-    const { data: sessionData } = await supabase.auth.getSession();
-    let token = sessionData.session?.access_token;
-    const expMs = (sessionData.session?.expires_at ?? 0) * 1000;
-    if (!token || (expMs > 0 && expMs < Date.now() + 60_000)) {
-      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
-      if (refreshErr || !refreshed.session?.access_token) {
-        throw new Error('You are not authenticated. Please log out and log back in, then try again. (AUTH_REFRESH_FAILED)');
-      }
-      token = refreshed.session.access_token;
-    }
-
-    let { data, error } = await invokeWithToken(token);
-
-    if (error && /invalid jwt|jwt/i.test(error.message || '')) {
-      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
-      if (!refreshErr && refreshed.session?.access_token) {
-        ({ data, error } = await invokeWithToken(refreshed.session.access_token));
-      }
-    }
-
-    if (error) {
-      throw new Error(await parseError(error as { message?: string; context?: Response }, data));
-    }
-
-    return data;
-  };
+  const invokeOrThrow = (fnName: string, body: Record<string, unknown>) =>
+    invokeFunctionOrThrow(supabase, fnName, body);
 
   async function load() {
     try {
@@ -320,6 +264,26 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const makeShareMessage = (albumName: string, link: string) =>
     `Please upload your ${albumName} photos here: ${link}`;
+
+  const sendAllActiveAlbumRequests = () => {
+    const lines = albums
+      .filter((a) => a.is_active)
+      .map((a) => {
+        const link = albumUploadLinks[a.id];
+        if (!link) return null;
+        return `${a.name}: ${makeShareMessage(a.name, link)}`;
+      })
+      .filter((v): v is string => typeof v === 'string');
+
+    if (lines.length === 0) {
+      setError('No active albums with links available to send.');
+      return;
+    }
+
+    const subject = encodeURIComponent('Photo upload links');
+    const body = encodeURIComponent(lines.join('\n\n'));
+    window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
+  };
 
   const copyAllShareMessages = async () => {
     const lines = albums
@@ -781,6 +745,9 @@ export const GuestPhotoSharing: React.FC = () => {
               </Button>
               <Button size="sm" variant="outline" onClick={() => void copyAllShareMessages()}>
                 {copied === 'all-share-messages' ? 'Copied messages' : 'Copy all messages'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => sendAllActiveAlbumRequests()}>
+                Send all active requests
               </Button>
               <Button size="sm" variant="outline" onClick={() => void regenerateAllKnownAlbumLinks()} disabled={bulkRegenerating}>
                 {bulkRegenerating ? 'Rotating links...' : 'Rotate known links'}

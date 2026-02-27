@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
-import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2 } from 'lucide-react';
+import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2, Link2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
@@ -369,6 +369,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
 export const DashboardMessages: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -620,12 +621,35 @@ export const DashboardMessages: React.FC = () => {
     }
   };
 
+  const knownPhotoLinksCount = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('dayof.photoAlbumLinks');
+      if (!raw) return 0;
+      return Object.values(JSON.parse(raw) as Record<string, string>).filter(Boolean).length;
+    } catch {
+      return 0;
+    }
+  }, []);
+
   const applyTemplateVariables = (text: string) => {
     const couple = [weddingSite?.couple_first_name, weddingSite?.couple_second_name].filter(Boolean).join(' & ') || 'our wedding';
     const rsvpLink = `${window.location.origin}/rsvp`;
+
+    let photoLink = `${window.location.origin}/photos/upload`;
+    try {
+      const raw = localStorage.getItem('dayof.photoAlbumLinks');
+      if (raw) {
+        const links = Object.values(JSON.parse(raw) as Record<string, string>).filter(Boolean);
+        if (links.length > 0) photoLink = links[0] as string;
+      }
+    } catch {
+      // ignore and fallback
+    }
+
     return text
       .replace(/\[COUPLE\]/g, couple)
       .replace(/\[RSVP LINK\]/g, rsvpLink)
+      .replace(/\[PHOTO LINK\]/g, photoLink)
       .replace(/\[DATE\]/g, 'our wedding date')
       .replace(/\[VENUE\]/g, 'our venue')
       .replace(/\[ADD DETAILS\]/g, 'timeline, parking, dress code, and arrival instructions');
@@ -1176,6 +1200,34 @@ export const DashboardMessages: React.FC = () => {
                     <p className="text-sm text-text-secondary">Sent / Queued</p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-rose-100 rounded-lg">
+                    <Link2 className="w-5 h-5 text-rose-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-text-primary">{knownPhotoLinksCount}</p>
+                    <p className="text-sm text-text-secondary">Known Photo Links</p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => navigate('/dashboard/photos')}>
+                    Open Photos
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        subject: applyTemplateVariables('Share your photos with us 📸'),
+                        body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
+                      }));
+                    }}
+                  >
+                    Insert Photo Template
+                  </Button>
+                </div>
               </div>
             </Card>
 
@@ -1188,6 +1240,7 @@ export const DashboardMessages: React.FC = () => {
                   { label: 'Week-Of Details', subject: 'Wedding Week Details', body: 'The big day is almost here! Here are some important details for the wedding week: [ADD DETAILS]' },
                   { label: 'Photo Upload Request', subject: 'Share your photos with us 📸', body: 'We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]' },
                   { label: 'Photo Upload Reminder', subject: 'Last call for wedding photos', body: 'If you snapped any photos, we would love to see them. Add yours here: [PHOTO LINK]' },
+                  { label: 'Photo + RSVP Combo', subject: 'Quick wedding update', body: 'Hi! RSVP here: [RSVP LINK]\n\nAnd if you have photos from our events, upload here: [PHOTO LINK]' },
                   { label: 'Thank You', subject: 'Thank You!', body: 'Thank you so much for celebrating our special day with us! Your presence meant the world to us. We are grateful for your love and support.' },
                 ].map(tpl => (
                   <button

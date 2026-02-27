@@ -11,6 +11,7 @@ import { createDefaultSectionInstance } from '../types/builder/section';
 import { supabase } from '../lib/supabase';
 import { demoWeddingSite } from '../lib/demoData';
 import { getTemplatePack } from './constants/builderTemplatePacks';
+import { readSetupDraft, type SetupDraft } from '../lib/setupDraft';
 
 function createDemoBuilderProject(): BuilderProject {
   const templateId = 'modern-luxe';
@@ -30,29 +31,53 @@ function createDemoBuilderProject(): BuilderProject {
   return project;
 }
 
-type SetupDraft = {
-  selectedTemplateId?: string;
-  partnerOneFirstName?: string;
-  partnerOneLastName?: string;
-  partnerTwoFirstName?: string;
-  partnerTwoLastName?: string;
-  dateKnown?: boolean;
-  weddingDate?: string;
-  weddingCity?: string;
-  weddingRegion?: string;
-  guestEstimateBand?: '' | 'lt50' | '50to100' | '100to200' | '200plus';
-  stylePreferences?: string[];
-};
+function hasMeaningfulSetupDraft(draft: SetupDraft): boolean {
+  return Boolean(
+    draft.partnerOneFirstName?.trim() ||
+    draft.partnerTwoFirstName?.trim() ||
+    draft.weddingDate ||
+    draft.weddingCity?.trim() ||
+    draft.guestEstimateBand ||
+    draft.stylePreferences?.length
+  );
+}
 
-function readSetupDraft(): SetupDraft | null {
-  try {
-    const raw = localStorage.getItem('dayof.builderV2.setupDraft');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as SetupDraft;
-    return parsed;
-  } catch {
-    return null;
+function applyTemplateDefaultsToProject(project: BuilderProject, templateId: string): BuilderProject {
+  const template = getTemplatePack(templateId);
+  if (!template) return { ...project, templateId };
+
+  const firstPage = project.pages[0];
+  if (!firstPage) return { ...project, templateId, themeId: template.defaultThemeId };
+
+  const hasExistingSections = firstPage.sections.some((section) =>
+    section.enabled || Object.keys(section.settings ?? {}).length > 1 || Object.keys(section.bindings ?? {}).length > 0
+  );
+
+  if (hasExistingSections) {
+    return {
+      ...project,
+      templateId,
+      themeId: project.themeId || template.defaultThemeId,
+    };
   }
+
+  return {
+    ...project,
+    templateId,
+    themeId: template.defaultThemeId,
+    pages: project.pages.map((page, pageIndex) => {
+      if (pageIndex !== 0) return page;
+      return {
+        ...page,
+        sections: template.sectionComposition.map((section, index) => ({
+          ...createDefaultSectionInstance(section.type, section.variant, index),
+          enabled: section.enabled,
+          locked: section.locked,
+          settings: { ...section.settings },
+        })),
+      };
+    }),
+  };
 }
 
 function applySetupDraftToWeddingData(source: WeddingDataV1, draft: SetupDraft): WeddingDataV1 {
@@ -208,14 +233,11 @@ export const BuilderPage: React.FC = () => {
       const setupDraft = readSetupDraft();
       const hasNoCoupleNames = !loadedWeddingData.couple.partner1Name && !loadedWeddingData.couple.partner2Name;
 
-      if (setupDraft && hasNoCoupleNames) {
+      if (hasMeaningfulSetupDraft(setupDraft) && hasNoCoupleNames) {
         nextWeddingData = applySetupDraftToWeddingData(loadedWeddingData, setupDraft);
 
-        if (nextProject && setupDraft.selectedTemplateId && nextProject.templateId !== setupDraft.selectedTemplateId) {
-          nextProject = {
-            ...nextProject,
-            templateId: setupDraft.selectedTemplateId,
-          };
+        if (nextProject && setupDraft.selectedTemplateId) {
+          nextProject = applyTemplateDefaultsToProject(nextProject, setupDraft.selectedTemplateId);
         }
 
         if (nextProject) {
@@ -246,11 +268,16 @@ export const BuilderPage: React.FC = () => {
     if (updatedWeddingData) setWeddingData(updatedWeddingData);
   };
 
-  const handlePublish = async (projectId: string) => {
-    if (!project) return;
-    if (isDemoMode) return;
+  const handlePublish = async (projectId: string): Promise<{ version: number; publishedAt: string }> => {
+    if (!project || isDemoMode) {
+      return {
+        version: project?.publishedVersion ?? 0,
+        publishedAt: new Date().toISOString(),
+      };
+    }
     const result = await publishService.publish({ ...project, id: projectId });
     if (!result.success) throw new Error(result.error);
+    return { version: result.version, publishedAt: result.publishedAt };
   };
 
   if (loading) {

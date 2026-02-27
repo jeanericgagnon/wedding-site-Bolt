@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
