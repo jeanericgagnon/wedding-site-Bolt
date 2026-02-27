@@ -11,6 +11,24 @@ export const Templates: React.FC = () => {
   const [season, setSeason] = useState<Facet>('all');
   const [colorway, setColorway] = useState<Facet>('all');
 
+  const recommendedTemplateIds = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('dayof.builderV2.setupDraft');
+      if (!raw) return [] as string[];
+      const d = JSON.parse(raw) as { stylePreferences?: string[] };
+      const prefs = new Set((d.stylePreferences ?? []).filter(Boolean));
+      if (prefs.size === 0) return [];
+      return [...templateCatalog]
+        .map((t) => ({ id: t.id, score: t.styleTags.filter((tag) => prefs.has(tag)).length }))
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map((x) => x.id);
+    } catch {
+      return [] as string[];
+    }
+  }, []);
+
   const filtered = useMemo(() => {
     return templateCatalog.filter((t) => {
       const styleOk = style === 'all' || t.styleTags.includes(style);
@@ -51,10 +69,15 @@ export const Templates: React.FC = () => {
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((tpl) => (
-            <div key={tpl.id} className="rounded-xl border border-neutral-200 bg-white overflow-hidden shadow-sm">
+            <div key={tpl.id} className={`rounded-xl border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-rose-300 ring-1 ring-rose-100' : 'border-neutral-200'}`}>
               <img src={tpl.previewImage} alt={tpl.name} className="h-40 w-full object-cover" />
               <div className="p-4">
-                <h2 className="text-lg font-semibold text-neutral-900">{tpl.name}</h2>
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-lg font-semibold text-neutral-900">{tpl.name}</h2>
+                  {recommendedTemplateIds.includes(tpl.id) && (
+                    <span className="rounded bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">Recommended</span>
+                  )}
+                </div>
                 <p className="mt-1 text-sm text-neutral-600">{tpl.description}</p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {tpl.styleTags.map((tag) => <span key={tag} className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">{tag}</span>)}
