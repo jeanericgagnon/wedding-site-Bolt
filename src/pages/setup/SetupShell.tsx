@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
-import { clearSetupDraft, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
+import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 
 const steps = [
   { key: 'names', label: 'Couple names' },
@@ -156,7 +156,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       await invokeFunctionOrThrow(supabase, 'setup-bootstrap', draft as unknown as Record<string, unknown>);
 
       // draft has been committed server-side; keep selected template key but clear raw draft
-      localStorage.removeItem('dayof.builderV2.setupDraft');
+      clearSetupDraftOnly();
       navigate('/builder');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save setup.');

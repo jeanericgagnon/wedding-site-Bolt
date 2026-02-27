@@ -63,6 +63,10 @@ export const clearSetupDraft = () => {
   localStorage.removeItem(SELECTED_TEMPLATE_KEY);
 };
 
+export const clearSetupDraftOnly = () => {
+  localStorage.removeItem(SETUP_DRAFT_KEY);
+};
+
 export const setupDraftProgress = (draft: SetupDraft): number => {
   let score = 0;
   if (draft.partnerOneFirstName.trim() && draft.partnerTwoFirstName.trim()) score += 1;
