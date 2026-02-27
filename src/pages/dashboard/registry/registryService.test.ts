@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { RegistryPreview } from './registryTypes';
+import type { RegistryItem, RegistryPreview } from './registryTypes';
+import { fetchUrlPreview, findDuplicateItem } from './registryService';
 
 const mockRpcResult = {
   data: null as unknown,
@@ -13,6 +14,12 @@ const mockSelectResult = {
 
 vi.mock('../../../lib/supabase', () => ({
   supabase: {
+    auth: {
+      getSession: vi.fn(async () => ({
+        data: { session: { access_token: 'test-token' } },
+        error: null,
+      })),
+    },
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       insert: vi.fn().mockReturnThis(),
@@ -59,8 +66,6 @@ describe('fetchUrlPreview', () => {
       json: () => Promise.resolve(preview),
     });
     vi.stubGlobal('fetch', mockFetch);
-
-    const { fetchUrlPreview } = await import('./registryService');
     const result = await fetchUrlPreview('https://amazon.com/dp/B001');
 
     expect(result.title).toBe('KitchenAid Mixer');
@@ -75,16 +80,12 @@ describe('fetchUrlPreview', () => {
       text: () => Promise.resolve('Rate limit exceeded'),
     });
     vi.stubGlobal('fetch', mockFetch);
-
-    const { fetchUrlPreview } = await import('./registryService');
     await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow();
   });
 
   it('throws on network failure', async () => {
     const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'));
     vi.stubGlobal('fetch', mockFetch);
-
-    const { fetchUrlPreview } = await import('./registryService');
     await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow('Network error');
   });
 
@@ -112,8 +113,6 @@ describe('fetchUrlPreview', () => {
       json: () => Promise.resolve(preview),
     });
     vi.stubGlobal('fetch', mockFetch);
-
-    const { fetchUrlPreview } = await import('./registryService');
     const result = await fetchUrlPreview('https://amazon.com/dp/B001');
 
     expect(result.error).toBe('Could not fetch page');
@@ -122,16 +121,32 @@ describe('fetchUrlPreview', () => {
 });
 
 describe('findDuplicateItem', () => {
-  const mockItem = (overrides: Partial<any>): any => ({
+  const mockItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
     id: 'item-1',
+    wedding_site_id: 'site-1',
     item_name: 'Test Product',
+    price_label: null,
+    price_amount: null,
+    store_name: null,
+    merchant: null,
     item_url: 'https://example.com/product',
     canonical_url: 'https://example.com/product',
+    image_url: null,
+    description: null,
+    notes: null,
+    quantity_needed: 1,
+    quantity_purchased: 0,
+    purchaser_name: null,
+    purchase_status: 'available',
+    hide_when_purchased: false,
+    sort_order: 0,
+    priority: 'medium',
+    created_at: '2026-01-01T00:00:00.000Z',
+    updated_at: '2026-01-01T00:00:00.000Z',
     ...overrides,
   });
 
   it('finds duplicate by canonical URL', () => {
-    const { findDuplicateItem } = require('./registryService');
     const items = [
       mockItem({ id: 'item-1', canonical_url: 'https://target.com/p/-/A-12345678' }),
       mockItem({ id: 'item-2', canonical_url: 'https://amazon.com/dp/B07XYZ1234' }),
@@ -148,7 +163,6 @@ describe('findDuplicateItem', () => {
   });
 
   it('finds duplicate by item URL when canonical is missing', () => {
-    const { findDuplicateItem } = require('./registryService');
     const items = [
       mockItem({
         id: 'item-1',
@@ -168,7 +182,6 @@ describe('findDuplicateItem', () => {
   });
 
   it('finds duplicate by title when URLs differ', () => {
-    const { findDuplicateItem } = require('./registryService');
     const items = [
       mockItem({
         id: 'item-1',
@@ -188,7 +201,6 @@ describe('findDuplicateItem', () => {
   });
 
   it('excludes item by ID', () => {
-    const { findDuplicateItem } = require('./registryService');
     const items = [
       mockItem({ id: 'item-1', canonical_url: 'https://target.com/p/-/A-12345678' }),
     ];
@@ -204,7 +216,6 @@ describe('findDuplicateItem', () => {
   });
 
   it('returns null when no duplicate found', () => {
-    const { findDuplicateItem } = require('./registryService');
     const items = [
       mockItem({ id: 'item-1', canonical_url: 'https://target.com/p/-/A-12345678' }),
     ];
@@ -219,7 +230,6 @@ describe('findDuplicateItem', () => {
   });
 
   it('handles case-insensitive matching', () => {
-    const { findDuplicateItem } = require('./registryService');
     const items = [
       mockItem({
         id: 'item-1',

@@ -9,6 +9,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 
 interface OverviewStats {
+  publishedVersion: number | null;
+  lastPublishedAt: string | null;
   totalGuests: number;
   confirmedGuests: number;
   declinedGuests: number;
@@ -102,6 +104,8 @@ export const DashboardOverview: React.FC = () => {
         const weddingDate = demoWeddingSite.wedding_date ?? null;
 
         setStats({
+          publishedVersion: 1,
+          lastPublishedAt: new Date().toISOString(),
           totalGuests: demoGuests.length,
           confirmedGuests: confirmed.length,
           declinedGuests: declined.length,
@@ -188,6 +192,8 @@ export const DashboardOverview: React.FC = () => {
       );
 
       setStats({
+        publishedVersion: typeof siteJson?.publishedVersion === 'number' ? (siteJson.publishedVersion as number) : null,
+        lastPublishedAt: typeof siteJson?.lastPublishedAt === 'string' ? (siteJson.lastPublishedAt as string) : null,
         totalGuests: allGuests.length,
         confirmedGuests: confirmed.length,
         declinedGuests: declined.length,
@@ -219,28 +225,7 @@ export const DashboardOverview: React.FC = () => {
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
 
-  const setupDraftProgress = useMemo(() => {
-    try {
-      const raw = localStorage.getItem('dayof.builderV2.setupDraft');
-      if (!raw) return 0;
-      const d = JSON.parse(raw) as {
-        partnerOneFirstName?: string;
-        partnerTwoFirstName?: string;
-        dateKnown?: boolean;
-        weddingDate?: string;
-        weddingCity?: string;
-        guestEstimateBand?: string;
-      };
-      let score = 0;
-      if ((d.partnerOneFirstName || '').trim() && (d.partnerTwoFirstName || '').trim()) score += 1;
-      if (d.dateKnown === false || !!d.weddingDate) score += 1;
-      if ((d.weddingCity || '').trim()) score += 1;
-      if (d.guestEstimateBand) score += 1;
-      return Math.round((score / 4) * 100);
-    } catch {
-      return 0;
-    }
-  }, [stats]);
+  const setupDraftProgressPercent = useMemo(() => setupDraftProgress(readSetupDraft()), []);
 
   const setupChecklist = stats
     ? [
@@ -283,14 +268,46 @@ export const DashboardOverview: React.FC = () => {
           id: 'publish',
           label: 'Publish site once',
           done: stats.isPublished,
-          actionLabel: 'Open site builder',
-          action: () => navigate('/dashboard/builder'),
+          actionLabel: stats.isPublished ? 'Open site builder' : 'Publish now',
+          action: () => navigate(stats.isPublished ? '/dashboard/builder' : '/dashboard/builder?publishNow=1'),
         },
       ]
     : [];
 
   const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
   const nextSetupItem = setupChecklist.find((item) => !item.done) ?? null;
+  const publishReadinessItems = [
+    {
+      id: 'slug',
+      label: 'Site URL configured',
+      done: Boolean(stats?.siteSlug),
+      actionLabel: 'Open settings',
+      action: () => navigate('/dashboard/settings'),
+    },
+    {
+      id: 'template',
+      label: 'Template selected',
+      done: Boolean(stats?.templateName),
+      actionLabel: 'Open templates',
+      action: () => navigate('/templates'),
+    },
+    {
+      id: 'date',
+      label: 'Wedding date set',
+      done: Boolean(stats?.weddingDate),
+      actionLabel: 'Set date',
+      action: () => navigate('/dashboard/settings'),
+    },
+    {
+      id: 'published',
+      label: 'Published at least once',
+      done: Boolean(stats?.isPublished),
+      actionLabel: stats?.isPublished ? 'Open builder' : 'Publish now',
+      action: () => navigate(stats?.isPublished ? '/dashboard/builder' : '/dashboard/builder?publishNow=1'),
+    },
+  ];
+  const publishReadyCount = publishReadinessItems.filter((item) => item.done).length;
+  const publishBlockers = publishReadinessItems.filter((item) => !item.done);
 
   return (
     <DashboardLayout currentPage="overview">
@@ -313,12 +330,12 @@ export const DashboardOverview: React.FC = () => {
             />
           </div>
         </div>
-        {setupDraftProgress > 0 && setupDraftProgress < 100 && (
+        {setupDraftProgressPercent > 0 && setupDraftProgressPercent < 100 && (
           <Card variant="bordered" padding="lg" className="shadow-sm border-rose-200 bg-rose-50/40">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-rose-900">Builder V2 setup in progress</p>
-                <p className="text-xs text-rose-700 mt-1">You're {setupDraftProgress}% done. Finish setup for stronger defaults.</p>
+                <p className="text-xs text-rose-700 mt-1">You're {setupDraftProgressPercent}% done. Finish setup for stronger defaults.</p>
               </div>
               <button
                 onClick={() => navigate('/setup/names')}
@@ -334,12 +351,46 @@ export const DashboardOverview: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
             <p className="text-text-secondary">Your wedding at a glance</p>
+            {!loading && stats && !stats.isPublished && (
+              <div className="mt-2 space-y-1">
+                <div className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
+                  Publish needed
+                </div>
+                {publishBlockers[0] && (
+                  <p className="text-xs text-amber-700">Next blocker: {publishBlockers[0].label}</p>
+                )}
+              </div>
+            )}
           </div>
-          {nextSetupItem && !loading && (
-            <Button variant="outline" size="sm" onClick={nextSetupItem.action}>
-              Next step: {nextSetupItem.label}
-            </Button>
-          )}
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {!loading && stats?.isPublished && stats?.siteSlug && (
+              <Button variant="outline" size="sm" onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}>
+                Open live site
+              </Button>
+            )}
+            {!loading && stats && !stats.isPublished && (
+              <>
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={() => navigate('/dashboard/builder?publishNow=1')}
+                  title="Open builder and run publish flow"
+                >
+                  Publish now
+                </Button>
+                {publishBlockers.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => publishBlockers[0]?.action()}>
+                    Fix blockers ({publishBlockers.length})
+                  </Button>
+                )}
+              </>
+            )}
+            {nextSetupItem && !loading && (
+              <Button variant="outline" size="sm" onClick={nextSetupItem.action}>
+                Next step: {nextSetupItem.label}
+              </Button>
+            )}
+          </div>
         </div>
 
         {error && (
@@ -476,9 +527,14 @@ export const DashboardOverview: React.FC = () => {
                         {stats?.isPublished ? 'Published and live' : 'Not yet published'}
                       </CardDescription>
                     </div>
-                    <Badge variant={stats?.isPublished ? 'success' : 'secondary'}>
-                      {stats?.isPublished ? 'Live' : 'Draft'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={stats?.isPublished ? 'success' : 'secondary'}>
+                        {stats?.isPublished ? 'Live' : 'Draft'}
+                      </Badge>
+                      {typeof stats?.publishedVersion === 'number' && (
+                        <Badge variant="secondary">v{stats.publishedVersion}</Badge>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -505,11 +561,78 @@ export const DashboardOverview: React.FC = () => {
                       {stats?.templateName?.replace(/-/g, ' ') ?? 'Default'}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between py-3 border-b border-border-subtle">
+                    <span className="text-text-secondary">Published version</span>
+                    <span className="text-text-primary font-medium">
+                      {typeof stats?.publishedVersion === 'number' ? `v${stats.publishedVersion}` : '—'}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between py-3">
                     <span className="text-text-secondary">Last updated</span>
                     <span className="text-text-primary">
                       {stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}
                     </span>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <span className="text-text-secondary">Publishing status</span>
+                    <span className="text-text-primary">
+                      {stats?.isPublished ? 'Published' : 'Draft only'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <span className="text-text-secondary">Last published</span>
+                    <span className="text-text-primary">
+                      {stats?.lastPublishedAt ? formatRelativeTime(stats.lastPublishedAt) : '—'}
+                    </span>
+                  </div>
+                  {!stats?.isPublished && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 space-y-1">
+                      <p>Your site is still private. Guests can only view it after first publish.</p>
+                      <p>
+                        Readiness: {stats?.siteSlug ? 'URL set' : 'set URL'} · {stats?.templateName ? 'template set' : 'choose template'} · publish once to go live.
+                      </p>
+                    </div>
+                  )}
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <p className="text-xs font-medium text-text-secondary">Publishing checklist</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-text-tertiary">{publishReadyCount}/{publishReadinessItems.length} ready</span>
+                        {publishBlockers[0] && (
+                          <button
+                            type="button"
+                            onClick={() => publishBlockers[0].action()}
+                            className="rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
+                          >
+                            Fix next
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {publishReadinessItems.map((item) => (
+                        <div key={item.id} className="text-xs text-text-secondary flex items-center justify-between gap-2 rounded border border-border-subtle bg-white px-2 py-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {item.done ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-green-600" aria-hidden="true" />
+                            ) : (
+                              <AlertCircle className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
+                            )}
+                            <span className="truncate">{item.label}</span>
+                            {item.done && <span className="text-[10px] rounded bg-green-50 px-1 py-0.5 text-green-700">Done</span>}
+                          </div>
+                          {!item.done && (
+                            <button
+                              type="button"
+                              onClick={item.action}
+                              className="shrink-0 rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
+                            >
+                              {item.actionLabel}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     {stats?.siteSlug && (
@@ -520,7 +643,7 @@ export const DashboardOverview: React.FC = () => {
                         onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}
                       >
                         <ExternalLink className="w-5 h-5 mr-2" aria-hidden="true" />
-                        Preview Site
+                        {stats.isPublished ? 'Open Live Site' : 'Preview Site'}
                       </Button>
                     )}
                     <Button
@@ -530,7 +653,7 @@ export const DashboardOverview: React.FC = () => {
                       onClick={() => navigate('/dashboard/builder')}
                     >
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
-                      Edit Site
+                      {stats?.isPublished ? 'Update Site' : 'Edit & Publish'}
                     </Button>
                   </div>
                 </CardContent>

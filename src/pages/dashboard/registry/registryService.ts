@@ -88,15 +88,12 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
   if (sessionError) {
-    console.error('Session error:', sessionError);
     throw new Error('Authentication error. Please refresh the page and sign in again.');
   }
 
   if (!session?.access_token) {
     throw new Error('No active session. Please sign in to use this feature.');
   }
-
-  console.log('Calling registry-preview with URL:', url);
 
   const resp = await fetch(endpoint, {
     method: 'POST',
@@ -108,19 +105,16 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
     body: JSON.stringify({ url, force_refresh: forceRefresh }),
   });
 
-  console.log('Registry-preview response status:', resp.status);
-
   if (!resp.ok) {
     let errorMessage = `HTTP ${resp.status}`;
     let errorDetails = '';
     try {
       const text = await resp.text();
-      console.error('Registry-preview error response:', text);
       const errorJson = JSON.parse(text);
       errorMessage = errorJson.error || errorJson.message || text || errorMessage;
       errorDetails = errorJson.details || '';
-    } catch (e) {
-      console.error('Failed to parse error response:', e);
+    } catch {
+      // keep fallback errorMessage
     }
 
     if (resp.status === 401) {
@@ -135,7 +129,6 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
   }
 
   const result = await resp.json() as RegistryPreview;
-  console.log('Registry-preview result:', result);
   return result;
 }
 

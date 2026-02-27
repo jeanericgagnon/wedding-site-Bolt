@@ -25,9 +25,11 @@ import { getAllThemePresets } from '../../lib/themePresets';
 interface BuilderTopBarProps {
   onSave: () => void;
   onPublish: () => void;
+  onFixPublishBlockers?: () => void;
   projectName?: string;
   saveError?: string | null;
   publishError?: string | null;
+  publishValidationError?: string | null;
 }
 
 function formatSavedAt(iso: string): string {
@@ -43,15 +45,21 @@ function formatSavedAt(iso: string): string {
 
 function formatPublishedAt(iso: string): string {
   const d = new Date(iso);
-  return `Live since ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (sameDay) return `Live since ${time}`;
+  return `Live since ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
 }
 
 export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   onSave,
   onPublish,
+  onFixPublishBlockers,
   projectName,
   saveError,
   publishError,
+  publishValidationError,
 }) => {
   const navigate = useNavigate();
   const { state, dispatch } = useBuilderContext();
@@ -61,9 +69,11 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const isDirty = selectIsDirty(state);
 
   const publishedAt = state.project?.lastPublishedAt ?? null;
+  const publishedVersion = state.project?.publishedVersion ?? null;
   const isPublished = publishStatus === 'published';
   const projectPages = state.project?.pages ?? [];
   const activePage = projectPages.find((p) => p.id === state.activePageId) ?? null;
+  const isPublishDisabled = state.isPublishing || state.isSaving || !!publishValidationError;
   const isThemePanelOpen = state.themePanelOpen;
   const activeThemeId = state.project?.themeId ?? 'romantic';
   const activeTheme = getAllThemePresets().find(p => p.id === activeThemeId);
@@ -74,7 +84,13 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   return (
     <header className="min-h-14 bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-3 md:px-4 py-2 md:py-0 gap-2 md:gap-3 z-50 sticky top-0">
       <button
-        onClick={() => navigate('/dashboard')}
+        onClick={() => {
+          if (isDirty) {
+            const ok = window.confirm('You have unsaved changes. Leave builder anyway?');
+            if (!ok) return;
+          }
+          navigate('/dashboard');
+        }}
         title="Back to Dashboard"
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors flex-shrink-0"
       >
@@ -118,6 +134,14 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       </div>
 
       <div className="hidden md:block h-5 w-px bg-gray-200 mx-1" />
+
+      <div className="hidden 2xl:flex items-center gap-1 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded px-2 py-1">
+        <span>⌘S Save</span>
+        <span>•</span>
+        <span>⌘P Preview</span>
+        <span>•</span>
+        <span>⌘⇧P Publish</span>
+      </div>
 
       <button
         onClick={() =>
@@ -225,16 +249,57 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         )}
 
         {isPublished && publishedAt && !state.isPublishing && !publishError && (
-          <span className="text-xs text-gray-400 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={`Published: ${new Date(publishedAt).toLocaleString()}`}>
+          <span className="text-xs text-gray-500 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={`Published: ${new Date(publishedAt).toLocaleString()}`}>
             <Clock size={11} />
             {formatPublishedAt(publishedAt)}
+            {typeof publishedVersion === 'number' && (
+              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">v{publishedVersion}</span>
+            )}
           </span>
         )}
         {publishError && !state.isPublishing && (
-          <span className="text-xs text-red-500 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={publishError}>
-            <XCircle size={12} />
-            Publish failed
-          </span>
+          <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
+            <span className="text-xs text-red-500 flex items-center gap-1.5" title={publishError}>
+              <XCircle size={12} />
+              Publish failed
+            </span>
+            <button
+              onClick={onPublish}
+              disabled={isPublishDisabled}
+              className="rounded border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700 hover:bg-red-100 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {publishValidationError && !state.isPublishing && (
+          <div className="items-center gap-1.5 hidden sm:flex">
+            <span className="text-xs text-amber-700 items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md inline-flex" title={publishValidationError}>
+              <AlertCircle size={12} />
+              Not ready to publish
+            </span>
+            {onFixPublishBlockers && (
+              <button
+                type="button"
+                onClick={onFixPublishBlockers}
+                className="text-[11px] rounded border border-amber-300 bg-amber-50 px-2 py-1 font-medium text-amber-800 hover:bg-amber-100"
+              >
+                Fix blockers
+              </button>
+            )}
+          </div>
+        )}
+
+        {publishValidationError && !state.isPublishing && (
+          <div className="sm:hidden w-full flex items-center justify-between rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
+            <span className="truncate pr-2">{publishValidationError}</span>
+            {onFixPublishBlockers && (
+              <button type="button" onClick={onFixPublishBlockers} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 font-medium">
+                Fix
+              </button>
+            )}
+          </div>
         )}
 
         <button
@@ -273,20 +338,30 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <div className="relative group">
           <button
             onClick={onPublish}
-            disabled={state.isPublishing}
+            disabled={isPublishDisabled}
+            aria-label={publishValidationError ? `Publish blocked: ${publishValidationError}` : 'Publish site'}
+            title={publishValidationError ? `${publishValidationError} (⌘⇧P)` : 'Publish site (⌘⇧P)'}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {state.isPublishing ? (
+            {state.isPublishing || state.isSaving ? (
               <Loader2 size={14} className="animate-spin" />
             ) : (
               <Globe size={14} />
             )}
-            {state.isPublishing ? 'Publishing…' : isPublished ? 'Re-publish' : 'Publish'}
+            {state.isPublishing
+              ? 'Publishing…'
+              : state.isSaving
+                ? 'Waiting for save…'
+                : isPublished
+                  ? `Re-publish${typeof publishedVersion === 'number' ? ` v${publishedVersion}` : ''}`
+                  : 'Publish'}
           </button>
-          <div className="absolute top-full right-0 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[200px] text-center">
-            {isPublished
-              ? 'Updates your live public site'
-              : 'Makes your site visible to guests'}
+          <div className="absolute top-full right-0 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[260px] text-center">
+            {publishValidationError
+              ? publishValidationError
+              : isPublished
+                ? 'Updates your live public site (⌘⇧P)'
+                : 'First publish makes your site visible to guests (⌘⇧P)'}
           </div>
         </div>
       </div>

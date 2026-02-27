@@ -25,6 +25,31 @@ interface BuilderShellProps {
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
 }
 
+type PublishIssue =
+  | { kind: 'no-pages'; message: string }
+  | { kind: 'no-enabled-sections'; message: string; firstSectionId?: string; firstPageId?: string };
+
+const getPublishIssue = (project: BuilderProject): PublishIssue | null => {
+  if (!project.pages.length) {
+    return { kind: 'no-pages', message: 'Add at least one page before publishing.' };
+  }
+
+  const firstSection = project.pages.flatMap((p) => p.sections.map((s) => ({ pageId: p.id, sectionId: s.id })))[0];
+  const hasEnabledSection = project.pages.some((page) => page.sections.some((section) => section.enabled));
+  if (!hasEnabledSection) {
+    return {
+      kind: 'no-enabled-sections',
+      message: 'Enable at least one section before publishing.',
+      firstSectionId: firstSection?.sectionId,
+      firstPageId: firstSection?.pageId,
+    };
+  }
+
+  return null;
+};
+
+const getPublishValidationError = (project: BuilderProject): string | null => getPublishIssue(project)?.message ?? null;
+
 export const BuilderShell: React.FC<BuilderShellProps> = ({
   initialProject,
   initialWeddingData,
@@ -70,9 +95,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   const [saveError, setSaveError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishNotice, setPublishNotice] = useState<string | null>(null);
 
   const stateRef = useRef(state);
   stateRef.current = state;
+  const shouldAutoPublishRef = useRef(new URLSearchParams(window.location.search).get('publishNow') === '1');
 
   useEffect(() => {
     const weddingId = initialProject.weddingId;
@@ -106,28 +133,68 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     }
   }, []);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (): Promise<boolean> => {
     const currentState = stateRef.current;
-    if (!currentState.project || !onSave) return;
+    if (!currentState.project || !onSave) return true;
     setSaveError(null);
     dispatch({ type: 'SET_SAVING', payload: true });
     try {
       await onSave(currentState.project, currentState.weddingData);
       dispatch(builderActions.markSaved(new Date().toISOString()));
+      return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save';
       setSaveError(msg);
       dispatch({ type: 'SET_SAVING', payload: false });
+      return false;
     }
   }, [onSave]);
+
+  const handleFixPublishBlockers = useCallback(() => {
+    const project = stateRef.current.project;
+    if (!project) return;
+    const issue = getPublishIssue(project);
+    if (!issue) return;
+
+    dispatch(builderActions.setMode('edit'));
+
+    if (issue.kind === 'no-pages') {
+      dispatch(builderActions.openTemplateGallery());
+      setPublishError(`${issue.message} Choose a starter template or add a page first.`);
+      return;
+    }
+
+    if (issue.kind === 'no-enabled-sections') {
+      if (issue.firstPageId) dispatch(builderActions.setActivePage(issue.firstPageId));
+      if (issue.firstSectionId) {
+        dispatch(builderActions.selectSection(issue.firstSectionId));
+        requestAnimationFrame(() => {
+          const el = document.querySelector(`[data-section-id="${issue.firstSectionId}"]`);
+          if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+      setPublishError(`${issue.message} Select a section and toggle it on in the inspector.`);
+    }
+  }, []);
 
   const handlePublish = useCallback(async () => {
     const currentState = stateRef.current;
     if (!currentState.project || !onPublish) return;
     if (currentState.isSaving || currentState.isPublishing) return;
     setPublishError(null);
+    setPublishNotice(null);
+
+    const publishValidationError = getPublishValidationError(currentState.project);
+    if (publishValidationError) {
+      setPublishError(publishValidationError);
+      return;
+    }
     if (currentState.isDirty) {
-      await handleSave();
+      const saved = await handleSave();
+      if (!saved) {
+        setPublishError('Please resolve save errors before publishing.');
+        return;
+      }
     }
     dispatch({ type: 'SET_PUBLISHING', payload: true });
     try {
@@ -138,6 +205,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishMeta.publishedAt
         )
       );
+      setPublishNotice(`Published v${publishMeta.version} successfully`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to publish';
       setPublishError(msg);
@@ -146,15 +214,48 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   }, [onPublish, handleSave]);
 
   useEffect(() => {
+    if (!shouldAutoPublishRef.current) return;
+    if (!state.project) return;
+
+    shouldAutoPublishRef.current = false;
+    const params = new URLSearchParams(window.location.search);
+    params.delete('publishNow');
+    const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}${window.location.hash}`;
+    window.history.replaceState({}, '', next);
+
+    window.setTimeout(() => {
+      const issue = getPublishIssue(state.project!);
+      if (issue) {
+        handleFixPublishBlockers();
+        return;
+      }
+      handlePublish();
+    }, 0);
+  }, [state.project, handleFixPublishBlockers, handlePublish]);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const meta = e.metaKey || e.ctrlKey;
       if (meta && e.key === 's') {
         e.preventDefault();
         handleSave();
       }
-      if (meta && e.key === 'p') {
+      if (meta && e.key === 'p' && !e.shiftKey) {
         e.preventDefault();
         dispatch(builderActions.setMode(stateRef.current.mode === 'preview' ? 'edit' : 'preview'));
+      }
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'p') {
+        const target = e.target as HTMLElement | null;
+        const isTyping = !!target && (
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable
+        );
+        if (!isTyping) {
+          e.preventDefault();
+          handlePublish();
+        }
       }
       if (meta && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -170,7 +271,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave]);
+  }, [handleSave, handlePublish]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -180,6 +281,12 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     }, BUILDER_AUTOSAVE_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [handleSave, onSave]);
+
+  useEffect(() => {
+    if (!publishNotice) return;
+    const timeout = window.setTimeout(() => setPublishNotice(null), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [publishNotice]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -198,9 +305,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         <BuilderTopBar
           onSave={handleSave}
           onPublish={handlePublish}
+          onFixPublishBlockers={handleFixPublishBlockers}
           projectName={projectName}
           saveError={saveError}
           publishError={publishError}
+          publishValidationError={state.project ? getPublishValidationError(state.project) : null}
         />
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-auto lg:overflow-hidden">
@@ -218,6 +327,19 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
             </div>
           )}
         </div>
+
+        {publishNotice && (
+          <div className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-2 z-50 max-w-sm">
+            <span className="flex-1">{publishNotice}</span>
+            <button
+              onClick={() => setPublishNotice(null)}
+              className="ml-2 font-bold text-lg leading-none opacity-80 hover:opacity-100"
+              aria-label="Dismiss publish notice"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {state.error && (
           <div className="fixed bottom-4 right-4 bg-error text-text-inverse px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-2 z-50 max-w-sm">
