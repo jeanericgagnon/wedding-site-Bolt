@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
+import { clearSetupDraft, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 
 const steps = [
   { key: 'names', label: 'Couple names' },
@@ -24,79 +25,16 @@ const styleOptions = [
   'Destination',
 ] as const;
 
-type SetupDraft = {
-  partnerOneFirstName: string;
-  partnerOneLastName: string;
-  partnerTwoFirstName: string;
-  partnerTwoLastName: string;
-  dateKnown: boolean;
-  weddingDate: string;
-  weddingCity: string;
-  weddingRegion: string;
-  guestEstimateBand: '' | 'lt50' | '50to100' | '100to200' | '200plus';
-  stylePreferences: string[];
-  selectedTemplateId: string;
-};
-
-const DRAFT_KEY = 'dayof.builderV2.setupDraft';
-
-const emptyDraft: SetupDraft = {
-  partnerOneFirstName: '',
-  partnerOneLastName: '',
-  partnerTwoFirstName: '',
-  partnerTwoLastName: '',
-  dateKnown: true,
-  weddingDate: '',
-  weddingCity: '',
-  weddingRegion: '',
-  guestEstimateBand: '',
-  stylePreferences: [],
-  selectedTemplateId: 'modern-luxe',
-};
-
-const readDraft = (): SetupDraft => {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return emptyDraft;
-    const parsed = JSON.parse(raw) as Partial<SetupDraft>;
-    return {
-      ...emptyDraft,
-      ...parsed,
-      dateKnown: parsed.dateKnown ?? true,
-      weddingDate: parsed.weddingDate ?? '',
-      weddingCity: parsed.weddingCity ?? '',
-      weddingRegion: parsed.weddingRegion ?? '',
-      guestEstimateBand: (parsed.guestEstimateBand as SetupDraft['guestEstimateBand']) ?? '',
-      stylePreferences: Array.isArray(parsed.stylePreferences) ? parsed.stylePreferences : [],
-      selectedTemplateId: parsed.selectedTemplateId ?? localStorage.getItem('dayof.builderV2.selectedTemplate') ?? 'modern-luxe',
-    };
-  } catch {
-    return emptyDraft;
-  }
-};
-
-const writeDraft = (draft: SetupDraft) => {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-};
-
 export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const params = useParams();
   const navigate = useNavigate();
   const activeStep = step ?? params.step ?? 'names';
 
-  const [draft, setDraft] = useState<SetupDraft>(() => readDraft());
+  const [draft, setDraft] = useState<SetupDraft>(() => readSetupDraft());
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
-  const completion = useMemo(() => {
-    let score = 0;
-    if (draft.partnerOneFirstName.trim() && draft.partnerTwoFirstName.trim()) score += 1;
-    if (!draft.dateKnown || !!draft.weddingDate) score += 1;
-    if (draft.weddingCity.trim()) score += 1;
-    if (draft.guestEstimateBand) score += 1;
-    if (draft.stylePreferences.length > 0) score += 1;
-    return Math.round((score / 5) * 100);
-  }, [draft]);
+  const completion = useMemo(() => setupDraftProgress(draft), [draft]);
 
   const nextStep = useMemo(() => {
     const idx = steps.findIndex((s) => s.key === activeStep);
@@ -114,7 +52,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     setError('');
     setDraft((prev) => {
       const next = { ...prev, ...patch };
-      writeDraft(next);
+      writeSetupDraft(next);
       return next;
     });
   };
@@ -205,8 +143,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   }, [draft.stylePreferences]);
 
   const resetSetupDraft = () => {
-    localStorage.removeItem(DRAFT_KEY);
-    localStorage.removeItem('dayof.builderV2.selectedTemplate');
+    clearSetupDraft();
     window.location.href = '/setup/names';
   };
 
@@ -214,7 +151,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     try {
       setError('');
       setSaving(true);
-      writeDraft(draft);
+      writeSetupDraft(draft);
 
       await invokeFunctionOrThrow(supabase, 'setup-bootstrap', draft as unknown as Record<string, unknown>);
 

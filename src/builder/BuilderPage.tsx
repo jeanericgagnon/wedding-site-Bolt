@@ -11,6 +11,7 @@ import { createDefaultSectionInstance } from '../types/builder/section';
 import { supabase } from '../lib/supabase';
 import { demoWeddingSite } from '../lib/demoData';
 import { getTemplatePack } from './constants/builderTemplatePacks';
+import { readSetupDraft, type SetupDraft } from '../lib/setupDraft';
 
 function createDemoBuilderProject(): BuilderProject {
   const templateId = 'modern-luxe';
@@ -30,29 +31,15 @@ function createDemoBuilderProject(): BuilderProject {
   return project;
 }
 
-type SetupDraft = {
-  selectedTemplateId?: string;
-  partnerOneFirstName?: string;
-  partnerOneLastName?: string;
-  partnerTwoFirstName?: string;
-  partnerTwoLastName?: string;
-  dateKnown?: boolean;
-  weddingDate?: string;
-  weddingCity?: string;
-  weddingRegion?: string;
-  guestEstimateBand?: '' | 'lt50' | '50to100' | '100to200' | '200plus';
-  stylePreferences?: string[];
-};
-
-function readSetupDraft(): SetupDraft | null {
-  try {
-    const raw = localStorage.getItem('dayof.builderV2.setupDraft');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as SetupDraft;
-    return parsed;
-  } catch {
-    return null;
-  }
+function hasMeaningfulSetupDraft(draft: SetupDraft): boolean {
+  return Boolean(
+    draft.partnerOneFirstName?.trim() ||
+    draft.partnerTwoFirstName?.trim() ||
+    draft.weddingDate ||
+    draft.weddingCity?.trim() ||
+    draft.guestEstimateBand ||
+    draft.stylePreferences?.length
+  );
 }
 
 function applySetupDraftToWeddingData(source: WeddingDataV1, draft: SetupDraft): WeddingDataV1 {
@@ -208,7 +195,7 @@ export const BuilderPage: React.FC = () => {
       const setupDraft = readSetupDraft();
       const hasNoCoupleNames = !loadedWeddingData.couple.partner1Name && !loadedWeddingData.couple.partner2Name;
 
-      if (setupDraft && hasNoCoupleNames) {
+      if (hasMeaningfulSetupDraft(setupDraft) && hasNoCoupleNames) {
         nextWeddingData = applySetupDraftToWeddingData(loadedWeddingData, setupDraft);
 
         if (nextProject && setupDraft.selectedTemplateId && nextProject.templateId !== setupDraft.selectedTemplateId) {
