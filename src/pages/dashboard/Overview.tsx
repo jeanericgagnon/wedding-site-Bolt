@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
@@ -218,6 +218,29 @@ export const DashboardOverview: React.FC = () => {
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
 
+  const setupDraftProgress = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('dayof.builderV2.setupDraft');
+      if (!raw) return 0;
+      const d = JSON.parse(raw) as {
+        partnerOneFirstName?: string;
+        partnerTwoFirstName?: string;
+        dateKnown?: boolean;
+        weddingDate?: string;
+        weddingCity?: string;
+        guestEstimateBand?: string;
+      };
+      let score = 0;
+      if ((d.partnerOneFirstName || '').trim() && (d.partnerTwoFirstName || '').trim()) score += 1;
+      if (d.dateKnown === false || !!d.weddingDate) score += 1;
+      if ((d.weddingCity || '').trim()) score += 1;
+      if (d.guestEstimateBand) score += 1;
+      return Math.round((score / 4) * 100);
+    } catch {
+      return 0;
+    }
+  }, [stats]);
+
   const setupChecklist = stats
     ? [
         {
@@ -289,6 +312,23 @@ export const DashboardOverview: React.FC = () => {
             />
           </div>
         </div>
+        {setupDraftProgress > 0 && setupDraftProgress < 100 && (
+          <Card variant="bordered" padding="lg" className="shadow-sm border-rose-200 bg-rose-50/40">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-rose-900">Builder V2 setup in progress</p>
+                <p className="text-xs text-rose-700 mt-1">You're {setupDraftProgress}% done. Finish setup for stronger defaults.</p>
+              </div>
+              <button
+                onClick={() => navigate('/setup/names')}
+                className="rounded bg-rose-600 px-3 py-2 text-xs font-medium text-white hover:bg-rose-700"
+              >
+                Resume setup
+              </button>
+            </div>
+          </Card>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
