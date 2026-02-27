@@ -10,6 +10,17 @@ const steps = [
   { key: 'review', label: 'Review & generate' },
 ] as const;
 
+const styleOptions = [
+  'Modern',
+  'Classic',
+  'Floral',
+  'Minimal',
+  'Romantic',
+  'Rustic',
+  'Bold',
+  'Destination',
+] as const;
+
 type SetupDraft = {
   partnerOneFirstName: string;
   partnerOneLastName: string;
@@ -19,6 +30,8 @@ type SetupDraft = {
   weddingDate: string;
   weddingCity: string;
   weddingRegion: string;
+  guestEstimateBand: '' | 'lt50' | '50to100' | '100to200' | '200plus';
+  stylePreferences: string[];
 };
 
 const DRAFT_KEY = 'dayof.builderV2.setupDraft';
@@ -32,6 +45,8 @@ const emptyDraft: SetupDraft = {
   weddingDate: '',
   weddingCity: '',
   weddingRegion: '',
+  guestEstimateBand: '',
+  stylePreferences: [],
 };
 
 const readDraft = (): SetupDraft => {
@@ -46,6 +61,8 @@ const readDraft = (): SetupDraft => {
       weddingDate: parsed.weddingDate ?? '',
       weddingCity: parsed.weddingCity ?? '',
       weddingRegion: parsed.weddingRegion ?? '',
+      guestEstimateBand: (parsed.guestEstimateBand as SetupDraft['guestEstimateBand']) ?? '',
+      stylePreferences: Array.isArray(parsed.stylePreferences) ? parsed.stylePreferences : [],
     };
   } catch {
     return emptyDraft;
@@ -70,6 +87,12 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     return steps[idx + 1].key;
   }, [activeStep]);
 
+  const prevStep = useMemo(() => {
+    const idx = steps.findIndex((s) => s.key === activeStep);
+    if (idx <= 0) return null;
+    return steps[idx - 1].key;
+  }, [activeStep]);
+
   const updateDraft = (patch: Partial<SetupDraft>) => {
     setError('');
     setDraft((prev) => {
@@ -81,6 +104,10 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
   const goNext = () => {
     if (nextStep) navigate(`/setup/${nextStep}`);
+  };
+
+  const goPrev = () => {
+    if (prevStep) navigate(`/setup/${prevStep}`);
   };
 
   const continueFromNames = () => {
@@ -105,6 +132,30 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       return;
     }
     goNext();
+  };
+
+  const continueFromGuestEstimate = () => {
+    if (!draft.guestEstimateBand) {
+      setError('Please choose a guest estimate range.');
+      return;
+    }
+    goNext();
+  };
+
+  const toggleStyle = (style: string) => {
+    const set = new Set(draft.stylePreferences);
+    if (set.has(style)) set.delete(style);
+    else set.add(style);
+    updateDraft({ stylePreferences: Array.from(set) });
+  };
+
+  const continueFromStyle = () => {
+    goNext();
+  };
+
+  const saveAndGoBuilder = () => {
+    writeDraft(draft);
+    navigate('/builder');
   };
 
   return (
@@ -132,40 +183,14 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           {activeStep === 'names' && (
             <div className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input
-                  className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                  placeholder="Partner 1 first name"
-                  value={draft.partnerOneFirstName}
-                  onChange={(e) => updateDraft({ partnerOneFirstName: e.target.value })}
-                />
-                <input
-                  className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                  placeholder="Partner 1 last name"
-                  value={draft.partnerOneLastName}
-                  onChange={(e) => updateDraft({ partnerOneLastName: e.target.value })}
-                />
-                <input
-                  className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                  placeholder="Partner 2 first name"
-                  value={draft.partnerTwoFirstName}
-                  onChange={(e) => updateDraft({ partnerTwoFirstName: e.target.value })}
-                />
-                <input
-                  className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                  placeholder="Partner 2 last name"
-                  value={draft.partnerTwoLastName}
-                  onChange={(e) => updateDraft({ partnerTwoLastName: e.target.value })}
-                />
+                <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Partner 1 first name" value={draft.partnerOneFirstName} onChange={(e) => updateDraft({ partnerOneFirstName: e.target.value })} />
+                <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Partner 1 last name" value={draft.partnerOneLastName} onChange={(e) => updateDraft({ partnerOneLastName: e.target.value })} />
+                <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Partner 2 first name" value={draft.partnerTwoFirstName} onChange={(e) => updateDraft({ partnerTwoFirstName: e.target.value })} />
+                <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Partner 2 last name" value={draft.partnerTwoLastName} onChange={(e) => updateDraft({ partnerTwoLastName: e.target.value })} />
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={continueFromNames}
-                  className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
-                >
-                  Continue
-                </button>
+                <button type="button" onClick={continueFromNames} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
                 <p className="text-xs text-neutral-500">Draft saves automatically in browser.</p>
               </div>
             </div>
@@ -174,32 +199,16 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           {activeStep === 'date' && (
             <div className="mt-4 space-y-4">
               <label className="flex items-center gap-2 text-sm text-neutral-700">
-                <input
-                  type="checkbox"
-                  checked={!draft.dateKnown}
-                  onChange={(e) => updateDraft({ dateKnown: !e.target.checked, weddingDate: e.target.checked ? '' : draft.weddingDate })}
-                />
+                <input type="checkbox" checked={!draft.dateKnown} onChange={(e) => updateDraft({ dateKnown: !e.target.checked, weddingDate: e.target.checked ? '' : draft.weddingDate })} />
                 We’re still deciding
               </label>
 
-              <input
-                type="date"
-                disabled={!draft.dateKnown}
-                className="w-full max-w-sm rounded border border-neutral-300 px-3 py-2 text-sm disabled:bg-neutral-100 disabled:text-neutral-500"
-                value={draft.weddingDate}
-                onChange={(e) => updateDraft({ weddingDate: e.target.value })}
-              />
+              <input type="date" disabled={!draft.dateKnown} className="w-full max-w-sm rounded border border-neutral-300 px-3 py-2 text-sm disabled:bg-neutral-100 disabled:text-neutral-500" value={draft.weddingDate} onChange={(e) => updateDraft({ weddingDate: e.target.value })} />
 
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={continueFromDate}
-                  className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
-                >
-                  Continue
-                </button>
-                <p className="text-xs text-neutral-500">This controls default countdown/event setup.</p>
+                <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
+                <button type="button" onClick={continueFromDate} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
               </div>
             </div>
           )}
@@ -207,36 +216,87 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           {activeStep === 'location' && (
             <div className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input
-                  className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                  placeholder="Wedding city"
-                  value={draft.weddingCity}
-                  onChange={(e) => updateDraft({ weddingCity: e.target.value })}
-                />
-                <input
-                  className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
-                  placeholder="State / Region (optional)"
-                  value={draft.weddingRegion}
-                  onChange={(e) => updateDraft({ weddingRegion: e.target.value })}
-                />
+                <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Wedding city" value={draft.weddingCity} onChange={(e) => updateDraft({ weddingCity: e.target.value })} />
+                <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="State / Region (optional)" value={draft.weddingRegion} onChange={(e) => updateDraft({ weddingRegion: e.target.value })} />
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={continueFromLocation}
-                  className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
-                >
-                  Continue
-                </button>
-                <p className="text-xs text-neutral-500">Used to prefill travel and FAQ defaults.</p>
+                <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
+                <button type="button" onClick={continueFromLocation} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
               </div>
             </div>
           )}
 
-          {!['names', 'date', 'location'].includes(activeStep) && (
-            <p className="mt-2 text-sm text-neutral-600">Step scaffold placeholder. Implementation follows in next issues.</p>
+          {activeStep === 'guest-estimate' && (
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  { value: 'lt50', label: 'Under 50 guests' },
+                  { value: '50to100', label: '50–100 guests' },
+                  { value: '100to200', label: '100–200 guests' },
+                  { value: '200plus', label: '200+ guests' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => updateDraft({ guestEstimateBand: opt.value as SetupDraft['guestEstimateBand'] })}
+                    className={`rounded border px-3 py-2 text-left text-sm ${draft.guestEstimateBand === opt.value ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-neutral-300 bg-white text-neutral-700'}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
+                <button type="button" onClick={continueFromGuestEstimate} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
+              </div>
+            </div>
+          )}
+
+          {activeStep === 'style' && (
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {styleOptions.map((style) => {
+                  const selected = draft.stylePreferences.includes(style);
+                  return (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => toggleStyle(style)}
+                      className={`rounded border px-3 py-2 text-sm ${selected ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-neutral-300 bg-white text-neutral-700'}`}
+                    >
+                      {style}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="text-xs text-neutral-500">Optional — helps preselect templates and starter sections.</p>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
+                <button type="button" onClick={continueFromStyle} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
+              </div>
+            </div>
+          )}
+
+          {activeStep === 'review' && (
+            <div className="mt-4 space-y-4">
+              <div className="rounded border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700 space-y-1">
+                <p><strong>Partners:</strong> {draft.partnerOneFirstName} {draft.partnerOneLastName} & {draft.partnerTwoFirstName} {draft.partnerTwoLastName}</p>
+                <p><strong>Date:</strong> {draft.dateKnown ? (draft.weddingDate || 'Not set') : 'Still deciding'}</p>
+                <p><strong>Location:</strong> {[draft.weddingCity, draft.weddingRegion].filter(Boolean).join(', ') || 'Not set'}</p>
+                <p><strong>Guest estimate:</strong> {draft.guestEstimateBand || 'Not set'}</p>
+                <p><strong>Styles:</strong> {draft.stylePreferences.join(', ') || 'None selected'}</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
+                <button type="button" onClick={saveAndGoBuilder} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Save and open builder</button>
+              </div>
+            </div>
           )}
         </div>
       </div>
