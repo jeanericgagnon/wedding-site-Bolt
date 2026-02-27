@@ -23,6 +23,8 @@ interface OverviewStats {
   venueName: string | null;
   venueLocation: string | null;
   registryItemCount: number;
+  photoAlbumCount: number;
+  activePhotoAlbumCount: number;
   recentRsvps: RecentRsvp[];
 }
 
@@ -114,6 +116,8 @@ export const DashboardOverview: React.FC = () => {
           venueName: demoWeddingSite.venue_name,
           venueLocation: demoWeddingSite.venue_location,
           registryItemCount: 2,
+          photoAlbumCount: 3,
+          activePhotoAlbumCount: 2,
           recentRsvps,
         });
         return;
@@ -148,6 +152,17 @@ export const DashboardOverview: React.FC = () => {
         .from('registry_items')
         .select('id', { count: 'exact', head: true })
         .eq('wedding_site_id', site?.id ?? '');
+
+      const { count: photoAlbumCount } = await supabase
+        .from('photo_albums')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '');
+
+      const { count: activePhotoAlbumCount } = await supabase
+        .from('photo_albums')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '')
+        .eq('is_active', true);
 
       const allGuests = guests ?? [];
       const confirmed = allGuests.filter((g) => g.rsvp_status === 'confirmed');
@@ -187,6 +202,8 @@ export const DashboardOverview: React.FC = () => {
         venueName: site?.venue_name ?? null,
         venueLocation: site?.wedding_location ?? null,
         registryItemCount: registryItemCount ?? 0,
+        photoAlbumCount: photoAlbumCount ?? 0,
+        activePhotoAlbumCount: activePhotoAlbumCount ?? 0,
         recentRsvps,
       });
     } catch {
@@ -230,6 +247,13 @@ export const DashboardOverview: React.FC = () => {
           done: stats.registryItemCount > 0,
           actionLabel: 'Open registry',
           action: () => navigate('/dashboard/registry'),
+        },
+        {
+          id: 'photos',
+          label: 'Create first photo sharing album',
+          done: stats.photoAlbumCount > 0,
+          actionLabel: 'Open photos',
+          action: () => navigate('/dashboard/photos'),
         },
         {
           id: 'publish',
@@ -515,6 +539,39 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card variant="bordered" padding="lg" className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Connector health</CardTitle>
+                <CardDescription>How connected your core modules are</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between py-2 border-b border-border-subtle">
+                    <span className="text-text-secondary">Itinerary → Photos</span>
+                    <span className={stats && stats.photoAlbumCount > 0 ? 'text-success font-medium' : 'text-text-tertiary'}>
+                      {stats && stats.photoAlbumCount > 0 ? `${stats.photoAlbumCount} album(s)` : 'Not connected'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border-subtle">
+                    <span className="text-text-secondary">Photos → Messages</span>
+                    <span className={stats && stats.activePhotoAlbumCount > 0 ? 'text-success font-medium' : 'text-text-tertiary'}>
+                      {stats && stats.activePhotoAlbumCount > 0 ? `${stats.activePhotoAlbumCount} active album(s)` : 'No active albums'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border-subtle">
+                    <span className="text-text-secondary">RSVP → Guests</span>
+                    <span className={stats && stats.totalGuests > 0 ? 'text-success font-medium' : 'text-text-tertiary'}>
+                      {stats && stats.totalGuests > 0 ? `${stats.totalGuests} guest(s)` : 'No guests yet'}
+                    </span>
+                  </div>
+                  <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>Open photos</Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/messages')}>Open messages</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card variant="bordered" padding="lg" className="shadow-sm">
               <CardHeader>
