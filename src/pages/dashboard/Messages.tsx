@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
-import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2 } from 'lucide-react';
+import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2, Link2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
@@ -620,6 +620,16 @@ export const DashboardMessages: React.FC = () => {
     }
   };
 
+  const knownPhotoLinksCount = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('dayof.photoAlbumLinks');
+      if (!raw) return 0;
+      return Object.values(JSON.parse(raw) as Record<string, string>).filter(Boolean).length;
+    } catch {
+      return 0;
+    }
+  }, []);
+
   const applyTemplateVariables = (text: string) => {
     const couple = [weddingSite?.couple_first_name, weddingSite?.couple_second_name].filter(Boolean).join(' & ') || 'our wedding';
     const rsvpLink = `${window.location.origin}/rsvp`;
@@ -1187,6 +1197,15 @@ export const DashboardMessages: React.FC = () => {
                       {messages.filter(m => m.status === 'sent' || m.status === 'queued').length}
                     </p>
                     <p className="text-sm text-text-secondary">Sent / Queued</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-rose-100 rounded-lg">
+                    <Link2 className="w-5 h-5 text-rose-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-text-primary">{knownPhotoLinksCount}</p>
+                    <p className="text-sm text-text-secondary">Known Photo Links</p>
                   </div>
                 </div>
               </div>
