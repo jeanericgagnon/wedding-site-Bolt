@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
 
 const steps = [
   { key: 'names', label: 'Couple names' },
@@ -83,6 +84,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
   const [draft, setDraft] = useState<SetupDraft>(() => readDraft());
   const [error, setError] = useState<string>('');
+  const [saving, setSaving] = useState(false);
 
   const nextStep = useMemo(() => {
     const idx = steps.findIndex((s) => s.key === activeStep);
@@ -156,9 +158,34 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     goNext();
   };
 
-  const saveAndGoBuilder = () => {
-    writeDraft(draft);
-    navigate('/builder');
+  const saveAndGoBuilder = async () => {
+    try {
+      setError('');
+      setSaving(true);
+      writeDraft(draft);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        throw new Error('Please log in again before continuing.');
+      }
+
+      const { data, error: fnError } = await supabase.functions.invoke('setup-bootstrap', {
+        body: draft,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (fnError) {
+        const maybe = data as { error?: string; code?: string } | null;
+        throw new Error(`${maybe?.error || fnError.message}${maybe?.code ? ` (${maybe.code})` : ''}`);
+      }
+
+      navigate('/builder');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save setup.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -297,7 +324,9 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
-                <button type="button" onClick={saveAndGoBuilder} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Save and open builder</button>
+                <button type="button" onClick={() => void saveAndGoBuilder()} disabled={saving} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60">
+                  {saving ? 'Saving...' : 'Save and open builder'}
+                </button>
               </div>
             </div>
           )}
