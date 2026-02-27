@@ -31,6 +31,7 @@ function createDemoBuilderProject(): BuilderProject {
 }
 
 type SetupDraft = {
+  selectedTemplateId?: string;
   partnerOneFirstName?: string;
   partnerOneLastName?: string;
   partnerTwoFirstName?: string;
@@ -203,13 +204,22 @@ export const BuilderPage: React.FC = () => {
       ]);
 
       let nextWeddingData = loadedWeddingData;
+      let nextProject = loadedProject;
       const setupDraft = readSetupDraft();
       const hasNoCoupleNames = !loadedWeddingData.couple.partner1Name && !loadedWeddingData.couple.partner2Name;
 
       if (setupDraft && hasNoCoupleNames) {
         nextWeddingData = applySetupDraftToWeddingData(loadedWeddingData, setupDraft);
-        if (loadedProject) {
-          await publishService.saveDraft(loadedProject, nextWeddingData);
+
+        if (nextProject && setupDraft.selectedTemplateId && nextProject.templateId !== setupDraft.selectedTemplateId) {
+          nextProject = {
+            ...nextProject,
+            templateId: setupDraft.selectedTemplateId,
+          };
+        }
+
+        if (nextProject) {
+          await publishService.saveDraft(nextProject, nextWeddingData);
         }
       }
 
@@ -217,7 +227,7 @@ export const BuilderPage: React.FC = () => {
         setCoupleName(nextWeddingData.couple.displayName);
       }
 
-      setProject(loadedProject);
+      setProject(nextProject);
       setWeddingData(nextWeddingData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load builder');

@@ -32,6 +32,7 @@ type SetupDraft = {
   weddingRegion: string;
   guestEstimateBand: '' | 'lt50' | '50to100' | '100to200' | '200plus';
   stylePreferences: string[];
+  selectedTemplateId: string;
 };
 
 const DRAFT_KEY = 'dayof.builderV2.setupDraft';
@@ -47,6 +48,7 @@ const emptyDraft: SetupDraft = {
   weddingRegion: '',
   guestEstimateBand: '',
   stylePreferences: [],
+  selectedTemplateId: 'modern-luxe',
 };
 
 const readDraft = (): SetupDraft => {
@@ -63,6 +65,7 @@ const readDraft = (): SetupDraft => {
       weddingRegion: parsed.weddingRegion ?? '',
       guestEstimateBand: (parsed.guestEstimateBand as SetupDraft['guestEstimateBand']) ?? '',
       stylePreferences: Array.isArray(parsed.stylePreferences) ? parsed.stylePreferences : [],
+      selectedTemplateId: parsed.selectedTemplateId ?? localStorage.getItem('dayof.builderV2.selectedTemplate') ?? 'modern-luxe',
     };
   } catch {
     return emptyDraft;
