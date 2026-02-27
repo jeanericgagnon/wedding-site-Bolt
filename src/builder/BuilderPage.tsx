@@ -11,7 +11,8 @@ import { createDefaultSectionInstance } from '../types/builder/section';
 import { supabase } from '../lib/supabase';
 import { demoWeddingSite } from '../lib/demoData';
 import { getTemplatePack } from './constants/builderTemplatePacks';
-import { readSetupDraft, type SetupDraft } from '../lib/setupDraft';
+import { readSetupDraft } from '../lib/setupDraft';
+import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
 
 function createDemoBuilderProject(): BuilderProject {
   const templateId = 'modern-luxe';
