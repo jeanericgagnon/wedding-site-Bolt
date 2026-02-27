@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { templateCatalog, templateColorwayFacets, templateSeasonFacets, templateStyleFacets } from '../builder/constants/templateCatalog';
 
 type Facet = 'all' | string;
@@ -58,13 +58,18 @@ export const Templates: React.FC = () => {
                 <div className="mt-2 flex flex-wrap gap-1">
                   {tpl.styleTags.map((tag) => <span key={tag} className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">{tag}</span>)}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => useTemplate(tpl.id)}
-                  className="mt-4 w-full rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700"
-                >
-                  Use this template
-                </button>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
+                    Preview
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => useTemplate(tpl.id)}
+                    className="rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700"
+                  >
+                    Use template
+                  </button>
+                </div>
               </div>
             </div>
           ))}

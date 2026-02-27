@@ -7,6 +7,7 @@ import { ToastProvider } from './components/ui/Toast';
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
 const Templates = lazy(() => import('./pages/Templates').then(m => ({ default: m.Templates })));
+const TemplateDetail = lazy(() => import('./pages/TemplateDetail').then(m => ({ default: m.TemplateDetail })));
 const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
 const Signup = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
 const Onboarding = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })));
@@ -66,6 +67,7 @@ const AppContent = () => {
         <Route path="/" element={isWeddingSubdomainHost ? <SiteView /> : <Home />} />
         <Route path="/product" element={<Product />} />
         <Route path="/templates" element={<Templates />} />
+        <Route path="/templates/:templateId" element={<TemplateDetail />} />
         <Route path="/builder-v2-lab" element={<BuilderV2Lab />} />
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />
