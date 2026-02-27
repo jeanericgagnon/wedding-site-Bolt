@@ -4,6 +4,7 @@ import {
   buildSetupChecklist,
   getChecklistProgress,
   getFirstIncompleteChecklistItem,
+  getIncompleteChecklistItems,
   getPublishBuilderRoute,
   type OverviewChecklistStats,
 } from './overviewUtils';
@@ -70,6 +71,16 @@ describe('overviewUtils', () => {
       templateName: 'modern-luxe',
     });
     expect(getChecklistProgress(items)).toEqual({ done: 2, total: 4 });
+  });
+
+  it('returns incomplete items in order', () => {
+    const items = buildPublishReadinessItems({
+      ...base,
+      siteSlug: 'my-site',
+      templateName: 'modern-luxe',
+    });
+    const incomplete = getIncompleteChecklistItems(items);
+    expect(incomplete.map((i) => i.id)).toEqual(['date', 'published']);
   });
 
   it('switches published readiness route/action once published toggles true', () => {

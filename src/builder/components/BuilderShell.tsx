@@ -17,6 +17,7 @@ import { mediaService } from '../services/mediaService';
 import { applyThemePreset, applyThemeTokens } from '../../lib/themePresets';
 import { getPublishIssue, getPublishValidationError } from '../utils/publishReadiness';
 import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
+import { getPublishNowAction } from '../utils/publishNowFlow';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -203,12 +204,14 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     window.history.replaceState({}, '', next);
 
     window.setTimeout(() => {
-      const issue = getPublishIssue(state.project!);
-      if (issue) {
+      const action = getPublishNowAction(true, state.project);
+      if (action === 'fix-blockers') {
         handleFixPublishBlockers();
         return;
       }
-      handlePublish();
+      if (action === 'publish') {
+        handlePublish();
+      }
     }, 0);
   }, [state.project, handleFixPublishBlockers, handlePublish]);
 

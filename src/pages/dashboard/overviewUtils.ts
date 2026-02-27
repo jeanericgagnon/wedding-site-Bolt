@@ -107,3 +107,6 @@ export const getChecklistProgress = (items: ChecklistItemDef[]): { done: number;
   done: items.filter((item) => item.done).length,
   total: items.length,
 });
+
+export const getIncompleteChecklistItems = (items: ChecklistItemDef[]): ChecklistItemDef[] =>
+  items.filter((item) => !item.done);

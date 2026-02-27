@@ -5,6 +5,7 @@ import {
   buildSetupChecklist,
   getChecklistProgress,
   getFirstIncompleteChecklistItem,
+  getIncompleteChecklistItems,
 } from './overviewUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
@@ -263,7 +264,7 @@ export const DashboardOverview: React.FC = () => {
     templateName: stats?.templateName ?? '',
   }).map((item) => ({ ...item, action: () => navigate(item.route) }));
   const publishProgress = getChecklistProgress(publishReadinessItems);
-  const publishBlockers = publishReadinessItems.filter((item) => !item.done);
+  const publishBlockers = getIncompleteChecklistItems(publishReadinessItems);
   const firstPublishBlocker = getFirstIncompleteChecklistItem(publishReadinessItems);
 
   return (
