@@ -75,6 +75,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const projectPages = state.project?.pages ?? [];
   const activePage = projectPages.find((p) => p.id === state.activePageId) ?? null;
   const isPublishDisabled = state.isPublishing || state.isSaving || !!publishValidationError;
+  const showPublishReady = !publishValidationError && !state.isPublishing && !state.isSaving;
   const isThemePanelOpen = state.themePanelOpen;
   const activeThemeId = state.project?.themeId ?? 'romantic';
   const activeTheme = getAllThemePresets().find(p => p.id === activeThemeId);
@@ -352,7 +353,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             aria-label="Save draft"
           >
             {state.isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {state.isSaving ? 'Saving…' : 'Save'}
+            {state.isSaving ? 'Saving…' : isDirty ? 'Save changes' : 'Saved'}
           </button>
           {!isDirty && !state.isSaving && (
             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
