@@ -15,35 +15,34 @@ type SetupDraft = {
   partnerOneLastName: string;
   partnerTwoFirstName: string;
   partnerTwoLastName: string;
+  dateKnown: boolean;
+  weddingDate: string;
 };
 
 const DRAFT_KEY = 'dayof.builderV2.setupDraft';
 
+const emptyDraft: SetupDraft = {
+  partnerOneFirstName: '',
+  partnerOneLastName: '',
+  partnerTwoFirstName: '',
+  partnerTwoLastName: '',
+  dateKnown: true,
+  weddingDate: '',
+};
+
 const readDraft = (): SetupDraft => {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) {
-      return {
-        partnerOneFirstName: '',
-        partnerOneLastName: '',
-        partnerTwoFirstName: '',
-        partnerTwoLastName: '',
-      };
-    }
+    if (!raw) return emptyDraft;
     const parsed = JSON.parse(raw) as Partial<SetupDraft>;
     return {
-      partnerOneFirstName: parsed.partnerOneFirstName ?? '',
-      partnerOneLastName: parsed.partnerOneLastName ?? '',
-      partnerTwoFirstName: parsed.partnerTwoFirstName ?? '',
-      partnerTwoLastName: parsed.partnerTwoLastName ?? '',
+      ...emptyDraft,
+      ...parsed,
+      dateKnown: parsed.dateKnown ?? true,
+      weddingDate: parsed.weddingDate ?? '',
     };
   } catch {
-    return {
-      partnerOneFirstName: '',
-      partnerOneLastName: '',
-      partnerTwoFirstName: '',
-      partnerTwoLastName: '',
-    };
+    return emptyDraft;
   }
 };
 
@@ -74,12 +73,24 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     });
   };
 
+  const goNext = () => {
+    if (nextStep) navigate(`/setup/${nextStep}`);
+  };
+
   const continueFromNames = () => {
     if (!draft.partnerOneFirstName.trim() || !draft.partnerTwoFirstName.trim()) {
       setError('Please enter first names for both partners.');
       return;
     }
-    if (nextStep) navigate(`/setup/${nextStep}`);
+    goNext();
+  };
+
+  const continueFromDate = () => {
+    if (draft.dateKnown && !draft.weddingDate) {
+      setError('Please select your wedding date or mark that you are still deciding.');
+      return;
+    }
+    goNext();
   };
 
   return (
@@ -104,7 +115,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           <p className="text-sm text-neutral-500">Current step</p>
           <h2 className="text-xl font-semibold text-neutral-900 mt-1">{steps.find((s) => s.key === activeStep)?.label ?? 'Setup'}</h2>
 
-          {activeStep === 'names' ? (
+          {activeStep === 'names' && (
             <div className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
@@ -144,7 +155,42 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p className="text-xs text-neutral-500">Draft saves automatically in browser.</p>
               </div>
             </div>
-          ) : (
+          )}
+
+          {activeStep === 'date' && (
+            <div className="mt-4 space-y-4">
+              <label className="flex items-center gap-2 text-sm text-neutral-700">
+                <input
+                  type="checkbox"
+                  checked={!draft.dateKnown}
+                  onChange={(e) => updateDraft({ dateKnown: !e.target.checked, weddingDate: e.target.checked ? '' : draft.weddingDate })}
+                />
+                We’re still deciding
+              </label>
+
+              <input
+                type="date"
+                disabled={!draft.dateKnown}
+                className="w-full max-w-sm rounded border border-neutral-300 px-3 py-2 text-sm disabled:bg-neutral-100 disabled:text-neutral-500"
+                value={draft.weddingDate}
+                onChange={(e) => updateDraft({ weddingDate: e.target.value })}
+              />
+
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={continueFromDate}
+                  className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
+                >
+                  Continue
+                </button>
+                <p className="text-xs text-neutral-500">This controls default countdown/event setup.</p>
+              </div>
+            </div>
+          )}
+
+          {!['names', 'date'].includes(activeStep) && (
             <p className="mt-2 text-sm text-neutral-600">Step scaffold placeholder. Implementation follows in next issues.</p>
           )}
         </div>
