@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
 
 const steps = [
@@ -118,6 +119,14 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     });
   };
 
+  const firstIncompleteStep = useMemo(() => {
+    if (!draft.partnerOneFirstName.trim() || !draft.partnerTwoFirstName.trim()) return 'names';
+    if (draft.dateKnown && !draft.weddingDate) return 'date';
+    if (!draft.weddingCity.trim()) return 'location';
+    if (!draft.guestEstimateBand) return 'guest-estimate';
+    return 'style';
+  }, [draft]);
+
   const goNext = () => {
     if (nextStep) navigate(`/setup/${nextStep}`);
   };
@@ -195,27 +204,19 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       .map((x) => x.template);
   }, [draft.stylePreferences]);
 
+  const resetSetupDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem('dayof.builderV2.selectedTemplate');
+    window.location.href = '/setup/names';
+  };
+
   const saveAndGoBuilder = async () => {
     try {
       setError('');
       setSaving(true);
       writeDraft(draft);
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        throw new Error('Please log in again before continuing.');
-      }
-
-      const { data, error: fnError } = await supabase.functions.invoke('setup-bootstrap', {
-        body: draft,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (fnError) {
-        const maybe = data as { error?: string; code?: string } | null;
-        throw new Error(`${maybe?.error || fnError.message}${maybe?.code ? ` (${maybe.code})` : ''}`);
-      }
+      await invokeFunctionOrThrow(supabase, 'setup-bootstrap', draft as unknown as Record<string, unknown>);
 
       // draft has been committed server-side; keep selected template key but clear raw draft
       localStorage.removeItem('dayof.builderV2.setupDraft');
@@ -242,7 +243,24 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/setup/${firstIncompleteStep}`)}
+            className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100"
+          >
+            Jump to next required step
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/templates')}
+            className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100"
+          >
+            Back to templates
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-2">
           {steps.map((s) => {
             const isReviewLocked = s.key === 'review' && !canOpenReview;
             return (
@@ -404,6 +422,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
               <div className="flex flex-wrap items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
                 <button type="button" onClick={() => navigate('/templates')} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Change template</button>
+                <button type="button" onClick={resetSetupDraft} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Start over</button>
                 <button type="button" onClick={() => void saveAndGoBuilder()} disabled={saving} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60">
                   {saving ? 'Saving...' : 'Save and open builder'}
                 </button>

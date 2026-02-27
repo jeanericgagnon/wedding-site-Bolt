@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../hooks/useAuth';
@@ -321,12 +322,10 @@ export const DashboardItinerary: React.FC = () => {
 
       if (!editingEvent && autoCreateAlbum && createdEvent?.id) {
         try {
-          await supabase.functions.invoke('photo-album-create', {
-            body: {
-              siteId: site.id,
-              name: createdEvent.event_name || formData.event_name,
-              itineraryEventId: createdEvent.id,
-            },
+          await invokeFunctionOrThrow(supabase, 'photo-album-create', {
+            siteId: site.id,
+            name: createdEvent.event_name || formData.event_name,
+            itineraryEventId: createdEvent.id,
           });
         } catch {
           // best-effort connector; itinerary save should still succeed

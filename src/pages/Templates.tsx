@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { templateCatalog, templateColorwayFacets, templateSeasonFacets, templateStyleFacets } from '../builder/constants/templateCatalog';
+import { readSetupDraft, SELECTED_TEMPLATE_KEY } from '../lib/setupDraft';
 
 type Facet = 'all' | string;
 
@@ -10,23 +11,18 @@ export const Templates: React.FC = () => {
   const [style, setStyle] = useState<Facet>('all');
   const [season, setSeason] = useState<Facet>('all');
   const [colorway, setColorway] = useState<Facet>('all');
+  const selectedTemplateId = localStorage.getItem(SELECTED_TEMPLATE_KEY) || '';
 
   const recommendedTemplateIds = useMemo(() => {
-    try {
-      const raw = localStorage.getItem('dayof.builderV2.setupDraft');
-      if (!raw) return [] as string[];
-      const d = JSON.parse(raw) as { stylePreferences?: string[] };
-      const prefs = new Set((d.stylePreferences ?? []).filter(Boolean));
-      if (prefs.size === 0) return [];
-      return [...templateCatalog]
-        .map((t) => ({ id: t.id, score: t.styleTags.filter((tag) => prefs.has(tag)).length }))
-        .filter((x) => x.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3)
-        .map((x) => x.id);
-    } catch {
-      return [] as string[];
-    }
+    const d = readSetupDraft();
+    const prefs = new Set((d.stylePreferences ?? []).filter(Boolean));
+    if (prefs.size === 0) return [] as string[];
+    return [...templateCatalog]
+      .map((t) => ({ id: t.id, score: t.styleTags.filter((tag) => prefs.has(tag)).length }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((x) => x.id);
   }, []);
 
   const filtered = useMemo(() => {
@@ -39,16 +35,28 @@ export const Templates: React.FC = () => {
   }, [style, season, colorway]);
 
   const useTemplate = (templateId: string) => {
-    localStorage.setItem('dayof.builderV2.selectedTemplate', templateId);
+    localStorage.setItem(SELECTED_TEMPLATE_KEY, templateId);
     navigate('/setup/names');
   };
 
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <h1 className="text-3xl font-bold text-neutral-900">Choose a template</h1>
-        <p className="mt-2 text-sm text-neutral-600">Filter by style, season, and colorway to find your starting point.</p>
-        <p className="mt-1 text-xs text-neutral-500">Template selection is carried into setup and builder defaults.</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-neutral-900">Choose a template</h1>
+            <p className="mt-2 text-sm text-neutral-600">Filter by style, season, and colorway to find your starting point.</p>
+            <p className="mt-1 text-xs text-neutral-500">Template selection is carried into setup and builder defaults.</p>
+          </div>
+          {selectedTemplateId && (
+            <button
+              onClick={() => navigate('/setup/names')}
+              className="rounded bg-rose-600 px-3 py-2 text-xs font-medium text-white hover:bg-rose-700"
+            >
+              Continue setup
+            </button>
+          )}
+        </div>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
           <select value={style} onChange={(e) => setStyle(e.target.value)} className="rounded border border-neutral-300 px-3 py-2 text-sm">
@@ -74,9 +82,14 @@ export const Templates: React.FC = () => {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="text-lg font-semibold text-neutral-900">{tpl.name}</h2>
-                  {recommendedTemplateIds.includes(tpl.id) && (
-                    <span className="rounded bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">Recommended</span>
-                  )}
+                  <div className="flex flex-col items-end gap-1">
+                    {recommendedTemplateIds.includes(tpl.id) && (
+                      <span className="rounded bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">Recommended</span>
+                    )}
+                    {selectedTemplateId === tpl.id && (
+                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Selected</span>
+                    )}
+                  </div>
                 </div>
                 <p className="mt-1 text-sm text-neutral-600">{tpl.description}</p>
                 <div className="mt-2 flex flex-wrap gap-1">
