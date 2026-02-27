@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2, Link2 } from 'lucide-react';
@@ -369,6 +369,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
 export const DashboardMessages: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -1207,6 +1208,25 @@ export const DashboardMessages: React.FC = () => {
                     <p className="text-2xl font-bold text-text-primary">{knownPhotoLinksCount}</p>
                     <p className="text-sm text-text-secondary">Known Photo Links</p>
                   </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => navigate('/dashboard/photos')}>
+                    Open Photos
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        subject: applyTemplateVariables('Share your photos with us 📸'),
+                        body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
+                      }));
+                    }}
+                  >
+                    Insert Photo Template
+                  </Button>
                 </div>
               </div>
             </Card>
