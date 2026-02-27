@@ -1,0 +1,26 @@
+import { describe, expect, it } from 'vitest';
+import { getPublishBlockedHints, shouldAutoPublishFromSearch } from './publishUiHints';
+
+describe('publishUiHints', () => {
+  it('returns page guidance for no-page message', () => {
+    const hints = getPublishBlockedHints('Add at least one page before publishing.');
+    expect(hints[0]).toContain('Templates');
+  });
+
+  it('returns section guidance for no-enabled-sections message', () => {
+    const hints = getPublishBlockedHints('Enable at least one section before publishing.');
+    expect(hints[0]).toContain('Select any section');
+  });
+
+  it('returns fallback guidance for unknown message', () => {
+    const hints = getPublishBlockedHints('Something else');
+    expect(hints).toEqual(['Use Fix blockers to jump to the right place.']);
+  });
+
+  it('detects publishNow from querystring', () => {
+    expect(shouldAutoPublishFromSearch('?publishNow=1')).toBe(true);
+    expect(shouldAutoPublishFromSearch('?foo=bar&publishNow=1')).toBe(true);
+    expect(shouldAutoPublishFromSearch('?publishNow=0')).toBe(false);
+    expect(shouldAutoPublishFromSearch('')).toBe(false);
+  });
+});

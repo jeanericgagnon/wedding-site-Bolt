@@ -16,6 +16,7 @@ import { BUILDER_AUTOSAVE_INTERVAL_MS } from '../constants/builderCapabilities';
 import { mediaService } from '../services/mediaService';
 import { applyThemePreset, applyThemeTokens } from '../../lib/themePresets';
 import { getPublishIssue, getPublishValidationError } from '../utils/publishReadiness';
+import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -75,7 +76,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   const stateRef = useRef(state);
   stateRef.current = state;
-  const shouldAutoPublishRef = useRef(new URLSearchParams(window.location.search).get('publishNow') === '1');
+  const shouldAutoPublishRef = useRef(shouldAutoPublishFromSearch(window.location.search));
 
   useEffect(() => {
     const weddingId = initialProject.weddingId;

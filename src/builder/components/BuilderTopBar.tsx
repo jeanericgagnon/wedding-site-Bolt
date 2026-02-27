@@ -19,6 +19,7 @@ import { getSectionManifest } from '../registry/sectionManifests';
 import { useNavigate } from 'react-router-dom';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
+import { getPublishBlockedHints } from '../utils/publishUiHints';
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
 import { getAllThemePresets } from '../../lib/themePresets';
 
@@ -82,16 +83,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     : ['#C0697B', '#E8A0A0', '#C89F56'];
   const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
   const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
-  const blockedHints = React.useMemo(() => {
-    if (!publishValidationError) return [] as string[];
-    if (publishValidationError.includes('page')) {
-      return ['Open Templates and apply a starter layout.', 'Or add a page/section from the Add panel.'];
-    }
-    if (publishValidationError.includes('Enable at least one section')) {
-      return ['Select any section on canvas.', 'Enable it in the inspector panel.'];
-    }
-    return ['Use Fix blockers to jump to the right place.'];
-  }, [publishValidationError]);
+  const blockedHints = React.useMemo(() => getPublishBlockedHints(publishValidationError), [publishValidationError]);
 
   return (
     <>
