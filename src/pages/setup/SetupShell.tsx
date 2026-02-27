@@ -86,6 +86,16 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
+  const completion = useMemo(() => {
+    let score = 0;
+    if (draft.partnerOneFirstName.trim() && draft.partnerTwoFirstName.trim()) score += 1;
+    if (!draft.dateKnown || !!draft.weddingDate) score += 1;
+    if (draft.weddingCity.trim()) score += 1;
+    if (draft.guestEstimateBand) score += 1;
+    if (draft.stylePreferences.length > 0) score += 1;
+    return Math.round((score / 5) * 100);
+  }, [draft]);
+
   const nextStep = useMemo(() => {
     const idx = steps.findIndex((s) => s.key === activeStep);
     if (idx < 0 || idx >= steps.length - 1) return null;
@@ -158,6 +168,13 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     goNext();
   };
 
+  const canOpenReview =
+    draft.partnerOneFirstName.trim() &&
+    draft.partnerTwoFirstName.trim() &&
+    (!draft.dateKnown || !!draft.weddingDate) &&
+    !!draft.weddingCity.trim() &&
+    !!draft.guestEstimateBand;
+
   const selectedTemplateName = useMemo(() => {
     const map: Record<string, string> = {
       'modern-luxe': 'Modern Luxe',
@@ -205,17 +222,35 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="text-3xl font-bold text-neutral-900">Website Setup</h1>
         <p className="mt-2 text-sm text-neutral-600">Builder V2 guided setup.</p>
+        <div className="mt-4">
+          <div className="mb-1 flex items-center justify-between text-xs text-neutral-500">
+            <span>Setup progress</span>
+            <span>{completion}%</span>
+          </div>
+          <div className="h-2 w-full rounded bg-neutral-200">
+            <div className="h-2 rounded bg-rose-600 transition-all" style={{ width: `${completion}%` }} />
+          </div>
+        </div>
 
         <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-2">
-          {steps.map((s) => (
-            <Link
-              key={s.key}
-              to={`/setup/${s.key}`}
-              className={`rounded border px-3 py-2 text-sm ${activeStep === s.key ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-neutral-300 bg-white text-neutral-700'}`}
-            >
-              {s.label}
-            </Link>
-          ))}
+          {steps.map((s) => {
+            const isReviewLocked = s.key === 'review' && !canOpenReview;
+            return (
+              <Link
+                key={s.key}
+                to={isReviewLocked ? '#' : `/setup/${s.key}`}
+                onClick={(e) => {
+                  if (isReviewLocked) {
+                    e.preventDefault();
+                    setError('Complete names, date/location, and guest estimate before review.');
+                  }
+                }}
+                className={`rounded border px-3 py-2 text-sm ${activeStep === s.key ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-neutral-300 bg-white text-neutral-700'} ${isReviewLocked ? 'opacity-60' : ''}`}
+              >
+                {s.label}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="mt-6 rounded-lg border border-neutral-200 bg-white p-5">
