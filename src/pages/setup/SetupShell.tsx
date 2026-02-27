@@ -17,6 +17,8 @@ type SetupDraft = {
   partnerTwoLastName: string;
   dateKnown: boolean;
   weddingDate: string;
+  weddingCity: string;
+  weddingRegion: string;
 };
 
 const DRAFT_KEY = 'dayof.builderV2.setupDraft';
@@ -28,6 +30,8 @@ const emptyDraft: SetupDraft = {
   partnerTwoLastName: '',
   dateKnown: true,
   weddingDate: '',
+  weddingCity: '',
+  weddingRegion: '',
 };
 
 const readDraft = (): SetupDraft => {
@@ -40,6 +44,8 @@ const readDraft = (): SetupDraft => {
       ...parsed,
       dateKnown: parsed.dateKnown ?? true,
       weddingDate: parsed.weddingDate ?? '',
+      weddingCity: parsed.weddingCity ?? '',
+      weddingRegion: parsed.weddingRegion ?? '',
     };
   } catch {
     return emptyDraft;
@@ -88,6 +94,14 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const continueFromDate = () => {
     if (draft.dateKnown && !draft.weddingDate) {
       setError('Please select your wedding date or mark that you are still deciding.');
+      return;
+    }
+    goNext();
+  };
+
+  const continueFromLocation = () => {
+    if (!draft.weddingCity.trim()) {
+      setError('Please enter your wedding city.');
       return;
     }
     goNext();
@@ -190,7 +204,38 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
             </div>
           )}
 
-          {!['names', 'date'].includes(activeStep) && (
+          {activeStep === 'location' && (
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+                  placeholder="Wedding city"
+                  value={draft.weddingCity}
+                  onChange={(e) => updateDraft({ weddingCity: e.target.value })}
+                />
+                <input
+                  className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+                  placeholder="State / Region (optional)"
+                  value={draft.weddingRegion}
+                  onChange={(e) => updateDraft({ weddingRegion: e.target.value })}
+                />
+              </div>
+
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={continueFromLocation}
+                  className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
+                >
+                  Continue
+                </button>
+                <p className="text-xs text-neutral-500">Used to prefill travel and FAQ defaults.</p>
+              </div>
+            </div>
+          )}
+
+          {!['names', 'date', 'location'].includes(activeStep) && (
             <p className="mt-2 text-sm text-neutral-600">Step scaffold placeholder. Implementation follows in next issues.</p>
           )}
         </div>
