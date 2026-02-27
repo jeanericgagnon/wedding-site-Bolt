@@ -80,14 +80,27 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const themeSwatchColors = activeTheme
     ? [activeTheme.tokens.colorPrimary, activeTheme.tokens.colorAccent, activeTheme.tokens.colorSecondary]
     : ['#C0697B', '#E8A0A0', '#C89F56'];
+  const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
+  const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
+  const blockedHints = React.useMemo(() => {
+    if (!publishValidationError) return [] as string[];
+    if (publishValidationError.includes('page')) {
+      return ['Open Templates and apply a starter layout.', 'Or add a page/section from the Add panel.'];
+    }
+    if (publishValidationError.includes('Enable at least one section')) {
+      return ['Select any section on canvas.', 'Enable it in the inspector panel.'];
+    }
+    return ['Use Fix blockers to jump to the right place.'];
+  }, [publishValidationError]);
 
   return (
+    <>
     <header className="min-h-14 bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-3 md:px-4 py-2 md:py-0 gap-2 md:gap-3 z-50 sticky top-0">
       <button
         onClick={() => {
           if (isDirty) {
-            const ok = window.confirm('You have unsaved changes. Leave builder anyway?');
-            if (!ok) return;
+            setShowLeaveConfirm(true);
+            return;
           }
           navigate('/dashboard');
         }}
@@ -279,6 +292,13 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               <AlertCircle size={12} />
               Not ready to publish
             </span>
+            <button
+              type="button"
+              onClick={() => setShowBlockedDetails((v) => !v)}
+              className="text-[11px] rounded border border-amber-300 bg-white px-2 py-1 font-medium text-amber-800 hover:bg-amber-50"
+            >
+              Why blocked?
+            </button>
             {onFixPublishBlockers && (
               <button
                 type="button"
@@ -294,11 +314,25 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         {publishValidationError && !state.isPublishing && (
           <div className="sm:hidden w-full flex items-center justify-between rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
             <span className="truncate pr-2">{publishValidationError}</span>
+            <button type="button" onClick={() => setShowBlockedDetails((v) => !v)} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 font-medium">
+              Why?
+            </button>
             {onFixPublishBlockers && (
               <button type="button" onClick={onFixPublishBlockers} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 font-medium">
                 Fix
               </button>
             )}
+          </div>
+        )}
+
+        {showBlockedDetails && publishValidationError && (
+          <div className="w-full rounded border border-amber-200 bg-amber-50 px-2 py-2 text-xs text-amber-900">
+            <p className="font-medium">{publishValidationError}</p>
+            <ul className="list-disc ml-4 mt-1 space-y-0.5">
+              {blockedHints.map((hint) => (
+                <li key={hint}>{hint}</li>
+              ))}
+            </ul>
           </div>
         )}
 
@@ -366,5 +400,33 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </div>
       </div>
     </header>
+    {showLeaveConfirm && (
+      <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm rounded-xl bg-white shadow-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900">Leave builder?</h3>
+          <p className="mt-1 text-sm text-gray-600">You have unsaved changes. If you leave now, recent edits may be lost.</p>
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowLeaveConfirm(false)}
+              className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Stay
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowLeaveConfirm(false);
+                navigate('/dashboard');
+              }}
+              className="rounded bg-rose-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-700"
+            >
+              Leave anyway
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };

@@ -160,6 +160,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
     if (issue.kind === 'no-pages') {
       dispatch(builderActions.openTemplateGallery());
+      setPublishNotice('Opened Templates so you can add content before publishing.');
       setPublishError(`${issue.message} Choose a starter template or add a page first.`);
       return;
     }
@@ -173,6 +174,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       }
+      setPublishNotice('Selected the first section. Enable it in inspector, then publish again.');
       setPublishError(`${issue.message} Select a section and toggle it on in the inspector.`);
     }
   }, []);
