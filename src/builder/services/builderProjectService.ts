@@ -4,6 +4,7 @@ import { LayoutConfigV1 } from '../../types/layoutConfig';
 import { WeddingDataV1, createEmptyWeddingData } from '../../types/weddingData';
 import { safeJsonParse } from '../../lib/jsonUtils';
 import { fromExistingLayoutToBuilderProject, fromBuilderProjectToExistingLayout } from '../adapters/layoutAdapter';
+import { serializeBuilderProject } from '../serializers/projectSerializer';
 
 export const builderProjectService = {
   async loadProject(weddingSiteId: string): Promise<BuilderProject | null> {
@@ -82,15 +83,16 @@ export const builderProjectService = {
   },
 
   async saveDraft(project: BuilderProject, weddingData?: WeddingDataV1): Promise<void> {
-    const layoutConfig = fromBuilderProjectToExistingLayout(project);
-    const projectJson = project;
+    const normalizedProject = serializeBuilderProject(project);
+    const layoutConfig = fromBuilderProjectToExistingLayout(normalizedProject);
+    const projectJson = normalizedProject;
     const layoutJson = layoutConfig;
 
     const updatePayload: Record<string, unknown> = {
       layout_config: layoutJson,
       site_json: projectJson,
-      active_template_id: project.templateId,
-      template_id: project.templateId,
+      active_template_id: normalizedProject.templateId,
+      template_id: normalizedProject.templateId,
       updated_at: new Date().toISOString(),
     };
 
@@ -223,6 +225,6 @@ export const builderProjectService = {
 
     if (publishError) throw publishError;
 
-    return { publishedAt, version: Date.now() };
+    return { publishedAt, version: nextPublishedVersion };
   },
 };

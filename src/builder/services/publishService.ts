@@ -1,6 +1,7 @@
 import { BuilderProject } from '../../types/builder/project';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { builderProjectService } from './builderProjectService';
+import { serializeBuilderProject } from '../serializers/projectSerializer';
 
 export type PublishResult = {
   success: boolean;
@@ -12,13 +13,14 @@ export type PublishResult = {
 export const publishService = {
   async publish(project: BuilderProject): Promise<PublishResult> {
     try {
-      await builderProjectService.saveDraft(project);
-      await builderProjectService.publishProject(project.id, project.weddingId);
+      const normalizedProject = serializeBuilderProject(project);
+      await builderProjectService.saveDraft(normalizedProject);
+      const publishMeta = await builderProjectService.publishProject(normalizedProject.id, normalizedProject.weddingId);
 
       return {
         success: true,
-        publishedAt: new Date().toISOString(),
-        version: (project.publishedVersion ?? 0) + 1,
+        publishedAt: publishMeta.publishedAt,
+        version: publishMeta.version,
       };
     } catch (err) {
       return {
