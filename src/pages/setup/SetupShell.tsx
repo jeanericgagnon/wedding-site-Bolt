@@ -217,6 +217,8 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
         throw new Error(`${maybe?.error || fnError.message}${maybe?.code ? ` (${maybe.code})` : ''}`);
       }
 
+      // draft has been committed server-side; keep selected template key but clear raw draft
+      localStorage.removeItem('dayof.builderV2.setupDraft');
       navigate('/builder');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save setup.');
