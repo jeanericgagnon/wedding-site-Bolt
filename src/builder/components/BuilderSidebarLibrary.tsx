@@ -207,6 +207,47 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
 
         {activeTab === 'sections' && !expandedManifest && (
           <div className="p-3">
+            <div className="mb-3 rounded-lg border border-rose-100 bg-rose-50/60 p-2">
+              <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700 mb-2">Quick presets</p>
+              <button
+                onClick={() => {
+                  const starter: BuilderSectionType[] = ['hero', 'story', 'schedule', 'travel', 'rsvp', 'gallery', 'faq'];
+                  starter.forEach((type) => {
+                    const manifest = getSectionManifest(type);
+                    if (manifest) addSection(manifest.type, manifest.defaultVariant);
+                  });
+                }}
+                className="mb-2 w-full rounded border border-rose-300 bg-white px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+              >
+                Add starter pack
+              </button>
+
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { type: 'hero', label: 'Hero' },
+                  { type: 'story', label: 'Story' },
+                  { type: 'schedule', label: 'Itinerary' },
+                  { type: 'travel', label: 'Travel' },
+                  { type: 'faq', label: 'FAQ' },
+                  { type: 'rsvp', label: 'RSVP' },
+                  { type: 'registry', label: 'Registry' },
+                  { type: 'gallery', label: 'Gallery' },
+                ].map((preset) => {
+                  const manifest = getSectionManifest(preset.type as BuilderSectionType);
+                  if (!manifest) return null;
+                  return (
+                    <button
+                      key={preset.type}
+                      onClick={() => addSection(manifest.type, manifest.defaultVariant)}
+                      className="rounded border border-rose-200 bg-white px-2 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition-colors"
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex items-center gap-2 px-1 mb-3">
               <button
                 onClick={() => setActiveTab('layers')}
