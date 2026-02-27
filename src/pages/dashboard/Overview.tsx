@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
-import { buildPublishReadinessItems, buildSetupChecklist } from './overviewUtils';
+import {
+  buildPublishReadinessItems,
+  buildSetupChecklist,
+  getChecklistProgress,
+  getFirstIncompleteChecklistItem,
+} from './overviewUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
@@ -257,8 +262,9 @@ export const DashboardOverview: React.FC = () => {
     siteSlug: stats?.siteSlug ?? '',
     templateName: stats?.templateName ?? '',
   }).map((item) => ({ ...item, action: () => navigate(item.route) }));
-  const publishReadyCount = publishReadinessItems.filter((item) => item.done).length;
+  const publishProgress = getChecklistProgress(publishReadinessItems);
   const publishBlockers = publishReadinessItems.filter((item) => !item.done);
+  const firstPublishBlocker = getFirstIncompleteChecklistItem(publishReadinessItems);
 
   return (
     <DashboardLayout currentPage="overview">
@@ -307,8 +313,8 @@ export const DashboardOverview: React.FC = () => {
                 <div className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
                   Publish needed
                 </div>
-                {publishBlockers[0] && (
-                  <p className="text-xs text-amber-700">Next blocker: {publishBlockers[0].label}</p>
+                {firstPublishBlocker && (
+                  <p className="text-xs text-amber-700">Next blocker: {firstPublishBlocker.label}</p>
                 )}
               </div>
             )}
@@ -329,8 +335,8 @@ export const DashboardOverview: React.FC = () => {
                 >
                   Publish now
                 </Button>
-                {publishBlockers.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={() => publishBlockers[0]?.action()}>
+                {publishBlockers.length > 0 && firstPublishBlocker?.action && (
+                  <Button variant="outline" size="sm" onClick={() => firstPublishBlocker.action?.()}>
                     Fix blockers ({publishBlockers.length})
                   </Button>
                 )}
@@ -548,11 +554,11 @@ export const DashboardOverview: React.FC = () => {
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <p className="text-xs font-medium text-text-secondary">Publishing checklist</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-text-tertiary">{publishReadyCount}/{publishReadinessItems.length} ready</span>
-                        {publishBlockers[0] && (
+                        <span className="text-[11px] text-text-tertiary">{publishProgress.done}/{publishProgress.total} ready</span>
+                        {firstPublishBlocker?.action && (
                           <button
                             type="button"
-                            onClick={() => publishBlockers[0].action()}
+                            onClick={() => firstPublishBlocker.action?.()}
                             className="rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
                           >
                             Fix next

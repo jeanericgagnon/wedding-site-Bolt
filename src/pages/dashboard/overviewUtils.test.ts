@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildPublishReadinessItems, buildSetupChecklist, getPublishBuilderRoute, type OverviewChecklistStats } from './overviewUtils';
+import {
+  buildPublishReadinessItems,
+  buildSetupChecklist,
+  getChecklistProgress,
+  getFirstIncompleteChecklistItem,
+  getPublishBuilderRoute,
+  type OverviewChecklistStats,
+} from './overviewUtils';
 
 const base: OverviewChecklistStats = {
   coupleName1: '',
@@ -39,5 +46,39 @@ describe('overviewUtils', () => {
     const blockers = buildPublishReadinessItems(base).filter((i) => !i.done);
     expect(blockers.map((b) => b.id)).toEqual(['slug', 'template', 'date', 'published']);
     expect(blockers[0].route).toBe('/dashboard/settings');
+  });
+
+  it('picks first incomplete checklist item for fix-next shortcut', () => {
+    const items = buildPublishReadinessItems(base);
+    const first = getFirstIncompleteChecklistItem(items);
+    expect(first?.id).toBe('slug');
+
+    const allDone = buildPublishReadinessItems({
+      ...base,
+      siteSlug: 'my-site',
+      templateName: 'modern-luxe',
+      weddingDate: '2026-09-12',
+      isPublished: true,
+    });
+    expect(getFirstIncompleteChecklistItem(allDone)).toBeNull();
+  });
+
+  it('returns checklist progress counts', () => {
+    const items = buildPublishReadinessItems({
+      ...base,
+      siteSlug: 'my-site',
+      templateName: 'modern-luxe',
+    });
+    expect(getChecklistProgress(items)).toEqual({ done: 2, total: 4 });
+  });
+
+  it('switches published readiness route/action once published toggles true', () => {
+    const draftPublishedItem = buildPublishReadinessItems(base).find((i) => i.id === 'published');
+    expect(draftPublishedItem?.actionLabel).toBe('Publish now');
+    expect(draftPublishedItem?.route).toBe('/dashboard/builder?publishNow=1');
+
+    const livePublishedItem = buildPublishReadinessItems({ ...base, isPublished: true }).find((i) => i.id === 'published');
+    expect(livePublishedItem?.actionLabel).toBe('Open builder');
+    expect(livePublishedItem?.route).toBe('/dashboard/builder');
   });
 });

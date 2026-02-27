@@ -17,6 +17,7 @@ export interface ChecklistItemDef {
   done: boolean;
   actionLabel: string;
   route: string;
+  action?: () => void;
 }
 
 export const getPublishBuilderRoute = (isPublished: boolean): string =>
@@ -97,3 +98,12 @@ export const buildPublishReadinessItems = (stats: OverviewChecklistStats): Check
     route: getPublishBuilderRoute(stats.isPublished),
   },
 ];
+
+export const getFirstIncompleteChecklistItem = (items: ChecklistItemDef[]): ChecklistItemDef | null => {
+  return items.find((item) => !item.done) ?? null;
+};
+
+export const getChecklistProgress = (items: ChecklistItemDef[]): { done: number; total: number } => ({
+  done: items.filter((item) => item.done).length,
+  total: items.length,
+});
