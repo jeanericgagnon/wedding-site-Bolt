@@ -209,7 +209,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 <p className="text-sm text-white/90">Ready to create your own wedding site? Sign up now for just $49.</p>
               </div>
               <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/templates')}
                 className="px-6 py-2.5 bg-white text-accent font-semibold rounded-xl hover:bg-white/95 transition-all shadow-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-accent"
               >
                 Sign Up

@@ -26,7 +26,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/product#templates" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
+                <Link to="/templates" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Templates
                 </Link>
               </li>

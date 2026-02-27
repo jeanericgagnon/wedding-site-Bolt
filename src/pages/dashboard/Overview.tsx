@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
@@ -23,6 +23,8 @@ interface OverviewStats {
   venueName: string | null;
   venueLocation: string | null;
   registryItemCount: number;
+  photoAlbumCount: number;
+  activePhotoAlbumCount: number;
   recentRsvps: RecentRsvp[];
 }
 
@@ -114,6 +116,8 @@ export const DashboardOverview: React.FC = () => {
           venueName: demoWeddingSite.venue_name,
           venueLocation: demoWeddingSite.venue_location,
           registryItemCount: 2,
+          photoAlbumCount: 3,
+          activePhotoAlbumCount: 2,
           recentRsvps,
         });
         return;
@@ -148,6 +152,17 @@ export const DashboardOverview: React.FC = () => {
         .from('registry_items')
         .select('id', { count: 'exact', head: true })
         .eq('wedding_site_id', site?.id ?? '');
+
+      const { count: photoAlbumCount } = await supabase
+        .from('photo_albums')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '');
+
+      const { count: activePhotoAlbumCount } = await supabase
+        .from('photo_albums')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '')
+        .eq('is_active', true);
 
       const allGuests = guests ?? [];
       const confirmed = allGuests.filter((g) => g.rsvp_status === 'confirmed');
@@ -187,6 +202,8 @@ export const DashboardOverview: React.FC = () => {
         venueName: site?.venue_name ?? null,
         venueLocation: site?.wedding_location ?? null,
         registryItemCount: registryItemCount ?? 0,
+        photoAlbumCount: photoAlbumCount ?? 0,
+        activePhotoAlbumCount: activePhotoAlbumCount ?? 0,
         recentRsvps,
       });
     } catch {
@@ -200,6 +217,29 @@ export const DashboardOverview: React.FC = () => {
     stats && stats.totalGuests > 0
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
+
+  const setupDraftProgress = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('dayof.builderV2.setupDraft');
+      if (!raw) return 0;
+      const d = JSON.parse(raw) as {
+        partnerOneFirstName?: string;
+        partnerTwoFirstName?: string;
+        dateKnown?: boolean;
+        weddingDate?: string;
+        weddingCity?: string;
+        guestEstimateBand?: string;
+      };
+      let score = 0;
+      if ((d.partnerOneFirstName || '').trim() && (d.partnerTwoFirstName || '').trim()) score += 1;
+      if (d.dateKnown === false || !!d.weddingDate) score += 1;
+      if ((d.weddingCity || '').trim()) score += 1;
+      if (d.guestEstimateBand) score += 1;
+      return Math.round((score / 4) * 100);
+    } catch {
+      return 0;
+    }
+  }, [stats]);
 
   const setupChecklist = stats
     ? [
@@ -230,6 +270,13 @@ export const DashboardOverview: React.FC = () => {
           done: stats.registryItemCount > 0,
           actionLabel: 'Open registry',
           action: () => navigate('/dashboard/registry'),
+        },
+        {
+          id: 'photos',
+          label: 'Create first photo sharing album',
+          done: stats.photoAlbumCount > 0,
+          actionLabel: 'Open photos',
+          action: () => navigate('/dashboard/photos'),
         },
         {
           id: 'publish',
@@ -265,6 +312,23 @@ export const DashboardOverview: React.FC = () => {
             />
           </div>
         </div>
+        {setupDraftProgress > 0 && setupDraftProgress < 100 && (
+          <Card variant="bordered" padding="lg" className="shadow-sm border-rose-200 bg-rose-50/40">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-rose-900">Builder V2 setup in progress</p>
+                <p className="text-xs text-rose-700 mt-1">You're {setupDraftProgress}% done. Finish setup for stronger defaults.</p>
+              </div>
+              <button
+                onClick={() => navigate('/setup/names')}
+                className="rounded bg-rose-600 px-3 py-2 text-xs font-medium text-white hover:bg-rose-700"
+              >
+                Resume setup
+              </button>
+            </div>
+          </Card>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
@@ -515,6 +579,39 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card variant="bordered" padding="lg" className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Connector health</CardTitle>
+                <CardDescription>How connected your core modules are</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between py-2 border-b border-border-subtle">
+                    <span className="text-text-secondary">Itinerary → Photos</span>
+                    <span className={stats && stats.photoAlbumCount > 0 ? 'text-success font-medium' : 'text-text-tertiary'}>
+                      {stats && stats.photoAlbumCount > 0 ? `${stats.photoAlbumCount} album(s)` : 'Not connected'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border-subtle">
+                    <span className="text-text-secondary">Photos → Messages</span>
+                    <span className={stats && stats.activePhotoAlbumCount > 0 ? 'text-success font-medium' : 'text-text-tertiary'}>
+                      {stats && stats.activePhotoAlbumCount > 0 ? `${stats.activePhotoAlbumCount} active album(s)` : 'No active albums'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border-subtle">
+                    <span className="text-text-secondary">RSVP → Guests</span>
+                    <span className={stats && stats.totalGuests > 0 ? 'text-success font-medium' : 'text-text-tertiary'}>
+                      {stats && stats.totalGuests > 0 ? `${stats.totalGuests} guest(s)` : 'No guests yet'}
+                    </span>
+                  </div>
+                  <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>Open photos</Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/messages')}>Open messages</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card variant="bordered" padding="lg" className="shadow-sm">
               <CardHeader>

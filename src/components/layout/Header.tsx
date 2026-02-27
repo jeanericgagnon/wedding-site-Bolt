@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   const isHomePage = location.pathname === '/';
 
   const handleSignUp = () => {
-    navigate('/signup');
+    navigate('/templates');
   };
 
   const handleLogin = () => {

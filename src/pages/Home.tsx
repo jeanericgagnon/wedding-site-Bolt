@@ -23,7 +23,7 @@ export const Home: React.FC = () => {
   const proposalImageUrl = `${import.meta.env.BASE_URL}7641B308-4D92-48B2-8332-E6AB193A128D_1_105_c.jpeg`;
 
   const handleSignUp = async () => {
-    navigate('/signup');
+    navigate('/templates');
   };
 
   const handleDemoLogin = async () => {
@@ -206,7 +206,7 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Schedule sends</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Delivery status tracking</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Draft + scheduled send flow</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Ready-made templates</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Template facets (style/season/colorway)</span></li>
               </ul>
             </Link>
 

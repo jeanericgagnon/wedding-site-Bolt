@@ -6,6 +6,8 @@ import { ToastProvider } from './components/ui/Toast';
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
+const Templates = lazy(() => import('./pages/Templates').then(m => ({ default: m.Templates })));
+const TemplateDetail = lazy(() => import('./pages/TemplateDetail').then(m => ({ default: m.TemplateDetail })));
 const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
 const Signup = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
 const Onboarding = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })));
@@ -13,6 +15,7 @@ const WeddingStatus = lazy(() => import('./pages/onboarding/WeddingStatus').then
 const Celebration = lazy(() => import('./pages/onboarding/Celebration').then(m => ({ default: m.Celebration })));
 const QuickStart = lazy(() => import('./pages/onboarding/QuickStart').then(m => ({ default: m.QuickStart })));
 const GuidedSetup = lazy(() => import('./pages/onboarding/GuidedSetup').then(m => ({ default: m.GuidedSetup })));
+const SetupShell = lazy(() => import('./pages/setup/SetupShell').then(m => ({ default: m.SetupShell })));
 const RSVP = lazy(() => import('./pages/RSVP'));
 const EventRSVP = lazy(() => import('./pages/EventRSVP'));
 const GuestContactUpdate = lazy(() => import('./pages/GuestContactUpdate'));
@@ -63,6 +66,8 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={isWeddingSubdomainHost ? <SiteView /> : <Home />} />
         <Route path="/product" element={<Product />} />
+        <Route path="/templates" element={<Templates />} />
+        <Route path="/templates/:templateId" element={<TemplateDetail />} />
         <Route path="/builder-v2-lab" element={<BuilderV2Lab />} />
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />
@@ -132,6 +137,22 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <GuidedSetup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup"
+          element={
+            <ProtectedRoute>
+              <SetupShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/setup/:step"
+          element={
+            <ProtectedRoute>
+              <SetupShell />
             </ProtectedRoute>
           }
         />
