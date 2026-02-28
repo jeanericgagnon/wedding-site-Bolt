@@ -128,6 +128,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
             .select('suggestion_text')
             .eq('site_slug', siteSlug)
             .eq('prompt_key', data.suggestionPrompt)
+            .eq('is_hidden', false)
             .order('created_at', { ascending: false })
             .limit(20),
         ]);
@@ -171,10 +172,22 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
   const submitSuggestion = async () => {
     const value = suggestionInput.trim();
     if (!value) return;
+
+    const normalized = value.toLowerCase();
+    if (suggestions.some((s) => s.trim().toLowerCase() === normalized)) return;
+
+    const cooldownKey = storageKey(siteSlug, 'suggestionCooldown');
+    const now = Date.now();
+    const lastSubmit = Number(window.localStorage.getItem(cooldownKey) || 0);
+    if (now - lastSubmit < 8000) return;
+
     const next = [value, ...suggestions].slice(0, 20);
     setSuggestions(next);
     setSuggestionInput('');
-    try { window.localStorage.setItem(storageKey(siteSlug, 'suggestions'), JSON.stringify(next)); } catch {}
+    try {
+      window.localStorage.setItem(storageKey(siteSlug, 'suggestions'), JSON.stringify(next));
+      window.localStorage.setItem(cooldownKey, String(now));
+    } catch {}
 
     if (siteSlug) {
       await supabase.from('interactive_suggestions').insert({
@@ -220,8 +233,14 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                       }
 
                       void (async () => {
+                        const voteCooldownKey = storageKey(siteSlug, `voteCooldown:${data.poll.id}`);
+                        const now = Date.now();
+                        const lastVote = Number(window.localStorage.getItem(voteCooldownKey) || 0);
+                        if (now - lastVote < 3000) return;
+
                         setSelectedPoll(opt.id);
                         poll.incrementLocal(opt.id);
+                        try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch {}
                         if (siteSlug) {
                           await supabase.from('interactive_votes').insert({
                             site_slug: siteSlug,
@@ -255,6 +274,11 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                 <button
                   onClick={async () => {
                     if (selectedPollMulti.length < data.poll.minSelections) return;
+                    const voteCooldownKey = storageKey(siteSlug, `voteCooldown:${data.poll.id}:multi`);
+                    const now = Date.now();
+                    const lastVote = Number(window.localStorage.getItem(voteCooldownKey) || 0);
+                    if (now - lastVote < 3000) return;
+
                     for (const optionId of selectedPollMulti) {
                       poll.incrementLocal(optionId);
                       if (siteSlug) {
@@ -266,6 +290,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                         });
                       }
                     }
+                    try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch {}
                     setSelectedPollMulti([]);
                   }}
                   disabled={selectedPollMulti.length < data.poll.minSelections}
@@ -285,8 +310,14 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                 <button
                   key={opt.id}
                   onClick={async () => {
+                    const voteCooldownKey = storageKey(siteSlug, `voteCooldown:${data.quiz.id}`);
+                    const now = Date.now();
+                    const lastVote = Number(window.localStorage.getItem(voteCooldownKey) || 0);
+                    if (now - lastVote < 3000) return;
+
                     setSelectedQuiz(opt.id);
                     quiz.incrementLocal(opt.id);
+                    try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch {}
                     if (siteSlug) {
                       await supabase.from('interactive_votes').insert({
                         site_slug: siteSlug,

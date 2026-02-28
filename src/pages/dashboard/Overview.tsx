@@ -11,7 +11,7 @@ import { buildFunnelSnapshot } from './analyticsAggregate';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
-import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Loader2, AlertCircle, Clock } from 'lucide-react';
+import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Loader2, AlertCircle, Clock, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
@@ -44,6 +44,12 @@ interface RecentRsvp {
   guestName: string;
   status: 'confirmed' | 'declined';
   receivedAt: string;
+}
+
+interface InteractiveSuggestion {
+  id: string;
+  suggestion_text: string;
+  created_at: string;
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -94,6 +100,8 @@ export const DashboardOverview: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [setupDraftProgressPercent, setSetupDraftProgressPercent] = useState<number>(0);
+  const [interactiveSuggestions, setInteractiveSuggestions] = useState<InteractiveSuggestion[]>([]);
+  const [interactiveLoading, setInteractiveLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -106,6 +114,33 @@ export const DashboardOverview: React.FC = () => {
     window.addEventListener('focus', refreshProgress);
     return () => window.removeEventListener('focus', refreshProgress);
   }, []);
+
+  useEffect(() => {
+    const slug = stats?.siteSlug;
+    if (!slug || isDemoMode) {
+      setInteractiveSuggestions([]);
+      return;
+    }
+
+    let mounted = true;
+    const loadSuggestions = async () => {
+      setInteractiveLoading(true);
+      const { data, error: suggestionsErr } = await supabase
+        .from('interactive_suggestions')
+        .select('id, suggestion_text, created_at')
+        .eq('site_slug', slug)
+        .eq('is_hidden', false)
+        .order('created_at', { ascending: false })
+        .limit(8);
+
+      if (!mounted) return;
+      if (!suggestionsErr) setInteractiveSuggestions((data ?? []) as InteractiveSuggestion[]);
+      setInteractiveLoading(false);
+    };
+
+    void loadSuggestions();
+    return () => { mounted = false; };
+  }, [stats?.siteSlug, isDemoMode]);
 
   async function loadStats() {
     if (!user) return;
@@ -263,6 +298,11 @@ export const DashboardOverview: React.FC = () => {
     registryClicks: Math.max((stats?.registryItemCount ?? 0) * 4, 0),
     faqExpands: Math.max((stats?.totalGuests ?? 0) * 2, 0),
   });
+
+  const hideSuggestion = async (id: string) => {
+    await supabase.from('interactive_suggestions').update({ is_hidden: true }).eq('id', id);
+    setInteractiveSuggestions((prev) => prev.filter((s) => s.id !== id));
+  };
 
   const setupChecklist = stats
     ? buildSetupChecklist({
@@ -706,6 +746,39 @@ export const DashboardOverview: React.FC = () => {
                       <Link to="/dashboard/guests" className="text-xs text-primary hover:text-primary-hover font-medium transition-colors">
                         Invite guests &rarr;
                       </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card variant="bordered" padding="lg" className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Interactive suggestions</CardTitle>
+                  <CardDescription>Latest guest prompt responses (moderation)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {interactiveLoading ? (
+                    <div className="text-sm text-text-secondary">Loading suggestions…</div>
+                  ) : interactiveSuggestions.length === 0 ? (
+                    <div className="text-sm text-text-secondary">No interactive suggestions yet.</div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {interactiveSuggestions.map((item) => (
+                        <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm text-text-primary">{item.suggestion_text}</p>
+                            <button
+                              type="button"
+                              onClick={() => hideSuggestion(item.id)}
+                              className="inline-flex items-center gap-1 rounded border border-border-subtle px-2 py-1 text-[11px] text-text-secondary hover:bg-surface"
+                            >
+                              <EyeOff className="w-3 h-3" />
+                              Hide
+                            </button>
+                          </div>
+                          <p className="mt-1 text-[11px] text-text-tertiary">{formatRelativeTime(item.created_at)}</p>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
