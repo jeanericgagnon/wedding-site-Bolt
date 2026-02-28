@@ -569,6 +569,11 @@ export default function RSVP() {
     guest?.invited_to_reception ? 'Reception' : null,
   ].filter(Boolean) as string[];
 
+  const inheritedHouseholdMembers = useMemo(
+    () => householdGuests.filter((h) => selectedHouseholdGuestIds.includes(h.id)),
+    [householdGuests, selectedHouseholdGuestIds]
+  );
+
   if (tokenAutoLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-amber-50 flex items-center justify-center">
@@ -1019,6 +1024,22 @@ export default function RSVP() {
                     </div>
                   )}
 
+                  {applyToHousehold && inheritedHouseholdMembers.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs uppercase updates-wide text-gray-500">Inherited to household</p>
+                      {inheritedHouseholdMembers.map((h) => {
+                        const name = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
+                        const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
+                        return (
+                          <div key={h.id} className="flex items-center justify-between text-sm gap-4">
+                            <span className="text-gray-600 font-medium">{name}</span>
+                            <span className="text-gray-900 text-right">{access}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
                     <div className="space-y-2">
                       <p className="text-xs uppercase updates-wide text-gray-500">Custom answers</p>
@@ -1118,10 +1139,31 @@ export default function RSVP() {
                   <span className="text-gray-900 capitalize">{formData.meal_choice}</span>
                 </div>
               )}
+              {formData.attending && (guest?.invited_to_ceremony || guest?.invited_to_reception) && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Events</span>
+                  <span className="text-gray-900">{[guest?.invited_to_ceremony ? (formData.attendCeremony ? 'Ceremony' : null) : null, guest?.invited_to_reception ? (formData.attendReception ? 'Reception' : null) : null].filter(Boolean).join(' + ') || 'None selected'}</span>
+                </div>
+              )}
               {formData.attending && formData.plus_one_name && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 font-medium">Plus one</span>
                   <span className="text-gray-900">{formData.plus_one_name}</span>
+                </div>
+              )}
+              {applyToHousehold && inheritedHouseholdMembers.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs uppercase updates-wide text-gray-500">Inherited to household</p>
+                  {inheritedHouseholdMembers.map((h) => {
+                    const name = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
+                    const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
+                    return (
+                      <div key={h.id} className="flex items-center justify-between text-sm gap-4">
+                        <span className="text-gray-600 font-medium">{name}</span>
+                        <span className="text-gray-900 text-right">{access}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               {formData.notes && (
