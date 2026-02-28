@@ -50,23 +50,23 @@ const FooterCtaRsvpPush: React.FC<SectionComponentProps<FooterCtaRsvpPushData>> 
     <section className={`py-32 md:py-40 ${bgClass}`} id="footer">
       <div className="max-w-4xl mx-auto px-6 text-center">
         {data.eyebrow && (
-          <p className={`text-xs uppercase tracking-[0.25em] font-medium mb-6 ${mutedClass}`}>
+          <p className={`text-xs uppercase tracking-[0.22em] font-medium mb-5 md:mb-6 ${mutedClass}`}>
             {data.eyebrow}
           </p>
         )}
 
-        <h2 className={`text-4xl md:text-7xl font-light leading-[1.02] tracking-tight mb-5 text-balance ${textClass}`}>
+        <h2 className={`text-4xl md:text-7xl font-light leading-[1.03] tracking-tight mb-5 text-balance ${textClass}`}>
           {data.headline}
         </h2>
 
         {data.subtext && (
-          <p className={`text-base md:text-lg font-light mb-11 ${mutedClass}`}>{data.subtext}</p>
+          <p className={`text-base md:text-lg font-light mb-10 md:mb-11 max-w-2xl mx-auto leading-relaxed ${mutedClass}`}>{data.subtext}</p>
         )}
 
         {data.ctaLabel && (
           <a
             href={data.ctaHref}
-            className={`inline-flex items-center gap-2.5 px-10 py-4 text-sm font-semibold tracking-[0.22em] uppercase rounded-full transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/60 ${ctaBtnClass}`}
+            className={`inline-flex items-center justify-center gap-2.5 min-h-[50px] px-9 md:px-10 py-4 text-sm font-semibold tracking-[0.16em] uppercase rounded-full transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/60 ${ctaBtnClass}`}
           >
             {data.ctaLabel}
             <ArrowRight size={14} />

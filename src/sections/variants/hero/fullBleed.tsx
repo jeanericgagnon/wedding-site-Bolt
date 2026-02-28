@@ -53,35 +53,35 @@ const HeroFullBleed: React.FC<SectionComponentProps<HeroFullBleedData>> = ({ dat
         <div className="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-700" aria-hidden="true" />
       )}
 
-      <div className={`relative z-10 flex flex-col ${alignClass} px-6 md:px-12 max-w-6xl mx-auto w-full py-32 md:py-40`}>
+      <div className={`relative z-10 flex flex-col ${alignClass} px-6 md:px-12 max-w-6xl mx-auto w-full py-28 md:py-40`}>
         <div className={`rounded-3xl px-2 md:px-4 ${data.textAlign === 'center' ? 'mx-auto' : ''} max-w-4xl`}>
           {data.eyebrow && (
-            <p className="text-[11px] md:text-xs uppercase tracking-[0.4em] text-white/70 mb-6 font-medium">
+            <p className="text-[11px] md:text-xs uppercase tracking-[0.36em] text-white/72 mb-5 font-medium">
               {data.eyebrow}
             </p>
           )}
 
           {data.showDivider && (
-            <div className={`flex mb-7 ${data.textAlign === 'center' ? 'justify-center' : data.textAlign === 'right' ? 'justify-end' : ''}`}>
+            <div className={`flex mb-8 ${data.textAlign === 'center' ? 'justify-center' : data.textAlign === 'right' ? 'justify-end' : ''}`}>
               <div className="w-24 h-px bg-white/45" />
             </div>
           )}
 
-          <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-light text-white tracking-[-0.04em] leading-[0.88] mb-7 text-balance drop-shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
+          <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-light text-white tracking-[-0.038em] leading-[0.9] mb-6 md:mb-7 text-balance drop-shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
             {data.headline}
           </h1>
 
           {data.subheadline && (
-            <p className="text-base md:text-xl text-white/85 font-light tracking-[0.01em] max-w-2xl leading-relaxed text-pretty">
+            <p className="text-base md:text-xl text-white/88 font-light tracking-[0.008em] max-w-2xl md:max-w-[46rem] leading-relaxed md:leading-[1.7] text-pretty">
               {data.subheadline}
             </p>
           )}
 
           {data.ctaLabel && (
-            <div className="mt-10">
+            <div className="mt-9 md:mt-10">
               <a
                 href={data.ctaHref}
-                className="inline-flex items-center gap-2.5 px-10 py-3.5 bg-white text-stone-900 text-sm font-semibold tracking-[0.16em] uppercase hover:bg-white/90 hover:-translate-y-0.5 transition-all rounded-full shadow-xl shadow-black/30"
+                className="inline-flex items-center justify-center gap-2.5 min-h-[48px] px-9 md:px-10 py-3.5 bg-white text-stone-900 text-sm font-semibold tracking-[0.14em] uppercase hover:bg-white/90 hover:-translate-y-0.5 transition-all rounded-full shadow-xl shadow-black/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black/20"
               >
                 {data.ctaLabel}
               </a>

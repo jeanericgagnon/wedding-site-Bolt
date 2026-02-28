@@ -118,13 +118,13 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
   return (
     <section className="py-32 md:py-40 bg-gradient-to-b from-white to-stone-50/35" id="rsvp">
       <div className="max-w-2xl mx-auto px-6 md:px-12">
-        <div className="text-center mb-12">
+        <div className="text-center mb-11 md:mb-12">
           {data.deadline && data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-stone-400 font-medium mb-4">
               {data.eyebrow} <span className="text-stone-600">{data.deadline}</span>
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight leading-[1.04]">{data.headline}</h2>
         </div>
 
         {data.events.length > 1 && (
@@ -155,7 +155,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
             <p className="text-xs text-stone-400">Embedded RSVP is enabled for this section.</p>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-7 bg-white border border-stone-100 rounded-[1.85rem] p-6 md:p-9 shadow-sm md:shadow-xl md:shadow-stone-900/5">
+        <form onSubmit={handleSubmit} className="space-y-7 md:space-y-8 bg-white border border-stone-100 rounded-[1.85rem] p-6 md:p-9 shadow-sm md:shadow-xl md:shadow-stone-900/5">
           <div>
             <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
               Full Name <span className="text-rose-400">*</span>
@@ -191,7 +191,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
                   key={option}
                   type="button"
                   onClick={() => setAttending(option)}
-                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                  className={`min-h-[46px] py-3 px-4 rounded-xl border-2 text-sm font-medium tracking-[0.01em] transition-all ${
                     attending === option
                       ? option === 'yes'
                         ? 'border-rose-400 bg-rose-50 text-rose-700'
@@ -248,7 +248,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
           <button
             type="submit"
             disabled={status === 'submitting' || !name || attending === null}
-            className="w-full py-4 bg-stone-900 text-white text-sm font-semibold uppercase tracking-[0.18em] rounded-xl hover:bg-stone-800 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full min-h-[50px] py-4 bg-stone-900 text-white text-sm font-semibold uppercase tracking-[0.16em] rounded-xl hover:bg-stone-800 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/20 focus-visible:ring-offset-2"
           >
             {status === 'submitting' && <Loader2 size={16} className="animate-spin" />}
             {status === 'submitting' ? 'Submitting…' : 'Send RSVP'}

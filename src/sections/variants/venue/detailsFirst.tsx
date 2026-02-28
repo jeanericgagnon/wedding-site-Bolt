@@ -82,13 +82,13 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-stone-400 font-medium mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 tracking-tight leading-[1.04]">{data.headline}</h2>
           {data.subheadline && (
-            <p className="text-stone-400 font-light mt-2">{data.subheadline}</p>
+            <p className="text-stone-400 font-light mt-2 leading-relaxed max-w-2xl mx-auto">{data.subheadline}</p>
           )}
         </div>
 
@@ -104,11 +104,11 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
               <div className="p-6 md:p-8">
                 <div className="mb-6">
                   {venue.role && (
-                    <p className="text-xs uppercase tracking-[0.2em] text-rose-500 font-medium mb-2">{venue.role}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-rose-500 font-medium mb-2">{venue.role}</p>
                   )}
-                  <h3 className="text-xl md:text-2xl font-light text-stone-900 leading-tight text-balance">{venue.name}</h3>
+                  <h3 className="text-xl md:text-2xl font-light text-stone-900 leading-tight tracking-[-0.01em] text-balance">{venue.name}</h3>
                   {venue.description && (
-                    <p className="text-sm text-stone-500 font-light mt-2 leading-relaxed text-pretty">{venue.description}</p>
+                    <p className="text-sm text-stone-500 font-light mt-2.5 leading-relaxed md:leading-[1.7] text-pretty max-w-[58ch]">{venue.description}</p>
                   )}
                 </div>
 
@@ -136,7 +136,7 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
                     href={venue.mapUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white text-sm font-medium rounded-xl hover:bg-stone-800 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 min-h-[46px] px-5 py-2.5 bg-stone-900 text-white text-sm font-medium tracking-[0.01em] rounded-xl hover:bg-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/20 focus-visible:ring-offset-2"
                   >
                     <Navigation size={14} />
                     Get Directions
