@@ -139,9 +139,35 @@ const PREVIEW_PHOTO_LIBRARY: Record<PreviewPhotoSet, { hero: string; gallery: st
 };
 
 const PREVIEW_STORY_MOMENTS: Record<PreviewPhotoSet, string[]> = {
-  romantic: ['First dance under the courtyard lights', 'Sunset vows in the rose garden', 'Golden hour portraits on the steps'],
-  editorial: ['Black-tie portraits in the grand hall', 'Letter exchange before ceremony', 'Champagne tower at twilight'],
-  coastal: ['Ceremony by the bluff', 'Barefoot walk after vows', 'Lantern send-off by the water'],
+  romantic: ['First dance beneath candlelit arches', 'Sunset vows in the rose garden', 'Golden-hour portraits on the terrace stairs'],
+  editorial: ['Black-tie portraits in the grand hall', 'Handwritten letters exchanged before the ceremony', 'Champagne tower and confetti at twilight'],
+  coastal: ['Ocean bluff ceremony with sea breeze vows', 'Barefoot walk after the kiss', 'Lantern send-off along the shoreline'],
+};
+
+const SECTION_PICKER_EDITORIAL_NOTES: Partial<Record<BuilderSectionType, string>> = {
+  hero: 'Set the opening mood and emotional first impression.',
+  story: 'Shape your narrative arc with moments guests remember.',
+  venue: 'Clarify location details while keeping a polished aesthetic.',
+  schedule: 'Organize weekend flow into readable editorial beats.',
+  travel: 'Guide guests through logistics without visual clutter.',
+  registry: 'Present gifting options with warmth and intention.',
+  faq: 'Answer common questions with calm, concise structure.',
+  rsvp: 'Drive responses with elegant, high-clarity interaction.',
+  gallery: 'Showcase celebration frames with cinematic rhythm.',
+  custom: 'Compose a bespoke section from flexible blocks.',
+};
+
+const SECTION_PICKER_STORY_LABEL: Partial<Record<BuilderSectionType, string>> = {
+  hero: 'Opening Frame',
+  story: 'Narrative',
+  venue: 'Setting',
+  schedule: 'Timeline',
+  travel: 'Guest Guide',
+  registry: 'Gifting',
+  faq: 'Guest Support',
+  rsvp: 'Response Flow',
+  gallery: 'Photo Story',
+  custom: 'Bespoke Layout',
 };
 
 const buildPreviewWeddingData = (photoSet: PreviewPhotoSet): WeddingDataV1 => {
@@ -151,7 +177,7 @@ const buildPreviewWeddingData = (photoSet: PreviewPhotoSet): WeddingDataV1 => {
   data.couple.partner1Name = 'Alex';
   data.couple.partner2Name = 'Sam';
   data.couple.displayName = 'Alex & Sam';
-  data.couple.story = 'From late-night coffee to forever vows — this weekend is a visual love letter to every chapter we have shared.';
+  data.couple.story = 'From quiet coffee-shop mornings to a candlelit first dance, this weekend is curated as an editorial love story for everyone we cherish.';
   data.event.weddingDateISO = new Date('2027-06-12T17:00:00.000Z').toISOString();
   data.venues = [{ id: 'venue-1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
   data.rsvp.deadlineISO = new Date('2027-05-12T00:00:00.000Z').toISOString();
@@ -400,10 +426,10 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     key={opt.id}
                     type="button"
                     onClick={() => setPreviewPhotoSet(opt.id)}
-                    className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                    className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 focus-visible:ring-offset-1 ${
                       previewPhotoSet === opt.id
-                        ? 'border-rose-300 bg-rose-50 text-rose-700'
-                        : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                        ? 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_6px_16px_-12px_rgba(190,24,93,0.55)]'
+                        : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-300'
                     }`}
                   >
                     {opt.label}
@@ -418,7 +444,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                   <button
                     key={manifest.type}
                     onClick={() => handleSectionClick(manifest)}
-                    className={`w-full text-left rounded-xl border transition-all duration-200 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 active:scale-[0.992] ${
+                    className={`w-full text-left rounded-xl border transition-all duration-300 ease-out overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/80 focus-visible:ring-offset-2 active:scale-[0.992] ${
                       isCustom
                         ? 'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50 hover:shadow-[0_10px_20px_-16px_rgba(217,119,6,0.5)]'
                         : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-[0_14px_30px_-18px_rgba(190,24,93,0.45)]'
@@ -435,15 +461,23 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                       <div className="absolute top-1.5 right-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
                         {manifest.defaultVariant}
                       </div>
-                    </div>
-                    <div className={`flex items-center justify-between px-2.5 py-2 border-t ${isCustom ? 'border-amber-100' : 'border-gray-100'}`}>
-                      <div className="min-w-0">
-                        <p className={`text-[11px] font-semibold truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
-                        <p className="text-[9px] text-gray-400 truncate">
-                          {isCustom ? '8 skeletons' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'style' : 'styles'}`}
-                        </p>
+                      <div className="absolute top-1.5 left-1.5 rounded bg-white/85 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-gray-600 shadow-sm">
+                        {SECTION_PICKER_STORY_LABEL[manifest.type] ?? 'Section'}
                       </div>
-                      <ChevronRight size={12} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
+                    </div>
+                    <div className={`px-2.5 py-2 border-t ${isCustom ? 'border-amber-100' : 'border-gray-100'}`}>
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="min-w-0">
+                          <p className={`text-[11px] font-semibold truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
+                          <p className="text-[9px] text-gray-400 truncate">
+                            {isCustom ? '8 skeletons' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'style' : 'styles'}`}
+                          </p>
+                        </div>
+                        <ChevronRight size={12} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
+                      </div>
+                      <p className="mt-1 text-[9px] leading-relaxed text-gray-500 line-clamp-2">
+                        {SECTION_PICKER_EDITORIAL_NOTES[manifest.type] ?? 'Curated section foundation with premium spacing and hierarchy.'}
+                      </p>
                     </div>
                   </button>
                 );
@@ -524,10 +558,10 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => onPreviewPhotoSetChange(opt.id)}
-                className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 focus-visible:ring-offset-1 ${
                   previewPhotoSet === opt.id
-                    ? 'border-rose-300 bg-rose-50 text-rose-700'
-                    : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                    ? 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_6px_16px_-12px_rgba(190,24,93,0.55)]'
+                    : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-300'
                 }`}
               >
                 {opt.label}
@@ -694,7 +728,7 @@ const VariantCard: React.FC<VariantCardProps> = ({
         isHovered
           ? 'border-rose-300 shadow-[0_20px_40px_-22px_rgba(190,24,93,0.58)] -translate-y-[2px]'
           : 'border-gray-200 hover:border-rose-200 hover:-translate-y-[1px] hover:shadow-[0_16px_30px_-18px_rgba(15,23,42,0.38)]'
-      }`}
+      } ${isDefault ? 'ring-1 ring-rose-100/70' : ''}`}
       title={variant.description}
       aria-label={`Add ${variant.label} variant`}
     >
@@ -724,6 +758,10 @@ const VariantCard: React.FC<VariantCardProps> = ({
           <span className={`mt-0.5 flex-shrink-0 transform transition-all duration-200 ${isHovered ? 'translate-x-0 opacity-100' : '-translate-x-1 opacity-0 group-focus-visible:translate-x-0 group-focus-visible:opacity-100'}`}>
             <Plus size={13} className="text-rose-500" />
           </span>
+        </div>
+        <div className="mt-2 flex items-center justify-between text-[9px] uppercase tracking-[0.12em] text-gray-400">
+          <span>{isHovered ? 'Tap to add' : 'Preview ready'}</span>
+          <span className={`${isHovered ? 'text-rose-500' : 'text-gray-300'} transition-colors`}>{isHovered ? 'Selected style' : 'Curated'}</span>
         </div>
       </div>
     </button>
