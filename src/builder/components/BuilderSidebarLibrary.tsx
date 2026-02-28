@@ -274,8 +274,15 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                         : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-md'
                     }`}
                   >
-                    <div className="pointer-events-none">
-                      <SectionTypePreview sectionType={manifest.type} />
+                    <div className="pointer-events-none relative">
+                      <VariantPreviewSwatch
+                        variantId={manifest.defaultVariant}
+                        sectionType={manifest.type}
+                        isHovered={false}
+                      />
+                      <div className="absolute top-1.5 right-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
+                        {manifest.defaultVariant}
+                      </div>
                     </div>
                     <div className={`flex items-center justify-between px-2.5 py-2 border-t ${isCustom ? 'border-amber-100' : 'border-gray-100'}`}>
                       <div className="min-w-0">
@@ -387,6 +394,9 @@ const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefau
       }`}
       title={variant.description}
     >
+      <div className="pointer-events-none border-b border-gray-100">
+        <SectionTypePreview sectionType={sectionType} compact />
+      </div>
       <VariantPreviewSwatch variantId={variant.id} sectionType={sectionType} isHovered={isHovered} />
 
       <div className="px-3 py-2.5">
@@ -407,7 +417,7 @@ const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefau
   );
 };
 
-const SectionTypePreview: React.FC<{ sectionType: string }> = ({ sectionType }) => {
+const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> = ({ sectionType, compact = false }) => {
   const previews: Record<string, React.ReactNode> = {
     hero: (
       <div className="w-full h-16 relative flex flex-col items-center justify-center bg-slate-700">
@@ -695,9 +705,11 @@ const SectionTypePreview: React.FC<{ sectionType: string }> = ({ sectionType }) 
     ),
   };
 
-  const preview = previews[sectionType];
-  if (preview) return <>{preview}</>;
-  return <div className="w-full h-16 bg-gray-100" />;
+  const preview = previews[sectionType] ?? <div className="w-full h-16 bg-gray-100" />;
+  if (compact) {
+    return <div className="w-full h-10 overflow-hidden">{preview}</div>;
+  }
+  return <>{preview}</>;
 };
 
 const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; isHovered: boolean }> = ({ variantId, sectionType, isHovered }) => {
