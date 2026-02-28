@@ -66,9 +66,23 @@ const PREVIEW_FIXTURES_BY_TYPE: Partial<Record<BuilderSectionType, Record<string
 };
 
 const PREVIEW_FIXTURES_BY_VARIANT: Record<string, Record<string, unknown>> = {
-  'hero:countdown': { title: 'Save the Date' },
+  'hero:countdown': { title: 'Save the Date', subtitle: 'Ceremony starts in 47 days' },
+  'hero:invitation': { title: 'Together with their families', subtitle: 'request the honor of your presence' },
+  'hero:split': { title: 'Napa Weekend', subtitle: 'Vows · Dinner · Dancing' },
+  'story:timeline': { title: 'Our Story in Three Chapters' },
+  'story:milestones': { title: 'Moments That Brought Us Here' },
+  'venue:detailsFirst': { title: 'Venue Details & Logistics', showMap: false },
+  'venue:mapFirst': { title: 'Find the Estate', showMap: true },
+  'schedule:agendaCards': { title: 'Weekend Events at a Glance' },
+  'schedule:program': { title: 'Ceremony & Reception Program' },
+  'travel:mapPins': { title: 'Where to Stay Nearby' },
+  'travel:compact': { title: 'Quick Travel Notes' },
   'registry:featured': { title: 'Featured Gifts' },
+  'registry:minimal': { title: 'Your Presence Is the Present' },
   'rsvp:multiEvent': { title: 'RSVP for Each Event' },
+  'rsvp:formal': { title: 'Kindly Reply' },
+  'gallery:polaroid': { title: 'Wedding Weekend Snapshots' },
+  'gallery:filmStrip': { title: 'Story Frames' },
   'countdown:simple': { title: 'Big Day Countdown', message: 'We cannot wait to celebrate with you' },
   'dress-code:moodBoard': { title: 'Dress Inspiration', colorPalette: [{ id: 'c1', color: '#1f2937', label: 'Midnight' }, { id: 'c2', color: '#e5e7eb', label: 'Silver' }, { id: 'c3', color: '#9f1239', label: 'Rose' }] },
   'contact:form': { title: 'Need Help?', showTitle: true },
@@ -124,20 +138,30 @@ const PREVIEW_PHOTO_LIBRARY: Record<PreviewPhotoSet, { hero: string; gallery: st
   },
 };
 
+const PREVIEW_STORY_MOMENTS: Record<PreviewPhotoSet, string[]> = {
+  romantic: ['First dance under the courtyard lights', 'Sunset vows in the rose garden', 'Golden hour portraits on the steps'],
+  editorial: ['Black-tie portraits in the grand hall', 'Letter exchange before ceremony', 'Champagne tower at twilight'],
+  coastal: ['Ceremony by the bluff', 'Barefoot walk after vows', 'Lantern send-off by the water'],
+};
+
 const buildPreviewWeddingData = (photoSet: PreviewPhotoSet): WeddingDataV1 => {
   const media = PREVIEW_PHOTO_LIBRARY[photoSet];
+  const moments = PREVIEW_STORY_MOMENTS[photoSet];
   const data = createEmptyWeddingData();
   data.couple.partner1Name = 'Alex';
   data.couple.partner2Name = 'Sam';
   data.couple.displayName = 'Alex & Sam';
-  data.couple.story = 'We met by chance, stayed for the conversation, and never stopped choosing each other.';
+  data.couple.story = 'From late-night coffee to forever vows — this weekend is a visual love letter to every chapter we have shared.';
   data.event.weddingDateISO = new Date('2027-06-12T17:00:00.000Z').toISOString();
   data.venues = [{ id: 'venue-1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
   data.rsvp.deadlineISO = new Date('2027-05-12T00:00:00.000Z').toISOString();
   data.registry.links = [{ id: 'reg-1', label: 'Honeymoon Fund', url: 'https://example.com/registry' }];
-  data.faq = [{ id: 'faq-1', q: 'Can I bring a plus one?', a: 'Please follow your invite details.' }];
+  data.faq = [
+    { id: 'faq-1', q: 'Can I bring a plus one?', a: 'Please follow your invite details.' },
+    { id: 'faq-2', q: 'Will photos be shared?', a: 'Yes — preview galleries will be available the week after.' },
+  ];
   data.media.heroImageUrl = media.hero;
-  data.media.gallery = media.gallery.map((url, i) => ({ id: `g${i + 1}`, url, caption: `Moment ${i + 1}` }));
+  data.media.gallery = media.gallery.map((url, i) => ({ id: `g${i + 1}`, url, caption: moments[i] ?? `Moment ${i + 1}` }));
   return data;
 };
 
@@ -394,13 +418,14 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                   <button
                     key={manifest.type}
                     onClick={() => handleSectionClick(manifest)}
-                    className={`w-full text-left rounded-xl border transition-all duration-150 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 ${
+                    className={`w-full text-left rounded-xl border transition-all duration-200 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 active:scale-[0.992] ${
                       isCustom
-                        ? 'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50'
-                        : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-md'
+                        ? 'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50 hover:shadow-[0_10px_20px_-16px_rgba(217,119,6,0.5)]'
+                        : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-[0_14px_30px_-18px_rgba(190,24,93,0.45)]'
                     }`}
                   >
                     <div className="pointer-events-none relative">
+                      <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-tr from-white/0 via-white/30 to-white/0" />
                       <BuilderVariantCardPreview
                         sectionType={manifest.type}
                         variantId={manifest.defaultVariant}
@@ -605,14 +630,16 @@ const VariantCard: React.FC<VariantCardProps> = ({
       onMouseEnter={() => onHover(variant.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onSelect(variant.id)}
-      className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 ${
+      className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 active:scale-[0.995] ${
         isHovered
-          ? 'border-rose-300 shadow-[0_14px_30px_-18px_rgba(190,24,93,0.55)] -translate-y-[1px]'
-          : 'border-gray-200 hover:border-rose-200 hover:shadow-[0_10px_20px_-16px_rgba(15,23,42,0.4)]'
+          ? 'border-rose-300 shadow-[0_16px_32px_-18px_rgba(190,24,93,0.55)] -translate-y-[1px]'
+          : 'border-gray-200 hover:border-rose-200 hover:shadow-[0_12px_22px_-16px_rgba(15,23,42,0.4)]'
       }`}
       title={variant.description}
+      aria-label={`Add ${variant.label} variant`}
     >
       <div className={`pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-br ${tone.accent} opacity-85`} />
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_80%_14%,rgba(255,255,255,0.7),transparent_38%)]" />
       <BuilderVariantCardPreview
         sectionType={sectionType}
         variantId={variant.id}
@@ -634,7 +661,7 @@ const VariantCard: React.FC<VariantCardProps> = ({
               <span className="mt-1.5 inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-700">Default</span>
             )}
           </div>
-          <span className={`mt-0.5 flex-shrink-0 transform transition-all duration-200 ${isHovered ? 'translate-x-0 opacity-100' : '-translate-x-1 opacity-0'}`}>
+          <span className={`mt-0.5 flex-shrink-0 transform transition-all duration-200 ${isHovered ? 'translate-x-0 opacity-100' : '-translate-x-1 opacity-0 group-focus-visible:translate-x-0 group-focus-visible:opacity-100'}`}>
             <Plus size={13} className="text-rose-500" />
           </span>
         </div>
@@ -713,8 +740,8 @@ const LiveVariantPreview: React.FC<{ sectionType: BuilderSectionType; variantId:
 
   return (
     <div className="relative h-20 overflow-hidden bg-white" style={{ contain: 'layout paint size' }}>
-      <div className="absolute inset-0 origin-top-left scale-[0.26] transition-transform duration-500 ease-out group-hover:scale-[0.268]" style={{ width: '384%', minHeight: '260px' }}>
-        <div className="h-full w-full saturate-[1.02] contrast-[1.01] transition-[filter] duration-500 ease-out group-hover:saturate-[1.05]">
+      <div className="absolute inset-0 origin-top-left scale-[0.26] transition-transform duration-500 ease-out group-hover:scale-[0.268] group-focus-visible:scale-[0.268]" style={{ width: '384%', minHeight: '260px' }}>
+        <div className="h-full w-full saturate-[1.02] contrast-[1.01] transition-[filter] duration-500 ease-out group-hover:saturate-[1.05] group-focus-visible:saturate-[1.05]">
           <SectionRenderer section={section} weddingData={weddingData} isPreview siteSlug="preview" />
         </div>
       </div>
