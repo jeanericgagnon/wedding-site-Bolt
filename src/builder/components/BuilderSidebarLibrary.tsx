@@ -34,18 +34,6 @@ import { CustomSectionSkeleton } from '../../sections/variants/custom/skeletons'
 import { getDefinition } from '../../sections/registry';
 import { SECTION_REGISTRY as LEGACY_SECTION_REGISTRY } from '../../sections/sectionRegistry';
 
-import engagement01 from '../../../assets/photos/raw-engagement-2026-02-27/003bf600-3a4d-4f35-976b-0586379b6785.jpg';
-import engagement02 from '../../../assets/photos/raw-engagement-2026-02-27/053d97ba-331e-4d85-93f9-7986e70e2874.jpg';
-import engagement03 from '../../../assets/photos/raw-engagement-2026-02-27/092f4223-1508-45f6-8f3d-78ca5afbb6f1.jpg';
-import engagement04 from '../../../assets/photos/raw-engagement-2026-02-27/18419a0b-742d-4e06-b315-c83be4e25f68.jpg';
-import engagement05 from '../../../assets/photos/raw-engagement-2026-02-27/1e3ee16d-404f-48e2-b949-62ed57e96c6c.jpg';
-import engagement06 from '../../../assets/photos/raw-engagement-2026-02-27/36788f74-4b86-4550-bee9-6b2e5fbb19f5.jpg';
-import engagement07 from '../../../assets/photos/raw-engagement-2026-02-27/3a6534e7-adf1-44c5-a728-94c6f6fa646c.jpg';
-import engagement08 from '../../../assets/photos/raw-engagement-2026-02-27/3c011ec8-ec9e-4b90-99f8-22e12da880c8.jpg';
-import engagement09 from '../../../assets/photos/raw-engagement-2026-02-27/45fe54f7-a753-4e5d-9913-aff3951db84f.jpg';
-import engagement10 from '../../../assets/photos/raw-engagement-2026-02-27/46c6527f-aabe-48ef-87c0-bfdac05c571f.jpg';
-import engagement11 from '../../../assets/photos/raw-engagement-2026-02-27/46ec533f-9fdb-4c8d-8f52-759efe846352.jpg';
-import engagement12 from '../../../assets/photos/raw-engagement-2026-02-27/47fc5b76-b923-4d85-8bd1-df4cb9cebcb8.jpg';
 
 type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
 
@@ -133,18 +121,18 @@ const PREVIEW_PHOTO_SET_OPTIONS: Array<{ id: PreviewPhotoSet; label: string }> =
 ];
 
 const ENGAGEMENT_LIBRARY = [
-  engagement01,
-  engagement02,
-  engagement03,
-  engagement04,
-  engagement05,
-  engagement06,
-  engagement07,
-  engagement08,
-  engagement09,
-  engagement10,
-  engagement11,
-  engagement12,
+  '/photos/engagement/003bf600-3a4d-4f35-976b-0586379b6785.jpg',
+  '/photos/engagement/053d97ba-331e-4d85-93f9-7986e70e2874.jpg',
+  '/photos/engagement/092f4223-1508-45f6-8f3d-78ca5afbb6f1.jpg',
+  '/photos/engagement/18419a0b-742d-4e06-b315-c83be4e25f68.jpg',
+  '/photos/engagement/1e3ee16d-404f-48e2-b949-62ed57e96c6c.jpg',
+  '/photos/engagement/36788f74-4b86-4550-bee9-6b2e5fbb19f5.jpg',
+  '/photos/engagement/3a6534e7-adf1-44c5-a728-94c6f6fa646c.jpg',
+  '/photos/engagement/3c011ec8-ec9e-4b90-99f8-22e12da880c8.jpg',
+  '/photos/engagement/45fe54f7-a753-4e5d-9913-aff3951db84f.jpg',
+  '/photos/engagement/46c6527f-aabe-48ef-87c0-bfdac05c571f.jpg',
+  '/photos/engagement/46ec533f-9fdb-4c8d-8f52-759efe846352.jpg',
+  '/photos/engagement/47fc5b76-b923-4d85-8bd1-df4cb9cebcb8.jpg',
 ];
 
 const ENGAGEMENT_MOMENTS = [
