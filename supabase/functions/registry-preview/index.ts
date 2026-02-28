@@ -124,6 +124,26 @@ function extractAsin(url: string): string | null {
   return m ? m[1].toUpperCase() : null;
 }
 
+function deriveFallbackTitle(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const pathParts = parsed.pathname.split('/').filter(Boolean);
+    const slug = [...pathParts].reverse().find((part) => /[a-zA-Z]/.test(part)) || '';
+    if (slug) {
+      const cleaned = slug
+        .replace(/\.html?$/i, '')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+        .trim();
+      if (cleaned && cleaned.length > 2 && !/^dp$/i.test(cleaned)) return cleaned;
+    }
+    const host = parsed.hostname.replace(/^www\./, '').split('.')[0];
+    return `${host.charAt(0).toUpperCase()}${host.slice(1)} item`;
+  } catch {
+    return 'Registry item';
+  }
+}
+
 function deriveFallbackImage(url: string, hostname: string): string | undefined {
   if (/amazon\./i.test(hostname)) {
     const asin = extractAsin(url);
@@ -198,6 +218,24 @@ async function extractProxyTextData(url: string): Promise<{ title?: string; pric
   } catch {
     return null;
   }
+}
+
+function ensureBaselineMetadata(rawUrl: string, data: ProductData): ProductData {
+  const normalized = normalizeUrl(rawUrl);
+  const title = data.title?.trim() || deriveFallbackTitle(rawUrl);
+  const imageUrl = data.image_url || deriveFallbackImage(rawUrl, normalized.hostname);
+
+  const missing = new Set(data.missing_fields ?? []);
+  if (title) missing.delete('title'); else missing.add('title');
+  if (imageUrl) missing.delete('image'); else missing.add('image');
+
+  return {
+    ...data,
+    title,
+    image_url: imageUrl,
+    partial: missing.size > 0,
+    missing_fields: missing.size ? Array.from(missing) : undefined,
+  };
 }
 
 // Main extraction function
@@ -415,14 +453,16 @@ Deno.serve(async (req: Request) => {
     if (!forceRefresh) {
       const cached = await getCached(supabaseAdmin, hash);
       if (cached) {
-        return new Response(JSON.stringify({ ...cached, cached: true }), {
+        const normalizedCached = ensureBaselineMetadata(rawUrl, cached);
+        return new Response(JSON.stringify({ ...normalizedCached, cached: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
 
     // Extract product data
-    const result = await extractProductData(rawUrl);
+    const extracted = await extractProductData(rawUrl);
+    const result = ensureBaselineMetadata(rawUrl, extracted);
 
     // Save to cache in background
     EdgeRuntime.waitUntil(saveCache(supabaseAdmin, hash, normalized.canonical, result));
