@@ -89,7 +89,43 @@ function buildPreviewSettings(sectionType: BuilderSectionType, variantId: string
   };
 }
 
-const buildPreviewWeddingData = (): WeddingDataV1 => {
+type PreviewPhotoSet = 'romantic' | 'editorial' | 'coastal';
+
+const PREVIEW_PHOTO_SET_OPTIONS: Array<{ id: PreviewPhotoSet; label: string }> = [
+  { id: 'romantic', label: 'Romantic' },
+  { id: 'editorial', label: 'Editorial' },
+  { id: 'coastal', label: 'Coastal' },
+];
+
+const PREVIEW_PHOTO_LIBRARY: Record<PreviewPhotoSet, { hero: string; gallery: string[] }> = {
+  romantic: {
+    hero: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+    gallery: [
+      'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+      'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
+      'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg',
+    ],
+  },
+  editorial: {
+    hero: 'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
+    gallery: [
+      'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
+      'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
+      'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
+    ],
+  },
+  coastal: {
+    hero: 'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
+    gallery: [
+      'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
+      'https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg',
+      'https://images.pexels.com/photos/457716/pexels-photo-457716.jpeg',
+    ],
+  },
+};
+
+const buildPreviewWeddingData = (photoSet: PreviewPhotoSet): WeddingDataV1 => {
+  const media = PREVIEW_PHOTO_LIBRARY[photoSet];
   const data = createEmptyWeddingData();
   data.couple.partner1Name = 'Alex';
   data.couple.partner2Name = 'Sam';
@@ -100,16 +136,10 @@ const buildPreviewWeddingData = (): WeddingDataV1 => {
   data.rsvp.deadlineISO = new Date('2027-05-12T00:00:00.000Z').toISOString();
   data.registry.links = [{ id: 'reg-1', label: 'Honeymoon Fund', url: 'https://example.com/registry' }];
   data.faq = [{ id: 'faq-1', q: 'Can I bring a plus one?', a: 'Please follow your invite details.' }];
-  data.media.heroImageUrl = 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg';
-  data.media.gallery = [
-    { id: 'g1', url: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg', caption: 'Engagement' },
-    { id: 'g2', url: 'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg', caption: 'Venue' },
-    { id: 'g3', url: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg', caption: 'Florals' },
-  ];
+  data.media.heroImageUrl = media.hero;
+  data.media.gallery = media.gallery.map((url, i) => ({ id: `g${i + 1}`, url, caption: `Moment ${i + 1}` }));
   return data;
 };
-
-const PREVIEW_WEDDING_DATA = buildPreviewWeddingData();
 
 interface BuilderSidebarLibraryProps {
   activePageId: string | null;
@@ -120,6 +150,8 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   const [activeTab, setActiveTab] = useState<SidebarTab>('layers');
   const [expandedType, setExpandedType] = useState<BuilderSectionType | null>(null);
   const [showSkeletonPicker, setShowSkeletonPicker] = useState(false);
+  const [previewPhotoSet, setPreviewPhotoSet] = useState<PreviewPhotoSet>('romantic');
+  const previewWeddingData = useMemo(() => buildPreviewWeddingData(previewPhotoSet), [previewPhotoSet]);
   const manifests = getAllSectionManifests();
 
   const expandedManifest = expandedType
@@ -336,6 +368,25 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
               </p>
               <span className="ml-auto text-[10px] text-gray-300">{manifests.length} types</span>
             </div>
+            <div className="mb-2.5 flex items-center gap-1.5 px-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Photo mood</span>
+              <div className="ml-auto flex items-center gap-1">
+                {PREVIEW_PHOTO_SET_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setPreviewPhotoSet(opt.id)}
+                    className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                      previewPhotoSet === opt.id
+                        ? 'border-rose-300 bg-rose-50 text-rose-700'
+                        : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               {manifests.map(manifest => {
                 const isCustom = manifest.type === 'custom';
@@ -354,6 +405,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                         sectionType={manifest.type}
                         variantId={manifest.defaultVariant}
                         isHovered={false}
+                        weddingData={previewWeddingData}
                       />
                       <div className="absolute top-1.5 right-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
                         {manifest.defaultVariant}
@@ -380,6 +432,9 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
             manifest={expandedManifest}
             onBack={() => setExpandedType(null)}
             onSelect={(variant) => addSection(expandedManifest.type, variant)}
+            previewPhotoSet={previewPhotoSet}
+            onPreviewPhotoSetChange={setPreviewPhotoSet}
+            previewWeddingData={previewWeddingData}
           />
         )}
       </div>
@@ -399,9 +454,19 @@ interface VariantPickerProps {
   manifest: BuilderSectionDefinitionWithMeta;
   onBack: () => void;
   onSelect: (variantId: string) => void;
+  previewPhotoSet: PreviewPhotoSet;
+  onPreviewPhotoSetChange: (photoSet: PreviewPhotoSet) => void;
+  previewWeddingData: WeddingDataV1;
 }
 
-const VariantPicker: React.FC<VariantPickerProps> = ({ manifest, onBack, onSelect }) => {
+const VariantPicker: React.FC<VariantPickerProps> = ({
+  manifest,
+  onBack,
+  onSelect,
+  previewPhotoSet,
+  onPreviewPhotoSetChange,
+  previewWeddingData,
+}) => {
   const [hoveredVariant, setHoveredVariant] = useState<string | null>(null);
   const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
 
@@ -426,6 +491,25 @@ const VariantPicker: React.FC<VariantPickerProps> = ({ manifest, onBack, onSelec
       <div className="px-3 pt-3 pb-2.5">
         <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Choose a style</p>
         <p className="text-[11px] text-gray-500 mt-1">Each style has a different layout feel. Pick one to add this section.</p>
+        <div className="mt-2.5 flex items-center gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Photo mood</span>
+          <div className="ml-auto flex items-center gap-1">
+            {PREVIEW_PHOTO_SET_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onPreviewPhotoSetChange(opt.id)}
+                className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                  previewPhotoSet === opt.id
+                    ? 'border-rose-300 bg-rose-50 text-rose-700'
+                    : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 pb-3">
@@ -439,6 +523,7 @@ const VariantPicker: React.FC<VariantPickerProps> = ({ manifest, onBack, onSelec
               isHovered={hoveredVariant === variant.id}
               onHover={setHoveredVariant}
               onSelect={onSelect}
+              previewWeddingData={previewWeddingData}
             />
           ))}
         </div>
@@ -454,9 +539,18 @@ interface VariantCardProps {
   isHovered: boolean;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
+  previewWeddingData: WeddingDataV1;
 }
 
-const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefault, isHovered, onHover, onSelect }) => {
+const VariantCard: React.FC<VariantCardProps> = ({
+  variant,
+  sectionType,
+  isDefault,
+  isHovered,
+  onHover,
+  onSelect,
+  previewWeddingData,
+}) => {
   return (
     <button
       onMouseEnter={() => onHover(variant.id)}
@@ -469,7 +563,12 @@ const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefau
       }`}
       title={variant.description}
     >
-      <BuilderVariantCardPreview sectionType={sectionType} variantId={variant.id} isHovered={isHovered} />
+      <BuilderVariantCardPreview
+        sectionType={sectionType}
+        variantId={variant.id}
+        isHovered={isHovered}
+        weddingData={previewWeddingData}
+      />
 
       <div className="px-3 py-2.5">
         <div className="flex items-start justify-between gap-2">
@@ -508,10 +607,16 @@ class VariantPreviewErrorBoundary extends React.Component<
   }
 }
 
-const BuilderVariantCardPreview: React.FC<{ sectionType: string; variantId: string; isHovered: boolean }> = React.memo(({
+const BuilderVariantCardPreview: React.FC<{
+  sectionType: string;
+  variantId: string;
+  isHovered: boolean;
+  weddingData: WeddingDataV1;
+}> = React.memo(({
   sectionType,
   variantId,
   isHovered,
+  weddingData,
 }) => {
   const typedSectionType = sectionType as BuilderSectionType;
   const fallback = <VariantPreviewSwatch variantId={variantId} sectionType={sectionType} isHovered={isHovered} />;
@@ -526,13 +631,17 @@ const BuilderVariantCardPreview: React.FC<{ sectionType: string; variantId: stri
         <div className="border-b border-gray-100">
           <SectionTypePreview sectionType={sectionType} compact />
         </div>
-        <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} />
+        <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} weddingData={weddingData} />
       </div>
     </VariantPreviewErrorBoundary>
   );
 });
 
-const LiveVariantPreview: React.FC<{ sectionType: BuilderSectionType; variantId: string }> = React.memo(({ sectionType, variantId }) => {
+const LiveVariantPreview: React.FC<{ sectionType: BuilderSectionType; variantId: string; weddingData: WeddingDataV1 }> = React.memo(({
+  sectionType,
+  variantId,
+  weddingData,
+}) => {
   const section = useMemo(() => {
     const instance = createDefaultSectionInstance(sectionType, variantId, 0);
     instance.settings = buildPreviewSettings(sectionType, variantId);
@@ -542,7 +651,7 @@ const LiveVariantPreview: React.FC<{ sectionType: BuilderSectionType; variantId:
   return (
     <div className="relative h-20 overflow-hidden bg-white" style={{ contain: 'layout paint size' }}>
       <div className="absolute inset-0 origin-top-left scale-[0.26]" style={{ width: '384%', minHeight: '260px' }}>
-        <SectionRenderer section={section} weddingData={PREVIEW_WEDDING_DATA} isPreview siteSlug="preview" />
+        <SectionRenderer section={section} weddingData={weddingData} isPreview siteSlug="preview" />
       </div>
       <div className="absolute inset-0 border-t border-gray-100/80" />
     </div>
