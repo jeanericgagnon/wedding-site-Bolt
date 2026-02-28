@@ -27,9 +27,9 @@ export const defaultQuotesGridData: QuotesGridData = {
   columns: '3',
   background: 'white',
   quotes: [
-    { id: '1', text: 'Watching these two fall in love has been one of the greatest joys of my life.', author: 'Margaret', role: 'Mother of the Bride', photo: '' },
-    { id: '2', text: 'I have never seen two people more perfectly suited for each other.', author: 'Jamie Chen', role: 'Maid of Honor', photo: '' },
-    { id: '3', text: 'From the moment you introduced us, I knew this was the one.', author: 'Daniel Park', role: 'Best Man', photo: '' },
+    { id: '1', text: 'Watching these two fall in love has been one of the greatest joys of my life.', author: 'Margaret', role: 'Mother of the Bride', photo: 'https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=300' },
+    { id: '2', text: 'I have never seen two people more perfectly suited for each other.', author: 'Jamie Chen', role: 'Maid of Honor', photo: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=300' },
+    { id: '3', text: 'From the moment you introduced us, I knew this was the one.', author: 'Daniel Park', role: 'Best Man', photo: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=300' },
     { id: '4', text: 'Love is patient, love is kind — and you two are the living proof.', author: 'Aunt Carol', role: 'Family', photo: '' },
     { id: '5', text: 'Here\'s to a lifetime of adventure, laughter, and love.', author: 'The Nguyens', role: 'Friends', photo: '' },
     { id: '6', text: 'So grateful to witness this love story from the very beginning.', author: 'Priya & Sam', role: 'College Friends', photo: '' },
@@ -86,18 +86,25 @@ const bgMap: Record<string, string> = {
   dark: 'bg-stone-900',
 };
 
+const textMap: Record<string, { heading: string; eyebrow: string; empty: string }> = {
+  white: { heading: 'text-stone-900', eyebrow: 'text-rose-400', empty: 'text-stone-400' },
+  soft: { heading: 'text-stone-900', eyebrow: 'text-rose-400', empty: 'text-stone-400' },
+  dark: { heading: 'text-white', eyebrow: 'text-rose-300', empty: 'text-stone-500' },
+};
+
 const QuotesGrid: React.FC<SectionComponentProps<QuotesGridData>> = ({ data }) => {
   const bg = bgMap[data.background] ?? 'bg-white';
   const gridCols = data.columns === '2' ? 'md:grid-cols-2' : 'md:grid-cols-3';
+  const tm = textMap[data.background] ?? textMap.white;
 
   return (
     <section className={`py-24 md:py-32 ${bg}`} id="quotes">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-rose-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className={`text-xs uppercase tracking-[0.25em] ${tm.eyebrow} font-medium mb-4`}>{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className={`text-4xl md:text-5xl font-light ${tm.heading}`}>{data.headline}</h2>
         </div>
 
         {data.quotes.length > 0 ? (
@@ -105,7 +112,7 @@ const QuotesGrid: React.FC<SectionComponentProps<QuotesGridData>> = ({ data }) =
             {data.quotes.map((q, i) => <QuoteCard key={q.id} q={q} idx={i} />)}
           </div>
         ) : (
-          <p className="text-center text-stone-400 text-sm py-12">No quotes added yet.</p>
+          <p className={`text-center ${tm.empty} text-sm py-12`}>No quotes added yet.</p>
         )}
       </div>
     </section>

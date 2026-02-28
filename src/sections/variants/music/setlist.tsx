@@ -62,7 +62,7 @@ const MusicSetlist: React.FC<SectionComponentProps<MusicSetlistData>> = ({ data 
   const tc = textClasses[data.background] ?? textClasses.gradient;
 
   return (
-    <section className={`py-24 md:py-32 ${bg}`} id="music">
+    <section className={`py-28 md:py-36 ${bg}`} id="music">
       <div className="max-w-2xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
@@ -74,11 +74,11 @@ const MusicSetlist: React.FC<SectionComponentProps<MusicSetlistData>> = ({ data 
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {data.songs.map((song) => {
             const Icon = iconMap[song.icon] ?? Music2;
             return (
-              <div key={song.id} className={`flex items-start gap-4 p-5 rounded-2xl border ${tc.card} transition-colors`}>
+              <div key={song.id} className={`flex items-start gap-4 p-6 rounded-3xl border ${tc.card} transition-colors shadow-sm`}>
                 <div className={`w-10 h-10 rounded-full border ${tc.border} flex items-center justify-center shrink-0 mt-0.5`}>
                   <Icon size={16} className={tc.sub} />
                 </div>

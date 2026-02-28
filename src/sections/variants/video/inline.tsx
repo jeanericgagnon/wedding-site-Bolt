@@ -20,7 +20,7 @@ export const defaultVideoInlineData: VideoInlineData = {
   headline: 'Our Story in Motion',
   bodyText: 'Before the big day, we wanted to share a little glimpse into our journey together. From the first hello to this moment, every step has led us here.',
   videoUrl: '',
-  thumbnailUrl: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=800',
+  thumbnailUrl: 'https://images.pexels.com/photos/355465/pexels-photo-355465.jpeg?auto=compress&cs=tinysrgb&w=1200',
   videoType: 'youtube',
   contentPosition: 'left',
 };
@@ -58,7 +58,7 @@ const VideoInline: React.FC<SectionComponentProps<VideoInlineData>> = ({ data })
   );
 
   const videoPlayer = (
-    <div className="relative aspect-video rounded-xl overflow-hidden bg-stone-900 shadow-lg">
+    <div className="relative aspect-video rounded-[1.75rem] overflow-hidden bg-stone-900 shadow-xl">
       {!playing && data.thumbnailUrl ? (
         <div
           className="absolute inset-0 cursor-pointer group"
@@ -102,7 +102,7 @@ const VideoInline: React.FC<SectionComponentProps<VideoInlineData>> = ({ data })
   );
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="video">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/50 to-white" id="video">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {isLeft ? (

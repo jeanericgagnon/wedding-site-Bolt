@@ -85,8 +85,8 @@ const MenuTabs: React.FC<SectionComponentProps<MenuTabsData>> = ({ data }) => {
   const activeCourse = data.courses[activeTab];
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="menu">
-      <div className="max-w-4xl mx-auto px-6 md:px-12">
+    <section className="py-28 md:py-36 bg-stone-50" id="menu">
+      <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
@@ -111,8 +111,8 @@ const MenuTabs: React.FC<SectionComponentProps<MenuTabsData>> = ({ data }) => {
                   onClick={() => setActiveTab(i)}
                   className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                     i === activeTab
-                      ? 'bg-stone-900 text-white shadow-sm'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      ? 'bg-rose-600 text-white shadow-sm'
+                      : 'bg-white text-stone-600 hover:bg-rose-50'
                   }`}
                 >
                   {course.label}

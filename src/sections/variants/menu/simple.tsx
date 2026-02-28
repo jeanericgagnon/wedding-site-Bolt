@@ -39,8 +39,8 @@ export const defaultMenuSimpleData: MenuSimpleData = {
 
 const MenuSimple: React.FC<SectionComponentProps<MenuSimpleData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-white" id="menu">
-      <div className="max-w-2xl mx-auto px-6 md:px-12">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-amber-50/30 via-white to-white" id="menu">
+      <div className="max-w-3xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
@@ -56,7 +56,7 @@ const MenuSimple: React.FC<SectionComponentProps<MenuSimpleData>> = ({ data }) =
           )}
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-10">
           {data.items.map((item, idx) => (
             <div key={item.id} className="border-b border-stone-100 last:border-0 pb-6 last:pb-0">
               <div className="flex items-start justify-between gap-4">

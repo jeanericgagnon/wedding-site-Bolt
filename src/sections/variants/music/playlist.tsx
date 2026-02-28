@@ -80,8 +80,9 @@ const MusicPlaylist: React.FC<SectionComponentProps<MusicPlaylistData>> = ({ dat
   const active = data.playlists[activeTab];
 
   return (
-    <section className="py-24 md:py-32 bg-stone-900" id="music">
-      <div className="max-w-3xl mx-auto px-6 md:px-12">
+    <section className="relative overflow-hidden py-28 md:py-36 bg-stone-950" id="music">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_0%,rgba(244,63,94,0.18),transparent_45%)]" />
+      <div className="relative max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>

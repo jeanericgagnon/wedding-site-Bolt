@@ -78,21 +78,21 @@ const iconMap = { utensils: Utensils, wine: Wine, leaf: Leaf };
 
 const MenuCard: React.FC<SectionComponentProps<MenuCardData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="menu">
+    <section className="relative overflow-hidden py-28 md:py-36 bg-stone-900" id="menu">
       {data.backgroundImage && (
         <div
-          className="absolute inset-0 opacity-5 bg-cover bg-center"
+          className="absolute inset-0 opacity-30 bg-cover bg-center"
           style={{ backgroundImage: `url(${data.backgroundImage})` }}
         />
       )}
-      <div className="relative max-w-5xl mx-auto px-6 md:px-12">
+      <div className="relative max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-stone-300 font-medium mb-4">{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className="text-4xl md:text-5xl font-light text-white">{data.headline}</h2>
           {data.subtitle && (
-            <p className="text-stone-500 mt-4 max-w-xl mx-auto leading-relaxed">{data.subtitle}</p>
+            <p className="text-stone-300 mt-4 max-w-xl mx-auto leading-relaxed">{data.subtitle}</p>
           )}
         </div>
 
@@ -100,7 +100,7 @@ const MenuCard: React.FC<SectionComponentProps<MenuCardData>> = ({ data }) => {
           {data.sections.map(sec => {
             const Icon = iconMap[sec.icon] ?? Utensils;
             return (
-              <div key={sec.id} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100">
+              <div key={sec.id} className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-xl border border-white/50">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-stone-100">
                   <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
                     <Icon size={14} className="text-stone-500" />

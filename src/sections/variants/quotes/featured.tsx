@@ -28,7 +28,7 @@ export const defaultQuotesFeaturedData: QuotesFeaturedData = {
   subtitle: 'Messages from the people who know us best.',
   showPhotos: true,
   quotes: [
-    { id: '1', text: 'Watching these two fall in love has been one of the greatest joys of my life. You were made for each other, and I couldn\'t be prouder.', author: 'Margaret Wilson', role: 'Mother of the Bride', photo: '', featured: true },
+    { id: '1', text: 'Watching these two fall in love has been one of the greatest joys of my life. You were made for each other, and I couldn\'t be prouder.', author: 'Margaret Wilson', role: 'Mother of the Bride', photo: 'https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=400', featured: true },
     { id: '2', text: 'I have never seen two people more perfectly suited. Here\'s to a lifetime of adventure and love.', author: 'Jamie Chen', role: 'Maid of Honor', photo: '', featured: false },
     { id: '3', text: 'From the moment you introduced us, I knew this was the one. Grateful to call you both family.', author: 'Daniel Park', role: 'Best Man', photo: '', featured: false },
     { id: '4', text: 'Love is patient, love is kind — and you two are living proof. Wishing you every happiness.', author: 'Aunt Carol', role: 'Family', photo: '', featured: false },
@@ -40,8 +40,9 @@ const QuotesFeatured: React.FC<SectionComponentProps<QuotesFeaturedData>> = ({ d
   const others = data.quotes.filter(q => !q.featured);
 
   return (
-    <section className="py-24 md:py-32 bg-gradient-to-b from-white via-stone-50/50 to-white" id="quotes">
-      <div className="max-w-6xl mx-auto px-6 md:px-12">
+    <section className="relative overflow-hidden py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/70 to-white" id="quotes">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_right,rgba(244,63,94,0.12),transparent_50%)]" />
+      <div className="relative max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-rose-400 font-medium mb-4">{data.eyebrow}</p>

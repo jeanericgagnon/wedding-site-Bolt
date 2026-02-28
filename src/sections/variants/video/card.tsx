@@ -64,7 +64,7 @@ const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => 
   const bg = data.background === 'soft' ? 'bg-stone-50' : 'bg-white';
 
   return (
-    <section className={`py-24 md:py-32 ${bg}`} id="video">
+    <section className={`py-28 md:py-36 ${bg}`} id="video">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
@@ -86,7 +86,7 @@ const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => 
             const isPlaying = playingId === video.id;
 
             return (
-              <div key={video.id} className="group rounded-2xl overflow-hidden border border-stone-100 bg-white shadow-sm hover:shadow-lg transition-shadow">
+              <div key={video.id} className="group rounded-[1.75rem] overflow-hidden border border-stone-100 bg-white shadow-sm hover:shadow-xl transition-shadow">
                 <div className="relative aspect-video bg-stone-900 cursor-pointer" onClick={() => embedUrl && !isPlaying && setPlayingId(video.id)}>
                   {isPlaying && embedUrl ? (
                     <iframe

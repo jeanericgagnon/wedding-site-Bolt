@@ -48,7 +48,7 @@ const DirectionsPin: React.FC<SectionComponentProps<DirectionsPinData>> = ({ dat
   const mapsHref = data.mapUrl || (mapsQuery ? `https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}` : '');
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="directions">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/40 to-white" id="directions">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (

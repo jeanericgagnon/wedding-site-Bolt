@@ -37,7 +37,7 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
   const bg = data.background === 'soft' ? 'bg-stone-50' : 'bg-white';
 
   return (
-    <section className={`py-24 md:py-32 ${bg}`} id="directions">
+    <section className={`py-28 md:py-36 ${bg}`} id="directions">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
@@ -46,7 +46,7 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
           <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
-        <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-stone-100">
+        <div className="bg-white rounded-[2rem] overflow-hidden shadow-xl border border-stone-100">
           {mapsHref && (
             <div className="aspect-[2/1] bg-stone-100 relative">
               <iframe

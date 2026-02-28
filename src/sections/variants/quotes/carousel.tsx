@@ -61,15 +61,16 @@ const QuotesCarousel: React.FC<SectionComponentProps<QuotesCarouselData>> = ({ d
   const q = data.quotes[current];
 
   return (
-    <section className={`py-24 md:py-32 ${colors.section}`} id="quotes">
-      <div className="max-w-3xl mx-auto px-6 md:px-12 text-center">
+    <section className={`relative overflow-hidden py-28 md:py-36 ${colors.section}`} id="quotes">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(244,63,94,0.10),transparent_55%)]" />
+      <div className="relative max-w-3xl mx-auto px-6 md:px-12 text-center">
         {data.eyebrow && (
           <p className="text-xs uppercase tracking-[0.25em] text-rose-400 font-medium mb-4">{data.eyebrow}</p>
         )}
         <h2 className={`text-3xl md:text-4xl font-light mb-16 ${colors.text}`}>{data.headline}</h2>
 
         <div className="relative min-h-[260px] flex items-center justify-center">
-          <div className={`w-full rounded-2xl p-10 md:p-14 shadow-sm border border-stone-100 transition-all duration-500 ${colors.card}`}>
+          <div className={`w-full rounded-[2rem] p-10 md:p-16 shadow-xl border border-stone-100/80 transition-all duration-500 ${colors.card}`}>
             <Quote size={32} className="text-rose-200 mx-auto mb-6" />
             <blockquote>
               <p className={`text-xl md:text-2xl font-light leading-relaxed italic ${colors.text}`}>

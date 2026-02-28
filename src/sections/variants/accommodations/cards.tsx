@@ -77,7 +77,7 @@ export const defaultAccommodationsCardsData: AccommodationsCardsData = {
 
 const AccommodationsCards: React.FC<SectionComponentProps<AccommodationsCardsData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-white" id="accommodations">
+    <section className="py-28 md:py-36 bg-stone-50" id="accommodations">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
@@ -97,11 +97,11 @@ const AccommodationsCards: React.FC<SectionComponentProps<AccommodationsCardsDat
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {data.hotels.map(hotel => (
             <div
               key={hotel.id}
-              className={`relative rounded-2xl overflow-hidden border shadow-sm hover:shadow-md transition-shadow bg-white ${
+              className={`group relative rounded-[1.75rem] overflow-hidden border shadow-sm hover:shadow-xl transition-shadow bg-white ${
                 hotel.recommended ? 'border-rose-200 ring-1 ring-rose-100' : 'border-stone-100'
               }`}
             >
@@ -115,7 +115,7 @@ const AccommodationsCards: React.FC<SectionComponentProps<AccommodationsCardsDat
 
               {hotel.image && (
                 <div className="aspect-[16/9] overflow-hidden">
-                  <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover" />
+                  <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover scale-[1.02] group-hover:scale-105 transition-transform duration-700" />
                 </div>
               )}
 

@@ -41,8 +41,9 @@ const DirectionsSplit: React.FC<SectionComponentProps<DirectionsSplitData>> = ({
   const bg = data.background === 'soft' ? 'bg-stone-50' : 'bg-white';
 
   return (
-    <section className={`${bg}`} id="directions">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-[600px]">
+    <section className={`relative overflow-hidden ${bg}`} id="directions">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_left,rgba(244,63,94,0.08),transparent_45%)]" />
+      <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-[640px]">
         <div className="py-20 px-8 md:px-16 flex flex-col justify-center">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>

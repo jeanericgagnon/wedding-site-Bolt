@@ -21,7 +21,7 @@ export const defaultVideoFullData: VideoFullData = {
   headline: 'Our Save the Date',
   subtitle: 'We made something special just for you.',
   videoUrl: '',
-  thumbnailUrl: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  thumbnailUrl: 'https://images.pexels.com/photos/169198/pexels-photo-169198.jpeg?auto=compress&cs=tinysrgb&w=1400',
   videoType: 'youtube',
   background: 'dark',
   autoplay: false,
@@ -54,8 +54,9 @@ const VideoFull: React.FC<SectionComponentProps<VideoFullData>> = ({ data }) => 
   const colors = bgMap[data.background] ?? bgMap.dark;
 
   return (
-    <section className={`py-24 md:py-32 ${colors.section}`} id="video">
-      <div className="max-w-5xl mx-auto px-6 md:px-12">
+    <section className={`relative overflow-hidden py-28 md:py-36 ${colors.section}`} id="video">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(244,63,94,0.12),transparent_55%)]" />
+      <div className="relative max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
             <p className={`text-xs uppercase tracking-[0.25em] font-medium mb-4 ${data.background === 'dark' ? 'text-stone-500' : 'text-stone-400'}`}>{data.eyebrow}</p>
@@ -66,7 +67,7 @@ const VideoFull: React.FC<SectionComponentProps<VideoFullData>> = ({ data }) => 
           )}
         </div>
 
-        <div className="relative aspect-video rounded-2xl overflow-hidden bg-stone-900 shadow-2xl">
+        <div className="relative aspect-video rounded-[2rem] overflow-hidden bg-stone-900 shadow-2xl ring-1 ring-white/10">
           {!playing && !data.autoplay && data.thumbnailUrl ? (
             <div
               className="absolute inset-0 cursor-pointer group"

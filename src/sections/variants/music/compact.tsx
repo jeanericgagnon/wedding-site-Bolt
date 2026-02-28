@@ -41,7 +41,7 @@ export const defaultMusicCompactData: MusicCompactData = {
 
 const MusicCompact: React.FC<SectionComponentProps<MusicCompactData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="music">
+    <section className="py-28 md:py-36 bg-white" id="music">
       <div className="max-w-3xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
@@ -53,7 +53,7 @@ const MusicCompact: React.FC<SectionComponentProps<MusicCompactData>> = ({ data 
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-stone-100 divide-y divide-stone-100 overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-b from-stone-50 to-white rounded-[2rem] border border-stone-100 divide-y divide-stone-100 overflow-hidden shadow-md">
           {data.songs.map((song, idx) => (
             <div key={song.id} className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50 transition-colors group">
               <div className="w-8 h-8 rounded-full bg-stone-100 group-hover:bg-stone-200 flex items-center justify-center shrink-0 transition-colors">
