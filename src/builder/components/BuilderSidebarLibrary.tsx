@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { DeleteSectionModal } from './DeleteSectionModal';
 import { SkeletonPickerModal } from './SkeletonPickerModal';
 import {
@@ -27,6 +27,8 @@ import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getAllSectionManifests, BuilderSectionDefinitionWithMeta, VariantMeta, getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionType, BuilderSectionInstance, createDefaultSectionInstance } from '../../types/builder/section';
+import { createEmptyWeddingData, WeddingDataV1 } from '../../types/weddingData';
+import { SectionRenderer } from './SectionRenderer';
 import { selectActivePageSections } from '../state/builderSelectors';
 import { CustomSectionSkeleton } from '../../sections/variants/custom/skeletons';
 
@@ -35,6 +37,30 @@ type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
 const SECTION_ICONS: Record<string, LucideIcon> = {
   Image, Heart, MapPin, Clock, Plane, Gift, HelpCircle, Mail, Images,
 };
+
+const LIVE_PREVIEW_TYPES = new Set<BuilderSectionType>(['hero', 'story', 'rsvp', 'gallery']);
+
+const buildPreviewWeddingData = (): WeddingDataV1 => {
+  const data = createEmptyWeddingData();
+  data.couple.partner1Name = 'Alex';
+  data.couple.partner2Name = 'Sam';
+  data.couple.displayName = 'Alex & Sam';
+  data.couple.story = 'We met by chance, stayed for the conversation, and never stopped choosing each other.';
+  data.event.weddingDateISO = new Date('2027-06-12T17:00:00.000Z').toISOString();
+  data.venues = [{ id: 'venue-1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
+  data.rsvp.deadlineISO = new Date('2027-05-12T00:00:00.000Z').toISOString();
+  data.registry.links = [{ id: 'reg-1', label: 'Honeymoon Fund', url: 'https://example.com/registry' }];
+  data.faq = [{ id: 'faq-1', q: 'Can I bring a plus one?', a: 'Please follow your invite details.' }];
+  data.media.heroImageUrl = 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg';
+  data.media.gallery = [
+    { id: 'g1', url: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg', caption: 'Engagement' },
+    { id: 'g2', url: 'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg', caption: 'Venue' },
+    { id: 'g3', url: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg', caption: 'Florals' },
+  ];
+  return data;
+};
+
+const PREVIEW_WEDDING_DATA = buildPreviewWeddingData();
 
 interface BuilderSidebarLibraryProps {
   activePageId: string | null;
@@ -275,9 +301,9 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     }`}
                   >
                     <div className="pointer-events-none relative">
-                      <VariantPreviewSwatch
-                        variantId={manifest.defaultVariant}
+                      <BuilderVariantCardPreview
                         sectionType={manifest.type}
+                        variantId={manifest.defaultVariant}
                         isHovered={false}
                       />
                       <div className="absolute top-1.5 right-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
@@ -394,10 +420,7 @@ const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefau
       }`}
       title={variant.description}
     >
-      <div className="pointer-events-none border-b border-gray-100">
-        <SectionTypePreview sectionType={sectionType} compact />
-      </div>
-      <VariantPreviewSwatch variantId={variant.id} sectionType={sectionType} isHovered={isHovered} />
+      <BuilderVariantCardPreview sectionType={sectionType} variantId={variant.id} isHovered={isHovered} />
 
       <div className="px-3 py-2.5">
         <div className="flex items-start justify-between gap-2">
@@ -414,6 +437,38 @@ const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefau
         </div>
       </div>
     </button>
+  );
+};
+
+const BuilderVariantCardPreview: React.FC<{ sectionType: string; variantId: string; isHovered: boolean }> = ({
+  sectionType,
+  variantId,
+  isHovered,
+}) => {
+  if (!LIVE_PREVIEW_TYPES.has(sectionType as BuilderSectionType)) {
+    return <VariantPreviewSwatch variantId={variantId} sectionType={sectionType} isHovered={isHovered} />;
+  }
+
+  return (
+    <div className="pointer-events-none">
+      <div className="border-b border-gray-100">
+        <SectionTypePreview sectionType={sectionType} compact />
+      </div>
+      <LiveVariantPreview sectionType={sectionType as BuilderSectionType} variantId={variantId} />
+    </div>
+  );
+};
+
+const LiveVariantPreview: React.FC<{ sectionType: BuilderSectionType; variantId: string }> = ({ sectionType, variantId }) => {
+  const section = useMemo(() => createDefaultSectionInstance(sectionType, variantId, 0), [sectionType, variantId]);
+
+  return (
+    <div className="relative h-20 overflow-hidden bg-white">
+      <div className="absolute inset-0 origin-top-left scale-[0.26]" style={{ width: '384%', minHeight: '260px' }}>
+        <SectionRenderer section={section} weddingData={PREVIEW_WEDDING_DATA} isPreview siteSlug="preview" />
+      </div>
+      <div className="absolute inset-0 border-t border-gray-100/80" />
+    </div>
   );
 };
 
