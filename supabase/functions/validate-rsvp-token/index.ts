@@ -26,6 +26,7 @@ interface SubmitPayload {
   notes?: string | null;
   customAnswers?: Record<string, unknown> | null;
   applyToHousehold?: boolean;
+  targetGuestIds?: string[];
   website?: string;
   hp_field?: string;
 }
@@ -115,9 +116,15 @@ Deno.serve(async (req: Request) => {
       };
 
       const fetchHouseholdGuests = async (siteId: string, householdId: string | null | undefined, guestId: string) => {
-        if (!householdId) return [] as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invite_token: string | null }>;
-        const { data } = await adminClient.from("guests").select("id, first_name, last_name, name, invite_token").eq("wedding_site_id", siteId).eq("household_id", householdId).neq("id", guestId).limit(8);
-        return (data || []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invite_token: string | null }>;
+        if (!householdId) return [] as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invite_token: string | null; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
+        const { data } = await adminClient
+          .from("guests")
+          .select("id, first_name, last_name, name, invite_token, invited_to_ceremony, invited_to_reception")
+          .eq("wedding_site_id", siteId)
+          .eq("household_id", householdId)
+          .neq("id", guestId)
+          .limit(8);
+        return (data || []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invite_token: string | null; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
       };
 
       if (byToken) {
@@ -150,7 +157,7 @@ Deno.serve(async (req: Request) => {
       const submitPayload = payload as SubmitPayload;
       if (submitPayload.website || submitPayload.hp_field) return json({ success: true });
 
-      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes, customAnswers, applyToHousehold } = submitPayload;
+      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes, customAnswers, applyToHousehold, targetGuestIds } = submitPayload;
       const attendCeremony = !!submitPayload.attendCeremony;
       const attendReception = !!submitPayload.attendReception;
       const plusOneCount = Number.isFinite(submitPayload.plusOneCount) ? Math.max(0, Math.floor(submitPayload.plusOneCount as number)) : (plusOneName?.trim() ? 1 : 0);
@@ -221,23 +228,45 @@ Deno.serve(async (req: Request) => {
         return json({ error: "This response exceeds the additional guest count allowed on your invitation." }, 400);
       }
 
-      const targetGuestIds: string[] = [guestId];
-      if (applyToHousehold && guest.household_id) {
-        const { data: sameHousehold } = await adminClient.from("guests").select("id, invited_to_ceremony, invited_to_reception").eq("wedding_site_id", guest.wedding_site_id).eq("household_id", guest.household_id);
-        for (const g of sameHousehold || []) {
-          if (!targetGuestIds.includes(g.id)) targetGuestIds.push(g.id);
+      const targetGuestIdsFinal: string[] = [guestId];
+      if (guest.household_id) {
+        const { data: sameHousehold } = await adminClient
+          .from("guests")
+          .select("id, invited_to_ceremony, invited_to_reception")
+          .eq("wedding_site_id", guest.wedding_site_id)
+          .eq("household_id", guest.household_id);
+
+        const householdIds = new Set((sameHousehold || []).map((g) => g.id));
+        householdIds.add(guestId);
+
+        if (Array.isArray(targetGuestIds) && targetGuestIds.length > 0) {
+          for (const id of targetGuestIds) {
+            if (!householdIds.has(id)) {
+              await logConflict(guest.wedding_site_id, guestId, "household_target_invalid", "RSVP inheritance included guest outside household.", submitPayload);
+              return json({ error: "One or more selected household guests are invalid for this invitation." }, 400);
+            }
+            if (!targetGuestIdsFinal.includes(id)) targetGuestIdsFinal.push(id);
+          }
+        } else if (applyToHousehold) {
+          for (const g of sameHousehold || []) {
+            if (!targetGuestIdsFinal.includes(g.id)) targetGuestIdsFinal.push(g.id);
+          }
+        }
+
+        const selectedRows = (sameHousehold || []).filter((g) => targetGuestIdsFinal.includes(g.id));
+        for (const g of selectedRows) {
           if (attending && attendCeremony && !g.invited_to_ceremony) {
             await logConflict(guest.wedding_site_id, g.id, "household_scope_conflict", "Household RSVP attempted ceremony attendance for a member not invited to ceremony.", submitPayload);
-            return json({ error: "Household RSVP conflict: one or more household members are not invited to all selected events." }, 400);
+            return json({ error: "Household RSVP conflict: one or more selected household guests are not invited to all selected events." }, 400);
           }
           if (attending && attendReception && !g.invited_to_reception) {
             await logConflict(guest.wedding_site_id, g.id, "household_scope_conflict", "Household RSVP attempted reception attendance for a member not invited to reception.", submitPayload);
-            return json({ error: "Household RSVP conflict: one or more household members are not invited to all selected events." }, 400);
+            return json({ error: "Household RSVP conflict: one or more selected household guests are not invited to all selected events." }, 400);
           }
         }
       }
 
-      for (const targetGuestId of targetGuestIds) {
+      for (const targetGuestId of targetGuestIdsFinal) {
         const rsvpPayload = {
           guest_id: targetGuestId,
           attending,
@@ -263,7 +292,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      await adminClient.from("guests").update({ rsvp_status: attending ? "confirmed" : "declined", rsvp_received_at: new Date().toISOString() }).in("id", targetGuestIds);
+      await adminClient.from("guests").update({ rsvp_status: attending ? "confirmed" : "declined", rsvp_received_at: new Date().toISOString() }).in("id", targetGuestIdsFinal);
 
       const { data: siteData } = await adminClient.from("wedding_sites").select("couple_email, couple_name_1, couple_name_2, wedding_date, venue_name").eq("id", guest.wedding_site_id).maybeSingle();
       const guestName = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;

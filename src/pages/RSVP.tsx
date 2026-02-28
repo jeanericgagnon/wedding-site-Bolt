@@ -65,6 +65,8 @@ interface HouseholdGuest {
   last_name: string | null;
   name: string;
   invite_token: string | null;
+  invited_to_ceremony?: boolean;
+  invited_to_reception?: boolean;
 }
 
 interface RSVPMealConfig {
@@ -184,7 +186,17 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
   const trimmed = searchValue.trim().toLowerCase();
   const questions = getDemoQuestions();
   const meal = getDemoMealConfig();
-  const householdFor = (g: (typeof demoGuests)[number]): HouseholdGuest[] => demoGuests.filter((x) => x.household_id === g.household_id && x.id !== g.id).map((x) => ({ id: x.id, first_name: x.first_name ?? null, last_name: x.last_name ?? null, name: x.name, invite_token: x.invite_token ?? null }));
+  const householdFor = (g: (typeof demoGuests)[number]): HouseholdGuest[] => demoGuests
+    .filter((x) => x.household_id === g.household_id && x.id !== g.id)
+    .map((x) => ({
+      id: x.id,
+      first_name: x.first_name ?? null,
+      last_name: x.last_name ?? null,
+      name: x.name,
+      invite_token: x.invite_token ?? null,
+      invited_to_ceremony: !!x.invited_to_ceremony,
+      invited_to_reception: !!x.invited_to_reception,
+    }));
   const stored = getDemoStoredResponses();
 
   const tokenMatch = demoGuests.find((g) => (g.invite_token || '').toLowerCase() === trimmed);
@@ -243,6 +255,7 @@ export default function RSVP() {
   const [mealConfig, setMealConfig] = useState<RSVPMealConfig>({ enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
   const [householdGuests, setHouseholdGuests] = useState<HouseholdGuest[]>([]);
   const [applyToHousehold, setApplyToHousehold] = useState(true);
+  const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -273,8 +286,10 @@ export default function RSVP() {
           setRsvpDeadline(result.rsvpDeadline);
           setRsvpQuestions(result.rsvpQuestions ?? []);
           setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
-          setHouseholdGuests(result.householdGuests ?? []);
-          setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
+          const hh = result.householdGuests ?? [];
+          setHouseholdGuests(hh);
+          setApplyToHousehold(hh.length > 0);
+          setSelectedHouseholdGuestIds(hh.map((h) => h.id));
           setStep('pick');
         } else {
           setError('Invitation not recognized. Please search by name below.');
@@ -307,9 +322,11 @@ export default function RSVP() {
         setAmbiguousGuests(result.guests);
         setRsvpDeadline(result.rsvpDeadline);
         setRsvpQuestions(result.rsvpQuestions ?? []);
-          setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
-          setHouseholdGuests(result.householdGuests ?? []);
-          setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
+        setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+        const hh = result.householdGuests ?? [];
+        setHouseholdGuests(hh);
+        setApplyToHousehold(hh.length > 0);
+        setSelectedHouseholdGuestIds(hh.map((h) => h.id));
         setStep('pick');
         return;
       }
@@ -330,6 +347,7 @@ export default function RSVP() {
     setMealConfig(meal);
     setHouseholdGuests(household);
     setApplyToHousehold(household.length > 0);
+    setSelectedHouseholdGuestIds(household.map((h) => h.id));
     if (foundRsvp) {
       setExistingRsvp(foundRsvp);
       const parsed = parseEventSelectionsFromNotes(foundRsvp.notes, foundGuest);
@@ -408,6 +426,11 @@ export default function RSVP() {
 
       const notesPayload = (formData.notes || '').trim();
 
+      if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
+        setError('Select at least one household guest to inherit this RSVP, or turn off inherit.');
+        return;
+      }
+
       if (DEMO_MODE) {
         const stored = getDemoStoredResponses();
         const payload: ExistingRSVP = {
@@ -422,13 +445,17 @@ export default function RSVP() {
           notes: notesPayload || null,
           custom_answers: customAnswers,
         };
-        const targetIds = applyToHousehold ? [guest.id, ...householdGuests.map((h) => h.id)] : [guest.id];
+        const targetIds = applyToHousehold ? [guest.id, ...selectedHouseholdGuestIds] : [guest.id];
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
         localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify(stored));
         setExistingRsvp(payload);
         setStep('success');
         return;
       }
+
+      const targetGuestIds = applyToHousehold
+        ? [guest.id, ...selectedHouseholdGuestIds]
+        : [guest.id];
 
       const { data, error: err } = await rsvpCall({
         action: 'submit',
@@ -444,6 +471,7 @@ export default function RSVP() {
         notes: notesPayload || null,
         customAnswers,
         applyToHousehold,
+        targetGuestIds,
       });
 
       if (err) {
@@ -767,19 +795,48 @@ export default function RSVP() {
 
                   {invitedEvents.length > 0 && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                      <p className="font-medium mb-1">You're invited to:</p>
+                      <p className="font-medium mb-1">Your event access details:</p>
                       <ul className="list-disc list-inside space-y-1 text-gray-700">
                         {invitedEvents.map((ev) => <li key={ev}>{ev}</li>)}
                       </ul>
                     </div>
                   )}
                   {householdGuests.length > 0 && (
-                    <label className="flex items-start gap-2 text-sm p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <input type="checkbox" checked={applyToHousehold} onChange={(e) => setApplyToHousehold(e.target.checked)} className="w-4 h-4 mt-0.5" />
-                      <span>
-                        Apply this RSVP to household too ({householdGuests.map((h) => h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name).join(', ')})
-                      </span>
-                    </label>
+                    <div className="text-sm p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+                      <label className="flex items-start gap-2">
+                        <input type="checkbox" checked={applyToHousehold} onChange={(e) => setApplyToHousehold(e.target.checked)} className="w-4 h-4 mt-0.5" />
+                        <span className="font-medium">Inherit this RSVP to selected household guests</span>
+                      </label>
+
+                      {applyToHousehold && (
+                        <>
+                          <p className="text-xs text-amber-800">Multi-select household members:</p>
+                          <div className="space-y-1.5">
+                            {householdGuests.map((h) => {
+                              const label = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
+                              const checked = selectedHouseholdGuestIds.includes(h.id);
+                              const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
+                              return (
+                                <label key={h.id} className="flex items-center justify-between gap-2 bg-white border border-amber-200 rounded-md px-2 py-1.5">
+                                  <span className="text-xs text-gray-700">{label}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-gray-500">{access}</span>
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={(e) => {
+                                        setSelectedHouseholdGuestIds((prev) => e.target.checked ? [...new Set([...prev, h.id])] : prev.filter((id) => id !== h.id));
+                                      }}
+                                      className="w-4 h-4"
+                                    />
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </>
               )}
@@ -1098,6 +1155,9 @@ export default function RSVP() {
                 setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
                 setCustomAnswers({});
                 setRsvpQuestions([]);
+                setHouseholdGuests([]);
+                setApplyToHousehold(true);
+                setSelectedHouseholdGuestIds([]);
                 setFormStep(1);
               }}
               className="w-full"
