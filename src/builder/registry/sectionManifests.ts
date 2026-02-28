@@ -432,7 +432,7 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Contact / Questions',
     icon: 'MessageCircle',
     defaultVariant: 'default',
-    supportedVariants: ['default', 'minimal', 'form', 'split', 'casual', 'coordinator'],
+    supportedVariants: ['default', 'minimal', 'form', 'split', 'casual', 'coordinator', 'interactiveHub'],
     variantMeta: [
       { id: 'default', label: 'Full', description: 'Contact cards with name, role, and contact links' },
       { id: 'minimal', label: 'Minimal', description: 'Slim bar with contact links inline' },
@@ -440,6 +440,7 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
       { id: 'split', label: 'Form & Details', description: 'Form on the left, contact info and social links on the right' },
       { id: 'casual', label: 'Casual Ask', description: 'Warm heading, couple photo, and single-field email input' },
       { id: 'coordinator', label: 'Coordinator', description: 'Couple contact info plus wedding coordinator card' },
+      { id: 'interactiveHub', label: 'Interactive Hub', description: 'Live polls, quiz, and open-ended guest prompts' },
     ],
     capabilities: { ...defaultCapabilities },
     settingsSchema: {
