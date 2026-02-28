@@ -42,6 +42,15 @@ interface BuilderTopBarProps {
   publishValidationError?: string | null;
 }
 
+function slugifyPage(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 64);
+}
+
 function formatSavedAt(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
@@ -517,14 +526,37 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <div className="max-h-[50vh] overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
             {projectPages.map((page, idx) => (
               <div key={page.id} className="px-3 py-2.5 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => dispatch(builderActions.setActivePage(page.id))}
-                  className={`text-left flex-1 min-w-0 rounded px-2 py-1.5 ${state.activePageId === page.id ? 'bg-rose-50 border border-rose-200 text-rose-700' : 'hover:bg-gray-50 text-gray-700'}`}
-                >
-                  <div className="text-sm font-medium truncate">{page.title}</div>
-                  <div className="text-[11px] text-gray-500">/{page.slug} {page.meta.isHome ? '• Home' : ''} {page.meta.isHidden ? '• Hidden' : ''}</div>
-                </button>
+                <div className={`flex-1 min-w-0 rounded border px-2 py-1.5 ${state.activePageId === page.id ? 'border-rose-200 bg-rose-50' : 'border-gray-200 bg-white'}`}>
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={page.title}
+                      onChange={(e) => {
+                        const title = e.target.value;
+                        dispatch(builderActions.updatePage(page.id, { title, slug: slugifyPage(title) || page.slug }));
+                      }}
+                      className="flex-1 min-w-0 bg-transparent text-sm font-medium text-gray-800 outline-none"
+                      placeholder="Page title"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => dispatch(builderActions.setActivePage(page.id))}
+                      className={`rounded px-2 py-1 text-[11px] font-medium ${state.activePageId === page.id ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    >
+                      {state.activePageId === page.id ? 'Editing' : 'Edit'}
+                    </button>
+                  </div>
+                  <div className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
+                    <span>/</span>
+                    <input
+                      value={page.slug}
+                      onChange={(e) => dispatch(builderActions.updatePage(page.id, { slug: slugifyPage(e.target.value) || page.slug }))}
+                      className="bg-transparent outline-none flex-1 min-w-0"
+                      placeholder="page-slug"
+                    />
+                    {page.meta.isHome ? <span>• Home</span> : null}
+                    {page.meta.isHidden ? <span>• Hidden</span> : null}
+                  </div>
+                </div>
 
                 <button
                   type="button"
