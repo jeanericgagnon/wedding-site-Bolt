@@ -2499,7 +2499,7 @@ Proceed with send?`)) return;
                     ? `${itineraryDrawerGuest.first_name} ${itineraryDrawerGuest.last_name}`
                     : itineraryDrawerGuest.name}
                 </h2>
-                <p className="text-xs text-text-secondary mt-0.5">Guest activity and itinerary invitations</p>
+                <p className="text-xs text-text-secondary mt-0.5">Guest updates and itinerary invitations</p>
                 <button
                   onClick={() => copyContactRequestLink(itineraryDrawerGuest)}
                   className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
@@ -2557,7 +2557,7 @@ Proceed with send?`)) return;
 
               <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Guest activity</p>
+                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Recent guest updates</p>
                   <span className="text-[11px] text-text-tertiary">Last {guestAuditEntries.length} changes</span>
                 </div>
                 {guestAuditEntries.length === 0 ? (

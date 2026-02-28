@@ -461,7 +461,7 @@ export const DashboardOverview: React.FC = () => {
                   </p>
                   <p className="text-sm text-text-secondary">RSVPs received</p>
                   {responseRate !== null && (
-                    <p className="text-xs text-text-tertiary mt-2">{responseRate}% response rate</p>
+                    <p className="text-xs text-text-tertiary mt-2">{responseRate}% replied so far</p>
                   )}
                   {stats?.totalGuests === 0 && (
                     <p className="text-xs text-text-tertiary mt-2">Add guests to get started</p>
@@ -787,33 +787,33 @@ export const DashboardOverview: React.FC = () => {
 
             <Card variant="bordered" padding="lg" className="shadow-sm">
               <CardHeader>
-                <CardTitle>Funnel snapshot</CardTitle>
-                <CardDescription>At-a-glance conversion health across core guest actions</CardDescription>
+                <CardTitle>Guest activity snapshot</CardTitle>
+                <CardDescription>A quick look at how guests are interacting with your site</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">Hero CTR</p>
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">Hero clicks</p>
                     <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.heroCtr}%</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">RSVP Start</p>
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">Started RSVP</p>
                     <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpStartRate}%</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">RSVP Complete</p>
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">Finished RSVP</p>
                     <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpCompletionRate}%</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">RSVP Fail</p>
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">RSVP hiccups</p>
                     <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpFailureRate}%</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">Registry CTR</p>
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">Registry clicks</p>
                     <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.registryCtr}%</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">FAQ Interaction</p>
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">FAQ opens</p>
                     <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.faqInteractionRate}%</p>
                   </div>
                 </div>
