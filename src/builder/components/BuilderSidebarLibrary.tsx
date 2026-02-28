@@ -971,6 +971,34 @@ function getVariantArtDirection(sectionType: string, variantId: string): Variant
   return VARIANT_ART_DIRECTION[`${sectionType}:${variantId}`] ?? {};
 }
 
+function cueWithoutPrefix(cue?: string): string | null {
+  if (!cue) return null;
+  return cue.replace(/^sequence:\s*/i, '').trim();
+}
+
+function getVariantSequenceCue(sectionType: string, variantId: string): string | null {
+  const fromArtDirection = cueWithoutPrefix(getVariantArtDirection(sectionType, variantId).sequenceCue);
+  if (fromArtDirection) return fromArtDirection;
+  const fromSection = cueWithoutPrefix(SECTION_PICKER_COMPOSITION_CUES[sectionType as BuilderSectionType]);
+  return fromSection;
+}
+
+function getVariantCompositionCue(sectionType: string, variantId: string): string | null {
+  const fromArtDirection = getVariantArtDirection(sectionType, variantId).compositionCue?.trim();
+  if (fromArtDirection) return fromArtDirection;
+  const fallbackByTone: Record<string, string> = {
+    minimal: 'Maintain generous whitespace and keep one clear focal element.',
+    formal: 'Favor symmetry, restrained contrast, and clean typographic hierarchy.',
+    editorial: 'Balance one hero focal point with supporting detail frames.',
+    cinematic: 'Use directional light and preserve depth between subject and background.',
+    interactive: 'Keep controls unobstructed and visual weight centered near actions.',
+    romantic: 'Use softer contrast and warm highlights for a cohesive romantic palette.',
+    playful: 'Use expressive color accents while keeping primary copy highly legible.',
+  };
+  const toneKey = VARIANT_TONE_BY_ID[variantId] ?? 'editorial';
+  return fallbackByTone[toneKey] ?? fallbackByTone.editorial;
+}
+
 function buildVariantPreviewWeddingData(
   sectionType: string,
   variantId: string,
@@ -1012,6 +1040,8 @@ const VariantCard: React.FC<VariantCardProps> = ({
     buildVariantPreviewWeddingData(sectionType, variant.id, previewPhotoSet)
   ), [sectionType, variant.id, previewPhotoSet, previewWeddingData]);
   const description = artDirection.description ?? variant.description;
+  const sequenceCue = getVariantSequenceCue(sectionType, variant.id);
+  const compositionCue = getVariantCompositionCue(sectionType, variant.id);
 
   return (
     <button
@@ -1045,11 +1075,15 @@ const VariantCard: React.FC<VariantCardProps> = ({
               </span>
             </div>
             <p className="line-clamp-2 text-[11px] leading-relaxed text-gray-500">{description}</p>
-            {artDirection.sequenceCue && (
-              <p className="mt-1 text-[9px] leading-relaxed text-gray-400 line-clamp-1">{artDirection.sequenceCue}</p>
+            {sequenceCue && (
+              <p className="mt-1 text-[9px] leading-relaxed text-gray-400 line-clamp-2">
+                <span className="font-semibold text-gray-500">Photo sequence:</span> {sequenceCue}
+              </p>
             )}
-            {artDirection.compositionCue && (
-              <p className="mt-0.5 text-[9px] leading-relaxed text-gray-400 line-clamp-1">{artDirection.compositionCue}</p>
+            {compositionCue && (
+              <p className="mt-0.5 text-[9px] leading-relaxed text-gray-400 line-clamp-2">
+                <span className="font-semibold text-gray-500">Composition:</span> {compositionCue}
+              </p>
             )}
             {isDefault && (
               <span className="mt-1.5 inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-700">Default</span>
@@ -1060,8 +1094,8 @@ const VariantCard: React.FC<VariantCardProps> = ({
           </span>
         </div>
         <div className="mt-2 flex items-center justify-between text-[9px] uppercase tracking-[0.12em] text-gray-400">
-          <span>{isHovered ? 'Tap to add' : 'Preview ready'}</span>
-          <span className={`${isHovered ? 'text-rose-500' : 'text-gray-300'} transition-colors`}>{isHovered ? 'Selected style' : 'Curated'}</span>
+          <span>{isHovered ? 'Click to add' : 'Live preview'}</span>
+          <span className={`${isHovered ? 'text-rose-500' : 'text-gray-300'} transition-colors`}>{isHovered ? 'Ready to insert' : 'Curated'}</span>
         </div>
       </div>
     </button>
