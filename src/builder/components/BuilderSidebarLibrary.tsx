@@ -31,6 +31,8 @@ import { createEmptyWeddingData, WeddingDataV1 } from '../../types/weddingData';
 import { SectionRenderer } from './SectionRenderer';
 import { selectActivePageSections } from '../state/builderSelectors';
 import { CustomSectionSkeleton } from '../../sections/variants/custom/skeletons';
+import { getDefinition } from '../../sections/registry';
+import { SECTION_REGISTRY as LEGACY_SECTION_REGISTRY } from '../../sections/sectionRegistry';
 
 type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
 
@@ -38,7 +40,54 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   Image, Heart, MapPin, Clock, Plane, Gift, HelpCircle, Mail, Images,
 };
 
-const LIVE_PREVIEW_TYPES = new Set<BuilderSectionType>(['hero', 'story', 'rsvp', 'gallery']);
+const LEGACY_PLACEHOLDER_TYPES = new Set<BuilderSectionType>(['quotes', 'menu', 'music', 'directions', 'video'] as BuilderSectionType[]);
+
+const PREVIEW_FIXTURES_BY_TYPE: Partial<Record<BuilderSectionType, Record<string, unknown>>> = {
+  hero: { title: 'We are getting married', headline: 'Alex & Sam', subtitle: 'June 12, 2027 · Rosewood Estate', showTitle: true },
+  story: { title: 'Our Story', showTitle: true },
+  venue: { title: 'Venue', showMap: true, showTitle: true },
+  schedule: { title: 'Weekend Timeline', showTitle: true },
+  travel: { title: 'Travel & Stay', showParking: true, showTitle: true },
+  registry: { title: 'Registry', message: 'Your presence is gift enough, but here are a few ideas.', showTitle: true },
+  faq: { title: 'FAQ', showTitle: true },
+  rsvp: { title: 'RSVP', showTitle: true },
+  gallery: { title: 'Gallery', showTitle: true },
+  countdown: { showTitle: true, title: 'Countdown', message: 'Celebration starts soon' },
+  'wedding-party': { showTitle: true, title: 'Wedding Party' },
+  'dress-code': { showTitle: true, title: 'Dress Code', dressCodeLabel: 'Black Tie Optional' },
+  accommodations: { showTitle: true, title: 'Accommodations' },
+  contact: { showTitle: true, title: 'Questions?' },
+  'footer-cta': { headline: 'Join us for our wedding', buttonLabel: 'RSVP' },
+  quotes: { headline: 'Sweet words from our favorite people', eyebrow: 'Guest Notes' },
+  menu: { headline: 'Dinner & Drinks', eyebrow: 'Reception Menu' },
+  music: { headline: 'Our Playlist', eyebrow: 'On Repeat' },
+  directions: { headline: 'How to get there', eyebrow: 'Directions' },
+  video: { headline: 'Watch our story', eyebrow: 'Featured Video' },
+};
+
+const PREVIEW_FIXTURES_BY_VARIANT: Record<string, Record<string, unknown>> = {
+  'hero:countdown': { title: 'Save the Date' },
+  'registry:featured': { title: 'Featured Gifts' },
+  'rsvp:multiEvent': { title: 'RSVP for Each Event' },
+  'countdown:simple': { title: 'Big Day Countdown', message: 'We cannot wait to celebrate with you' },
+  'dress-code:moodBoard': { title: 'Dress Inspiration', colorPalette: [{ id: 'c1', color: '#1f2937', label: 'Midnight' }, { id: 'c2', color: '#e5e7eb', label: 'Silver' }, { id: 'c3', color: '#9f1239', label: 'Rose' }] },
+  'contact:form': { title: 'Need Help?', showTitle: true },
+  'footer-cta:rsvpPush': { headline: 'RSVP by May 12' },
+};
+
+function hasLivePreviewSupport(sectionType: BuilderSectionType, variantId: string): boolean {
+  if (Boolean(getDefinition(sectionType, variantId))) return true;
+  if (LEGACY_PLACEHOLDER_TYPES.has(sectionType)) return false;
+  return Boolean(LEGACY_SECTION_REGISTRY[sectionType]);
+}
+
+function buildPreviewSettings(sectionType: BuilderSectionType, variantId: string): Record<string, unknown> {
+  return {
+    showTitle: true,
+    ...(PREVIEW_FIXTURES_BY_TYPE[sectionType] ?? {}),
+    ...(PREVIEW_FIXTURES_BY_VARIANT[`${sectionType}:${variantId}`] ?? {}),
+  };
+}
 
 const buildPreviewWeddingData = (): WeddingDataV1 => {
   const data = createEmptyWeddingData();
@@ -440,37 +489,65 @@ const VariantCard: React.FC<VariantCardProps> = ({ variant, sectionType, isDefau
   );
 };
 
-const BuilderVariantCardPreview: React.FC<{ sectionType: string; variantId: string; isHovered: boolean }> = ({
+class VariantPreviewErrorBoundary extends React.Component<
+  { fallback: React.ReactNode; children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { fallback: React.ReactNode; children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+const BuilderVariantCardPreview: React.FC<{ sectionType: string; variantId: string; isHovered: boolean }> = React.memo(({
   sectionType,
   variantId,
   isHovered,
 }) => {
-  if (!LIVE_PREVIEW_TYPES.has(sectionType as BuilderSectionType)) {
-    return <VariantPreviewSwatch variantId={variantId} sectionType={sectionType} isHovered={isHovered} />;
+  const typedSectionType = sectionType as BuilderSectionType;
+  const fallback = <VariantPreviewSwatch variantId={variantId} sectionType={sectionType} isHovered={isHovered} />;
+
+  if (!hasLivePreviewSupport(typedSectionType, variantId)) {
+    return fallback;
   }
 
   return (
-    <div className="pointer-events-none">
-      <div className="border-b border-gray-100">
-        <SectionTypePreview sectionType={sectionType} compact />
+    <VariantPreviewErrorBoundary fallback={fallback}>
+      <div className="pointer-events-none">
+        <div className="border-b border-gray-100">
+          <SectionTypePreview sectionType={sectionType} compact />
+        </div>
+        <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} />
       </div>
-      <LiveVariantPreview sectionType={sectionType as BuilderSectionType} variantId={variantId} />
-    </div>
+    </VariantPreviewErrorBoundary>
   );
-};
+});
 
-const LiveVariantPreview: React.FC<{ sectionType: BuilderSectionType; variantId: string }> = ({ sectionType, variantId }) => {
-  const section = useMemo(() => createDefaultSectionInstance(sectionType, variantId, 0), [sectionType, variantId]);
+const LiveVariantPreview: React.FC<{ sectionType: BuilderSectionType; variantId: string }> = React.memo(({ sectionType, variantId }) => {
+  const section = useMemo(() => {
+    const instance = createDefaultSectionInstance(sectionType, variantId, 0);
+    instance.settings = buildPreviewSettings(sectionType, variantId);
+    return instance;
+  }, [sectionType, variantId]);
 
   return (
-    <div className="relative h-20 overflow-hidden bg-white">
+    <div className="relative h-20 overflow-hidden bg-white" style={{ contain: 'layout paint size' }}>
       <div className="absolute inset-0 origin-top-left scale-[0.26]" style={{ width: '384%', minHeight: '260px' }}>
         <SectionRenderer section={section} weddingData={PREVIEW_WEDDING_DATA} isPreview siteSlug="preview" />
       </div>
       <div className="absolute inset-0 border-t border-gray-100/80" />
     </div>
   );
-};
+});
 
 const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> = ({ sectionType, compact = false }) => {
   const previews: Record<string, React.ReactNode> = {
