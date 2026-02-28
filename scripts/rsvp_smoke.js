@@ -40,9 +40,9 @@ if (guestsResp.status >= 300 || !Array.isArray(guestsResp.data) || guestsResp.da
 }
 
 const guests = guestsResp.data;
-const baselineGuest = guests[0];
-const noCeremonyGuest = guests.find((x) => x.invited_to_ceremony === false);
-const noReceptionGuest = guests.find((x) => x.invited_to_reception === false);
+const baselineGuest = guests.find((x) => x.invited_to_ceremony === true && x.invited_to_reception === true) || guests[0];
+const noCeremonyGuest = guests.find((x) => x.invited_to_ceremony === false && x.id !== baselineGuest.id);
+const noReceptionGuest = guests.find((x) => x.invited_to_reception === false && x.id !== baselineGuest.id);
 
 const fn = `${base}/functions/v1/validate-rsvp-token`;
 const cases = [
@@ -118,6 +118,8 @@ if (noCeremonyGuest) {
       childrenCount: 0,
     },
   });
+} else {
+  cases.push({ name: 'scope_violation_ceremony_blocked', skipped: 'no ceremony-excluded guest available' });
 }
 
 if (noReceptionGuest) {
@@ -134,10 +136,16 @@ if (noReceptionGuest) {
       childrenCount: 0,
     },
   });
+} else {
+  cases.push({ name: 'scope_violation_reception_blocked', skipped: 'no reception-excluded guest available' });
 }
 
 const results = [];
 for (const c of cases) {
+  if ('skipped' in c) {
+    results.push({ name: c.name, skipped: c.skipped });
+    continue;
+  }
   const r = await req(fn, { method: 'POST', body: JSON.stringify(c.payload) });
   results.push({
     name: c.name,
