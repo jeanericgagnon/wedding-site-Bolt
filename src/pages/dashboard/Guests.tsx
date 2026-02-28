@@ -235,6 +235,8 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpAutoSaveState, setRsvpAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [rsvpConfigDirty, setRsvpConfigDirty] = useState(false);
   const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
+  const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
+  const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const rsvpConfigLoadedRef = useRef(false);
 
 
@@ -456,6 +458,52 @@ export const DashboardGuests: React.FC = () => {
     }
   }, [weddingSiteId, fetchGuests]);
 
+  const visibleRsvpConflicts = useMemo(
+    () => rsvpConflicts.filter((c) => conflictFilter === 'all' ? true : c.severity === conflictFilter),
+    [rsvpConflicts, conflictFilter]
+  );
+
+  const resolveConflict = useCallback(async (conflictId: string) => {
+    setResolvingConflictId(conflictId);
+    try {
+      if (isDemoMode) {
+        setRsvpConflicts((prev) => prev.filter((c) => c.id !== conflictId));
+        return;
+      }
+      const { error } = await supabase
+        .from('rsvp_conflicts')
+        .update({ resolved: true, resolved_at: new Date().toISOString() })
+        .eq('id', conflictId);
+      if (error) throw error;
+      setRsvpConflicts((prev) => prev.filter((c) => c.id !== conflictId));
+      toast('RSVP conflict marked resolved', 'success');
+    } catch {
+      toast('Failed to resolve RSVP conflict', 'error');
+    } finally {
+      setResolvingConflictId(null);
+    }
+  }, [isDemoMode, toast]);
+
+  const resolveAllVisibleConflicts = useCallback(async () => {
+    if (visibleRsvpConflicts.length === 0) return;
+    setResolvingConflictId('all');
+    try {
+      const ids = visibleRsvpConflicts.map((c) => c.id);
+      if (!isDemoMode) {
+        const { error } = await supabase
+          .from('rsvp_conflicts')
+          .update({ resolved: true, resolved_at: new Date().toISOString() })
+          .in('id', ids);
+        if (error) throw error;
+      }
+      setRsvpConflicts((prev) => prev.filter((c) => !ids.includes(c.id)));
+      toast(`${ids.length} RSVP conflict${ids.length === 1 ? '' : 's'} resolved`, 'success');
+    } catch {
+      toast('Failed to resolve RSVP conflicts', 'error');
+    } finally {
+      setResolvingConflictId(null);
+    }
+  }, [isDemoMode, toast, visibleRsvpConflicts]);
 
   const handleSaveRsvpConfig = async () => {
     setRsvpConfigSaving(true);
@@ -1863,16 +1911,49 @@ Proceed with send?`)) return;
         })()}
 
         {rsvpConflicts.length > 0 && (
-          <div className="p-4 bg-error-light border border-error/20 rounded-xl space-y-2">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-error" />
-              <p className="text-sm font-medium text-error">{rsvpConflicts.length} RSVP conflict {rsvpConflicts.length === 1 ? 'submission' : 'submissions'} flagged</p>
+          <div className="p-4 bg-error-light border border-error/20 rounded-xl space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-error" />
+                <p className="text-sm font-medium text-error">{rsvpConflicts.length} RSVP conflict {rsvpConflicts.length === 1 ? 'submission' : 'submissions'} flagged</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={conflictFilter}
+                  onChange={(e) => setConflictFilter(e.target.value as 'all' | 'error' | 'warning')}
+                  options={[
+                    { value: 'all', label: 'All severities' },
+                    { value: 'error', label: 'Errors only' },
+                    { value: 'warning', label: 'Warnings only' },
+                  ]}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={visibleRsvpConflicts.length === 0 || resolvingConflictId === 'all'}
+                  onClick={resolveAllVisibleConflicts}
+                >
+                  {resolvingConflictId === 'all' ? 'Resolving…' : `Resolve ${visibleRsvpConflicts.length}`}
+                </Button>
+              </div>
             </div>
-            <ul className="space-y-1">
-              {rsvpConflicts.slice(0, 6).map((c) => {
+            <ul className="space-y-1.5">
+              {visibleRsvpConflicts.slice(0, 8).map((c) => {
                 const guestName = guests.find((g) => g.id === c.guest_id)?.name || 'Unknown guest';
                 return (
-                  <li key={c.id} className="text-xs text-error/90">• {guestName}: {c.message}</li>
+                  <li key={c.id} className="text-xs text-error/90 flex items-start justify-between gap-3">
+                    <span>
+                      • {guestName}: {c.message}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={resolvingConflictId === c.id}
+                      onClick={() => resolveConflict(c.id)}
+                    >
+                      {resolvingConflictId === c.id ? 'Resolving…' : 'Resolve'}
+                    </Button>
+                  </li>
                 );
               })}
             </ul>
