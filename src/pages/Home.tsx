@@ -190,7 +190,7 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Meal selection</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Dietary updates</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Deadline handling</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Real-time analytics</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Live response view</span></li>
               </ul>
             </Link>
 
@@ -206,7 +206,7 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Schedule sends</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Delivery status updates</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Draft + scheduled send flow</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Template facets (style/season/colorway)</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Ready to send templates</span></li>
               </ul>
             </Link>
 
@@ -234,10 +234,10 @@ export const Home: React.FC = () => {
               <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Registry</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Link existing registries</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>BYOAL affiliate option</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Link any registry</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Honeymoon fund</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Charity donations</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Auto-fetch details</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Simple gift cards and links</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>No sponsored clutter</span></li>
               </ul>
             </Link>

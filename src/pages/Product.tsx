@@ -171,7 +171,7 @@ export const Product: React.FC = () => {
               <span className="text-primary"> built right</span>
             </h1>
             <p className="text-lg md:text-xl text-text-secondary mb-10 max-w-3xl mx-auto leading-relaxed">
-              Explore every feature, demo the RSVP flow, browse real templates, and see how DayOf engineers around the common failure modes of wedding sites.
+              Explore every feature, demo the RSVP flow, browse real templates, and see how DayOf keeps planning simple when wedding details get busy.
             </p>
             <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
               <Link to="/signup" className="w-full sm:w-auto">
@@ -197,7 +197,7 @@ export const Product: React.FC = () => {
             <h2 className="section-title mb-4 text-text-primary">
               Wedding sites fail in <span className="text-primary">predictable ways</span>
             </h2>
-            <p className="text-text-secondary text-lg max-w-2xl mx-auto">We catalogued 12 common failure modes and built explicit fixes for each one.</p>
+            <p className="text-text-secondary text-lg max-w-2xl mx-auto">We focused on the 12 biggest stress points couples hit and built clear fixes for each one.</p>
           </div>
 
           <div className="relative">
