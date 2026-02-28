@@ -13,20 +13,28 @@ function preserveContentAcrossTemplate(
   existingSections: BuilderSectionInstance[],
   newSections: BuilderSectionInstance[]
 ): BuilderSectionInstance[] {
-  const existingByType = new Map<string, BuilderSectionInstance>();
+  const existingByType = new Map<string, BuilderSectionInstance[]>();
   for (const sec of existingSections) {
     if (!existingByType.has(sec.type)) {
-      existingByType.set(sec.type, sec);
+      existingByType.set(sec.type, []);
     }
+    existingByType.get(sec.type)!.push(sec);
   }
+
   return newSections.map(newSec => {
-    const existing = existingByType.get(newSec.type);
+    const bucket = existingByType.get(newSec.type);
+    const existing = bucket && bucket.length ? bucket.shift() : undefined;
     if (!existing) return newSec;
+
     return {
       ...newSec,
+      id: existing.id,
+      enabled: existing.enabled,
+      locked: existing.locked,
       settings: { ...newSec.settings, ...existing.settings },
       bindings: { ...newSec.bindings, ...existing.bindings },
       styleOverrides: { ...existing.styleOverrides },
+      meta: { ...existing.meta, updatedAtISO: new Date().toISOString() },
     };
   });
 }

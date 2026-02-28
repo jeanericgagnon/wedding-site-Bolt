@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyBuilderProject } from '../../types/builder/project';
 import type { BuilderSectionInstance } from '../../types/builder/section';
 import { getPublishIssue, getPublishValidationError } from './publishReadiness';
+import { createEmptyWeddingData } from '../../types/weddingData';
 
 function makeSection(overrides?: Partial<BuilderSectionInstance>): BuilderSectionInstance {
   const now = new Date().toISOString();
@@ -51,5 +52,29 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toBeNull();
     expect(getPublishValidationError(project)).toBeNull();
+  });
+
+  it('blocks publish when couple names are missing', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+
+    const issue = getPublishIssue(project, data);
+    expect(issue?.kind).toBe('missing-couple-names');
+    expect(getPublishValidationError(project, data)).toBe('Add both partner names before publishing.');
+  });
+
+  it('passes data preflight when names/date/venue/rsvp are configured', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    data.rsvp.enabled = true;
+
+    expect(getPublishIssue(project, data)).toBeNull();
+    expect(getPublishValidationError(project, data)).toBeNull();
   });
 });

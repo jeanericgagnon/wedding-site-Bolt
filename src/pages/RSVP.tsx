@@ -268,11 +268,6 @@ export default function RSVP() {
           setAmbiguousGuests(result.guests);
           setRsvpDeadline(result.rsvpDeadline);
           setRsvpQuestions(result.rsvpQuestions ?? []);
-        setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
-        setHouseholdGuests(result.householdGuests ?? []);
-        setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
-          setHouseholdGuests(result.householdGuests ?? []);
-          setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
           setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
           setHouseholdGuests(result.householdGuests ?? []);
           setApplyToHousehold((result.householdGuests?.length ?? 0) > 0);
@@ -968,19 +963,7 @@ export default function RSVP() {
                       ))}
                     </div>
                   )}
-    
-                  {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs uppercase tracking-wide text-gray-500">Custom answers</p>
-                      {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
-                        <div key={q.id} className="flex items-start justify-between text-sm gap-4">
-                          <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>
-                          <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-              {formData.notes && (
+                  {formData.notes && (
                     <div className="flex items-start justify-between text-sm gap-4">
                       <span className="text-gray-600 font-medium flex-shrink-0">Notes</span>
                       <span className="text-gray-900 text-right">{formData.notes}</span>

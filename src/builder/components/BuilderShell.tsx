@@ -131,7 +131,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const handleFixPublishBlockers = useCallback(() => {
     const project = stateRef.current.project;
     if (!project) return;
-    const issue = getPublishIssue(project);
+    const issue = getPublishIssue(project, stateRef.current.weddingData);
     if (!issue) return;
 
     dispatch(builderActions.setMode('edit'));
@@ -154,6 +154,30 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       }
       setPublishNotice('Selected the first section. Enable it in inspector, then publish again.');
       setPublishError(`${issue.message} Select a section and toggle it on in the inspector.`);
+      return;
+    }
+
+    if (issue.kind === 'missing-couple-names') {
+      setPublishNotice('Open couple details in settings and fill both names.');
+      setPublishError(issue.message);
+      return;
+    }
+
+    if (issue.kind === 'missing-event-date') {
+      setPublishNotice('Add your wedding date in event settings.');
+      setPublishError(issue.message);
+      return;
+    }
+
+    if (issue.kind === 'missing-venue') {
+      setPublishNotice('Add at least one venue in the details panel before publishing.');
+      setPublishError(issue.message);
+      return;
+    }
+
+    if (issue.kind === 'rsvp-disabled') {
+      setPublishNotice('Enable RSVP in settings or remove RSVP CTA before publishing.');
+      setPublishError(issue.message);
     }
   }, []);
 
@@ -164,7 +188,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     setPublishError(null);
     setPublishNotice(null);
 
-    const publishValidationError = getPublishValidationError(currentState.project);
+    const publishValidationError = getPublishValidationError(currentState.project, currentState.weddingData);
     if (publishValidationError) {
       setPublishError(publishValidationError);
       return;
@@ -204,7 +228,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     window.history.replaceState({}, '', next);
 
     window.setTimeout(() => {
-      const action = getPublishNowAction(true, state.project);
+      const action = getPublishNowAction(true, state.project, state.weddingData);
       if (action === 'fix-blockers') {
         handleFixPublishBlockers();
         return;
@@ -290,7 +314,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           projectName={projectName}
           saveError={saveError}
           publishError={publishError}
-          publishValidationError={state.project ? getPublishValidationError(state.project) : null}
+          publishValidationError={state.project ? getPublishValidationError(state.project, state.weddingData) : null}
         />
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
