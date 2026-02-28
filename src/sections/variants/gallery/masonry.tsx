@@ -111,7 +111,7 @@ const MasonryCell: React.FC<{
 
 const SECTION_SHELL = "py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white";
 const CONTAINER_SHELL = "max-w-6xl mx-auto px-6 md:px-12";
-const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900 tracking-tight";
+const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900 tracking-tight text-balance";
 const PHOTO_FRAME = "relative group overflow-hidden rounded-[1.4rem] bg-stone-200 ring-1 ring-stone-100/80 shadow-[0_12px_40px_-28px_rgba(28,25,23,0.45)] transition-[opacity,transform]";
 const PHOTO_IMG = "w-full h-full object-cover saturate-[1.03] contrast-[1.02] transition-transform duration-700 group-hover:scale-105";
 
@@ -146,7 +146,7 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
         </div>
 
         {data.images.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 auto-rows-[240px] gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 auto-rows-[220px] md:auto-rows-[250px] gap-3 md:gap-4">
             {data.images.map((image, idx) => (
               <MasonryCell
                 key={image.id}
@@ -179,7 +179,7 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
           </button>
           <button
             onClick={e => { e.stopPropagation(); prevImage(); }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-colors"
           >
             <ChevronLeft size={20} />
           </button>
@@ -195,7 +195,7 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
           </div>
           <button
             onClick={e => { e.stopPropagation(); nextImage(); }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-colors"
           >
             <ChevronRight size={20} />
           </button>

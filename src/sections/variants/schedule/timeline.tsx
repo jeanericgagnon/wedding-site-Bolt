@@ -55,9 +55,9 @@ const ScheduleTimeline: React.FC<SectionComponentProps<ScheduleTimelineData>> = 
         <div className="relative">
           <div className="absolute left-[3.6rem] top-3 bottom-3 w-px bg-gradient-to-b from-stone-200 via-stone-100 to-stone-200" aria-hidden="true" />
 
-          <div className="space-y-0">
+          <div className="space-y-1">
             {data.events.map((event, idx) => (
-              <div key={event.id} className="flex gap-8 md:gap-10 group">
+              <div key={event.id} className="flex gap-8 md:gap-10 group rounded-2xl px-1 md:px-2 hover:bg-stone-50/80 transition-colors">
                 <div className="flex flex-col items-end w-24 flex-shrink-0 pt-1">
                   <span className="text-sm font-medium text-stone-500 tabular-nums leading-none whitespace-nowrap">
                     {event.time}
@@ -71,8 +71,8 @@ const ScheduleTimeline: React.FC<SectionComponentProps<ScheduleTimelineData>> = 
                   )}
                 </div>
 
-                <div className="pb-10 flex-1 min-w-0">
-                  <h3 className="text-lg font-medium text-stone-900 leading-tight">{event.label}</h3>
+                <div className="pb-9 pt-0.5 flex-1 min-w-0">
+                  <h3 className="text-lg font-medium text-stone-900 leading-tight text-balance">{event.label}</h3>
                   {event.description && (
                     <p className="text-sm text-stone-500 font-light mt-1 leading-relaxed">{event.description}</p>
                   )}

@@ -64,6 +64,7 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
     { icon: Plane, label: 'By Air', content: data.flightInfo },
     { icon: Car, label: 'By Car', content: data.drivingInfo },
     { icon: Car, label: 'Parking', content: data.parkingInfo },
+    { icon: Car, label: 'Shuttle', content: data.shuttleInfo },
   ].filter(item => item.content);
 
   return (
@@ -79,16 +80,16 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
         </div>
 
         {travelItems.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          <div className={`grid grid-cols-1 gap-6 mb-16 ${travelItems.length >= 4 ? 'md:grid-cols-2 lg:grid-cols-4' : travelItems.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
             {travelItems.map(({ icon: Icon, label, content }) => (
-              <div key={label} className="bg-white rounded-[1.5rem] p-7 border border-stone-100 shadow-sm hover:shadow-lg transition-shadow">
+              <div key={label} className="bg-white rounded-[1.5rem] p-7 border border-stone-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center">
                     <Icon size={15} className="text-stone-500" />
                   </div>
                   <h3 className="text-sm font-medium text-stone-700 uppercase tracking-wide">{label}</h3>
                 </div>
-                <p className="text-sm text-stone-500 leading-relaxed">{content}</p>
+                <p className="text-sm text-stone-500 leading-relaxed text-pretty">{content}</p>
               </div>
             ))}
           </div>

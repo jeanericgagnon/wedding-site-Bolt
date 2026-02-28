@@ -69,13 +69,13 @@ const FaqAccordion: React.FC<SectionComponentProps<FaqAccordionData>> = ({ data 
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-4">{data.headline}</h2>
+          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-4 tracking-tight text-balance">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-500 font-light leading-relaxed">{data.subheadline}</p>
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {data.items.map(item => {
             const isOpen = openId === item.id;
             return (

@@ -130,7 +130,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
         {data.events.length > 1 && (
           <div className="mb-8 space-y-2">
             {data.events.map(event => (
-              <div key={event.id} className="flex items-start gap-3 p-4 bg-stone-50 rounded-xl border border-stone-100">
+              <div key={event.id} className="flex items-start gap-3 p-4 bg-stone-50 rounded-xl border border-stone-100 shadow-[0_4px_20px_-20px_rgba(28,25,23,0.5)]">
                 <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-2 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-stone-800">{event.label}</p>
@@ -155,7 +155,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
             <p className="text-xs text-stone-400">Embedded RSVP is enabled for this section.</p>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-stone-100 rounded-[1.75rem] p-6 md:p-8 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-stone-100 rounded-[1.75rem] p-6 md:p-8 shadow-sm md:shadow-lg md:shadow-stone-900/5">
           <div>
             <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
               Full Name <span className="text-rose-400">*</span>
@@ -248,7 +248,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
           <button
             type="submit"
             disabled={status === 'submitting' || !name || attending === null}
-            className="w-full py-4 bg-stone-900 text-white text-sm font-medium uppercase tracking-widest rounded-xl hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full py-4 bg-stone-900 text-white text-sm font-semibold uppercase tracking-[0.18em] rounded-xl hover:bg-stone-800 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {status === 'submitting' && <Loader2 size={16} className="animate-spin" />}
             {status === 'submitting' ? 'Submitting…' : 'Send RSVP'}

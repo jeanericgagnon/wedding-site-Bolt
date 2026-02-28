@@ -34,8 +34,8 @@ const StoryTwoColumn: React.FC<SectionComponentProps<StoryTwoColumnData>> = ({ d
   return (
     <section className="py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/40 to-white" id="story">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center ${data.imagePosition === 'left' ? 'md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1' : ''}`}>
-          <div className="space-y-10">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-14 md:gap-24 items-center ${data.imagePosition === 'left' ? 'md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1' : ''}`}>
+          <div className="space-y-9">
             {data.showDivider && <div className="w-14 h-px bg-stone-300" />}
 
             <div className="space-y-4">
@@ -44,7 +44,7 @@ const StoryTwoColumn: React.FC<SectionComponentProps<StoryTwoColumnData>> = ({ d
                   {data.eyebrow}
                 </p>
               )}
-              <h2 className="text-4xl md:text-6xl font-light text-stone-900 leading-[1.04] tracking-tight">
+              <h2 className="text-4xl md:text-6xl font-light text-stone-900 leading-[1.03] tracking-tight text-balance">
                 {data.headline}
               </h2>
             </div>
@@ -52,19 +52,19 @@ const StoryTwoColumn: React.FC<SectionComponentProps<StoryTwoColumnData>> = ({ d
             <div className="space-y-5">
               {paragraphs.length > 0
                 ? paragraphs.map((p, i) => (
-                    <p key={i} className="text-stone-600 leading-[1.95] text-base md:text-lg font-light">
+                    <p key={i} className="text-stone-600 leading-[1.9] text-base md:text-lg font-light text-pretty">
                       {p}
                     </p>
                   ))
                 : (
-                  <p className="text-stone-600 leading-[1.95] text-base md:text-lg font-light">{data.body}</p>
+                  <p className="text-stone-600 leading-[1.9] text-base md:text-lg font-light text-pretty">{data.body}</p>
                 )
               }
             </div>
 
             {data.quote && (
-              <blockquote className="border-l-2 border-stone-200 pl-5 py-1">
-                <p className="text-stone-500 italic text-base leading-relaxed">"{data.quote}"</p>
+              <blockquote className="border-l-2 border-stone-200 pl-5 py-1.5 bg-stone-50/60 rounded-r-xl">
+                <p className="text-stone-600 italic text-base leading-relaxed">"{data.quote}"</p>
                 {data.quoteAttribution && (
                   <cite className="text-stone-400 text-sm not-italic mt-2 block">— {data.quoteAttribution}</cite>
                 )}

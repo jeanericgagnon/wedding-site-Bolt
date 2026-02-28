@@ -43,8 +43,8 @@ const FooterCtaRsvpPush: React.FC<SectionComponentProps<FooterCtaRsvpPushData>> 
   const dividerClass = data.background === 'light' ? 'bg-stone-200' : 'bg-white/10';
 
   const ctaBtnClass = data.background === 'light'
-    ? 'bg-stone-900 text-white hover:bg-stone-800'
-    : 'bg-white text-stone-900 hover:bg-white/90';
+    ? 'bg-stone-900 text-white hover:bg-stone-800 shadow-lg shadow-stone-900/10'
+    : 'bg-white text-stone-900 hover:bg-white/90 shadow-xl shadow-black/25';
 
   return (
     <section className={`py-28 md:py-36 ${bgClass}`} id="footer">
@@ -55,7 +55,7 @@ const FooterCtaRsvpPush: React.FC<SectionComponentProps<FooterCtaRsvpPushData>> 
           </p>
         )}
 
-        <h2 className={`text-4xl md:text-7xl font-light leading-[1.02] tracking-tight mb-5 ${textClass}`}>
+        <h2 className={`text-4xl md:text-7xl font-light leading-[1.02] tracking-tight mb-5 text-balance ${textClass}`}>
           {data.headline}
         </h2>
 
@@ -66,7 +66,7 @@ const FooterCtaRsvpPush: React.FC<SectionComponentProps<FooterCtaRsvpPushData>> 
         {data.ctaLabel && (
           <a
             href={data.ctaHref}
-            className={`inline-flex items-center gap-2 px-9 py-4 text-sm font-semibold tracking-[0.18em] uppercase rounded-full transition-all hover:-translate-y-0.5 ${ctaBtnClass}`}
+            className={`inline-flex items-center gap-2 px-9 py-4 text-sm font-semibold tracking-[0.18em] uppercase rounded-full transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/60 ${ctaBtnClass}`}
           >
             {data.ctaLabel}
             <ArrowRight size={14} />

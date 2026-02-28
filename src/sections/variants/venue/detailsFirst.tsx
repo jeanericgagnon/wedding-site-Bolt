@@ -92,9 +92,9 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
           )}
         </div>
 
-        <div className={isWide ? 'grid grid-cols-1 md:grid-cols-2 gap-8' : 'space-y-8 max-w-3xl mx-auto'}>
+        <div className={isWide ? 'grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-9' : 'space-y-8 max-w-4xl mx-auto'}>
           {data.venues.map(venue => (
-            <div key={venue.id} className="bg-white rounded-2xl overflow-hidden border border-stone-100 shadow-sm">
+            <div key={venue.id} className="bg-white rounded-[1.4rem] overflow-hidden border border-stone-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
               {venue.image && (
                 <div className="aspect-[21/9] overflow-hidden">
                   <img src={venue.image} alt={venue.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
@@ -106,9 +106,9 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
                   {venue.role && (
                     <p className="text-xs uppercase tracking-[0.2em] text-rose-500 font-medium mb-2">{venue.role}</p>
                   )}
-                  <h3 className="text-xl md:text-2xl font-light text-stone-900">{venue.name}</h3>
+                  <h3 className="text-xl md:text-2xl font-light text-stone-900 leading-tight text-balance">{venue.name}</h3>
                   {venue.description && (
-                    <p className="text-sm text-stone-500 font-light mt-2 leading-relaxed">{venue.description}</p>
+                    <p className="text-sm text-stone-500 font-light mt-2 leading-relaxed text-pretty">{venue.description}</p>
                   )}
                 </div>
 

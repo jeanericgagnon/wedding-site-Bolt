@@ -115,7 +115,7 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
     href={gift.isClaimed ? undefined : (gift.url || '#')}
     target={gift.url && !gift.isClaimed ? '_blank' : undefined}
     rel="noopener noreferrer"
-    className={`group flex flex-col bg-white rounded-2xl overflow-hidden border transition-all ${
+    className={`group flex flex-col bg-white rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 ${
       gift.isClaimed
         ? 'border-stone-100 opacity-60 cursor-default'
         : gift.isPriority
@@ -204,6 +204,8 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
     : 'grid-cols-1 sm:grid-cols-2';
 
+  const hasStoreLinks = data.storeLinks.length > 0;
+
   const heroGift = data.layout === 'hero' && displayGifts[0];
   const restGifts = data.layout === 'hero' ? displayGifts.slice(1) : displayGifts;
 
@@ -265,7 +267,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
           </div>
         )}
 
-        {data.storeLinks.length > 0 && (
+        {hasStoreLinks && (
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-5">
               <div className="flex items-center gap-2">
