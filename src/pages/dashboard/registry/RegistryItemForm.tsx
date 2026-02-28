@@ -111,16 +111,23 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       if (duplicate) {
         setDedupeWarning(`"${duplicate.item_name}" may already be in your registry. You can still add it if it's a different item.`);
       }
-      setDraft(prev => ({
-        ...prev,
-        item_name: preview.title ?? prev.item_name,
-        price_label: preview.price_label ?? prev.price_label,
-        price_amount: preview.price_amount != null ? String(preview.price_amount) : prev.price_amount,
-        merchant: preview.store_name ?? preview.merchant ?? (preview.brand ?? null) ?? prev.merchant,
-        item_url: preview.canonical_url ?? normalized,
-        image_url: preview.image_url ?? prev.image_url,
-        notes: preview.description && !prev.notes ? preview.description : prev.notes,
-      }));
+      setDraft(prev => {
+        const targetUrl = preview.canonical_url ?? normalized;
+        const previousNormalized = normalizeUrl(prev.item_url || '');
+        const urlChanged = previousNormalized !== targetUrl;
+        const missing = new Set(preview.missing_fields ?? []);
+
+        return {
+          ...prev,
+          item_name: preview.title ?? (urlChanged ? '' : prev.item_name),
+          price_label: preview.price_label ?? (urlChanged ? '' : prev.price_label),
+          price_amount: preview.price_amount != null ? String(preview.price_amount) : (urlChanged ? '' : prev.price_amount),
+          merchant: preview.store_name ?? preview.merchant ?? (preview.brand ?? null) ?? (urlChanged ? '' : prev.merchant),
+          item_url: targetUrl,
+          image_url: preview.image_url ?? (urlChanged || missing.has('image') ? '' : prev.image_url),
+          notes: preview.description && !prev.notes ? preview.description : prev.notes,
+        };
+      });
     } catch (err: unknown) {
       setFetchError(err instanceof Error ? err.message : 'Fetch failed. You can still fill in the form manually.');
       setDraft(prev => ({
