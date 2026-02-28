@@ -32,17 +32,6 @@ function createDemoBuilderProject(): BuilderProject {
   return project;
 }
 
-function hasMeaningfulSetupDraft(draft: SetupDraft): boolean {
-  return Boolean(
-    draft.partnerOneFirstName?.trim() ||
-    draft.partnerTwoFirstName?.trim() ||
-    draft.weddingDate ||
-    draft.weddingCity?.trim() ||
-    draft.guestEstimateBand ||
-    draft.stylePreferences?.length
-  );
-}
-
 function applyTemplateDefaultsToProject(project: BuilderProject, templateId: string): BuilderProject {
   const template = getTemplatePack(templateId);
   if (!template) return { ...project, templateId };
@@ -79,42 +68,6 @@ function applyTemplateDefaultsToProject(project: BuilderProject, templateId: str
       };
     }),
   };
-}
-
-function applySetupDraftToWeddingData(source: WeddingDataV1, draft: SetupDraft): WeddingDataV1 {
-  const next = structuredClone(source) as WeddingDataV1;
-
-  const p1 = draft.partnerOneFirstName?.trim() ?? '';
-  const p2 = draft.partnerTwoFirstName?.trim() ?? '';
-  if (p1) next.couple.partner1Name = p1;
-  if (p2) next.couple.partner2Name = p2;
-  if (p1 && p2) next.couple.displayName = `${p1} & ${p2}`;
-
-  if (draft.dateKnown && draft.weddingDate) {
-    next.event.weddingDateISO = new Date(draft.weddingDate).toISOString();
-  }
-
-  const location = [draft.weddingCity?.trim(), draft.weddingRegion?.trim()].filter(Boolean).join(', ');
-  if (location) {
-    if (!next.venues || next.venues.length === 0) {
-      next.venues = [{ id: 'primary', name: 'Main Venue', address: location }];
-    } else {
-      next.venues[0].address = location;
-    }
-  }
-
-  if (Array.isArray(draft.stylePreferences) && draft.stylePreferences.length > 0) {
-    next.theme = {
-      ...next.theme,
-      tokens: {
-        ...(next.theme?.tokens ?? {}),
-        style_preferences: draft.stylePreferences.join(','),
-      },
-    };
-  }
-
-  next.meta.updatedAtISO = new Date().toISOString();
-  return next;
 }
 
 function createDemoWeddingDataFromSite(): WeddingDataV1 {

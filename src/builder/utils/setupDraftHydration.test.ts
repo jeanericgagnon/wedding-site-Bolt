@@ -14,8 +14,6 @@ describe('setupDraftHydration', () => {
   it('hydrates names/date/location and smart defaults', () => {
     const source = createEmptyWeddingData();
     source.couple.story = '';
-    source.wedding.message = '';
-    source.rsvp.message = '';
     source.travel.notes = '';
 
     const result = applySetupDraftToWeddingData(
@@ -24,6 +22,7 @@ describe('setupDraftHydration', () => {
         partnerOneFirstName: 'Eric',
         partnerTwoFirstName: 'Alex',
         weddingDate: '2026-10-10',
+        dateKnown: true,
         weddingCity: 'San Diego',
         weddingRegion: 'CA',
         stylePreferences: ['modern', 'romantic'],
@@ -32,27 +31,21 @@ describe('setupDraftHydration', () => {
 
     expect(result.couple.partner1Name).toContain('Eric');
     expect(result.couple.partner2Name).toContain('Alex');
-    expect(result.wedding.date).toBe('2026-10-10');
-    expect(result.countdown.targetDate).toBe('2026-10-10');
-    expect(result.wedding.location).toBe('San Diego, CA');
-    expect(result.metadata.tags).toEqual(expect.arrayContaining(['modern', 'romantic']));
+    expect(result.couple.displayName).toContain('Eric & Alex');
+    expect(result.event.weddingDateISO).toBe(new Date('2026-10-10').toISOString());
+    expect(result.venues[0]?.address).toBe('San Diego, CA');
+    expect(result.theme.tokens?.style_preferences).toContain('modern');
     expect(result.couple.story).toContain('Eric & Alex');
-    expect(result.wedding.message).toContain('Join us in San Diego, CA');
-    expect(result.rsvp.message).toContain("Please RSVP");
     expect(result.travel.notes).toContain('hotel and travel recommendations');
   });
 
   it('does not override existing authored fields', () => {
     const source = createEmptyWeddingData();
     source.couple.story = 'Custom story';
-    source.wedding.message = 'Custom message';
-    source.rsvp.message = 'Custom RSVP';
     source.travel.notes = 'Custom travel';
 
     const result = applySetupDraftToWeddingData(source, draft({ partnerOneFirstName: 'Eric' }));
     expect(result.couple.story).toBe('Custom story');
-    expect(result.wedding.message).toBe('Custom message');
-    expect(result.rsvp.message).toBe('Custom RSVP');
     expect(result.travel.notes).toBe('Custom travel');
   });
 });

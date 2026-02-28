@@ -16,10 +16,10 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { getSectionManifest } from '../registry/sectionManifests';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { getPublishBlockedHints } from '../utils/publishUiHints';
+import { getPublishBlockedHints, shouldOpenPhotoTipsFromSearch } from '../utils/publishUiHints';
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
 import { getAllThemePresets } from '../../lib/themePresets';
 
@@ -63,6 +63,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   publishValidationError,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { state, dispatch } = useBuilderContext();
   const undoRedo = selectUndoRedo(state);
   const isPreview = selectIsPreviewMode(state);
@@ -84,7 +85,25 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     : ['#C0697B', '#E8A0A0', '#C89F56'];
   const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
   const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
+  const [showPhotoTips, setShowPhotoTips] = React.useState(() => shouldOpenPhotoTipsFromSearch(location.search));
   const blockedHints = React.useMemo(() => getPublishBlockedHints(publishValidationError), [publishValidationError]);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('photoTips') !== '1') return;
+    setShowPhotoTips(true);
+    params.delete('photoTips');
+    navigate(`${location.pathname}${params.toString() ? `?${params.toString()}` : ''}${location.hash}`, { replace: true });
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  React.useEffect(() => {
+    if (!showPhotoTips) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowPhotoTips(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showPhotoTips]);
 
   return (
     <>
@@ -365,6 +384,16 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </div>
 
         <div className="relative group">
+          <button
+            type="button"
+            onClick={() => setShowPhotoTips((v) => !v)}
+            aria-expanded={showPhotoTips}
+            aria-controls="builder-photo-tips-panel"
+            className="inline-flex items-center rounded border border-sky-300 bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-800 hover:bg-sky-100 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
+            title="Show photo placement tips"
+          >
+            Photo tips
+          </button>
           <button
             onClick={onPublish}
             disabled={isPublishDisabled}
