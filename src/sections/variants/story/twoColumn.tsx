@@ -32,10 +32,10 @@ const StoryTwoColumn: React.FC<SectionComponentProps<StoryTwoColumnData>> = ({ d
   const paragraphs = data.body.split('\n\n').filter(Boolean);
 
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/40 to-white" id="story">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-white via-stone-50/35 to-white" id="story">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-14 md:gap-24 items-center ${data.imagePosition === 'left' ? 'md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1' : ''}`}>
-          <div className="space-y-9">
+          <div className="space-y-10 md:space-y-11">
             {data.showDivider && <div className="w-14 h-px bg-stone-300" />}
 
             <div className="space-y-4">
@@ -74,7 +74,7 @@ const StoryTwoColumn: React.FC<SectionComponentProps<StoryTwoColumnData>> = ({ d
 
           {data.image ? (
             <div className="relative">
-              <div className="aspect-[3/4] rounded-[1.75rem] overflow-hidden shadow-[0_24px_70px_-30px_rgba(24,24,27,0.45)]">
+              <div className="aspect-[3/4] rounded-[1.9rem] overflow-hidden shadow-[0_34px_80px_-35px_rgba(24,24,27,0.5)]">
                 <img
                   src={data.image}
                   alt={data.imageAlt}

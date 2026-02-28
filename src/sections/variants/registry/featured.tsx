@@ -210,7 +210,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
   const restGifts = data.layout === 'hero' ? displayGifts.slice(1) : displayGifts;
 
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-white to-stone-50/35" id="registry">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-white to-stone-50/35" id="registry">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
@@ -232,7 +232,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
                   href={heroGift.isClaimed ? undefined : (heroGift.url || '#')}
                   target={heroGift.url && !heroGift.isClaimed ? '_blank' : undefined}
                   rel="noopener noreferrer"
-                  className="group grid grid-cols-1 md:grid-cols-2 gap-0 bg-white rounded-2xl overflow-hidden border border-rose-100 shadow-sm hover:shadow-md transition-shadow"
+                  className="group grid grid-cols-1 md:grid-cols-2 gap-0 bg-white rounded-[1.7rem] overflow-hidden border border-rose-100 shadow-sm hover:shadow-xl transition-shadow"
                 >
                   {heroGift.image && (
                     <div className="aspect-[4/3] md:aspect-auto overflow-hidden bg-stone-100">

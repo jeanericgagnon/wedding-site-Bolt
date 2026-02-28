@@ -47,7 +47,7 @@ const FooterCtaRsvpPush: React.FC<SectionComponentProps<FooterCtaRsvpPushData>> 
     : 'bg-white text-stone-900 hover:bg-white/90 shadow-xl shadow-black/25';
 
   return (
-    <section className={`py-28 md:py-36 ${bgClass}`} id="footer">
+    <section className={`py-32 md:py-40 ${bgClass}`} id="footer">
       <div className="max-w-4xl mx-auto px-6 text-center">
         {data.eyebrow && (
           <p className={`text-xs uppercase tracking-[0.25em] font-medium mb-6 ${mutedClass}`}>
@@ -66,7 +66,7 @@ const FooterCtaRsvpPush: React.FC<SectionComponentProps<FooterCtaRsvpPushData>> 
         {data.ctaLabel && (
           <a
             href={data.ctaHref}
-            className={`inline-flex items-center gap-2 px-9 py-4 text-sm font-semibold tracking-[0.18em] uppercase rounded-full transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/60 ${ctaBtnClass}`}
+            className={`inline-flex items-center gap-2.5 px-10 py-4 text-sm font-semibold tracking-[0.22em] uppercase rounded-full transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/60 ${ctaBtnClass}`}
           >
             {data.ctaLabel}
             <ArrowRight size={14} />

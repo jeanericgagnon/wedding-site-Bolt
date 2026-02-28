@@ -53,8 +53,8 @@ const HeroFullBleed: React.FC<SectionComponentProps<HeroFullBleedData>> = ({ dat
         <div className="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-700" aria-hidden="true" />
       )}
 
-      <div className={`relative z-10 flex flex-col ${alignClass} px-6 md:px-12 max-w-6xl mx-auto w-full py-28 md:py-36`}>
-        <div className={`rounded-3xl px-2 md:px-4 ${data.textAlign === 'center' ? 'mx-auto' : ''}`}>
+      <div className={`relative z-10 flex flex-col ${alignClass} px-6 md:px-12 max-w-6xl mx-auto w-full py-32 md:py-40`}>
+        <div className={`rounded-3xl px-2 md:px-4 ${data.textAlign === 'center' ? 'mx-auto' : ''} max-w-4xl`}>
           {data.eyebrow && (
             <p className="text-[11px] md:text-xs uppercase tracking-[0.4em] text-white/70 mb-6 font-medium">
               {data.eyebrow}
@@ -67,7 +67,7 @@ const HeroFullBleed: React.FC<SectionComponentProps<HeroFullBleedData>> = ({ dat
             </div>
           )}
 
-          <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-light text-white tracking-[-0.035em] leading-[0.9] mb-6 text-balance drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+          <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-light text-white tracking-[-0.04em] leading-[0.88] mb-7 text-balance drop-shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
             {data.headline}
           </h1>
 

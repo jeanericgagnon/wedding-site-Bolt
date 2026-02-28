@@ -109,7 +109,7 @@ const MasonryCell: React.FC<{
   );
 };
 
-const SECTION_SHELL = "py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white";
+const SECTION_SHELL = "py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white";
 const CONTAINER_SHELL = "max-w-6xl mx-auto px-6 md:px-12";
 const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900 tracking-tight text-balance";
 const PHOTO_FRAME = "relative group overflow-hidden rounded-[1.4rem] bg-stone-200 ring-1 ring-stone-100/80 shadow-[0_12px_40px_-28px_rgba(28,25,23,0.45)] transition-[opacity,transform]";

@@ -61,7 +61,7 @@ const FaqAccordion: React.FC<SectionComponentProps<FaqAccordionData>> = ({ data 
   const toggle = (id: string) => setOpenId(prev => (prev === id ? null : id));
 
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="faq">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white" id="faq">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (

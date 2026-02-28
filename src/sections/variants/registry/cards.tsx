@@ -70,7 +70,7 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
   const storeGroups = liveItems ? groupByStore(liveItems) : null;
 
   return (
-    <section className="py-28 md:py-36 bg-white" id="registry">
+    <section className="py-32 md:py-40 bg-white" id="registry">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (

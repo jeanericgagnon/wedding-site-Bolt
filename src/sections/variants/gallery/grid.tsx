@@ -145,7 +145,7 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
   }, [lightboxIndex]);
 
   return (
-    <section className="py-28 md:py-36 bg-white" id="gallery">
+    <section className="py-32 md:py-40 bg-white" id="gallery">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (

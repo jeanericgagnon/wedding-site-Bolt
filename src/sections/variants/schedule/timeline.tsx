@@ -38,7 +38,7 @@ export const defaultScheduleTimelineData: ScheduleTimelineData = {
 
 const ScheduleTimeline: React.FC<SectionComponentProps<ScheduleTimelineData>> = ({ data }) => {
   return (
-    <section className="py-28 md:py-36 bg-white" id="schedule">
+    <section className="py-32 md:py-40 bg-white" id="schedule">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (

@@ -43,7 +43,7 @@ export const defaultVenueCardData: VenueCardData = {
 
 const VenueCard: React.FC<SectionComponentProps<VenueCardData>> = ({ data }) => {
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="venue">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white" id="venue">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (

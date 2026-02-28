@@ -70,7 +70,7 @@ const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({
   const currentDay = data.days.find(d => d.id === activeDay) ?? data.days[0];
 
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/40 to-white" id="schedule">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-white via-stone-50/35 to-white" id="schedule">
       <div className="max-w-3xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (

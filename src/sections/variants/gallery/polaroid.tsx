@@ -109,7 +109,7 @@ const PolaroidCard: React.FC<{
   );
 };
 
-const SECTION_SHELL = "py-28 md:py-36";
+const SECTION_SHELL = "py-32 md:py-40";
 const CONTAINER_SHELL = "max-w-6xl mx-auto px-6 md:px-12";
 const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900 tracking-tight";
 const PHOTO_IMG = "w-full h-full object-cover saturate-[1.03] contrast-[1.02] transition-transform duration-500 group-hover:scale-105";

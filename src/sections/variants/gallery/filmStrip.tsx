@@ -97,7 +97,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
     data.animation === 'zoom' ? (isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95') : '';
 
   return (
-    <section ref={sectionRef} className="py-28 md:py-36 bg-stone-900" id="gallery">
+    <section ref={sectionRef} className="py-32 md:py-40 bg-stone-900" id="gallery">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-10">
           {data.eyebrow && (

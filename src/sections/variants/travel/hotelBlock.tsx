@@ -103,7 +103,7 @@ const StarRating: React.FC<{ stars: number }> = ({ stars }) => (
 
 const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = ({ data }) => {
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="travel">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white" id="travel">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
@@ -138,7 +138,7 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
           {data.hotels.map(hotel => (
             <div
               key={hotel.id}
-              className={`relative bg-white rounded-2xl overflow-hidden border shadow-sm hover:shadow-md transition-shadow flex flex-col ${
+              className={`relative bg-white rounded-[1.5rem] overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col ${
                 hotel.recommended ? 'border-rose-200 ring-1 ring-rose-100' : 'border-stone-100'
               }`}
             >

@@ -116,7 +116,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
   }
 
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-white to-stone-50/40" id="rsvp">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-white to-stone-50/35" id="rsvp">
       <div className="max-w-2xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.deadline && data.eyebrow && (
@@ -155,7 +155,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
             <p className="text-xs text-stone-400">Embedded RSVP is enabled for this section.</p>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-stone-100 rounded-[1.75rem] p-6 md:p-8 shadow-sm md:shadow-lg md:shadow-stone-900/5">
+        <form onSubmit={handleSubmit} className="space-y-7 bg-white border border-stone-100 rounded-[1.85rem] p-6 md:p-9 shadow-sm md:shadow-xl md:shadow-stone-900/5">
           <div>
             <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
               Full Name <span className="text-rose-400">*</span>

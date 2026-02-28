@@ -61,7 +61,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
   const accent = ACCENT_CLASSES[data.accentColor];
 
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="schedule">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white" id="schedule">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
@@ -75,7 +75,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
           {data.events.map(event => {
             const categoryLabel = CATEGORY_LABELS[event.category];
             return (

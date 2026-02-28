@@ -78,7 +78,7 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
   const isWide = data.layout === 'wide';
 
   return (
-    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="venue">
+    <section className="py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white" id="venue">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
@@ -94,7 +94,7 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
 
         <div className={isWide ? 'grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-9' : 'space-y-8 max-w-4xl mx-auto'}>
           {data.venues.map(venue => (
-            <div key={venue.id} className="bg-white rounded-[1.4rem] overflow-hidden border border-stone-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
+            <div key={venue.id} className="bg-white rounded-[1.5rem] overflow-hidden border border-stone-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               {venue.image && (
                 <div className="aspect-[21/9] overflow-hidden">
                   <img src={venue.image} alt={venue.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
