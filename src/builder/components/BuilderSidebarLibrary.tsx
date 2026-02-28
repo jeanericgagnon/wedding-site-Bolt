@@ -288,6 +288,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   const [expandedType, setExpandedType] = useState<BuilderSectionType | null>(null);
   const [showSkeletonPicker, setShowSkeletonPicker] = useState(false);
   const [previewPhotoSet, setPreviewPhotoSet] = useState<PreviewPhotoSet>('romantic');
+  const [quickPresetGroup, setQuickPresetGroup] = useState<'essentials' | 'extras'>('essentials');
   const previewWeddingData = useMemo(() => buildPreviewWeddingData(previewPhotoSet), [previewPhotoSet]);
   const manifests = getAllSectionManifests();
 
@@ -466,17 +467,39 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 Add starter pack
               </button>
 
+              <div className="mb-2 flex items-center gap-1 rounded-md border border-rose-200 bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() => setQuickPresetGroup('essentials')}
+                  className={`flex-1 rounded px-2 py-1 text-[11px] font-medium ${quickPresetGroup === 'essentials' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'}`}
+                >
+                  Essentials
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickPresetGroup('extras')}
+                  className={`flex-1 rounded px-2 py-1 text-[11px] font-medium ${quickPresetGroup === 'extras' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'}`}
+                >
+                  Extras
+                </button>
+              </div>
+
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { type: 'hero', label: 'Hero' },
-                  { type: 'story', label: 'Story' },
-                  { type: 'schedule', label: 'Itinerary' },
-                  { type: 'travel', label: 'Travel' },
-                  { type: 'faq', label: 'FAQ' },
-                  { type: 'rsvp', label: 'RSVP' },
-                  { type: 'registry', label: 'Registry' },
-                  { type: 'gallery', label: 'Gallery' },
-                  { type: 'contact', label: 'Interactive', variant: 'interactiveHub' },
+                  ...(quickPresetGroup === 'essentials'
+                    ? [
+                        { type: 'hero', label: 'Hero' },
+                        { type: 'story', label: 'Story' },
+                        { type: 'schedule', label: 'Itinerary' },
+                        { type: 'travel', label: 'Travel' },
+                        { type: 'faq', label: 'FAQ' },
+                        { type: 'rsvp', label: 'RSVP' },
+                      ]
+                    : [
+                        { type: 'registry', label: 'Registry' },
+                        { type: 'gallery', label: 'Gallery' },
+                        { type: 'contact', label: 'Interactive', variant: 'interactiveHub' },
+                      ]),
                 ].map((preset) => {
                   const manifest = getSectionManifest(preset.type as BuilderSectionType);
                   if (!manifest) return null;
@@ -492,17 +515,19 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 })}
               </div>
 
-              <button
-                onClick={() => {
-                  const contactManifest = getSectionManifest('contact');
-                  const faqManifest = getSectionManifest('faq');
-                  if (contactManifest) addSection(contactManifest.type, 'interactiveHub');
-                  if (faqManifest) addSection(faqManifest.type, faqManifest.defaultVariant);
-                }}
-                className="mt-2 w-full rounded border border-rose-300 bg-white px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
-              >
-                Add Interactive + FAQ
-              </button>
+              {quickPresetGroup === 'extras' && (
+                <button
+                  onClick={() => {
+                    const contactManifest = getSectionManifest('contact');
+                    const faqManifest = getSectionManifest('faq');
+                    if (contactManifest) addSection(contactManifest.type, 'interactiveHub');
+                    if (faqManifest) addSection(faqManifest.type, faqManifest.defaultVariant);
+                  }}
+                  className="mt-2 w-full rounded border border-rose-300 bg-white px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+                >
+                  Add Interactive + FAQ
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-2 px-1 mb-3">

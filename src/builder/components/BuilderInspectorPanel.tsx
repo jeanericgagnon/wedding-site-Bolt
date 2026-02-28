@@ -12,6 +12,7 @@ type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 export const BuilderInspectorPanel: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
   const [activeTab, setActiveTab] = React.useState<InspectorTab>('content');
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
   const selectedSection = selectSelectedSection(state);
   const activePage = selectActivePage(state);
 
@@ -98,6 +99,11 @@ export const BuilderInspectorPanel: React.FC = () => {
     { id: 'data' as InspectorTab, icon: Database, label: 'Data', show: hasBindings },
   ].filter(t => t.show);
 
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.id === 'guide' || tab.id === 'content') return true;
+    return showAdvanced;
+  });
+
   return (
     <aside className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
@@ -144,21 +150,35 @@ export const BuilderInspectorPanel: React.FC = () => {
       </div>
 
       {tabs.length > 1 && (
-        <div className="flex border-b border-gray-100 px-4">
-          {tabs.map(tab => (
+        <div className="border-b border-gray-100 px-4">
+          <div className="flex items-center">
+            {visibleTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-colors mr-1 ${
+                  activeTab === tab.id
+                    ? 'border-rose-500 text-rose-600'
+                    : 'border-transparent text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                <tab.icon size={12} />
+                {tab.label}
+              </button>
+            ))}
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-colors mr-1 ${
-                activeTab === tab.id
-                  ? 'border-rose-500 text-rose-600'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
-              }`}
+              type="button"
+              onClick={() => {
+                setShowAdvanced((v) => !v);
+                if (showAdvanced && (activeTab === 'style' || activeTab === 'layout' || activeTab === 'data')) {
+                  setActiveTab('content');
+                }
+              }}
+              className="ml-auto rounded border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-600 hover:bg-gray-50"
             >
-              <tab.icon size={12} />
-              {tab.label}
+              {showAdvanced ? 'Hide advanced' : 'Show advanced'}
             </button>
-          ))}
+          </div>
         </div>
       )}
 
@@ -199,7 +219,10 @@ export const BuilderInspectorPanel: React.FC = () => {
               ].filter((view) => view.id !== 'data' || hasBindings).map((view) => (
                 <button
                   key={view.id}
-                  onClick={() => setActiveTab(view.id as InspectorTab)}
+                  onClick={() => {
+                    if (view.id !== 'content' && view.id !== 'guide') setShowAdvanced(true);
+                    setActiveTab(view.id as InspectorTab);
+                  }}
                   className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 transition-colors"
                 >
                   {view.label}
