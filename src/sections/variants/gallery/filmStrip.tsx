@@ -18,6 +18,8 @@ export const galleryFilmStripSchema = z.object({
   enableLightbox: z.boolean().default(true),
   animation: z.enum(['none', 'fade', 'slide-up', 'zoom']).default('slide-up'),
   autoScroll: z.boolean().default(false),
+  continuousGlide: z.boolean().default(true),
+  glideSpeed: z.number().min(10).max(90).default(42),
 });
 
 export type GalleryFilmStripData = z.infer<typeof galleryFilmStripSchema>;
@@ -40,6 +42,8 @@ export const defaultGalleryFilmStripData: GalleryFilmStripData = {
   enableLightbox: true,
   animation: 'slide-up',
   autoScroll: false,
+  continuousGlide: true,
+  glideSpeed: 42,
   images: SAMPLE_PHOTOS.map((p, i) => ({ id: String(i + 1), url: p.url, alt: p.alt, caption: '' })),
 };
 
@@ -47,6 +51,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [isGlidePaused, setIsGlidePaused] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
 
@@ -62,11 +67,12 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
 
   useEffect(() => {
     if (!data.autoScroll || data.images.length === 0) return;
+    const ms = Math.max(1400, 5200 - data.glideSpeed * 40);
     const interval = setInterval(() => {
       setActiveIndex(i => (i + 1) % data.images.length);
-    }, 3500);
+    }, ms);
     return () => clearInterval(interval);
-  }, [data.autoScroll, data.images.length]);
+  }, [data.autoScroll, data.images.length, data.glideSpeed]);
 
   useEffect(() => {
     if (!stripRef.current) return;
@@ -97,7 +103,9 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
     data.animation === 'zoom' ? (isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95') : '';
 
   return (
-    <section ref={sectionRef} className="py-32 md:py-40 bg-stone-900" id="gallery">
+    <>
+      <style>{`@keyframes filmstripMarquee { 0% { transform: translateX(0); } 100% { transform: translateX(calc(-50% - 0.25rem)); } }`}</style>
+      <section ref={sectionRef} className="py-32 md:py-40 bg-stone-900" id="gallery">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-10">
           {data.eyebrow && (
@@ -151,25 +159,58 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
               </div>
             </div>
 
-            <div
-              ref={stripRef}
-              className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x"
-              style={{ scrollbarWidth: 'none' }}
-            >
-              {data.images.map((img, idx) => (
-                <button
-                  key={img.id}
-                  onClick={() => setActiveIndex(idx)}
-                  className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden transition-all snap-start ${
-                    idx === activeIndex
-                      ? 'ring-2 ring-white scale-105 opacity-100'
-                      : 'opacity-40 hover:opacity-70 scale-100'
-                  }`}
+            {data.continuousGlide ? (
+              <div
+                className="relative overflow-hidden pb-1"
+                onMouseEnter={() => setIsGlidePaused(true)}
+                onMouseLeave={() => setIsGlidePaused(false)}
+              >
+                <div
+                  className="flex gap-2 w-max"
+                  style={{
+                    animation: `filmstripMarquee ${Math.max(16, 72 - data.glideSpeed * 0.6)}s linear infinite`,
+                    animationPlayState: isGlidePaused ? 'paused' : 'running',
+                  }}
                 >
-                  <img src={img.url} alt={img.alt} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
-                </button>
-              ))}
-            </div>
+                  {[...data.images, ...data.images].map((img, i) => {
+                    const idx = i % data.images.length;
+                    return (
+                      <button
+                        key={`${img.id}-${i}`}
+                        onClick={() => setActiveIndex(idx)}
+                        className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden transition-all ${
+                          idx === activeIndex
+                            ? 'ring-2 ring-white scale-105 opacity-100'
+                            : 'opacity-40 hover:opacity-70 scale-100'
+                        }`}
+                      >
+                        <img src={img.url} alt={img.alt} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div
+                ref={stripRef}
+                className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x"
+                style={{ scrollbarWidth: 'none' }}
+              >
+                {data.images.map((img, idx) => (
+                  <button
+                    key={img.id}
+                    onClick={() => setActiveIndex(idx)}
+                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden transition-all snap-start ${
+                      idx === activeIndex
+                        ? 'ring-2 ring-white scale-105 opacity-100'
+                        : 'opacity-40 hover:opacity-70 scale-100'
+                    }`}
+                  >
+                    <img src={img.url} alt={img.alt} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -194,7 +235,8 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
           <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">{lightboxIndex + 1} / {data.images.length}</p>
         </div>
       )}
-    </section>
+      </section>
+    </>
   );
 };
 

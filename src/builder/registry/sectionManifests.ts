@@ -298,6 +298,9 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
         ]},
         { key: 'showCaptions', label: 'Show Captions', type: 'toggle', defaultValue: true },
         { key: 'enableLightbox', label: 'Enable Lightbox', type: 'toggle', defaultValue: true },
+        { key: 'autoScroll', label: 'Auto-advance hero', type: 'toggle', defaultValue: false },
+        { key: 'continuousGlide', label: 'Continuous glide rail', type: 'toggle', defaultValue: true },
+        { key: 'glideSpeed', label: 'Glide Speed (10-90)', type: 'number', defaultValue: 42 },
       ],
     },
     bindingsSchema: {
