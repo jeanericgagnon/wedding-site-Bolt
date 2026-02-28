@@ -46,6 +46,34 @@ export const BuilderInspectorPanel: React.FC = () => {
   const manifest = getSectionManifest(selectedSection.type);
   const hasBindings = manifest.capabilities.hasBindings && manifest.bindingsSchema.slots.length > 0;
 
+  const hasMeaningfulContent = Object.entries(selectedSection.settings ?? {}).some(([k, v]) => {
+    if (k === 'showTitle') return false;
+    if (typeof v === 'string') return v.trim().length > 0;
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return true;
+    if (Array.isArray(v)) return v.length > 0;
+    return !!v;
+  });
+  const hasStyleOverrides = Object.values(selectedSection.styleOverrides ?? {}).some((v) => v !== undefined && v !== '');
+  const hasLayoutCustomization = selectedSection.variant !== manifest.defaultVariant
+    || !!selectedSection.styleOverrides?.paddingTop
+    || !!selectedSection.styleOverrides?.paddingBottom;
+  const dataConfigured = !hasBindings
+    || manifest.bindingsSchema.slots.every((slot) => {
+      const bound = (selectedSection.bindings as Record<string, unknown> | undefined)?.[slot.key];
+      return Array.isArray(bound) ? bound.length > 0 : bound !== undefined;
+    });
+
+  const guideSteps = [
+    { id: 'content', label: 'Add section content', done: hasMeaningfulContent },
+    { id: 'style', label: 'Tune visual style', done: hasStyleOverrides },
+    { id: 'layout', label: 'Choose layout/spacing', done: hasLayoutCustomization },
+    { id: 'data', label: 'Verify data bindings', done: dataConfigured && hasBindings, optional: !hasBindings },
+    { id: 'visibility', label: 'Keep section visible', done: selectedSection.enabled },
+  ];
+  const requiredGuideSteps = guideSteps.filter((s) => !s.optional);
+  const guideProgress = Math.round((requiredGuideSteps.filter((s) => s.done).length / Math.max(requiredGuideSteps.length, 1)) * 100);
+
   const handleUpdateSetting = (key: string, value: string | boolean | number) => {
     dispatch(
       builderActions.updateSection(activePage.id, selectedSection.id, {
@@ -140,7 +168,28 @@ export const BuilderInspectorPanel: React.FC = () => {
             <div className="rounded-xl border border-sky-100 bg-sky-50 p-3">
               <p className="text-xs font-semibold text-sky-900 mb-1">Change views guide</p>
               <p className="text-[11px] text-sky-800">Use these focused views to make edits quickly without hunting through controls.</p>
+              <div className="mt-2">
+                <div className="h-1.5 rounded-full bg-sky-100 overflow-hidden">
+                  <div className="h-full bg-sky-500" style={{ width: `${guideProgress}%` }} />
+                </div>
+                <p className="mt-1 text-[10px] text-sky-900">Section setup progress: {guideProgress}%</p>
+              </div>
             </div>
+
+            <div className="space-y-1.5">
+              {guideSteps.map((step) => (
+                <button
+                  key={step.id}
+                  onClick={() => !step.optional && setActiveTab(step.id === 'visibility' ? 'layout' : (step.id as InspectorTab))}
+                  disabled={step.optional}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${step.done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-white text-gray-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700'} ${step.optional ? 'opacity-60 cursor-default' : ''}`}
+                >
+                  <span className="font-medium">{step.label}</span>
+                  <span className="ml-2 text-[10px]">{step.optional ? 'optional' : step.done ? 'done' : 'needs work'}</span>
+                </button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               {[
                 { id: 'content', label: 'Edit copy' },
