@@ -3079,6 +3079,34 @@ function getSectionHealth(section: BuilderSectionInstance): SectionHealth {
   return 'draft';
 }
 
+function getStarterContentPatch(section: BuilderSectionInstance): Partial<BuilderSectionInstance> {
+  const now = new Date().toISOString();
+  const starterByType: Partial<Record<BuilderSectionType, Record<string, unknown>>> = {
+    hero: { title: 'We are getting married', headline: 'Alex & Sam', subtitle: 'June 12, 2027 · Rosewood Estate' },
+    story: { title: 'Our Story', content: 'From first coffee to forever — we cannot wait to celebrate with you.' },
+    schedule: { title: 'Weekend Schedule' },
+    travel: { title: 'Travel & Stay', notes: 'Use the recommended hotels for easiest shuttle access.' },
+    registry: { title: 'Registry', message: 'Your presence is the best gift, but here are a few ideas if you wish.' },
+    faq: { title: 'FAQ' },
+    rsvp: { title: 'RSVP' },
+    venue: { title: 'Venue Details' },
+    contact: { title: 'Questions?' },
+    'footer-cta': { headline: 'Join us for our big day', buttonLabel: 'RSVP' },
+  };
+
+  return {
+    settings: {
+      ...section.settings,
+      showTitle: true,
+      ...(starterByType[section.type] ?? {}),
+    },
+    meta: {
+      ...section.meta,
+      updatedAtISO: now,
+    },
+  };
+}
+
 interface SortableLayerItemProps {
   section: BuilderSectionInstance;
   index: number;
@@ -3113,6 +3141,7 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
     draft: 'bg-amber-100 text-amber-700',
     ready: 'bg-emerald-100 text-emerald-700',
   }[health];
+  const canInsertStarter = health === 'empty' && Boolean(pageId);
 
   return (
     <div
@@ -3160,6 +3189,20 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
       </div>
 
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        {canInsertStarter && (
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              if (!pageId) return;
+              dispatch(builderActions.updateSection(pageId, section.id, getStarterContentPatch(section)));
+            }}
+            title="Insert starter content"
+            className="inline-flex items-center gap-1 rounded bg-rose-50 px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wide text-rose-600 hover:bg-rose-100"
+          >
+            <Sparkles size={10} />
+            Start
+          </button>
+        )}
         <button
           onClick={e => {
             e.stopPropagation();

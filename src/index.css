@@ -111,23 +111,23 @@
   }
 
   .section-shell {
-    @apply py-16 md:py-20;
+    @apply py-12 md:py-20;
   }
 
   .section-shell-compact {
-    @apply py-12 md:py-14;
+    @apply py-9 md:py-14;
   }
 
   .section-intro {
-    @apply text-center mb-10 md:mb-12;
+    @apply text-center mb-8 md:mb-12;
   }
 
   .section-title {
-    @apply text-[2rem] md:text-[2.5rem] font-serif font-bold text-ink leading-[1.12] tracking-tight;
+    @apply text-[1.75rem] md:text-[2.5rem] font-serif font-bold text-ink leading-[1.14] tracking-tight;
   }
 
   .section-subtitle {
-    @apply text-[1.02rem] md:text-[1.125rem] text-ink/70 leading-relaxed max-w-2xl mx-auto;
+    @apply text-[1rem] md:text-[1.125rem] text-ink/70 leading-relaxed max-w-2xl mx-auto;
   }
 
   .card-elevated {

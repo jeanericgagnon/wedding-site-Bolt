@@ -5,6 +5,7 @@ import { WeddingDataV1, createEmptyWeddingData } from '../../types/weddingData';
 import { safeJsonParse } from '../../lib/jsonUtils';
 import { fromExistingLayoutToBuilderProject, fromBuilderProjectToExistingLayout } from '../adapters/layoutAdapter';
 import { serializeBuilderProject } from '../serializers/projectSerializer';
+import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from './versionHistory';
 
 export const builderProjectService = {
   async loadProject(weddingSiteId: string): Promise<BuilderProject | null> {
@@ -145,6 +146,14 @@ export const builderProjectService = {
     }
 
     if (error) throw error;
+
+    recordBuilderRevision({
+      weddingId: project.weddingId,
+      project: normalizedProject,
+      weddingData,
+      action: 'save',
+      actor: 'builder',
+    });
   },
 
   async publishProject(_projectId: string, weddingSiteId: string): Promise<{ publishedAt: string; version: number }> {
@@ -225,6 +234,41 @@ export const builderProjectService = {
 
     if (publishError) throw publishError;
 
+    try {
+      const latestProject = await this.loadProject(weddingSiteId);
+      if (latestProject) {
+        const latestWeddingData = await this.loadWeddingData(weddingSiteId);
+        recordBuilderRevision({
+          weddingId: weddingSiteId,
+          project: latestProject,
+          weddingData: latestWeddingData,
+          action: 'publish',
+          actor: 'builder',
+        });
+      }
+    } catch {
+      // non-blocking revision logging
+    }
+
     return { publishedAt, version: nextPublishedVersion };
+  },
+
+  async listProjectRevisions(weddingSiteId: string) {
+    return listBuilderRevisions(weddingSiteId);
+  },
+
+  async rollbackToRevision(weddingSiteId: string, revisionId: string): Promise<boolean> {
+    const revision = getBuilderRevision(weddingSiteId, revisionId);
+    if (!revision) return false;
+
+    await this.saveDraft(revision.project, revision.weddingData);
+    recordBuilderRevision({
+      weddingId: weddingSiteId,
+      project: revision.project,
+      weddingData: revision.weddingData,
+      action: 'rollback',
+      actor: 'builder',
+    });
+    return true;
   },
 };
