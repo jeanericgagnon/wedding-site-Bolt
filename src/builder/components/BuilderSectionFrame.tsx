@@ -3,7 +3,7 @@ import { GripVertical, Eye, EyeOff, Settings2, Trash2, Copy, ChevronDown, Chevro
 import { DeleteSectionModal } from './DeleteSectionModal';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { BuilderSectionInstance } from '../../types/builder/section';
+import { BuilderSectionInstance, BuilderSettingsField } from '../../types/builder/section';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getSectionManifest } from '../registry/sectionManifests';
@@ -15,6 +15,30 @@ interface BuilderSectionFrameProps {
   isSelected: boolean;
   isHovered: boolean;
   isPreview?: boolean;
+}
+
+const INLINE_FIELD_KEYS_BY_SECTION: Partial<Record<BuilderSectionInstance['type'], string[]>> = {
+  hero: ['headline', 'subtitle'],
+  story: ['title', 'storyText'],
+};
+
+const INLINE_CTA_FIELD_PATTERN = /(?:^|_)(buttonLabel|ctaLabel|ctaText|label)$/i;
+
+function getInlineCanvasFields(sectionType: BuilderSectionInstance['type'], fields: BuilderSettingsField[]): BuilderSettingsField[] {
+  const keyPriority = INLINE_FIELD_KEYS_BY_SECTION[sectionType] ?? [];
+  const fieldMap = new Map(fields.map(field => [field.key, field]));
+
+  const prioritized = keyPriority
+    .map(key => fieldMap.get(key))
+    .filter((field): field is BuilderSettingsField => !!field && (field.type === 'text' || field.type === 'textarea'));
+
+  const ctaFields = fields.filter((field) => {
+    if (prioritized.some((picked) => picked.key === field.key)) return false;
+    if (field.type !== 'text') return false;
+    return INLINE_CTA_FIELD_PATTERN.test(field.key);
+  });
+
+  return [...prioritized, ...ctaFields];
 }
 
 export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
@@ -71,10 +95,8 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
 
   const isHighlighted = !isPreview && (isSelected || isHovered);
 
-  const textFields = manifest.settingsSchema.fields.filter(
-    f => f.type === 'text' || f.type === 'textarea'
-  );
-  const hasInlineFields = textFields.length > 0;
+  const inlineCanvasFields = getInlineCanvasFields(section.type, manifest.settingsSchema.fields);
+  const hasInlineFields = inlineCanvasFields.length > 0;
 
   if (isPreview) {
     return (
@@ -246,7 +268,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
         <InlineEditPanel
           section={section}
           pageId={pageId}
-          fields={textFields}
+          fields={inlineCanvasFields}
           onClose={() => setInlineEditOpen(false)}
         />
       )}

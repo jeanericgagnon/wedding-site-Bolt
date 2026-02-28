@@ -118,9 +118,9 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   return (
     <>
     <aside
-      className={`flex-shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarExpanded ? 'w-full lg:w-96' : 'w-full lg:w-64'}`}
+      className={`flex-shrink-0 h-full min-h-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarExpanded ? 'w-full lg:w-96' : 'w-full lg:w-64'}`}
     >
-      <div className="flex border-b border-gray-200">
+      <div className="sticky top-0 z-20 flex border-b border-gray-200 bg-white">
         {([
           { id: 'layers', icon: Layers, label: 'Sections' },
           { id: 'sections', icon: Plus, label: 'Add' },
@@ -146,7 +146,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         {activeTab === 'layers' && (
           <div className="p-3">
             <div className="flex items-center justify-between px-1 mb-2">

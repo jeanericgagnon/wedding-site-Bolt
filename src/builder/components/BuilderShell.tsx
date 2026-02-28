@@ -218,36 +218,35 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const meta = e.metaKey || e.ctrlKey;
-      if (meta && e.key === 's') {
+      const target = e.target as HTMLElement | null;
+      const isTyping = !!target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      );
+
+      if (meta && e.key === 's' && !isTyping) {
         e.preventDefault();
         handleSave();
       }
-      if (meta && e.key === 'p' && !e.shiftKey) {
+      if (meta && e.key === 'p' && !e.shiftKey && !isTyping) {
         e.preventDefault();
         dispatch(builderActions.setMode(stateRef.current.mode === 'preview' ? 'edit' : 'preview'));
       }
-      if (meta && e.shiftKey && e.key.toLowerCase() === 'p') {
-        const target = e.target as HTMLElement | null;
-        const isTyping = !!target && (
-          target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.isContentEditable
-        );
-        if (!isTyping) {
-          e.preventDefault();
-          handlePublish();
-        }
+      if (meta && e.shiftKey && e.key.toLowerCase() === 'p' && !isTyping) {
+        e.preventDefault();
+        handlePublish();
       }
-      if (meta && e.key === 'z' && !e.shiftKey) {
+      if (meta && e.key === 'z' && !e.shiftKey && !isTyping) {
         e.preventDefault();
         dispatch(builderActions.undo());
       }
-      if (meta && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+      if (meta && (e.key === 'y' || (e.key === 'z' && e.shiftKey)) && !isTyping) {
         e.preventDefault();
         dispatch(builderActions.redo());
       }
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !isTyping) {
         dispatch(builderActions.selectSection(null));
       }
     };
@@ -294,9 +293,9 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishValidationError={state.project ? getPublishValidationError(state.project) : null}
         />
 
-        <div className="flex-1 flex flex-col lg:flex-row overflow-auto lg:overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
           {state.mode === 'edit' && (
-            <div className="hidden lg:block">
+            <div className="hidden lg:block h-full min-h-0">
               <BuilderSidebarLibrary activePageId={state.activePageId} />
             </div>
           )}
@@ -304,7 +303,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           <BuilderCanvas />
 
           {state.mode === 'edit' && (
-            <div className="hidden lg:block">
+            <div className="hidden lg:block h-full min-h-0">
               <BuilderInspectorPanel />
             </div>
           )}

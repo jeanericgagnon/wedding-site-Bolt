@@ -89,7 +89,7 @@ export const BuilderCanvas: React.FC = () => {
 
   return (
     <div
-      className={`flex-1 overflow-y-auto ${isPreview ? 'bg-white' : 'bg-gray-100'}`}
+      className={`flex-1 min-h-0 overflow-y-auto overscroll-contain ${isPreview ? 'bg-white' : 'bg-gray-100'}`}
       onClick={() => dispatch(builderActions.selectSection(null))}
     >
       <DndContext
