@@ -549,6 +549,7 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
               onHover={setHoveredVariant}
               onSelect={onSelect}
               previewWeddingData={previewWeddingData}
+              previewPhotoSet={previewPhotoSet}
             />
           ))}
         </div>
@@ -565,6 +566,7 @@ interface VariantCardProps {
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
   previewWeddingData: WeddingDataV1;
+  previewPhotoSet: PreviewPhotoSet;
 }
 
 const VARIANT_STYLE_TONE: Record<string, { label: string; accent: string; chip: string }> = {
@@ -614,6 +616,60 @@ function getVariantTone(variantId: string): { label: string; accent: string; chi
   return VARIANT_STYLE_TONE[key];
 }
 
+const PREVIEW_PHOTO_SET_BY_VARIANT: Record<string, PreviewPhotoSet> = {
+  'hero:default': 'editorial',
+  'hero:minimal': 'romantic',
+  'hero:split': 'coastal',
+  'hero:countdown': 'coastal',
+  'hero:invitation': 'romantic',
+
+  'story:default': 'romantic',
+  'story:timeline': 'editorial',
+  'story:milestones': 'coastal',
+  'story:split': 'editorial',
+
+  'venue:mapFirst': 'coastal',
+  'venue:splitMap': 'editorial',
+  'venue:detailsFirst': 'romantic',
+
+  'gallery:masonry': 'editorial',
+  'gallery:grid': 'romantic',
+  'gallery:filmStrip': 'coastal',
+  'gallery:polaroid': 'romantic',
+
+  'quotes:featured': 'editorial',
+  'quotes:grid': 'romantic',
+  'quotes:carousel': 'coastal',
+};
+
+const PREVIEW_NARRATIVE_BY_VARIANT: Record<string, string> = {
+  'hero:default': 'A cinematic opening frame that sets the tone for the full weekend.',
+  'hero:minimal': 'A quiet portrait-first opening focused on names, date, and intentional whitespace.',
+  'hero:split': 'Two-scene opener balancing setting and editorial typography in one glance.',
+  'story:timeline': 'A chapter-by-chapter narrative arc from first meeting to the aisle.',
+  'story:milestones': 'Key moments distilled into visual beats with premium editorial pacing.',
+  'story:split': 'Parallel storytelling: image-led memory on one side, context on the other.',
+  'gallery:filmStrip': 'A sequence-driven highlight reel designed for momentum and memory.',
+  'gallery:polaroid': 'Warm candid snapshots with intimate, tactile weekend energy.',
+  'quotes:carousel': 'Guest voices presented as a paced editorial feature.',
+};
+
+function buildVariantPreviewWeddingData(
+  sectionType: string,
+  variantId: string,
+  fallbackPhotoSet: PreviewPhotoSet,
+): WeddingDataV1 {
+  const variantKey = `${sectionType}:${variantId}`;
+  const photoSet = PREVIEW_PHOTO_SET_BY_VARIANT[variantKey] ?? fallbackPhotoSet;
+  const data = buildPreviewWeddingData(photoSet);
+  data.couple.story = PREVIEW_NARRATIVE_BY_VARIANT[variantKey] ?? data.couple.story;
+  data.media.gallery = data.media.gallery.map((item, index) => ({
+    ...item,
+    caption: `${data.media.gallery[index]?.caption ?? `Moment ${index + 1}`} · Frame ${index + 1}`,
+  }));
+  return data;
+}
+
 const VariantCard: React.FC<VariantCardProps> = ({
   variant,
   sectionType,
@@ -622,18 +678,22 @@ const VariantCard: React.FC<VariantCardProps> = ({
   onHover,
   onSelect,
   previewWeddingData,
+  previewPhotoSet,
 }) => {
   const tone = getVariantTone(variant.id);
+  const curatedWeddingData = useMemo(() => (
+    buildVariantPreviewWeddingData(sectionType, variant.id, previewPhotoSet)
+  ), [sectionType, variant.id, previewPhotoSet, previewWeddingData]);
 
   return (
     <button
       onMouseEnter={() => onHover(variant.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onSelect(variant.id)}
-      className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-1 active:scale-[0.995] ${
+      className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left will-change-transform transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/80 focus-visible:ring-offset-2 active:scale-[0.992] ${
         isHovered
-          ? 'border-rose-300 shadow-[0_16px_32px_-18px_rgba(190,24,93,0.55)] -translate-y-[1px]'
-          : 'border-gray-200 hover:border-rose-200 hover:shadow-[0_12px_22px_-16px_rgba(15,23,42,0.4)]'
+          ? 'border-rose-300 shadow-[0_20px_40px_-22px_rgba(190,24,93,0.58)] -translate-y-[2px]'
+          : 'border-gray-200 hover:border-rose-200 hover:-translate-y-[1px] hover:shadow-[0_16px_30px_-18px_rgba(15,23,42,0.38)]'
       }`}
       title={variant.description}
       aria-label={`Add ${variant.label} variant`}
@@ -644,7 +704,7 @@ const VariantCard: React.FC<VariantCardProps> = ({
         sectionType={sectionType}
         variantId={variant.id}
         isHovered={isHovered}
-        weddingData={previewWeddingData}
+        weddingData={curatedWeddingData}
       />
 
       <div className="relative px-3.5 py-3">
@@ -714,7 +774,7 @@ const BuilderVariantCardPreview: React.FC<{
           <SectionTypePreview sectionType={sectionType} compact />
         </div>
         <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} weddingData={weddingData} />
-        <div className="absolute right-1.5 top-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
+        <div className="absolute right-1.5 top-1.5 rounded-md bg-black/48 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/95 shadow-sm">
           {variantId}
         </div>
         <div
@@ -722,6 +782,7 @@ const BuilderVariantCardPreview: React.FC<{
             isHovered ? 'opacity-100' : 'opacity-70'
           }`}
         />
+        <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/8 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-90' : 'opacity-50'}`} />
       </div>
     </VariantPreviewErrorBoundary>
   );
