@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { supabase } from '../../../lib/supabase';
 
 const PollOptionSchema = z.object({
   id: z.string(),
@@ -63,7 +64,7 @@ function usePersistentCounter(siteSlug: string | undefined, key: string) {
     }
   });
 
-  const increment = (optionId: string) => {
+  const incrementLocal = (optionId: string) => {
     setCounts((prev) => {
       const next = { ...prev, [optionId]: (prev[optionId] || 0) + 1 };
       try { window.localStorage.setItem(fullKey, JSON.stringify(next)); } catch {}
@@ -71,12 +72,18 @@ function usePersistentCounter(siteSlug: string | undefined, key: string) {
     });
   };
 
-  return { counts, increment };
+  const setRemoteCounts = (remote: Record<string, number>) => {
+    setCounts(remote);
+    try { window.localStorage.setItem(fullKey, JSON.stringify(remote)); } catch {}
+  };
+
+  return { counts, incrementLocal, setRemoteCounts };
 }
 
 const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>> = ({ data, siteSlug }) => {
   const poll = usePersistentCounter(siteSlug, `poll:${data.poll.id}`);
   const quiz = usePersistentCounter(siteSlug, `quiz:${data.quiz.id}`);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [selectedPoll, setSelectedPoll] = useState<string | null>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>(() => {
@@ -89,15 +96,86 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
   });
   const [suggestionInput, setSuggestionInput] = useState('');
 
+  useEffect(() => {
+    let mounted = true;
+    if (!siteSlug) return;
+
+    const sync = async () => {
+      setIsSyncing(true);
+      try {
+        const [pollRes, quizRes, suggestionsRes] = await Promise.all([
+          supabase
+            .from('interactive_votes')
+            .select('option_id')
+            .eq('site_slug', siteSlug)
+            .eq('widget_kind', 'poll')
+            .eq('widget_id', data.poll.id),
+          supabase
+            .from('interactive_votes')
+            .select('option_id')
+            .eq('site_slug', siteSlug)
+            .eq('widget_kind', 'quiz')
+            .eq('widget_id', data.quiz.id),
+          supabase
+            .from('interactive_suggestions')
+            .select('suggestion_text')
+            .eq('site_slug', siteSlug)
+            .eq('prompt_key', data.suggestionPrompt)
+            .order('created_at', { ascending: false })
+            .limit(20),
+        ]);
+
+        if (!mounted) return;
+
+        if (!pollRes.error) {
+          const counts = (pollRes.data ?? []).reduce<Record<string, number>>((acc, row) => {
+            const id = String((row as { option_id?: string }).option_id || '');
+            if (!id) return acc;
+            acc[id] = (acc[id] || 0) + 1;
+            return acc;
+          }, {});
+          poll.setRemoteCounts(counts);
+        }
+
+        if (!quizRes.error) {
+          const counts = (quizRes.data ?? []).reduce<Record<string, number>>((acc, row) => {
+            const id = String((row as { option_id?: string }).option_id || '');
+            if (!id) return acc;
+            acc[id] = (acc[id] || 0) + 1;
+            return acc;
+          }, {});
+          quiz.setRemoteCounts(counts);
+        }
+
+        if (!suggestionsRes.error) {
+          setSuggestions((suggestionsRes.data ?? []).map((row) => String((row as { suggestion_text?: string }).suggestion_text || '')).filter(Boolean));
+        }
+      } finally {
+        if (mounted) setIsSyncing(false);
+      }
+    };
+
+    void sync();
+    return () => { mounted = false; };
+  }, [siteSlug, data.poll.id, data.quiz.id, data.suggestionPrompt]);
+
   const pollTotal = useMemo(() => Object.values(poll.counts).reduce((a, b) => a + b, 0), [poll.counts]);
 
-  const submitSuggestion = () => {
+  const submitSuggestion = async () => {
     const value = suggestionInput.trim();
     if (!value) return;
     const next = [value, ...suggestions].slice(0, 20);
     setSuggestions(next);
     setSuggestionInput('');
     try { window.localStorage.setItem(storageKey(siteSlug, 'suggestions'), JSON.stringify(next)); } catch {}
+
+    if (siteSlug) {
+      await supabase.from('interactive_suggestions').insert({
+        site_slug: siteSlug,
+        prompt_key: data.suggestionPrompt,
+        suggestion_text: value,
+      });
+    }
   };
 
   return (
@@ -107,6 +185,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
           <p className="text-xs uppercase tracking-[0.28em] text-primary font-medium mb-3">{data.eyebrow}</p>
           <h2 className="text-4xl font-light text-text-primary">{data.title}</h2>
           <p className="mt-3 text-text-secondary">{data.subtitle}</p>
+          {isSyncing && <p className="mt-2 text-[11px] text-text-tertiary">Syncing latest guest responses…</p>}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -120,9 +199,17 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                 return (
                   <button
                     key={opt.id}
-                    onClick={() => {
+                    onClick={async () => {
                       setSelectedPoll(opt.id);
-                      poll.increment(opt.id);
+                      poll.incrementLocal(opt.id);
+                      if (siteSlug) {
+                        await supabase.from('interactive_votes').insert({
+                          site_slug: siteSlug,
+                          widget_kind: 'poll',
+                          widget_id: data.poll.id,
+                          option_id: opt.id,
+                        });
+                      }
                     }}
                     className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${selectedPoll === opt.id ? 'border-primary bg-primary/10' : 'border-border hover:bg-surface-subtle'}`}
                   >
@@ -143,9 +230,17 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
               {data.quiz.options.map((opt) => (
                 <button
                   key={opt.id}
-                  onClick={() => {
+                  onClick={async () => {
                     setSelectedQuiz(opt.id);
-                    quiz.increment(opt.id);
+                    quiz.incrementLocal(opt.id);
+                    if (siteSlug) {
+                      await supabase.from('interactive_votes').insert({
+                        site_slug: siteSlug,
+                        widget_kind: 'quiz',
+                        widget_id: data.quiz.id,
+                        option_id: opt.id,
+                      });
+                    }
                   }}
                   className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${selectedQuiz === opt.id ? 'border-primary bg-primary/10' : 'border-border hover:bg-surface-subtle'}`}
                 >
