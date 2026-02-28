@@ -17,7 +17,8 @@
     "test:coverage": "vitest run --coverage",
     "smoke:web": "bash scripts/smoke-sites.sh",
     "smoke:rsvp": "node scripts/rsvp_smoke.js",
-    "smoke:rsvp:strict": "node scripts/rsvp_smoke.js --strict"
+    "smoke:rsvp:strict": "node scripts/rsvp_smoke.js --strict",
+    "hardpass:rsvp": "npm test && npm run build && npm run smoke:rsvp:strict"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
