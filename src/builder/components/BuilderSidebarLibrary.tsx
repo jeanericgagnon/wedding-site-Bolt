@@ -503,6 +503,18 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                   );
                 })}
               </div>
+
+              <button
+                onClick={() => {
+                  const contactManifest = getSectionManifest('contact');
+                  const faqManifest = getSectionManifest('faq');
+                  if (contactManifest) addSection(contactManifest.type, 'interactiveHub');
+                  if (faqManifest) addSection(faqManifest.type, faqManifest.defaultVariant);
+                }}
+                className="mt-2 w-full rounded border border-rose-300 bg-white px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+              >
+                Add Interactive + FAQ
+              </button>
             </div>
 
             <div className="flex items-center gap-2 px-1 mb-3">
