@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link2, Loader2, X, ImageOff, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { Button } from '../../../components/ui';
 import { fetchUrlPreview, findDuplicateItem } from './registryService';
@@ -74,7 +74,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     setDraft(prev => ({ ...prev, [key]: value }));
   }
 
-  async function doFetch(urlToFetch: string, forceRefresh = false) {
+  const doFetch = useCallback(async (urlToFetch: string, forceRefresh = false) => {
     const normalized = normalizeUrl(urlToFetch.trim());
     if (!isValidUrl(normalized)) {
       setFetchError('Please enter a valid URL (e.g. https://amazon.com/product)');
@@ -130,7 +130,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     } finally {
       setFetching(false);
     }
-  }
+  }, [existingItems, initial?.id]);
 
   async function handleFetch() {
     if (!urlInput.trim()) return;
@@ -142,6 +142,33 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     if (!urlToUse) return;
     await doFetch(urlToUse, true);
   }
+
+  useEffect(() => {
+    if (draft.item_type === 'cash_fund') return;
+
+    const normalized = normalizeUrl(urlInput.trim());
+    if (!isValidUrl(normalized)) return;
+
+    if (lastAutoFetchedUrlRef.current === normalized) return;
+
+    if (autoFetchTimerRef.current) {
+      window.clearTimeout(autoFetchTimerRef.current);
+    }
+
+    autoFetchTimerRef.current = window.setTimeout(() => {
+      void (async () => {
+        await doFetch(normalized);
+        lastAutoFetchedUrlRef.current = normalized;
+      })();
+    }, 700);
+
+    return () => {
+      if (autoFetchTimerRef.current) {
+        window.clearTimeout(autoFetchTimerRef.current);
+        autoFetchTimerRef.current = null;
+      }
+    };
+  }, [urlInput, draft.item_type, doFetch]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
