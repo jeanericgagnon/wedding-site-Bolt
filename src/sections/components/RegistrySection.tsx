@@ -148,7 +148,7 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
     const received = item.fund_received_amount ?? 0;
     const pct = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
     return (
-      <div className="bg-surface rounded-2xl border border-border p-4 flex flex-col gap-3">
+      <div className="bg-surface rounded-2xl border border-border p-4 md:p-5 flex flex-col gap-3 shadow-sm">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-medium text-text-primary text-sm line-clamp-2">{item.item_name}</h3>
           <span className="text-[10px] uppercase px-2 py-1 rounded border border-primary/30 text-primary bg-primary/10">Cash Fund</span>
@@ -167,9 +167,9 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          {item.fund_venmo_url && <a href={item.fund_venmo_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">Venmo</a>}
-          {item.fund_paypal_url && <a href={item.fund_paypal_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">PayPal</a>}
-          {item.fund_custom_url && <a href={item.fund_custom_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary">{item.fund_custom_label || 'Contribute'}</a>}
+          {item.fund_venmo_url && <a href={item.fund_venmo_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">Venmo</a>}
+          {item.fund_paypal_url && <a href={item.fund_paypal_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">PayPal</a>}
+          {item.fund_custom_url && <a href={item.fund_custom_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">{item.fund_custom_label || 'Contribute'}</a>}
           {item.fund_zelle_handle && (
             <button
               onClick={async () => {
@@ -179,7 +179,7 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
                   setTimeout(() => setCopiedZelle(false), 1600);
                 } catch {}
               }}
-              className="inline-flex items-center px-3 py-1.5 text-xs border border-border rounded-xl hover:border-primary"
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors"
               title={`Copy Zelle: ${item.fund_zelle_handle}`}
             >
               {copiedZelle ? 'Copied ✓' : `Zelle: ${item.fund_zelle_handle}`}
@@ -216,14 +216,14 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
         )}
       </div>
 
-      <div className="p-4 flex flex-col gap-2 flex-1">
+      <div className="p-4 md:p-5 flex flex-col gap-2.5 flex-1">
         <div className="flex-1">
           <h3 className="font-medium text-text-primary leading-snug line-clamp-2 text-sm">{item.item_name}</h3>
           {merchant && <p className="text-xs text-text-tertiary mt-0.5">{merchant}</p>}
         </div>
 
         {displayPrice && (
-          <p className="text-base font-bold text-primary">{displayPrice}</p>
+          <p className="text-base font-semibold tracking-tight text-primary">{displayPrice}</p>
         )}
 
         {item.notes && (
@@ -252,7 +252,7 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-primary text-text-inverse text-xs font-medium rounded-xl hover:bg-primary-hover transition-colors"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
-              I'll buy this
+              Mark as purchasing
             </button>
           )}
 
@@ -262,7 +262,7 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center w-9 h-9 border border-border rounded-xl hover:border-primary/40 text-text-tertiary hover:text-primary transition-colors flex-shrink-0"
-              title="View product"
+              title="Open registry item"
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
@@ -303,11 +303,11 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
       <div className="text-center mb-10">
         {settings.showTitle !== false && (
           <>
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Gift Registry</p>
-            <h2 className="text-4xl font-light text-text-primary">{settings.title || 'Registry'}</h2>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Gift Registry</p>
+            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
           </>
         )}
-        {notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto">{notes}</p>}
+        {notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{notes}</p>}
         <div className="w-10 h-px bg-primary mx-auto mt-6" />
       </div>
 
@@ -323,7 +323,7 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
           <p className="text-text-secondary">All items have been purchased. Thank you!</p>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
           {visibleItems.map(item => (
             <RegistryCard key={item.id} item={item} onPurchase={setPurchasingItem} />
           ))}
@@ -377,7 +377,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle !== false && (
-            <h2 className="text-4xl font-bold text-text-primary mb-8">{settings.title || 'Registry'}</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{settings.title || 'Registry'}</h2>
           )}
           <p className="text-text-secondary">Registry links and gift details will appear here once added</p>
         </div>
@@ -389,9 +389,9 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
     <section className="py-16 px-4 bg-surface">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
-          <h2 className="text-4xl font-bold text-text-primary text-center mb-8">{settings.title || 'Registry'}</h2>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-8">{settings.title || 'Registry'}</h2>
         )}
-        {registry.notes && <p className="text-text-secondary text-center mb-8">{registry.notes}</p>}
+        {registry.notes && <p className="text-text-secondary text-center mb-8 leading-relaxed">{registry.notes}</p>}
         <div className="grid md:grid-cols-2 gap-4">
           {linksToShow.map(link => (
             <a
@@ -399,9 +399,9 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between p-4 bg-surface-subtle rounded-lg hover:bg-primary/10 transition-colors"
+              className="flex items-center justify-between p-4 bg-surface-subtle rounded-xl border border-border/60 hover:border-primary/30 hover:bg-primary/5 transition-colors"
             >
-              <span className="font-medium text-text-primary">{link.label || link.url}</span>
+              <span className="font-medium tracking-tight text-text-primary">{link.label || link.url}</span>
               <ExternalLink className="w-5 h-5 text-primary" />
             </a>
           ))}
@@ -460,9 +460,9 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Gift registry</p>
-            <h2 className="text-4xl font-light text-text-primary">{settings.title || 'Registry'}</h2>
-            {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto">{registry.notes}</p>}
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Gift registry</p>
+            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
+            {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
@@ -473,14 +473,14 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col items-center p-8 bg-surface rounded-2xl border border-border hover:border-primary/40 hover:shadow-md transition-all duration-200"
+              className="group flex flex-col items-center p-8 bg-surface rounded-2xl border border-border hover:border-primary/40 hover:shadow-md transition-all duration-200 shadow-sm"
             >
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                 <Gift className="w-6 h-6 text-primary" />
               </div>
               <span className="font-medium text-text-primary text-center mb-3">{link.label || link.url}</span>
               <span className="inline-flex items-center gap-1.5 text-sm text-primary font-medium">
-                View registry
+                Open registry
                 <ExternalLink className="w-3.5 h-3.5" />
               </span>
             </a>
@@ -519,16 +519,16 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
           <div className="text-center mb-10">
             {settings.showTitle !== false && (
               <>
-                <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Gift registry</p>
-                <h2 className="text-4xl font-light text-text-primary">{settings.title || 'Registry'}</h2>
+                <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Gift registry</p>
+                <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
               </>
             )}
-            {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto">{registry.notes}</p>}
+            {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
           </div>
 
           <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8 text-center">
-            <h3 className="text-xl font-semibold text-text-primary">Honeymoon & Experiences Fund</h3>
-            <p className="text-sm text-text-secondary mt-2 max-w-2xl mx-auto">
+            <h3 className="text-xl font-semibold tracking-tight text-text-primary">Honeymoon & Experiences Fund</h3>
+            <p className="text-sm text-text-secondary leading-relaxed mt-2 max-w-2xl mx-auto">
               Your love and support means everything. If you prefer, you can contribute toward shared memories and future adventures.
             </p>
           </div>
@@ -558,9 +558,9 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">Gift registry</p>
-            <h2 className="text-4xl font-light text-text-primary">{settings.title || 'Registry'}</h2>
-            {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto">{registry.notes}</p>}
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Gift registry</p>
+            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
+            {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
           </div>
         )}
 
@@ -568,13 +568,13 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
           href={featured.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block rounded-2xl border border-primary/25 bg-primary/5 p-7 md:p-9 mb-6 hover:border-primary/40 transition-colors"
+          className="block rounded-2xl border border-primary/25 bg-primary/5 p-7 md:p-9 mb-6 hover:border-primary/40 transition-colors shadow-sm"
         >
           <p className="text-xs uppercase tracking-[0.24em] text-primary font-medium mb-2">Featured fund</p>
-          <h3 className="text-2xl md:text-3xl font-semibold text-text-primary">{featured.label || featured.url}</h3>
-          <p className="text-text-secondary mt-3 max-w-2xl">Contribute to our honeymoon and first-year adventures.</p>
+          <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary">{featured.label || featured.url}</h3>
+          <p className="text-text-secondary mt-3 max-w-2xl leading-relaxed">Contribute to our honeymoon and first-year adventures.</p>
           <span className="inline-flex items-center gap-2 mt-5 text-primary font-medium">
-            Contribute now
+            Contribute to this fund
             <ExternalLink className="w-4 h-4" />
           </span>
         </a>
@@ -587,9 +587,9 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 bg-surface-subtle rounded-xl border border-border hover:border-primary/30 transition-colors"
+                className="flex items-center justify-between p-4 bg-surface-subtle rounded-xl border border-border hover:border-primary/30 transition-colors shadow-sm"
               >
-                <span className="font-medium text-text-primary">{link.label || link.url}</span>
+                <span className="font-medium tracking-tight text-text-primary">{link.label || link.url}</span>
                 <ExternalLink className="w-4 h-4 text-primary" />
               </a>
             ))}
