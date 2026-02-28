@@ -117,7 +117,7 @@ function buildPreviewSettings(sectionType: BuilderSectionType, variantId: string
 }
 
 type PreviewPhotoSet = 'romantic' | 'editorial' | 'coastal';
-type PreviewSectionFamily = Extract<BuilderSectionType, 'hero' | 'story' | 'gallery' | 'rsvp' | 'venue' | 'schedule' | 'travel' | 'registry' | 'contact' | 'footer-cta'>;
+type PreviewSectionFamily = Extract<BuilderSectionType, 'hero' | 'story' | 'gallery' | 'rsvp' | 'venue' | 'schedule' | 'travel' | 'registry' | 'faq' | 'contact' | 'footer-cta'>;
 
 interface PreviewPhotoRecipe {
   hero: string;
