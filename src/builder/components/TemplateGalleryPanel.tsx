@@ -489,6 +489,8 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
   const [confirmTemplate, setConfirmTemplate] = useState<BuilderTemplateDefinition | null>(null);
   const [detailsTemplate, setDetailsTemplate] = useState<BuilderTemplateDefinition | null>(null);
+  const [compareTemplateIds, setCompareTemplateIds] = useState<string[]>([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
   const [applyResult, setApplyResult] = useState<ApplyResult | null>(null);
 
   const templates = getAllTemplatePacks();
@@ -524,6 +526,18 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
   const currentTemplateId = state.project?.templateId;
   const activePage = selectActivePage(state);
+
+  const compareTemplates = compareTemplateIds
+    .map((id) => templates.find((t) => t.id === id))
+    .filter((t): t is BuilderTemplateDefinition => Boolean(t));
+
+  const toggleCompareTemplate = useCallback((templateId: string) => {
+    setCompareTemplateIds((prev) => {
+      if (prev.includes(templateId)) return prev.filter((id) => id !== templateId);
+      if (prev.length >= 2) return [prev[1], templateId];
+      return [...prev, templateId];
+    });
+  }, []);
 
   const handleApplyTemplate = useCallback(async (template: BuilderTemplateDefinition) => {
     if (!activePage) return;
@@ -707,6 +721,32 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             </div>
           </div>
 
+          <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 flex items-center justify-between gap-3">
+            <div className="text-xs text-sky-900">
+              {compareTemplates.length === 0 && 'Select up to 2 templates to compare side-by-side.'}
+              {compareTemplates.length === 1 && `Selected for compare: ${compareTemplates[0].displayName}. Pick one more.`}
+              {compareTemplates.length === 2 && `Ready to compare: ${compareTemplates[0].displayName} vs ${compareTemplates[1].displayName}.`}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCompareTemplateIds([])}
+                disabled={compareTemplates.length === 0}
+                className="rounded border border-sky-200 bg-white px-2 py-1 text-xs font-medium text-sky-800 hover:bg-sky-100 disabled:opacity-40"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCompareModal(true)}
+                disabled={compareTemplates.length !== 2}
+                className="rounded border border-sky-300 bg-sky-600 px-2 py-1 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-40"
+              >
+                Compare
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-5">
             {filtered.map(template => (
               <TemplateCard
@@ -714,8 +754,10 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 template={template}
                 isCurrent={template.id === currentTemplateId}
                 isApplying={applyingTemplateId === template.id}
+                isCompared={compareTemplateIds.includes(template.id)}
                 onApply={() => setConfirmTemplate(template)}
                 onDetails={() => setDetailsTemplate(template)}
+                onCompare={() => toggleCompareTemplate(template.id)}
               />
             ))}
           </div>
@@ -726,6 +768,22 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           )}
         </div>
       </div>
+
+      {showCompareModal && compareTemplates.length === 2 && (
+        <TemplateCompareModal
+          leftTemplate={compareTemplates[0]}
+          rightTemplate={compareTemplates[1]}
+          onApplyLeft={() => {
+            setShowCompareModal(false);
+            setConfirmTemplate(compareTemplates[0]);
+          }}
+          onApplyRight={() => {
+            setShowCompareModal(false);
+            setConfirmTemplate(compareTemplates[1]);
+          }}
+          onClose={() => setShowCompareModal(false)}
+        />
+      )}
 
       {detailsTemplate && (
         <TemplateDetailsModal
@@ -754,11 +812,13 @@ interface TemplateCardProps {
   template: BuilderTemplateDefinition;
   isCurrent: boolean;
   isApplying: boolean;
+  isCompared: boolean;
   onApply: () => void;
   onDetails: () => void;
+  onCompare: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isApplying, onApply, onDetails }) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isApplying, isCompared, onApply, onDetails, onCompare }) => {
   const [hovered, setHovered] = useState(false);
   const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
   const fontLabel = FONT_LABELS[template.suggestedFonts.heading] || template.suggestedFonts.heading;
@@ -768,6 +828,8 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
       className={`group rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
         isCurrent
           ? 'border-rose-400 shadow-lg shadow-rose-100/60'
+          : isCompared
+          ? 'border-sky-400 shadow-lg shadow-sky-100/70'
           : hovered
           ? 'border-gray-300 shadow-lg shadow-gray-100/80'
           : 'border-gray-100 shadow-sm'
@@ -834,12 +896,22 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
           <div className="text-[10px] text-gray-400 italic">{fontLabel}</div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-2">
           <button
             onClick={e => { e.stopPropagation(); onDetails(); }}
             className="w-full py-2 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50"
           >
-            See details
+            Details
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onCompare(); }}
+            className={`w-full py-2 rounded-xl text-xs font-semibold border transition-colors ${
+              isCompared
+                ? 'border-sky-300 bg-sky-50 text-sky-700'
+                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {isCompared ? 'Compared' : 'Compare'}
           </button>
           <button
             onClick={e => { e.stopPropagation(); onApply(); }}
@@ -863,6 +935,60 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
           ) : 'Apply Template'}
         </button>
       </div>
+      </div>
+    </div>
+  );
+};
+
+interface TemplateCompareModalProps {
+  leftTemplate: BuilderTemplateDefinition;
+  rightTemplate: BuilderTemplateDefinition;
+  onApplyLeft: () => void;
+  onApplyRight: () => void;
+  onClose: () => void;
+}
+
+const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplate, rightTemplate, onApplyLeft, onApplyRight, onClose }) => {
+  const leftDots = THEME_DOTS[leftTemplate.id] || ['#999', '#ccc', '#fff'];
+  const rightDots = THEME_DOTS[rightTemplate.id] || ['#999', '#ccc', '#fff'];
+
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
+      <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-5xl w-full mx-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Compare templates</h3>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            { template: leftTemplate, dots: leftDots, onApply: onApplyLeft },
+            { template: rightTemplate, dots: rightDots, onApply: onApplyRight },
+          ].map(({ template, dots, onApply }) => (
+            <div key={template.id} className="rounded-xl border border-gray-200 p-3">
+              <div className="aspect-[4/3] rounded-lg border border-gray-100 overflow-hidden bg-gray-50 mb-3">
+                <TemplatePreview templateId={template.id} />
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900">{template.displayName}</h4>
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{template.description}</p>
+                </div>
+                <div className="flex items-center gap-1 mt-0.5">
+                  {dots.map((c, i) => <div key={i} className="w-2.5 h-2.5 rounded-full border border-gray-200" style={{ background: c }} />)}
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {template.moodTags.slice(0, 3).map((tag) => (
+                  <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">{tag}</span>
+                ))}
+              </div>
+              <button onClick={onApply} className="mt-3 w-full py-2 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800">
+                Apply {template.displayName}
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
