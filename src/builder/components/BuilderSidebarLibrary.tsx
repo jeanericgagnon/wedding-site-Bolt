@@ -488,11 +488,11 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
         </div>
       </div>
 
-      <div className="px-3 pt-3 pb-2.5">
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Choose a style</p>
-        <p className="text-[11px] text-gray-500 mt-1">Each style has a different layout feel. Pick one to add this section.</p>
+      <div className="px-3.5 pt-3 pb-3">
+        <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-[0.14em]">Choose a style</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-gray-500">Each style has a different layout feel. Pick one to add this section.</p>
         <div className="mt-2.5 flex items-center gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Photo mood</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Photo mood</span>
           <div className="ml-auto flex items-center gap-1">
             {PREVIEW_PHOTO_SET_OPTIONS.map((opt) => (
               <button
@@ -512,8 +512,8 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-3">
-        <div className="grid grid-cols-1 gap-2.5">
+      <div className="flex-1 overflow-y-auto px-3.5 pb-3.5">
+        <div className="grid grid-cols-1 gap-3">
           {manifest.variantMeta.map((variant: VariantMeta) => (
             <VariantCard
               key={variant.id}
@@ -556,10 +556,10 @@ const VariantCard: React.FC<VariantCardProps> = ({
       onMouseEnter={() => onHover(variant.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onSelect(variant.id)}
-      className={`w-full text-left rounded-xl border transition-all duration-150 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 ${
+      className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 ${
         isHovered
-          ? 'border-rose-400 shadow-md -translate-y-[1px]'
-          : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-sm'
+          ? 'border-rose-300 shadow-[0_10px_22px_-14px_rgba(190,24,93,0.45)] -translate-y-[1px]'
+          : 'border-gray-200 hover:border-rose-200 hover:shadow-[0_8px_18px_-14px_rgba(15,23,42,0.35)]'
       }`}
       title={variant.description}
     >
@@ -570,17 +570,17 @@ const VariantCard: React.FC<VariantCardProps> = ({
         weddingData={previewWeddingData}
       />
 
-      <div className="px-3 py-2.5">
-        <div className="flex items-start justify-between gap-2">
+      <div className="px-3.5 py-3">
+        <div className="flex items-start justify-between gap-2.5">
           <div className="min-w-0 flex-1">
-            <span className="text-[12px] font-semibold text-gray-800 block truncate">{variant.label}</span>
-            <p className="text-[10px] text-gray-500 leading-relaxed line-clamp-2 mt-0.5">{variant.description}</p>
+            <span className="block truncate text-[13px] font-semibold tracking-tight text-gray-800">{variant.label}</span>
+            <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-gray-500">{variant.description}</p>
             {isDefault && (
-              <span className="inline-block mt-1 text-[9px] text-gray-500 font-medium bg-gray-100 px-1.5 py-0.5 rounded">Default</span>
+              <span className="mt-1.5 inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-700">Default</span>
             )}
           </div>
-          <span className={`flex-shrink-0 transition-opacity duration-150 mt-0.5 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-            <Plus size={12} className="text-rose-500" />
+          <span className={`mt-0.5 flex-shrink-0 transform transition-all duration-200 ${isHovered ? 'translate-x-0 opacity-100' : '-translate-x-1 opacity-0'}`}>
+            <Plus size={13} className="text-rose-500" />
           </span>
         </div>
       </div>
@@ -627,11 +627,16 @@ const BuilderVariantCardPreview: React.FC<{
 
   return (
     <VariantPreviewErrorBoundary fallback={fallback}>
-      <div className="pointer-events-none">
+      <div className="pointer-events-none relative overflow-hidden bg-white">
         <div className="border-b border-gray-100">
           <SectionTypePreview sectionType={sectionType} compact />
         </div>
         <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} weddingData={weddingData} />
+        <div
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-b from-white/0 via-white/0 to-white/15 transition-opacity duration-300 ${
+            isHovered ? 'opacity-100' : 'opacity-70'
+          }`}
+        />
       </div>
     </VariantPreviewErrorBoundary>
   );
@@ -650,8 +655,10 @@ const LiveVariantPreview: React.FC<{ sectionType: BuilderSectionType; variantId:
 
   return (
     <div className="relative h-20 overflow-hidden bg-white" style={{ contain: 'layout paint size' }}>
-      <div className="absolute inset-0 origin-top-left scale-[0.26]" style={{ width: '384%', minHeight: '260px' }}>
-        <SectionRenderer section={section} weddingData={weddingData} isPreview siteSlug="preview" />
+      <div className="absolute inset-0 origin-top-left scale-[0.26] transition-transform duration-500 ease-out group-hover:scale-[0.268]" style={{ width: '384%', minHeight: '260px' }}>
+        <div className="h-full w-full saturate-[1.02] contrast-[1.01] transition-[filter] duration-500 ease-out group-hover:saturate-[1.05]">
+          <SectionRenderer section={section} weddingData={weddingData} isPreview siteSlug="preview" />
+        </div>
       </div>
       <div className="absolute inset-0 border-t border-gray-100/80" />
     </div>
