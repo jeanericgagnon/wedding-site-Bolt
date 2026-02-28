@@ -43,26 +43,26 @@ export const defaultVenueCardData: VenueCardData = {
 
 const VenueCard: React.FC<SectionComponentProps<VenueCardData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="venue">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="venue">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-[11px] uppercase tracking-[0.32em] text-stone-400 font-semibold mb-5">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
         </div>
 
         <div className={`grid gap-8 ${data.venues.length === 1 ? 'max-w-2xl mx-auto' : 'grid-cols-1 md:grid-cols-2'}`}>
           {data.venues.map(venue => (
-            <div key={venue.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-100 hover:shadow-md transition-shadow">
+            <div key={venue.id} className="bg-white rounded-[1.5rem] overflow-hidden shadow-sm border border-stone-100/80 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               {venue.image && (
                 <div className="aspect-[16/9] overflow-hidden">
                   <img src={venue.image} alt={venue.name} className="w-full h-full object-cover" />
                 </div>
               )}
-              <div className="p-6 md:p-8 space-y-4">
+              <div className="p-7 md:p-9 space-y-5">
                 {venue.role && (
                   <p className="text-xs uppercase tracking-[0.2em] text-rose-500 font-medium">{venue.role}</p>
                 )}

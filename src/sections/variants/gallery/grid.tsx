@@ -145,17 +145,17 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
   }, [lightboxIndex]);
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="gallery">
+    <section className="py-28 md:py-36 bg-white" id="gallery">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
         </div>
 
         {data.images.length > 0 ? (
-          <div className={`grid ${colClass} gap-3`}>
+          <div className={`grid ${colClass} gap-3 md:gap-4`}>
             {data.images.map((image, idx) => (
               <AnimatedImage
                 key={image.id}

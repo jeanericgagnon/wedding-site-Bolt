@@ -67,7 +67,7 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
   ].filter(item => item.content);
 
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="travel">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="travel">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
@@ -75,13 +75,13 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
         </div>
 
         {travelItems.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
             {travelItems.map(({ icon: Icon, label, content }) => (
-              <div key={label} className="bg-white rounded-2xl p-6 border border-stone-100 shadow-sm">
+              <div key={label} className="bg-white rounded-[1.5rem] p-7 border border-stone-100 shadow-sm hover:shadow-lg transition-shadow">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center">
                     <Icon size={15} className="text-stone-500" />

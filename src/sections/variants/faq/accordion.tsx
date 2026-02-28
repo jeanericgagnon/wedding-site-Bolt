@@ -61,8 +61,8 @@ const FaqAccordion: React.FC<SectionComponentProps<FaqAccordionData>> = ({ data 
   const toggle = (id: string) => setOpenId(prev => (prev === id ? null : id));
 
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="faq">
-      <div className="max-w-3xl mx-auto px-6 md:px-12">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="faq">
+      <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
@@ -75,7 +75,7 @@ const FaqAccordion: React.FC<SectionComponentProps<FaqAccordionData>> = ({ data 
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {data.items.map(item => {
             const isOpen = openId === item.id;
             return (
@@ -87,7 +87,7 @@ const FaqAccordion: React.FC<SectionComponentProps<FaqAccordionData>> = ({ data 
               >
                 <button
                   onClick={() => toggle(item.id)}
-                  className="flex items-center justify-between w-full text-left px-6 py-5 group"
+                  className="flex items-center justify-between w-full text-left px-7 py-5.5 group"
                   aria-expanded={isOpen}
                 >
                   <span className="font-medium text-stone-900 text-base leading-snug pr-4 group-hover:text-stone-700 transition-colors">

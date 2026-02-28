@@ -38,26 +38,26 @@ export const defaultScheduleTimelineData: ScheduleTimelineData = {
 
 const ScheduleTimeline: React.FC<SectionComponentProps<ScheduleTimelineData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-white" id="schedule">
-      <div className="max-w-3xl mx-auto px-6 md:px-12">
+    <section className="py-28 md:py-36 bg-white" id="schedule">
+      <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-3">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3 tracking-tight">{data.headline}</h2>
           {data.showDate && data.date && (
             <p className="text-stone-400 text-base font-light">{data.date}</p>
           )}
         </div>
 
         <div className="relative">
-          <div className="absolute left-[3.25rem] top-3 bottom-3 w-px bg-stone-100" aria-hidden="true" />
+          <div className="absolute left-[3.6rem] top-3 bottom-3 w-px bg-gradient-to-b from-stone-200 via-stone-100 to-stone-200" aria-hidden="true" />
 
           <div className="space-y-0">
             {data.events.map((event, idx) => (
-              <div key={event.id} className="flex gap-8 group">
+              <div key={event.id} className="flex gap-8 md:gap-10 group">
                 <div className="flex flex-col items-end w-24 flex-shrink-0 pt-1">
                   <span className="text-sm font-medium text-stone-500 tabular-nums leading-none whitespace-nowrap">
                     {event.time}
@@ -72,7 +72,7 @@ const ScheduleTimeline: React.FC<SectionComponentProps<ScheduleTimelineData>> = 
                 </div>
 
                 <div className="pb-10 flex-1 min-w-0">
-                  <h3 className="text-base font-medium text-stone-900 leading-tight">{event.label}</h3>
+                  <h3 className="text-lg font-medium text-stone-900 leading-tight">{event.label}</h3>
                   {event.description && (
                     <p className="text-sm text-stone-500 font-light mt-1 leading-relaxed">{event.description}</p>
                   )}

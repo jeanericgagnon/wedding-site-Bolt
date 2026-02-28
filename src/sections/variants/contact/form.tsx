@@ -53,7 +53,7 @@ export const defaultContactFormData: ContactFormData = {
 
 const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="contact">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="contact">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
@@ -61,9 +61,9 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-3">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3 tracking-tight">{data.headline}</h2>
           {data.subheadline && (
-            <p className="text-stone-500 font-light text-lg">{data.subheadline}</p>
+            <p className="text-stone-500 font-light text-lg leading-relaxed">{data.subheadline}</p>
           )}
           {data.introText && (
             <p className="text-stone-400 text-sm max-w-xl mx-auto mt-2 leading-relaxed">{data.introText}</p>
@@ -73,7 +73,7 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
         {data.contacts.length > 0 && (
           <div className={`grid gap-5 ${data.contacts.length === 1 ? 'max-w-sm mx-auto' : 'grid-cols-1 md:grid-cols-2'}`}>
             {data.contacts.map(contact => (
-              <div key={contact.id} className="bg-white rounded-2xl p-6 border border-stone-100 shadow-sm">
+              <div key={contact.id} className="bg-white rounded-[1.5rem] p-7 border border-stone-100 shadow-sm hover:shadow-lg transition-shadow">
                 <div className="mb-4">
                   <h3 className="font-medium text-stone-900 text-base">{contact.name}</h3>
                   {contact.role && (

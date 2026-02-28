@@ -52,9 +52,9 @@ export const defaultDressCodeMoodBoardData: DressCodeMoodBoardData = {
 
 const DressCodeMoodBoard: React.FC<SectionComponentProps<DressCodeMoodBoardData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="dress-code">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="dress-code">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-20 items-start">
           <div className="space-y-8">
             <div>
               {data.eyebrow && (
@@ -62,8 +62,8 @@ const DressCodeMoodBoard: React.FC<SectionComponentProps<DressCodeMoodBoardData>
                   {data.eyebrow}
                 </p>
               )}
-              <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-3">{data.headline}</h2>
-              <div className="inline-flex items-center px-4 py-1.5 bg-stone-900 text-white text-sm font-medium rounded-full">
+              <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-4 tracking-tight">{data.headline}</h2>
+              <div className="inline-flex items-center px-5 py-2 bg-stone-900 text-white text-sm font-medium rounded-full shadow-md">
                 {data.dressCode}
               </div>
             </div>

@@ -103,7 +103,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
   if (status === 'success') {
     const message = attending === 'yes' ? data.confirmationMessage : data.declineMessage;
     return (
-      <section className="py-24 md:py-32 bg-white" id="rsvp">
+      <section className="py-28 md:py-36 bg-gradient-to-b from-white to-stone-50/40" id="rsvp">
         <div className="max-w-lg mx-auto px-6 text-center">
           <div className="w-16 h-16 rounded-full bg-green-50 border border-green-100 flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={28} className="text-green-500" />
@@ -116,15 +116,15 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
   }
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="rsvp">
-      <div className="max-w-xl mx-auto px-6 md:px-12">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-white to-stone-50/40" id="rsvp">
+      <div className="max-w-2xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.deadline && data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
               {data.eyebrow} <span className="text-stone-600">{data.deadline}</span>
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
         </div>
 
         {data.events.length > 1 && (
@@ -155,7 +155,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
             <p className="text-xs text-stone-400">Embedded RSVP is enabled for this section.</p>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-stone-100 rounded-[1.75rem] p-6 md:p-8 shadow-sm">
           <div>
             <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
               Full Name <span className="text-rose-400">*</span>

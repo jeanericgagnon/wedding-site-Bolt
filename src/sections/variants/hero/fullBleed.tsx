@@ -33,7 +33,7 @@ const HeroFullBleed: React.FC<SectionComponentProps<HeroFullBleedData>> = ({ dat
   const alignClass = data.textAlign === 'left' ? 'text-left items-start' : data.textAlign === 'right' ? 'text-right items-end' : 'text-center items-center';
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden" id="hero">
+    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden isolate" id="hero">
       {data.backgroundImage ? (
         <>
           <img
@@ -52,25 +52,25 @@ const HeroFullBleed: React.FC<SectionComponentProps<HeroFullBleedData>> = ({ dat
         <div className="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-700" aria-hidden="true" />
       )}
 
-      <div className={`relative z-10 flex flex-col ${alignClass} px-6 md:px-12 max-w-5xl mx-auto w-full py-24`}>
+      <div className={`relative z-10 flex flex-col ${alignClass} px-6 md:px-12 max-w-5xl mx-auto w-full py-28 md:py-32`}>
         {data.eyebrow && (
-          <p className="text-xs md:text-sm uppercase tracking-[0.3em] text-white/70 mb-6 font-light">
+          <p className="text-[11px] md:text-xs uppercase tracking-[0.38em] text-white/65 mb-7 font-medium">
             {data.eyebrow}
           </p>
         )}
 
         {data.showDivider && (
           <div className={`flex mb-8 ${data.textAlign === 'center' ? 'justify-center' : data.textAlign === 'right' ? 'justify-end' : ''}`}>
-            <div className="w-16 h-px bg-white/40" />
+            <div className="w-20 h-px bg-white/45" />
           </div>
         )}
 
-        <h1 className="text-6xl md:text-8xl lg:text-9xl font-light text-white tracking-tight leading-none mb-6">
+        <h1 className="text-5xl md:text-8xl lg:text-9xl font-light text-white tracking-[-0.03em] leading-[0.92] mb-7 drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
           {data.headline}
         </h1>
 
         {data.subheadline && (
-          <p className="text-base md:text-xl text-white/75 font-light tracking-wide mt-2 max-w-xl">
+          <p className="text-base md:text-xl text-white/80 font-light tracking-[0.02em] mt-1 max-w-2xl leading-relaxed">
             {data.subheadline}
           </p>
         )}
@@ -79,7 +79,7 @@ const HeroFullBleed: React.FC<SectionComponentProps<HeroFullBleedData>> = ({ dat
           <div className="mt-10">
             <a
               href={data.ctaHref}
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-stone-900 text-sm font-medium tracking-widest uppercase hover:bg-white/90 transition-all rounded-full"
+              className="inline-flex items-center gap-2 px-9 py-3.5 bg-white text-stone-900 text-sm font-semibold tracking-[0.18em] uppercase hover:bg-white/90 hover:-translate-y-0.5 transition-all rounded-full shadow-lg shadow-black/20"
             >
               {data.ctaLabel}
             </a>

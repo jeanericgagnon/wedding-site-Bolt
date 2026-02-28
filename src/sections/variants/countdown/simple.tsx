@@ -67,28 +67,28 @@ const CountdownSimple: React.FC<SectionComponentProps<CountdownSimpleData>> = ({
   ];
 
   return (
-    <section className={`py-20 md:py-28 ${bgClass}`} id="countdown">
-      <div className="max-w-4xl mx-auto px-6 text-center">
+    <section className={`py-24 md:py-32 ${bgClass}`} id="countdown">
+      <div className="max-w-5xl mx-auto px-6 text-center">
         {data.eyebrow && (
           <p className={`text-xs uppercase tracking-[0.25em] font-medium mb-4 ${mutedClass}`}>
             {data.eyebrow}
           </p>
         )}
         {data.headline && (
-          <h2 className={`text-3xl md:text-4xl font-light mb-12 ${textClass}`}>{data.headline}</h2>
+          <h2 className={`text-3xl md:text-5xl font-light mb-14 tracking-tight ${textClass}`}>{data.headline}</h2>
         )}
 
         {time.done ? (
           <p className={`text-3xl font-light ${textClass}`}>{data.messageAfter}</p>
         ) : (
-          <div className="flex items-start justify-center gap-4 md:gap-8">
+          <div className="flex items-start justify-center gap-4 md:gap-10">
             {units.map((unit, idx) => (
               <React.Fragment key={unit.label}>
                 {idx > 0 && (
                   <div className={`text-3xl md:text-5xl font-light mt-2 ${mutedClass}`}>:</div>
                 )}
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`text-5xl md:text-7xl font-light tabular-nums tracking-tight leading-none ${textClass}`}>
+                  <div className={`text-5xl md:text-7xl lg:text-8xl font-light tabular-nums tracking-[-0.03em] leading-none ${textClass}`}>
                     {String(unit.value).padStart(2, '0')}
                   </div>
                   <p className={`text-xs uppercase tracking-[0.2em] ${mutedClass}`}>{unit.label}</p>

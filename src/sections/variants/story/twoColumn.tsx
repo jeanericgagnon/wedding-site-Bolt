@@ -32,19 +32,19 @@ const StoryTwoColumn: React.FC<SectionComponentProps<StoryTwoColumnData>> = ({ d
   const paragraphs = data.body.split('\n\n').filter(Boolean);
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="story">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/40 to-white" id="story">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center ${data.imagePosition === 'left' ? 'md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1' : ''}`}>
-          <div className="space-y-8">
-            {data.showDivider && <div className="w-10 h-px bg-stone-300" />}
+          <div className="space-y-10">
+            {data.showDivider && <div className="w-14 h-px bg-stone-300" />}
 
             <div className="space-y-4">
               {data.eyebrow && (
-                <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium">
+                <p className="text-[11px] uppercase tracking-[0.32em] text-stone-400 font-semibold">
                   {data.eyebrow}
                 </p>
               )}
-              <h2 className="text-4xl md:text-5xl font-light text-stone-900 leading-tight">
+              <h2 className="text-4xl md:text-6xl font-light text-stone-900 leading-[1.04] tracking-tight">
                 {data.headline}
               </h2>
             </div>
@@ -52,12 +52,12 @@ const StoryTwoColumn: React.FC<SectionComponentProps<StoryTwoColumnData>> = ({ d
             <div className="space-y-5">
               {paragraphs.length > 0
                 ? paragraphs.map((p, i) => (
-                    <p key={i} className="text-stone-600 leading-[1.85] text-base md:text-lg font-light">
+                    <p key={i} className="text-stone-600 leading-[1.95] text-base md:text-lg font-light">
                       {p}
                     </p>
                   ))
                 : (
-                  <p className="text-stone-600 leading-[1.85] text-base md:text-lg font-light">{data.body}</p>
+                  <p className="text-stone-600 leading-[1.95] text-base md:text-lg font-light">{data.body}</p>
                 )
               }
             </div>
@@ -74,7 +74,7 @@ const StoryTwoColumn: React.FC<SectionComponentProps<StoryTwoColumnData>> = ({ d
 
           {data.image ? (
             <div className="relative">
-              <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl">
+              <div className="aspect-[3/4] rounded-[1.75rem] overflow-hidden shadow-[0_24px_70px_-30px_rgba(24,24,27,0.45)]">
                 <img
                   src={data.image}
                   alt={data.imageAlt}

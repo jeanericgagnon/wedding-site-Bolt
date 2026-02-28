@@ -70,13 +70,13 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
   const storeGroups = liveItems ? groupByStore(liveItems) : null;
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="registry">
+    <section className="py-28 md:py-36 bg-white" id="registry">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-4">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-4 tracking-tight">{data.headline}</h2>
           {data.message && (
             <p className="text-stone-500 text-base font-light leading-relaxed max-w-2xl mx-auto">{data.message}</p>
           )}
@@ -90,7 +90,7 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
                 href={group.url || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col p-6 bg-stone-50 border border-stone-100 rounded-2xl hover:border-stone-300 hover:bg-white hover:shadow-sm transition-all"
+                className="group flex flex-col p-7 bg-stone-50/70 border border-stone-100 rounded-[1.5rem] hover:border-stone-300 hover:bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center shadow-sm group-hover:shadow transition-shadow">
@@ -119,7 +119,7 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
                 href={link.url || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col p-6 bg-stone-50 border border-stone-100 rounded-2xl hover:border-stone-300 hover:bg-white hover:shadow-sm transition-all"
+                className="group flex flex-col p-7 bg-stone-50/70 border border-stone-100 rounded-[1.5rem] hover:border-stone-300 hover:bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center shadow-sm group-hover:shadow transition-shadow">
@@ -146,7 +146,7 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
             href={data.cashFundUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-2xl hover:bg-rose-100 hover:border-rose-200 transition-all"
+            className="group flex items-center justify-between p-7 bg-rose-50 border border-rose-100 rounded-[1.5rem] hover:bg-rose-100 hover:border-rose-200 hover:shadow-sm transition-all"
           >
             <div className="min-w-0">
               <p className="font-medium text-rose-900 text-base">{data.cashFundLabel}</p>
