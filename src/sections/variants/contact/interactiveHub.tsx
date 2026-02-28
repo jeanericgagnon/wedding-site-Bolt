@@ -12,6 +12,9 @@ const PollQuestionSchema = z.object({
   id: z.string(),
   prompt: z.string(),
   options: z.array(PollOptionSchema),
+  mode: z.enum(['single', 'multi']).default('single'),
+  minSelections: z.number().min(1).max(10).default(1),
+  maxSelections: z.number().min(1).max(10).default(3),
 });
 
 const QuizQuestionSchema = z.object({
@@ -33,6 +36,9 @@ export const contactInteractiveHubSchema = z.object({
       { id: 'opt2', label: 'Eric picks Kara\'s' },
       { id: 'opt3', label: 'Kara picks Eric\'s' },
     ],
+    mode: 'single',
+    minSelections: 1,
+    maxSelections: 3,
   }),
   quiz: QuizQuestionSchema.default({
     id: 'quiz-cry',
@@ -85,6 +91,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
   const quiz = usePersistentCounter(siteSlug, `quiz:${data.quiz.id}`);
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedPoll, setSelectedPoll] = useState<string | null>(null);
+  const [selectedPollMulti, setSelectedPollMulti] = useState<string[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>(() => {
     try {
@@ -196,31 +203,78 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
               {data.poll.options.map((opt) => {
                 const count = poll.counts[opt.id] || 0;
                 const pct = pollTotal ? Math.round((count / pollTotal) * 100) : 0;
+                const isSelected = data.poll.mode === 'multi'
+                  ? selectedPollMulti.includes(opt.id)
+                  : selectedPoll === opt.id;
                 return (
                   <button
                     key={opt.id}
-                    onClick={async () => {
-                      setSelectedPoll(opt.id);
-                      poll.incrementLocal(opt.id);
-                      if (siteSlug) {
-                        await supabase.from('interactive_votes').insert({
-                          site_slug: siteSlug,
-                          widget_kind: 'poll',
-                          widget_id: data.poll.id,
-                          option_id: opt.id,
+                    onClick={() => {
+                      if (data.poll.mode === 'multi') {
+                        setSelectedPollMulti((prev) => {
+                          if (prev.includes(opt.id)) return prev.filter((id) => id !== opt.id);
+                          if (prev.length >= data.poll.maxSelections) return prev;
+                          return [...prev, opt.id];
                         });
+                        return;
                       }
+
+                      void (async () => {
+                        setSelectedPoll(opt.id);
+                        poll.incrementLocal(opt.id);
+                        if (siteSlug) {
+                          await supabase.from('interactive_votes').insert({
+                            site_slug: siteSlug,
+                            widget_kind: 'poll',
+                            widget_id: data.poll.id,
+                            option_id: opt.id,
+                          });
+                        }
+                      })();
                     }}
-                    className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${selectedPoll === opt.id ? 'border-primary bg-primary/10' : 'border-border hover:bg-surface-subtle'}`}
+                    className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${isSelected ? 'border-primary bg-primary/10' : 'border-border hover:bg-surface-subtle'}`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span>{opt.label}</span>
+                      <span className="inline-flex items-center gap-2">
+                        {data.poll.mode === 'multi' && (
+                          <span className={`inline-flex h-4 w-4 items-center justify-center rounded border text-[10px] ${isSelected ? 'border-primary bg-primary text-white' : 'border-border text-transparent'}`}>✓</span>
+                        )}
+                        {opt.label}
+                      </span>
                       {data.allowPublicResults && <span className="text-xs text-text-tertiary">{pct}%</span>}
                     </div>
                   </button>
                 );
               })}
             </div>
+            {data.poll.mode === 'multi' && (
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="text-[11px] text-text-tertiary">
+                  Pick {data.poll.minSelections}–{data.poll.maxSelections}
+                </p>
+                <button
+                  onClick={async () => {
+                    if (selectedPollMulti.length < data.poll.minSelections) return;
+                    for (const optionId of selectedPollMulti) {
+                      poll.incrementLocal(optionId);
+                      if (siteSlug) {
+                        await supabase.from('interactive_votes').insert({
+                          site_slug: siteSlug,
+                          widget_kind: 'poll',
+                          widget_id: data.poll.id,
+                          option_id: optionId,
+                        });
+                      }
+                    }
+                    setSelectedPollMulti([]);
+                  }}
+                  disabled={selectedPollMulti.length < data.poll.minSelections}
+                  className="rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50"
+                >
+                  Submit choices
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-border bg-surface p-5">
