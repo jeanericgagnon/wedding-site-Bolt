@@ -80,6 +80,9 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
     case 'SET_MODE':
       return { ...state, mode: action.payload, selectedSectionId: null };
 
+    case 'SET_PREVIEW_VIEWPORT':
+      return { ...state, previewViewport: action.payload };
+
     case 'ADD_SECTION':
       return updatePageSections(state, action.payload.pageId, page => {
         const { section, insertAfterIndex } = action.payload;

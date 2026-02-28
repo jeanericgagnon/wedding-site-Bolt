@@ -12,6 +12,7 @@ export const builderActions = {
   selectSection: (sectionId: string | null): BuilderAction => ({ type: 'SELECT_SECTION', payload: sectionId }),
   hoverSection: (sectionId: string | null): BuilderAction => ({ type: 'HOVER_SECTION', payload: sectionId }),
   setMode: (mode: 'edit' | 'preview'): BuilderAction => ({ type: 'SET_MODE', payload: mode }),
+  setPreviewViewport: (viewport: 'desktop' | 'mobile'): BuilderAction => ({ type: 'SET_PREVIEW_VIEWPORT', payload: viewport }),
 
   addSection: (pageId: string, section: BuilderSectionInstance, insertAfterIndex?: number): BuilderAction => ({
     type: 'ADD_SECTION',

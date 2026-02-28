@@ -6,6 +6,7 @@ import { BuilderMediaAsset, MediaUploadProgress } from '../../types/builder/medi
 import { WeddingDataV1 } from '../../types/weddingData';
 
 export type BuilderMode = 'edit' | 'preview';
+export type PreviewViewport = 'desktop' | 'mobile';
 
 export interface BuilderState {
   project: BuilderProject | null;
@@ -14,6 +15,7 @@ export interface BuilderState {
   selectedSectionId: string | null;
   hoveredSectionId: string | null;
   mode: BuilderMode;
+  previewViewport: PreviewViewport;
   isDirty: boolean;
   isSaving: boolean;
   isPublishing: boolean;
@@ -38,6 +40,7 @@ export const initialBuilderState: BuilderState = {
   selectedSectionId: null,
   hoveredSectionId: null,
   mode: 'edit',
+  previewViewport: 'desktop',
   isDirty: false,
   isSaving: false,
   isPublishing: false,
@@ -80,6 +83,7 @@ export type BuilderAction =
   | { type: 'SELECT_SECTION'; payload: string | null }
   | { type: 'HOVER_SECTION'; payload: string | null }
   | { type: 'SET_MODE'; payload: BuilderMode }
+  | { type: 'SET_PREVIEW_VIEWPORT'; payload: PreviewViewport }
   | { type: 'ADD_SECTION'; payload: { pageId: string; section: BuilderSectionInstance; insertAfterIndex?: number } }
   | { type: 'REMOVE_SECTION'; payload: { pageId: string; sectionId: string } }
   | { type: 'REORDER_SECTIONS'; payload: { pageId: string; orderedIds: string[] } }

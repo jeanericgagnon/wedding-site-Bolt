@@ -3051,6 +3051,34 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
   return <div className={`w-full h-20 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-100'}`} />;
 };
 
+type SectionHealth = 'empty' | 'draft' | 'ready';
+
+function getSectionHealth(section: BuilderSectionInstance): SectionHealth {
+  if (!section.enabled) return 'draft';
+
+  const bindingCount = Object.values(section.bindings ?? {}).reduce((sum, value) => {
+    if (Array.isArray(value)) return sum + value.filter(Boolean).length;
+    return sum;
+  }, 0);
+
+  const meaningfulSettingEntries = Object.entries(section.settings ?? {}).filter(([key, value]) => {
+    if (key === 'showTitle') return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'number') return true;
+    if (typeof value === 'boolean') return value;
+    if (value && typeof value === 'object') return Object.keys(value as Record<string, unknown>).length > 0;
+    return false;
+  }).length;
+
+  const styleCount = Object.keys(section.styleOverrides ?? {}).length;
+
+  const signalScore = bindingCount + meaningfulSettingEntries + styleCount;
+  if (signalScore === 0) return 'empty';
+  if (signalScore >= 3) return 'ready';
+  return 'draft';
+}
+
 interface SortableLayerItemProps {
   section: BuilderSectionInstance;
   index: number;
@@ -3079,6 +3107,12 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
 
   const manifest = getSectionManifest(section.type);
   const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
+  const health = getSectionHealth(section);
+  const healthPill = {
+    empty: 'bg-gray-100 text-gray-500',
+    draft: 'bg-amber-100 text-amber-700',
+    ready: 'bg-emerald-100 text-emerald-700',
+  }[health];
 
   return (
     <div
@@ -3114,7 +3148,15 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
         <p className={`text-xs font-medium truncate ${isSelected ? 'text-rose-700' : 'text-gray-700'}`}>
           {manifest.label}
         </p>
-        <p className="text-[10px] text-gray-400">#{index + 1}</p>
+        <div className="mt-0.5 flex items-center gap-1.5">
+          <p className="text-[10px] text-gray-400">#{index + 1}</p>
+          <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${healthPill}`}>
+            {health}
+          </span>
+          {section.locked && (
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-600">locked</span>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
@@ -3131,10 +3173,12 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
         <button
           onClick={e => {
             e.stopPropagation();
+            if (section.locked) return;
             setShowDeleteModal(true);
           }}
-          title="Delete section"
-          className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+          title={section.locked ? 'Locked section' : 'Delete section'}
+          disabled={section.locked}
+          className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
         >
           <Trash2 size={12} />
         </button>

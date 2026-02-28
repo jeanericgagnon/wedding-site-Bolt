@@ -14,6 +14,8 @@ import {
   Clock,
   Palette,
   ArrowLeft,
+  Monitor,
+  Smartphone,
 } from 'lucide-react';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -69,6 +71,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const isPreview = selectIsPreviewMode(state);
   const publishStatus = selectPublishStatus(state);
   const isDirty = selectIsDirty(state);
+  const previewViewport = state.previewViewport;
 
   const publishedAt = state.project?.lastPublishedAt ?? null;
   const publishedVersion = state.project?.publishedVersion ?? null;
@@ -361,6 +364,35 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           {isPreview ? <EyeOff size={14} /> : <Eye size={14} />}
           {isPreview ? 'Exit Preview' : 'Preview'}
         </button>
+
+        {isPreview && (
+          <div className="hidden sm:flex items-center rounded-md border border-gray-200 bg-white p-0.5">
+            <button
+              type="button"
+              onClick={() => dispatch(builderActions.setPreviewViewport('desktop'))}
+              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                previewViewport === 'desktop'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Monitor size={12} />
+              Desktop
+            </button>
+            <button
+              type="button"
+              onClick={() => dispatch(builderActions.setPreviewViewport('mobile'))}
+              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                previewViewport === 'mobile'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Smartphone size={12} />
+              Mobile
+            </button>
+          </div>
+        )}
 
         <div className="relative group">
           <button

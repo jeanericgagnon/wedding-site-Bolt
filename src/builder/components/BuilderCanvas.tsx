@@ -16,6 +16,7 @@ import {
   selectActivePage,
   selectActivePageSections,
   selectIsPreviewMode,
+  selectPreviewViewport,
 } from '../state/builderSelectors';
 import { BuilderDropZone } from './BuilderDropZone';
 import { SectionRenderer } from './SectionRenderer';
@@ -32,6 +33,7 @@ export const BuilderCanvas: React.FC = () => {
   const activePage = selectActivePage(state);
   const sections = selectActivePageSections(state);
   const isPreview = selectIsPreviewMode(state);
+  const previewViewport = selectPreviewViewport(state);
   const weddingData = state.weddingData ?? createEmptyWeddingData();
   const themeTokens = state.project?.themeTokens;
 
@@ -89,7 +91,7 @@ export const BuilderCanvas: React.FC = () => {
 
   return (
     <div
-      className={`flex-1 min-h-0 overflow-y-auto overscroll-contain ${isPreview ? 'bg-white' : 'bg-gray-100'}`}
+      className={`flex-1 min-h-0 overflow-y-auto overscroll-contain ${isPreview ? 'bg-white' : 'bg-gray-100'} ${isPreview && previewViewport === 'mobile' ? 'px-3 py-4' : ''}`}
       onClick={() => dispatch(builderActions.selectSection(null))}
     >
       <DndContext
@@ -98,7 +100,10 @@ export const BuilderCanvas: React.FC = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className={`builder-themed-canvas ${isPreview ? '' : 'max-w-4xl mx-auto my-6 shadow-xl rounded-lg overflow-hidden'} bg-white min-h-full`}>
+        <div
+          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-4xl mx-auto my-6 shadow-xl rounded-lg overflow-hidden'} bg-white min-h-full`}
+          style={isPreview && previewViewport === 'mobile' ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)' } : undefined}
+        >
           {!isPreview && (
             <div className="bg-gray-200 flex items-center gap-1.5 px-4 py-2.5">
               <div className="w-3 h-3 rounded-full bg-gray-400" />

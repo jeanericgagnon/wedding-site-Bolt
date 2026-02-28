@@ -32,6 +32,10 @@ export function selectIsPreviewMode(state: BuilderState): boolean {
   return state.mode === 'preview';
 }
 
+export function selectPreviewViewport(state: BuilderState): 'desktop' | 'mobile' {
+  return state.previewViewport;
+}
+
 export function selectPublishStatus(state: BuilderState) {
   return state.project?.publishStatus ?? 'draft';
 }
