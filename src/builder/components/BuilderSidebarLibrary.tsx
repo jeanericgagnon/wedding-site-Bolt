@@ -104,6 +104,14 @@ function buildPreviewSettings(sectionType: BuilderSectionType, variantId: string
 }
 
 type PreviewPhotoSet = 'romantic' | 'editorial' | 'coastal';
+type PreviewSectionFamily = Extract<BuilderSectionType, 'hero' | 'story' | 'gallery' | 'rsvp' | 'venue' | 'schedule' | 'travel' | 'registry' | 'contact' | 'footer-cta'>;
+
+interface PreviewPhotoRecipe {
+  hero: string;
+  gallery: string[];
+  moments: string[];
+  story?: string;
+}
 
 const PREVIEW_PHOTO_SET_OPTIONS: Array<{ id: PreviewPhotoSet; label: string }> = [
   { id: 'romantic', label: 'Romantic' },
@@ -111,37 +119,191 @@ const PREVIEW_PHOTO_SET_OPTIONS: Array<{ id: PreviewPhotoSet; label: string }> =
   { id: 'coastal', label: 'Coastal' },
 ];
 
-const PREVIEW_PHOTO_LIBRARY: Record<PreviewPhotoSet, { hero: string; gallery: string[] }> = {
+const PREVIEW_FAMILY_PHOTO_LIBRARY: Record<PreviewPhotoSet, Partial<Record<PreviewSectionFamily, PreviewPhotoRecipe>>> = {
   romantic: {
-    hero: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-    gallery: [
-      'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-      'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
-      'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg',
-    ],
+    hero: {
+      hero: 'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
+        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+        'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
+      ],
+      moments: ['Champagne toast on the terrace', 'Golden-hour vows in the garden', 'First dance under candlelight'],
+      story: 'From quiet coffee-shop mornings to a candlelit first dance, this weekend is curated as an intimate love story for everyone we cherish.',
+    },
+    story: {
+      hero: 'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
+        'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
+        'https://images.pexels.com/photos/1024960/pexels-photo-1024960.jpeg',
+      ],
+      moments: ['Handwritten letters before the ceremony', 'Portraits on the grand staircase', 'Quiet moment before guests arrive'],
+    },
+    gallery: {
+      hero: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+        'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg',
+        'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
+      ],
+      moments: ['Ceremony aisle reveal', 'Candid laughs at cocktail hour', 'Sparkler exit at midnight'],
+    },
+    rsvp: {
+      hero: 'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
+        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
+        'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
+      ],
+      moments: ['Invitation suite details', 'Wax-sealed RSVP cards', 'Floral stationery flat lay'],
+    },
   },
   editorial: {
-    hero: 'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
-    gallery: [
-      'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
-      'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
-      'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
-    ],
+    hero: {
+      hero: 'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
+        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
+        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+      ],
+      moments: ['Black-tie entry on marble steps', 'Editorial portrait in window light', 'Night reception with champagne tower'],
+      story: 'A modern black-tie weekend styled with intentional typography, cinematic framing, and polished pacing from first glance to farewell.',
+    },
+    venue: {
+      hero: 'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg',
+        'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg',
+        'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg',
+      ],
+      moments: ['Estate exterior and arrival drive', 'Ceremony lawn wide angle', 'Reception hall detail lighting'],
+    },
+    schedule: {
+      hero: 'https://images.pexels.com/photos/2072163/pexels-photo-2072163.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/2072163/pexels-photo-2072163.jpeg',
+        'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
+        'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
+      ],
+      moments: ['Welcome drinks at sunset', 'Ceremony cue and processional', 'Late-night dance floor energy'],
+    },
+    travel: {
+      hero: 'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg',
+        'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg',
+        'https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg',
+      ],
+      moments: ['Arrival at boutique hotel', 'Guest shuttle drop-off at venue', 'Airport transfer and welcome bags'],
+    },
+    registry: {
+      hero: 'https://images.pexels.com/photos/264787/pexels-photo-264787.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/264787/pexels-photo-264787.jpeg',
+        'https://images.pexels.com/photos/1666065/pexels-photo-1666065.jpeg',
+        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+      ],
+      moments: ['Curated home essentials', 'Honeymoon experiences board', 'Handwritten thank-you note'],
+    },
+    contact: {
+      hero: 'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg',
+        'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
+        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
+      ],
+      moments: ['Planner response desk', 'Weekend concierge board', 'Guest support contact card'],
+    },
+    'footer-cta': {
+      hero: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
+        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
+        'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
+      ],
+      moments: ['Final portrait embrace', 'Sunset confetti sendoff', 'Closing RSVP reminder frame'],
+    },
   },
   coastal: {
-    hero: 'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
-    gallery: [
-      'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
-      'https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg',
-      'https://images.pexels.com/photos/457716/pexels-photo-457716.jpeg',
-    ],
+    hero: {
+      hero: 'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
+        'https://images.pexels.com/photos/457716/pexels-photo-457716.jpeg',
+        'https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg',
+      ],
+      moments: ['Ocean bluff ceremony view', 'Barefoot beach portraits', 'Lantern send-off by the water'],
+      story: 'Sea breeze vows, warm neutrals, and sun-washed photo direction keep every preview calm, luminous, and destination-ready.',
+    },
+    gallery: {
+      hero: 'https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg',
+        'https://images.pexels.com/photos/457716/pexels-photo-457716.jpeg',
+        'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
+      ],
+      moments: ['Ceremony from the bluff edge', 'Reception tables with ocean horizon', 'Blue-hour shoreline walk'],
+    },
+    venue: {
+      hero: 'https://images.pexels.com/photos/21014/pexels-photo.jpg',
+      gallery: [
+        'https://images.pexels.com/photos/21014/pexels-photo.jpg',
+        'https://images.pexels.com/photos/457716/pexels-photo-457716.jpeg',
+        'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg',
+      ],
+      moments: ['Clifftop venue approach', 'Ceremony arch against sea', 'Reception canopy by the shore'],
+    },
+    travel: {
+      hero: 'https://images.pexels.com/photos/358319/pexels-photo-358319.jpeg',
+      gallery: [
+        'https://images.pexels.com/photos/358319/pexels-photo-358319.jpeg',
+        'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg',
+        'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg',
+      ],
+      moments: ['Scenic drive-in route', 'Shuttle and valet drop zone', 'Hotel check-in with welcome cards'],
+    },
   },
 };
 
-const PREVIEW_STORY_MOMENTS: Record<PreviewPhotoSet, string[]> = {
-  romantic: ['First dance beneath candlelit arches', 'Sunset vows in the rose garden', 'Golden-hour portraits on the terrace stairs'],
-  editorial: ['Black-tie portraits in the grand hall', 'Handwritten letters exchanged before the ceremony', 'Champagne tower and confetti at twilight'],
-  coastal: ['Ocean bluff ceremony with sea breeze vows', 'Barefoot walk after the kiss', 'Lantern send-off along the shoreline'],
+function getPreviewPhotoRecipe(photoSet: PreviewPhotoSet, sectionType: string): PreviewPhotoRecipe {
+  const typedSection = sectionType as PreviewSectionFamily;
+  const bySet = PREVIEW_FAMILY_PHOTO_LIBRARY[photoSet];
+  return bySet[typedSection] ?? bySet.hero ?? PREVIEW_FAMILY_PHOTO_LIBRARY.editorial.hero!;
+}
+
+const buildPreviewWeddingData = (photoSet: PreviewPhotoSet, sectionType: string = 'hero'): WeddingDataV1 => {
+  const recipe = getPreviewPhotoRecipe(photoSet, sectionType);
+  const data = createEmptyWeddingData();
+  data.couple.partner1Name = 'Alex';
+  data.couple.partner2Name = 'Sam';
+  data.couple.displayName = 'Alex & Sam';
+  data.couple.story = recipe.story ?? 'From quiet coffee-shop mornings to a candlelit first dance, this weekend is curated as an editorial love story for everyone we cherish.';
+  data.event.weddingDateISO = new Date('2027-06-12T17:00:00.000Z').toISOString();
+  data.venues = [{ id: 'venue-1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
+  data.schedule = [
+    { id: 's1', label: 'Welcome Dinner', startTimeISO: '2027-06-11T18:00:00.000Z', venueId: 'venue-1', notes: 'Cocktails and sunset toasts' },
+    { id: 's2', label: 'Ceremony', startTimeISO: '2027-06-12T17:00:00.000Z', venueId: 'venue-1', notes: 'Please arrive 20 minutes early' },
+    { id: 's3', label: 'Reception', startTimeISO: '2027-06-12T19:00:00.000Z', venueId: 'venue-1', notes: 'Dinner, dancing, and late-night bites' },
+  ];
+  data.travel = {
+    notes: 'We suggest arriving by Friday afternoon to enjoy the full weekend experience.',
+    parkingInfo: 'Complimentary valet and shuttle service available from partner hotels.',
+    hotelInfo: 'Room blocks are reserved at The Archer, Oak & Ivy, and Riverstone House.',
+    flightInfo: 'Nearest airports: SFO (90 min) and OAK (75 min).',
+  };
+  data.rsvp.deadlineISO = new Date('2027-05-12T00:00:00.000Z').toISOString();
+  data.registry.links = [
+    { id: 'reg-1', label: 'Honeymoon Fund', url: 'https://example.com/registry/honeymoon' },
+    { id: 'reg-2', label: 'Williams Sonoma', url: 'https://example.com/registry/home' },
+  ];
+  data.faq = [
+    { id: 'faq-1', q: 'Can I bring a plus one?', a: 'Please follow your invite details.' },
+    { id: 'faq-2', q: 'Will photos be shared?', a: 'Yes — preview galleries will be available the week after.' },
+  ];
+  data.media.heroImageUrl = recipe.hero;
+  data.media.gallery = recipe.gallery.map((url, i) => ({ id: `g${i + 1}`, url, caption: recipe.moments[i] ?? `Moment ${i + 1}` }));
+  return data;
 };
 
 const SECTION_PICKER_EDITORIAL_NOTES: Partial<Record<BuilderSectionType, string>> = {
@@ -170,25 +332,17 @@ const SECTION_PICKER_STORY_LABEL: Partial<Record<BuilderSectionType, string>> = 
   custom: 'Bespoke Layout',
 };
 
-const buildPreviewWeddingData = (photoSet: PreviewPhotoSet): WeddingDataV1 => {
-  const media = PREVIEW_PHOTO_LIBRARY[photoSet];
-  const moments = PREVIEW_STORY_MOMENTS[photoSet];
-  const data = createEmptyWeddingData();
-  data.couple.partner1Name = 'Alex';
-  data.couple.partner2Name = 'Sam';
-  data.couple.displayName = 'Alex & Sam';
-  data.couple.story = 'From quiet coffee-shop mornings to a candlelit first dance, this weekend is curated as an editorial love story for everyone we cherish.';
-  data.event.weddingDateISO = new Date('2027-06-12T17:00:00.000Z').toISOString();
-  data.venues = [{ id: 'venue-1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
-  data.rsvp.deadlineISO = new Date('2027-05-12T00:00:00.000Z').toISOString();
-  data.registry.links = [{ id: 'reg-1', label: 'Honeymoon Fund', url: 'https://example.com/registry' }];
-  data.faq = [
-    { id: 'faq-1', q: 'Can I bring a plus one?', a: 'Please follow your invite details.' },
-    { id: 'faq-2', q: 'Will photos be shared?', a: 'Yes — preview galleries will be available the week after.' },
-  ];
-  data.media.heroImageUrl = media.hero;
-  data.media.gallery = media.gallery.map((url, i) => ({ id: `g${i + 1}`, url, caption: moments[i] ?? `Moment ${i + 1}` }));
-  return data;
+const SECTION_PICKER_COMPOSITION_CUES: Partial<Record<BuilderSectionType, string>> = {
+  hero: 'Sequence: wide scene → close portrait → detail.',
+  story: 'Sequence: chapter opener → narrative support → emotional close.',
+  gallery: 'Sequence: hero frame → supporting candids → final celebration.',
+  rsvp: 'Sequence: stationery detail → form context → submit confidence cue.',
+  venue: 'Sequence: arrival exterior → ceremony ground → reception interior.',
+  schedule: 'Sequence: welcome beat → ceremony cue → late-night energy.',
+  travel: 'Sequence: transit touchpoint → hotel proof → venue proximity.',
+  registry: 'Sequence: featured gift → lifestyle context → gratitude detail.',
+  contact: 'Sequence: planner/couple cue → contact options → reassurance copy.',
+  'footer-cta': 'Sequence: farewell portrait → action button → timeline reminder.',
 };
 
 interface BuilderSidebarLibraryProps {
@@ -456,7 +610,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                         sectionType={manifest.type}
                         variantId={manifest.defaultVariant}
                         isHovered={false}
-                        weddingData={previewWeddingData}
+                        weddingData={buildPreviewWeddingData(previewPhotoSet, manifest.type)}
                       />
                       <div className="absolute top-1.5 right-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
                         {manifest.defaultVariant}
@@ -477,6 +631,9 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                       </div>
                       <p className="mt-1 text-[9px] leading-relaxed text-gray-500 line-clamp-2">
                         {SECTION_PICKER_EDITORIAL_NOTES[manifest.type] ?? 'Curated section foundation with premium spacing and hierarchy.'}
+                      </p>
+                      <p className="mt-1 text-[8px] leading-relaxed text-gray-400 line-clamp-2">
+                        {SECTION_PICKER_COMPOSITION_CUES[manifest.type] ?? 'Sequence: establish context → reveal detail → reinforce CTA.'}
                       </p>
                     </div>
                   </button>
@@ -650,57 +807,192 @@ function getVariantTone(variantId: string): { label: string; accent: string; chi
   return VARIANT_STYLE_TONE[key];
 }
 
-const PREVIEW_PHOTO_SET_BY_VARIANT: Record<string, PreviewPhotoSet> = {
-  'hero:default': 'editorial',
-  'hero:minimal': 'romantic',
-  'hero:split': 'coastal',
-  'hero:countdown': 'coastal',
-  'hero:invitation': 'romantic',
+interface VariantArtDirection {
+  photoSet?: PreviewPhotoSet;
+  narrative?: string;
+  description?: string;
+  sequenceCue?: string;
+  compositionCue?: string;
+  hero?: string;
+  gallery?: string[];
+  moments?: string[];
+}
 
-  'story:default': 'romantic',
-  'story:timeline': 'editorial',
-  'story:milestones': 'coastal',
-  'story:split': 'editorial',
-
-  'venue:mapFirst': 'coastal',
-  'venue:splitMap': 'editorial',
-  'venue:detailsFirst': 'romantic',
-
-  'gallery:masonry': 'editorial',
-  'gallery:grid': 'romantic',
-  'gallery:filmStrip': 'coastal',
-  'gallery:polaroid': 'romantic',
-
-  'quotes:featured': 'editorial',
-  'quotes:grid': 'romantic',
-  'quotes:carousel': 'coastal',
+const VARIANT_ART_DIRECTION: Record<string, VariantArtDirection> = {
+  'hero:default': {
+    photoSet: 'editorial',
+    narrative: 'A cinematic opening frame that sets the tone for the full weekend.',
+    description: 'Names, date, and hero image arranged as a polished opening tableau.',
+    sequenceCue: 'Wide estate scene → couple portrait → date lockup.',
+    compositionCue: 'Keep names center-weighted with horizon line in upper third.',
+  },
+  'hero:split': {
+    photoSet: 'coastal',
+    narrative: 'Two-scene opener balancing setting and editorial typography in one glance.',
+    description: 'Dual-panel opener pairing location context with elevated type.',
+    sequenceCue: 'Landscape establishing frame → portrait crop for typography side.',
+    compositionCue: 'Reserve negative space on text panel and keep faces eye-level.',
+  },
+  'hero:invitation': {
+    photoSet: 'romantic',
+    narrative: 'Stationery-led hero with formal cadence and invitation-first hierarchy.',
+    description: 'Invitation card aesthetic with letterpress-inspired typographic rhythm.',
+    sequenceCue: 'Paper texture detail → couple monogram → formal copy block.',
+    compositionCue: 'Favor centered symmetry and subtle texture over high contrast.',
+  },
+  'story:default': {
+    photoSet: 'romantic',
+    narrative: 'An intimate narrative pane with soft pacing and warm portrait support.',
+    description: 'Balanced text-and-photo story module with premium reading flow.',
+    sequenceCue: 'Memory opener → connective detail → emotional portrait.',
+    compositionCue: 'Use one calm portrait with clear negative space near copy.',
+  },
+  'story:timeline': {
+    photoSet: 'editorial',
+    narrative: 'A chapter-by-chapter narrative arc from first meeting to the aisle.',
+    description: 'Milestone timeline with editorial pacing and chronological clarity.',
+    sequenceCue: 'Early chapter → turning point → proposal / pre-ceremony beat.',
+    compositionCue: 'Alternate wide and close crops to keep vertical rhythm.',
+  },
+  'story:milestones': {
+    photoSet: 'coastal',
+    narrative: 'Key moments distilled into visual beats with premium editorial pacing.',
+    description: 'Icon-led milestone cards that spotlight the couple\'s defining moments.',
+    sequenceCue: 'First date cue → travel memory → engagement detail.',
+    compositionCue: 'Prefer clean subject isolation for card-level legibility.',
+  },
+  'gallery:masonry': {
+    photoSet: 'editorial',
+    description: 'Varied-height collage with confident hero/support cadence.',
+    sequenceCue: 'Hero portrait → reaction candids → dance-floor energy.',
+    compositionCue: 'Anchor tallest column with highest-contrast portrait.',
+  },
+  'gallery:grid': {
+    photoSet: 'romantic',
+    description: 'Uniform gallery rhythm built for clean scanning and soft color continuity.',
+    sequenceCue: 'Ceremony moment → couple portrait → guest celebration.',
+    compositionCue: 'Keep neighboring frames tonally aligned for luxury consistency.',
+  },
+  'gallery:filmStrip': {
+    photoSet: 'coastal',
+    narrative: 'A sequence-driven highlight reel designed for momentum and memory.',
+    description: 'Large hero frame with cinematic thumbnails for quick browsing.',
+    sequenceCue: 'Establishing vista → intimate close-up → twilight finale.',
+    compositionCue: 'Select a hero frame with clear focal subject and directional light.',
+  },
+  'rsvp:default': {
+    photoSet: 'romantic',
+    description: 'High-clarity RSVP section with elevated form framing.',
+    sequenceCue: 'Stationery detail → form context image → confirmation cue.',
+    compositionCue: 'Keep backdrop quiet so form fields stay dominant.',
+  },
+  'rsvp:card': {
+    photoSet: 'editorial',
+    description: 'Stepped RSVP flow using card choreography and progress cues.',
+    sequenceCue: 'Welcome step → guest details → final response state.',
+    compositionCue: 'Use neutral background with one focused accent image.',
+  },
+  'rsvp:formal': {
+    photoSet: 'romantic',
+    narrative: 'Invitation-language RSVP with black-tie restraint and confidence.',
+    description: 'Formal response card styled like a classic invitation suite.',
+    sequenceCue: 'Monogram detail → response options → deadline reminder.',
+    compositionCue: 'Preserve whitespace and avoid busy background textures.',
+  },
+  'venue:card': {
+    photoSet: 'editorial',
+    description: 'Photo-forward venue cards that prioritize setting and logistics together.',
+    sequenceCue: 'Arrival exterior → ceremony view → reception hall.',
+    compositionCue: 'Lead with a wide exterior shot, then supporting interiors.',
+  },
+  'venue:mapFirst': {
+    photoSet: 'coastal',
+    description: 'Map-led orientation for guests who want logistics first.',
+    sequenceCue: 'Regional map cue → venue exterior → route context.',
+    compositionCue: 'Use readable aerial-style images with clean contrast.',
+  },
+  'venue:splitMap': {
+    photoSet: 'editorial',
+    description: 'Balanced split view for equal emphasis on details and map.',
+    sequenceCue: 'Venue portrait → map panel → parking detail.',
+    compositionCue: 'Keep map side uncluttered; text side needs clear hierarchy.',
+  },
+  'schedule:timeline': {
+    photoSet: 'editorial',
+    description: 'Vertical timeline with editorial rhythm from welcome to farewell.',
+    sequenceCue: 'Welcome drinks → ceremony cue → afterparty moment.',
+    compositionCue: 'Alternating accents work best with one dominant photo tone.',
+  },
+  'schedule:agendaCards': {
+    photoSet: 'romantic',
+    description: 'Card-based itinerary for easy scanning across the weekend.',
+    sequenceCue: 'Day opener → ceremony block → reception block.',
+    compositionCue: 'Keep image crops simple to avoid competing with time labels.',
+  },
+  'travel:hotelBlock': {
+    photoSet: 'editorial',
+    description: 'Hotel-first layout with polished booking and shuttle context.',
+    sequenceCue: 'Hotel exterior → room atmosphere → venue transit.',
+    compositionCue: 'Use straight-on architecture shots for trust and clarity.',
+  },
+  'travel:mapPins': {
+    photoSet: 'coastal',
+    description: 'Map + list pairing optimized for destination weddings.',
+    sequenceCue: 'Regional arrival map → hotel markers → venue pin close-up.',
+    compositionCue: 'Prefer high-legibility maps with minimal decorative overlays.',
+  },
+  'registry:featured': {
+    photoSet: 'editorial',
+    description: 'Editorial gift spotlight with premium image-first merchandising.',
+    sequenceCue: 'Hero gift → supporting gifts → gratitude note.',
+    compositionCue: 'Lead with one high-quality lifestyle image before product grid.',
+  },
+  'registry:cards': {
+    photoSet: 'romantic',
+    description: 'Simple registry cards with warm copy and clear outbound actions.',
+    sequenceCue: 'Primary registry card → secondary links → closing thanks.',
+    compositionCue: 'Keep iconography subtle; image accents should feel soft.',
+  },
+  'contact:form': {
+    photoSet: 'editorial',
+    description: 'Concierge-style contact section with direct support pathways.',
+    sequenceCue: 'Planner cue → contact cards → closing reassurance.',
+    compositionCue: 'Use calm neutral imagery so action links remain clear.',
+  },
+  'footer-cta:photo': {
+    photoSet: 'romantic',
+    description: 'Final emotional frame that drives one confident RSVP action.',
+    sequenceCue: 'Closing portrait → RSVP CTA → deadline prompt.',
+    compositionCue: 'Choose a farewell portrait with clear center-safe framing.',
+  },
 };
 
-const PREVIEW_NARRATIVE_BY_VARIANT: Record<string, string> = {
-  'hero:default': 'A cinematic opening frame that sets the tone for the full weekend.',
-  'hero:minimal': 'A quiet portrait-first opening focused on names, date, and intentional whitespace.',
-  'hero:split': 'Two-scene opener balancing setting and editorial typography in one glance.',
-  'story:timeline': 'A chapter-by-chapter narrative arc from first meeting to the aisle.',
-  'story:milestones': 'Key moments distilled into visual beats with premium editorial pacing.',
-  'story:split': 'Parallel storytelling: image-led memory on one side, context on the other.',
-  'gallery:filmStrip': 'A sequence-driven highlight reel designed for momentum and memory.',
-  'gallery:polaroid': 'Warm candid snapshots with intimate, tactile weekend energy.',
-  'quotes:carousel': 'Guest voices presented as a paced editorial feature.',
-};
+function getVariantArtDirection(sectionType: string, variantId: string): VariantArtDirection {
+  return VARIANT_ART_DIRECTION[`${sectionType}:${variantId}`] ?? {};
+}
 
 function buildVariantPreviewWeddingData(
   sectionType: string,
   variantId: string,
   fallbackPhotoSet: PreviewPhotoSet,
 ): WeddingDataV1 {
-  const variantKey = `${sectionType}:${variantId}`;
-  const photoSet = PREVIEW_PHOTO_SET_BY_VARIANT[variantKey] ?? fallbackPhotoSet;
-  const data = buildPreviewWeddingData(photoSet);
-  data.couple.story = PREVIEW_NARRATIVE_BY_VARIANT[variantKey] ?? data.couple.story;
-  data.media.gallery = data.media.gallery.map((item, index) => ({
-    ...item,
-    caption: `${data.media.gallery[index]?.caption ?? `Moment ${index + 1}`} · Frame ${index + 1}`,
+  const artDirection = getVariantArtDirection(sectionType, variantId);
+  const photoSet = artDirection.photoSet ?? fallbackPhotoSet;
+  const data = buildPreviewWeddingData(photoSet, sectionType);
+  if (artDirection.narrative) data.couple.story = artDirection.narrative;
+
+  if (artDirection.hero) {
+    data.media.heroImageUrl = artDirection.hero;
+  }
+
+  const gallerySource = artDirection.gallery ?? data.media.gallery.map((item) => item.url);
+  const moments = artDirection.moments ?? gallerySource.map((_, i) => data.media.gallery[i]?.caption ?? `Moment ${i + 1}`);
+  data.media.gallery = gallerySource.map((url, index) => ({
+    id: `g${index + 1}`,
+    url,
+    caption: `${moments[index] ?? `Moment ${index + 1}`} · Frame ${index + 1}`,
   }));
+
   return data;
 }
 
@@ -715,9 +1007,11 @@ const VariantCard: React.FC<VariantCardProps> = ({
   previewPhotoSet,
 }) => {
   const tone = getVariantTone(variant.id);
+  const artDirection = getVariantArtDirection(sectionType, variant.id);
   const curatedWeddingData = useMemo(() => (
     buildVariantPreviewWeddingData(sectionType, variant.id, previewPhotoSet)
   ), [sectionType, variant.id, previewPhotoSet, previewWeddingData]);
+  const description = artDirection.description ?? variant.description;
 
   return (
     <button
@@ -750,7 +1044,13 @@ const VariantCard: React.FC<VariantCardProps> = ({
                 {tone.label}
               </span>
             </div>
-            <p className="line-clamp-2 text-[11px] leading-relaxed text-gray-500">{variant.description}</p>
+            <p className="line-clamp-2 text-[11px] leading-relaxed text-gray-500">{description}</p>
+            {artDirection.sequenceCue && (
+              <p className="mt-1 text-[9px] leading-relaxed text-gray-400 line-clamp-1">{artDirection.sequenceCue}</p>
+            )}
+            {artDirection.compositionCue && (
+              <p className="mt-0.5 text-[9px] leading-relaxed text-gray-400 line-clamp-1">{artDirection.compositionCue}</p>
+            )}
             {isDefault && (
               <span className="mt-1.5 inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-700">Default</span>
             )}
