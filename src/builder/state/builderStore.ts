@@ -6,7 +6,7 @@ import { BuilderMediaAsset, MediaUploadProgress } from '../../types/builder/medi
 import { WeddingDataV1 } from '../../types/weddingData';
 
 export type BuilderMode = 'edit' | 'preview';
-export type PreviewViewport = 'desktop' | 'mobile';
+export type PreviewViewport = 'desktop' | 'tablet' | 'mobile';
 
 export interface BuilderState {
   project: BuilderProject | null;

@@ -206,9 +206,29 @@ export const BuilderInspectorPanel: React.FC = () => {
                 </button>
               ))}
             </div>
-            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-[11px] text-gray-600 space-y-1">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-[11px] text-gray-600 space-y-2">
               <p><span className="font-semibold">Tip:</span> layout changes preserve your content and bindings.</p>
-              <p><span className="font-semibold">Tip:</span> switch preview desktop/mobile from the top bar after each major change.</p>
+              <p><span className="font-semibold">Tip:</span> run a quick viewport pass before publish.</p>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <button
+                  onClick={() => dispatch(builderActions.setPreviewViewport('desktop'))}
+                  className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] font-medium text-gray-600 hover:border-rose-200 hover:text-rose-700"
+                >
+                  Desktop check
+                </button>
+                <button
+                  onClick={() => dispatch(builderActions.setPreviewViewport('tablet'))}
+                  className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] font-medium text-gray-600 hover:border-rose-200 hover:text-rose-700"
+                >
+                  Tablet check
+                </button>
+                <button
+                  onClick={() => dispatch(builderActions.setPreviewViewport('mobile'))}
+                  className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] font-medium text-gray-600 hover:border-rose-200 hover:text-rose-700"
+                >
+                  Mobile check
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -15,6 +15,7 @@ import {
   Palette,
   ArrowLeft,
   Monitor,
+  Tablet,
   Smartphone,
 } from 'lucide-react';
 import { getSectionManifest } from '../registry/sectionManifests';
@@ -378,6 +379,18 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             >
               <Monitor size={12} />
               Desktop
+            </button>
+            <button
+              type="button"
+              onClick={() => dispatch(builderActions.setPreviewViewport('tablet'))}
+              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                previewViewport === 'tablet'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Tablet size={12} />
+              Tablet
             </button>
             <button
               type="button"
