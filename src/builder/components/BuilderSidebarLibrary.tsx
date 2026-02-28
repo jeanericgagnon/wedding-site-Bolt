@@ -542,6 +542,53 @@ interface VariantCardProps {
   previewWeddingData: WeddingDataV1;
 }
 
+const VARIANT_STYLE_TONE: Record<string, { label: string; accent: string; chip: string }> = {
+  minimal: { label: 'Minimal', accent: 'from-stone-300/45 via-white/0 to-white/0', chip: 'border-stone-300 text-stone-600 bg-stone-50' },
+  formal: { label: 'Formal', accent: 'from-slate-600/30 via-slate-300/10 to-white/0', chip: 'border-slate-300 text-slate-700 bg-slate-50' },
+  editorial: { label: 'Editorial', accent: 'from-zinc-700/30 via-zinc-300/10 to-white/0', chip: 'border-zinc-300 text-zinc-700 bg-zinc-50' },
+  cinematic: { label: 'Cinematic', accent: 'from-indigo-600/35 via-violet-400/15 to-white/0', chip: 'border-indigo-300 text-indigo-700 bg-indigo-50' },
+  interactive: { label: 'Interactive', accent: 'from-emerald-500/35 via-teal-300/10 to-white/0', chip: 'border-emerald-300 text-emerald-700 bg-emerald-50' },
+  romantic: { label: 'Romantic', accent: 'from-rose-500/35 via-pink-300/15 to-white/0', chip: 'border-rose-300 text-rose-700 bg-rose-50' },
+  playful: { label: 'Playful', accent: 'from-amber-400/40 via-orange-200/15 to-white/0', chip: 'border-amber-300 text-amber-700 bg-amber-50' },
+};
+
+const VARIANT_TONE_BY_ID: Record<string, keyof typeof VARIANT_STYLE_TONE> = {
+  default: 'editorial',
+  card: 'editorial',
+  full: 'cinematic',
+  fullbleed: 'cinematic',
+  background: 'cinematic',
+  photo: 'cinematic',
+  split: 'editorial',
+  splitMap: 'editorial',
+  detailsFirst: 'formal',
+  invitation: 'formal',
+  tabs: 'interactive',
+  dayTabs: 'interactive',
+  accordion: 'interactive',
+  carousel: 'interactive',
+  mapPins: 'interactive',
+  multiVenue: 'interactive',
+  requestForm: 'interactive',
+  chat: 'playful',
+  polaroid: 'playful',
+  illustrated: 'playful',
+  rings: 'playful',
+  timeline: 'formal',
+  minimal: 'minimal',
+  compact: 'minimal',
+  banner: 'formal',
+  featured: 'romantic',
+  honeymoon: 'romantic',
+  monogram: 'formal',
+  letter: 'romantic',
+};
+
+function getVariantTone(variantId: string): { label: string; accent: string; chip: string } {
+  const key = VARIANT_TONE_BY_ID[variantId] ?? 'editorial';
+  return VARIANT_STYLE_TONE[key];
+}
+
 const VariantCard: React.FC<VariantCardProps> = ({
   variant,
   sectionType,
@@ -551,6 +598,8 @@ const VariantCard: React.FC<VariantCardProps> = ({
   onSelect,
   previewWeddingData,
 }) => {
+  const tone = getVariantTone(variant.id);
+
   return (
     <button
       onMouseEnter={() => onHover(variant.id)}
@@ -558,11 +607,12 @@ const VariantCard: React.FC<VariantCardProps> = ({
       onClick={() => onSelect(variant.id)}
       className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 ${
         isHovered
-          ? 'border-rose-300 shadow-[0_10px_22px_-14px_rgba(190,24,93,0.45)] -translate-y-[1px]'
-          : 'border-gray-200 hover:border-rose-200 hover:shadow-[0_8px_18px_-14px_rgba(15,23,42,0.35)]'
+          ? 'border-rose-300 shadow-[0_14px_30px_-18px_rgba(190,24,93,0.55)] -translate-y-[1px]'
+          : 'border-gray-200 hover:border-rose-200 hover:shadow-[0_10px_20px_-16px_rgba(15,23,42,0.4)]'
       }`}
       title={variant.description}
     >
+      <div className={`pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-br ${tone.accent} opacity-85`} />
       <BuilderVariantCardPreview
         sectionType={sectionType}
         variantId={variant.id}
@@ -570,11 +620,16 @@ const VariantCard: React.FC<VariantCardProps> = ({
         weddingData={previewWeddingData}
       />
 
-      <div className="px-3.5 py-3">
+      <div className="relative px-3.5 py-3">
         <div className="flex items-start justify-between gap-2.5">
           <div className="min-w-0 flex-1">
-            <span className="block truncate text-[13px] font-semibold tracking-tight text-gray-800">{variant.label}</span>
-            <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-gray-500">{variant.description}</p>
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <span className="block truncate text-[13px] font-semibold tracking-tight text-gray-800">{variant.label}</span>
+              <span className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${tone.chip}`}>
+                {tone.label}
+              </span>
+            </div>
+            <p className="line-clamp-2 text-[11px] leading-relaxed text-gray-500">{variant.description}</p>
             {isDefault && (
               <span className="mt-1.5 inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-700">Default</span>
             )}
@@ -628,10 +683,13 @@ const BuilderVariantCardPreview: React.FC<{
   return (
     <VariantPreviewErrorBoundary fallback={fallback}>
       <div className="pointer-events-none relative overflow-hidden bg-white">
-        <div className="border-b border-gray-100">
+        <div className="border-b border-gray-100 bg-gradient-to-r from-white via-gray-50/60 to-white">
           <SectionTypePreview sectionType={sectionType} compact />
         </div>
         <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} weddingData={weddingData} />
+        <div className="absolute right-1.5 top-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
+          {variantId}
+        </div>
         <div
           className={`pointer-events-none absolute inset-0 bg-gradient-to-b from-white/0 via-white/0 to-white/15 transition-opacity duration-300 ${
             isHovered ? 'opacity-100' : 'opacity-70'
