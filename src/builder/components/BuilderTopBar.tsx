@@ -147,6 +147,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <span>⌘P Preview</span>
         <span>•</span>
         <span>⌘⇧P Publish</span>
+        <span>•</span>
+        <span>Use Fix blockers if needed</span>
       </div>
 
       <button
@@ -311,7 +313,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               Why?
             </button>
             {onFixPublishBlockers && (
-              <button type="button" onClick={onFixPublishBlockers} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 font-medium">
+              <button type="button" onClick={onFixPublishBlockers} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-50">
                 Fix
               </button>
             )}
