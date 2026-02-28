@@ -59,6 +59,14 @@ interface RsvpConflict {
   severity: 'error' | 'warning' | string;
   created_at: string;
   resolved: boolean;
+  resolved_at?: string | null;
+}
+
+interface RsvpConflictStats {
+  openNow: number;
+  opened24h: number;
+  resolved24h: number;
+  topCodes: Array<{ code: string; count: number }>;
 }
 
 function formatAuditValue(value: unknown): string {
@@ -235,6 +243,7 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpAutoSaveState, setRsvpAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [rsvpConfigDirty, setRsvpConfigDirty] = useState(false);
   const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
+  const [rsvpConflictHistory, setRsvpConflictHistory] = useState<RsvpConflict[]>([]);
   const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const rsvpConfigLoadedRef = useRef(false);
@@ -409,6 +418,7 @@ export const DashboardGuests: React.FC = () => {
         }));
         setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
         setRsvpConflicts([]);
+        setRsvpConflictHistory([]);
         setLoading(false);
         return;
       }
@@ -423,15 +433,23 @@ export const DashboardGuests: React.FC = () => {
 
       if (guestsData) {
         const guestIds = guestsData.map(g => g.id);
-        const [{ data: rsvpsData }, { data: conflictsData }] = await Promise.all([
+        const windowStartIso = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
+        const [{ data: rsvpsData }, { data: conflictsData }, { data: conflictHistoryData }] = await Promise.all([
           supabase.from('rsvps').select('*').in('guest_id', guestIds),
           supabase
             .from('rsvp_conflicts')
-            .select('id, guest_id, conflict_code, message, severity, created_at, resolved')
+            .select('id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at')
             .eq('wedding_site_id', weddingSiteId)
             .eq('resolved', false)
             .order('created_at', { ascending: false })
             .limit(20),
+          supabase
+            .from('rsvp_conflicts')
+            .select('id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at')
+            .eq('wedding_site_id', weddingSiteId)
+            .gte('created_at', windowStartIso)
+            .order('created_at', { ascending: false })
+            .limit(500),
         ]);
 
         const guestsWithRsvps = guestsData.map(guest => ({
@@ -441,6 +459,7 @@ export const DashboardGuests: React.FC = () => {
 
         setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
         setRsvpConflicts((conflictsData ?? []) as RsvpConflict[]);
+        setRsvpConflictHistory((conflictHistoryData ?? []) as RsvpConflict[]);
       }
     } catch {
     } finally {
@@ -463,11 +482,37 @@ export const DashboardGuests: React.FC = () => {
     [rsvpConflicts, conflictFilter]
   );
 
+  const rsvpConflictStats = useMemo<RsvpConflictStats>(() => {
+    const now = Date.now();
+    const dayAgo = now - (24 * 60 * 60 * 1000);
+
+    const opened24h = rsvpConflictHistory.filter((c) => new Date(c.created_at).getTime() >= dayAgo).length;
+    const resolved24h = rsvpConflictHistory.filter((c) => c.resolved_at && new Date(c.resolved_at).getTime() >= dayAgo).length;
+
+    const codeCounts = new Map<string, number>();
+    for (const c of rsvpConflictHistory) {
+      codeCounts.set(c.conflict_code, (codeCounts.get(c.conflict_code) ?? 0) + 1);
+    }
+
+    const topCodes = [...codeCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([code, count]) => ({ code, count }));
+
+    return {
+      openNow: rsvpConflicts.length,
+      opened24h,
+      resolved24h,
+      topCodes,
+    };
+  }, [rsvpConflicts.length, rsvpConflictHistory]);
+
   const resolveConflict = useCallback(async (conflictId: string) => {
     setResolvingConflictId(conflictId);
     try {
       if (isDemoMode) {
         setRsvpConflicts((prev) => prev.filter((c) => c.id !== conflictId));
+        setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
         return;
       }
       const { error } = await supabase
@@ -476,6 +521,7 @@ export const DashboardGuests: React.FC = () => {
         .eq('id', conflictId);
       if (error) throw error;
       setRsvpConflicts((prev) => prev.filter((c) => c.id !== conflictId));
+      setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
       toast('RSVP conflict marked resolved', 'success');
     } catch {
       toast('Failed to resolve RSVP conflict', 'error');
@@ -497,6 +543,7 @@ export const DashboardGuests: React.FC = () => {
         if (error) throw error;
       }
       setRsvpConflicts((prev) => prev.filter((c) => !ids.includes(c.id)));
+      setRsvpConflictHistory((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
       toast(`${ids.length} RSVP conflict${ids.length === 1 ? '' : 's'} resolved`, 'success');
     } catch {
       toast('Failed to resolve RSVP conflicts', 'error');
@@ -1937,6 +1984,28 @@ Proceed with send?`)) return;
                 </Button>
               </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
+                <p className="text-[10px] uppercase text-error/70">Open now</p>
+                <p className="text-sm font-semibold text-error">{rsvpConflictStats.openNow}</p>
+              </div>
+              <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
+                <p className="text-[10px] uppercase text-error/70">Opened (24h)</p>
+                <p className="text-sm font-semibold text-error">{rsvpConflictStats.opened24h}</p>
+              </div>
+              <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
+                <p className="text-[10px] uppercase text-error/70">Resolved (24h)</p>
+                <p className="text-sm font-semibold text-error">{rsvpConflictStats.resolved24h}</p>
+              </div>
+            </div>
+
+            {rsvpConflictStats.topCodes.length > 0 && (
+              <div className="text-[11px] text-error/90">
+                <span className="font-semibold">Top conflict codes:</span>{' '}
+                {rsvpConflictStats.topCodes.map((c) => `${c.code} (${c.count})`).join(' · ')}
+              </div>
+            )}
+
             <ul className="space-y-1.5">
               {visibleRsvpConflicts.slice(0, 8).map((c) => {
                 const guestName = guests.find((g) => g.id === c.guest_id)?.name || 'Unknown guest';
