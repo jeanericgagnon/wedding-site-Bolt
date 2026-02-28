@@ -13,6 +13,7 @@ const env = Object.fromEntries(
 
 const base = env.VITE_SUPABASE_URL;
 const key = env.VITE_SUPABASE_ANON_KEY;
+const strict = process.argv.includes('--strict');
 
 async function req(url, opts = {}) {
   const res = await fetch(url, {
@@ -155,8 +156,30 @@ for (const c of cases) {
   });
 }
 
-console.log(JSON.stringify({
-  ok: true,
+const expectedStatus = {
+  valid_submit_baseline: 200,
+  invalid_token_blocked: 403,
+  plus_one_limit_blocked: 400,
+  children_limit_blocked: 400,
+  scope_violation_ceremony_blocked: 400,
+  scope_violation_reception_blocked: 400,
+};
+
+const failures = [];
+for (const r of results) {
+  if ('skipped' in r) {
+    if (strict) failures.push(`${r.name} skipped: ${r.skipped}`);
+    continue;
+  }
+  const wanted = expectedStatus[r.name];
+  if (typeof wanted === 'number' && r.status !== wanted) {
+    failures.push(`${r.name} expected ${wanted} got ${r.status}`);
+  }
+}
+
+const output = {
+  ok: failures.length === 0,
+  strict,
   selectedGuests: {
     baseline: {
       id: baselineGuest.id,
@@ -169,4 +192,8 @@ console.log(JSON.stringify({
     noReception: noReceptionGuest ? { id: noReceptionGuest.id, name: noReceptionGuest.name, invited_to_ceremony: noReceptionGuest.invited_to_ceremony, invited_to_reception: noReceptionGuest.invited_to_reception } : null,
   },
   results,
-}, null, 2));
+  failures,
+};
+
+console.log(JSON.stringify(output, null, 2));
+if (failures.length > 0) process.exit(1);
