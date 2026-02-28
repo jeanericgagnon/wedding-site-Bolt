@@ -629,7 +629,7 @@ export const VaultContribute: React.FC = () => {
               <div className="w-14 h-14 bg-white border border-amber-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                 <Lock className="w-6 h-6 text-primary" />
               </div>
-              {coupleName && <p className="text-sm text-stone-500 mb-1 tracking-wide uppercase font-medium">{coupleName}</p>}
+              {coupleName && <p className="text-sm text-stone-500 mb-1 updates-wide uppercase font-medium">{coupleName}</p>}
               <h1 className="text-[30px] leading-tight font-bold text-text-primary">Choose an Anniversary Vault</h1>
               <p className="text-text-secondary text-sm mt-2">Pick a vault to leave a message. Completed vaults are marked.</p>
             </div>
@@ -648,7 +648,7 @@ export const VaultContribute: React.FC = () => {
                       {done && <CheckCircle className="w-5 h-5 text-green-600" />}
                     </div>
                     <p className="text-xs text-stone-500 mt-2">Opens on the {ordinalLabel(v.duration_years)} anniversary.</p>
-                    <p className={`text-xs mt-3 font-semibold tracking-wide ${done ? 'text-emerald-700' : 'text-primary'}`}>{done ? 'Submitted ✓' : 'Add message →'}</p>
+                    <p className={`text-xs mt-3 font-semibold updates-wide ${done ? 'text-emerald-700' : 'text-primary'}`}>{done ? 'Submitted ✓' : 'Add message →'}</p>
                   </Link>
                 );
               })}
@@ -714,7 +714,7 @@ export const VaultContribute: React.FC = () => {
               <Lock className="w-6 h-6 text-primary" />
             </div>
             {coupleName && (
-              <p className="text-sm text-stone-500 mb-1 tracking-wide uppercase font-medium">
+              <p className="text-sm text-stone-500 mb-1 updates-wide uppercase font-medium">
                 {coupleName}
               </p>
             )}
@@ -800,7 +800,7 @@ export const VaultContribute: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5 tracking-[0.01em]">Message type</label>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5 updates-[0.01em]">Message type</label>
                   <select
                     value={form.media_type}
                     onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); if (isRecordingVoice) stopVoiceRecording(); }}

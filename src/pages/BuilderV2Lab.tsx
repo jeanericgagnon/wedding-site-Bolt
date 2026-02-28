@@ -985,7 +985,7 @@ export const BuilderV2Lab: React.FC = () => {
       <div className="w-full px-0 py-0 h-full flex flex-col gap-0 [--topbar-h:46px] [--rail-head-h:50px] [--page-row-h:52px]">
         <div className="h-[var(--topbar-h)] px-2 md:px-3 border-b border-border-subtle bg-white flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
+            <p className="text-xs uppercase updates-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
             <h1 className="text-lg md:text-xl font-semibold mt-0.5">Functional shell (Sprint 2 in progress)</h1>
             <p className="text-text-secondary mt-0.5 text-xs max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
           </div>
@@ -1121,7 +1121,7 @@ export const BuilderV2Lab: React.FC = () => {
                         <div className="border-t border-border-subtle bg-white">
                           {(sectionBlocks[instance.id] ?? []).map((b) => (
                             <div key={b.id} className="px-5 py-3.5 border-b border-border-subtle bg-white/95">
-                              <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">{BLOCK_LABELS[b.type]}</p>
+                              <p className="text-[11px] uppercase updates-wide text-text-tertiary mb-1">{BLOCK_LABELS[b.type]}</p>
                               {b.type === 'qna' ? (
                                 <div className="space-y-1">
                                   <p className="text-sm text-text-primary"><span className="font-medium">Q:</span> {normalizeBlockData(b).question}</p>
@@ -1142,7 +1142,7 @@ export const BuilderV2Lab: React.FC = () => {
                                   {normalizeBlockData(b).note && <p className="text-sm text-text-secondary">{normalizeBlockData(b).note}</p>}
                                 </div>
                               ) : b.type === 'divider' ? (
-                                <p className="text-xs text-text-tertiary tracking-[0.2em]">{normalizeBlockData(b).text || '———'}</p>
+                                <p className="text-xs text-text-tertiary updates-[0.2em]">{normalizeBlockData(b).text || '———'}</p>
                               ) : b.type === 'event' ? (
                                 <div className="space-y-1">
                                   <p className="text-sm text-text-primary font-medium">{normalizeBlockData(b).title}</p>
@@ -1179,7 +1179,7 @@ export const BuilderV2Lab: React.FC = () => {
             {showMinimap && (
               <div className="absolute right-6 bottom-6 z-30 w-44 max-h-64 overflow-auto rounded-lg border border-border bg-white/95 shadow-sm p-2 space-y-1">
                 <div className="flex items-center justify-between px-1 pb-1">
-                  <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Mini-map</p>
+                  <p className="text-[10px] uppercase updates-wide text-text-tertiary">Mini-map</p>
                   <button onClick={() => setShowMinimap(false)} className="text-[10px] text-text-tertiary hover:text-text-primary">Close</button>
                 </div>
                 {orderedVisible.map((s) => (
@@ -1203,7 +1203,7 @@ export const BuilderV2Lab: React.FC = () => {
 
             <div className="p-3.5 space-y-3 overflow-auto h-[calc(100%-var(--rail-head-h))] scroll-smooth">
               <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border border-border-subtle rounded-sm px-2.5 py-2 space-y-1.5">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Now editing</p>
+                <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Now editing</p>
                 <p className="text-sm font-medium text-text-primary truncate">{selected.title}</p>
                 <button
                   onClick={() => {
@@ -1225,7 +1225,7 @@ export const BuilderV2Lab: React.FC = () => {
               </div>
 
               <div className="border border-border rounded-sm p-2.5 bg-surface-subtle space-y-2">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">{propertyTab === 'content' ? 'Content' : 'Settings'}</p>
+                <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">{propertyTab === 'content' ? 'Content' : 'Settings'}</p>
                 {propertyTab === 'content' && (
                   <>
                     <button
@@ -1268,7 +1268,7 @@ export const BuilderV2Lab: React.FC = () => {
                       <p className="text-[10px] text-text-tertiary">Section limits: content blocks are capped to keep pages clean and readable.</p>
 
                       <div className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                        <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Header</p>
+                        <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Header</p>
                         <label className="block">
                           <span className="text-[11px] text-text-tertiary">Title</span>
                           <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
@@ -1278,7 +1278,7 @@ export const BuilderV2Lab: React.FC = () => {
                       {selected.type === 'hero' && (
                         <>
                           <div id="rail-section-hero" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Couple names</p>
+                            <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Couple names</p>
                             <label className="block">
                               <span className="text-[11px] text-text-tertiary">Couple names</span>
                               <input
@@ -1289,7 +1289,7 @@ export const BuilderV2Lab: React.FC = () => {
                             </label>
                           </div>
                           <div className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Date</p>
+                            <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Date</p>
                             <label className="block">
                               <span className="text-[11px] text-text-tertiary">Wedding date & time</span>
                               <input
@@ -1305,7 +1305,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                       {selected.type === 'story' && (
                         <div id="rail-section-story" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Story</p>
+                          <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Story</p>
                           <label className="block">
                             <span className="text-[11px] text-text-tertiary">Story text</span>
                             <textarea
@@ -1320,7 +1320,7 @@ export const BuilderV2Lab: React.FC = () => {
                       {selected.type === 'schedule' && (
                         <>
                           <div id="rail-section-schedule" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                            <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Primary event</p>
+                            <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Primary event</p>
                             <label className="block">
                               <span className="text-[11px] text-text-tertiary">Primary event title</span>
                               <input value={previewFields.scheduleTitle} onChange={(e) => updatePreviewField('scheduleTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
@@ -1335,7 +1335,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                       {selected.type === 'travel' && (
                         <div id="rail-section-travel" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Travel details</p>
+                          <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Travel details</p>
                           <label className="block"><span className="text-[11px] text-text-tertiary">Flights</span><input value={previewFields.travelFlights} onChange={(e) => updatePreviewField('travelFlights', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                           <label className="block"><span className="text-[11px] text-text-tertiary">Parking</span><input value={previewFields.travelParking} onChange={(e) => updatePreviewField('travelParking', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                           <label className="block"><span className="text-[11px] text-text-tertiary">Hotels</span><input value={previewFields.travelHotels} onChange={(e) => updatePreviewField('travelHotels', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
@@ -1345,7 +1345,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                       {selected.type === 'registry' && (
                         <div id="rail-section-registry" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">Registry</p>
+                          <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Registry</p>
                           <label className="block"><span className="text-[11px] text-text-tertiary">Featured registry item</span><input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                           <label className="block"><span className="text-[11px] text-text-tertiary">Registry note</span><textarea value={previewFields.registryNote} onChange={(e) => updatePreviewField('registryNote', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2 bg-white text-sm min-h-20" /></label>
                         </div>
@@ -1365,7 +1365,7 @@ export const BuilderV2Lab: React.FC = () => {
                           <div className="sticky top-0 z-[1] -mx-3 px-3 py-1.5 mb-1 bg-white/95 backdrop-blur flex items-center justify-between gap-2 border-b border-border-subtle">
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="text-[10px] text-text-tertiary cursor-grab select-none" title="Reorder block">⋮⋮</span>
-                              <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium truncate">Block · {BLOCK_LABELS[block.type]}</p>
+                              <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium truncate">Block · {BLOCK_LABELS[block.type]}</p>
                             </div>
                             <div className="flex items-center gap-1 p-0.5 rounded-md border border-border-subtle bg-surface-subtle">
                               <button title="Move block up" onClick={() => moveBlock(selected.id, block.id, -1)} className="text-[10px] border rounded px-1.5 py-0.5 bg-white hover:border-primary/40 hover:bg-primary/5 transition-all duration-150">↑</button>
@@ -1473,7 +1473,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                       {selected.type === 'rsvp' && (
                         <div id="rail-section-rsvp" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary font-medium">RSVP</p>
+                          <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">RSVP</p>
                           <label className="block"><span className="text-[11px] text-text-tertiary">RSVP heading</span><input value={previewFields.rsvpTitle} onChange={(e) => updatePreviewField('rsvpTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                           <label className="block"><span className="text-[11px] text-text-tertiary">RSVP deadline</span><input type="date" value={toDateInputValue(previewFields.rsvpDeadlineISO)} onChange={(e) => updateRsvpDeadlineDate(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>
                         </div>
@@ -1537,7 +1537,7 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
             {pinnedCommands.length > 0 && (
               <div className="px-3 py-2 border-b border-border-subtle">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">Pinned</p>
+                <p className="text-[11px] uppercase updates-wide text-text-tertiary mb-1">Pinned</p>
                 <div className="flex flex-wrap gap-1">
                   {pinnedCommands.map((label) => (
                     <button key={label} onClick={() => setCommandQuery(label)} className="text-[11px] px-2 py-1 rounded-full bg-amber-50 border border-amber-200 hover:border-amber-300">{label}</button>
@@ -1548,7 +1548,7 @@ export const BuilderV2Lab: React.FC = () => {
 
             {recentCommands.length > 0 && (
               <div className="px-3 py-2 border-b border-border-subtle">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1">Recent</p>
+                <p className="text-[11px] uppercase updates-wide text-text-tertiary mb-1">Recent</p>
                 <div className="flex flex-wrap gap-1">
                   {recentCommands.map((label) => (
                     <button key={label} onClick={() => setCommandQuery(label)} className="text-[11px] px-2 py-1 rounded-full bg-surface-subtle border border-border-subtle hover:border-primary/30">{label}</button>
@@ -1560,7 +1560,7 @@ export const BuilderV2Lab: React.FC = () => {
               {commandItems.slice(0, 18).map((item, idx, arr) => (
                 <div key={item.id}>
                   {(idx === 0 || arr[idx - 1].group !== item.group) && (
-                    <p className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wide text-text-tertiary">{item.group}</p>
+                    <p className="px-3 pt-2 pb-1 text-[11px] uppercase updates-wide text-text-tertiary">{item.group}</p>
                   )}
                   <button
                     onClick={() => { item.action(); setShowCommand(false); setCommandQuery(''); }}

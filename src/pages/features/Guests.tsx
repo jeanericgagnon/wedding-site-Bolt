@@ -100,7 +100,7 @@ export const GuestsFeature: React.FC = () => {
                 Invite different guests to different events. Ceremony only, reception only, or full weekend access.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Per-event guest permissions</li>
+                <li>• Per-event guest access rules</li>
                 <li>• No leakage between events</li>
                 <li>• Clear visibility controls</li>
               </ul>
@@ -142,7 +142,7 @@ export const GuestsFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Export for Vendors</h3>
               <p className="text-ink/70 mb-4">
-                Export your guest list in any format your vendors need. Caterer, venue, or your own tracking.
+                Export your guest list in any format your vendors need. Caterer, venue, or your own updates.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• CSV, Excel, PDF formats</li>
@@ -172,7 +172,7 @@ export const GuestsFeature: React.FC = () => {
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Advanced Search and Filtering</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Find guests instantly with powerful search. Filter by RSVP status, event permissions, meal choices, or custom tags. Sort by name, response date, or household size.
+                      Find guests instantly with powerful search. Filter by RSVP status, event access rules, meal choices, or custom tags. Sort by name, response date, or household size.
                     </p>
                   </div>
                 </div>
@@ -225,13 +225,13 @@ export const GuestsFeature: React.FC = () => {
                 'Unlimited guests',
                 'Household grouping',
                 'Plus-one management',
-                'Event permissions',
+                'Event access',
                 'Duplicate prevention',
                 'CSV import/export',
                 'Advanced search',
                 'Custom tags',
                 'Private notes',
-                'Dietary tracking',
+                'Dietary updates',
                 'RSVP status filtering',
                 'Real-time updates',
               ].map((feature, idx) => (

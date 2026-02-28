@@ -124,7 +124,7 @@ export const Product: React.FC = () => {
   const pains = [
     { icon: Users,         title: 'Household mapping errors',           desc: 'Group guests properly from day one — no duplicate names, no confusion about who is who.' },
     { icon: UserPlus,      title: 'Plus-one logic breaks',              desc: 'Control exactly who can bring a date: named, unnamed, or none. Enforced server-side.' },
-    { icon: Lock,          title: 'Multi-event permission leakage',     desc: 'Ceremony-only guests never see reception details. Separate access controls per event.' },
+    { icon: Lock,          title: 'Multi-event privacy mixups',     desc: 'Ceremony-only guests never see reception details. Separate access controls per event.' },
     { icon: Clock,         title: 'RSVP deadline ambiguity',            desc: 'Clear cutoffs with per-timezone display. Late submissions blocked with a friendly message.' },
     { icon: AlertTriangle, title: 'Duplicate guest submissions',        desc: 'Token-gated RSVP prevents accidental double responses. One token, one guest, one record.' },
     { icon: Shield,        title: 'Privacy/indexing accidentally public',desc: 'Private by default, with noindex control and invite-only mode built in — not bolted on.' },
@@ -289,7 +289,7 @@ export const Product: React.FC = () => {
               {activeTab === 'guests' && (
                 <>
                   <h3 className="text-2xl font-bold text-text-primary">Guests + Households</h3>
-                  <p className="text-text-secondary">Full guest list management with intelligent grouping, permissions, and import/export.</p>
+                  <p className="text-text-secondary">Full guest list management with smart grouping, access rules, and easy import/export.</p>
                   <ul className="space-y-3">
                     {[
                       'Import CSV with intelligent column auto-mapping',
@@ -307,8 +307,8 @@ export const Product: React.FC = () => {
                     ))}
                   </ul>
                   <div className="rounded-xl border border-border bg-surface-subtle p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-text-tertiary mb-2">How household logic works</p>
-                    <p className="text-sm text-text-secondary leading-relaxed">One invite can represent a household, but each person keeps their own RSVP status, meal choice, and event permissions. You get fewer invite mistakes without losing per-guest accuracy.</p>
+                    <p className="text-xs font-semibold uppercase updates-wide text-text-tertiary mb-2">How household logic works</p>
+                    <p className="text-sm text-text-secondary leading-relaxed">One invite can represent a household, but each person keeps their own RSVP status, meal choice, and event access rules. You get fewer invite mistakes without losing per-guest accuracy.</p>
                   </div>
                   <Link to="/features/guests"><Button variant="primary">Full guest management docs <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
                 </>
@@ -321,7 +321,7 @@ export const Product: React.FC = () => {
                   <ul className="space-y-3">
                     {[
                       'Per-guest cryptographic invite tokens — no name-search guessing',
-                      'Multi-event permissions with separate attendance tracking',
+                      'Multi-event access rules with separate attendance updates',
                       'Meal selection + dietary note collection per guest',
                       'Plus-one acceptance with mandatory name capture',
                       'RSVP deadline enforcement with configurable late override',
@@ -393,7 +393,7 @@ export const Product: React.FC = () => {
                       'Universal URL — link Amazon, Target, Crate & Barrel, any store',
                       'BYOAL: bring your own affiliate links, we never override them',
                       'Auto-fetch item metadata: title, price, image from URL',
-                      'Purchase tracking with quantity and partial-purchased status',
+                      'Purchase updates with quantity and partial-purchased status',
                       'Honeymoon fund and charity donation links',
                       'Clean display with zero sponsored clutter',
                     ].map((item, i) => (
@@ -416,7 +416,7 @@ export const Product: React.FC = () => {
                       'Visual seating chart builder with drag-and-drop',
                       'Assign entire households to tables in one action',
                       'Export seating for caterer and venue (CSV/PDF)',
-                      'Day-of check-in mode with arrival tracking',
+                      'Day-of check-in mode with arrival updates',
                       'Meal headcount export by table and event',
                     ].map((item, i) => (
                       <li key={i} className="flex items-start gap-3">
@@ -557,7 +557,7 @@ export const Product: React.FC = () => {
                 {[
                   { icon: Users,         label: 'Household grouping, merging, splitting',       done: true },
                   { icon: UserPlus,      label: 'Plus-one rules (named/unnamed)',                done: true },
-                  { icon: Lock,          label: 'Per-event invitation permissions',              done: true },
+                  { icon: Lock,          label: 'Per-event invitation access rules',              done: true },
                   { icon: AlertTriangle, label: 'Duplicate guest detection',                    done: true },
                   { icon: Upload,        label: 'CSV import with auto column mapping',           done: true },
                   { icon: Download,      label: 'Export for vendor/caterer',                    done: true },
@@ -579,7 +579,7 @@ export const Product: React.FC = () => {
               <ul className="space-y-3">
                 {[
                   { icon: Lock,          label: 'Cryptographic per-guest invite tokens',        done: true },
-                  { icon: CheckCircle2,  label: 'Multi-event RSVP with separate permissions',   done: true },
+                  { icon: CheckCircle2,  label: 'Multi-event RSVP with separate access rules',   done: true },
                   { icon: Utensils,      label: 'Meal choices + dietary/allergen notes',         done: true },
                   { icon: MessageSquare, label: 'Custom RSVP questions',                         done: true },
                   { icon: Mail,          label: 'Confirmation email automation',                  done: true },
@@ -606,7 +606,7 @@ export const Product: React.FC = () => {
                   { icon: Clock,         label: 'Scheduled sends + draft saving',                done: true },
                   { icon: Mail,          label: 'Personalized invitations with RSVP link',        done: true },
                   { icon: MessageSquare, label: 'SMS by segment',                               done: false },
-                  { icon: BarChart3,     label: 'Open/click tracking',                           done: false },
+                  { icon: BarChart3,     label: 'Open/click updates',                           done: false },
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <f.icon className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
@@ -647,7 +647,7 @@ export const Product: React.FC = () => {
                 {[
                   { icon: Wallet,       label: 'Universal URL — any store, no lock-in',          done: true },
                   { icon: Zap,          label: 'Auto-fetch title, price, image from URL',         done: true },
-                  { icon: CheckCircle2, label: 'Purchase tracking with quantity + partial status', done: true },
+                  { icon: CheckCircle2, label: 'Purchase updates with quantity + partial status', done: true },
                   { icon: Heart,        label: 'Honeymoon fund + charity donation links',          done: true },
                   { icon: DollarSign,   label: 'Cash fund (Venmo, PayPal, Zelle links)',          done: false },
                 ].map((f, i) => (
@@ -670,7 +670,7 @@ export const Product: React.FC = () => {
                   'Visual seating chart builder with drag-and-drop',
                   'Household-aware table assignment (assign whole family at once)',
                   'Caterer export: CSV, Excel, PDF',
-                  'Day-of check-in mode with arrival tracking',
+                  'Day-of check-in mode with arrival updates',
                   'Meal headcount by table',
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
@@ -973,7 +973,7 @@ export const Product: React.FC = () => {
                       </div>
                     </div>
                     <p className="text-xs text-text-tertiary mb-3 line-clamp-3 leading-relaxed min-h-[3.6em]">{tmpl.description}</p>
-                    <p className="text-[11px] text-text-tertiary mb-2 uppercase tracking-wide">
+                    <p className="text-[11px] text-text-tertiary mb-2 uppercase updates-wide">
                       Best for: {tmpl.moodTags.slice(0, 2).map(tag => TEMPLATE_MOOD_LABELS[tag] ?? tag).join(' · ')} weddings
                     </p>
                     <div className="flex flex-wrap gap-1 mb-3">

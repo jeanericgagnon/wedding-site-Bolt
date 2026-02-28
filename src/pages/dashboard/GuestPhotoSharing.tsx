@@ -295,7 +295,7 @@ export const GuestPhotoSharing: React.FC = () => {
       .filter((v): v is string => typeof v === 'string');
 
     if (lines.length === 0) {
-      setError('No share messages available yet. Generate links first.');
+      setError('No share messages available yet. Create links first.');
       return;
     }
 
@@ -309,7 +309,7 @@ export const GuestPhotoSharing: React.FC = () => {
       .filter((v): v is string => typeof v === 'string' && v.length > 0);
 
     if (links.length === 0) {
-      setError('No known upload links yet. Generate or regenerate links first.');
+      setError('No known upload links yet. Create or regenerate links first.');
       return;
     }
 

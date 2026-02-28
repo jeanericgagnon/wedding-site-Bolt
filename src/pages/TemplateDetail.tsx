@@ -30,7 +30,7 @@ export const TemplateDetail: React.FC = () => {
       <div className="mx-auto max-w-5xl rounded-xl border border-neutral-200 bg-white overflow-hidden">
         <img src={tpl.previewImage} alt={tpl.name} className="h-72 w-full object-cover" />
         <div className="p-6">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">Design family: {tpl.designFamily}</p>
+          <p className="text-xs uppercase updates-wide text-neutral-500">Design family: {tpl.designFamily}</p>
           <h1 className="mt-1 text-3xl font-bold text-neutral-900">{tpl.name}</h1>
           <p className="mt-3 text-sm text-neutral-600 max-w-3xl">{tpl.description}</p>
 

@@ -11,7 +11,7 @@ interface Props {
   onAdd: (task: Partial<PlanningTask>) => Promise<void>;
   onUpdate: (id: string, updates: Partial<PlanningTask>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
-  onGenerateMilestones: () => Promise<void>;
+  onCreateMilestones: () => Promise<void>;
 }
 
 type ViewMode = 'list' | 'kanban';
@@ -179,7 +179,7 @@ function TaskCard({ task, onUpdate, onDelete, onEdit }: {
   );
 }
 
-export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate, onDelete, onGenerateMilestones }) => {
+export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate, onDelete, onCreateMilestones }) => {
   const [view, setView] = useState<ViewMode>('list');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [filterPriority, setFilterPriority] = useState<FilterPriority>('all');
@@ -187,7 +187,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
   const [editingTask, setEditingTask] = useState<PlanningTask | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [generatingMilestones, setGeneratingMilestones] = useState(false);
-  const [confirmGenerate, setConfirmGenerate] = useState(false);
+  const [confirmCreate, setConfirmCreate] = useState(false);
 
   const filtered = tasks.filter(t => {
     if (filterStatus !== 'all' && t.status !== filterStatus) return false;
@@ -212,11 +212,11 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
     setSelectedIds(new Set());
   }
 
-  async function handleGenerateMilestones() {
+  async function handleCreateMilestones() {
     setGeneratingMilestones(true);
-    await onGenerateMilestones();
+    await onCreateMilestones();
     setGeneratingMilestones(false);
-    setConfirmGenerate(false);
+    setConfirmCreate(false);
   }
 
   const kanbanColumns: { status: PlanningTask['status']; label: string }[] = [
@@ -272,13 +272,13 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
             </Button>
           )}
           {weddingDate && tasks.length === 0 && (
-            <Button variant="outline" size="sm" onClick={() => setConfirmGenerate(true)} disabled={generatingMilestones}>
+            <Button variant="outline" size="sm" onClick={() => setConfirmCreate(true)} disabled={generatingMilestones}>
               <Sparkles className="w-4 h-4 mr-1" />
-              Generate Checklist
+              Create Checklist
             </Button>
           )}
           {weddingDate && tasks.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setConfirmGenerate(true)} disabled={generatingMilestones}>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmCreate(true)} disabled={generatingMilestones}>
               <Sparkles className="w-4 h-4 mr-1" />
               Checklist
             </Button>
@@ -290,17 +290,17 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
         </div>
       </div>
 
-      {confirmGenerate && (
+      {confirmCreate && (
         <div className="p-4 bg-primary-light border border-primary/20 rounded-xl flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-text-primary">Generate milestone checklist?</p>
+            <p className="text-sm font-medium text-text-primary">Create milestone checklist?</p>
             <p className="text-xs text-text-secondary mt-0.5">This will add ~28 standard wedding tasks based on your wedding date. Existing tasks will be kept.</p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            <Button size="sm" onClick={handleGenerateMilestones} disabled={generatingMilestones}>
-              {generatingMilestones ? 'Generating...' : 'Generate'}
+            <Button size="sm" onClick={handleCreateMilestones} disabled={generatingMilestones}>
+              {generatingMilestones ? 'Creating...' : 'Create'}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirmGenerate(false)}>Cancel</Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmCreate(false)}>Cancel</Button>
           </div>
         </div>
       )}

@@ -112,7 +112,7 @@ export const TravelFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Add to Calendar</h3>
               <p className="text-ink/70 mb-4">
-                Generate calendar invites for each event. Works with Apple Calendar, Google Calendar, and Outlook.
+                Create calendar invites for each event. Works with Apple Calendar, Google Calendar, and Outlook.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• ICS file generation</li>

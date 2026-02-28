@@ -954,7 +954,7 @@ export default function RSVP() {
 
                   {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs uppercase tracking-wide text-gray-500">Custom answers</p>
+                      <p className="text-xs uppercase updates-wide text-gray-500">Custom answers</p>
                       {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
                         <div key={q.id} className="flex items-start justify-between text-sm gap-4">
                           <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>

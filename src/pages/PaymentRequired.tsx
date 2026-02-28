@@ -9,7 +9,7 @@ import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionE
 const FEATURES = [
   'Your own wedding website with custom URL',
   'RSVP management for all your guests',
-  'Registry with purchase tracking',
+  'Registry with purchase updates',
   'Guest messaging & communication tools',
   'Itinerary builder & schedule',
   'Drag-and-drop site builder',

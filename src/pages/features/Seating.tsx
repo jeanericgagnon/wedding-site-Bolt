@@ -86,7 +86,7 @@ export const SeatingFeature: React.FC = () => {
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Drag guests to tables</li>
-                <li>• Live capacity tracking</li>
+                <li>• Live capacity updates</li>
                 <li>• Color-coded by status</li>
               </ul>
             </div>
@@ -97,7 +97,7 @@ export const SeatingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Print Place Cards</h3>
               <p className="text-ink/70 mb-4">
-                Generate printable place cards with guest names and table numbers. Multiple templates available.
+                Create printable place cards with guest names and table numbers. Multiple templates available.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• PDF generation</li>
@@ -217,14 +217,14 @@ export const SeatingFeature: React.FC = () => {
               Every feature included
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              Everything you need for seating planning and day-of guest tracking.
+              Everything you need for seating planning and day-of guest updates.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[
                 'Drag-and-drop seating board',
                 'Per-event seating',
-                'Table capacity tracking',
+                'Table capacity updates',
                 'Auto-assign from RSVPs',
                 'Household-aware grouping',
                 'RSVP drift detection',

@@ -309,7 +309,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
         <div className="flex-1 overflow-y-auto px-6 py-5">
           <div className="prose prose-sm max-w-none">
             <div className="bg-surface-subtle rounded-xl border border-border p-5">
-              <p className="text-xs font-medium text-text-tertiary uppercase tracking-wide mb-3">Message body</p>
+              <p className="text-xs font-medium text-text-tertiary uppercase updates-wide mb-3">Message body</p>
               <div className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap font-sans">
                 {message.body}
               </div>

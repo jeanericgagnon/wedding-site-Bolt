@@ -1259,7 +1259,7 @@ setWeddingSiteId('demo-site-id');
         <div className="rounded-2xl border border-primary/15 bg-[linear-gradient(135deg,rgba(59,130,246,0.07),rgba(255,255,255,0.95))] p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] text-primary/80 font-semibold mb-2">Time Capsule</p>
+              <p className="text-[11px] uppercase updates-[0.16em] text-primary/80 font-semibold mb-2">Time Capsule</p>
               <h1 className="text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
               <p className="text-text-secondary">
                 Time capsule messages sealed until each anniversary milestone. Up to {MAX_VAULTS} vaults supported.
@@ -1292,7 +1292,7 @@ setWeddingSiteId('demo-site-id');
             <div>
               <div className="flex items-center gap-2">
                 <p className="text-sm font-semibold text-text-primary">Vault Storage Provider</p>
-                {isDemoMode && <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border border-warning/30 bg-warning/10 text-warning">Demo Mode</span>}
+                {isDemoMode && <span className="text-[10px] uppercase updates-wide px-2 py-0.5 rounded-full border border-warning/30 bg-warning/10 text-warning">Demo Mode</span>}
               </div>
               <p className="text-xs text-text-secondary mt-1">Use Supabase storage now, or connect Google Drive for external archive flow and time-lock orchestration.</p>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">

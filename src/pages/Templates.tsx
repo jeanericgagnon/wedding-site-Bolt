@@ -84,10 +84,10 @@ export const Templates: React.FC = () => {
                   <h2 className="text-lg font-semibold text-neutral-900">{tpl.name}</h2>
                   <div className="flex flex-col items-end gap-1">
                     {recommendedTemplateIds.includes(tpl.id) && (
-                      <span className="rounded bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">Recommended</span>
+                      <span className="rounded bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-rose-700">Recommended</span>
                     )}
                     {selectedTemplateId === tpl.id && (
-                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Selected</span>
+                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-emerald-700">Selected</span>
                     )}
                   </div>
                 </div>

@@ -97,7 +97,7 @@ export const MessagingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Guest Segmentation</h3>
               <p className="text-ink/70 mb-4">
-                Send to specific groups. RSVP status, event permissions, household tags, or custom filters.
+                Send to specific groups. RSVP status, event access rules, household tags, or custom filters.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Non-responders only</li>
@@ -131,7 +131,7 @@ export const MessagingFeature: React.FC = () => {
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Email open rates</li>
-                <li>• Click tracking</li>
+                <li>• Click updates</li>
                 <li>• Individual guest history</li>
               </ul>
             </div>
@@ -186,7 +186,7 @@ export const MessagingFeature: React.FC = () => {
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Advanced Filtering</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Combine multiple filters to reach exactly who you need. RSVP status AND event permissions AND custom tags. Preview recipient count before sending.
+                      Combine multiple filters to reach exactly who you need. RSVP status AND event access rules AND custom tags. Preview recipient count before sending.
                     </p>
                   </div>
                 </div>
@@ -226,8 +226,8 @@ export const MessagingFeature: React.FC = () => {
                 'SMS credits available',
                 'Guest segmentation',
                 'Schedule sends',
-                'Open tracking',
-                'Click tracking',
+                'Open updates',
+                'Click updates',
                 'Message templates',
                 'Custom messages',
                 'Automated reminders',

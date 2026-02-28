@@ -781,7 +781,7 @@ export const DashboardGuests: React.FC = () => {
     }));
 
     setFollowUpTasks((prev) => [...stamped, ...prev].slice(0, 12));
-    toast(`Generated ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
+    toast(`Created ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
   };
 
   const handleSendSelectedInvitations = async () => {
@@ -1631,7 +1631,7 @@ Proceed with send?`)) return;
         <div className="max-w-7xl mx-auto space-y-8">
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
-            <p className="text-text-secondary">Manage your guest list and track responses</p>
+            <p className="text-text-secondary">Manage your guest list and see responses</p>
             <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
               <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
               <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
@@ -1709,7 +1709,7 @@ Proceed with send?`)) return;
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
-          <p className="text-text-secondary">Manage your guest list and track responses</p>
+          <p className="text-text-secondary">Manage your guest list and see responses</p>
           <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
             <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
             <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
@@ -1957,7 +1957,7 @@ Proceed with send?`)) return;
                   {showOpsMenu && (
                     <div className="absolute right-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg shadow-lg p-1 max-h-96 overflow-auto">
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyOpsSummary(); setShowOpsMenu(false); }}>Copy ops summary</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Generate checklist</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
                         const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
                         const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
@@ -2525,7 +2525,7 @@ Proceed with send?`)) return;
 
                 return (
                   <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-text-tertiary">RSVP details</p>
+                    <p className="text-xs uppercase updates-wide text-text-tertiary">RSVP details</p>
                     <div className="text-sm text-text-primary">
                       <span className="font-medium">Status:</span>{' '}
                       <span className="capitalize">{status}</span>
@@ -2542,7 +2542,7 @@ Proceed with send?`)) return;
                     )}
                     {entries.length > 0 && (
                       <div className="pt-1 space-y-1.5">
-                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Custom answers</p>
+                        <p className="text-xs uppercase updates-wide text-text-tertiary">Custom answers</p>
                         {entries.map((entry) => (
                           <div key={entry.key} className="text-sm text-text-primary flex items-start justify-between gap-3">
                             <span className="text-text-secondary truncate">{entry.key}</span>
@@ -2557,7 +2557,7 @@ Proceed with send?`)) return;
 
               <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Recent guest updates</p>
+                  <p className="text-xs uppercase updates-wide text-text-tertiary">Recent guest updates</p>
                   <span className="text-[11px] text-text-tertiary">Last {guestAuditEntries.length} changes</span>
                 </div>
                 {guestAuditEntries.length === 0 ? (

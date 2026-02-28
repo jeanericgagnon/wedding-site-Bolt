@@ -174,7 +174,7 @@ export const DashboardPlanning: React.FC = () => {
     }
   }, [toast, isDemoMode]);
 
-  const handleGenerateMilestones = useCallback(async () => {
+  const handleCreateMilestones = useCallback(async () => {
     if (!siteId || !weddingDate) return;
     try {
       const milestones = generateMilestoneTasks(siteId, weddingDate);
@@ -397,7 +397,7 @@ export const DashboardPlanning: React.FC = () => {
                 onAdd={handleAddTask}
                 onUpdate={handleUpdateTask}
                 onDelete={handleDeleteTask}
-                onGenerateMilestones={handleGenerateMilestones}
+                onCreateMilestones={handleCreateMilestones}
               />
             )}
             {activeTab === 'budget' && (

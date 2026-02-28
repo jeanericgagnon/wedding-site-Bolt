@@ -82,7 +82,7 @@ export const RSVPFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Multi-Event RSVP</h3>
               <p className="text-ink/70 mb-4">
-                Separate RSVPs for ceremony, reception, rehearsal dinner, or any events you add. Clear permissions prevent leakage.
+                Separate RSVPs for ceremony, reception, rehearsal dinner, or any events you add. Clear access rules keep event details private.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Per-event responses</li>
@@ -102,7 +102,7 @@ export const RSVPFeature: React.FC = () => {
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Custom meal options</li>
                 <li>• Dietary notes per person</li>
-                <li>• Allergen tracking</li>
+                <li>• Allergen updates</li>
               </ul>
             </div>
 
@@ -142,11 +142,11 @@ export const RSVPFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Real-Time Analytics</h3>
               <p className="text-ink/70 mb-4">
-                Track response rates, headcounts, meal choices, and dietary needs in real-time. Export anytime.
+                Track reply paces, headcounts, meal choices, and dietary needs in real-time. Export anytime.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Live headcount by event</li>
-                <li>• Response rate tracking</li>
+                <li>• Response rate updates</li>
                 <li>• Meal choice breakdown</li>
               </ul>
             </div>
@@ -225,7 +225,7 @@ export const RSVPFeature: React.FC = () => {
                 'Household-aware flow',
                 'Multi-event RSVP',
                 'Meal selection',
-                'Dietary tracking',
+                'Dietary updates',
                 'Custom questions',
                 'Deadline enforcement',
                 'Automatic reminders',

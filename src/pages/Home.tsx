@@ -49,7 +49,7 @@ export const Home: React.FC = () => {
       <section id="top" className="py-20 md:py-32 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-[2.5rem] md:text-[4.25rem] font-serif font-bold text-ink mb-6 leading-[1.05] tracking-tight">
+            <h1 className="text-[2.5rem] md:text-[4.25rem] font-serif font-bold text-ink mb-6 leading-[1.05] updates-tight">
               A wedding site that doesn't break when it matters
             </h1>
             <p className="text-[1.125rem] md:text-[1.25rem] text-ink/75 mb-10 leading-relaxed max-w-3xl mx-auto">
@@ -77,7 +77,7 @@ export const Home: React.FC = () => {
                 {demoLoading ? 'Opening demo...' : 'Try demo'}
               </button>
             </div>
-            <p className="text-[0.8125rem] text-ink/60 tracking-wide leading-loose">
+            <p className="text-[0.8125rem] text-ink/60 updates-wide leading-loose">
               $49 flat fee for 2 years • Auto-renew OFF by default • Private by default
             </p>
           </div>
@@ -119,7 +119,7 @@ export const Home: React.FC = () => {
             </div>
 
             <div className="bg-accent/5 rounded-2xl p-8 border border-accent/20 max-w-2xl mx-auto">
-              <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-3 leading-[1.2] tracking-tight">Built for trust, not tricks</h3>
+              <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-3 leading-[1.2] updates-tight">Built for trust, not tricks</h3>
               <p className="text-[1.0625rem] text-ink/80 mb-6 leading-relaxed">Wedding sites should not make money by stressing you out.</p>
               <ul className="space-y-3 text-[0.9375rem] text-ink/70">
                 <li className="leading-relaxed">No upsells. No paid add ons to "unlock" the basics.</li>
@@ -149,7 +149,7 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Users className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">Guests + Households</h3>
+              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Guests + Households</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <span className="text-brand mt-0.5">•</span>
@@ -161,7 +161,7 @@ export const Home: React.FC = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-brand mt-0.5">•</span>
-                  <span>Event permissions</span>
+                  <span>Event access</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-brand mt-0.5">•</span>
@@ -183,12 +183,12 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <CheckCircle2 className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">RSVP Engine</h3>
+              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">RSVP Engine</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Multi-event RSVP</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Household-aware flow</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Meal selection</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Dietary tracking</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Dietary updates</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Deadline handling</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Real-time analytics</span></li>
               </ul>
@@ -199,12 +199,12 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">Messaging</h3>
+              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Messaging</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Email blasts included</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Guest segmentation</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Schedule sends</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Delivery status tracking</span></li>
+                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Delivery status updates</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Draft + scheduled send flow</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Template facets (style/season/colorway)</span></li>
               </ul>
@@ -215,7 +215,7 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Hotel className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">Travel + Itinerary</h3>
+              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Travel + Itinerary</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Hotel room blocks</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Multi-day timeline</span></li>
@@ -231,7 +231,7 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Heart className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">Registry</h3>
+              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Registry</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Link existing registries</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>BYOAL affiliate option</span></li>
@@ -247,7 +247,7 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug tracking-tight">Seating</h3>
+              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Seating</h3>
               <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Drag-and-drop seating board</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table capacity management</span></li>
@@ -275,7 +275,7 @@ export const Home: React.FC = () => {
       <section id="pricing" className="py-20 bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="text-[2rem] font-serif font-bold text-ink mb-4 leading-[1.2] tracking-tight">
+            <h2 className="text-[2rem] font-serif font-bold text-ink mb-4 leading-[1.2] updates-tight">
               Simple, honest pricing
             </h2>
             <p className="text-[1.125rem] text-ink/70 leading-relaxed">
@@ -286,10 +286,10 @@ export const Home: React.FC = () => {
           <div className="max-w-lg mx-auto mb-16">
             <div className="bg-white border-2 border-brand/30 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-200">
               <div className="text-center mb-8">
-                <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 leading-[1.2] tracking-tight">Complete Wedding Platform</h3>
+                <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 leading-[1.2] updates-tight">Complete Wedding Platform</h3>
                 <div className="mb-5">
                   <div className="flex items-baseline justify-center gap-2">
-                    <span className="text-[4.5rem] font-bold text-brand leading-[1] tracking-tight">$49</span>
+                    <span className="text-[4.5rem] font-bold text-brand leading-[1] updates-tight">$49</span>
                     <span className="text-[1.125rem] text-ink/60 leading-snug pb-2">/ 2 years</span>
                   </div>
                 </div>
@@ -304,7 +304,7 @@ export const Home: React.FC = () => {
                   'Email included (fair-use)',
                   'SMS credits optional',
                   'Multi-event RSVP',
-                  'Meal choices + dietary tracking',
+                  'Meal choices + dietary updates',
                   'Guest list management',
                   'Itinerary timeline',
                   'Private by default',
@@ -342,10 +342,10 @@ export const Home: React.FC = () => {
               </div>
 
               <div className="mt-6 pt-6 border-t border-border-subtle space-y-2">
-                <p className="text-[0.8125rem] text-ink/55 text-center tracking-wide leading-loose">
+                <p className="text-[0.8125rem] text-ink/55 text-center updates-wide leading-loose">
                   Taxes may apply depending on location.
                 </p>
-                <p className="text-[0.8125rem] text-ink/55 text-center tracking-wide leading-loose">
+                <p className="text-[0.8125rem] text-ink/55 text-center updates-wide leading-loose">
                   After 2 years: site remains readable. You'll get the option to renew.
                 </p>
               </div>
@@ -353,7 +353,7 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="max-w-3xl mx-auto">
-            <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-8 text-center leading-[1.2] tracking-tight">Frequently asked questions</h3>
+            <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-8 text-center leading-[1.2] updates-tight">Frequently asked questions</h3>
             <div className="space-y-3">
               {[
                 {

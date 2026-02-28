@@ -1269,7 +1269,7 @@ export const DashboardSeating: React.FC = () => {
         <head><title>Seating Export - ${eventName}</title></head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; padding:24px; color:#111;">
           <h1 style="margin:0 0 6px 0;">Seating Report — ${eventName}</h1>
-          <p style="margin:0 0 14px 0; color:#555;">Generated ${now}</p>
+          <p style="margin:0 0 14px 0; color:#555;">Created ${now}</p>
           <p style="margin:0 0 20px 0; color:#333;">Attending: ${counters?.attending ?? 0} · Seated: ${counters?.seated ?? 0} · Arrived: ${arrivedCount}</p>
           ${tableBlocks || '<p>No tables yet.</p>'}
         </body>
