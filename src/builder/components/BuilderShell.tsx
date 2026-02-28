@@ -74,6 +74,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
+  const [showCoachmarks, setShowCoachmarks] = useState(false);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -108,6 +109,16 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     const params = new URLSearchParams(window.location.search);
     if (params.get('openTemplates') === '1') {
       dispatch(builderActions.openTemplateGallery());
+    }
+  }, []);
+
+  useEffect(() => {
+    const key = 'builder_coachmarks_seen_v1';
+    try {
+      const seen = window.localStorage.getItem(key);
+      if (!seen) setShowCoachmarks(true);
+    } catch {
+      setShowCoachmarks(true);
     }
   }, []);
 
@@ -365,6 +376,41 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           isOpen={state.themePanelOpen}
           onClose={() => dispatch(builderActions.closeThemePanel())}
         />
+
+        {showCoachmarks && (
+          <div className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-[1px] flex items-center justify-center p-4">
+            <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200 p-5">
+              <h3 className="text-lg font-semibold text-gray-900">Quick builder walkthrough</h3>
+              <p className="mt-1 text-sm text-gray-600">Three fast checks to edit confidently like a pro.</p>
+              <ol className="mt-4 space-y-2 text-sm text-gray-700 list-decimal list-inside">
+                <li><span className="font-medium">Left rail:</span> drag sections to reorder and use status chips to spot gaps.</li>
+                <li><span className="font-medium">Canvas:</span> click any section to edit it in the right panel.</li>
+                <li><span className="font-medium">Top bar:</span> run desktop/tablet/mobile preview before publish.</li>
+              </ol>
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCoachmarks(false);
+                  }}
+                  className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Close for now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCoachmarks(false);
+                    try { window.localStorage.setItem('builder_coachmarks_seen_v1', '1'); } catch {}
+                  }}
+                  className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </BuilderContext.Provider>
   );

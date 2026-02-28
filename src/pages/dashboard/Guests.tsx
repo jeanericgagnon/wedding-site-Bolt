@@ -1116,6 +1116,14 @@ Proceed with send?`)) return;
     exportCSV(responders, 'guests-rsvp-responders');
   };
 
+  const exportPendingGuestsCSV = () => {
+    exportCSV(guests.filter((g) => g.rsvp_status === 'pending'), 'guests-pending-rsvp');
+  };
+
+  const exportMissingMealCSV = () => {
+    exportCSV(guests.filter((g) => g.rsvp?.attending && !g.rsvp?.meal_choice), 'guests-missing-meal');
+  };
+
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !weddingSiteId) return;
@@ -1917,6 +1925,12 @@ Proceed with send?`)) return;
                       </button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowExportMenu(false); }}>
                         Export RSVP responders
+                      </button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowExportMenu(false); }}>
+                        Export pending RSVP
+                      </button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowExportMenu(false); }}>
+                        Export missing meal choices
                       </button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowExportMenu(false); }}>
                         Copy filtered emails
