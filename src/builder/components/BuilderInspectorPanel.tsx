@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image, Plus, Trash2 } from 'lucide-react';
+import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image, Plus, Trash2, Compass, Ruler } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectSelectedSection, selectActivePage } from '../state/builderSelectors';
@@ -7,7 +7,7 @@ import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
 
-type InspectorTab = 'content' | 'style' | 'data';
+type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 
 export const BuilderInspectorPanel: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
@@ -21,14 +21,22 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   if (!selectedSection || !activePage) {
     return (
-      <aside className="w-full lg:w-72 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
+      <aside className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
-          <div>
+          <div className="w-full max-w-xs">
             <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Pencil size={18} className="text-gray-300" />
             </div>
             <p className="text-sm font-semibold text-gray-600 mb-1">No section selected</p>
-            <p className="text-xs text-gray-400 leading-relaxed">Click any section on the canvas to edit its content and style</p>
+            <p className="text-xs text-gray-400 leading-relaxed mb-4">Click any section on the canvas to open guided editing views.</p>
+            <div className="rounded-xl border border-sky-100 bg-sky-50 p-3 text-left">
+              <p className="text-[11px] font-semibold text-sky-900 mb-1">Quick guide</p>
+              <ul className="space-y-1 text-[11px] text-sky-800">
+                <li>1. Select a section on canvas</li>
+                <li>2. Use Content / Style / Layout views</li>
+                <li>3. Toggle preview for desktop/mobile check</li>
+              </ul>
+            </div>
           </div>
         </div>
       </aside>
@@ -55,13 +63,15 @@ export const BuilderInspectorPanel: React.FC = () => {
   };
 
   const tabs: { id: InspectorTab; icon: React.ComponentType<{ size?: string | number; className?: string }>; label: string; show: boolean }[] = [
+    { id: 'guide' as InspectorTab, icon: Compass, label: 'Guide', show: true },
     { id: 'content' as InspectorTab, icon: Pencil, label: 'Content', show: manifest.settingsSchema.fields.length > 0 },
     { id: 'style' as InspectorTab, icon: Palette, label: 'Style', show: true },
+    { id: 'layout' as InspectorTab, icon: Ruler, label: 'Layout', show: true },
     { id: 'data' as InspectorTab, icon: Database, label: 'Data', show: hasBindings },
   ].filter(t => t.show);
 
   return (
-    <aside className="w-full lg:w-72 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
+    <aside className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -125,6 +135,35 @@ export const BuilderInspectorPanel: React.FC = () => {
       )}
 
       <div className="flex-1 overflow-y-auto">
+        {activeTab === 'guide' && (
+          <div className="p-4 space-y-4">
+            <div className="rounded-xl border border-sky-100 bg-sky-50 p-3">
+              <p className="text-xs font-semibold text-sky-900 mb-1">Change views guide</p>
+              <p className="text-[11px] text-sky-800">Use these focused views to make edits quickly without hunting through controls.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: 'content', label: 'Edit copy' },
+                { id: 'style', label: 'Tune styles' },
+                { id: 'layout', label: 'Change layout' },
+                { id: 'data', label: 'Bindings' },
+              ].filter((view) => view.id !== 'data' || hasBindings).map((view) => (
+                <button
+                  key={view.id}
+                  onClick={() => setActiveTab(view.id as InspectorTab)}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                >
+                  {view.label}
+                </button>
+              ))}
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-[11px] text-gray-600 space-y-1">
+              <p><span className="font-semibold">Tip:</span> layout changes preserve your content and bindings.</p>
+              <p><span className="font-semibold">Tip:</span> switch preview desktop/mobile from the top bar after each major change.</p>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'content' && (
           <div className="p-4 space-y-1">
             {manifest.settingsSchema.fields.map(field => (
@@ -227,24 +266,6 @@ export const BuilderInspectorPanel: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Spacing</p>
-              <SpacingControl
-                label="Padding Top"
-                value={selectedSection.styleOverrides?.paddingTop ?? ''}
-                onChange={val => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                  styleOverrides: { ...selectedSection.styleOverrides, paddingTop: val || undefined },
-                }))}
-              />
-              <SpacingControl
-                label="Padding Bottom"
-                value={selectedSection.styleOverrides?.paddingBottom ?? ''}
-                onChange={val => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
-                  styleOverrides: { ...selectedSection.styleOverrides, paddingBottom: val || undefined },
-                }))}
-              />
             </div>
 
             <div className="border-t border-gray-100 pt-4">
@@ -352,8 +373,13 @@ export const BuilderInspectorPanel: React.FC = () => {
               )}
             </div>
 
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Layout</p>
+          </div>
+        )}
+
+        {activeTab === 'layout' && (
+          <div className="p-4 space-y-5">
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Layout Variant</p>
               <div className="relative">
                 <select
                   value={selectedSection.variant}
@@ -366,7 +392,25 @@ export const BuilderInspectorPanel: React.FC = () => {
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
-              <p className="mt-1.5 text-[11px] text-gray-500">Tip: changing layout keeps your content and data bindings.</p>
+              <p className="mt-1.5 text-[11px] text-gray-500">Changing layout keeps your content and bindings intact.</p>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Spacing</p>
+              <SpacingControl
+                label="Padding Top"
+                value={selectedSection.styleOverrides?.paddingTop ?? ''}
+                onChange={val => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                  styleOverrides: { ...selectedSection.styleOverrides, paddingTop: val || undefined },
+                }))}
+              />
+              <SpacingControl
+                label="Padding Bottom"
+                value={selectedSection.styleOverrides?.paddingBottom ?? ''}
+                onChange={val => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                  styleOverrides: { ...selectedSection.styleOverrides, paddingBottom: val || undefined },
+                }))}
+              />
             </div>
           </div>
         )}
