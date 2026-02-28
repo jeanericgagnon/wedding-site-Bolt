@@ -67,14 +67,18 @@ Deno.serve(async (req: Request) => {
       attemptedPayload: unknown,
       severity: "error" | "warning" = "error",
     ) => {
-      await adminClient.from("rsvp_conflicts").insert({
-        wedding_site_id: weddingSiteId,
-        guest_id: guestId,
-        conflict_code: conflictCode,
-        message,
-        severity,
-        attempted_payload: attemptedPayload ?? {},
-      }).catch(() => {});
+      try {
+        await adminClient.from("rsvp_conflicts").insert({
+          wedding_site_id: weddingSiteId,
+          guest_id: guestId,
+          conflict_code: conflictCode,
+          message,
+          severity,
+          attempted_payload: attemptedPayload ?? {},
+        });
+      } catch {
+        // best effort
+      }
     };
 
     let payload: Payload;
@@ -169,7 +173,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: guest, error: guestErr } = await adminClient
         .from("guests")
-        .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, token_expires_at, household_id, plus_one_allowed, invited_to_ceremony, invited_to_reception, children_allowed, max_children, max_additional_guests")
+        .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, household_id, plus_one_allowed, invited_to_ceremony, invited_to_reception, children_allowed, max_children, max_additional_guests")
         .eq("id", guestId)
         .maybeSingle();
 
@@ -178,7 +182,8 @@ Deno.serve(async (req: Request) => {
         await logConflict(guest.wedding_site_id, guestId, "invite_token_mismatch", "Invite token did not match guest record.", submitPayload);
         return json({ error: "This RSVP link isn't valid. Please use the original link from your invitation email, or ask the couple for a new one." }, 403);
       }
-      if (guest.token_expires_at && new Date(guest.token_expires_at) < new Date()) {
+      const tokenExpiresAt = (guest as { token_expires_at?: string | null }).token_expires_at;
+      if (tokenExpiresAt && new Date(tokenExpiresAt) < new Date()) {
         await logConflict(guest.wedding_site_id, guestId, "invite_token_expired", "Invite token is expired.", submitPayload);
         return json({ error: "This RSVP link has expired. Please reach out to the couple to receive a new invitation link." }, 403);
       }
@@ -264,23 +269,31 @@ Deno.serve(async (req: Request) => {
       const guestName = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
 
       if (guest.email && siteData) {
-        await adminClient.from("email_queue").insert({
-          site_id: guest.wedding_site_id,
-          guest_id: guest.id,
-          type: "rsvp_confirmation",
-          payload_json: { to: guest.email, guestName, attending, coupleName1: siteData.couple_name_1, coupleName2: siteData.couple_name_2, weddingDate: siteData.wedding_date, venueName: siteData.venue_name },
-          status: "pending",
-        }).catch(() => {});
+        try {
+          await adminClient.from("email_queue").insert({
+            site_id: guest.wedding_site_id,
+            guest_id: guest.id,
+            type: "rsvp_confirmation",
+            payload_json: { to: guest.email, guestName, attending, coupleName1: siteData.couple_name_1, coupleName2: siteData.couple_name_2, weddingDate: siteData.wedding_date, venueName: siteData.venue_name },
+            status: "pending",
+          });
+        } catch {
+          // best effort
+        }
       }
 
       if (siteData?.couple_email) {
-        await adminClient.from("email_queue").insert({
-          site_id: guest.wedding_site_id,
-          guest_id: guest.id,
-          type: "rsvp_notification",
-          payload_json: { to: siteData.couple_email, guestName, attending, mealChoice: mealChoice ?? null, plusOneName: plusOneName ?? null, notes: notes ?? null, coupleName1: siteData.couple_name_1, coupleName2: siteData.couple_name_2 },
-          status: "pending",
-        }).catch(() => {});
+        try {
+          await adminClient.from("email_queue").insert({
+            site_id: guest.wedding_site_id,
+            guest_id: guest.id,
+            type: "rsvp_notification",
+            payload_json: { to: siteData.couple_email, guestName, attending, mealChoice: mealChoice ?? null, plusOneName: plusOneName ?? null, notes: notes ?? null, coupleName1: siteData.couple_name_1, coupleName2: siteData.couple_name_2 },
+            status: "pending",
+          });
+        } catch {
+          // best effort
+        }
       }
 
       EdgeRuntime.waitUntil((async () => {
