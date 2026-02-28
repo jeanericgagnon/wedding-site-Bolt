@@ -74,7 +74,12 @@ export const BuilderCanvas: React.FC = () => {
 
   const renderSection = useCallback(
     (section: BuilderSectionInstance) => (
-      <SectionRenderer section={section} weddingData={weddingData} isPreview={isPreview} />
+      <SectionRenderer
+        section={section}
+        weddingData={weddingData}
+        isPreview={isPreview}
+        globalAnimationPreset={state.project?.globalAnimationPreset}
+      />
     ),
     [weddingData, isPreview]
   );

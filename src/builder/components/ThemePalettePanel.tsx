@@ -81,6 +81,7 @@ function PresetRow({
 export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, onClose }) => {
   const { state, dispatch } = useBuilderContext();
   const activeThemeId = state.project?.themeId ?? 'romantic';
+  const globalAnimationPreset = state.project?.globalAnimationPreset ?? null;
   const presets = getAllThemePresets();
   const packs = getThemePacks();
 
@@ -212,6 +213,22 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
           >
             Custom
           </button>
+        </div>
+
+        <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/80">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Global section animation (optional)</label>
+          <select
+            value={globalAnimationPreset ?? 'none'}
+            onChange={(e) => dispatch(builderActions.setGlobalAnimationPreset(e.target.value === 'none' ? null : (e.target.value as 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger')))}
+            className="mt-1.5 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-xs text-gray-700 bg-white"
+          >
+            <option value="none">No global animation (per-section only)</option>
+            <option value="fade-in">Fade In</option>
+            <option value="fade-up">Fade Up</option>
+            <option value="slide-up">Slide Up</option>
+            <option value="zoom-in">Zoom In</option>
+            <option value="stagger">Stagger by section order</option>
+          </select>
         </div>
 
         <div className="flex-1 overflow-y-auto">

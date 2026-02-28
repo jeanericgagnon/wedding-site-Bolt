@@ -9,6 +9,7 @@ export interface BuilderProject {
   templateId: string;
   themeId: string;
   themeTokens?: ThemeTokens;
+  globalAnimationPreset?: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger';
   pages: BuilderPage[];
   draftVersion: number;
   publishedVersion: number | null;

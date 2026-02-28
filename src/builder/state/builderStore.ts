@@ -92,6 +92,7 @@ export type BuilderAction =
   | { type: 'DUPLICATE_SECTION'; payload: { pageId: string; sectionId: string } }
   | { type: 'APPLY_TEMPLATE'; payload: { templateId: string; sections: BuilderSectionInstance[] } }
   | { type: 'APPLY_THEME'; payload: string }
+  | { type: 'SET_GLOBAL_ANIMATION_PRESET'; payload: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger' | null }
   | { type: 'SET_SAVING'; payload: boolean }
   | { type: 'SET_PUBLISHING'; payload: boolean }
   | { type: 'MARK_SAVED'; payload: string }

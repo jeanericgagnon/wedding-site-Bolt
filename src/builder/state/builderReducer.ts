@@ -198,6 +198,20 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       };
     }
 
+    case 'SET_GLOBAL_ANIMATION_PRESET': {
+      if (!state.project) return state;
+      const newHistory = pushHistory(state.history, state.project, `Set global motion`, 'APPLY_THEME');
+      return {
+        ...state,
+        isDirty: true,
+        history: newHistory,
+        project: {
+          ...state.project,
+          globalAnimationPreset: action.payload ?? undefined,
+        },
+      };
+    }
+
     case 'UNDO': {
       const { history, project } = state;
       if (!project || history.currentIndex <= 0) return state;

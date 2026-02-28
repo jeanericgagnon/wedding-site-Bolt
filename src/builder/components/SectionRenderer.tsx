@@ -11,6 +11,7 @@ interface SectionRendererProps {
   weddingData: WeddingDataV1;
   isPreview?: boolean;
   siteSlug?: string;
+  globalAnimationPreset?: BuilderSectionStyleOverrides['animationPreset'];
 }
 
 function toSectionInstance(section: BuilderSectionInstance): SectionInstance {
@@ -35,8 +36,9 @@ function buildOverrideStyle(overrides: BuilderSectionStyleOverrides): React.CSSP
   };
 }
 
-function getAnimationClass(overrides: BuilderSectionStyleOverrides): string {
-  switch (overrides.animationPreset ?? 'none') {
+function getAnimationClass(overrides: BuilderSectionStyleOverrides, globalAnimationPreset?: BuilderSectionStyleOverrides['animationPreset']): string {
+  const preset = overrides.animationPreset ?? globalAnimationPreset ?? 'none';
+  switch (preset) {
     case 'fade-in':
       return 'section-anim section-anim-fade-in';
     case 'fade-up':
@@ -152,7 +154,7 @@ class SectionErrorBoundary extends React.Component<
   }
 }
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug }) => {
+export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug, globalAnimationPreset }) => {
   const resolved = resolveAndParse(
     section.type,
     section.variant,
@@ -164,10 +166,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     const { Component } = def;
 
     const overrideStyle = buildOverrideStyle(section.styleOverrides);
-    const animationClass = getAnimationClass(section.styleOverrides);
+    const effectivePreset = section.styleOverrides.animationPreset ?? globalAnimationPreset;
+    const animationClass = getAnimationClass(section.styleOverrides, globalAnimationPreset);
     const mergedStyle = {
       ...overrideStyle,
-      animationDelay: section.styleOverrides.animationPreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
+      animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
     } as React.CSSProperties;
 
     return (
@@ -196,10 +199,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
 
   const instance = toSectionInstance(section);
   const legacyOverrideStyle = buildOverrideStyle(section.styleOverrides);
-  const animationClass = getAnimationClass(section.styleOverrides);
+  const effectivePreset = section.styleOverrides.animationPreset ?? globalAnimationPreset;
+  const animationClass = getAnimationClass(section.styleOverrides, globalAnimationPreset);
   const legacyMergedStyle = {
     ...legacyOverrideStyle,
-    animationDelay: section.styleOverrides.animationPreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
+    animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
   } as React.CSSProperties;
 
   return (
