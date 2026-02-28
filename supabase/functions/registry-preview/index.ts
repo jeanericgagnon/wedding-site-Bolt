@@ -145,14 +145,24 @@ function deriveFallbackTitle(url: string): string {
 }
 
 function deriveFallbackImage(url: string, hostname: string): string | undefined {
+  const cleanHost = hostname.replace(/^www\./, '');
   if (/amazon\./i.test(hostname)) {
     const asin = extractAsin(url);
     if (asin) return `https://images-na.ssl-images-amazon.com/images/P/${asin}.01.L.jpg`;
   }
-  return `https://logo.clearbit.com/${hostname.replace(/^www\./, '')}`;
+  // Clearbit first, with a universally available avatar fallback when logos are blocked.
+  return `https://logo.clearbit.com/${cleanHost}`;
 }
 
-async function extractProxyTextData(url: string): Promise<{ title?: string; priceAmount?: number; priceLabel?: string; imageUrl?: string } | null> {
+function deriveUltimateImageFallback(hostname: string, title: string): string {
+  const cleanHost = hostname.replace(/^www\./, '');
+  const label = encodeURIComponent(title || cleanHost);
+  return `https://ui-avatars.com/api/?name=${label}&size=512&background=f3f4f6&color=374151&bold=true`;
+}
+
+const MIN_PRICE_CONFIDENCE_SCORE = 2;
+
+async function extractProxyTextData(url: string): Promise<{ title?: string; priceAmount?: number; priceLabel?: string; imageUrl?: string; priceConfidence?: number } | null> {
   try {
     const proxyUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//i, '')}`;
     const resp = await fetch(proxyUrl, {
@@ -193,8 +203,9 @@ async function extractProxyTextData(url: string): Promise<{ title?: string; pric
       .sort((a, b) => (b.score - a.score) || (b.amount - a.amount));
 
     const chosenPrice = rankedPrices[0];
-    const priceAmount = chosenPrice?.amount;
-    const priceLabel = chosenPrice ? `${chosenPrice.currency}${chosenPrice.amount.toFixed(2)}` : undefined;
+    const hasConfidentPrice = (chosenPrice?.score ?? -99) >= MIN_PRICE_CONFIDENCE_SCORE;
+    const priceAmount = hasConfidentPrice ? chosenPrice?.amount : undefined;
+    const priceLabel = hasConfidentPrice && chosenPrice ? `${chosenPrice.currency}${chosenPrice.amount.toFixed(2)}` : undefined;
 
     const imageCandidates = [
       ...body.matchAll(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/g),
@@ -214,7 +225,7 @@ async function extractProxyTextData(url: string): Promise<{ title?: string; pric
     const finalTitle = title && !/^etsy\.com$/i.test(title) ? title : etsySlugTitle;
 
     if (!finalTitle) return null;
-    return { title: finalTitle, priceAmount, priceLabel, imageUrl };
+    return { title: finalTitle, priceAmount, priceLabel, imageUrl, priceConfidence: chosenPrice?.score };
   } catch {
     return null;
   }
@@ -223,7 +234,7 @@ async function extractProxyTextData(url: string): Promise<{ title?: string; pric
 function ensureBaselineMetadata(rawUrl: string, data: ProductData): ProductData {
   const normalized = normalizeUrl(rawUrl);
   const title = data.title?.trim() || deriveFallbackTitle(rawUrl);
-  const imageUrl = data.image_url || deriveFallbackImage(rawUrl, normalized.hostname);
+  const imageUrl = data.image_url || deriveFallbackImage(rawUrl, normalized.hostname) || deriveUltimateImageFallback(normalized.hostname, title);
 
   const missing = new Set(data.missing_fields ?? []);
   if (title) missing.delete('title'); else missing.add('title');
