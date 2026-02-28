@@ -49,8 +49,12 @@ interface Guest {
 interface ExistingRSVP {
   id: string;
   attending: boolean;
+  attending_ceremony?: boolean | null;
+  attending_reception?: boolean | null;
   meal_choice: string | null;
   plus_one_name: string | null;
+  plus_one_count?: number | null;
+  children_count?: number | null;
   notes: string | null;
   custom_answers?: Record<string, string | string[]> | null;
 }
@@ -329,10 +333,12 @@ export default function RSVP() {
     if (foundRsvp) {
       setExistingRsvp(foundRsvp);
       const parsed = parseEventSelectionsFromNotes(foundRsvp.notes, foundGuest);
+      const attendCeremony = typeof foundRsvp.attending_ceremony === 'boolean' ? foundRsvp.attending_ceremony : parsed.attendCeremony;
+      const attendReception = typeof foundRsvp.attending_reception === 'boolean' ? foundRsvp.attending_reception : parsed.attendReception;
       setFormData({
         attending: foundRsvp.attending,
-        attendCeremony: parsed.attendCeremony,
-        attendReception: parsed.attendReception,
+        attendCeremony,
+        attendReception,
         meal_choice: (() => {
           const current = foundRsvp.meal_choice || '';
           if (!current) return '';
@@ -400,19 +406,19 @@ export default function RSVP() {
         return;
       }
 
-      const eventSelections: string[] = [];
-      if (guest.invited_to_ceremony) eventSelections.push(`Ceremony:${formData.attendCeremony ? 'yes' : 'no'}`);
-      if (guest.invited_to_reception) eventSelections.push(`Reception:${formData.attendReception ? 'yes' : 'no'}`);
-      const eventTag = eventSelections.length ? `[Events ${eventSelections.join(', ')}]` : '';
-      const notesPayload = [formData.notes?.trim() || '', eventTag].filter(Boolean).join('\n').trim();
+      const notesPayload = (formData.notes || '').trim();
 
       if (DEMO_MODE) {
         const stored = getDemoStoredResponses();
         const payload: ExistingRSVP = {
           id: `demo-rsvp-${guest.id}`,
           attending: formData.attending,
+          attending_ceremony: formData.attendCeremony,
+          attending_reception: formData.attendReception,
           meal_choice: formData.meal_choice || null,
           plus_one_name: formData.plus_one_name || null,
+          plus_one_count: formData.plus_one_name.trim() ? 1 : 0,
+          children_count: 0,
           notes: notesPayload || null,
           custom_answers: customAnswers,
         };
@@ -429,8 +435,12 @@ export default function RSVP() {
         guestId: guest.id,
         inviteToken: guest.invite_token,
         attending: formData.attending,
+        attendCeremony: formData.attendCeremony,
+        attendReception: formData.attendReception,
         mealChoice: formData.meal_choice || null,
         plusOneName: formData.plus_one_name || null,
+        plusOneCount: formData.plus_one_name.trim() ? 1 : 0,
+        childrenCount: 0,
         notes: notesPayload || null,
         customAnswers,
         applyToHousehold,

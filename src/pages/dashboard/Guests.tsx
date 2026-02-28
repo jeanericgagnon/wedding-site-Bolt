@@ -28,8 +28,12 @@ interface Guest {
 
 interface RSVP {
   attending: boolean;
+  attending_ceremony?: boolean | null;
+  attending_reception?: boolean | null;
   meal_choice: string | null;
   plus_one_name: string | null;
+  plus_one_count?: number | null;
+  children_count?: number | null;
   notes: string | null;
   custom_answers?: Record<string, string | string[]> | null;
 }
@@ -45,6 +49,16 @@ interface GuestAuditEntry {
   changed_by: string | null;
   old_data: Record<string, unknown> | null;
   new_data: Record<string, unknown> | null;
+}
+
+interface RsvpConflict {
+  id: string;
+  guest_id: string;
+  conflict_code: string;
+  message: string;
+  severity: 'error' | 'warning' | string;
+  created_at: string;
+  resolved: boolean;
 }
 
 function formatAuditValue(value: unknown): string {
@@ -220,6 +234,7 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpConfigSaving, setRsvpConfigSaving] = useState(false);
   const [rsvpAutoSaveState, setRsvpAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [rsvpConfigDirty, setRsvpConfigDirty] = useState(false);
+  const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
   const rsvpConfigLoadedRef = useRef(false);
 
 
@@ -391,6 +406,7 @@ export const DashboardGuests: React.FC = () => {
           rsvp: demoRSVPs.find(r => r.guest_id === guest.id),
         }));
         setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
+        setRsvpConflicts([]);
         setLoading(false);
         return;
       }
@@ -405,10 +421,16 @@ export const DashboardGuests: React.FC = () => {
 
       if (guestsData) {
         const guestIds = guestsData.map(g => g.id);
-        const { data: rsvpsData } = await supabase
-          .from('rsvps')
-          .select('*')
-          .in('guest_id', guestIds);
+        const [{ data: rsvpsData }, { data: conflictsData }] = await Promise.all([
+          supabase.from('rsvps').select('*').in('guest_id', guestIds),
+          supabase
+            .from('rsvp_conflicts')
+            .select('id, guest_id, conflict_code, message, severity, created_at, resolved')
+            .eq('wedding_site_id', weddingSiteId)
+            .eq('resolved', false)
+            .order('created_at', { ascending: false })
+            .limit(20),
+        ]);
 
         const guestsWithRsvps = guestsData.map(guest => ({
           ...guest,
@@ -416,6 +438,7 @@ export const DashboardGuests: React.FC = () => {
         }));
 
         setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
+        setRsvpConflicts((conflictsData ?? []) as RsvpConflict[]);
       }
     } catch {
     } finally {
@@ -1838,6 +1861,23 @@ Proceed with send?`)) return;
             </div>
           );
         })()}
+
+        {rsvpConflicts.length > 0 && (
+          <div className="p-4 bg-error-light border border-error/20 rounded-xl space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-error" />
+              <p className="text-sm font-medium text-error">{rsvpConflicts.length} RSVP conflict {rsvpConflicts.length === 1 ? 'submission' : 'submissions'} flagged</p>
+            </div>
+            <ul className="space-y-1">
+              {rsvpConflicts.slice(0, 6).map((c) => {
+                const guestName = guests.find((g) => g.id === c.guest_id)?.name || 'Unknown guest';
+                return (
+                  <li key={c.id} className="text-xs text-error/90">• {guestName}: {c.message}</li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">
