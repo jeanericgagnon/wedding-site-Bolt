@@ -488,13 +488,14 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                   { type: 'rsvp', label: 'RSVP' },
                   { type: 'registry', label: 'Registry' },
                   { type: 'gallery', label: 'Gallery' },
+                  { type: 'contact', label: 'Interactive', variant: 'interactiveHub' },
                 ].map((preset) => {
                   const manifest = getSectionManifest(preset.type as BuilderSectionType);
                   if (!manifest) return null;
                   return (
                     <button
-                      key={preset.type}
-                      onClick={() => addSection(manifest.type, manifest.defaultVariant)}
+                      key={`${preset.type}-${preset.variant ?? 'default'}`}
+                      onClick={() => addSection(manifest.type, preset.variant ?? manifest.defaultVariant)}
                       className="rounded border border-rose-200 bg-white px-2 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition-colors"
                     >
                       {preset.label}
