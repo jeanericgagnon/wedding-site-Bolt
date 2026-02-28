@@ -1079,7 +1079,7 @@ Proceed with send?`)) return;
   };
 
   const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = 'guests') => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Plus One', 'Meal Choice', 'RSVP Date', 'Invite Token'];
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Plus One', 'Meal Choice', 'RSVP Date', 'Invite Token', 'Custom Answers'];
     const rows = rowsSource.map(guest => [
       guest.first_name || '',
       guest.last_name || '',
@@ -1109,6 +1109,11 @@ Proceed with send?`)) return;
   const exportFilteredCSV = () => {
     const segment = (segmentLabelMap[filterStatus] || filterStatus).toLowerCase().replace(/[^a-z0-9]+/g, '-');
     exportCSV(filteredGuests, `guests-${segment}`);
+  };
+
+  const exportRsvpRespondersCSV = () => {
+    const responders = guests.filter((g) => g.rsvp_status !== 'pending');
+    exportCSV(responders, 'guests-rsvp-responders');
   };
 
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1909,6 +1914,9 @@ Proceed with send?`)) return;
                       </button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowExportMenu(false); }}>
                         Export filtered guests
+                      </button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowExportMenu(false); }}>
+                        Export RSVP responders
                       </button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowExportMenu(false); }}>
                         Copy filtered emails

@@ -5,9 +5,9 @@ import { Heart } from 'lucide-react';
 export const Footer: React.FC = () => {
   return (
     <footer className="bg-white border-t border-brand/20 mt-auto">
-      <div className="container-custom py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-1">
+      <div className="container-custom py-10 md:py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-8">
+          <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
               <span className="text-[1.25rem] font-serif font-semibold text-ink leading-snug tracking-tight">WeddingSite</span>

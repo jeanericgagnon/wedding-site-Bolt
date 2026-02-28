@@ -105,14 +105,21 @@ export const BuilderCanvas: React.FC = () => {
           style={isPreview && previewViewport === 'mobile' ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)' } : undefined}
         >
           {!isPreview && (
-            <div className="bg-gray-200 flex items-center gap-1.5 px-4 py-2.5">
-              <div className="w-3 h-3 rounded-full bg-gray-400" />
-              <div className="w-3 h-3 rounded-full bg-gray-400" />
-              <div className="w-3 h-3 rounded-full bg-gray-400" />
-              <div className="flex-1 bg-white rounded h-5 mx-4 text-xs text-gray-400 flex items-center justify-center">
-                yourwedding.com
+            <>
+              <div className="bg-gray-200 flex items-center gap-1.5 px-4 py-2.5">
+                <div className="w-3 h-3 rounded-full bg-gray-400" />
+                <div className="w-3 h-3 rounded-full bg-gray-400" />
+                <div className="w-3 h-3 rounded-full bg-gray-400" />
+                <div className="flex-1 bg-white rounded h-5 mx-4 text-xs text-gray-400 flex items-center justify-center">
+                  yourwedding.com
+                </div>
               </div>
-            </div>
+              {!state.selectedSectionId && (
+                <div className="px-4 py-2.5 text-xs bg-sky-50 text-sky-800 border-b border-sky-100">
+                  Tip: click any section to edit it, or drag sections in the left rail to reorder.
+                </div>
+              )}
+            </>
           )}
 
           <BuilderDropZone
