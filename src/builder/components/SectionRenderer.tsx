@@ -35,6 +35,23 @@ function buildOverrideStyle(overrides: BuilderSectionStyleOverrides): React.CSSP
   };
 }
 
+function getAnimationClass(overrides: BuilderSectionStyleOverrides): string {
+  switch (overrides.animationPreset ?? 'none') {
+    case 'fade-in':
+      return 'section-anim section-anim-fade-in';
+    case 'fade-up':
+      return 'section-anim section-anim-fade-up';
+    case 'slide-up':
+      return 'section-anim section-anim-slide-up';
+    case 'zoom-in':
+      return 'section-anim section-anim-zoom-in';
+    case 'stagger':
+      return 'section-anim section-anim-stagger';
+    default:
+      return '';
+  }
+}
+
 const SIZE_TO_CLASS: Record<string, string> = {
   sm: '25%',
   md: '40%',
@@ -147,11 +164,16 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     const { Component } = def;
 
     const overrideStyle = buildOverrideStyle(section.styleOverrides);
+    const animationClass = getAnimationClass(section.styleOverrides);
+    const mergedStyle = {
+      ...overrideStyle,
+      animationDelay: section.styleOverrides.animationPreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
+    } as React.CSSProperties;
 
     return (
       <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
         <SideImageWrapper overrides={section.styleOverrides}>
-          <div style={overrideStyle}>
+          <div className={animationClass} style={mergedStyle}>
             <Component data={parsedData as never} siteSlug={siteSlug} />
           </div>
         </SideImageWrapper>
@@ -174,11 +196,16 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
 
   const instance = toSectionInstance(section);
   const legacyOverrideStyle = buildOverrideStyle(section.styleOverrides);
+  const animationClass = getAnimationClass(section.styleOverrides);
+  const legacyMergedStyle = {
+    ...legacyOverrideStyle,
+    animationDelay: section.styleOverrides.animationPreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
+  } as React.CSSProperties;
 
   return (
     <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
       <SideImageWrapper overrides={section.styleOverrides}>
-        <div style={legacyOverrideStyle}>
+        <div className={animationClass} style={legacyMergedStyle}>
           <LegacyComponent data={weddingData} instance={instance} />
         </div>
       </SideImageWrapper>

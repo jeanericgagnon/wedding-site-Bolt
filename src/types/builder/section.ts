@@ -81,6 +81,7 @@ export interface BuilderSectionStyleOverrides {
   sideImagePosition?: 'left' | 'right';
   sideImageSize?: 'sm' | 'md' | 'lg';
   sideImageFit?: 'cover' | 'contain';
+  animationPreset?: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger';
 }
 
 export interface BuilderDropZoneModel {

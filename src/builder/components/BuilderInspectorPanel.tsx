@@ -338,6 +338,32 @@ export const BuilderInspectorPanel: React.FC = () => {
             </div>
 
             <div className="border-t border-gray-100 pt-4">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Animation</p>
+              <div className="grid grid-cols-3 gap-1.5 mb-3">
+                {[
+                  ['none', 'None'],
+                  ['fade-in', 'Fade'],
+                  ['fade-up', 'Fade Up'],
+                  ['slide-up', 'Slide'],
+                  ['zoom-in', 'Zoom'],
+                  ['stagger', 'Stagger'],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
+                      styleOverrides: { ...selectedSection.styleOverrides, animationPreset: id as 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger' },
+                    }))}
+                    className={`rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                      (selectedSection.styleOverrides?.animationPreset ?? 'none') === id
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Side Image</p>
                 {selectedSection.styleOverrides?.sideImage && (
