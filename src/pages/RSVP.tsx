@@ -815,7 +815,26 @@ export default function RSVP() {
 
                       {applyToHousehold && (
                         <>
-                          <p className="text-xs text-amber-800">Multi-select household members:</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs text-amber-800">Multi-select household members:</p>
+                            <span className="text-[10px] text-amber-700">{selectedHouseholdGuestIds.length}/{householdGuests.length} selected</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedHouseholdGuestIds(householdGuests.map((h) => h.id))}
+                              className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
+                            >
+                              Select all
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedHouseholdGuestIds([])}
+                              className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
+                            >
+                              Clear
+                            </button>
+                          </div>
                           <div className="space-y-1.5">
                             {householdGuests.map((h) => {
                               const label = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
