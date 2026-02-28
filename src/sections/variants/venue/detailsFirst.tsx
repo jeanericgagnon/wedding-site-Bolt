@@ -78,7 +78,7 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
   const isWide = data.layout === 'wide';
 
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="venue">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="venue">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
@@ -86,7 +86,7 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-2">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 tracking-tight">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-400 font-light mt-2">{data.subheadline}</p>
           )}
@@ -97,7 +97,7 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
             <div key={venue.id} className="bg-white rounded-2xl overflow-hidden border border-stone-100 shadow-sm">
               {venue.image && (
                 <div className="aspect-[21/9] overflow-hidden">
-                  <img src={venue.image} alt={venue.name} className="w-full h-full object-cover" />
+                  <img src={venue.image} alt={venue.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
                 </div>
               )}
 

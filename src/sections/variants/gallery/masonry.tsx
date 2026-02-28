@@ -87,7 +87,7 @@ const MasonryCell: React.FC<{
     <div
       ref={ref}
       onClick={() => enableLightbox && onOpen(idx)}
-      className={`relative group overflow-hidden rounded-xl bg-stone-200 transition-[opacity,transform] ${
+      className={`${PHOTO_FRAME} ${
         image.span === '2' ? 'col-span-2' : ''
       } ${enableLightbox ? 'cursor-pointer' : ''} ${animClasses}`}
       style={animStyle}
@@ -95,7 +95,7 @@ const MasonryCell: React.FC<{
       <img
         src={image.url}
         alt={image.alt}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        className={PHOTO_IMG}
       />
       {enableLightbox && (
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -108,6 +108,12 @@ const MasonryCell: React.FC<{
     </div>
   );
 };
+
+const SECTION_SHELL = "py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white";
+const CONTAINER_SHELL = "max-w-6xl mx-auto px-6 md:px-12";
+const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900 tracking-tight";
+const PHOTO_FRAME = "relative group overflow-hidden rounded-[1.4rem] bg-stone-200 ring-1 ring-stone-100/80 shadow-[0_12px_40px_-28px_rgba(28,25,23,0.45)] transition-[opacity,transform]";
+const PHOTO_IMG = "w-full h-full object-cover saturate-[1.03] contrast-[1.02] transition-transform duration-700 group-hover:scale-105";
 
 const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ data }) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -128,15 +134,15 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
   }, [lightboxIndex]);
 
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="gallery">
-      <div className="max-w-6xl mx-auto px-6 md:px-12">
+    <section className={SECTION_SHELL} id="gallery">
+      <div className={CONTAINER_SHELL}>
         <div className="text-center mb-14">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className={SECTION_TITLE}>{data.headline}</h2>
         </div>
 
         {data.images.length > 0 ? (

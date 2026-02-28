@@ -51,7 +51,7 @@ export const defaultVenueSplitMapData: VenueSplitMapData = {
 
 const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-white" id="venue">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-white to-stone-50/35" id="venue">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
@@ -59,7 +59,7 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-2">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 tracking-tight">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-400 font-light">{data.subheadline}</p>
           )}
@@ -140,7 +140,7 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
                     <img
                       src={venue.image}
                       alt={venue.name}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover saturate-[1.03] contrast-[1.02]"
                     />
                   ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-stone-50">

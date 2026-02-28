@@ -70,7 +70,7 @@ const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({
   const currentDay = data.days.find(d => d.id === activeDay) ?? data.days[0];
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="schedule">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/40 to-white" id="schedule">
       <div className="max-w-3xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
@@ -78,7 +78,7 @@ const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
         </div>
 
         {data.days.length > 1 && (
@@ -89,8 +89,8 @@ const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({
                 onClick={() => setActiveDay(day.id)}
                 className={`flex-shrink-0 flex flex-col items-center px-5 py-3 rounded-xl border-2 transition-all ${
                   activeDay === day.id
-                    ? 'border-stone-900 bg-stone-900 text-white'
-                    : 'border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700'
+                    ? 'border-stone-900 bg-stone-900 text-white shadow-sm'
+                    : 'border-stone-200/90 bg-white/80 text-stone-500 hover:border-stone-300 hover:text-stone-700'
                 }`}
               >
                 <span className="text-xs font-medium uppercase tracking-wide">{day.label}</span>

@@ -128,7 +128,7 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
         <img
           src={gift.image}
           alt={gift.name}
-          className={`w-full h-full object-cover transition-transform duration-500 ${gift.isClaimed ? '' : 'group-hover:scale-105'}`}
+          className={`w-full h-full object-cover saturate-[1.03] contrast-[1.02] transition-transform duration-500 ${gift.isClaimed ? '' : 'group-hover:scale-105'}`}
         />
       </div>
     )}
@@ -208,7 +208,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
   const restGifts = data.layout === 'hero' ? displayGifts.slice(1) : displayGifts;
 
   return (
-    <section className="py-24 md:py-32 bg-white" id="registry">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-white to-stone-50/35" id="registry">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
@@ -216,7 +216,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-4">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-4 tracking-tight">{data.headline}</h2>
           {data.message && (
             <p className="text-stone-500 text-base font-light leading-relaxed max-w-2xl mx-auto">{data.message}</p>
           )}
@@ -234,7 +234,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
                 >
                   {heroGift.image && (
                     <div className="aspect-[4/3] md:aspect-auto overflow-hidden bg-stone-100">
-                      <img src={heroGift.image} alt={heroGift.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img src={heroGift.image} alt={heroGift.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02] group-hover:scale-105 transition-transform duration-500" />
                     </div>
                   )}
                   <div className="p-8 flex flex-col justify-center">

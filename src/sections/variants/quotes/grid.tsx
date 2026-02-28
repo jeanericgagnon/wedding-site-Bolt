@@ -65,7 +65,7 @@ const QuoteCard: React.FC<{ q: QuotesGridData['quotes'][number]; idx: number }> 
       <p className="text-stone-600 italic leading-relaxed text-base flex-1">"{q.text}"</p>
       <div className="mt-6 flex items-center gap-3">
         {q.photo ? (
-          <img src={q.photo} alt={q.author} className="w-9 h-9 rounded-full object-cover ring-2 ring-stone-200 shrink-0" />
+          <img src={q.photo} alt={q.author} className="w-9 h-9 rounded-full object-cover saturate-[1.03] contrast-[1.02] ring-2 ring-stone-200 shrink-0" />
         ) : (
           <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
             <span className="text-rose-500 text-sm font-medium">{q.author.charAt(0)}</span>
@@ -98,13 +98,13 @@ const QuotesGrid: React.FC<SectionComponentProps<QuotesGridData>> = ({ data }) =
   const tm = textMap[data.background] ?? textMap.white;
 
   return (
-    <section className={`py-24 md:py-32 ${bg}`} id="quotes">
+    <section className={`py-28 md:py-36 ${bg}`} id="quotes">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
             <p className={`text-xs uppercase tracking-[0.25em] ${tm.eyebrow} font-medium mb-4`}>{data.eyebrow}</p>
           )}
-          <h2 className={`text-4xl md:text-5xl font-light ${tm.heading}`}>{data.headline}</h2>
+          <h2 className={`text-4xl md:text-6xl font-light tracking-tight ${tm.heading}`}>{data.headline}</h2>
         </div>
 
         {data.quotes.length > 0 ? (

@@ -103,7 +103,7 @@ const StarRating: React.FC<{ stars: number }> = ({ stars }) => (
 
 const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = ({ data }) => {
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="travel">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="travel">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
@@ -111,7 +111,7 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-3">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3 tracking-tight">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-500 font-light max-w-xl mx-auto">{data.subheadline}</p>
           )}
@@ -152,7 +152,7 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
 
               {hotel.image && (
                 <div className="aspect-[16/9] overflow-hidden flex-shrink-0">
-                  <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover" />
+                  <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
                 </div>
               )}
 

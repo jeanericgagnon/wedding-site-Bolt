@@ -51,7 +51,7 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
   const heightClass = MAP_HEIGHT[data.mapHeight];
 
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="venue">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="venue">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
@@ -59,7 +59,7 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
         </div>
 
         {primaryVenue && (

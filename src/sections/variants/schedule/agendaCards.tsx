@@ -61,7 +61,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
   const accent = ACCENT_CLASSES[data.accentColor];
 
   return (
-    <section className="py-24 md:py-32 bg-stone-50" id="schedule">
+    <section className="py-28 md:py-36 bg-gradient-to-b from-stone-50 to-white" id="schedule">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
@@ -69,7 +69,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-2">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 tracking-tight">{data.headline}</h2>
           {data.showDate && data.date && (
             <p className="text-stone-400 text-base font-light">{data.date}</p>
           )}
@@ -87,7 +87,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
               >
                 {event.image && (
                   <div className="h-36 overflow-hidden">
-                    <img src={event.image} alt={event.label} className="w-full h-full object-cover" />
+                    <img src={event.image} alt={event.label} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
                   </div>
                 )}
                 <div className="p-5">

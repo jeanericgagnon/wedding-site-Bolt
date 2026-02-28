@@ -67,7 +67,7 @@ const CountdownSimple: React.FC<SectionComponentProps<CountdownSimpleData>> = ({
   ];
 
   return (
-    <section className={`py-24 md:py-32 ${bgClass}`} id="countdown">
+    <section className={`py-28 md:py-36 ${bgClass}`} id="countdown">
       <div className="max-w-5xl mx-auto px-6 text-center">
         {data.eyebrow && (
           <p className={`text-xs uppercase tracking-[0.25em] font-medium mb-4 ${mutedClass}`}>
@@ -75,7 +75,7 @@ const CountdownSimple: React.FC<SectionComponentProps<CountdownSimpleData>> = ({
           </p>
         )}
         {data.headline && (
-          <h2 className={`text-3xl md:text-5xl font-light mb-14 tracking-tight ${textClass}`}>{data.headline}</h2>
+          <h2 className={`text-4xl md:text-6xl font-light mb-14 tracking-tight ${textClass}`}>{data.headline}</h2>
         )}
 
         {time.done ? (
@@ -85,7 +85,7 @@ const CountdownSimple: React.FC<SectionComponentProps<CountdownSimpleData>> = ({
             {units.map((unit, idx) => (
               <React.Fragment key={unit.label}>
                 {idx > 0 && (
-                  <div className={`text-3xl md:text-5xl font-light mt-2 ${mutedClass}`}>:</div>
+                  <div className={`text-4xl md:text-6xl font-light mt-2 ${mutedClass}`}>:</div>
                 )}
                 <div className="flex flex-col items-center gap-2">
                   <div className={`text-5xl md:text-7xl lg:text-8xl font-light tabular-nums tracking-[-0.03em] leading-none ${textClass}`}>

@@ -97,13 +97,13 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
     data.animation === 'zoom' ? (isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95') : '';
 
   return (
-    <section ref={sectionRef} className="py-24 md:py-32 bg-stone-900" id="gallery">
+    <section ref={sectionRef} className="py-28 md:py-36 bg-stone-900" id="gallery">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-10">
           {data.eyebrow && (
             <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-5xl font-light text-white">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-white tracking-tight">{data.headline}</h2>
         </div>
 
         {data.images.length > 0 && (
@@ -118,7 +118,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
                   key={img.id}
                   className={`absolute inset-0 transition-opacity duration-700 ${idx === activeIndex ? 'opacity-100' : 'opacity-0'}`}
                 >
-                  <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                  <img src={img.url} alt={img.alt} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
                 </div>
               ))}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
@@ -166,7 +166,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
                       : 'opacity-40 hover:opacity-70 scale-100'
                   }`}
                 >
-                  <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                  <img src={img.url} alt={img.alt} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
                 </button>
               ))}
             </div>
