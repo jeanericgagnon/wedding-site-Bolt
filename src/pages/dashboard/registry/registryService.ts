@@ -85,25 +85,33 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
   const endpoint = `${supabaseUrl}/functions/v1/registry-preview`;
 
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-  if (sessionError) {
-    throw new Error('Authentication error. Please refresh the page and sign in again.');
-  }
-
-  if (!session?.access_token) {
-    throw new Error('No active session. Please sign in to use this feature.');
-  }
-
-  const resp = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
+  const invoke = async (accessToken?: string) => {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.access_token}`,
       Apikey: anonKey,
-    },
-    body: JSON.stringify({ url, force_refresh: forceRefresh }),
-  });
+    };
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+    return fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ url, force_refresh: forceRefresh }),
+    });
+  };
+
+  let accessToken: string | undefined;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    accessToken = session?.access_token;
+  } catch {
+    accessToken = undefined;
+  }
+
+  let resp = await invoke(accessToken);
+  if (resp.status === 401 || resp.status === 403) {
+    // Retry with anon-only headers in case local session token expired.
+    resp = await invoke();
+  }
 
   if (!resp.ok) {
     let errorMessage = `HTTP ${resp.status}`;
@@ -115,10 +123,6 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
       errorDetails = errorJson.details || '';
     } catch {
       // keep fallback errorMessage
-    }
-
-    if (resp.status === 401) {
-      throw new Error('Session expired. Please refresh the page and try again.');
     }
 
     if (errorDetails) {

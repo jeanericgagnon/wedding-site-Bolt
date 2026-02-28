@@ -119,6 +119,42 @@ async function saveCache(
   }
 }
 
+async function extractProxyTextData(url: string): Promise<{ title?: string; priceAmount?: number; priceLabel?: string } | null> {
+  try {
+    const proxyUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//i, '')}`;
+    const resp = await fetch(proxyUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; DayOfRegistryPreview/1.0)",
+        Accept: "text/plain, text/markdown, */*",
+      },
+    });
+    if (!resp.ok) return null;
+
+    const body = await resp.text();
+    if (!body || body.length < 80) return null;
+
+    const lines = body.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const titleLine = lines.find((l) => l.startsWith('Title:')) || lines.find((l) => l.startsWith('# ')) || lines[0];
+    const title = titleLine
+      ?.replace(/^Title:\s*/i, '')
+      .replace(/^#\s*/, '')
+      .trim();
+
+    const priceMatch = body.match(/([$€£])\s?([\d,]+(?:\.\d{1,2})?)/);
+    let priceAmount: number | undefined;
+    let priceLabel: string | undefined;
+    if (priceMatch) {
+      priceAmount = parseFloat(priceMatch[2].replace(/,/g, ''));
+      priceLabel = `${priceMatch[1]}${priceAmount.toFixed(2)}`;
+    }
+
+    if (!title) return null;
+    return { title, priceAmount, priceLabel };
+  } catch {
+    return null;
+  }
+}
+
 // Main extraction function
 async function extractProductData(url: string): Promise<ProductData> {
   const normalized = normalizeUrl(url);
@@ -192,11 +228,27 @@ async function extractProductData(url: string): Promise<ProductData> {
   } catch (error) {
     clearTimeout(timeout);
 
-    // Create fallback with whatever we can derive from the URL
-    const isAbort =
-      error instanceof Error &&
-      (error.message.toLowerCase().includes("abort") ||
-        error.message.toLowerCase().includes("signal"));
+    const proxyData = await extractProxyTextData(url);
+    if (proxyData?.title) {
+      const missing: string[] = ['image'];
+      if (!proxyData.priceAmount) missing.push('price');
+      return {
+        title: proxyData.title,
+        store_name: normalized.hostname
+          .replace(/^www\./, "")
+          .replace(/\.(com|net|org|co\.uk)$/, "")
+          .split(".")
+          .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+          .join(" "),
+        canonical_url: normalized.canonical,
+        price_amount: proxyData.priceAmount,
+        price_label: proxyData.priceLabel,
+        confidence_score: proxyData.priceAmount ? 0.45 : 0.38,
+        source_method: "fallback",
+        partial: true,
+        missing_fields: missing,
+      };
+    }
 
     // Extract a basic title from URL slug
     const fallbackTitle = (() => {
@@ -215,8 +267,6 @@ async function extractProductData(url: string): Promise<ProductData> {
         return "Product";
       }
     })();
-
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       title: fallbackTitle,
