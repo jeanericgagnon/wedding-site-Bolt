@@ -119,7 +119,20 @@ async function saveCache(
   }
 }
 
-async function extractProxyTextData(url: string): Promise<{ title?: string; priceAmount?: number; priceLabel?: string } | null> {
+function extractAsin(url: string): string | null {
+  const m = url.match(/\/dp\/([A-Z0-9]{10})/i) || url.match(/\/gp\/product\/([A-Z0-9]{10})/i);
+  return m ? m[1].toUpperCase() : null;
+}
+
+function deriveFallbackImage(url: string, hostname: string): string | undefined {
+  if (/amazon\./i.test(hostname)) {
+    const asin = extractAsin(url);
+    if (asin) return `https://images-na.ssl-images-amazon.com/images/P/${asin}.01.L.jpg`;
+  }
+  return `https://logo.clearbit.com/${hostname.replace(/^www\./, '')}`;
+}
+
+async function extractProxyTextData(url: string): Promise<{ title?: string; priceAmount?: number; priceLabel?: string; imageUrl?: string } | null> {
   try {
     const proxyUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//i, '')}`;
     const resp = await fetch(proxyUrl, {
@@ -138,18 +151,50 @@ async function extractProxyTextData(url: string): Promise<{ title?: string; pric
     const title = titleLine
       ?.replace(/^Title:\s*/i, '')
       .replace(/^#\s*/, '')
+      .replace(/\s*[|\-–—]\s*(Amazon|Etsy|Target|Walmart|Wayfair).*$/i, '')
+      .replace(/^Amazon\.com:\s*/i, '')
       .trim();
 
-    const priceMatch = body.match(/([$€£])\s?([\d,]+(?:\.\d{1,2})?)/);
-    let priceAmount: number | undefined;
-    let priceLabel: string | undefined;
-    if (priceMatch) {
-      priceAmount = parseFloat(priceMatch[2].replace(/,/g, ''));
-      priceLabel = `${priceMatch[1]}${priceAmount.toFixed(2)}`;
-    }
+    const rawPriceMatches = [...body.matchAll(/([$€£])\s?([\d,]+(?:\.\d{1,2})?)/g)];
+    const rankedPrices = rawPriceMatches
+      .map((m) => {
+        const amount = parseFloat(m[2].replace(/,/g, ''));
+        if (!Number.isFinite(amount) || amount <= 0) return null;
+        const idx = m.index ?? 0;
+        const context = body.slice(Math.max(0, idx - 30), Math.min(body.length, idx + 40)).toLowerCase();
+        let score = 0;
+        if (context.includes('price') || context.includes('sale') || context.includes('now')) score += 2;
+        if (context.includes('shipping') || context.includes('/oz') || context.includes('monthly')) score -= 2;
+        if (amount < 5) score -= 1;
+        if (amount > 8000) score -= 2;
+        return { amount, currency: m[1], score };
+      })
+      .filter((v): v is { amount: number; currency: string; score: number } => Boolean(v))
+      .sort((a, b) => (b.score - a.score) || (b.amount - a.amount));
 
-    if (!title) return null;
-    return { title, priceAmount, priceLabel };
+    const chosenPrice = rankedPrices[0];
+    const priceAmount = chosenPrice?.amount;
+    const priceLabel = chosenPrice ? `${chosenPrice.currency}${chosenPrice.amount.toFixed(2)}` : undefined;
+
+    const imageCandidates = [
+      ...body.matchAll(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/g),
+      ...body.matchAll(/(https?:\/\/[^\s"')]+\.(?:jpg|jpeg|png|webp))/gi),
+    ]
+      .map((m) => m[1])
+      .filter(Boolean)
+      .filter((u) => !/(logo|icon|sprite|favicon|1x1|blank)/i.test(u));
+
+    const imageUrl = imageCandidates[0];
+
+    const etsySlugMatch = url.match(/etsy\.com\/listing\/\d+\/([^/?#]+)/i);
+    const etsySlugTitle = etsySlugMatch
+      ? etsySlugMatch[1].replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+      : undefined;
+
+    const finalTitle = title && !/^etsy\.com$/i.test(title) ? title : etsySlugTitle;
+
+    if (!finalTitle) return null;
+    return { title: finalTitle, priceAmount, priceLabel, imageUrl };
   } catch {
     return null;
   }
@@ -230,7 +275,9 @@ async function extractProductData(url: string): Promise<ProductData> {
 
     const proxyData = await extractProxyTextData(url);
     if (proxyData?.title) {
-      const missing: string[] = ['image'];
+      const fallbackImage = proxyData.imageUrl || deriveFallbackImage(url, normalized.hostname);
+      const missing: string[] = [];
+      if (!fallbackImage) missing.push('image');
       if (!proxyData.priceAmount) missing.push('price');
       return {
         title: proxyData.title,
@@ -241,11 +288,12 @@ async function extractProductData(url: string): Promise<ProductData> {
           .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
           .join(" "),
         canonical_url: normalized.canonical,
+        image_url: fallbackImage,
         price_amount: proxyData.priceAmount,
         price_label: proxyData.priceLabel,
-        confidence_score: proxyData.priceAmount ? 0.45 : 0.38,
+        confidence_score: proxyData.imageUrl && proxyData.priceAmount ? 0.58 : proxyData.priceAmount ? 0.46 : 0.4,
         source_method: "fallback",
-        partial: true,
+        partial: missing.length > 0,
         missing_fields: missing,
       };
     }
@@ -268,6 +316,7 @@ async function extractProductData(url: string): Promise<ProductData> {
       }
     })();
 
+    const fallbackImage = deriveFallbackImage(url, normalized.hostname);
     return {
       title: fallbackTitle,
       store_name: normalized.hostname
@@ -277,10 +326,11 @@ async function extractProductData(url: string): Promise<ProductData> {
         .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
         .join(" "),
       canonical_url: normalized.canonical,
-      confidence_score: 0.2,
+      image_url: fallbackImage,
+      confidence_score: fallbackImage ? 0.28 : 0.2,
       source_method: "fallback",
       partial: true,
-      missing_fields: ["image", "price"],
+      missing_fields: fallbackImage ? ["price"] : ["image", "price"],
     };
   }
 }
