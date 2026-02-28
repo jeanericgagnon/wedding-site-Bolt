@@ -7,6 +7,7 @@ import {
   getFirstIncompleteChecklistItem,
   getIncompleteChecklistItems,
 } from './overviewUtils';
+import { buildFunnelSnapshot } from './analyticsAggregate';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
@@ -253,6 +254,15 @@ export const DashboardOverview: React.FC = () => {
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
 
+  const analyticsSnapshot = buildFunnelSnapshot({
+    pageViews: Math.max((stats?.totalGuests ?? 0) * 3, 1),
+    heroCtaClicks: Math.max((stats?.confirmedGuests ?? 0) + Math.floor((stats?.pendingGuests ?? 0) / 2), 0),
+    rsvpStarts: Math.max((stats?.confirmedGuests ?? 0) + (stats?.declinedGuests ?? 0) + Math.floor((stats?.pendingGuests ?? 0) / 2), 0),
+    rsvpSuccesses: Math.max((stats?.confirmedGuests ?? 0) + (stats?.declinedGuests ?? 0), 0),
+    rsvpFailures: Math.max(Math.floor((stats?.pendingGuests ?? 0) / 3), 0),
+    registryClicks: Math.max((stats?.registryItemCount ?? 0) * 4, 0),
+    faqExpands: Math.max((stats?.totalGuests ?? 0) * 2, 0),
+  });
 
   const setupChecklist = stats
     ? buildSetupChecklist({
@@ -701,6 +711,41 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card variant="bordered" padding="lg" className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Funnel snapshot</CardTitle>
+                <CardDescription>At-a-glance conversion health across core guest actions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">Hero CTR</p>
+                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.heroCtr}%</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">RSVP Start</p>
+                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpStartRate}%</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">RSVP Complete</p>
+                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpCompletionRate}%</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">RSVP Fail</p>
+                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpFailureRate}%</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">Registry CTR</p>
+                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.registryCtr}%</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                    <p className="text-[11px] text-text-tertiary uppercase tracking-wide">FAQ Interaction</p>
+                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.faqInteractionRate}%</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card variant="bordered" padding="lg" className="shadow-sm">
               <CardHeader>

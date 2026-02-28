@@ -18,6 +18,7 @@ export interface ThemePreset {
   id: string;
   name: string;
   description: string;
+  pack?: 'clean-neutral' | 'floral-soft' | 'evening-elegant' | 'coastal' | 'bold';
   tokens: ThemeTokens;
 }
 
@@ -26,6 +27,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     id: 'romantic',
     name: 'Romantic Blush',
     description: 'Dusty rose, warm ivory, and champagne gold',
+    pack: 'floral-soft',
     tokens: {
       colorPrimary: '#B5546A',
       colorPrimaryHover: '#9E3F57',
@@ -47,6 +49,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     id: 'elegant',
     name: 'Modern Luxe',
     description: 'Near-black, warm whites, and brushed gold',
+    pack: 'evening-elegant',
     tokens: {
       colorPrimary: '#1C1917',
       colorPrimaryHover: '#0C0A09',
@@ -68,6 +71,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     id: 'garden',
     name: 'Botanical Garden',
     description: 'Herb sage, soft ivory, and terracotta warmth',
+    pack: 'floral-soft',
     tokens: {
       colorPrimary: '#4E7C5F',
       colorPrimaryHover: '#3C6249',
@@ -89,6 +93,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     id: 'ocean',
     name: 'Coastal Escape',
     description: 'Deep sea teal, crisp white, and driftwood amber',
+    pack: 'coastal',
     tokens: {
       colorPrimary: '#1E5F6F',
       colorPrimaryHover: '#164F5D',
@@ -110,6 +115,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     id: 'sunset',
     name: 'Desert Sunset',
     description: 'Burnt sienna, warm cream, and dusty mauve',
+    pack: 'bold',
     tokens: {
       colorPrimary: '#B85C38',
       colorPrimaryHover: '#9E4A2A',
@@ -131,6 +137,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     id: 'classic',
     name: 'Timeless Navy',
     description: 'Deep navy, heirloom ivory, and gilded gold',
+    pack: 'evening-elegant',
     tokens: {
       colorPrimary: '#1A2B4A',
       colorPrimaryHover: '#0F1E36',
@@ -152,6 +159,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     id: 'editorial',
     name: 'Editorial Dark',
     description: 'Warm charcoal, off-white parchment, and bronze',
+    pack: 'clean-neutral',
     tokens: {
       colorPrimary: '#2D2926',
       colorPrimaryHover: '#1A1714',
@@ -173,6 +181,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
     id: 'linen',
     name: 'Fresh Linen',
     description: 'Natural linen, clean white, and slate blue accents',
+    pack: 'clean-neutral',
     tokens: {
       colorPrimary: '#3C5A78',
       colorPrimaryHover: '#2C4660',
@@ -186,7 +195,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
       colorSurfaceSubtle: '#F4F2EE',
       colorBorder: '#DDD8CE',
       colorTextPrimary: '#1E2B3A',
-      colorTextSecondary: '#6070848',
+      colorTextSecondary: '#607084',
     },
   },
 };
@@ -197,6 +206,16 @@ export function getThemePreset(presetId: string): ThemePreset {
 
 export function getAllThemePresets(): ThemePreset[] {
   return Object.values(THEME_PRESETS);
+}
+
+export function getThemePacks(): Array<{ id: NonNullable<ThemePreset['pack']>; label: string }> {
+  return [
+    { id: 'clean-neutral', label: 'Clean Neutral' },
+    { id: 'floral-soft', label: 'Floral Soft' },
+    { id: 'evening-elegant', label: 'Evening Elegant' },
+    { id: 'coastal', label: 'Coastal' },
+    { id: 'bold', label: 'Bold' },
+  ];
 }
 
 export function applyThemeTokens(tokens: ThemeTokens, el: HTMLElement = document.documentElement): void {

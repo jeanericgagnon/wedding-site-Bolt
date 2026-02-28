@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Palette, Check, ChevronRight, Pipette } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { getAllThemePresets, ThemeTokens, applyThemePreset } from '../../lib/themePresets';
+import { getAllThemePresets, getThemePacks, ThemeTokens, applyThemePreset } from '../../lib/themePresets';
 
 interface ThemePalettePanelProps {
   isOpen: boolean;
@@ -82,8 +82,10 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
   const { state, dispatch } = useBuilderContext();
   const activeThemeId = state.project?.themeId ?? 'romantic';
   const presets = getAllThemePresets();
+  const packs = getThemePacks();
 
   const [view, setView] = useState<PanelView>('presets');
+  const [selectedPack, setSelectedPack] = useState<string>('all');
   const [customTokens, setCustomTokens] = useState<ThemeTokens>(() => {
     const active = presets.find(p => p.id === activeThemeId);
     return active?.tokens ?? presets[0].tokens;
@@ -157,6 +159,10 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
     setCustomApplied(false);
   };
 
+  const filteredPresets = selectedPack === 'all'
+    ? presets
+    : presets.filter((preset) => preset.pack === selectedPack);
+
   const grouped = TOKEN_LABELS.reduce<Record<string, typeof TOKEN_LABELS>>((acc, t) => {
     if (!acc[t.group]) acc[t.group] = [];
     acc[t.group].push(t);
@@ -210,8 +216,26 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
 
         <div className="flex-1 overflow-y-auto">
           {view === 'presets' && (
-            <div className="p-3 space-y-1">
-              {presets.map(preset => (
+            <div className="p-3 space-y-2">
+              <div className="flex flex-wrap gap-1.5 pb-2 border-b border-gray-100">
+                <button
+                  onClick={() => setSelectedPack('all')}
+                  className={`px-2 py-1 rounded-full text-[11px] font-medium border ${selectedPack === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                >
+                  All packs
+                </button>
+                {packs.map((pack) => (
+                  <button
+                    key={pack.id}
+                    onClick={() => setSelectedPack(pack.id)}
+                    className={`px-2 py-1 rounded-full text-[11px] font-medium border ${selectedPack === pack.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                  >
+                    {pack.label}
+                  </button>
+                ))}
+              </div>
+
+              {filteredPresets.map(preset => (
                 <PresetRow
                   key={preset.id}
                   preset={preset}

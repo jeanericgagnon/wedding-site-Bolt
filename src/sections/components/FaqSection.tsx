@@ -54,6 +54,25 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
     ? faq.filter(f => bindings.faqIds!.includes(f.id))
     : faq;
   const [openId, setOpenId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState<'all' | 'travel' | 'attire' | 'logistics' | 'gifts'>('all');
+
+  const categoryForQuestion = (q: string): 'travel' | 'attire' | 'logistics' | 'gifts' => {
+    const norm = q.toLowerCase();
+    if (norm.includes('hotel') || norm.includes('travel') || norm.includes('parking') || norm.includes('shuttle')) return 'travel';
+    if (norm.includes('wear') || norm.includes('dress') || norm.includes('attire')) return 'attire';
+    if (norm.includes('registry') || norm.includes('gift')) return 'gifts';
+    return 'logistics';
+  };
+
+  const filteredFaqs = faqsToShow.filter((item) => {
+    const matchesSearch = search.trim().length === 0
+      || item.q.toLowerCase().includes(search.toLowerCase())
+      || item.a.toLowerCase().includes(search.toLowerCase());
+    const qCategory = categoryForQuestion(item.q);
+    const matchesCategory = category === 'all' || qCategory === category;
+    return matchesSearch && matchesCategory;
+  });
 
   if (faqsToShow.length === 0) {
     return (
@@ -78,12 +97,44 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
+        <div className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search questions"
+            className="w-full sm:max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary"
+          />
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'logistics', label: 'Logistics' },
+              { id: 'travel', label: 'Travel' },
+              { id: 'attire', label: 'Attire' },
+              { id: 'gifts', label: 'Gifts' },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setCategory(opt.id as typeof category)}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${category === opt.id ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:bg-surface-subtle'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-2.5">
-          {faqsToShow.map(item => (
+          {filteredFaqs.length === 0 && (
+            <div className="rounded-xl border border-border bg-surface px-4 py-6 text-sm text-text-secondary text-center">
+              No FAQ results for that search/filter yet.
+            </div>
+          )}
+          {filteredFaqs.map(item => (
             <div key={item.id} className="border border-border rounded-xl overflow-hidden bg-surface shadow-sm">
               <button
                 onClick={() => setOpenId(openId === item.id ? null : item.id)}
-                className="w-full flex items-center justify-between p-5 text-left hover:bg-surface-subtle transition-colors"
+                className="w-full flex items-center justify-between p-5 text-left hover:bg-surface-subtle ui-motion-standard"
                 aria-expanded={openId === item.id}
               >
                 <span className="font-medium text-text-primary pr-4 leading-relaxed">{item.q}</span>

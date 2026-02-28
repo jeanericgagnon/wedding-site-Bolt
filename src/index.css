@@ -137,4 +137,20 @@
   .card-clean {
     @apply bg-white rounded-2xl border border-border-subtle shadow-sm;
   }
+
+  .ui-motion-standard {
+    transition: all 180ms ease-out;
+  }
+
+  .ui-motion-emphasis {
+    transition: transform 180ms ease-out, box-shadow 180ms ease-out, background-color 180ms ease-out, color 180ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-motion-standard,
+    .ui-motion-emphasis {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
 }

@@ -191,7 +191,7 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
   }
 
   return (
-    <div className={`bg-surface rounded-2xl border overflow-hidden flex flex-col transition-all duration-200 ${
+    <div className={`bg-surface rounded-2xl border overflow-hidden flex flex-col ui-motion-emphasis ${
       isPurchased ? 'border-success/30 bg-success-light/10 opacity-75' : 'border-border hover:border-primary/30 hover:shadow-md'
     }`}>
       <div className="relative aspect-[4/3] bg-surface-subtle flex-shrink-0">
@@ -281,10 +281,25 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
 }) {
   const [purchasingItem, setPurchasingItem] = useState<RegistryItem | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<'recommended' | 'price-low' | 'price-high'>('recommended');
+  const [groupMode, setGroupMode] = useState<'all' | 'funds' | 'stores'>('all');
 
-  const visibleItems = items.filter(item =>
-    !(item.hide_when_purchased && item.purchase_status === 'purchased')
-  );
+  const visibleItems = items.filter(item => {
+    if (item.hide_when_purchased && item.purchase_status === 'purchased') return false;
+    if (groupMode === 'funds') return item.item_type === 'cash_fund';
+    if (groupMode === 'stores') return item.item_type !== 'cash_fund';
+    return true;
+  });
+
+  const sortedItems = [...visibleItems].sort((a, b) => {
+    const priceA = a.price_amount ?? 0;
+    const priceB = b.price_amount ?? 0;
+    if (sortMode === 'price-low') return priceA - priceB;
+    if (sortMode === 'price-high') return priceB - priceA;
+    const scoreA = (a.purchase_status === 'available' ? 2 : 0) + (a.item_type === 'cash_fund' ? 1 : 0);
+    const scoreB = (b.purchase_status === 'available' ? 2 : 0) + (b.item_type === 'cash_fund' ? 1 : 0);
+    return scoreB - scoreA;
+  });
 
   async function handleConfirmPurchase(purchaserName: string) {
     if (!purchasingItem) return;
@@ -317,14 +332,47 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
         </div>
       )}
 
-      {visibleItems.length === 0 ? (
+      <div className="mb-6 flex flex-wrap items-center gap-2 justify-center">
+        <div className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-1.5 py-1">
+          {[
+            { id: 'all', label: 'All gifts' },
+            { id: 'funds', label: 'Funds' },
+            { id: 'stores', label: 'Stores' },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setGroupMode(opt.id as typeof groupMode)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium ${groupMode === opt.id ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-surface-subtle'}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-1.5 py-1">
+          {[
+            { id: 'recommended', label: 'Recommended' },
+            { id: 'price-low', label: 'Price ↑' },
+            { id: 'price-high', label: 'Price ↓' },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setSortMode(opt.id as typeof sortMode)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium ${sortMode === opt.id ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-surface-subtle'}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {sortedItems.length === 0 ? (
         <div className="text-center py-12">
           <Gift className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
           <p className="text-text-secondary">All items have been purchased. Thank you!</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
-          {visibleItems.map(item => (
+          {sortedItems.map(item => (
             <RegistryCard key={item.id} item={item} onPurchase={setPurchasingItem} />
           ))}
         </div>
