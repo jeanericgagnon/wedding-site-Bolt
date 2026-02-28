@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import {
   buildPublishReadinessItems,
@@ -76,17 +76,35 @@ function calcDaysUntil(dateStr: string): number {
   return Math.ceil((target.getTime() - today.getTime()) / 86400000);
 }
 
+function resolveWeddingDateFromData(
+  weddingData: Record<string, unknown> | null,
+  site: { wedding_date?: string | null; venue_date?: string | null } | null
+): string | null {
+  const event = (weddingData?.event as Record<string, unknown> | undefined) ?? undefined;
+  const eventWeddingDateISO = typeof event?.weddingDateISO === 'string' ? event.weddingDateISO : null;
+  const legacyWeddingDate = typeof weddingData?.weddingDate === 'string' ? (weddingData.weddingDate as string) : null;
+  return eventWeddingDateISO ?? legacyWeddingDate ?? site?.wedding_date ?? site?.venue_date ?? null;
+}
+
 export const DashboardOverview: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [setupDraftProgressPercent, setSetupDraftProgressPercent] = useState<number>(0);
 
   useEffect(() => {
     if (!user) return;
     loadStats();
   }, [user, isDemoMode]);
+
+  useEffect(() => {
+    const refreshProgress = () => setSetupDraftProgressPercent(setupDraftProgress(readSetupDraft()));
+    refreshProgress();
+    window.addEventListener('focus', refreshProgress);
+    return () => window.removeEventListener('focus', refreshProgress);
+  }, []);
 
   async function loadStats() {
     if (!user) return;
@@ -148,7 +166,10 @@ export const DashboardOverview: React.FC = () => {
 
       if (site) {
         const weddingData = site.wedding_data as Record<string, unknown> | null;
-        weddingDate = (weddingData?.weddingDate as string) ?? site.wedding_date ?? site.venue_date ?? null;
+        weddingDate = resolveWeddingDateFromData(weddingData, {
+          wedding_date: site.wedding_date,
+          venue_date: site.venue_date,
+        });
         templateName = site.template_id ?? null;
       }
 
@@ -232,7 +253,6 @@ export const DashboardOverview: React.FC = () => {
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
 
-  const setupDraftProgressPercent = useMemo(() => setupDraftProgress(readSetupDraft()), []);
 
   const setupChecklist = stats
     ? buildSetupChecklist({
@@ -310,8 +330,8 @@ export const DashboardOverview: React.FC = () => {
             <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
             <p className="text-text-secondary">Your wedding at a glance</p>
             {!loading && stats && !stats.isPublished && (
-              <div className="mt-2 space-y-1">
-                <div className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
+              <div className="mt-2 space-y-1.5">
+                <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
                   Publish needed
                 </div>
                 {firstPublishBlocker && (
@@ -335,6 +355,14 @@ export const DashboardOverview: React.FC = () => {
                   title="Open builder and run publish flow"
                 >
                   Publish now
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/dashboard/builder?photoTips=1')}
+                  title="Open builder with photo placement tips"
+                >
+                  Photo tips
                 </Button>
                 {publishBlockers.length > 0 && firstPublishBlocker?.action && (
                   <Button variant="outline" size="sm" onClick={() => firstPublishBlocker.action?.()}>
@@ -544,18 +572,30 @@ export const DashboardOverview: React.FC = () => {
                     </span>
                   </div>
                   {!stats?.isPublished && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 space-y-1">
-                      <p>Your site is still private. Guests can only view it after first publish.</p>
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 space-y-1.5">
+                      <p className="font-medium">Your site is still private. Guests can only view it after first publish.</p>
                       <p>
                         Readiness: {stats?.siteSlug ? 'URL set' : 'set URL'} · {stats?.templateName ? 'template set' : 'choose template'} · publish once to go live.
                       </p>
                     </div>
                   )}
-                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2">
-                    <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 shadow-sm">
+                    <div className="flex items-center justify-between gap-2 mb-2.5">
                       <p className="text-xs font-medium text-text-secondary">Publishing checklist</p>
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] text-text-tertiary">{publishProgress.done}/{publishProgress.total} ready</span>
+                        {publishBlockers.length === 0 ? (
+                          <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                            All checks passed
+                          </span>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => navigate('/dashboard/builder?photoTips=1')}
+                          className="rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100"
+                        >
+                          Photo tips
+                        </button>
                         {firstPublishBlocker?.action && (
                           <button
                             type="button"
@@ -569,7 +609,7 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {publishReadinessItems.map((item) => (
-                        <div key={item.id} className="text-xs text-text-secondary flex items-center justify-between gap-2 rounded border border-border-subtle bg-white px-2 py-1.5">
+                        <div key={item.id} className="text-xs text-text-secondary flex items-center justify-between gap-2 rounded border border-border-subtle bg-white px-2 py-1.5 shadow-[0_1px_0_rgba(0,0,0,0.02)]">
                           <div className="flex items-center gap-1.5 min-w-0">
                             {item.done ? (
                               <CheckCircle2 className="w-3.5 h-3.5 text-green-600" aria-hidden="true" />
@@ -577,7 +617,7 @@ export const DashboardOverview: React.FC = () => {
                               <AlertCircle className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
                             )}
                             <span className="truncate">{item.label}</span>
-                            {item.done && <span className="text-[10px] rounded bg-green-50 px-1 py-0.5 text-green-700">Done</span>}
+                            {item.done && <span className="text-[10px] rounded border border-green-200 bg-green-50 px-1.5 py-0.5 font-medium text-green-700">Done</span>}
                           </div>
                           {!item.done && (
                             <button
@@ -608,7 +648,7 @@ export const DashboardOverview: React.FC = () => {
                       variant="outline"
                       size="md"
                       fullWidth
-                      onClick={() => navigate('/dashboard/builder')}
+                      onClick={() => navigate('/dashboard/builder?photoTips=1')}
                     >
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
                       {stats?.isPublished ? 'Update Site' : 'Edit & Publish'}

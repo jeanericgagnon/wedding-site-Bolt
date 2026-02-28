@@ -13,3 +13,8 @@ export const shouldAutoPublishFromSearch = (search: string): boolean => {
   const params = new URLSearchParams(search);
   return params.get('publishNow') === '1';
 };
+
+export const shouldOpenPhotoTipsFromSearch = (search: string): boolean => {
+  const params = new URLSearchParams(search);
+  return params.get('photoTips') === '1';
+};

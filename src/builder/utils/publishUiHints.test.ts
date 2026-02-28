@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getPublishBlockedHints, shouldAutoPublishFromSearch } from './publishUiHints';
+import { getPublishBlockedHints, shouldAutoPublishFromSearch, shouldOpenPhotoTipsFromSearch } from './publishUiHints';
 
 describe('publishUiHints', () => {
   it('returns page guidance for no-page message', () => {
@@ -22,5 +22,12 @@ describe('publishUiHints', () => {
     expect(shouldAutoPublishFromSearch('?foo=bar&publishNow=1')).toBe(true);
     expect(shouldAutoPublishFromSearch('?publishNow=0')).toBe(false);
     expect(shouldAutoPublishFromSearch('')).toBe(false);
+  });
+
+  it('detects photoTips from querystring', () => {
+    expect(shouldOpenPhotoTipsFromSearch('?photoTips=1')).toBe(true);
+    expect(shouldOpenPhotoTipsFromSearch('?foo=bar&photoTips=1')).toBe(true);
+    expect(shouldOpenPhotoTipsFromSearch('?photoTips=0')).toBe(false);
+    expect(shouldOpenPhotoTipsFromSearch('')).toBe(false);
   });
 });
