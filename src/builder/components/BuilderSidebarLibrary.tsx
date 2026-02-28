@@ -34,6 +34,19 @@ import { CustomSectionSkeleton } from '../../sections/variants/custom/skeletons'
 import { getDefinition } from '../../sections/registry';
 import { SECTION_REGISTRY as LEGACY_SECTION_REGISTRY } from '../../sections/sectionRegistry';
 
+import engagement01 from '../../../assets/photos/raw-engagement-2026-02-27/003bf600-3a4d-4f35-976b-0586379b6785.jpg';
+import engagement02 from '../../../assets/photos/raw-engagement-2026-02-27/053d97ba-331e-4d85-93f9-7986e70e2874.jpg';
+import engagement03 from '../../../assets/photos/raw-engagement-2026-02-27/092f4223-1508-45f6-8f3d-78ca5afbb6f1.jpg';
+import engagement04 from '../../../assets/photos/raw-engagement-2026-02-27/18419a0b-742d-4e06-b315-c83be4e25f68.jpg';
+import engagement05 from '../../../assets/photos/raw-engagement-2026-02-27/1e3ee16d-404f-48e2-b949-62ed57e96c6c.jpg';
+import engagement06 from '../../../assets/photos/raw-engagement-2026-02-27/36788f74-4b86-4550-bee9-6b2e5fbb19f5.jpg';
+import engagement07 from '../../../assets/photos/raw-engagement-2026-02-27/3a6534e7-adf1-44c5-a728-94c6f6fa646c.jpg';
+import engagement08 from '../../../assets/photos/raw-engagement-2026-02-27/3c011ec8-ec9e-4b90-99f8-22e12da880c8.jpg';
+import engagement09 from '../../../assets/photos/raw-engagement-2026-02-27/45fe54f7-a753-4e5d-9913-aff3951db84f.jpg';
+import engagement10 from '../../../assets/photos/raw-engagement-2026-02-27/46c6527f-aabe-48ef-87c0-bfdac05c571f.jpg';
+import engagement11 from '../../../assets/photos/raw-engagement-2026-02-27/46ec533f-9fdb-4c8d-8f52-759efe846352.jpg';
+import engagement12 from '../../../assets/photos/raw-engagement-2026-02-27/47fc5b76-b923-4d85-8bd1-df4cb9cebcb8.jpg';
+
 type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
 
 const SECTION_ICONS: Record<string, LucideIcon> = {
@@ -119,150 +132,82 @@ const PREVIEW_PHOTO_SET_OPTIONS: Array<{ id: PreviewPhotoSet; label: string }> =
   { id: 'coastal', label: 'Coastal' },
 ];
 
+const ENGAGEMENT_LIBRARY = [
+  engagement01,
+  engagement02,
+  engagement03,
+  engagement04,
+  engagement05,
+  engagement06,
+  engagement07,
+  engagement08,
+  engagement09,
+  engagement10,
+  engagement11,
+  engagement12,
+];
+
+const ENGAGEMENT_MOMENTS = [
+  'Golden-hour portraits together',
+  'Playful candid with natural smiles',
+  'Walking shots with soft movement',
+  'Close-up ring and hand detail',
+  'Wide scenic frame for hero moments',
+  'Documentary-style laugh and motion',
+  'Soft editorial portrait in shade',
+  'Sunlit celebration frame',
+  'Elegant side-profile portrait',
+  'Wide composition for section headers',
+  'Classic embrace shot',
+  'Final storytelling frame',
+];
+
+function makeRecipe(start: number, story?: string): PreviewPhotoRecipe {
+  const hero = ENGAGEMENT_LIBRARY[start % ENGAGEMENT_LIBRARY.length];
+  const gallery = [0, 1, 2].map((offset) => ENGAGEMENT_LIBRARY[(start + offset) % ENGAGEMENT_LIBRARY.length]);
+  const moments = [0, 1, 2].map((offset) => ENGAGEMENT_MOMENTS[(start + offset) % ENGAGEMENT_MOMENTS.length]);
+  return { hero, gallery, moments, story };
+}
+
 const PREVIEW_FAMILY_PHOTO_LIBRARY: Record<PreviewPhotoSet, Partial<Record<PreviewSectionFamily, PreviewPhotoRecipe>>> = {
   romantic: {
-    hero: {
-      hero: 'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
-        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-        'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
-      ],
-      moments: ['Champagne toast on the terrace', 'Golden-hour vows in the garden', 'First dance under candlelight'],
-      story: 'From quiet coffee-shop mornings to a candlelit first dance, this weekend is curated as an intimate love story for everyone we cherish.',
-    },
-    story: {
-      hero: 'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
-        'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
-        'https://images.pexels.com/photos/1024960/pexels-photo-1024960.jpeg',
-      ],
-      moments: ['Handwritten letters before the ceremony', 'Portraits on the grand staircase', 'Quiet moment before guests arrive'],
-    },
-    gallery: {
-      hero: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-        'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg',
-        'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
-      ],
-      moments: ['Ceremony aisle reveal', 'Candid laughs at cocktail hour', 'Sparkler exit at midnight'],
-    },
-    rsvp: {
-      hero: 'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
-        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
-        'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
-      ],
-      moments: ['Invitation suite details', 'Wax-sealed RSVP cards', 'Floral stationery flat lay'],
-    },
+    hero: makeRecipe(0, 'From first look to final dance, this experience is rooted in your real engagement story and personality.'),
+    story: makeRecipe(1),
+    gallery: makeRecipe(2),
+    rsvp: makeRecipe(3),
+    venue: makeRecipe(4),
+    schedule: makeRecipe(5),
+    travel: makeRecipe(6),
+    registry: makeRecipe(7),
+    faq: makeRecipe(8),
+    contact: makeRecipe(9),
+    'footer-cta': makeRecipe(10),
   },
   editorial: {
-    hero: {
-      hero: 'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
-        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
-        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-      ],
-      moments: ['Black-tie entry on marble steps', 'Editorial portrait in window light', 'Night reception with champagne tower'],
-      story: 'A modern black-tie weekend styled with intentional typography, cinematic framing, and polished pacing from first glance to farewell.',
-    },
-    venue: {
-      hero: 'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg',
-        'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg',
-        'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg',
-      ],
-      moments: ['Estate exterior and arrival drive', 'Ceremony lawn wide angle', 'Reception hall detail lighting'],
-    },
-    schedule: {
-      hero: 'https://images.pexels.com/photos/2072163/pexels-photo-2072163.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/2072163/pexels-photo-2072163.jpeg',
-        'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
-        'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
-      ],
-      moments: ['Welcome drinks at sunset', 'Ceremony cue and processional', 'Late-night dance floor energy'],
-    },
-    travel: {
-      hero: 'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg',
-        'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg',
-        'https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg',
-      ],
-      moments: ['Arrival at boutique hotel', 'Guest shuttle drop-off at venue', 'Airport transfer and welcome bags'],
-    },
-    registry: {
-      hero: 'https://images.pexels.com/photos/264787/pexels-photo-264787.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/264787/pexels-photo-264787.jpeg',
-        'https://images.pexels.com/photos/1666065/pexels-photo-1666065.jpeg',
-        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-      ],
-      moments: ['Curated home essentials', 'Honeymoon experiences board', 'Handwritten thank-you note'],
-    },
-    contact: {
-      hero: 'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg',
-        'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
-        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
-      ],
-      moments: ['Planner response desk', 'Weekend concierge board', 'Guest support contact card'],
-    },
-    'footer-cta': {
-      hero: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-        'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
-        'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',
-      ],
-      moments: ['Final portrait embrace', 'Sunset confetti sendoff', 'Closing RSVP reminder frame'],
-    },
+    hero: makeRecipe(2, 'A clean editorial flow using your engagement photos gives every template an instantly personal, premium feel.'),
+    story: makeRecipe(3),
+    gallery: makeRecipe(4),
+    rsvp: makeRecipe(5),
+    venue: makeRecipe(6),
+    schedule: makeRecipe(7),
+    travel: makeRecipe(8),
+    registry: makeRecipe(9),
+    faq: makeRecipe(10),
+    contact: makeRecipe(11),
+    'footer-cta': makeRecipe(0),
   },
   coastal: {
-    hero: {
-      hero: 'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
-        'https://images.pexels.com/photos/457716/pexels-photo-457716.jpeg',
-        'https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg',
-      ],
-      moments: ['Ocean bluff ceremony view', 'Barefoot beach portraits', 'Lantern send-off by the water'],
-      story: 'Sea breeze vows, warm neutrals, and sun-washed photo direction keep every preview calm, luminous, and destination-ready.',
-    },
-    gallery: {
-      hero: 'https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg',
-        'https://images.pexels.com/photos/457716/pexels-photo-457716.jpeg',
-        'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
-      ],
-      moments: ['Ceremony from the bluff edge', 'Reception tables with ocean horizon', 'Blue-hour shoreline walk'],
-    },
-    venue: {
-      hero: 'https://images.pexels.com/photos/21014/pexels-photo.jpg',
-      gallery: [
-        'https://images.pexels.com/photos/21014/pexels-photo.jpg',
-        'https://images.pexels.com/photos/457716/pexels-photo-457716.jpeg',
-        'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg',
-      ],
-      moments: ['Clifftop venue approach', 'Ceremony arch against sea', 'Reception canopy by the shore'],
-    },
-    travel: {
-      hero: 'https://images.pexels.com/photos/358319/pexels-photo-358319.jpeg',
-      gallery: [
-        'https://images.pexels.com/photos/358319/pexels-photo-358319.jpeg',
-        'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg',
-        'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg',
-      ],
-      moments: ['Scenic drive-in route', 'Shuttle and valet drop zone', 'Hotel check-in with welcome cards'],
-    },
+    hero: makeRecipe(4, 'Your own engagement session now powers every section preview so templates feel like your actual wedding site from day one.'),
+    story: makeRecipe(5),
+    gallery: makeRecipe(6),
+    rsvp: makeRecipe(7),
+    venue: makeRecipe(8),
+    schedule: makeRecipe(9),
+    travel: makeRecipe(10),
+    registry: makeRecipe(11),
+    faq: makeRecipe(0),
+    contact: makeRecipe(1),
+    'footer-cta': makeRecipe(2),
   },
 };
 
