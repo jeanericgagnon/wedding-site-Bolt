@@ -34,9 +34,16 @@ for r in "${ROUTES[@]}"; do
 done
 
 echo
-echo "== Smoke: QA fallback assets =="
+echo "== Smoke: QA SPA fallback checks =="
 check_url "$QA_BASE" "/404.html"
-check_url "$QA_BASE" "/?oc_redirect=%2Fdashboard%2Fbuilder"
+for r in "${ROUTES[@]}"; do
+  encoded=$(python3 - <<PY
+import urllib.parse
+print(urllib.parse.quote('${r}', safe=''))
+PY
+)
+  check_url "$QA_BASE" "/?oc_redirect=${encoded}"
+done
 
 echo
-echo "Note: GitHub Pages SPA deep links may return 404 over raw HTTP while still working client-side via 404.html fallback."
+echo "Note: GitHub Pages deep links can return 404 over raw HTTP. oc_redirect checks verify SPA fallback routing health."

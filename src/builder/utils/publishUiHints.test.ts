@@ -12,6 +12,26 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Select any section');
   });
 
+  it('returns partner-name guidance', () => {
+    const hints = getPublishBlockedHints('Add both partner names before publishing.');
+    expect(hints[0]).toContain('couple details');
+  });
+
+  it('returns wedding-date guidance', () => {
+    const hints = getPublishBlockedHints('Add your wedding date before publishing.');
+    expect(hints[0]).toContain('event settings');
+  });
+
+  it('returns venue guidance', () => {
+    const hints = getPublishBlockedHints('Add at least one venue before publishing.');
+    expect(hints[0]).toContain('venue');
+  });
+
+  it('returns RSVP guidance', () => {
+    const hints = getPublishBlockedHints('Enable RSVP before publishing.');
+    expect(hints[0]).toContain('RSVP');
+  });
+
   it('returns fallback guidance for unknown message', () => {
     const hints = getPublishBlockedHints('Something else');
     expect(hints).toEqual(['Use Fix blockers to jump to the right place.']);
