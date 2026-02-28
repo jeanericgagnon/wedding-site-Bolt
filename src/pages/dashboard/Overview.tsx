@@ -11,7 +11,7 @@ import { buildFunnelSnapshot } from './analyticsAggregate';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
-import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Loader2, AlertCircle, Clock, EyeOff } from 'lucide-react';
+import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, AlertCircle, Clock, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';

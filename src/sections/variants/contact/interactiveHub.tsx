@@ -73,14 +73,14 @@ function usePersistentCounter(siteSlug: string | undefined, key: string) {
   const incrementLocal = (optionId: string) => {
     setCounts((prev) => {
       const next = { ...prev, [optionId]: (prev[optionId] || 0) + 1 };
-      try { window.localStorage.setItem(fullKey, JSON.stringify(next)); } catch {}
+      try { window.localStorage.setItem(fullKey, JSON.stringify(next)); } catch { void 0; }
       return next;
     });
   };
 
   const setRemoteCounts = (remote: Record<string, number>) => {
     setCounts(remote);
-    try { window.localStorage.setItem(fullKey, JSON.stringify(remote)); } catch {}
+    try { window.localStorage.setItem(fullKey, JSON.stringify(remote)); } catch { void 0; }
   };
 
   return { counts, incrementLocal, setRemoteCounts };
@@ -187,7 +187,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
     try {
       window.localStorage.setItem(storageKey(siteSlug, 'suggestions'), JSON.stringify(next));
       window.localStorage.setItem(cooldownKey, String(now));
-    } catch {}
+    } catch { void 0; }
 
     if (siteSlug) {
       await supabase.from('interactive_suggestions').insert({
@@ -240,7 +240,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
 
                         setSelectedPoll(opt.id);
                         poll.incrementLocal(opt.id);
-                        try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch {}
+                        try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch { void 0; }
                         if (siteSlug) {
                           await supabase.from('interactive_votes').insert({
                             site_slug: siteSlug,
@@ -290,7 +290,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                         });
                       }
                     }
-                    try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch {}
+                    try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch { void 0; }
                     setSelectedPollMulti([]);
                   }}
                   disabled={selectedPollMulti.length < data.poll.minSelections}
@@ -317,7 +317,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
 
                     setSelectedQuiz(opt.id);
                     quiz.incrementLocal(opt.id);
-                    try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch {}
+                    try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch { void 0; }
                     if (siteSlug) {
                       await supabase.from('interactive_votes').insert({
                         site_slug: siteSlug,
