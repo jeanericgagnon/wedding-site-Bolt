@@ -80,6 +80,11 @@ export type BuilderAction =
   | { type: 'LOAD_PROJECT'; payload: BuilderProject }
   | { type: 'SET_WEDDING_DATA'; payload: WeddingDataV1 }
   | { type: 'SET_ACTIVE_PAGE'; payload: string }
+  | { type: 'ADD_PAGE'; payload: { title?: string } }
+  | { type: 'UPDATE_PAGE'; payload: { pageId: string; patch: Partial<BuilderPage> } }
+  | { type: 'DUPLICATE_PAGE'; payload: { pageId: string } }
+  | { type: 'REMOVE_PAGE'; payload: { pageId: string } }
+  | { type: 'REORDER_PAGES'; payload: { orderedIds: string[] } }
   | { type: 'SELECT_SECTION'; payload: string | null }
   | { type: 'HOVER_SECTION'; payload: string | null }
   | { type: 'SET_MODE'; payload: BuilderMode }

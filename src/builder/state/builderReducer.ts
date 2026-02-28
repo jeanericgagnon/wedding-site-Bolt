@@ -71,6 +71,132 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
     case 'SET_ACTIVE_PAGE':
       return { ...state, activePageId: action.payload, selectedSectionId: null };
 
+    case 'ADD_PAGE': {
+      if (!state.project) return state;
+      const newHistory = pushHistory(state.history, state.project, 'Add page', 'ADD_SECTION');
+      const nextIndex = state.project.pages.length;
+      const titleBase = action.payload.title?.trim() || `Page ${nextIndex + 1}`;
+      const slug = titleBase.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `page-${nextIndex + 1}`;
+      const now = new Date().toISOString();
+      const newPage: BuilderPage = {
+        id: generateBuilderId(),
+        title: titleBase,
+        slug,
+        orderIndex: nextIndex,
+        sections: [],
+        meta: { isHome: false, isHidden: false },
+      };
+      return {
+        ...state,
+        isDirty: true,
+        history: newHistory,
+        activePageId: newPage.id,
+        selectedSectionId: null,
+        project: {
+          ...state.project,
+          meta: { ...state.project.meta, updatedAtISO: now },
+          pages: [...state.project.pages, newPage],
+        },
+      };
+    }
+
+    case 'UPDATE_PAGE': {
+      if (!state.project) return state;
+      const newHistory = pushHistory(state.history, state.project, 'Update page', 'UPDATE_SECTION_SETTINGS');
+      const now = new Date().toISOString();
+      return {
+        ...state,
+        isDirty: true,
+        history: newHistory,
+        project: {
+          ...state.project,
+          meta: { ...state.project.meta, updatedAtISO: now },
+          pages: state.project.pages.map((p) => p.id === action.payload.pageId ? { ...p, ...action.payload.patch } : p),
+        },
+      };
+    }
+
+    case 'DUPLICATE_PAGE': {
+      if (!state.project) return state;
+      const source = state.project.pages.find((p) => p.id === action.payload.pageId);
+      if (!source) return state;
+      const newHistory = pushHistory(state.history, state.project, 'Duplicate page', 'ADD_SECTION');
+      const now = new Date().toISOString();
+      const copyId = generateBuilderId();
+      const copiedPage: BuilderPage = {
+        ...source,
+        id: copyId,
+        title: `${source.title} Copy`,
+        slug: `${source.slug}-copy`,
+        orderIndex: state.project.pages.length,
+        sections: source.sections.map((s, i) => ({
+          ...s,
+          id: generateBuilderId(),
+          orderIndex: i,
+          meta: { createdAtISO: now, updatedAtISO: now },
+        })),
+        meta: { ...source.meta, isHome: false },
+      };
+      return {
+        ...state,
+        isDirty: true,
+        history: newHistory,
+        activePageId: copyId,
+        selectedSectionId: null,
+        project: {
+          ...state.project,
+          meta: { ...state.project.meta, updatedAtISO: now },
+          pages: [...state.project.pages, copiedPage],
+        },
+      };
+    }
+
+    case 'REMOVE_PAGE': {
+      if (!state.project) return state;
+      if (state.project.pages.length <= 1) return state;
+      const target = state.project.pages.find((p) => p.id === action.payload.pageId);
+      if (!target || target.meta.isHome) return state;
+      const newHistory = pushHistory(state.history, state.project, 'Remove page', 'REMOVE_SECTION');
+      const remaining = state.project.pages
+        .filter((p) => p.id !== action.payload.pageId)
+        .map((p, idx) => ({ ...p, orderIndex: idx }));
+      const fallbackActive = state.activePageId === action.payload.pageId ? remaining[0]?.id ?? null : state.activePageId;
+      return {
+        ...state,
+        isDirty: true,
+        history: newHistory,
+        activePageId: fallbackActive,
+        selectedSectionId: null,
+        project: {
+          ...state.project,
+          pages: remaining,
+          meta: { ...state.project.meta, updatedAtISO: new Date().toISOString() },
+        },
+      };
+    }
+
+    case 'REORDER_PAGES': {
+      if (!state.project) return state;
+      const newHistory = pushHistory(state.history, state.project, 'Reorder pages', 'REORDER_SECTIONS');
+      const pageMap = new Map(state.project.pages.map((p) => [p.id, p]));
+      const ordered = action.payload.orderedIds
+        .map((id, idx) => {
+          const page = pageMap.get(id);
+          return page ? { ...page, orderIndex: idx } : null;
+        })
+        .filter((p): p is BuilderPage => Boolean(p));
+      return {
+        ...state,
+        isDirty: true,
+        history: newHistory,
+        project: {
+          ...state.project,
+          pages: ordered,
+          meta: { ...state.project.meta, updatedAtISO: new Date().toISOString() },
+        },
+      };
+    }
+
     case 'SELECT_SECTION':
       return { ...state, selectedSectionId: action.payload };
 

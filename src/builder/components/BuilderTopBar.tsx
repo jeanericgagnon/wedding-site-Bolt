@@ -17,6 +17,12 @@ import {
   Monitor,
   Tablet,
   Smartphone,
+  Files,
+  FilePlus2,
+  Copy,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -89,6 +95,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     : ['#C0697B', '#E8A0A0', '#C89F56'];
   const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
   const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
+  const [showPageManager, setShowPageManager] = React.useState(false);
+  const [newPageTitle, setNewPageTitle] = React.useState('');
   const [showPhotoTips, setShowPhotoTips] = React.useState(() => shouldOpenPhotoTipsFromSearch(location.search));
   const blockedHints = React.useMemo(() => getPublishBlockedHints(publishValidationError), [publishValidationError]);
 
@@ -138,6 +146,15 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </span>
         <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
       </div>
+
+      <button
+        type="button"
+        onClick={() => setShowPageManager(true)}
+        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+      >
+        <Files size={13} />
+        Pages ({projectPages.length})
+      </button>
 
       <div className="hidden md:block h-5 w-px bg-gray-200 mx-1" />
 
@@ -469,6 +486,102 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </div>
       </div>
     </header>
+    {showPageManager && (
+      <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-900">Page manager</h3>
+            <button type="button" onClick={() => setShowPageManager(false)} className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Close</button>
+          </div>
+
+          <div className="flex items-center gap-2 mb-3">
+            <input
+              value={newPageTitle}
+              onChange={(e) => setNewPageTitle(e.target.value)}
+              placeholder="New page name"
+              className="flex-1 rounded border border-gray-200 px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                dispatch(builderActions.addPage(newPageTitle || undefined));
+                setNewPageTitle('');
+              }}
+              className="inline-flex items-center gap-1 rounded bg-gray-900 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+            >
+              <FilePlus2 size={12} />
+              Add page
+            </button>
+          </div>
+
+          <div className="max-h-[50vh] overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+            {projectPages.map((page, idx) => (
+              <div key={page.id} className="px-3 py-2.5 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => dispatch(builderActions.setActivePage(page.id))}
+                  className={`text-left flex-1 min-w-0 rounded px-2 py-1.5 ${state.activePageId === page.id ? 'bg-rose-50 border border-rose-200 text-rose-700' : 'hover:bg-gray-50 text-gray-700'}`}
+                >
+                  <div className="text-sm font-medium truncate">{page.title}</div>
+                  <div className="text-[11px] text-gray-500">/{page.slug} {page.meta.isHome ? '• Home' : ''} {page.meta.isHidden ? '• Hidden' : ''}</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => dispatch(builderActions.updatePage(page.id, { meta: { ...page.meta, isHidden: !page.meta.isHidden } }))}
+                  className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50"
+                >
+                  {page.meta.isHidden ? 'Show' : 'Hide'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = [...projectPages];
+                    if (idx === 0) return;
+                    [updated[idx - 1], updated[idx]] = [updated[idx], updated[idx - 1]];
+                    dispatch(builderActions.reorderPages(updated.map((p) => p.id)));
+                  }}
+                  disabled={idx === 0}
+                  className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                >
+                  <ArrowUp size={12} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = [...projectPages];
+                    if (idx === updated.length - 1) return;
+                    [updated[idx + 1], updated[idx]] = [updated[idx], updated[idx + 1]];
+                    dispatch(builderActions.reorderPages(updated.map((p) => p.id)));
+                  }}
+                  disabled={idx === projectPages.length - 1}
+                  className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                >
+                  <ArrowDown size={12} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => dispatch(builderActions.duplicatePage(page.id))}
+                  className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50"
+                >
+                  <Copy size={12} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => dispatch(builderActions.removePage(page.id))}
+                  disabled={page.meta.isHome || projectPages.length <= 1}
+                  className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
     {showLeaveConfirm && (
       <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-xl bg-white shadow-xl border border-gray-200 p-4">
