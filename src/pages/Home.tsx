@@ -53,7 +53,7 @@ export const Home: React.FC = () => {
               A wedding site that doesn't break when it matters
             </h1>
             <p className="text-[1.125rem] md:text-[1.25rem] text-ink/75 mb-10 leading-relaxed max-w-3xl mx-auto">
-              RSVP correctness, privacy-first defaults, and simple pricing—built for couples who want confidence, not chaos.
+              One place for your wedding site, RSVPs, guests, messaging, seating, registry, photo sharing, and timeline, built to make planning easier, not push you through a funnel.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <button
