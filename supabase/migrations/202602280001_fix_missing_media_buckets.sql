@@ -12,7 +12,8 @@ values
 on conflict (id) do nothing;
 
 -- Authenticated users can read their app media buckets
-create policy if not exists "authenticated can read site media"
+DROP POLICY IF EXISTS "authenticated can read site media" ON storage.objects;
+create policy "authenticated can read site media"
 on storage.objects
 for select
 using (
@@ -21,7 +22,8 @@ using (
 );
 
 -- Authenticated users can upload to app media buckets
-create policy if not exists "authenticated can upload site media"
+DROP POLICY IF EXISTS "authenticated can upload site media" ON storage.objects;
+create policy "authenticated can upload site media"
 on storage.objects
 for insert
 with check (
@@ -30,7 +32,8 @@ with check (
 );
 
 -- Authenticated users can update their uploaded media in app buckets
-create policy if not exists "authenticated can update site media"
+DROP POLICY IF EXISTS "authenticated can update site media" ON storage.objects;
+create policy "authenticated can update site media"
 on storage.objects
 for update
 using (
@@ -43,7 +46,8 @@ with check (
 );
 
 -- Authenticated users can delete from app media buckets (optional but useful for builder replacement flows)
-create policy if not exists "authenticated can delete site media"
+DROP POLICY IF EXISTS "authenticated can delete site media" ON storage.objects;
+create policy "authenticated can delete site media"
 on storage.objects
 for delete
 using (
