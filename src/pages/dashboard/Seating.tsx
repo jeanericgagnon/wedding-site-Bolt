@@ -12,6 +12,7 @@ import {
   useDraggable,
 } from '@dnd-kit/core';
 import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -1248,6 +1249,49 @@ export const DashboardSeating: React.FC = () => {
     downloadCSV(csv, 'place-cards.csv');
   }
 
+  function handleExportExcel() {
+    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
+    const eventName = selectedEvent?.event_name ?? 'Event';
+    const assignmentMap = new Map(assignments.map(a => [a.guest_id, a]));
+    const tableMap = new Map(tables.map(t => [t.id, t]));
+
+    const seatingRows = allGuests
+      .filter(g => g.is_attending)
+      .map((guest) => {
+        const assignment = assignmentMap.get(guest.id);
+        const table = assignment ? tableMap.get(assignment.table_id) : null;
+        return {
+          Guest: guest.full_name,
+          Email: guest.email ?? '',
+          Table: table?.table_name ?? 'Unassigned',
+          Seat: assignment?.seat_index ?? '',
+          Arrived: assignment?.checked_in_at ? 'Yes' : 'No',
+          Event: eventName,
+        };
+      });
+
+    const tableRows = tables
+      .map((table) => {
+        const assigned = assignments.filter(a => a.table_id === table.id).length;
+        const arrived = assignments.filter(a => a.table_id === table.id && !!a.checked_in_at).length;
+        return {
+          Table: table.table_name,
+          Capacity: table.capacity,
+          Assigned: assigned,
+          Arrived: arrived,
+          'Meal Headcount': assigned,
+        };
+      })
+      .sort((a, b) => a.Table.localeCompare(b.Table));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(seatingRows), 'Seating');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tableRows), 'Table Summary');
+
+    const safeName = (eventName || 'event').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase();
+    XLSX.writeFile(wb, `seating-${safeName}.xlsx`);
+  }
+
   function handlePrint() {
     window.print();
   }
@@ -1315,6 +1359,14 @@ export const DashboardSeating: React.FC = () => {
     .filter(g => g.full_name.toLowerCase().includes(checkInQuery.toLowerCase().trim()))
     .slice(0, 8);
 
+  const mealHeadcountByTable = tables
+    .map((table) => {
+      const assigned = assignments.filter(a => a.table_id === table.id).length;
+      return { tableName: table.table_name, assigned, capacity: table.capacity };
+    })
+    .filter((row) => row.assigned > 0)
+    .sort((a, b) => b.assigned - a.assigned);
+
   if (loading) {
     return (
       <DashboardLayout currentPage="seating">
@@ -1359,6 +1411,12 @@ export const DashboardSeating: React.FC = () => {
           <div className="flex flex-wrap gap-2 items-center p-2 rounded-xl border border-border-subtle bg-surface-subtle/40">
             <Button variant="outline" size="sm" onClick={handleExportCSV}>
               <Download className="w-4 h-4 mr-1" /> CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportExcel}>
+              <Download className="w-4 h-4 mr-1" /> Excel
+            </Button>
+            <Button variant={checkInMode ? 'primary' : 'outline'} size="sm" onClick={() => setCheckInMode(v => !v)}>
+              <CheckCircle2 className="w-4 h-4 mr-1" /> {checkInMode ? 'Check-in: On' : 'Check-in Mode'}
             </Button>
             <div className="inline-flex rounded-xl border border-border bg-surface-subtle p-0.5">
               <button
@@ -1428,6 +1486,23 @@ export const DashboardSeating: React.FC = () => {
                   </Card>
                 ))}
               </div>
+            )}
+
+            {mealHeadcountByTable.length > 0 && (
+              <Card padding="sm" className="bg-surface border border-border-subtle">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-text-primary">Meal headcount by table</p>
+                  <span className="text-xs text-text-tertiary">Assigned guests</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {mealHeadcountByTable.map((row) => (
+                    <div key={row.tableName} className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2">
+                      <p className="text-sm font-medium text-text-primary truncate">{row.tableName}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">{row.assigned}/{row.capacity} meals</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             )}
 
             {invalidCount > 0 && (

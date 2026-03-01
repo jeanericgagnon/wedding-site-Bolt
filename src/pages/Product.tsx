@@ -670,9 +670,9 @@ export const Product: React.FC = () => {
                   { label: 'Visual seating chart builder with drag-and-drop', done: true },
                   { label: 'Household-aware table assignment (assign whole family at once)', done: true },
                   { label: 'Caterer export: CSV + PDF', done: true },
-                  { label: 'Excel export', done: false },
-                  { label: 'Day-of check-in mode with arrival updates', done: false },
-                  { label: 'Meal headcount by table', done: false },
+                  { label: 'Excel export', done: true },
+                  { label: 'Day-of check-in mode with arrival updates', done: true },
+                  { label: 'Meal headcount by table', done: true },
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <Clock className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
