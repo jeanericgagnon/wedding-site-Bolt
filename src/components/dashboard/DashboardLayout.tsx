@@ -18,6 +18,7 @@ import {
   ExternalLink,
   ClipboardList,
   Armchair,
+  Bug,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
@@ -76,6 +77,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
     { id: 'photos', label: 'Photo Sharing', icon: Camera, path: '/dashboard/photos' },
     { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
+    { id: 'errors', label: 'Error Logs', icon: Bug, path: '/dashboard/errors' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
   ];
 

@@ -72,6 +72,26 @@ Deno.serve(async (req: Request) => {
       ? payload.metadata
       : {};
 
+    let inferredUserId: string | null = payload.userId ?? null;
+    let inferredSiteId: string | null = payload.weddingSiteId ?? null;
+
+    if (!inferredUserId || !inferredSiteId) {
+      const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+      const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+      if (token) {
+        const { data: userData } = await adminClient.auth.getUser(token);
+        if (!inferredUserId) inferredUserId = userData.user?.id ?? null;
+      }
+      if (!inferredSiteId && inferredUserId) {
+        const { data: siteData } = await adminClient
+          .from("wedding_sites")
+          .select("id")
+          .eq("user_id", inferredUserId)
+          .maybeSingle();
+        inferredSiteId = siteData?.id ?? null;
+      }
+    }
+
     const { error } = await adminClient.from("app_error_logs").insert({
       source,
       severity,
@@ -79,8 +99,8 @@ Deno.serve(async (req: Request) => {
       message,
       stack,
       fingerprint: fp,
-      wedding_site_id: payload.weddingSiteId ?? null,
-      user_id: payload.userId ?? null,
+      wedding_site_id: inferredSiteId,
+      user_id: inferredUserId,
       metadata,
     });
 
