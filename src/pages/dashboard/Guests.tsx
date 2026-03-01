@@ -1523,6 +1523,10 @@ Proceed with send?`)) return;
       const emailIdx = findIdx('email', 'email address', 'email_address');
       const phoneIdx = findIdx('phone', 'phone number', 'phone_number', 'mobile', 'cell');
       const plusOneIdx = findIdx('plus one', 'plus_one', 'plus_one_allowed');
+      const statusIdx = findIdx('status', 'rsvp_status', 'rsvp status');
+      const mealChoiceIdx = findIdx('meal choice', 'meal_choice', 'meal');
+      const rsvpDateIdx = findIdx('rsvp date', 'rsvp_date', 'responded_at', 'response date');
+      const inviteTokenIdx = findIdx('invite token', 'invite_token', 'token');
       const householdIdIdx = findIdx('household_id', 'household id', 'household', 'family_id', 'party_id');
       const householdNameIdx = findIdx('household_name', 'household name', 'family', 'group_name', 'group');
       const invitedEventsIdx = findIdx('invited_events', 'invited events', 'events', 'event_invites');
@@ -1583,6 +1587,17 @@ Proceed with send?`)) return;
         const phone = phoneIdx >= 0 ? (values[phoneIdx] || null) : null;
         const plusRaw = plusOneIdx >= 0 ? (values[plusOneIdx] || '') : '';
         const plusOneAllowed = ['yes', 'true', '1', 'y'].includes(plusRaw.toLowerCase());
+        const statusRaw = statusIdx >= 0 ? (values[statusIdx] || '').toLowerCase().trim() : '';
+        const normalizedStatus: 'pending' | 'confirmed' | 'declined' =
+          ['confirmed', 'attending', 'accepted', 'yes'].includes(statusRaw)
+            ? 'confirmed'
+            : ['declined', 'no', 'not attending', 'rejected'].includes(statusRaw)
+              ? 'declined'
+              : 'pending';
+        const mealChoice = mealChoiceIdx >= 0 ? (values[mealChoiceIdx] || '').trim() : '';
+        const rsvpDateRaw = rsvpDateIdx >= 0 ? (values[rsvpDateIdx] || '').trim() : '';
+        const parsedRsvpDate = rsvpDateRaw ? new Date(rsvpDateRaw) : null;
+        const inviteTokenRaw = inviteTokenIdx >= 0 ? (values[inviteTokenIdx] || '').trim() : '';
         const householdIdRaw = householdIdIdx >= 0 ? (values[householdIdIdx] || '').trim() : '';
         const householdNameRaw = householdNameIdx >= 0 ? (values[householdNameIdx] || '').trim() : '';
         const householdKey = householdIdRaw || householdNameRaw;
@@ -1621,11 +1636,17 @@ Proceed with send?`)) return;
           phone,
           group_name: householdNameRaw || null,
           plus_one_allowed: plusOneAllowed,
-          rsvp_status: 'pending',
+          rsvp_status: normalizedStatus,
+          rsvp_received_at: normalizedStatus !== 'pending'
+            ? (parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : new Date().toISOString())
+            : null,
+          invite_token: inviteTokenRaw || null,
           invited_to_ceremony: true,
           invited_to_reception: true,
           __household_key: householdKey || null,
           __invited_event_ids: Array.from(invitedEventIds),
+          __meal_choice: mealChoice || null,
+          __rsvp_date: parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : null,
         };
 
         if (!firstName && !lastName && !email) {
@@ -1705,13 +1726,21 @@ Proceed with send?`)) return;
       }
 
       const guestsWithTokens: Array<Record<string, unknown>> = await Promise.all(
-        csvPreview.map(async g => ({ ...g, invite_token: await generateSecureToken() }))
+        csvPreview.map(async g => {
+          const existingToken = (g.invite_token as string | null | undefined) ?? null;
+          return {
+            ...g,
+            invite_token: existingToken && existingToken.length > 0 ? existingToken : await generateSecureToken(),
+          };
+        })
       );
 
       const guestRows = guestsWithTokens.map((g) => {
         const row = { ...g } as Record<string, unknown>;
         delete row.__household_key;
         delete row.__invited_event_ids;
+        delete row.__meal_choice;
+        delete row.__rsvp_date;
         return row;
       });
 
@@ -1740,16 +1769,36 @@ Proceed with send?`)) return;
       }
 
       const eventInviteRows: Array<{ event_id: string; guest_id: string }> = [];
+      const rsvpRows: Array<{ guest_id: string; attending: boolean; meal_choice: string | null; submitted_at: string | null }> = [];
       guestsWithTokens.forEach((row, idx) => {
         const guestId = inserted[idx]?.id as string | undefined;
         if (!guestId) return;
         const eventIds = (row.__invited_event_ids as string[] | undefined) ?? [];
         eventIds.forEach((eventId) => eventInviteRows.push({ event_id: eventId, guest_id: guestId }));
+
+        const status = String(row.rsvp_status || 'pending').toLowerCase();
+        const attending = status === 'confirmed' || status === 'attending' || status === 'accepted';
+        const declined = status === 'declined' || status === 'no';
+        if (attending || declined) {
+          rsvpRows.push({
+            guest_id: guestId,
+            attending,
+            meal_choice: (row.__meal_choice as string | null | undefined) ?? null,
+            submitted_at: (row.__rsvp_date as string | null | undefined)
+              || (row.rsvp_received_at as string | null | undefined)
+              || new Date().toISOString(),
+          });
+        }
       });
 
       if (eventInviteRows.length > 0) {
         const { error: inviteError } = await supabase.from('event_invitations').insert(eventInviteRows);
         if (inviteError) throw inviteError;
+      }
+
+      if (rsvpRows.length > 0) {
+        const { error: rsvpError } = await supabase.from('rsvps').upsert(rsvpRows, { onConflict: 'guest_id' });
+        if (rsvpError) throw rsvpError;
       }
 
       await fetchGuests();
