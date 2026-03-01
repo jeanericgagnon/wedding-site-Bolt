@@ -782,11 +782,11 @@ export default function RSVP() {
               <p className="mt-2 text-xs text-gray-500">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Final review & submit'} · {Math.round((formStep / 3) * 100)}% complete</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {formStep === 1 && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Will you be attending?</label>
+                    <label className="block text-sm font-medium mb-1.5">Will you be attending?</label>
                     <Select
                       value={formData.attending ? 'yes' : 'no'}
                       onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
@@ -902,7 +902,7 @@ export default function RSVP() {
 
                       {mealConfig.enabled && (
                         <div>
-                          <label className="block text-sm font-medium mb-2">Meal Choice</label>
+                          <label className="block text-sm font-medium mb-1.5">Meal Choice</label>
                           <Select
                             value={formData.meal_choice}
                             onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
@@ -916,7 +916,7 @@ export default function RSVP() {
 
                       {guest.plus_one_allowed && (
                         <div>
-                          <label className="block text-sm font-medium mb-2">
+                          <label className="block text-sm font-medium mb-1.5">
                             Plus One Name (Optional)
                           </label>
                           <Input
