@@ -168,15 +168,15 @@ export const DashboardSettings: React.FC = () => {
       }
 
       if (data) {
-        setWeddingSiteId(data.id);
-        const name1 = data.couple_name_1 ?? '';
-        const name2 = data.couple_name_2 ?? '';
+        setWeddingSiteId((data.id as string) ?? null);
+        const name1 = (data.couple_name_1 as string) ?? '';
+        const name2 = (data.couple_name_2 as string) ?? '';
         setCoupleNames(name1 && name2 ? `${name1} & ${name2}` : name1 || name2 || '');
         setAccountEmail(user.email ?? '');
-        setCurrentTemplate(data.active_template_id || 'base');
-        setSiteSlug(data.site_slug ?? '');
+        setCurrentTemplate((data.active_template_id as string) || 'base');
+        setSiteSlug((data.site_slug as string) ?? '');
         setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
-        setHideFromSearch(!!(data.hide_from_search));
+        setHideFromSearch(!!(data.hide_from_search as boolean | null | undefined));
         setGuestAccessToken((data.guest_access_token as string | null) ?? null);
         setDefaultLanguage(((data.default_language as string) === 'es' ? 'es' : 'en'));
         const prefs = data.notification_prefs as Record<string, boolean> | null;
