@@ -423,7 +423,7 @@ export const DashboardMessages: React.FC = () => {
       const url = await createSmsCreditsSession(weddingSite.id, success, cancel, pack);
       window.location.href = url;
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Failed to open checkout', 'error');
+      toast(err instanceof Error ? err.message : 'Couldn’t open checkout right now. Please try again.', 'error');
     } finally {
       setBuyingPack(null);
     }
@@ -470,7 +470,7 @@ export const DashboardMessages: React.FC = () => {
       if (error) throw error;
       setMessages(data || []);
     } catch {
-      toast('Failed to load message history', 'error');
+      toast('Couldn’t load message history right now. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -807,7 +807,7 @@ export const DashboardMessages: React.FC = () => {
       }
       await fetchMessages();
     } catch {
-      toast('Failed to retry message', 'error');
+      toast('Couldn’t retry that message right now. Please try again.', 'error');
     }
   }
 

@@ -173,7 +173,7 @@ export const DashboardRegistry: React.FC = () => {
           await loadItems(site.id);
         }
       } catch {
-        toast('Failed to initialize', 'error');
+        toast('Couldn’t finish setup right now. Please try again.', 'error');
       } finally {
         setLoading(false);
       }
@@ -287,7 +287,7 @@ export const DashboardRegistry: React.FC = () => {
       setItems(prev => prev.filter(i => i.id !== id));
       toast('Item removed');
     } catch {
-      toast('Failed to delete item', 'error');
+      toast('Couldn’t remove that item. Please try again.', 'error');
     }
   }
 
@@ -354,7 +354,7 @@ export const DashboardRegistry: React.FC = () => {
         toast('No new details found — details are up to date');
       }
     } catch {
-      toast('Failed to refresh product details', 'error');
+      toast('Couldn’t refresh product details right now. Please try again.', 'error');
     }
   }
 
@@ -525,7 +525,7 @@ export const DashboardRegistry: React.FC = () => {
       setPolicyUpdatedBy(user?.id ?? null);
       toast('Refresh policy saved.');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Failed to save refresh policy.', 'error');
+      toast(err instanceof Error ? err.message : 'Couldn’t save refresh settings right now. Please try again.', 'error');
     } finally {
       setSavingRefreshPolicy(false);
     }

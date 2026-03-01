@@ -118,7 +118,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ vaultConfigId, durationYears, onS
         attachment_name: attachmentName.trim() || null,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : 'Couldn’t save right now. Please try again.');
       setSaving(false);
     }
   }
@@ -696,7 +696,7 @@ export const DashboardVault: React.FC = () => {
       .eq('id', weddingSiteId);
 
     if (error) {
-      toast('Failed to update vault storage provider.', 'error');
+      toast('Couldn’t update vault storage right now. Please try again.', 'error');
       return;
     }
 
@@ -1056,7 +1056,7 @@ setWeddingSiteId('demo-site-id');
       setVaultConfigs(prev => [...prev, data as VaultConfig].sort((a, b) => a.duration_years - b.duration_years));
       toast('Vault added');
     } catch {
-      toast('Failed to add vault', 'error');
+      toast('Couldn’t add that vault right now. Please try again.', 'error');
     } finally {
       setAddingVault(false);
     }
@@ -1091,7 +1091,7 @@ setWeddingSiteId('demo-site-id');
       toast('Starter vault set loaded (1/5/10)');
       await loadData();
     } catch {
-      toast('Failed to load starter vault set', 'error');
+      toast('Couldn’t load starter vaults right now. Please try again.', 'error');
     } finally {
       setAddingVault(false);
     }
@@ -1211,7 +1211,7 @@ setWeddingSiteId('demo-site-id');
       return;
     }
     const { error } = await supabase.from('vault_entries').delete().eq('id', id);
-    if (error) { toast('Failed to delete entry', 'error'); return; }
+    if (error) { toast('Couldn’t remove that entry. Please try again.', 'error'); return; }
     setEntries(prev => prev.filter(e => e.id !== id));
     toast('Entry removed');
   }
