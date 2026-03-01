@@ -7,6 +7,11 @@ import { useAuth } from '../hooks/useAuth';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
+const ADMIN_ERROR_LOG_EMAIL = 'admin@dayof.love';
+
+const getPostLoginRoute = (email: string | null | undefined): string =>
+  (email || '').toLowerCase() === ADMIN_ERROR_LOG_EMAIL ? '/admin/errors' : '/dashboard/overview';
+
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -31,20 +36,22 @@ export const Login: React.FC = () => {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       if (data.session && oauthSource === 'google') {
-        setNotice('Google sign-in successful. Redirecting to your dashboard…');
-        navigate('/dashboard', { replace: true });
+        const to = getPostLoginRoute(data.session.user.email);
+        setNotice('Google sign-in successful. Redirecting…');
+        navigate(to, { replace: true });
       }
     };
 
     primeSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       if (event === 'SIGNED_IN') {
+        const to = getPostLoginRoute(session?.user?.email);
         if (oauthSource === 'google') {
-          setNotice('Google sign-in successful. Redirecting to your dashboard…');
+          setNotice('Google sign-in successful. Redirecting…');
         }
-        navigate('/dashboard', { replace: true });
+        navigate(to, { replace: true });
       }
     });
 
@@ -64,12 +71,12 @@ export const Login: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
       if (signInError) throw signInError;
-      navigate('/dashboard');
+      navigate(getPostLoginRoute(signInData.user?.email));
     } catch (err: unknown) {
       setError((err as Error).message || 'Couldn’t sign you in right now. Please try again.');
     } finally {
@@ -82,7 +89,7 @@ export const Login: React.FC = () => {
     setError('');
     try {
       await signIn();
-      navigate('/dashboard');
+      navigate(getPostLoginRoute('demo@dayof.love'));
     } catch (err: unknown) {
       setError((err as Error).message || 'Couldn’t open demo mode right now. Please try again.');
     } finally {
