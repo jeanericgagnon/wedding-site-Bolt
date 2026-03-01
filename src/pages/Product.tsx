@@ -81,6 +81,7 @@ export const Product: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('guests');
   const [rsvpStep, setRsvpStep] = useState<number>(1);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [slidesPerView, setSlidesPerView] = useState(1);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
 
   const templates = getAllTemplatePacks();
@@ -100,6 +101,20 @@ export const Product: React.FC = () => {
        '--color-surface-subtle','--color-border','--color-text-primary','--color-text-secondary',
       ].forEach(p => root.style.removeProperty(p));
     };
+  }, []);
+
+  useEffect(() => {
+    const computeSlides = () => {
+      const w = window.innerWidth;
+      if (w >= 1024) return 3;
+      if (w >= 768) return 2;
+      return 1;
+    };
+
+    const apply = () => setSlidesPerView(computeSlides());
+    apply();
+    window.addEventListener('resize', apply);
+    return () => window.removeEventListener('resize', apply);
   }, []);
 
   const handlePreviewTheme = (themeId: string) => {
@@ -135,6 +150,13 @@ export const Product: React.FC = () => {
     { icon: FileText,      title: 'Easy CSV imports',                    desc: 'Smart column detection maps common heading variations automatically.' },
     { icon: AlertTriangle, title: 'Backup recovery options',             desc: 'Multiple recovery paths are available if you need quick account access.' },
   ];
+
+  const maxCarouselIndex = Math.max(0, pains.length - slidesPerView);
+  const carouselPageCount = maxCarouselIndex + 1;
+
+  useEffect(() => {
+    setCarouselIndex((prev) => Math.min(prev, maxCarouselIndex));
+  }, [maxCarouselIndex]);
 
   const themePreviews = [
     { id: 'elegant',   label: 'Modern Luxe',       desc: 'Near-black, warm whites, brushed gold' },
@@ -201,10 +223,10 @@ export const Product: React.FC = () => {
           </div>
 
           <div className="relative">
-            <div className="overflow-hidden px-12">
+            <div className="overflow-hidden px-0 md:px-12">
               <div
-                className="flex transition-transform duration-500 ease-in-out gap-6"
-                style={{ transform: `translateX(-${carouselIndex * (100 / 3)}%)` }}
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${(carouselIndex * 100) / slidesPerView}%)` }}
               >
                 {pains.map((item, idx) => (
                   <div key={idx} className="flex-shrink-0 w-full md:w-1/2 lg:w-1/3 px-3">
@@ -223,22 +245,22 @@ export const Product: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setCarouselIndex(p => (p === 0 ? pains.length - 1 : p - 1))}
-              className="absolute left-0 top-1/2 -translate-y-1/2 p-3 bg-surface border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors shadow-lg"
+              onClick={() => setCarouselIndex(p => (p <= 0 ? maxCarouselIndex : p - 1))}
+              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 p-3 bg-surface border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors shadow-lg"
               aria-label="Previous"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
-              onClick={() => setCarouselIndex(p => (p === pains.length - 1 ? 0 : p + 1))}
-              className="absolute right-0 top-1/2 -translate-y-1/2 p-3 bg-surface border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors shadow-lg"
+              onClick={() => setCarouselIndex(p => (p >= maxCarouselIndex ? 0 : p + 1))}
+              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 p-3 bg-surface border-2 border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors shadow-lg"
               aria-label="Next"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
 
-            <div className="flex justify-center gap-2 mt-8">
-              {pains.map((_, idx) => (
+            <div className="flex justify-center gap-2 mt-6 md:mt-8">
+              {Array.from({ length: carouselPageCount }).map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCarouselIndex(idx)}
@@ -246,6 +268,24 @@ export const Product: React.FC = () => {
                   aria-label={`Slide ${idx + 1}`}
                 />
               ))}
+            </div>
+
+            <div className="md:hidden mt-4 flex items-center justify-center gap-3">
+              <button
+                onClick={() => setCarouselIndex(p => (p <= 0 ? maxCarouselIndex : p - 1))}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-primary/40 text-primary bg-surface"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="text-xs text-text-tertiary min-w-[64px] text-center">{carouselIndex + 1} / {carouselPageCount}</span>
+              <button
+                onClick={() => setCarouselIndex(p => (p >= maxCarouselIndex ? 0 : p + 1))}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-primary/40 text-primary bg-surface"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
