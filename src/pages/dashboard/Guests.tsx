@@ -1842,88 +1842,79 @@ Proceed with send?`)) return;
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary-light rounded-lg flex-shrink-0">
-                <Users className="w-6 h-6 text-primary" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.total}</p>
-                <p className="text-sm text-text-secondary">Invited</p>
-              </div>
+        <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
+          <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-text-primary">Snapshot & RSVP insights</span>
+            <span className="text-xs text-text-tertiary">Tap to expand</span>
+          </summary>
+          <div className="mt-3 space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Card variant="bordered" padding="md">
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-primary" aria-hidden="true" />
+                  <div>
+                    <p className="text-xl font-bold text-text-primary">{stats.total}</p>
+                    <p className="text-xs text-text-secondary">Invited</p>
+                  </div>
+                </div>
+              </Card>
+              <Card variant="bordered" padding="md">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-success" aria-hidden="true" />
+                  <div>
+                    <p className="text-xl font-bold text-text-primary">{stats.confirmed}</p>
+                    <p className="text-xs text-text-secondary">RSVP Yes</p>
+                  </div>
+                </div>
+              </Card>
+              <Card variant="bordered" padding="md">
+                <div className="flex items-center gap-3">
+                  <XCircle className="w-5 h-5 text-error" aria-hidden="true" />
+                  <div>
+                    <p className="text-xl font-bold text-text-primary">{stats.declined}</p>
+                    <p className="text-xs text-text-secondary">RSVP No</p>
+                  </div>
+                </div>
+              </Card>
+              <Card variant="bordered" padding="md">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-warning" aria-hidden="true" />
+                  <div>
+                    <p className="text-xl font-bold text-text-primary">{stats.pending}</p>
+                    <p className="text-xs text-text-secondary">Pending</p>
+                  </div>
+                </div>
+              </Card>
             </div>
-          </Card>
 
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-success-light rounded-lg flex-shrink-0">
-                <CheckCircle2 className="w-6 h-6 text-success" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.confirmed}</p>
-                <p className="text-sm text-text-secondary">RSVP Yes</p>
-              </div>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
+              <button onClick={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                <p className="text-xs text-text-tertiary">Missing meal</p>
+                <p className="text-base font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
+              </button>
+              <button onClick={() => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                <p className="text-xs text-text-tertiary">Plus-one missing</p>
+                <p className="text-base font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
+              </button>
+              <button onClick={() => { setSearchQuery(''); setFilterStatus('pending'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                <p className="text-xs text-text-tertiary">No response</p>
+                <p className="text-base font-semibold text-text-primary">{rsvpOps.noResponse}</p>
+              </button>
+              <button onClick={() => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                <p className="text-xs text-text-tertiary">Pending, no email</p>
+                <p className="text-base font-semibold text-text-primary">{rsvpOps.pendingNoEmail}</p>
+              </button>
+              <button onClick={() => { setSearchQuery(''); setFilterStatus('ceremony-no'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                <p className="text-xs text-text-tertiary">Ceremony: No</p>
+                <p className="text-base font-semibold text-text-primary">{rsvpOps.ceremonyNo}</p>
+              </button>
+              <button onClick={() => { setSearchQuery(''); setFilterStatus('reception-no'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                <p className="text-xs text-text-tertiary">Reception: No</p>
+                <p className="text-base font-semibold text-text-primary">{rsvpOps.receptionNo}</p>
+              </button>
             </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-error-light rounded-lg flex-shrink-0">
-                <XCircle className="w-6 h-6 text-error" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.declined}</p>
-                <p className="text-sm text-text-secondary">RSVP No</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="md">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-warning-light rounded-lg flex-shrink-0">
-                <Clock className="w-6 h-6 text-warning" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.pending}</p>
-                <p className="text-sm text-text-secondary">Pending</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        <Card variant="bordered" padding="md">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-            <h3 className="text-sm font-semibold text-text-primary">RSVP Ops Panel</h3>
-            <span className="text-xs text-text-tertiary break-words">Action-focused follow up</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
-            <button onClick={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary break-words">Missing meal choice</p>
-              <p className="text-lg font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
-            </button>
-            <button onClick={() => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary break-words">Plus-one missing name</p>
-              <p className="text-lg font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
-            </button>
-            <button onClick={() => { setSearchQuery(''); setFilterStatus('ceremony-no'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary break-words">Ceremony: No</p>
-              <p className="text-lg font-semibold text-text-primary">{rsvpOps.ceremonyNo}</p>
-            </button>
-            <button onClick={() => { setSearchQuery(''); setFilterStatus('reception-no'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary break-words">Reception: No</p>
-              <p className="text-lg font-semibold text-text-primary">{rsvpOps.receptionNo}</p>
-            </button>
-            <button onClick={() => { setSearchQuery(''); setFilterStatus('pending'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary break-words">No response yet</p>
-              <p className="text-lg font-semibold text-text-primary">{rsvpOps.noResponse}</p>
-            </button>
-            <button onClick={() => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-left p-3 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-              <p className="text-xs text-text-tertiary break-words">Pending, no email</p>
-              <p className="text-lg font-semibold text-text-primary">{rsvpOps.pendingNoEmail}</p>
-            </button>
-          </div>
-        </Card>
+        </details>
 
         {(() => {
           const conflicts: string[] = [];
@@ -2205,40 +2196,42 @@ Proceed with send?`)) return;
               </div>
             </div>
 
-            <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle space-y-2">
-              <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
-              {daysToWedding !== null && (
-                <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
-                  Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
+            <details className="p-3 rounded-xl border border-border-subtle bg-surface-subtle">
+              <summary className="cursor-pointer text-xs font-medium text-text-secondary">Campaign insights & reminders</summary>
+              <div className="mt-2 space-y-2">
+                <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
+                {daysToWedding !== null && (
+                  <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
+                    Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <p className="text-xs text-text-secondary">
+                    Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
+                    Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span> ·
+                    Campaign readiness: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
+                  </p>
+                  <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
+                    <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
+                    Skip guests invited in last 24h
+                  </label>
                 </div>
-              )}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <p className="text-xs text-text-secondary">
-                  Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
-                  Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span> ·
-                  Campaign readiness: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
-                </p>
-                <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
-                  <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
-                  Skip guests invited in last 24h
-                </label>
-              </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <label className="text-xs text-text-secondary w-28">Campaign preset</label>
-                <select
-                  value={campaignPreset}
-                  onChange={(e) => applyCampaignPreset(e.target.value as any)}
-                  className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
-                >
-                  <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
-                  <option value="missing-meal">Missing meal ({rsvpOps.missingMeal})</option>
-                  <option value="plusone-missing">Missing plus-one name ({rsvpOps.plusOneMissingName})</option>
-                  <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
-                  <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
-                  <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
-                </select>
-              </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="text-xs text-text-secondary w-28">Campaign preset</label>
+                  <select
+                    value={campaignPreset}
+                    onChange={(e) => applyCampaignPreset(e.target.value as any)}
+                    className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
+                  >
+                    <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
+                    <option value="missing-meal">Missing meal ({rsvpOps.missingMeal})</option>
+                    <option value="plusone-missing">Missing plus-one name ({rsvpOps.plusOneMissingName})</option>
+                    <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
+                    <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
+                    <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
+                  </select>
+                </div>
 
               {reminderCandidates.length > 0 && (
                 <div className="space-y-1">
@@ -2333,6 +2326,7 @@ Proceed with send?`)) return;
                 </div>
               )}
             </div>
+          </details>
 
             <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border-subtle bg-surface-subtle">
               <p className="text-xs text-text-secondary">
