@@ -1619,7 +1619,7 @@ Proceed with send?`)) return;
         return;
       }
 
-      const guestsWithTokens = await Promise.all(
+      const guestsWithTokens: Array<Record<string, unknown>> = await Promise.all(
         csvPreview.map(async g => ({ ...g, invite_token: await generateSecureToken() }))
       );
 
