@@ -143,9 +143,9 @@ export const Home: React.FC = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             {/* Guests + Households */}
-            <Link to="/features/guests" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <Link to="/features/guests" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Users className="w-6 h-6 text-brand" />
               </div>
@@ -179,7 +179,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* RSVP Engine */}
-            <Link to="/features/rsvp" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <Link to="/features/rsvp" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <CheckCircle2 className="w-6 h-6 text-brand" />
               </div>
@@ -195,7 +195,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Messaging */}
-            <Link to="/features/messaging" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <Link to="/features/messaging" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
@@ -211,7 +211,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Travel + Itinerary */}
-            <Link to="/features/travel" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <Link to="/features/travel" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Hotel className="w-6 h-6 text-brand" />
               </div>
@@ -227,7 +227,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Registry */}
-            <Link to="/features/registry" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <Link to="/features/registry" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Heart className="w-6 h-6 text-brand" />
               </div>
@@ -243,7 +243,7 @@ export const Home: React.FC = () => {
             </Link>
 
             {/* Seating + Check-in */}
-            <Link to="/features/seating" className="card-clean p-6 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <Link to="/features/seating" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>

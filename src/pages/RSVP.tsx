@@ -733,9 +733,9 @@ export default function RSVP() {
         )}
 
         {step === 'form' && guest && (
-          <Card className="p-8">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-serif mb-2">Welcome, {guestDisplayName}!</h1>
+          <Card className="p-6 md:p-8">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl md:text-3xl font-serif mb-2">Welcome, {guestDisplayName}!</h1>
               {existingRsvp && (
                 <p className="text-sm text-gray-600">
                   You've already responded. You can update your response below.
@@ -770,7 +770,7 @@ export default function RSVP() {
               </div>
             )}
 
-            <div className="mb-6">
+            <div className="mb-5 p-3 bg-surface-subtle/40 border border-border-subtle rounded-xl">
               <div className="flex items-center gap-2 text-xs">
                 {[1, 2, 3].map((n) => (
                   <div key={n} className={`flex items-center gap-2 ${n < 3 ? 'flex-1' : ''}`}>
