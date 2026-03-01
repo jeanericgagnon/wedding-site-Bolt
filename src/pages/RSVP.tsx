@@ -1206,7 +1206,7 @@ export default function RSVP() {
             </details>
 
             {formData.attending && (
-              <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg py-3 px-4 mb-6">
+              <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg py-3 px-4 mb-5">
                 We can't wait to celebrate with you!
               </p>
             )}

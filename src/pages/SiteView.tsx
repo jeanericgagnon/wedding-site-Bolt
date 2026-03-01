@@ -68,7 +68,7 @@ const PasswordGate: React.FC<{
         </div>
         <form
           onSubmit={e => { e.preventDefault(); onSubmit(pw); }}
-          className="bg-white border border-stone-200 rounded-2xl shadow-sm p-6 space-y-4"
+          className="bg-white border border-stone-200 rounded-2xl shadow-sm p-5 space-y-4"
         >
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">

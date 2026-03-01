@@ -284,7 +284,7 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="max-w-lg mx-auto mb-16">
-            <div className="bg-white border-2 border-brand/30 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-200">
+            <div className="bg-white border-2 border-brand/30 rounded-2xl p-7 shadow-lg hover:shadow-xl transition-shadow duration-200">
               <div className="text-center mb-8">
                 <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 leading-[1.2] updates-tight">Complete Wedding Platform</h3>
                 <div className="mb-5">
