@@ -1152,7 +1152,7 @@ export default function RSVP() {
                 RSVP summary
                 <span className="text-xs text-gray-500">View details</span>
               </summary>
-              <div className="mt-3 space-y-3">
+              <div className="mt-2.5 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 font-medium">Attendance</span>
                 <span className={`font-semibold px-2.5 py-1 rounded-full text-xs ${

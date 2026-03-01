@@ -148,7 +148,7 @@ const ComingSoonScreen: React.FC = () => {
       <div className="flex justify-end w-full max-w-md absolute top-4 right-4">
         <LanguageSwitcher />
       </div>
-      <div className="max-w-md w-full text-center space-y-4">
+      <div className="max-w-md w-full text-center space-y-3">
         <div className="w-24 h-24 bg-primary/8 rounded-full flex items-center justify-center mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-primary/60">
             <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>

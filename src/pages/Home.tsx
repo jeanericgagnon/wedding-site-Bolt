@@ -298,7 +298,7 @@ export const Home: React.FC = () => {
                 </span>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 mb-7">
                 {[
                   'Unlimited guests',
                   'Email included (fair-use)',
