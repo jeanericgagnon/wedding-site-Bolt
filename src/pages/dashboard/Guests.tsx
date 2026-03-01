@@ -1906,10 +1906,15 @@ Proceed with send?`)) return;
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border ${getAuditActionTone(entry.action)}`}>
-                              {getAuditActionIcon(entry.action)}
-                              <span>{entry.action === 'insert' ? 'Created' : entry.action === 'delete' ? 'Removed' : 'Updated'}</span>
-                            </span>
+                            {(() => {
+                              const ActionIcon = getAuditActionIcon(entry.action);
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border ${getAuditActionTone(entry.action)}`}>
+                                  <ActionIcon className="w-3 h-3" />
+                                  <span>{entry.action === 'insert' ? 'Created' : entry.action === 'delete' ? 'Removed' : 'Updated'}</span>
+                                </span>
+                              );
+                            })()}
                             <span className="text-xs text-text-tertiary truncate">{getAuditGuestLabel(entry)}</span>
                           </div>
                           <p className="text-sm text-text-secondary leading-relaxed">{summarizeAuditEntry(entry)}</p>
