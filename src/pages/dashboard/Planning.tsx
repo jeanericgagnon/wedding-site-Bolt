@@ -354,20 +354,17 @@ export const DashboardPlanning: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-1 p-1 bg-surface-subtle rounded-xl border border-border-subtle w-full overflow-x-auto">
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-surface text-text-primary shadow-sm'
-                  : 'text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="p-2 bg-surface-subtle rounded-xl border border-border-subtle">
+          <label className="text-xs text-text-secondary">Section</label>
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value as Tab)}
+            className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {TABS.map(tab => (
+              <option key={tab.id} value={tab.id}>{tab.label}</option>
+            ))}
+          </select>
         </div>
 
         {loading ? (
