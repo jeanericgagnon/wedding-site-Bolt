@@ -250,8 +250,7 @@ export async function getEligibleGuests(
   const hasEventInvitations = (invitations ?? []).length > 0;
 
   return allGuests.map(g => {
-    const fullName = (g.full_name as string | null)
-      || (g.name as string | null)
+    const fullName = (g.name as string | null)
       || `${(g.first_name as string | null) ?? ''} ${(g.last_name as string | null) ?? ''}`.trim()
       || 'Guest';
     const eventRsvp = inviteMap.get(g.id);
