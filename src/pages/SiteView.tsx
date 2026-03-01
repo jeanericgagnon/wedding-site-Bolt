@@ -158,7 +158,7 @@ const ComingSoonScreen: React.FC = () => {
           <h1 className="text-3xl font-light text-text-primary mb-2">{t('site.coming_soon_title')}</h1>
           <p className="text-text-secondary leading-relaxed">{t('site.coming_soon_subtitle')}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="flex-1 h-px bg-border" />
           <span className="text-xs text-text-tertiary px-2">dayof.love</span>
           <div className="flex-1 h-px bg-border" />

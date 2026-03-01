@@ -1133,7 +1133,7 @@ export default function RSVP() {
 
         {step === 'success' && (
           <Card className="p-5 md:p-7">
-            <div className="text-center mb-6">
+            <div className="text-center mb-5">
               <div className="flex justify-center mb-4">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center ${formData.attending ? 'bg-green-100' : 'bg-neutral-100'}`}>
                   <CheckCircle className={`w-9 h-9 ${formData.attending ? 'text-green-500' : 'text-neutral-500'}`} />
