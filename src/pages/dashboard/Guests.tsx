@@ -2195,7 +2195,10 @@ Proceed with send?`)) return;
             </div>
 
             <details className="p-3 rounded-xl border border-border-subtle bg-surface-subtle">
-              <summary className="cursor-pointer text-sm font-semibold text-text-primary">Campaign insights & reminders</summary>
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-text-primary">Campaign insights & reminders</span>
+                <span className="text-xs text-text-tertiary">View details</span>
+              </summary>
               <div className="mt-2 space-y-2">
                 <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
                 {daysToWedding !== null && (

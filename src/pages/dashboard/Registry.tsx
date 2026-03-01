@@ -705,7 +705,10 @@ export const DashboardRegistry: React.FC = () => {
               <p className="text-xs text-warning mt-1">You’ve used over 80% of this month’s refresh budget. Lean mode can help stretch remaining runs.</p>
             )}
             <details className="mt-3 rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
-              <summary className="cursor-pointer text-sm font-semibold text-text-primary">Refresh settings</summary>
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-text-primary">Refresh settings</span>
+                <span className="text-xs text-text-tertiary">View details</span>
+              </summary>
               <div className="mt-2 flex flex-wrap items-end gap-2">
                 <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
                   <button className={`px-2 py-1 ${refreshPreset === 'lean' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('lean')}>Lean{recommendedPreset === 'lean' ? ' ★' : ''}</button>
