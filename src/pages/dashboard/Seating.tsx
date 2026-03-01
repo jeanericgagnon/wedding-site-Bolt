@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2 } from 'lucide-react';
+import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2, ChevronDown } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -614,6 +614,7 @@ export const DashboardSeating: React.FC = () => {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
+  const [seatingActionsOpen, setSeatingActionsOpen] = useState(false);
   const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
 
@@ -1378,59 +1379,76 @@ export const DashboardSeating: React.FC = () => {
           </div>
         </div>
 
-        {layoutMode === 'visual' && (
-          <div className="hidden sm:flex flex-wrap items-center gap-3 text-xs text-text-tertiary bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2">
-            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-surface border border-border-subtle" /> Empty seat</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary-light border border-primary/40" /> Active drop zone</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-success/10 border border-success/40" /> Arrived (check-in)</span>
-          </div>
-        )}
+        <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
+          <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
+            <span className="text-sm font-medium text-text-primary">Seating insights</span>
+            <span className="text-xs text-text-tertiary">Tap to expand</span>
+          </summary>
+          <div className="mt-3 space-y-3">
+            {layoutMode === 'visual' && (
+              <div className="hidden sm:flex flex-wrap items-center gap-3 text-xs text-text-tertiary bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2">
+                <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-surface border border-border-subtle" /> Empty seat</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary-light border border-primary/40" /> Active drop zone</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-success/10 border border-success/40" /> Arrived (check-in)</span>
+              </div>
+            )}
 
-        {counters && (
-          <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
-            {[
-              { label: 'Invited', value: counters.invited, color: 'text-text-primary' },
-              { label: 'Attending', value: counters.attending, color: 'text-success' },
-              { label: 'Arrived', value: arrivedCount, color: 'text-success' },
-              { label: 'Declined', value: counters.declined, color: 'text-error' },
-              { label: 'Pending', value: counters.pending, color: 'text-warning' },
-              { label: 'Seated', value: counters.seated, color: 'text-primary' },
-              { label: 'Unassigned', value: counters.unassigned, color: counters.unassigned > 0 ? 'text-warning' : 'text-text-tertiary' },
-            ].map(stat => (
-              <Card key={stat.label} padding="sm" className="text-center">
-                <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
-                <p className="text-xs text-text-tertiary">{stat.label}</p>
-              </Card>
-            ))}
-          </div>
-        )}
+            {counters && (
+              <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
+                {[
+                  { label: 'Invited', value: counters.invited, color: 'text-text-primary' },
+                  { label: 'Attending', value: counters.attending, color: 'text-success' },
+                  { label: 'Arrived', value: arrivedCount, color: 'text-success' },
+                  { label: 'Declined', value: counters.declined, color: 'text-error' },
+                  { label: 'Pending', value: counters.pending, color: 'text-warning' },
+                  { label: 'Seated', value: counters.seated, color: 'text-primary' },
+                  { label: 'Unassigned', value: counters.unassigned, color: counters.unassigned > 0 ? 'text-warning' : 'text-text-tertiary' },
+                ].map(stat => (
+                  <Card key={stat.label} padding="sm" className="text-center">
+                    <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
+                    <p className="text-xs text-text-tertiary">{stat.label}</p>
+                  </Card>
+                ))}
+              </div>
+            )}
 
-        {invalidCount > 0 && (
-          <div className="flex items-center gap-2 p-3 bg-error/5 border border-error/20 rounded-xl text-sm">
-            <AlertTriangle className="w-4 h-4 text-error flex-shrink-0" />
-            <span className="text-text-primary">
-              <span className="font-medium text-error">{invalidCount}</span> assignment(s) are invalid due to RSVP changes.
-            </span>
+            {invalidCount > 0 && (
+              <div className="flex items-center gap-2 p-3 bg-error/5 border border-error/20 rounded-xl text-sm">
+                <AlertTriangle className="w-4 h-4 text-error flex-shrink-0" />
+                <span className="text-text-primary">
+                  <span className="font-medium text-error">{invalidCount}</span> assignment(s) are invalid due to RSVP changes.
+                </span>
+              </div>
+            )}
           </div>
-        )}
+        </details>
 
         <div className="flex flex-wrap gap-2 items-center p-2 rounded-xl border border-border-subtle bg-surface-subtle/40">
           <Button size="sm" onClick={() => setAddingTable(true)}>
             <Plus className="w-4 h-4 mr-1" /> Add Table
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowAutoTablesModal(true)}>
-            <Wand2 className="w-4 h-4 mr-1" /> Auto-Create Tables
-          </Button>
-          {tables.length > 0 && unassignedGuests.length > 0 && (
-            <Button variant="outline" size="sm" onClick={handleAutoSeat}>
-              <Wand2 className="w-4 h-4 mr-1" /> Auto-Seat Guests
+          <div className="relative">
+            <Button variant="outline" size="sm" onClick={() => setSeatingActionsOpen((v) => !v)}>
+              More actions <ChevronDown className="w-4 h-4 ml-1" />
             </Button>
-          )}
-          {assignments.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setShowResetConfirm(true)} className="text-error hover:text-error hover:bg-error/5">
-              <RotateCcw className="w-4 h-4 mr-1" /> Reset All
-            </Button>
-          )}
+            {seatingActionsOpen && (
+              <div className="absolute left-0 top-10 z-20 w-56 rounded-lg border border-border bg-white p-2 shadow-lg space-y-1">
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setShowAutoTablesModal(true); setSeatingActionsOpen(false); }}>
+                  <Wand2 className="w-4 h-4 mr-1" /> Auto-Create Tables
+                </Button>
+                {tables.length > 0 && unassignedGuests.length > 0 && (
+                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoSeat(); setSeatingActionsOpen(false); }}>
+                    <Wand2 className="w-4 h-4 mr-1" /> Auto-Seat Guests
+                  </Button>
+                )}
+                {assignments.length > 0 && (
+                  <Button variant="ghost" size="sm" className="w-full justify-start text-error hover:text-error hover:bg-error/5" onClick={() => { setShowResetConfirm(true); setSeatingActionsOpen(false); }}>
+                    <RotateCcw className="w-4 h-4 mr-1" /> Reset All
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {checkInMode && (
