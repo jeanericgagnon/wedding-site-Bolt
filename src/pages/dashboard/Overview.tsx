@@ -590,28 +590,8 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                   )}
                   <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-                    <span className="text-text-secondary">Template</span>
-                    <span className="text-text-primary font-medium capitalize">
-                      {stats?.templateName?.replace(/-/g, ' ') ?? 'Default'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-                    <span className="text-text-secondary">Published version</span>
-                    <span className="text-text-primary font-medium">
-                      {typeof stats?.publishedVersion === 'number' ? `v${stats.publishedVersion}` : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-3">
-                    <span className="text-text-secondary">Last updated</span>
-                    <span className="text-text-primary">
-                      {stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-3">
-                    <span className="text-text-secondary">Publishing status</span>
-                    <span className="text-text-primary">
-                      {stats?.isPublished ? 'Published' : 'Draft only'}
-                    </span>
+                    <span className="text-text-secondary">Status</span>
+                    <span className="text-text-primary">{stats?.isPublished ? 'Live' : 'Draft'}</span>
                   </div>
                   <div className="flex items-center justify-between py-3">
                     <span className="text-text-secondary">Last published</span>
@@ -619,67 +599,49 @@ export const DashboardOverview: React.FC = () => {
                       {stats?.lastPublishedAt ? formatRelativeTime(stats.lastPublishedAt) : '—'}
                     </span>
                   </div>
-                  {!stats?.isPublished && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 space-y-1.5">
-                      <p className="font-medium">Your site is still private. Guests can only view it after first publish.</p>
-                      <p>
-                        Readiness: {stats?.siteSlug ? 'URL set' : 'set URL'} · {stats?.templateName ? 'template set' : 'choose template'} · publish once to go live.
-                      </p>
-                    </div>
-                  )}
-                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 shadow-sm">
-                    <div className="flex items-center justify-between gap-2 mb-2.5">
-                      <p className="text-xs font-medium text-text-secondary">Publishing checklist</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-text-tertiary">{publishProgress.done}/{publishProgress.total} ready</span>
-                        {publishBlockers.length === 0 ? (
-                          <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-                            All checks passed
-                          </span>
-                        ) : null}
+
+                  <details className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
+                    <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-text-secondary">View details</span>
+                      <span className="text-[11px] text-text-tertiary">{publishProgress.done}/{publishProgress.total} ready</span>
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      <div className="flex items-center justify-between py-2 border-b border-border-subtle">
+                        <span className="text-text-secondary text-sm">Template</span>
+                        <span className="text-text-primary font-medium capitalize text-sm">
+                          {stats?.templateName?.replace(/-/g, ' ') ?? 'Default'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-b border-border-subtle">
+                        <span className="text-text-secondary text-sm">Published version</span>
+                        <span className="text-text-primary font-medium text-sm">
+                          {typeof stats?.publishedVersion === 'number' ? `v${stats.publishedVersion}` : '—'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-text-secondary text-sm">Last updated</span>
+                        <span className="text-text-primary text-sm">
+                          {stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}
+                        </span>
+                      </div>
+
+                      {!stats?.isPublished && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+                          Ready to publish: {stats?.siteSlug ? 'URL set' : 'set URL'} · {stats?.templateName ? 'template set' : 'choose template'}.
+                        </div>
+                      )}
+
+                      {firstPublishBlocker?.action && (
                         <button
                           type="button"
-                          onClick={() => navigate('/dashboard/builder?photoTips=1')}
-                          className="rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100"
+                          onClick={() => firstPublishBlocker.action?.()}
+                          className="w-full rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100"
                         >
-                          Photo tips
+                          Fix next: {firstPublishBlocker.label}
                         </button>
-                        {firstPublishBlocker?.action && (
-                          <button
-                            type="button"
-                            onClick={() => firstPublishBlocker.action?.()}
-                            className="rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
-                          >
-                            Fix next
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {publishReadinessItems.map((item) => (
-                        <div key={item.id} className="text-xs text-text-secondary flex items-center justify-between gap-2 rounded border border-border-subtle bg-white px-2 py-1.5 shadow-[0_1px_0_rgba(0,0,0,0.02)]">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            {item.done ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-green-600" aria-hidden="true" />
-                            ) : (
-                              <AlertCircle className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
-                            )}
-                            <span className="truncate">{item.label}</span>
-                            {item.done && <span className="text-[10px] rounded border border-green-200 bg-green-50 px-1.5 py-0.5 font-medium text-green-700">Done</span>}
-                          </div>
-                          {!item.done && (
-                            <button
-                              type="button"
-                              onClick={item.action}
-                              className="shrink-0 rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100"
-                            >
-                              {item.actionLabel}
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  </details>
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     {stats?.siteSlug && (
                       <Button
