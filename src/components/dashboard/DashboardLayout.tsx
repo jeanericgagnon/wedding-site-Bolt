@@ -11,7 +11,6 @@ import {
   Settings,
   Menu,
   X,
-  LogOut,
   Mail,
   Calendar,
   Sparkles,
@@ -32,7 +31,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
-  const { user, signOut, isDemoMode } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,11 +51,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         if (data?.site_slug) setSiteSlug(data.site_slug);
       });
   }, [user, isDemoMode]);
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/login');
-  };
 
   const getUserInitials = () => {
     if (user?.email) {
@@ -133,15 +127,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             </ul>
           </nav>
 
-          <div className="p-4 border-t border-border-subtle">
-            <button
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-base text-text-secondary hover:bg-surface-subtle hover:text-text-primary transition-colors w-full text-left min-h-[44px]"
-              onClick={handleLogout}
-            >
-              <LogOut className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-              <span>Log out</span>
-            </button>
-          </div>
         </div>
       </aside>
 

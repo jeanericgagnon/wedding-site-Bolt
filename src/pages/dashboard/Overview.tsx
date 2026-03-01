@@ -748,7 +748,7 @@ export const DashboardOverview: React.FC = () => {
             <details className="rounded-xl border border-border-subtle bg-surface p-4">
               <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold text-text-primary">Engagement insights</span>
-                <span className="text-xs text-text-tertiary">View details</span>
+                <span className="text-xs text-text-tertiary">Optional details</span>
               </summary>
               <p className="text-xs text-text-secondary mt-1">A quick look at how guests are interacting with your site</p>
               <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -782,7 +782,7 @@ export const DashboardOverview: React.FC = () => {
             <details className="rounded-xl border border-border-subtle bg-surface p-4">
               <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold text-text-primary">Site health</span>
-                <span className="text-xs text-text-tertiary">View details</span>
+                <span className="text-xs text-text-tertiary">Optional details</span>
               </summary>
               <p className="text-xs text-text-secondary mt-1">Connection status and setup progress</p>
               <div className="mt-3 space-y-4">

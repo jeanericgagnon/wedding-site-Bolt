@@ -750,6 +750,7 @@ export const DashboardRegistry: React.FC = () => {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <ActionsMenu
+              label="More"
               open={registryActionsOpen}
               onToggle={() => setRegistryActionsOpen((v) => !v)}
               align="right"
