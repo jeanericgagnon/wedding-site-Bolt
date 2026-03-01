@@ -1808,7 +1808,7 @@ Proceed with send?`)) return;
 
       const { data: insertedGuests, error } = await supabase
         .from('guests')
-        .insert(guestRows)
+        .upsert(guestRows, { onConflict: 'invite_token' })
         .select('id, first_name, last_name, name, email');
       if (error) throw error;
 
