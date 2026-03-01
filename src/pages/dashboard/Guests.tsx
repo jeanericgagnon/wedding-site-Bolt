@@ -2595,11 +2595,11 @@ Proceed with send?`)) return;
                   <span className="text-[11px] text-text-tertiary">Issue legend: pending, meal, plus-one, contact, event-decline</span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 min-w-0">
                   <select
                     value={filterStatus}
                     onChange={(e) => { setFilterStatus(e.target.value as typeof filterStatus); setViewMode('list'); }}
-                    className="text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
+                    className="w-full sm:w-auto min-w-0 text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
                   >
                     <option value="all">All ({stats.total})</option>
                     <option value="confirmed">Confirmed ({stats.confirmed})</option>
@@ -2607,11 +2607,11 @@ Proceed with send?`)) return;
                     <option value="pending">Pending ({stats.pending})</option>
                   </select>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0 w-full sm:w-auto">
                     <select
                       value={extraFilterDraft}
                       onChange={(e) => setExtraFilterDraft(e.target.value)}
-                      className="text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
+                      className="w-full sm:w-auto min-w-0 text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
                     >
                       <option value="">Add filter…</option>
                       <option value="ceremony-no">Ceremony No ({rsvpOps.ceremonyNo})</option>
@@ -2636,7 +2636,7 @@ Proceed with send?`)) return;
                         setExtraFilters(prev => prev.includes(extraFilterDraft) ? prev : [...prev, extraFilterDraft]);
                         setExtraFilterDraft('');
                       }}
-                      className="text-xs px-2 py-2 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-50"
+                      className="w-full sm:w-auto text-xs px-2 py-2 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-50"
                     >
                       Add
                     </button>
