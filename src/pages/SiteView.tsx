@@ -68,7 +68,7 @@ const PasswordGate: React.FC<{
         </div>
         <form
           onSubmit={e => { e.preventDefault(); onSubmit(pw); }}
-          className="bg-white border border-stone-200 rounded-2xl shadow-sm p-6 space-y-4"
+          className="bg-white border border-stone-200 rounded-2xl shadow-sm p-5 space-y-3"
         >
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -119,7 +119,7 @@ const InviteOnlyGate: React.FC = () => {
         <LanguageSwitcher />
       </div>
       <div className="flex-1 flex items-center justify-center">
-        <div className="max-w-md w-full text-center space-y-6">
+        <div className="max-w-md w-full text-center space-y-5">
           <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto">
             <Lock className="w-8 h-8 text-stone-200" />
           </div>

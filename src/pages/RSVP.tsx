@@ -1128,14 +1128,14 @@ export default function RSVP() {
         )}
 
         {step === 'success' && (
-          <Card className="p-8">
+          <Card className="p-6 md:p-8">
             <div className="text-center mb-6">
               <div className="flex justify-center mb-4">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center ${formData.attending ? 'bg-green-100' : 'bg-neutral-100'}`}>
                   <CheckCircle className={`w-9 h-9 ${formData.attending ? 'text-green-500' : 'text-neutral-500'}`} />
                 </div>
               </div>
-              <h1 className="text-3xl font-serif mb-2">
+              <h1 className="text-2xl md:text-3xl font-serif mb-2">
                 {formData.attending ? "You're confirmed!" : "Response recorded"}
               </h1>
               <p className="text-gray-500 text-sm">
@@ -1143,7 +1143,12 @@ export default function RSVP() {
               </p>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 space-y-3">
+            <details className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
+              <summary className="cursor-pointer text-sm font-semibold text-gray-800 flex items-center justify-between">
+                RSVP summary
+                <span className="text-xs text-gray-500">View details</span>
+              </summary>
+              <div className="mt-3 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 font-medium">Attendance</span>
                 <span className={`font-semibold px-2.5 py-1 rounded-full text-xs ${
@@ -1193,7 +1198,8 @@ export default function RSVP() {
                   <span className="text-gray-900 text-right">{formData.notes}</span>
                 </div>
               )}
-            </div>
+              </div>
+            </details>
 
             {formData.attending && (
               <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg py-3 px-4 mb-6">
