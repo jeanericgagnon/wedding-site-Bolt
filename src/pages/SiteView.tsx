@@ -130,7 +130,7 @@ const InviteOnlyGate: React.FC = () => {
           <p className="text-sm text-stone-500">
             If you received an invitation, check your email for the private link from the couple.
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="flex-1 h-px bg-stone-200" />
             <span className="text-xs text-stone-400 px-2">dayof.love</span>
             <div className="flex-1 h-px bg-stone-200" />

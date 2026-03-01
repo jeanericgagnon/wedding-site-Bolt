@@ -1216,7 +1216,7 @@ export default function RSVP() {
               </p>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Button
                 onClick={() => {
                   setStep('search');
