@@ -592,7 +592,7 @@ export default function RSVP() {
       </div>
       <div className="container mx-auto px-4 pb-16 max-w-2xl">
         {step === 'search' && (
-          <Card className="p-6 md:p-8">
+          <Card className="p-5 md:p-7">
             <div className="text-center mb-6">
               <h1 className="text-2xl md:text-3xl font-serif mb-2">{t('rsvp.title')}</h1>
               <p className="text-gray-600">{t('rsvp.subtitle')}</p>

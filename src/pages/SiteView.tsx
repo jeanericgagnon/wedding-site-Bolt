@@ -99,7 +99,7 @@ const PasswordGate: React.FC<{
           <button
             type="submit"
             disabled={!pw || checking}
-            className="w-full py-2.5 bg-stone-800 text-white rounded-lg font-medium hover:bg-stone-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full h-11 bg-stone-800 text-white rounded-lg font-medium hover:bg-stone-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {checking ? t('site.password_checking') : t('site.password_submit')}
           </button>

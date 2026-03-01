@@ -88,7 +88,7 @@ export const Home: React.FC = () => {
       <section id="why" className="section-shell bg-white">
         <div className="container-custom">
           <div className="max-w-3xl mx-auto">
-            <h2 className="section-title mb-12 text-center">
+            <h2 className="section-title mb-10 text-center">
               Why I built this
             </h2>
 
