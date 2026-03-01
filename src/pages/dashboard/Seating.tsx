@@ -1449,7 +1449,7 @@ export const DashboardSeating: React.FC = () => {
               Actions <ChevronDown className="w-4 h-4 ml-1" />
             </Button>
             {seatingActionsOpen && (
-              <div className="absolute left-0 top-10 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1">
+              <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1">
                 <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setShowAutoTablesModal(true); setSeatingActionsOpen(false); }}>
                   <Wand2 className="w-4 h-4 mr-1" /> Auto-Create Tables
                 </Button>

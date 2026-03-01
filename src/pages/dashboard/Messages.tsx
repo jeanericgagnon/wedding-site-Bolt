@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2, Link2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -829,8 +830,8 @@ export const DashboardMessages: React.FC = () => {
   if (loading) {
     return (
       <DashboardLayout currentPage="messages">
-        <div className="flex items-center justify-center h-64">
-          <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <div className="max-w-7xl mx-auto">
+          <DashboardStateBlock title="Loading messages…" description="Preparing your campaigns and activity." />
         </div>
       </DashboardLayout>
     );

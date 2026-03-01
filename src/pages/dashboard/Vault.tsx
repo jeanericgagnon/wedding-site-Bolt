@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button } from '../../components/ui';
 import {
   Lock, Unlock, Plus, Trash2, ChevronDown, ChevronUp, Loader2,
@@ -1227,8 +1228,8 @@ setWeddingSiteId('demo-site-id');
   if (loading) {
     return (
       <DashboardLayout currentPage="vault">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <div className="max-w-4xl mx-auto">
+          <DashboardStateBlock title="Loading vaults…" description="Preparing your time capsule settings." />
         </div>
       </DashboardLayout>
     );
