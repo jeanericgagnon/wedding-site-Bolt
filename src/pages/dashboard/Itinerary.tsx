@@ -144,23 +144,30 @@ export const DashboardItinerary: React.FC = () => {
 
       const eventsWithCounts = await Promise.all(
         normalizedEvents.map(async (event) => {
-          const { count: inviteCount } = await supabase
+          const { data: invites } = await supabase
             .from('event_invitations')
-            .select('*', { count: 'exact', head: true })
+            .select('id')
             .eq('event_id', event.id);
 
-          const { data: rsvps } = await supabase
-            .from('event_rsvps')
-            .select('attending, event_invitations!inner(event_id)')
-            .eq('event_invitations.event_id', event.id);
+          const invitationIds = (invites ?? []).map((i) => i.id as string);
+          const inviteCount = invitationIds.length;
 
-          const rsvpCount = rsvps?.length || 0;
-          const attendingCount = rsvps?.filter((r) => r.attending).length || 0;
-          const declinedCount = rsvps?.filter((r) => !r.attending).length || 0;
+          let rsvps: Array<{ attending: boolean | null }> = [];
+          if (invitationIds.length > 0) {
+            const { data } = await supabase
+              .from('event_rsvps')
+              .select('attending')
+              .in('event_invitation_id', invitationIds);
+            rsvps = (data ?? []) as Array<{ attending: boolean | null }>;
+          }
+
+          const rsvpCount = rsvps.length;
+          const attendingCount = rsvps.filter((r) => !!r.attending).length;
+          const declinedCount = rsvps.filter((r) => r.attending === false).length;
 
           return {
             ...event,
-            invitation_count: inviteCount || 0,
+            invitation_count: inviteCount,
             rsvp_count: rsvpCount,
             attending_count: attendingCount,
             declined_count: declinedCount,
