@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -1741,11 +1742,8 @@ Proceed with send?`)) return;
   if (loading) {
     return (
       <DashboardLayout currentPage="guests">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-text-secondary text-sm">Loading guests...</p>
-          </div>
+        <div className="max-w-7xl mx-auto">
+          <DashboardStateBlock title="Loading guests…" description="Preparing your guest list and RSVP status." />
         </div>
       </DashboardLayout>
     );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button } from '../../components/ui';
 import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -851,15 +852,9 @@ export const DashboardRegistry: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20 gap-3 text-text-secondary">
-              <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-              Loading registry…
-            </div>
+            <DashboardStateBlock title="Loading registry…" description="Pulling your latest items and settings." />
           ) : !weddingSiteId ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-              <AlertCircle className="w-10 h-10 text-text-tertiary" />
-              <p className="text-text-secondary">No wedding site found. Complete onboarding first.</p>
-            </div>
+            <DashboardStateBlock title="No wedding site found" description="Complete onboarding first to set up your registry." />
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
               <div className="w-16 h-16 rounded-full bg-surface-subtle flex items-center justify-center">

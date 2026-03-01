@@ -10,6 +10,7 @@ import {
 import { buildFunnelSnapshot } from './analyticsAggregate';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, AlertCircle, Clock, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -430,10 +431,7 @@ export const DashboardOverview: React.FC = () => {
         </div>
 
         {error && (
-          <div className="flex items-center gap-3 p-4 bg-error/10 border border-error/20 rounded-xl text-error text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {error}
-          </div>
+          <DashboardStateBlock title="Couldn’t load overview right now" description={error} tone="error" />
         )}
 
         {loading ? (
