@@ -233,7 +233,7 @@ export async function getEligibleGuests(
 ): Promise<EligibleGuest[]> {
   const { data: allGuests, error } = await supabase
     .from('guests')
-    .select('id, name, first_name, last_name, email, rsvp_status, household_id, group_name')
+    .select('*')
     .eq('wedding_site_id', weddingSiteId);
   if (error) throw error;
   if (!allGuests) return [];
