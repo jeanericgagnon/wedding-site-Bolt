@@ -451,7 +451,7 @@ export const SiteView: React.FC = () => {
       <SiteViewContext.Provider value={{ weddingSiteId }}>
         <div className="builder-themed-canvas min-h-screen bg-background">
           {builderSections.map(section => (
-            <SectionRenderer key={section.id} section={section} weddingData={weddingData} isPreview />
+            <SectionRenderer key={section.id} section={section} weddingData={weddingData} />
           ))}
         </div>
       </SiteViewContext.Provider>
