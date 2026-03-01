@@ -31,6 +31,7 @@ export const DashboardErrorLogs: React.FC = () => {
   const [severityFilter, setSeverityFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all');
   const [routeFilter, setRouteFilter] = useState('all');
   const [datePreset, setDatePreset] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
+  const [fingerprintFilter, setFingerprintFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -107,6 +108,7 @@ export const DashboardErrorLogs: React.FC = () => {
         : datePreset === '7d'
           ? rowTs >= now - 7 * 24 * 60 * 60 * 1000
           : rowTs >= now - 30 * 24 * 60 * 60 * 1000;
+    const fingerprintOk = fingerprintFilter === 'all' ? true : (row.fingerprint || 'none') === fingerprintFilter;
     const q = searchQuery.trim().toLowerCase();
     const searchOk = q.length === 0
       ? true
@@ -114,12 +116,18 @@ export const DashboardErrorLogs: React.FC = () => {
         || (row.source || '').toLowerCase().includes(q)
         || (row.route || '').toLowerCase().includes(q)
         || (row.fingerprint || '').toLowerCase().includes(q);
-    return severityOk && routeOk && dateOk && searchOk;
-  }), [rows, severityFilter, routeFilter, datePreset, searchQuery]);
+    return severityOk && routeOk && dateOk && fingerprintOk && searchOk;
+  }), [rows, severityFilter, routeFilter, datePreset, fingerprintFilter, searchQuery]);
 
   const routeOptions = useMemo(() => {
     const values = new Set<string>();
     for (const r of rows) values.add(r.route || '—');
+    return ['all', ...Array.from(values).sort()];
+  }, [rows]);
+
+  const fingerprintOptions = useMemo(() => {
+    const values = new Set<string>();
+    for (const r of rows) values.add(r.fingerprint || 'none');
     return ['all', ...Array.from(values).sort()];
   }, [rows]);
 
@@ -283,6 +291,18 @@ export const DashboardErrorLogs: React.FC = () => {
                     ))}
                   </select>
                 </label>
+                <label className="text-xs text-text-secondary">
+                  Fingerprint
+                  <select
+                    value={fingerprintFilter}
+                    onChange={(e) => { setFingerprintFilter(e.target.value); setPage(1); }}
+                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white"
+                  >
+                    {fingerprintOptions.map((f) => (
+                      <option key={f} value={f}>{f === 'all' ? 'All fingerprints' : f}</option>
+                    ))}
+                  </select>
+                </label>
                 <button
                   onClick={exportFilteredCsv}
                   className="px-3 py-1.5 text-xs border border-border rounded-md bg-white hover:bg-surface-subtle"
@@ -299,15 +319,23 @@ export const DashboardErrorLogs: React.FC = () => {
                       <p className="text-text-primary truncate">{g.sampleMessage}</p>
                       <p className="text-xs text-text-tertiary">Latest: {new Date(g.latestAt).toLocaleString()}</p>
                     </div>
-                    <span className="text-xs px-2 py-1 rounded-full border border-border-subtle bg-surface-subtle whitespace-nowrap">{g.count}x</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="text-xs px-2 py-1 rounded-md border border-border-subtle bg-white"
+                        onClick={() => { setFingerprintFilter(g.fingerprint); setPage(1); }}
+                      >
+                        Filter
+                      </button>
+                      <span className="text-xs px-2 py-1 rounded-full border border-border-subtle bg-surface-subtle whitespace-nowrap">{g.count}x</span>
+                    </div>
                   </div>
                 ))}
               </div>
             </Card>
 
-              <Card variant="bordered" padding="none" className="overflow-auto">
+              <Card variant="bordered" padding="none" className="overflow-auto max-h-[60vh]">
               <table className="w-full text-sm min-w-[900px]">
-              <thead className="bg-surface-subtle text-text-secondary">
+              <thead className="bg-surface-subtle text-text-secondary sticky top-0 z-10">
                 <tr>
                   <th className="text-left px-3 py-2">Time</th>
                   <th className="text-left px-3 py-2">Severity</th>
