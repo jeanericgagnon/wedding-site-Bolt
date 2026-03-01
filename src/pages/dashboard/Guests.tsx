@@ -1433,6 +1433,21 @@ Proceed with send?`)) return;
 
     setNuclearDeleting(true);
     try {
+      const { data: guestRows, error: guestReadError } = await supabase
+        .from('guests')
+        .select('id')
+        .eq('wedding_site_id', weddingSiteId);
+      if (guestReadError) throw guestReadError;
+
+      const guestIds = (guestRows ?? []).map((g) => g.id as string);
+
+      // Best-effort dependency cleanup for environments without full FK cascades.
+      if (guestIds.length > 0) {
+        await supabase.from('event_invitations').delete().in('guest_id', guestIds);
+        await supabase.from('event_rsvps').delete().in('guest_id', guestIds);
+        await supabase.from('rsvps').delete().in('guest_id', guestIds);
+      }
+
       const { error } = await supabase
         .from('guests')
         .delete()
@@ -1444,8 +1459,11 @@ Proceed with send?`)) return;
       setShowNuclearDeleteModal(false);
       setNuclearConfirmInput('');
       toast(`Deleted ${required} guests.`, 'success');
-    } catch {
-      toast('Failed to delete all guests. Please try again.', 'error');
+    } catch (err) {
+      const errObj = err as { message?: string; details?: string; code?: string } | null;
+      const msg = errObj?.message || errObj?.details || 'Failed to delete all guests. Please try again.';
+      const code = errObj?.code ? ` (${errObj.code})` : '';
+      toast(`${msg}${code}`, 'error');
     } finally {
       setNuclearDeleting(false);
     }
