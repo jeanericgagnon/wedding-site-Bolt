@@ -380,6 +380,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvFieldMap, setCsvFieldMap] = useState<CsvFieldMap | null>(null);
   const [csvShowMapper, setCsvShowMapper] = useState(false);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
+  const cleanGuestsView = true;
   const csvNameMappingValid = !!csvFieldMap && csvFieldMap.first_name >= 0 && csvFieldMap.last_name >= 0;
   const csvColumnLetter = (index: number) => {
     let n = index + 1;
@@ -2477,6 +2478,7 @@ Proceed with send?`)) return;
           </div>
         </div>
 
+        {!cleanGuestsView && (
         <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
             <span className="text-sm font-semibold text-text-primary">Snapshot & RSVP insights</span>
@@ -2550,8 +2552,9 @@ Proceed with send?`)) return;
             </div>
           </div>
         </details>
+        )}
 
-        {(() => {
+        {!cleanGuestsView && (() => {
           const conflicts: string[] = [];
           const emailsSeen = new Map<string, string>();
           guests.forEach(g => {
@@ -2591,7 +2594,7 @@ Proceed with send?`)) return;
           );
         })()}
 
-        {rsvpConflicts.length > 0 && (
+        {!cleanGuestsView && rsvpConflicts.length > 0 && (
           <div className="p-4 bg-error-light border border-error/20 rounded-xl space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -2688,7 +2691,7 @@ Proceed with send?`)) return;
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">
 
-            {recommendedAction && (
+            {!cleanGuestsView && recommendedAction && (
               <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Recommended next action: {recommendedAction.title}</p>
@@ -2713,7 +2716,7 @@ Proceed with send?`)) return;
               </div>
             )}
 
-            {opsQueue.length > 0 && (
+            {!cleanGuestsView && opsQueue.length > 0 && (
               <div className="p-3.5 rounded-xl border border-border-subtle bg-white space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-text-primary">Priority RSVP queue</p>
@@ -2823,6 +2826,7 @@ Proceed with send?`)) return;
               <p className="text-xs text-text-tertiary mt-2">Selected file: <span className="font-medium text-text-secondary">{csvSelectedFilename}</span></p>
             )}
 
+            {!cleanGuestsView && (
             <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -2834,8 +2838,9 @@ Proceed with send?`)) return;
                 <Button variant="outline" size="sm" onClick={() => setShowCampaignModal(true)}>Open</Button>
               </div>
             </div>
+            )}
 
-            {showCampaignModal && (
+            {!cleanGuestsView && showCampaignModal && (
               <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-3">
                 <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-2xl border border-border bg-white shadow-2xl">
                   <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
