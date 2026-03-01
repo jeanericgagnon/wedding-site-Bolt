@@ -676,32 +676,18 @@ export const DashboardVault: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
 
-  async function handleStorageProviderChange(next: 'supabase' | 'google_drive') {
-    if (!weddingSiteId) return;
-
-    if (next === 'google_drive' && !googleDriveConnected) {
-      toast('Connect Google Drive first, then switch storage provider.', 'error');
-      return;
-    }
-
-    if (isDemoMode && weddingSiteId === 'demo-site-id') {
-      setVaultStorageProvider(next);
-      toast('Demo: storage provider updated locally.');
+  async function forceGoogleDriveProvider(siteId: string) {
+    if (isDemoMode && siteId === 'demo-site-id') {
+      setVaultStorageProvider('google_drive');
       return;
     }
 
     const { error } = await supabase
       .from('wedding_sites')
-      .update({ vault_storage_provider: next })
-      .eq('id', weddingSiteId);
+      .update({ vault_storage_provider: 'google_drive' })
+      .eq('id', siteId);
 
-    if (error) {
-      toast('Couldn’t update vault storage right now. Please try again.', 'error');
-      return;
-    }
-
-    setVaultStorageProvider(next);
-    toast(`Vault storage set to ${next === 'google_drive' ? 'Google Drive' : 'Supabase Storage'}.`);
+    if (!error) setVaultStorageProvider('google_drive');
   }
 
 
@@ -847,8 +833,9 @@ export const DashboardVault: React.FC = () => {
 
         if (demoSite) {
           setWeddingSiteId(demoSite.id);
-          setVaultStorageProvider(((demoSite as { vault_storage_provider?: 'supabase' | 'google_drive' }).vault_storage_provider) ?? 'supabase');
+          setVaultStorageProvider('google_drive');
           setGoogleDriveConnected(!!(demoSite as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
+          void forceGoogleDriveProvider(demoSite.id);
 if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
           else setWeddingDate(new Date(DEMO_WEDDING_DATE));
 
@@ -876,7 +863,7 @@ if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
         }
 
 setWeddingSiteId('demo-site-id');
-        setVaultStorageProvider('supabase');
+        setVaultStorageProvider('google_drive');
         setGoogleDriveConnected(false);
         setWeddingDate(new Date(DEMO_WEDDING_DATE));
         const demoState = loadDemoState();
@@ -894,8 +881,9 @@ setWeddingSiteId('demo-site-id');
 
       if (!site) return;
       setWeddingSiteId(site.id);
-      setVaultStorageProvider(((site as { vault_storage_provider?: 'supabase' | 'google_drive' }).vault_storage_provider) ?? 'supabase');
+      setVaultStorageProvider('google_drive');
       setGoogleDriveConnected(!!(site as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
+      void forceGoogleDriveProvider(site.id);
       if (site.wedding_date) setWeddingDate(new Date(site.wedding_date));
       if (site.site_slug) setSiteSlug(site.site_slug as string);
 
@@ -1248,10 +1236,8 @@ setWeddingSiteId('demo-site-id');
 
   const totalEntries = entries.length;
   const orderedVaultConfigs = [...vaultConfigs].sort((a, b) => a.duration_years - b.duration_years);
-  const setupStepConnectDone = googleDriveConnected;
-  const setupStepHealthDone = !!googleDriveConnected && !!driveHealthMessage && !driveNeedsReconnect;
-  const setupStepProviderDone = vaultStorageProvider === 'google_drive';
-  const shouldNudgeProviderSwitch = setupStepHealthDone && !setupStepProviderDone;
+  const driveConnectedHealthy = googleDriveConnected && !driveNeedsReconnect;
+  const showReconnectButton = !googleDriveConnected || driveNeedsReconnect;
 
   return (
     <DashboardLayout currentPage="vault">
@@ -1294,14 +1280,15 @@ setWeddingSiteId('demo-site-id');
                 <p className="text-sm font-semibold text-text-primary">Vault Storage Provider</p>
                 {isDemoMode && <span className="text-[10px] uppercase updates-wide px-2 py-0.5 rounded-full border border-warning/30 bg-warning/10 text-warning">Demo Mode</span>}
               </div>
-              <p className="text-xs text-text-secondary mt-1">Use Supabase storage now, or connect Google Drive for external archive flow and time-lock orchestration.</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                <span className={`px-2 py-1 rounded-full border ${setupStepConnectDone ? 'border-success/30 bg-success/10 text-success' : 'border-border text-text-tertiary'}`}>1. Connect Drive</span>
-                <span className={`px-2 py-1 rounded-full border ${setupStepHealthDone ? 'border-success/30 bg-success/10 text-success' : 'border-border text-text-tertiary'}`}>2. Check Health</span>
-                <span className={`px-2 py-1 rounded-full border ${setupStepProviderDone ? 'border-success/30 bg-success/10 text-success' : 'border-border text-text-tertiary'}`}>3. Switch Provider</span>
+              <p className="text-xs text-text-secondary mt-1">Google Drive is the only vault storage provider.</p>
+              <div className="mt-3 flex items-center gap-2 text-[11px]">
+                <span className={`px-2 py-1 rounded-full border ${driveConnectedHealthy ? 'border-success/30 bg-success/10 text-success' : 'border-error/30 bg-error/10 text-error'}`}>
+                  {driveConnectedHealthy ? 'Connected' : 'Disconnected'}
+                </span>
+                <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Provider: Google Drive</span>
               </div>
               {isDemoMode && (
-                <p className="text-xs text-warning mt-2">Provider actions are simulated in demo mode.</p>
+                <p className="text-xs text-warning mt-2">Drive actions are simulated in demo mode.</p>
               )}
               {driveHealthMessage && (
                 <p className={`text-xs mt-2 ${driveNeedsReconnect ? 'text-error' : 'text-success'}`}>
@@ -1310,28 +1297,14 @@ setWeddingSiteId('demo-site-id');
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => handleStorageProviderChange('supabase')}
-                className={`px-3 py-2 rounded-lg text-sm border ${vaultStorageProvider === 'supabase' ? 'bg-primary/10 border-primary text-primary' : 'border-border text-text-secondary'}`}
-              >
-                Supabase
-              </button>
-              <button
-                onClick={() => handleStorageProviderChange('google_drive')}
-                disabled={!googleDriveConnected}
-                className={`px-3 py-2 rounded-lg text-sm border transition-all ${vaultStorageProvider === 'google_drive' ? 'bg-primary/10 border-primary text-primary' : 'border-border text-text-secondary'} ${shouldNudgeProviderSwitch ? 'ring-2 ring-primary/30 border-primary/50 animate-pulse' : ''} disabled:opacity-60`}
-                title={!googleDriveConnected ? 'Connect Google Drive first' : (shouldNudgeProviderSwitch ? 'Health check passed. Switch provider to Google Drive.' : undefined)}
-              >
-                Google Drive
-              </button>
-              <Button variant="outline" size="sm" onClick={handleConnectGoogleDrive} disabled={connectingDrive}>
-                {connectingDrive ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
-                {googleDriveConnected ? 'Reconnect Drive' : 'Connect Drive'}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={checkGoogleDriveHealth} disabled={driveHealthChecking || (!googleDriveConnected && !isDemoMode)}>
-                {driveHealthChecking ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
-                Check Health
-              </Button>
+              {showReconnectButton ? (
+                <Button variant="outline" size="sm" onClick={handleConnectGoogleDrive} disabled={connectingDrive}>
+                  {connectingDrive ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                  {googleDriveConnected ? 'Reconnect Drive' : 'Connect Drive'}
+                </Button>
+              ) : (
+                <span className="text-xs text-success">Drive connection is healthy.</span>
+              )}
             </div>
           </div>
         </Card>
