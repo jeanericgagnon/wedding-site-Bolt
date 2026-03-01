@@ -351,7 +351,9 @@ export const Product: React.FC = () => {
                     <p className="text-xs font-semibold uppercase updates-wide text-text-tertiary mb-2">How household logic works</p>
                     <p className="text-sm text-text-secondary leading-relaxed">One invite can represent a household, but each person keeps their own RSVP status, meal choice, and event access rules. You get fewer invite mistakes without losing per-guest accuracy.</p>
                   </div>
-                  <Link to="/features/guests"><Button variant="primary">Full guest management docs <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
+                  <div className="pt-2 pb-1">
+                    <Link to="/features/guests"><Button variant="primary">Full guest management docs <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
+                  </div>
                 </>
               )}
 
@@ -568,7 +570,7 @@ export const Product: React.FC = () => {
       </section>
 
       {/* FULL FEATURE LIST */}
-      <section id="full-features" className="section-shell bg-surface-subtle">
+      <section id="full-features" className="section-shell bg-surface-subtle mt-4 md:mt-6">
         <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="section-title mb-4 text-text-primary">
