@@ -132,7 +132,7 @@ export const GuestsFeature: React.FC = () => {
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Auto-detect column mappings</li>
                 <li>• Preview before import</li>
-                <li>• Validation and error handling</li>
+                <li>• Clear checks and helpful prompts</li>
               </ul>
             </div>
 

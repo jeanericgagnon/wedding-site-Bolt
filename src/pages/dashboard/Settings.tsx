@@ -793,7 +793,7 @@ export const DashboardSettings: React.FC = () => {
                       {privacyMode === 'invite_only' && (
                         <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-3">
                           <p className="text-sm font-medium text-text-primary">Private site link</p>
-                          <p className="text-xs text-text-secondary">Share this link with guests. Anyone without it will see a blocked page.</p>
+                          <p className="text-xs text-text-secondary">Share this link with guests. It keeps your site private for invited visitors.</p>
                           {guestAccessToken && siteSlug ? (
                             <div className="flex items-center gap-2">
                               <code className="flex-1 text-xs bg-background border border-border rounded-lg px-3 py-2 text-text-secondary truncate">
@@ -1069,7 +1069,7 @@ export const DashboardSettings: React.FC = () => {
                                   <Plus className="w-4 h-4 mr-1" />
                                   Add choice
                                 </Button>
-                                <p className="text-xs text-text-tertiary">At least 2 non-empty choices required.</p>
+                                <p className="text-xs text-text-tertiary">Add at least 2 options so guests can choose clearly.</p>
                               </div>
                             )}
                               </>

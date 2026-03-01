@@ -420,14 +420,14 @@ export default function RSVP() {
       }
 
       if (formData.attending && guest.invited_to_ceremony && guest.invited_to_reception && !formData.attendCeremony && !formData.attendReception) {
-        setError('Please select at least one event (ceremony or reception), or mark not attending.');
+        setError('Please choose at least one event from your invitation, or mark not attending.');
         return;
       }
 
       const notesPayload = (formData.notes || '').trim();
 
       if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
-        setError('Select at least one household guest to inherit this RSVP, or turn off inherit.');
+        setError('Pick at least one household guest to share this RSVP with, or turn inheritance off.');
         return;
       }
 

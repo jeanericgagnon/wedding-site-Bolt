@@ -1970,16 +1970,16 @@ Proceed with send?`)) return;
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-error" />
-                <p className="text-sm font-medium text-error">{rsvpConflicts.length} RSVP conflict {rsvpConflicts.length === 1 ? 'submission' : 'submissions'} flagged</p>
+                <p className="text-sm font-medium text-error">{rsvpConflicts.length} RSVP {rsvpConflicts.length === 1 ? 'item' : 'items'} to review</p>
               </div>
               <div className="flex items-center gap-2">
                 <Select
                   value={conflictFilter}
                   onChange={(e) => setConflictFilter(e.target.value as 'all' | 'error' | 'warning')}
                   options={[
-                    { value: 'all', label: 'All severities' },
-                    { value: 'error', label: 'Errors only' },
-                    { value: 'warning', label: 'Warnings only' },
+                    { value: 'all', label: 'All' },
+                    { value: 'error', label: 'Needs attention' },
+                    { value: 'warning', label: 'Heads-up' },
                   ]}
                 />
                 <Button

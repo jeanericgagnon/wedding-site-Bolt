@@ -127,7 +127,7 @@ export const SeatingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">RSVP Drift Detection</h3>
               <p className="text-ink/70 mb-4">
-                When a guest changes their RSVP after you've assigned seating, Dayof flags the affected assignment. No silent gaps in your chart.
+                If a guest updates their RSVP after seating is assigned, Dayof highlights the impacted seat so you can adjust quickly.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Highlights invalidated seats</li>

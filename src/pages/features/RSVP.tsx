@@ -116,7 +116,7 @@ export const RSVPFeature: React.FC = () => {
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Text, multiple choice, or checkboxes</li>
-                <li>• Optional or required</li>
+                <li>• Optional or recommended</li>
                 <li>• Per-event or global</li>
               </ul>
             </div>
