@@ -64,6 +64,22 @@ interface RsvpConflict {
   resolved_at?: string | null;
 }
 
+interface CsvFieldMap {
+  first_name: number;
+  last_name: number;
+  full_name: number;
+  email: number;
+  phone: number;
+  plus_one: number;
+  status: number;
+  meal_choice: number;
+  rsvp_date: number;
+  invite_token: number;
+  household_id: number;
+  household_name: number;
+  invited_events: number;
+}
+
 interface RsvpConflictStats {
   openNow: number;
   opened24h: number;
@@ -356,6 +372,10 @@ export const DashboardGuests: React.FC = () => {
   const [csvUnknownEvents, setCsvUnknownEvents] = useState<string[]>([]);
   const [csvSelectedFilename, setCsvSelectedFilename] = useState<string | null>(null);
   const [csvMappingSummary, setCsvMappingSummary] = useState<{ core: string[]; rsvp: string[]; household: string[]; eventCols: string[] }>({ core: [], rsvp: [], household: [], eventCols: [] });
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [csvDataRows, setCsvDataRows] = useState<string[][]>([]);
+  const [csvFieldMap, setCsvFieldMap] = useState<CsvFieldMap | null>(null);
+  const [csvShowMapper, setCsvShowMapper] = useState(false);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
@@ -1470,6 +1490,166 @@ Proceed with send?`)) return;
     }
   };
 
+  const buildCsvPreviewFromMapping = useCallback(async (headers: string[], dataRows: string[][], fieldMap: CsvFieldMap) => {
+    if (fieldMap.first_name < 0 && fieldMap.last_name < 0 && fieldMap.full_name < 0) {
+      toast('Please map at least First/Last Name or Full Name.', 'error');
+      return;
+    }
+
+    let resolvedSiteId = weddingSiteId;
+    if (!resolvedSiteId && !isDemoMode) {
+      const { data: site } = await supabase
+        .from('wedding_sites')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      resolvedSiteId = (site?.id as string | null) ?? null;
+      if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
+    }
+    if (!resolvedSiteId && !isDemoMode) {
+      toast('Could not find your wedding site. Refresh and try again.', 'error');
+      return;
+    }
+
+    const normalizeEventName = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
+    const itineraryByNormalizedName = new Map(itineraryEvents.map((ev) => [normalizeEventName(ev.event_name), ev.id] as const));
+    const inviteEventColumns = headers
+      .map((h, idx) => ({ h, idx }))
+      .filter(({ h }) => {
+        if (h.startsWith('invite:')) return true;
+        return itineraryByNormalizedName.has(normalizeEventName(h));
+      });
+
+    setCsvMappingSummary({
+      core: [
+        fieldMap.first_name >= 0 ? 'First Name' : '',
+        fieldMap.last_name >= 0 ? 'Last Name' : '',
+        fieldMap.full_name >= 0 ? 'Full Name' : '',
+        fieldMap.email >= 0 ? 'Email' : '',
+        fieldMap.phone >= 0 ? 'Phone' : '',
+        fieldMap.plus_one >= 0 ? 'Plus One' : '',
+      ].filter(Boolean),
+      rsvp: [
+        fieldMap.status >= 0 ? 'Status → RSVP status' : '',
+        fieldMap.meal_choice >= 0 ? 'Meal Choice → RSVP meal' : '',
+        fieldMap.rsvp_date >= 0 ? 'RSVP Date → RSVP submitted_at' : '',
+        fieldMap.invite_token >= 0 ? 'Invite Token → guest token' : '',
+      ].filter(Boolean),
+      household: [
+        fieldMap.household_id >= 0 ? 'household_id' : '',
+        fieldMap.household_name >= 0 ? 'household_name / group_name' : '',
+      ].filter(Boolean),
+      eventCols: inviteEventColumns.map(({ h }) => h),
+    });
+
+    const skipped: string[] = [];
+    const unknownEvents = new Set<string>();
+    const parsed: Record<string, unknown>[] = [];
+
+    dataRows.forEach((row, idx) => {
+      const values = (row || []).map((v) => String(v ?? '').trim());
+      let firstName = fieldMap.first_name >= 0 ? (values[fieldMap.first_name] || '') : '';
+      let lastName = fieldMap.last_name >= 0 ? (values[fieldMap.last_name] || '') : '';
+
+      if ((!firstName && !lastName) && fieldMap.full_name >= 0) {
+        const full = (values[fieldMap.full_name] || '').trim();
+        if (full.includes(',')) {
+          const [lastPart, firstPart] = full.split(',').map((p) => p.trim());
+          firstName = firstPart || '';
+          lastName = lastPart || '';
+        } else {
+          const parts = full.split(/\s+/).filter(Boolean);
+          firstName = parts[0] || '';
+          lastName = parts.slice(1).join(' ');
+        }
+      }
+
+      const email = fieldMap.email >= 0 ? (values[fieldMap.email] || null) : null;
+      const phone = fieldMap.phone >= 0 ? (values[fieldMap.phone] || null) : null;
+      const plusRaw = fieldMap.plus_one >= 0 ? (values[fieldMap.plus_one] || '') : '';
+      const plusOneAllowed = ['yes', 'true', '1', 'y'].includes(plusRaw.toLowerCase());
+      const statusRaw = fieldMap.status >= 0 ? (values[fieldMap.status] || '').toLowerCase().trim() : '';
+      const normalizedStatus: 'pending' | 'confirmed' | 'declined' =
+        ['confirmed', 'attending', 'accepted', 'yes'].includes(statusRaw)
+          ? 'confirmed'
+          : ['declined', 'no', 'not attending', 'rejected'].includes(statusRaw)
+            ? 'declined'
+            : 'pending';
+      const mealChoice = fieldMap.meal_choice >= 0 ? (values[fieldMap.meal_choice] || '').trim() : '';
+      const rsvpDateRaw = fieldMap.rsvp_date >= 0 ? (values[fieldMap.rsvp_date] || '').trim() : '';
+      const parsedRsvpDate = rsvpDateRaw ? new Date(rsvpDateRaw) : null;
+      const inviteTokenRaw = fieldMap.invite_token >= 0 ? (values[fieldMap.invite_token] || '').trim() : '';
+      const householdIdRaw = fieldMap.household_id >= 0 ? (values[fieldMap.household_id] || '').trim() : '';
+      const householdNameRaw = fieldMap.household_name >= 0 ? (values[fieldMap.household_name] || '').trim() : '';
+      const householdKey = householdIdRaw || householdNameRaw;
+
+      const invitedEventIds = new Set<string>();
+      if (fieldMap.invited_events >= 0) {
+        const raw = values[fieldMap.invited_events] || '';
+        raw.split(/[|,;]/).map((x) => x.trim()).filter(Boolean).forEach((eventName) => {
+          const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
+          if (eventId) invitedEventIds.add(eventId);
+          else unknownEvents.add(eventName);
+        });
+      }
+
+      inviteEventColumns.forEach(({ h, idx: colIdx }) => {
+        const eventName = (h.startsWith('invite:') ? h.replace(/^invite:/, '') : h).trim();
+        const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
+        if (!eventId) {
+          unknownEvents.add(eventName);
+          return;
+        }
+        const raw = (values[colIdx] || '').toLowerCase().trim();
+        const truthy = ['yes', 'true', '1', 'y', 'invited', 'include'].includes(raw);
+        const falsey = ['no', 'false', '0', 'n', 'not invited', 'exclude'].includes(raw);
+        if (truthy) invitedEventIds.add(eventId);
+        if (falsey) invitedEventIds.delete(eventId);
+      });
+
+      if (!firstName && !lastName && !email) {
+        skipped.push(`Row ${idx + 2}: missing name/email`);
+        return;
+      }
+
+      parsed.push({
+        wedding_site_id: resolvedSiteId,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        name: `${firstName || ''} ${lastName || ''}`.trim() || (email || 'Guest'),
+        email,
+        phone,
+        group_name: householdNameRaw || null,
+        plus_one_allowed: plusOneAllowed,
+        rsvp_status: normalizedStatus,
+        rsvp_received_at: normalizedStatus !== 'pending'
+          ? (parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : new Date().toISOString())
+          : null,
+        invite_token: inviteTokenRaw || null,
+        invited_to_ceremony: true,
+        invited_to_reception: true,
+        __household_key: householdKey || null,
+        __invited_event_ids: Array.from(invitedEventIds),
+        __meal_choice: mealChoice || null,
+        __rsvp_date: parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : null,
+      });
+    });
+
+    if (parsed.length === 0) {
+      setCsvUnknownEvents([]);
+      toast('No valid guests found in the file. All rows were skipped.', 'error');
+      return;
+    }
+
+    setCsvPreview(parsed);
+    setCsvSkipped(skipped);
+    setCsvUnknownEvents(Array.from(unknownEvents));
+    setCsvShowMapper(false);
+    const skippedMsg = skipped.length > 0 ? ` (${skipped.length} skipped)` : '';
+    const unknownMsg = unknownEvents.size > 0 ? `, ${unknownEvents.size} unknown event name${unknownEvents.size === 1 ? '' : 's'}` : '';
+    toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}.`, 'success');
+  }, [isDemoMode, itineraryEvents, supabase, user?.id, weddingSiteId, toast]);
+
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
@@ -1518,179 +1698,27 @@ Proceed with send?`)) return;
         return -1;
       };
 
-      const firstNameIdx = findIdx('first name', 'first_name', 'firstname', 'given name', 'given_name');
-      const lastNameIdx = findIdx('last name', 'last_name', 'lastname', 'surname', 'family_name', 'family name');
-      const fullNameIdx = findIdx('name', 'full name', 'full_name', 'guest_name', 'guest name');
-      const emailIdx = findIdx('email', 'email address', 'email_address');
-      const phoneIdx = findIdx('phone', 'phone number', 'phone_number', 'mobile', 'cell');
-      const plusOneIdx = findIdx('plus one', 'plus_one', 'plus_one_allowed');
-      const statusIdx = findIdx('status', 'rsvp_status', 'rsvp status');
-      const mealChoiceIdx = findIdx('meal choice', 'meal_choice', 'meal');
-      const rsvpDateIdx = findIdx('rsvp date', 'rsvp_date', 'responded_at', 'response date');
-      const inviteTokenIdx = findIdx('invite token', 'invite_token', 'token');
-      const householdIdIdx = findIdx('household_id', 'household id', 'household', 'family_id', 'party_id');
-      const householdNameIdx = findIdx('household_name', 'household name', 'family', 'group_name', 'group');
-      const invitedEventsIdx = findIdx('invited_events', 'invited events', 'events', 'event_invites');
+      const defaultMap: CsvFieldMap = {
+        first_name: findIdx('first name', 'first_name', 'firstname', 'given name', 'given_name'),
+        last_name: findIdx('last name', 'last_name', 'lastname', 'surname', 'family_name', 'family name'),
+        full_name: findIdx('name', 'full name', 'full_name', 'guest_name', 'guest name'),
+        email: findIdx('email', 'email address', 'email_address'),
+        phone: findIdx('phone', 'phone number', 'phone_number', 'mobile', 'cell'),
+        plus_one: findIdx('plus one', 'plus_one', 'plus_one_allowed'),
+        status: findIdx('status', 'rsvp_status', 'rsvp status'),
+        meal_choice: findIdx('meal choice', 'meal_choice', 'meal'),
+        rsvp_date: findIdx('rsvp date', 'rsvp_date', 'responded_at', 'response date'),
+        invite_token: findIdx('invite token', 'invite_token', 'token'),
+        household_id: findIdx('household_id', 'household id', 'household', 'family_id', 'party_id'),
+        household_name: findIdx('household_name', 'household name', 'family', 'group_name', 'group'),
+        invited_events: findIdx('invited_events', 'invited events', 'events', 'event_invites'),
+      };
 
-      if (firstNameIdx < 0 && lastNameIdx < 0 && fullNameIdx < 0) {
-        toast('File must include name columns (First/Last or Full Name).', 'error');
-        return;
-      }
-
-      let resolvedSiteId = weddingSiteId;
-      if (!resolvedSiteId && !isDemoMode) {
-        const { data: site } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('user_id', user?.id)
-          .maybeSingle();
-        resolvedSiteId = (site?.id as string | null) ?? null;
-        if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
-      }
-      if (!resolvedSiteId && !isDemoMode) {
-        toast('Could not find your wedding site. Refresh and try again.', 'error');
-        return;
-      }
-
-      const normalizeEventName = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
-      const itineraryByNormalizedName = new Map(itineraryEvents.map((ev) => [normalizeEventName(ev.event_name), ev.id] as const));
-      const inviteEventColumns = headers
-        .map((h, idx) => ({ h, idx }))
-        .filter(({ h }) => {
-          if (h.startsWith('invite:')) return true;
-          return itineraryByNormalizedName.has(normalizeEventName(h));
-        });
-
-      setCsvMappingSummary({
-        core: [
-          firstNameIdx >= 0 ? 'First Name' : '',
-          lastNameIdx >= 0 ? 'Last Name' : '',
-          emailIdx >= 0 ? 'Email' : '',
-          phoneIdx >= 0 ? 'Phone' : '',
-          plusOneIdx >= 0 ? 'Plus One' : '',
-        ].filter(Boolean),
-        rsvp: [
-          statusIdx >= 0 ? 'Status → RSVP status' : '',
-          mealChoiceIdx >= 0 ? 'Meal Choice → RSVP meal' : '',
-          rsvpDateIdx >= 0 ? 'RSVP Date → RSVP submitted_at' : '',
-          inviteTokenIdx >= 0 ? 'Invite Token → guest token' : '',
-        ].filter(Boolean),
-        household: [
-          householdIdIdx >= 0 ? 'household_id' : '',
-          householdNameIdx >= 0 ? 'household_name / group_name' : '',
-        ].filter(Boolean),
-        eventCols: inviteEventColumns.map(({ h }) => h),
-      });
-
-      const dataRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
-      const skipped: string[] = [];
-      const unknownEvents = new Set<string>();
-      const parsed: Record<string, unknown>[] = [];
-
-      dataRows.forEach((row, idx) => {
-        const values = (row || []).map((v) => String(v ?? '').trim());
-        let firstName = firstNameIdx >= 0 ? (values[firstNameIdx] || '') : '';
-        let lastName = lastNameIdx >= 0 ? (values[lastNameIdx] || '') : '';
-
-        if ((!firstName && !lastName) && fullNameIdx >= 0) {
-          const full = (values[fullNameIdx] || '').trim();
-          if (full.includes(',')) {
-            const [lastPart, firstPart] = full.split(',').map((p) => p.trim());
-            firstName = firstPart || '';
-            lastName = lastPart || '';
-          } else {
-            const parts = full.split(/\s+/).filter(Boolean);
-            firstName = parts[0] || '';
-            lastName = parts.slice(1).join(' ');
-          }
-        }
-
-        const email = emailIdx >= 0 ? (values[emailIdx] || null) : null;
-        const phone = phoneIdx >= 0 ? (values[phoneIdx] || null) : null;
-        const plusRaw = plusOneIdx >= 0 ? (values[plusOneIdx] || '') : '';
-        const plusOneAllowed = ['yes', 'true', '1', 'y'].includes(plusRaw.toLowerCase());
-        const statusRaw = statusIdx >= 0 ? (values[statusIdx] || '').toLowerCase().trim() : '';
-        const normalizedStatus: 'pending' | 'confirmed' | 'declined' =
-          ['confirmed', 'attending', 'accepted', 'yes'].includes(statusRaw)
-            ? 'confirmed'
-            : ['declined', 'no', 'not attending', 'rejected'].includes(statusRaw)
-              ? 'declined'
-              : 'pending';
-        const mealChoice = mealChoiceIdx >= 0 ? (values[mealChoiceIdx] || '').trim() : '';
-        const rsvpDateRaw = rsvpDateIdx >= 0 ? (values[rsvpDateIdx] || '').trim() : '';
-        const parsedRsvpDate = rsvpDateRaw ? new Date(rsvpDateRaw) : null;
-        const inviteTokenRaw = inviteTokenIdx >= 0 ? (values[inviteTokenIdx] || '').trim() : '';
-        const householdIdRaw = householdIdIdx >= 0 ? (values[householdIdIdx] || '').trim() : '';
-        const householdNameRaw = householdNameIdx >= 0 ? (values[householdNameIdx] || '').trim() : '';
-        const householdKey = householdIdRaw || householdNameRaw;
-
-        const invitedEventIds = new Set<string>();
-
-        if (invitedEventsIdx >= 0) {
-          const raw = values[invitedEventsIdx] || '';
-          raw.split(/[|,;]/).map((x) => x.trim()).filter(Boolean).forEach((eventName) => {
-            const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
-            if (eventId) invitedEventIds.add(eventId);
-            else unknownEvents.add(eventName);
-          });
-        }
-
-        inviteEventColumns.forEach(({ h, idx: colIdx }) => {
-          const eventName = (h.startsWith('invite:') ? h.replace(/^invite:/, '') : h).trim();
-          const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
-          if (!eventId) {
-            unknownEvents.add(eventName);
-            return;
-          }
-          const raw = (values[colIdx] || '').toLowerCase().trim();
-          const truthy = ['yes', 'true', '1', 'y', 'invited', 'include'].includes(raw);
-          const falsey = ['no', 'false', '0', 'n', 'not invited', 'exclude'].includes(raw);
-          if (truthy) invitedEventIds.add(eventId);
-          if (falsey) invitedEventIds.delete(eventId);
-        });
-
-        const guest: Record<string, unknown> = {
-          wedding_site_id: resolvedSiteId,
-          first_name: firstName || null,
-          last_name: lastName || null,
-          name: `${firstName || ''} ${lastName || ''}`.trim() || (email || 'Guest'),
-          email,
-          phone,
-          group_name: householdNameRaw || null,
-          plus_one_allowed: plusOneAllowed,
-          rsvp_status: normalizedStatus,
-          rsvp_received_at: normalizedStatus !== 'pending'
-            ? (parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : new Date().toISOString())
-            : null,
-          invite_token: inviteTokenRaw || null,
-          invited_to_ceremony: true,
-          invited_to_reception: true,
-          __household_key: householdKey || null,
-          __invited_event_ids: Array.from(invitedEventIds),
-          __meal_choice: mealChoice || null,
-          __rsvp_date: parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : null,
-        };
-
-        if (!firstName && !lastName && !email) {
-          skipped.push(`Row ${idx + 2}: missing name/email`);
-          return;
-        }
-
-        parsed.push(guest);
-      });
-
-      if (parsed.length === 0) {
-        setCsvUnknownEvents([]);
-        toast('No valid guests found in the file. All rows were skipped.', 'error');
-        return;
-      }
-
-      setCsvPreview(parsed);
-      setCsvSkipped(skipped);
-      setCsvUnknownEvents(Array.from(unknownEvents));
-      const skippedMsg = skipped.length > 0 ? ` (${skipped.length} skipped)` : '';
-      const unknownMsg = unknownEvents.size > 0 ? `, ${unknownEvents.size} unknown event name${unknownEvents.size === 1 ? '' : 's'}` : '';
-      toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}.`, 'success');
+      const filteredRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
+      setCsvHeaders(headers);
+      setCsvDataRows(filteredRows);
+      setCsvFieldMap(defaultMap);
+      setCsvShowMapper(true);
     } catch (err) {
       setCsvUnknownEvents([]);
       const msg = err instanceof Error ? err.message : 'Failed to parse guest file';
@@ -3465,6 +3493,67 @@ Proceed with send?`)) return;
                   onClick={handleNuclearDeleteAllGuests}
                 >
                   {nuclearDeleting ? 'Deleting…' : 'Delete all guests'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {csvShowMapper && csvFieldMap && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) setCsvShowMapper(false); }} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b border-border-subtle">
+                <div>
+                  <h2 className="text-lg font-semibold text-text-primary">Map Columns</h2>
+                  <p className="text-sm text-text-secondary mt-0.5">Map your file columns before preview/import{csvSelectedFilename ? ` · ${csvSelectedFilename}` : ''}</p>
+                </div>
+                <button onClick={() => setCsvShowMapper(false)} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-text-secondary" />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1 p-6 space-y-3">
+                {([
+                  ['first_name', 'First Name (recommended)'],
+                  ['last_name', 'Last Name (recommended)'],
+                  ['full_name', 'Full Name (optional fallback)'],
+                  ['email', 'Email'],
+                  ['phone', 'Phone'],
+                  ['plus_one', 'Plus One Allowed'],
+                  ['status', 'RSVP Status'],
+                  ['meal_choice', 'Meal Choice'],
+                  ['rsvp_date', 'RSVP Date'],
+                  ['invite_token', 'Invite Token'],
+                  ['household_id', 'Household ID'],
+                  ['household_name', 'Household Name / Group Name'],
+                  ['invited_events', 'Invited Events (list)'],
+                ] as Array<[keyof CsvFieldMap, string]>).map(([key, label]) => (
+                  <label key={key} className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
+                    <span className="text-sm text-text-primary">{label}</span>
+                    <select
+                      value={csvFieldMap[key]}
+                      onChange={(e) => setCsvFieldMap(prev => prev ? { ...prev, [key]: Number(e.target.value) } : prev)}
+                      className="w-full rounded-md border border-border px-3 py-2 text-sm bg-surface"
+                    >
+                      <option value={-1}>— Not mapped —</option>
+                      {csvHeaders.map((header, idx) => (
+                        <option key={`${key}-${idx}`} value={idx}>{header || `(column ${idx + 1})`}</option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-3 p-6 border-t border-border-subtle">
+                <Button variant="outline" fullWidth onClick={() => setCsvShowMapper(false)} disabled={csvImporting}>Cancel</Button>
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={() => buildCsvPreviewFromMapping(csvHeaders, csvDataRows, csvFieldMap)}
+                  disabled={csvImporting}
+                >
+                  Continue to Review
                 </Button>
               </div>
             </div>
