@@ -1707,8 +1707,10 @@ Proceed with send?`)) return;
       setCsvUnknownEvents([]);
       setCsvSelectedFilename(null);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      toast(`Import failed: ${msg}`, 'error');
+      const errObj = err as { message?: string; details?: string; hint?: string; code?: string } | null;
+      const msg = errObj?.message || errObj?.details || errObj?.hint || (err instanceof Error ? err.message : 'Unknown error');
+      const code = errObj?.code ? ` (${errObj.code})` : '';
+      toast(`Import failed: ${msg}${code}`, 'error');
     } finally {
       setCsvImporting(false);
     }
