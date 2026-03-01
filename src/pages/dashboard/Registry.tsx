@@ -78,6 +78,7 @@ export const DashboardRegistry: React.FC = () => {
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkImportBusy, setBulkImportBusy] = useState(false);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
+  const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
 
   function toast(message: string, type: 'success' | 'error' = 'success') {
     const id = Date.now();
@@ -685,66 +686,77 @@ export const DashboardRegistry: React.FC = () => {
             {nearBudgetCap && (
               <p className="text-xs text-warning mt-1">You’ve used over 80% of this month’s refresh budget. Lean mode can help stretch remaining runs.</p>
             )}
-            <div className="mt-2 flex flex-wrap items-end gap-2">
-              <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
-                <button className={`px-2 py-1 ${refreshPreset === 'lean' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('lean')}>Lean{recommendedPreset === 'lean' ? ' ★' : ''}</button>
-                <button className={`px-2 py-1 border-l border-border ${refreshPreset === 'balanced' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('balanced')}>Balanced{recommendedPreset === 'balanced' ? ' ★' : ''}</button>
-                <button className={`px-2 py-1 border-l border-border ${refreshPreset === 'aggressive' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('aggressive')}>Aggressive{recommendedPreset === 'aggressive' ? ' ★' : ''}</button>
+            <details className="mt-3 rounded-lg border border-border bg-surface-subtle/40 p-2">
+              <summary className="cursor-pointer text-xs font-medium text-text-secondary">Refresh settings</summary>
+              <div className="mt-2 flex flex-wrap items-end gap-2">
+                <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
+                  <button className={`px-2 py-1 ${refreshPreset === 'lean' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('lean')}>Lean{recommendedPreset === 'lean' ? ' ★' : ''}</button>
+                  <button className={`px-2 py-1 border-l border-border ${refreshPreset === 'balanced' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('balanced')}>Balanced{recommendedPreset === 'balanced' ? ' ★' : ''}</button>
+                  <button className={`px-2 py-1 border-l border-border ${refreshPreset === 'aggressive' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('aggressive')}>Aggressive{recommendedPreset === 'aggressive' ? ' ★' : ''}</button>
+                </div>
+                <label className="text-xs text-text-secondary inline-flex items-center gap-2 mr-1">
+                  <input
+                    type="checkbox"
+                    checked={autoRefreshEnabled}
+                    onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                  />
+                  Auto refresh enabled
+                </label>
+                <label className="text-xs text-text-secondary inline-flex items-center gap-2 mr-1">
+                  <input
+                    type="checkbox"
+                    checked={refreshIncludePurchased}
+                    onChange={(e) => setRefreshIncludePurchased(e.target.checked)}
+                  />
+                  Include purchased/hidden items
+                </label>
+                <label className="text-xs text-text-secondary">
+                  Monthly cap
+                  <input
+                    type="number"
+                    min={10}
+                    max={2000}
+                    value={refreshCapDraft}
+                    onChange={(e) => setRefreshCapDraft(Number(e.target.value))}
+                    className="ml-2 w-24 px-2 py-1 bg-surface-subtle border border-border rounded-md text-xs"
+                  />
+                </label>
+                <label className="text-xs text-text-secondary">
+                  Enabled until
+                  <input
+                    type="date"
+                    value={refreshWindowDraft}
+                    onChange={(e) => setRefreshWindowDraft(e.target.value)}
+                    className="ml-2 px-2 py-1 bg-surface-subtle border border-border rounded-md text-xs"
+                  />
+                </label>
+                <Button variant="ghost" size="sm" onClick={setDefaultRefreshWindowFromWedding} disabled={!weddingDate}>Use wedding + 30d</Button>
+                <Button variant={nearBudgetCap && refreshPreset !== 'lean' ? 'outline' : 'ghost'} size="sm" onClick={() => applyRefreshPreset(recommendedPreset)}>{nearBudgetCap && refreshPreset !== 'lean' ? 'Switch to Lean' : 'Apply recommended'}</Button>
+                <Button variant="outline" size="sm" onClick={handleSaveRefreshPolicy} disabled={savingRefreshPolicy || isDemoMode}>{savingRefreshPolicy ? 'Saving…' : 'Save policy'}</Button>
+                <Button variant="ghost" size="sm" onClick={handleResetMonthlyBudgetCounter} disabled={isDemoMode || monthlyRefreshCount === 0}>Reset month usage</Button>
+                <span className="text-[11px] text-text-tertiary">Lean=60 · Balanced=120 · Aggressive=240 refreshes/month · Recommended: {recommendedPreset}{items.length > 0 ? ` (${items.length} items)` : ''}</span>
               </div>
-              <label className="text-xs text-text-secondary inline-flex items-center gap-2 mr-1">
-                <input
-                  type="checkbox"
-                  checked={autoRefreshEnabled}
-                  onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
-                />
-                Auto refresh enabled
-              </label>
-
-              <label className="text-xs text-text-secondary inline-flex items-center gap-2 mr-1">
-                <input
-                  type="checkbox"
-                  checked={refreshIncludePurchased}
-                  onChange={(e) => setRefreshIncludePurchased(e.target.checked)}
-                />
-                Include purchased/hidden items
-              </label>
-              <label className="text-xs text-text-secondary">
-                Monthly cap
-                <input
-                  type="number"
-                  min={10}
-                  max={2000}
-                  value={refreshCapDraft}
-                  onChange={(e) => setRefreshCapDraft(Number(e.target.value))}
-                  className="ml-2 w-24 px-2 py-1 bg-surface-subtle border border-border rounded-md text-xs"
-                />
-              </label>
-              <label className="text-xs text-text-secondary">
-                Enabled until
-                <input
-                  type="date"
-                  value={refreshWindowDraft}
-                  onChange={(e) => setRefreshWindowDraft(e.target.value)}
-                  className="ml-2 px-2 py-1 bg-surface-subtle border border-border rounded-md text-xs"
-                />
-              </label>
-              <Button variant="ghost" size="sm" onClick={setDefaultRefreshWindowFromWedding} disabled={!weddingDate}>Use wedding + 30d</Button>
-              <Button variant={nearBudgetCap && refreshPreset !== 'lean' ? 'outline' : 'ghost'} size="sm" onClick={() => applyRefreshPreset(recommendedPreset)}>{nearBudgetCap && refreshPreset !== 'lean' ? 'Switch to Lean' : 'Apply recommended'}</Button>
-              <Button variant="outline" size="sm" onClick={handleSaveRefreshPolicy} disabled={savingRefreshPolicy || isDemoMode}>{savingRefreshPolicy ? 'Saving…' : 'Save policy'}</Button>
-              <Button variant="ghost" size="sm" onClick={handleResetMonthlyBudgetCounter} disabled={isDemoMode || monthlyRefreshCount === 0}>Reset month usage</Button>
-              <span className="text-[11px] text-text-tertiary">Lean=60 · Balanced=120 · Aggressive=240 refreshes/month · Recommended: {recommendedPreset}{items.length > 0 ? ` (${items.length} items)` : ''}</span>
-            </div>
+            </details>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="md" onClick={() => setBulkImportOpen(true)} disabled={!weddingSiteId}>
-              Bulk Import URLs
-            </Button>
-            <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false)} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
-              {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
-            </Button>
-            <Button variant="outline" size="md" onClick={() => handleAutoRefreshStale(false, true)} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
-              {autoRefreshing ? 'Refreshing…' : 'Refresh alert items'}
-            </Button>
+            <div className="relative">
+              <Button variant="outline" size="md" onClick={() => setRegistryActionsOpen((v) => !v)}>
+                Actions
+              </Button>
+              {registryActionsOpen && (
+                <div className="absolute right-0 top-11 z-20 w-64 rounded-lg border border-border bg-white p-2 shadow-lg space-y-1">
+                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
+                    Bulk Import URLs
+                  </Button>
+                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
+                    {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
+                  </Button>
+                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false, true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
+                    {autoRefreshing ? 'Refreshing…' : 'Refresh alert items'}
+                  </Button>
+                </div>
+              )}
+            </div>
             <Button variant="primary" size="md" onClick={handleAddNew} disabled={!weddingSiteId}>
               <Plus className="w-4 h-4" />
               Add Item
