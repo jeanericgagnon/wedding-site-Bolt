@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 
 interface ErrorLogRow {
@@ -13,7 +14,10 @@ interface ErrorLogRow {
   fingerprint: string | null;
 }
 
+const ADMIN_ERROR_LOG_EMAIL = 'admin@dayof.love';
+
 export const DashboardErrorLogs: React.FC = () => {
+  const { user } = useAuth();
   const [rows, setRows] = useState<ErrorLogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +43,21 @@ export const DashboardErrorLogs: React.FC = () => {
       mounted = false;
     };
   }, []);
+
+  const isAdmin = (user?.email || '').toLowerCase() === ADMIN_ERROR_LOG_EMAIL;
+
+  if (!isAdmin) {
+    return (
+      <DashboardLayout currentPage="settings">
+        <div className="max-w-3xl mx-auto">
+          <Card padding="lg">
+            <h1 className="text-xl font-semibold text-text-primary mb-2">Restricted</h1>
+            <p className="text-sm text-text-secondary">Error logs are visible only to the admin account.</p>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout currentPage="errors">
