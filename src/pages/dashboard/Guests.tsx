@@ -237,8 +237,10 @@ export const DashboardGuests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
-  const [extraFilters, setExtraFilters] = useState<Array<'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>>([]);
-  const [extraFilterDraft, setExtraFilterDraft] = useState<'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact' | ''>('');
+  const [extraFilters, setExtraFilters] = useState<string[]>([]);
+  const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
+  const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
+  const [eventInviteGuestMap, setEventInviteGuestMap] = useState<Map<string, Set<string>>>(new Map());
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
@@ -493,6 +495,55 @@ export const DashboardGuests: React.FC = () => {
       fetchGuests();
     }
   }, [weddingSiteId, fetchGuests]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadItineraryFilterData() {
+      if (!weddingSiteId || isDemoMode) {
+        if (!cancelled) {
+          setItineraryFilterEvents([]);
+          setEventInviteGuestMap(new Map());
+        }
+        return;
+      }
+
+      try {
+        const [eventsRes, invitesRes] = await Promise.all([
+          supabase
+            .from('itinerary_events')
+            .select('id, event_name, event_date, start_time, location_name')
+            .eq('wedding_site_id', weddingSiteId)
+            .order('event_date', { ascending: true }),
+          supabase
+            .from('event_invitations')
+            .select('event_id, guest_id'),
+        ]);
+
+        if (cancelled) return;
+
+        setItineraryFilterEvents((eventsRes.data ?? []) as ItineraryEvent[]);
+
+        const next = new Map<string, Set<string>>();
+        ((invitesRes.data ?? []) as Array<{ event_id: string; guest_id: string }>).forEach((row) => {
+          const set = next.get(row.event_id) ?? new Set<string>();
+          set.add(row.guest_id);
+          next.set(row.event_id, set);
+        });
+        setEventInviteGuestMap(next);
+      } catch {
+        if (!cancelled) {
+          setItineraryFilterEvents([]);
+          setEventInviteGuestMap(new Map());
+        }
+      }
+    }
+
+    void loadItineraryFilterData();
+    return () => {
+      cancelled = true;
+    };
+  }, [weddingSiteId, isDemoMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1488,16 +1539,27 @@ Proceed with send?`)) return;
       guest.email?.toLowerCase().includes(searchTerm);
 
     const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
-    const checkFilter = (filter: string) => (
-      filter === 'all' ||
-      guest.rsvp_status === filter ||
-      (filter === 'ceremony-no' && eventSelections?.ceremony === false) ||
-      (filter === 'reception-no' && eventSelections?.reception === false) ||
-      (filter === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
-      (filter === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
-      (filter === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
-      (filter === 'no-contact' && !guest.email && !guest.phone)
-    );
+    const checkFilter = (filter: string) => {
+      if (filter.startsWith('event-invited:')) {
+        const eventId = filter.replace('event-invited:', '');
+        return eventInviteGuestMap.get(eventId)?.has(guest.id) ?? false;
+      }
+      if (filter.startsWith('event-not-invited:')) {
+        const eventId = filter.replace('event-not-invited:', '');
+        return !(eventInviteGuestMap.get(eventId)?.has(guest.id) ?? false);
+      }
+
+      return (
+        filter === 'all' ||
+        guest.rsvp_status === filter ||
+        (filter === 'ceremony-no' && eventSelections?.ceremony === false) ||
+        (filter === 'reception-no' && eventSelections?.reception === false) ||
+        (filter === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
+        (filter === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
+        (filter === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
+        (filter === 'no-contact' && !guest.email && !guest.phone)
+      );
+    };
 
     const matchesPrimaryFilter = checkFilter(filterStatus);
     const matchesExtraFilters = extraFilters.every((f) => checkFilter(f));
@@ -1689,6 +1751,21 @@ Proceed with send?`)) return;
     'plusone-missing': 'Plus-one Missing Name',
     'pending-no-email': 'Pending, No Email',
     'no-contact': 'No Contact Info',
+  };
+
+  const labelForFilter = (filter: string) => {
+    if (segmentLabelMap[filter]) return segmentLabelMap[filter];
+    if (filter.startsWith('event-invited:')) {
+      const eventId = filter.replace('event-invited:', '');
+      const name = itineraryFilterEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
+      return `${name}: Invited`;
+    }
+    if (filter.startsWith('event-not-invited:')) {
+      const eventId = filter.replace('event-not-invited:', '');
+      const name = itineraryFilterEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
+      return `${name}: Not invited`;
+    }
+    return filter;
   };
 
   const getStatusBadge = (status: string) => {
@@ -2454,7 +2531,7 @@ Proceed with send?`)) return;
                   <div className="flex items-center gap-2">
                     <select
                       value={extraFilterDraft}
-                      onChange={(e) => setExtraFilterDraft(e.target.value as typeof extraFilterDraft)}
+                      onChange={(e) => setExtraFilterDraft(e.target.value)}
                       className="text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
                     >
                       <option value="">Add filter…</option>
@@ -2464,6 +2541,13 @@ Proceed with send?`)) return;
                       <option value="plusone-missing">Plus-One Missing ({rsvpOps.plusOneMissingName})</option>
                       <option value="pending-no-email">Pending No Email ({rsvpOps.pendingNoEmail})</option>
                       <option value="no-contact">No Contact ({contactStats.withNoContact})</option>
+                      {itineraryFilterEvents.length > 0 && <option value="" disabled>── Itinerary ──</option>}
+                      {itineraryFilterEvents.map((event) => (
+                        <React.Fragment key={event.id}>
+                          <option value={`event-invited:${event.id}`}>{event.event_name}: Invited</option>
+                          <option value={`event-not-invited:${event.id}`}>{event.event_name}: Not invited</option>
+                        </React.Fragment>
+                      ))}
                     </select>
                     <button
                       type="button"
@@ -2484,7 +2568,7 @@ Proceed with send?`)) return;
                   <div className="flex flex-wrap gap-2">
                     {extraFilters.map((f) => (
                       <span key={f} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-primary/30 bg-primary/5 text-[11px] text-primary">
-                        {segmentLabelMap[f] || f}
+                        {labelForFilter(f)}
                         <button
                           type="button"
                           onClick={() => setExtraFilters(prev => prev.filter((x) => x !== f))}
