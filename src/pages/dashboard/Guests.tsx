@@ -2732,23 +2732,23 @@ Proceed with send?`)) return;
                     <ChevronDown className="w-4 h-4 ml-1" />
                   </Button>
                   {showExportMenu && (
-                    <div className="absolute z-20 mt-1 w-52 bg-white border border-border rounded-lg shadow-lg p-1">
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowExportMenu(false); }}>
+                    <div className="absolute left-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg shadow-lg p-1 flex flex-col gap-1">
+                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowExportMenu(false); }}>
                         Export all guests
                       </button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowExportMenu(false); }}>
+                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowExportMenu(false); }}>
                         Export filtered guests
                       </button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowExportMenu(false); }}>
+                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowExportMenu(false); }}>
                         Export RSVP responders
                       </button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowExportMenu(false); }}>
+                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowExportMenu(false); }}>
                         Export pending RSVP
                       </button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowExportMenu(false); }}>
+                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowExportMenu(false); }}>
                         Export missing meal choices
                       </button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowExportMenu(false); }}>
+                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowExportMenu(false); }}>
                         Copy filtered emails
                       </button>
                     </div>
