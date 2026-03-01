@@ -383,7 +383,7 @@ export const SiteView: React.FC = () => {
       ];
       resetProps.forEach(p => el.style.removeProperty(p));
     };
-  }, [resolvedSlug, searchParams]);
+  }, [i18n, resolvedSlug, searchParams]);
 
   useEffect(() => {
     if (!hideFromSearch) return;
