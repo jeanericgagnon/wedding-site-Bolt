@@ -14,15 +14,44 @@ interface ErrorLogRow {
   fingerprint: string | null;
 }
 
-const ADMIN_ERROR_LOG_EMAIL = 'admin@dayof.love';
-
 export const DashboardErrorLogs: React.FC = () => {
   const { user, loading } = useAuth();
   const [rows, setRows] = useState<ErrorLogRow[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const isAdmin = (user?.email || '').toLowerCase() === ADMIN_ERROR_LOG_EMAIL;
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!user?.id) {
+        if (mounted) {
+          setIsAdmin(false);
+          setLogsLoading(false);
+        }
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!mounted) return;
+      if (error) {
+        setError(error.message);
+        setLogsLoading(false);
+        return;
+      }
+
+      setIsAdmin(!!data);
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!isAdmin) {

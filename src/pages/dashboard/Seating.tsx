@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2, ChevronDown } from 'lucide-react';
+import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2 } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -19,6 +19,7 @@ import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { ActionsMenu } from '../../components/ui/ActionsMenu';
 import {
   ItineraryEvent, SeatingEvent, SeatingTable, SeatingAssignment, EligibleGuest,
   EventCounters, getWeddingSiteId, loadItineraryEvents, getOrCreateSeatingEvent,
@@ -1444,28 +1445,26 @@ export const DashboardSeating: React.FC = () => {
           <Button size="sm" onClick={() => setAddingTable(true)}>
             <Plus className="w-4 h-4 mr-1" /> Add Table
           </Button>
-          <div className="relative" ref={seatingActionsRef}>
-            <Button variant="outline" size="sm" onClick={() => setSeatingActionsOpen((v) => !v)}>
-              Actions <ChevronDown className="w-4 h-4 ml-1" />
+          <ActionsMenu
+            open={seatingActionsOpen}
+            onToggle={() => setSeatingActionsOpen((v) => !v)}
+            align="right"
+            menuRef={seatingActionsRef}
+          >
+            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setShowAutoTablesModal(true); setSeatingActionsOpen(false); }}>
+              <Wand2 className="w-4 h-4 mr-1" /> Auto-Create Tables
             </Button>
-            {seatingActionsOpen && (
-              <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1">
-                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setShowAutoTablesModal(true); setSeatingActionsOpen(false); }}>
-                  <Wand2 className="w-4 h-4 mr-1" /> Auto-Create Tables
-                </Button>
-                {tables.length > 0 && unassignedGuests.length > 0 && (
-                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoSeat(); setSeatingActionsOpen(false); }}>
-                    <Wand2 className="w-4 h-4 mr-1" /> Auto-Seat Guests
-                  </Button>
-                )}
-                {assignments.length > 0 && (
-                  <Button variant="ghost" size="sm" className="w-full justify-start text-error hover:text-error hover:bg-error/5" onClick={() => { setShowResetConfirm(true); setSeatingActionsOpen(false); }}>
-                    <RotateCcw className="w-4 h-4 mr-1" /> Reset All
-                  </Button>
-                )}
-              </div>
+            {tables.length > 0 && unassignedGuests.length > 0 && (
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoSeat(); setSeatingActionsOpen(false); }}>
+                <Wand2 className="w-4 h-4 mr-1" /> Auto-Seat Guests
+              </Button>
             )}
-          </div>
+            {assignments.length > 0 && (
+              <Button variant="ghost" size="sm" className="w-full justify-start text-error hover:text-error hover:bg-error/5" onClick={() => { setShowResetConfirm(true); setSeatingActionsOpen(false); }}>
+                <RotateCcw className="w-4 h-4 mr-1" /> Reset All
+              </Button>
+            )}
+          </ActionsMenu>
         </div>
 
         {checkInMode && (

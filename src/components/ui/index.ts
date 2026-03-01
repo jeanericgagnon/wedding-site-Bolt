@@ -6,3 +6,4 @@ export * from './Select';
 export * from './Badge';
 export * from './AddressInput';
 export * from './Toast';
+export * from './ActionsMenu';

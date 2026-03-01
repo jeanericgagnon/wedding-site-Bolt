@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
-import { Card, Button } from '../../components/ui';
+import { Card, Button, ActionsMenu } from '../../components/ui';
 import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -760,24 +760,22 @@ export const DashboardRegistry: React.FC = () => {
             </details>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative" ref={registryActionsRef}>
-              <Button variant="outline" size="md" onClick={() => setRegistryActionsOpen((v) => !v)}>
-                Actions
+            <ActionsMenu
+              open={registryActionsOpen}
+              onToggle={() => setRegistryActionsOpen((v) => !v)}
+              align="right"
+              menuRef={registryActionsRef}
+            >
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
+                Bulk Import URLs
               </Button>
-              {registryActionsOpen && (
-                <div className="absolute right-0 top-11 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1">
-                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
-                    Bulk Import URLs
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
-                    {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false, true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
-                    {autoRefreshing ? 'Refreshing…' : 'Refresh alert items'}
-                  </Button>
-                </div>
-              )}
-            </div>
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
+                {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
+              </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false, true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
+                {autoRefreshing ? 'Refreshing…' : 'Refresh alert items'}
+              </Button>
+            </ActionsMenu>
             <Button variant="primary" size="md" onClick={handleAddNew} disabled={!weddingSiteId}>
               <Plus className="w-4 h-4" />
               Add Item
