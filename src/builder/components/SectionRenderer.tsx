@@ -101,16 +101,20 @@ interface ErrorBoundaryState {
 }
 
 class SectionErrorBoundary extends React.Component<
-  { children: React.ReactNode; sectionType: string; isPreview?: boolean },
+  { children: React.ReactNode; sectionType: string; isPreview?: boolean; onError?: () => void },
   ErrorBoundaryState
 > {
-  constructor(props: { children: React.ReactNode; sectionType: string; isPreview?: boolean }) {
+  constructor(props: { children: React.ReactNode; sectionType: string; isPreview?: boolean; onError?: () => void }) {
     super(props);
     this.state = { hasError: false, errorMessage: null };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, errorMessage: error.message };
+  }
+
+  componentDidCatch(): void {
+    this.props.onError?.();
   }
 
   handleRetry = () => {
@@ -155,27 +159,32 @@ class SectionErrorBoundary extends React.Component<
 }
 
 export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug, globalAnimationPreset }) => {
-  const resolved = resolveAndParse(
-    section.type,
-    section.variant,
-    section.settings as Record<string, unknown>
-  );
+  const [preferLegacyRenderer, setPreferLegacyRenderer] = React.useState(false);
+
+  const styleOverrides = section.styleOverrides ?? {};
+  const overrideStyle = buildOverrideStyle(styleOverrides);
+  const effectivePreset = styleOverrides.animationPreset ?? globalAnimationPreset;
+  const animationClass = getAnimationClass(styleOverrides, globalAnimationPreset);
+  const mergedStyle = {
+    ...overrideStyle,
+    animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
+  } as React.CSSProperties;
+
+  const resolved = !preferLegacyRenderer
+    ? resolveAndParse(
+      section.type,
+      section.variant,
+      section.settings as Record<string, unknown>
+    )
+    : null;
 
   if (resolved) {
     const { def, parsedData } = resolved;
     const { Component } = def;
 
-    const overrideStyle = buildOverrideStyle(section.styleOverrides);
-    const effectivePreset = section.styleOverrides.animationPreset ?? globalAnimationPreset;
-    const animationClass = getAnimationClass(section.styleOverrides, globalAnimationPreset);
-    const mergedStyle = {
-      ...overrideStyle,
-      animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
-    } as React.CSSProperties;
-
     return (
-      <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
-        <SideImageWrapper overrides={section.styleOverrides}>
+      <SectionErrorBoundary sectionType={section.type} isPreview={isPreview} onError={() => setPreferLegacyRenderer(true)}>
+        <SideImageWrapper overrides={styleOverrides}>
           <div className={animationClass} style={mergedStyle}>
             <Component data={parsedData as never} siteSlug={siteSlug} />
           </div>
@@ -198,18 +207,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
   }
 
   const instance = toSectionInstance(section);
-  const legacyOverrideStyle = buildOverrideStyle(section.styleOverrides);
-  const effectivePreset = section.styleOverrides.animationPreset ?? globalAnimationPreset;
-  const animationClass = getAnimationClass(section.styleOverrides, globalAnimationPreset);
-  const legacyMergedStyle = {
-    ...legacyOverrideStyle,
-    animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
-  } as React.CSSProperties;
 
   return (
     <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
-      <SideImageWrapper overrides={section.styleOverrides}>
-        <div className={animationClass} style={legacyMergedStyle}>
+      <SideImageWrapper overrides={styleOverrides}>
+        <div className={animationClass} style={mergedStyle}>
           <LegacyComponent data={weddingData} instance={instance} />
         </div>
       </SideImageWrapper>
