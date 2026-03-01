@@ -832,13 +832,12 @@ export const DashboardRegistry: React.FC = () => {
             >
               {showAlertsOnly ? 'Showing alerts only' : 'Show alerts only'}
             </button>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Weekly stale: {alertCounts.stale}</span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Price changed: {alertCounts.priceChanged}</span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Out of stock: {alertCounts.outOfStock}</span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Remaining budget: {refreshBudgetRemaining}</span>
-            <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>Used: {Math.round(budgetUtilization * 100)}%</span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Retry backlog: {items.filter((i) => (i.refresh_fail_count ?? 0) > 0).length}</span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Projected checks: {projectedMonthlyCalls}/mo</span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">
+              Alerts: {alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}
+            </span>
+            <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>
+              Budget used: {Math.round(budgetUtilization * 100)}%
+            </span>
           </div>
 
           {loading ? (
