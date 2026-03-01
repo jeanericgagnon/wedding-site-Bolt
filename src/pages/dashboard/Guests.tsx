@@ -364,6 +364,7 @@ export const DashboardGuests: React.FC = () => {
     invited_to_ceremony: true,
     invited_to_reception: true,
   });
+  const [formEventInviteIds, setFormEventInviteIds] = useState<Set<string>>(new Set());
 
   const fetchWeddingSite = useCallback(async () => {
     if (!user) return;
@@ -787,7 +788,7 @@ export const DashboardGuests: React.FC = () => {
       }
 
       const inviteToken = await generateSecureToken();
-      const { error } = await supabase
+      const { data: createdGuest, error } = await supabase
         .from('guests')
         .insert([{
           wedding_site_id: weddingSiteId,
@@ -801,9 +802,17 @@ export const DashboardGuests: React.FC = () => {
           invited_to_reception: formData.invited_to_reception,
           invite_token: inviteToken,
           rsvp_status: 'pending',
-        }]);
+        }])
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      if (createdGuest?.id && formEventInviteIds.size > 0) {
+        const rows = Array.from(formEventInviteIds).map((eventId) => ({ event_id: eventId, guest_id: createdGuest.id }));
+        const { error: inviteError } = await supabase.from('event_invitations').insert(rows);
+        if (inviteError) throw inviteError;
+      }
 
       await fetchGuests();
       setShowAddModal(false);
@@ -857,6 +866,18 @@ export const DashboardGuests: React.FC = () => {
         .eq('id', editingGuest.id);
 
       if (error) throw error;
+
+      const { error: clearInvitesError } = await supabase
+        .from('event_invitations')
+        .delete()
+        .eq('guest_id', editingGuest.id);
+      if (clearInvitesError) throw clearInvitesError;
+
+      if (formEventInviteIds.size > 0) {
+        const rows = Array.from(formEventInviteIds).map((eventId) => ({ event_id: eventId, guest_id: editingGuest.id }));
+        const { error: inviteError } = await supabase.from('event_invitations').insert(rows);
+        if (inviteError) throw inviteError;
+      }
 
       await fetchGuests();
       setEditingGuest(null);
@@ -1304,6 +1325,7 @@ Proceed with send?`)) return;
       invited_to_ceremony: true,
       invited_to_reception: true,
     });
+    setFormEventInviteIds(new Set(itineraryFilterEvents.map((e) => e.id)));
   };
 
   const openEditModal = (guest: GuestWithRSVP) => {
@@ -1317,6 +1339,10 @@ Proceed with send?`)) return;
       invited_to_ceremony: guest.invited_to_ceremony,
       invited_to_reception: guest.invited_to_reception,
     });
+    const invitedIds = itineraryFilterEvents
+      .filter((event) => eventInviteGuestMap.get(event.id)?.has(guest.id))
+      .map((event) => event.id);
+    setFormEventInviteIds(new Set(invitedIds));
   };
 
   const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = 'guests') => {
@@ -1843,7 +1869,7 @@ Proceed with send?`)) return;
                   onChange={(e) => setFormData({ ...formData, invited_to_ceremony: e.target.checked })}
                   className="rounded"
                 />
-                <span className="text-sm text-text-primary">Invited to Ceremony</span>
+                <span className="text-sm text-text-primary">Invited to Ceremony (legacy flag)</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -1852,8 +1878,35 @@ Proceed with send?`)) return;
                   onChange={(e) => setFormData({ ...formData, invited_to_reception: e.target.checked })}
                   className="rounded"
                 />
-                <span className="text-sm text-text-primary">Invited to Reception</span>
+                <span className="text-sm text-text-primary">Invited to Reception (legacy flag)</span>
               </label>
+
+              {itineraryFilterEvents.length > 0 && (
+                <div className="pt-1 border-t border-border-subtle">
+                  <p className="text-xs font-medium text-text-secondary mb-2">Itinerary invitations (used by RSVP filters)</p>
+                  <div className="space-y-1.5 max-h-40 overflow-auto pr-1">
+                    {itineraryFilterEvents.map((event) => {
+                      const checked = formEventInviteIds.has(event.id);
+                      return (
+                        <label key={event.id} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              const next = new Set(formEventInviteIds);
+                              if (e.target.checked) next.add(event.id);
+                              else next.delete(event.id);
+                              setFormEventInviteIds(next);
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-text-primary truncate">{event.event_name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" fullWidth onClick={onClose}>
