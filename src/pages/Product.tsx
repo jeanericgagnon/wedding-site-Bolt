@@ -667,16 +667,17 @@ export const Product: React.FC = () => {
               </h3>
               <ul className="space-y-3">
                 {[
-                  'Visual seating chart builder with drag-and-drop',
-                  'Household-aware table assignment (assign whole family at once)',
-                  'Caterer export: CSV, Excel, PDF',
-                  'Day-of check-in mode with arrival updates',
-                  'Meal headcount by table',
+                  { label: 'Visual seating chart builder with drag-and-drop', done: true },
+                  { label: 'Household-aware table assignment (assign whole family at once)', done: true },
+                  { label: 'Caterer export: CSV + PDF', done: true },
+                  { label: 'Excel export', done: false },
+                  { label: 'Day-of check-in mode with arrival updates', done: false },
+                  { label: 'Meal headcount by table', done: false },
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 flex-shrink-0 text-text-tertiary/50" />
-                    <span className="text-sm text-text-tertiary">{f}</span>
-                    <Badge variant="secondary" className="text-xs ml-auto">Soon</Badge>
+                    <Clock className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
+                    <span className={`text-sm ${f.done ? 'text-text-secondary' : 'text-text-tertiary'}`}>{f.label}</span>
+                    {!f.done && <Badge variant="secondary" className="text-xs ml-auto">Soon</Badge>}
                   </li>
                 ))}
               </ul>
