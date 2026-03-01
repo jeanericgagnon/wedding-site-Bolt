@@ -687,23 +687,12 @@ export const DashboardRegistry: React.FC = () => {
             <p className="text-sm text-text-secondary">
               Paste any product URL to import items from any store · prices auto-refresh weekly
             </p>
-            <p className="text-xs text-text-tertiary mt-1">
-              Auto-refresh: {autoRefreshEnabled ? (refreshWindowOpen ? 'Open' : 'Closed (window)') : 'Paused'} · Budget: {monthlyRefreshCount}/{monthlyRefreshCap} this month{monthlyRefreshMonth ? ` (${monthlyRefreshMonth})` : ''} · Scope: {refreshIncludePurchased ? 'All items' : 'Active only'}
-            </p>
-            <p className="text-xs text-text-tertiary mt-1">
-              Projection: ~{projectedMonthlyCalls} item checks/month · coverage {projectedRefreshCoverage}% of {eligibleItemCount} eligible items
-            </p>
-            {policyUpdatedAt && (
-              <p className="text-[11px] text-text-tertiary mt-1">
-                Policy last updated {new Date(policyUpdatedAt).toLocaleString()}{policyUpdatedBy && user?.id === policyUpdatedBy ? ' by you' : ''}
-              </p>
-            )}
-            {daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14 && (
-              <p className="text-xs text-warning mt-1">Refresh window is almost up. Lean mode is recommended for smoother updates.</p>
-            )}
-            {nearBudgetCap && (
-              <p className="text-xs text-warning mt-1">You’ve used over 80% of this month’s refresh budget. Lean mode can help stretch remaining runs.</p>
-            )}
+            <div className="mt-2 inline-flex items-center gap-2 text-[11px] text-text-tertiary">
+              <span className="px-2 py-0.5 rounded-full border border-border-subtle bg-surface-subtle">
+                {autoRefreshEnabled ? (refreshWindowOpen ? 'Auto-refresh on' : 'Refresh window closed') : 'Auto-refresh paused'}
+              </span>
+              <span>Budget {monthlyRefreshCount}/{monthlyRefreshCap}</span>
+            </div>
             <details className="mt-3 rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
               <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold text-text-primary">Refresh settings</span>
