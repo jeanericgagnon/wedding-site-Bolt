@@ -272,7 +272,7 @@ export const Home: React.FC = () => {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-20 bg-white">
+      <section id="pricing" className="py-16 md:py-20 bg-white">
         <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="text-[2rem] font-serif font-bold text-ink mb-4 leading-[1.2] updates-tight">

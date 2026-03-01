@@ -791,6 +791,7 @@ export default function RSVP() {
                     <Select
                       value={formData.attending ? 'yes' : 'no'}
                       onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
+                      className="h-11"
                       required
                       options={[
                         { value: 'yes', label: "Yes, I'll be there!" },
@@ -907,6 +908,7 @@ export default function RSVP() {
                           <Select
                             value={formData.meal_choice}
                             onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
+                            className="h-11"
                             options={[
                               { value: '', label: 'Select a meal option' },
                               ...mealConfig.options.map((opt) => ({ value: opt, label: opt })),
@@ -925,6 +927,7 @@ export default function RSVP() {
                             value={formData.plus_one_name}
                             onChange={(e) => setFormData({ ...formData, plus_one_name: e.target.value })}
                             placeholder="Guest's full name"
+                            className="h-11"
                           />
                           <p className="text-xs text-gray-500 mt-1">You're welcome to bring a guest</p>
                         </div>

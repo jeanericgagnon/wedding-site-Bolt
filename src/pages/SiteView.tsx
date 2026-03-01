@@ -68,7 +68,7 @@ const PasswordGate: React.FC<{
         </div>
         <form
           onSubmit={e => { e.preventDefault(); onSubmit(pw); }}
-          className="bg-white border border-stone-200 rounded-2xl shadow-sm p-5 space-y-3"
+          className="bg-white border border-stone-200 rounded-2xl shadow-sm p-6 space-y-4"
         >
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -83,7 +83,7 @@ const PasswordGate: React.FC<{
               type={showPw ? 'text' : 'password'}
               value={pw}
               onChange={e => setPw(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-stone-300 rounded-lg text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
+              className="w-full h-11 px-3 pr-10 border border-stone-300 rounded-lg text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
               placeholder={t('site.password_placeholder')}
               autoComplete="current-password"
             />
