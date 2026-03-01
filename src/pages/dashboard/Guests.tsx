@@ -3213,7 +3213,7 @@ Proceed with send?`)) return;
                       {filteredGuests.map((guest) => (
                         <tr
                           key={guest.id}
-                          className="hover:bg-surface-subtle transition-colors cursor-pointer"
+                          className="border-b border-border-subtle/70 hover:bg-surface-subtle/60 transition-colors cursor-pointer"
                           onClick={() => openItineraryDrawer(guest)}
                         >
                           <td className="px-4 py-2.5">
@@ -3285,10 +3285,11 @@ Proceed with send?`)) return;
                             </code>
                           </td>
                           <td className="px-4 py-2.5 text-right" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-1.5">
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="px-2 py-1 text-xs"
                                 onClick={() => openItineraryDrawer(guest)}
                                 title="Manage event invitations"
                               >
@@ -3299,6 +3300,7 @@ Proceed with send?`)) return;
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  className="px-2 py-1 text-xs"
                                   onClick={() => handleSendInvitation(guest)}
                                   disabled={sendingInviteId === guest.id}
                                   title={guest.invite_token ? 'Send invitation email' : 'Send invitation'}
@@ -3307,7 +3309,7 @@ Proceed with send?`)) return;
                                   {sendingInviteId === guest.id ? 'Sending…' : 'Invite'}
                                 </Button>
                               )}
-                              <Button variant="ghost" size="sm" onClick={() => openEditModal(guest)}>
+                              <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)}>
                                 Edit
                               </Button>
                               <Button
@@ -3315,7 +3317,7 @@ Proceed with send?`)) return;
                                 size="sm"
                                 onClick={() => handleDeleteGuest(guest.id)}
                                 disabled={deletingGuestId === guest.id}
-                                className={confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}
+                                className={`px-2 py-1 text-xs ${confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}`}
                               >
                                 {deletingGuestId === guest.id
                                   ? 'Removing…'
