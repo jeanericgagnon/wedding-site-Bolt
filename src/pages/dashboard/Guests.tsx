@@ -237,6 +237,8 @@ export const DashboardGuests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
+  const [extraFilters, setExtraFilters] = useState<Array<'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>>([]);
+  const [extraFilterDraft, setExtraFilterDraft] = useState<'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact' | ''>('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
@@ -1486,17 +1488,21 @@ Proceed with send?`)) return;
       guest.email?.toLowerCase().includes(searchTerm);
 
     const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
-    const matchesFilter =
-      filterStatus === 'all' ||
-      guest.rsvp_status === filterStatus ||
-      (filterStatus === 'ceremony-no' && eventSelections?.ceremony === false) ||
-      (filterStatus === 'reception-no' && eventSelections?.reception === false) ||
-      (filterStatus === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
-      (filterStatus === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
-      (filterStatus === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
-      (filterStatus === 'no-contact' && !guest.email && !guest.phone);
+    const checkFilter = (filter: string) => (
+      filter === 'all' ||
+      guest.rsvp_status === filter ||
+      (filter === 'ceremony-no' && eventSelections?.ceremony === false) ||
+      (filter === 'reception-no' && eventSelections?.reception === false) ||
+      (filter === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
+      (filter === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
+      (filter === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
+      (filter === 'no-contact' && !guest.email && !guest.phone)
+    );
 
-    return matchesSearch && matchesFilter;
+    const matchesPrimaryFilter = checkFilter(filterStatus);
+    const matchesExtraFilters = extraFilters.every((f) => checkFilter(f));
+
+    return matchesSearch && matchesPrimaryFilter && matchesExtraFilters;
   });
 
   const emailableFilteredGuests = filteredGuests.filter(g => !!g.email && !!g.invite_token);
@@ -2396,6 +2402,7 @@ Proceed with send?`)) return;
             <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border-subtle bg-surface-subtle">
               <p className="text-xs text-text-secondary">
                 Active segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span>
+                {extraFilters.length > 0 ? <> · +<span className="font-semibold text-text-primary">{extraFilters.length}</span> filters</> : null}
                 {searchQuery ? <> · Search: <span className="font-semibold text-text-primary">“{searchQuery}”</span></> : null}
               </p>
               <div className="flex items-center gap-2">
@@ -2406,7 +2413,7 @@ Proceed with send?`)) return;
                   Save segment
                 </button>
                 <button
-                  onClick={() => { setFilterStatus('all'); setSearchQuery(''); setViewMode('list'); }}
+                  onClick={() => { setFilterStatus('all'); setExtraFilters([]); setSearchQuery(''); setViewMode('list'); }}
                   className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
                 >
                   Clear filters
@@ -2421,41 +2428,75 @@ Proceed with send?`)) return;
             )}
 
             <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/90 backdrop-blur p-2 rounded-lg border border-border-subtle overflow-hidden">
-              <div className="flex gap-2 flex-wrap min-w-0">
-                <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => setSortByPriority(v => !v)}
                     className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
                   >
                     {sortByPriority ? 'Priority sort: On' : 'Priority sort: Off'}
                   </button>
-                  {sortByPriority && <span className="text-[11px] text-text-tertiary">Ranks by pending/meal/plus-one/contact gaps</span>}
                   <span className="text-[11px] text-text-tertiary">Issue legend: pending, meal, plus-one, contact, event-decline</span>
                 </div>
-                {([
-                  { id: 'all', label: `All (${stats.total})` },
-                  { id: 'confirmed', label: `Confirmed (${stats.confirmed})` },
-                  { id: 'declined', label: `Declined (${stats.declined})` },
-                  { id: 'pending', label: `Pending (${stats.pending})` },
-                  { id: 'ceremony-no', label: `Ceremony No (${rsvpOps.ceremonyNo})` },
-                  { id: 'reception-no', label: `Reception No (${rsvpOps.receptionNo})` },
-                  { id: 'missing-meal', label: `Missing Meal (${rsvpOps.missingMeal})` },
-                  { id: 'plusone-missing', label: `Plus-One Missing (${rsvpOps.plusOneMissingName})` },
-                  { id: 'pending-no-email', label: `Pending No Email (${rsvpOps.pendingNoEmail})` },
-                  { id: 'no-contact', label: `No Contact (${contactStats.withNoContact})` },
-                ] as const).map(({ id, label }) => (
-                  <button
-                    key={id}
-                    onClick={() => { setFilterStatus(id); setViewMode('list'); }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                      filterStatus === id && viewMode === 'list'
-                        ? 'bg-primary text-text-inverse'
-                        : 'bg-surface-subtle text-text-secondary hover:bg-surface hover:text-text-primary'
-                    }`}
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => { setFilterStatus(e.target.value as typeof filterStatus); setViewMode('list'); }}
+                    className="text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
                   >
-                    {label}
-                  </button>
-                ))}
+                    <option value="all">All ({stats.total})</option>
+                    <option value="confirmed">Confirmed ({stats.confirmed})</option>
+                    <option value="declined">Declined ({stats.declined})</option>
+                    <option value="pending">Pending ({stats.pending})</option>
+                  </select>
+
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={extraFilterDraft}
+                      onChange={(e) => setExtraFilterDraft(e.target.value as typeof extraFilterDraft)}
+                      className="text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
+                    >
+                      <option value="">Add filter…</option>
+                      <option value="ceremony-no">Ceremony No ({rsvpOps.ceremonyNo})</option>
+                      <option value="reception-no">Reception No ({rsvpOps.receptionNo})</option>
+                      <option value="missing-meal">Missing Meal ({rsvpOps.missingMeal})</option>
+                      <option value="plusone-missing">Plus-One Missing ({rsvpOps.plusOneMissingName})</option>
+                      <option value="pending-no-email">Pending No Email ({rsvpOps.pendingNoEmail})</option>
+                      <option value="no-contact">No Contact ({contactStats.withNoContact})</option>
+                    </select>
+                    <button
+                      type="button"
+                      disabled={!extraFilterDraft}
+                      onClick={() => {
+                        if (!extraFilterDraft) return;
+                        setExtraFilters(prev => prev.includes(extraFilterDraft) ? prev : [...prev, extraFilterDraft]);
+                        setExtraFilterDraft('');
+                      }}
+                      className="text-xs px-2 py-2 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-50"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                {extraFilters.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {extraFilters.map((f) => (
+                      <span key={f} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-primary/30 bg-primary/5 text-[11px] text-primary">
+                        {segmentLabelMap[f] || f}
+                        <button
+                          type="button"
+                          onClick={() => setExtraFilters(prev => prev.filter((x) => x !== f))}
+                          className="text-primary/80 hover:text-primary"
+                          aria-label={`Remove ${f}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => setViewMode(v => v === 'households' ? 'list' : 'households')}
@@ -2485,7 +2526,7 @@ Proceed with send?`)) return;
               <div className="p-6 border border-dashed border-border rounded-xl text-center bg-surface-subtle">
                 <p className="text-sm text-text-secondary">No guests in this segment right now.</p>
                 <button
-                  onClick={() => { setFilterStatus('all'); setSearchQuery(''); }}
+                  onClick={() => { setFilterStatus('all'); setExtraFilters([]); setSearchQuery(''); }}
                   className="mt-2 text-xs text-primary hover:underline"
                 >
                   Clear filters to view all guests
