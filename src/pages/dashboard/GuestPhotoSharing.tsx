@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { ActionsMenu } from '../../components/ui/ActionsMenu';
 import { Input } from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
@@ -751,54 +752,51 @@ export const GuestPhotoSharing: React.FC = () => {
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-semibold text-neutral-900">Albums</h2>
-            <div className="relative" ref={actionsMenuRef}>
-              <Button size="sm" variant="outline" onClick={() => setActionsMenuOpen((v) => !v)}>
-                Actions
+            <ActionsMenu
+              open={actionsMenuOpen}
+              onToggle={() => setActionsMenuOpen((v) => !v)}
+              align="right"
+              menuRef={actionsMenuRef}
+            >
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportAlbumLinksCsv(); setActionsMenuOpen(false); }}>
+                Export album links
               </Button>
-
-              {actionsMenuOpen && (
-                <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1">
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportAlbumLinksCsv(); setActionsMenuOpen(false); }}>
-                    Export album links
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportSharePackCsv(); setActionsMenuOpen(false); }}>
-                    Export share pack
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void copyAllKnownLinks(); setActionsMenuOpen(false); }}>
-                    {copied === 'all-links' ? 'Copied all' : 'Copy all links'}
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void copyAllShareMessages(); setActionsMenuOpen(false); }}>
-                    {copied === 'all-share-messages' ? 'Copied messages' : 'Copy all messages'}
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { sendAllActiveAlbumRequests(); setActionsMenuOpen(false); }}>
-                    Send all active requests
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void regenerateAllKnownAlbumLinks(); setActionsMenuOpen(false); }} disabled={bulkRegenerating}>
-                    {bulkRegenerating ? 'Rotating links...' : 'Rotate known links'}
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setShowFlaggedOnly((v) => !v)}>
-                    <Flag className="w-3.5 h-3.5 mr-1" />
-                    {showFlaggedOnly ? 'Show all uploads' : 'Show flagged only'}
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setShowHidden((v) => !v)}>
-                    {showHidden ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
-                    {showHidden ? 'Hide hidden items' : 'Show hidden items'}
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsFlaggedByFilter(true)} disabled={bulkModerating}>
-                    Flag visible
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsFlaggedByFilter(false)} disabled={bulkModerating}>
-                    Unflag visible
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsHiddenByFilter(true)} disabled={bulkModerating}>
-                    Hide visible
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsHiddenByFilter(false)} disabled={bulkModerating}>
-                    Unhide visible
-                  </Button>
-                </div>
-              )}
-            </div>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportSharePackCsv(); setActionsMenuOpen(false); }}>
+                Export share pack
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void copyAllKnownLinks(); setActionsMenuOpen(false); }}>
+                {copied === 'all-links' ? 'Copied all' : 'Copy all links'}
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void copyAllShareMessages(); setActionsMenuOpen(false); }}>
+                {copied === 'all-share-messages' ? 'Copied messages' : 'Copy all messages'}
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { sendAllActiveAlbumRequests(); setActionsMenuOpen(false); }}>
+                Send all active requests
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void regenerateAllKnownAlbumLinks(); setActionsMenuOpen(false); }} disabled={bulkRegenerating}>
+                {bulkRegenerating ? 'Rotating links...' : 'Rotate known links'}
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setShowFlaggedOnly((v) => !v)}>
+                <Flag className="w-3.5 h-3.5 mr-1" />
+                {showFlaggedOnly ? 'Show all uploads' : 'Show flagged only'}
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setShowHidden((v) => !v)}>
+                {showHidden ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
+                {showHidden ? 'Hide hidden items' : 'Show hidden items'}
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsFlaggedByFilter(true)} disabled={bulkModerating}>
+                Flag visible
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsFlaggedByFilter(false)} disabled={bulkModerating}>
+                Unflag visible
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsHiddenByFilter(true)} disabled={bulkModerating}>
+                Hide visible
+              </Button>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsHiddenByFilter(false)} disabled={bulkModerating}>
+                Unhide visible
+              </Button>
+            </ActionsMenu>
           </div>
           <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
             <Input

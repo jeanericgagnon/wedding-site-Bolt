@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
@@ -12,6 +12,14 @@ interface ErrorLogRow {
   route: string | null;
   message: string;
   fingerprint: string | null;
+}
+
+interface GroupedError {
+  fingerprint: string;
+  count: number;
+  latestAt: string;
+  sampleMessage: string;
+  severity: string;
 }
 
 export const DashboardErrorLogs: React.FC = () => {
@@ -80,6 +88,29 @@ export const DashboardErrorLogs: React.FC = () => {
     };
   }, [isAdmin]);
 
+  const grouped = useMemo<GroupedError[]>(() => {
+    const map = new Map<string, GroupedError>();
+    for (const row of rows) {
+      const key = row.fingerprint || `no-fp:${row.message.slice(0, 80)}`;
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, {
+          fingerprint: key,
+          count: 1,
+          latestAt: row.created_at,
+          sampleMessage: row.message,
+          severity: row.severity,
+        });
+      } else {
+        existing.count += 1;
+        if (new Date(row.created_at).getTime() > new Date(existing.latestAt).getTime()) {
+          existing.latestAt = row.created_at;
+        }
+      }
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 8);
+  }, [rows]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background p-6">
@@ -125,8 +156,24 @@ export const DashboardErrorLogs: React.FC = () => {
             <p className="text-sm text-text-secondary">No recent errors found.</p>
           </Card>
         ) : (
-          <Card variant="bordered" padding="none" className="overflow-auto">
-            <table className="w-full text-sm min-w-[900px]">
+          <>
+            <Card variant="bordered" padding="lg">
+              <h2 className="text-sm font-semibold text-text-primary mb-2">Top recurring errors</h2>
+              <div className="space-y-2">
+                {grouped.map((g) => (
+                  <div key={g.fingerprint} className="flex items-start justify-between gap-3 text-sm border-b border-border-subtle last:border-0 pb-2 last:pb-0">
+                    <div className="min-w-0">
+                      <p className="text-text-primary truncate">{g.sampleMessage}</p>
+                      <p className="text-xs text-text-tertiary">Latest: {new Date(g.latestAt).toLocaleString()}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full border border-border-subtle bg-surface-subtle whitespace-nowrap">{g.count}x</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+              <Card variant="bordered" padding="none" className="overflow-auto">
+              <table className="w-full text-sm min-w-[900px]">
               <thead className="bg-surface-subtle text-text-secondary">
                 <tr>
                   <th className="text-left px-3 py-2">Time</th>
@@ -149,8 +196,9 @@ export const DashboardErrorLogs: React.FC = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </Card>
+              </table>
+            </Card>
+          </>
         )}
       </div>
     </div>
