@@ -1426,10 +1426,6 @@ Proceed with send?`)) return;
       return;
     }
     setCsvSelectedFilename(file.name);
-    if (!weddingSiteId) {
-      toast('Could not find your wedding site. Refresh and try again.', 'error');
-      return;
-    }
 
     try {
       const lowerName = file.name.toLowerCase();
@@ -1482,6 +1478,21 @@ Proceed with send?`)) return;
 
       if (firstNameIdx < 0 && lastNameIdx < 0 && fullNameIdx < 0) {
         toast('File must include name columns (First/Last or Full Name).', 'error');
+        return;
+      }
+
+      let resolvedSiteId = weddingSiteId;
+      if (!resolvedSiteId && !isDemoMode) {
+        const { data: site } = await supabase
+          .from('wedding_sites')
+          .select('id')
+          .eq('user_id', user?.id)
+          .maybeSingle();
+        resolvedSiteId = (site?.id as string | null) ?? null;
+        if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
+      }
+      if (!resolvedSiteId && !isDemoMode) {
+        toast('Could not find your wedding site. Refresh and try again.', 'error');
         return;
       }
 
@@ -1546,7 +1557,7 @@ Proceed with send?`)) return;
         });
 
         const guest: Record<string, unknown> = {
-          wedding_site_id: weddingSiteId,
+          wedding_site_id: resolvedSiteId,
           first_name: firstName || null,
           last_name: lastName || null,
           name: `${firstName || ''} ${lastName || ''}`.trim() || (email || 'Guest'),
@@ -1591,9 +1602,23 @@ Proceed with send?`)) return;
   };
 
   const confirmCsvImport = async () => {
-    if (!csvPreview || !weddingSiteId) return;
+    if (!csvPreview) return;
     setCsvImporting(true);
     try {
+      let resolvedSiteId = weddingSiteId;
+      if (!resolvedSiteId && !isDemoMode) {
+        const { data: site } = await supabase
+          .from('wedding_sites')
+          .select('id')
+          .eq('user_id', user?.id)
+          .maybeSingle();
+        resolvedSiteId = (site?.id as string | null) ?? null;
+        if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
+      }
+      if (!resolvedSiteId && !isDemoMode) {
+        toast('Could not find your wedding site. Refresh and try again.', 'error');
+        return;
+      }
       if (isDemoMode) {
         const importedGuests = csvPreview.map((g, idx) => ({
           id: `demo-import-${Date.now()}-${idx}`,
