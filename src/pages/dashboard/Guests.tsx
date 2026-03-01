@@ -374,6 +374,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvMappingSummary, setCsvMappingSummary] = useState<{ core: string[]; rsvp: string[]; household: string[]; eventCols: string[] }>({ core: [], rsvp: [], household: [], eventCols: [] });
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvDataRows, setCsvDataRows] = useState<string[][]>([]);
+  const [csvColumnSamples, setCsvColumnSamples] = useState<string[]>([]);
   const [csvFieldMap, setCsvFieldMap] = useState<CsvFieldMap | null>(null);
   const [csvShowMapper, setCsvShowMapper] = useState(false);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1699,24 +1700,33 @@ Proceed with send?`)) return;
       };
 
       const defaultMap: CsvFieldMap = {
-        first_name: findIdx('first name', 'first_name', 'firstname', 'given name', 'given_name'),
-        last_name: findIdx('last name', 'last_name', 'lastname', 'surname', 'family_name', 'family name'),
+        first_name: findIdx('first name', 'first_name', 'firstname', 'given name', 'given_name', 'first'),
+        last_name: findIdx('last name', 'last_name', 'lastname', 'surname', 'family_name', 'family name', 'last'),
         full_name: findIdx('name', 'full name', 'full_name', 'guest_name', 'guest name'),
-        email: findIdx('email', 'email address', 'email_address'),
-        phone: findIdx('phone', 'phone number', 'phone_number', 'mobile', 'cell'),
-        plus_one: findIdx('plus one', 'plus_one', 'plus_one_allowed'),
-        status: findIdx('status', 'rsvp_status', 'rsvp status'),
-        meal_choice: findIdx('meal choice', 'meal_choice', 'meal'),
-        rsvp_date: findIdx('rsvp date', 'rsvp_date', 'responded_at', 'response date'),
-        invite_token: findIdx('invite token', 'invite_token', 'token'),
+        email: findIdx('email', 'email address', 'email_address', 'e-mail', 'mail'),
+        phone: findIdx('phone', 'phone number', 'phone_number', 'mobile', 'cell', 'telephone'),
+        plus_one: findIdx('plus one', 'plus_one', 'plus_one_allowed', 'plus one allowed'),
+        status: findIdx('status', 'rsvp_status', 'rsvp status', 'rsvp'),
+        meal_choice: findIdx('meal choice', 'meal_choice', 'meal', 'meal option', 'meal selection'),
+        rsvp_date: findIdx('rsvp date', 'rsvp_date', 'responded_at', 'response date', 'responded', 'submitted at'),
+        invite_token: findIdx('invite token', 'invite_token', 'token', 'invite code'),
         household_id: findIdx('household_id', 'household id', 'household', 'family_id', 'party_id'),
-        household_name: findIdx('household_name', 'household name', 'family', 'group_name', 'group'),
-        invited_events: findIdx('invited_events', 'invited events', 'events', 'event_invites'),
+        household_name: findIdx('household_name', 'household name', 'family', 'group_name', 'group', 'household group'),
+        invited_events: findIdx('invited_events', 'invited events', 'events', 'event_invites', 'event invites list'),
       };
 
       const filteredRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
+      const samples = headers.map((_, idx) => {
+        for (const row of filteredRows) {
+          const sample = String(row?.[idx] ?? '').trim();
+          if (sample.length > 0) return sample;
+        }
+        return '';
+      });
+
       setCsvHeaders(headers);
       setCsvDataRows(filteredRows);
+      setCsvColumnSamples(samples);
       setCsvFieldMap(defaultMap);
       setCsvShowMapper(true);
     } catch (err) {
@@ -3539,7 +3549,9 @@ Proceed with send?`)) return;
                     >
                       <option value={-1}>— Not mapped —</option>
                       {csvHeaders.map((header, idx) => (
-                        <option key={`${key}-${idx}`} value={idx}>{header || `(column ${idx + 1})`}</option>
+                        <option key={`${key}-${idx}`} value={idx}>
+                          {header || `(column ${idx + 1})`}{csvColumnSamples[idx] ? ` — e.g. ${csvColumnSamples[idx].slice(0, 40)}` : ''}
+                        </option>
                       ))}
                     </select>
                   </label>
