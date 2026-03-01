@@ -1429,7 +1429,7 @@ export const DashboardSeating: React.FC = () => {
           </Button>
           <div className="relative">
             <Button variant="outline" size="sm" onClick={() => setSeatingActionsOpen((v) => !v)}>
-              More actions <ChevronDown className="w-4 h-4 ml-1" />
+              Actions <ChevronDown className="w-4 h-4 ml-1" />
             </Button>
             {seatingActionsOpen && (
               <div className="absolute left-0 top-10 z-20 w-56 rounded-lg border border-border bg-white p-2 shadow-lg space-y-1">

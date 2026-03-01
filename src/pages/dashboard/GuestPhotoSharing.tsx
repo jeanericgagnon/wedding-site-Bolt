@@ -736,7 +736,7 @@ export const GuestPhotoSharing: React.FC = () => {
             <h2 className="text-xl font-semibold text-neutral-900">Albums</h2>
             <div className="relative">
               <Button size="sm" variant="outline" onClick={() => setActionsMenuOpen((v) => !v)}>
-                Album actions
+                Actions
               </Button>
 
               {actionsMenuOpen && (

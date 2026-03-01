@@ -2162,7 +2162,7 @@ Proceed with send?`)) return;
 
                 <div className="relative">
                   <Button variant="outline" size="md" onClick={() => setShowOpsMenu(v => !v)}>
-                    More Actions
+                    Actions
                     <ChevronDown className="w-4 h-4 ml-1" />
                   </Button>
                   {showOpsMenu && (
