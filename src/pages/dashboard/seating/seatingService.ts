@@ -233,7 +233,7 @@ export async function getEligibleGuests(
 ): Promise<EligibleGuest[]> {
   const { data: allGuests, error } = await supabase
     .from('guests')
-    .select('id, full_name, email, rsvp_status, household_id, group_name')
+    .select('id, full_name, name, first_name, last_name, email, rsvp_status, household_id, group_name')
     .eq('wedding_site_id', weddingSiteId);
   if (error) throw error;
   if (!allGuests) return [];
@@ -250,6 +250,10 @@ export async function getEligibleGuests(
   const hasEventInvitations = (invitations ?? []).length > 0;
 
   return allGuests.map(g => {
+    const fullName = (g.full_name as string | null)
+      || (g.name as string | null)
+      || `${(g.first_name as string | null) ?? ''} ${(g.last_name as string | null) ?? ''}`.trim()
+      || 'Guest';
     const eventRsvp = inviteMap.get(g.id);
     const isInvitedToEvent = inviteMap.has(g.id);
 
@@ -262,7 +266,7 @@ export async function getEligibleGuests(
 
     return {
       id: g.id,
-      full_name: g.full_name,
+      full_name: fullName,
       email: g.email,
       rsvp_status: g.rsvp_status,
       household_id: g.household_id,
