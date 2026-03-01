@@ -1132,7 +1132,7 @@ export default function RSVP() {
         )}
 
         {step === 'success' && (
-          <Card className="p-6 md:p-8">
+          <Card className="p-5 md:p-7">
             <div className="text-center mb-6">
               <div className="flex justify-center mb-4">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center ${formData.attending ? 'bg-green-100' : 'bg-neutral-100'}`}>

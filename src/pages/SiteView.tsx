@@ -59,7 +59,7 @@ const PasswordGate: React.FC<{
       </div>
       <div className="flex-1 flex items-center justify-center">
       <div className="max-w-sm w-full">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock className="w-8 h-8 text-stone-200" />
           </div>
