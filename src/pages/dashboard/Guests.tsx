@@ -1426,6 +1426,7 @@ Proceed with send?`)) return;
       return;
     }
     setCsvSelectedFilename(file.name);
+    toast(`Parsing ${file.name}…`, 'success');
 
     try {
       const lowerName = file.name.toLowerCase();
@@ -2512,6 +2513,7 @@ Proceed with send?`)) return;
                   type="file"
                   accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                   onChange={importCSV}
+                  onInput={(e) => importCSV(e as unknown as React.ChangeEvent<HTMLInputElement>)}
                   className="hidden"
                 />
                 <Button
