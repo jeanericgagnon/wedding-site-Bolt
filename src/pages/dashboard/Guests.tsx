@@ -353,6 +353,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvPreview, setCsvPreview] = useState<Record<string, unknown>[] | null>(null);
   const [csvSkipped, setCsvSkipped] = useState<string[]>([]);
   const [csvImporting, setCsvImporting] = useState(false);
+  const [csvUnknownEvents, setCsvUnknownEvents] = useState<string[]>([]);
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
@@ -1451,6 +1452,7 @@ Proceed with send?`)) return;
       }
 
       if (rows.length < 2) {
+        setCsvUnknownEvents([]);
         toast('File appears to be empty or missing a header row.', 'error');
         return;
       }
@@ -1471,14 +1473,24 @@ Proceed with send?`)) return;
       const emailIdx = findIdx('email', 'email address', 'email_address');
       const phoneIdx = findIdx('phone', 'phone number', 'phone_number', 'mobile', 'cell');
       const plusOneIdx = findIdx('plus one', 'plus_one', 'plus_one_allowed');
+      const householdIdIdx = findIdx('household_id', 'household id', 'household', 'family_id', 'party_id');
+      const householdNameIdx = findIdx('household_name', 'household name', 'family', 'group_name', 'group');
+      const invitedEventsIdx = findIdx('invited_events', 'invited events', 'events', 'event_invites');
 
       if (firstNameIdx < 0 && lastNameIdx < 0 && fullNameIdx < 0) {
         toast('File must include name columns (First/Last or Full Name).', 'error');
         return;
       }
 
+      const normalizeEventName = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
+      const itineraryByNormalizedName = new Map(itineraryEvents.map((ev) => [normalizeEventName(ev.event_name), ev.id] as const));
+      const inviteEventColumns = headers
+        .map((h, idx) => ({ h, idx }))
+        .filter(({ h }) => h.startsWith('invite:'));
+
       const dataRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
       const skipped: string[] = [];
+      const unknownEvents = new Set<string>();
       const parsed: Record<string, unknown>[] = [];
 
       dataRows.forEach((row, idx) => {
@@ -1503,6 +1515,32 @@ Proceed with send?`)) return;
         const phone = phoneIdx >= 0 ? (values[phoneIdx] || null) : null;
         const plusRaw = plusOneIdx >= 0 ? (values[plusOneIdx] || '') : '';
         const plusOneAllowed = ['yes', 'true', '1', 'y'].includes(plusRaw.toLowerCase());
+        const householdIdRaw = householdIdIdx >= 0 ? (values[householdIdIdx] || '').trim() : '';
+        const householdNameRaw = householdNameIdx >= 0 ? (values[householdNameIdx] || '').trim() : '';
+        const householdKey = householdIdRaw || householdNameRaw;
+
+        const invitedEventIds = new Set<string>();
+
+        if (invitedEventsIdx >= 0) {
+          const raw = values[invitedEventsIdx] || '';
+          raw.split(/[|,;]/).map((x) => x.trim()).filter(Boolean).forEach((eventName) => {
+            const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
+            if (eventId) invitedEventIds.add(eventId);
+            else unknownEvents.add(eventName);
+          });
+        }
+
+        inviteEventColumns.forEach(({ h, idx: colIdx }) => {
+          const eventName = h.replace(/^invite:/, '').trim();
+          const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
+          if (!eventId) {
+            unknownEvents.add(eventName);
+            return;
+          }
+          const raw = (values[colIdx] || '').toLowerCase().trim();
+          const truthy = ['yes', 'true', '1', 'y', 'invited', 'include'].includes(raw);
+          if (truthy) invitedEventIds.add(eventId);
+        });
 
         const guest: Record<string, unknown> = {
           wedding_site_id: weddingSiteId,
@@ -1511,10 +1549,13 @@ Proceed with send?`)) return;
           name: `${firstName || ''} ${lastName || ''}`.trim() || (email || 'Guest'),
           email,
           phone,
+          group_name: householdNameRaw || null,
           plus_one_allowed: plusOneAllowed,
           rsvp_status: 'pending',
           invited_to_ceremony: true,
           invited_to_reception: true,
+          __household_key: householdKey || null,
+          __invited_event_ids: Array.from(invitedEventIds),
         };
 
         if (!firstName && !lastName && !email) {
@@ -1526,15 +1567,19 @@ Proceed with send?`)) return;
       });
 
       if (parsed.length === 0) {
+        setCsvUnknownEvents([]);
         toast('No valid guests found in the file. All rows were skipped.', 'error');
         return;
       }
 
       setCsvPreview(parsed);
       setCsvSkipped(skipped);
+      setCsvUnknownEvents(Array.from(unknownEvents));
       const skippedMsg = skipped.length > 0 ? ` (${skipped.length} skipped)` : '';
-      toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}.`, 'success');
+      const unknownMsg = unknownEvents.size > 0 ? `, ${unknownEvents.size} unknown event name${unknownEvents.size === 1 ? '' : 's'}` : '';
+      toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}.`, 'success');
     } catch (err) {
+      setCsvUnknownEvents([]);
       const msg = err instanceof Error ? err.message : 'Failed to parse guest file';
       toast(msg, 'error');
     } finally {
@@ -1561,7 +1606,8 @@ Proceed with send?`)) return;
           invite_token: generateLocalInviteToken(),
           rsvp_status: 'pending',
           rsvp_received_at: null,
-          household_id: null,
+          household_id: (g.__household_key as string | null) || null,
+          group_name: (g.group_name as string | null) || null,
         } as GuestWithRSVP));
 
         setGuests(prev => [...importedGuests, ...prev]);
@@ -1569,19 +1615,67 @@ Proceed with send?`)) return;
         toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
         setCsvPreview(null);
         setCsvSkipped([]);
+        setCsvUnknownEvents([]);
         return;
       }
 
       const guestsWithTokens = await Promise.all(
         csvPreview.map(async g => ({ ...g, invite_token: await generateSecureToken() }))
       );
-      const { error } = await supabase.from('guests').insert(guestsWithTokens);
+
+      const guestRows = guestsWithTokens.map((g) => {
+        const row = { ...g } as Record<string, unknown>;
+        delete row.__household_key;
+        delete row.__invited_event_ids;
+        return row;
+      });
+
+      const { data: insertedGuests, error } = await supabase
+        .from('guests')
+        .insert(guestRows)
+        .select('id, first_name, last_name, name, email');
       if (error) throw error;
+
+      const inserted = insertedGuests ?? [];
+      const keyToGuestIds = new Map<string, string[]>();
+      guestsWithTokens.forEach((row, idx) => {
+        const key = row.__household_key as string | null | undefined;
+        if (!key) return;
+        const guestId = inserted[idx]?.id as string | undefined;
+        if (!guestId) return;
+        const existing = keyToGuestIds.get(key) ?? [];
+        existing.push(guestId);
+        keyToGuestIds.set(key, existing);
+      });
+
+      for (const [, ids] of keyToGuestIds) {
+        if (ids.length < 2) continue;
+        const householdId = ids[0];
+        await supabase.from('guests').update({ household_id: householdId }).in('id', ids);
+      }
+
+      const eventInviteRows: Array<{ event_id: string; guest_id: string }> = [];
+      guestsWithTokens.forEach((row, idx) => {
+        const guestId = inserted[idx]?.id as string | undefined;
+        if (!guestId) return;
+        const eventIds = (row.__invited_event_ids as string[] | undefined) ?? [];
+        eventIds.forEach((eventId) => eventInviteRows.push({ event_id: eventId, guest_id: guestId }));
+      });
+
+      if (eventInviteRows.length > 0) {
+        const { error: inviteError } = await supabase.from('event_invitations').insert(eventInviteRows);
+        if (inviteError) throw inviteError;
+      }
+
       await fetchGuests();
       const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
-      toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
+      const householdsMsg = keyToGuestIds.size > 0 ? `, ${keyToGuestIds.size} household key${keyToGuestIds.size === 1 ? '' : 's'}` : '';
+      const eventsMsg = eventInviteRows.length > 0 ? `, ${eventInviteRows.length} event invite${eventInviteRows.length === 1 ? '' : 's'}` : '';
+      const unknownEventsMsg = csvUnknownEvents.length > 0 ? `, ${csvUnknownEvents.length} unknown event name${csvUnknownEvents.length === 1 ? '' : 's'}` : '';
+      toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
       setCsvPreview(null);
       setCsvSkipped([]);
+      setCsvUnknownEvents([]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       toast(`Import failed: ${msg}`, 'error');
@@ -3154,7 +3248,7 @@ Proceed with send?`)) return;
 
       {csvPreview && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => !csvImporting && setCsvPreview(null)} />
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); } }} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-border-subtle">
@@ -3166,7 +3260,7 @@ Proceed with send?`)) return;
                   </p>
                 </div>
                 {!csvImporting && (
-                  <button onClick={() => setCsvPreview(null)} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
+                  <button onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); }} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
                     <X className="w-5 h-5 text-text-secondary" />
                   </button>
                 )}
@@ -3182,6 +3276,16 @@ Proceed with send?`)) return;
                   </div>
                 )}
 
+                {csvUnknownEvents.length > 0 && (
+                  <div className="mb-4 p-3 bg-surface-subtle border border-border rounded-lg">
+                    <p className="text-xs font-medium text-text-primary mb-1">Unmatched itinerary event names ({csvUnknownEvents.length})</p>
+                    <p className="text-xs text-text-secondary mb-1">These names were not found in your itinerary and will be ignored for event invites.</p>
+                    <ul className="space-y-0.5">
+                      {csvUnknownEvents.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-text-secondary">• {name}</li>)}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="divide-y divide-border-subtle">
                   {csvPreview.slice(0, 50).map((g, i) => (
                     <div key={i} className="py-2.5 flex items-center gap-4">
@@ -3193,6 +3297,7 @@ Proceed with send?`)) return;
                           {String(g.first_name || '')} {String(g.last_name || '')}
                         </p>
                         {Boolean(g.email) && <p className="text-xs text-text-secondary truncate">{String(g.email)}</p>}
+                        {Boolean(g.group_name) && <p className="text-[11px] text-text-tertiary truncate">Household: {String(g.group_name)}</p>}
                       </div>
                       {Boolean(g.plus_one_allowed) && (
                         <span className="text-xs px-2 py-0.5 bg-surface-subtle rounded-full text-text-secondary flex-shrink-0">+1</span>
@@ -3208,7 +3313,7 @@ Proceed with send?`)) return;
               </div>
 
               <div className="flex gap-3 p-6 border-t border-border-subtle">
-                <Button variant="outline" fullWidth onClick={() => setCsvPreview(null)} disabled={csvImporting}>
+                <Button variant="outline" fullWidth onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); }} disabled={csvImporting}>
                   Cancel
                 </Button>
                 <Button variant="primary" fullWidth onClick={confirmCsvImport} disabled={csvImporting}>
