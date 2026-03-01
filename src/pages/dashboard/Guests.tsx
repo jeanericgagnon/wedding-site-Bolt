@@ -1419,6 +1419,38 @@ Proceed with send?`)) return;
     exportCSV(guests.filter((g) => g.rsvp?.attending && !g.rsvp?.meal_choice), 'guests-missing-meal');
   };
 
+  const handleNuclearDeleteAllGuests = async () => {
+    if (!weddingSiteId || isDemoMode) {
+      toast('Nuclear delete is unavailable in demo mode.', 'error');
+      return;
+    }
+
+    const required = String(guests.length);
+    if (nuclearConfirmInput.trim() !== required) {
+      toast(`Type ${required} to confirm deletion.`, 'error');
+      return;
+    }
+
+    setNuclearDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .delete()
+        .eq('wedding_site_id', weddingSiteId);
+      if (error) throw error;
+
+      await fetchGuests();
+      setSelectedGuestIds(new Set());
+      setShowNuclearDeleteModal(false);
+      setNuclearConfirmInput('');
+      toast(`Deleted ${required} guests.`, 'success');
+    } catch {
+      toast('Failed to delete all guests. Please try again.', 'error');
+    } finally {
+      setNuclearDeleting(false);
+    }
+  };
+
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
@@ -2093,6 +2125,9 @@ Proceed with send?`)) return;
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [showNuclearDeleteModal, setShowNuclearDeleteModal] = useState(false);
+  const [nuclearConfirmInput, setNuclearConfirmInput] = useState('');
+  const [nuclearDeleting, setNuclearDeleting] = useState(false);
 
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
@@ -2601,6 +2636,18 @@ Proceed with send?`)) return;
                         window.alert(`Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`);
                         setShowOpsMenu(false);
                       }}>Dry run</button>
+                      <div className="my-1 border-t border-border-subtle" />
+                      <button
+                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                        disabled={guests.length === 0 || isDemoMode}
+                        onClick={() => {
+                          setShowOpsMenu(false);
+                          setNuclearConfirmInput('');
+                          setShowNuclearDeleteModal(true);
+                        }}
+                      >
+                        Nuclear delete all guests
+                      </button>
                     </div>
                   )}
                 </div>
@@ -3289,6 +3336,47 @@ Proceed with send?`)) return;
                 </p>
               </div>
             )}
+          </div>
+        </>
+      )}
+
+      {showNuclearDeleteModal && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => !nuclearDeleting && setShowNuclearDeleteModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md">
+              <div className="p-6 border-b border-border-subtle">
+                <h2 className="text-lg font-semibold text-text-primary">Nuclear delete all guests</h2>
+                <p className="text-sm text-text-secondary mt-1">This permanently deletes every guest in this site.</p>
+              </div>
+              <div className="p-6 space-y-3">
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  Type <span className="font-semibold">{guests.length}</span> to confirm deletion.
+                </div>
+                <input
+                  type="text"
+                  value={nuclearConfirmInput}
+                  onChange={(e) => setNuclearConfirmInput(e.target.value)}
+                  placeholder={`Type ${guests.length}`}
+                  className="w-full rounded-md border border-border px-3 py-2 text-sm"
+                  disabled={nuclearDeleting}
+                />
+              </div>
+              <div className="p-6 pt-0 flex gap-2">
+                <Button variant="outline" fullWidth disabled={nuclearDeleting} onClick={() => setShowNuclearDeleteModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  fullWidth
+                  className="!bg-red-600 hover:!bg-red-700"
+                  disabled={nuclearDeleting || nuclearConfirmInput.trim() !== String(guests.length)}
+                  onClick={handleNuclearDeleteAllGuests}
+                >
+                  {nuclearDeleting ? 'Deleting…' : 'Delete all guests'}
+                </Button>
+              </div>
+            </div>
           </div>
         </>
       )}
