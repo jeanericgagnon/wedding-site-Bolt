@@ -28,6 +28,8 @@ export const DashboardErrorLogs: React.FC = () => {
   const [logsLoading, setLogsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [severityFilter, setSeverityFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all');
+  const [routeFilter, setRouteFilter] = useState('all');
 
   useEffect(() => {
     let mounted = true;
@@ -88,9 +90,21 @@ export const DashboardErrorLogs: React.FC = () => {
     };
   }, [isAdmin]);
 
+  const filteredRows = useMemo(() => rows.filter((row) => {
+    const severityOk = severityFilter === 'all' ? true : row.severity === severityFilter;
+    const routeOk = routeFilter === 'all' ? true : (row.route || '—') === routeFilter;
+    return severityOk && routeOk;
+  }), [rows, severityFilter, routeFilter]);
+
+  const routeOptions = useMemo(() => {
+    const values = new Set<string>();
+    for (const r of rows) values.add(r.route || '—');
+    return ['all', ...Array.from(values).sort()];
+  }, [rows]);
+
   const grouped = useMemo<GroupedError[]>(() => {
     const map = new Map<string, GroupedError>();
-    for (const row of rows) {
+    for (const row of filteredRows) {
       const key = row.fingerprint || `no-fp:${row.message.slice(0, 80)}`;
       const existing = map.get(key);
       if (!existing) {
@@ -109,7 +123,7 @@ export const DashboardErrorLogs: React.FC = () => {
       }
     }
     return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 8);
-  }, [rows]);
+  }, [filteredRows]);
 
   if (loading) {
     return (
@@ -157,7 +171,35 @@ export const DashboardErrorLogs: React.FC = () => {
           </Card>
         ) : (
           <>
-            <Card variant="bordered" padding="lg">
+            <Card variant="bordered" padding="lg" className="space-y-3">
+              <div className="flex flex-wrap gap-2 items-end">
+                <label className="text-xs text-text-secondary">
+                  Severity
+                  <select
+                    value={severityFilter}
+                    onChange={(e) => setSeverityFilter(e.target.value as 'all' | 'error' | 'warning' | 'info')}
+                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white"
+                  >
+                    <option value="all">All</option>
+                    <option value="error">Error</option>
+                    <option value="warning">Warning</option>
+                    <option value="info">Info</option>
+                  </select>
+                </label>
+                <label className="text-xs text-text-secondary">
+                  Route
+                  <select
+                    value={routeFilter}
+                    onChange={(e) => setRouteFilter(e.target.value)}
+                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white"
+                  >
+                    {routeOptions.map((r) => (
+                      <option key={r} value={r}>{r === 'all' ? 'All routes' : r}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
               <h2 className="text-sm font-semibold text-text-primary mb-2">Top recurring errors</h2>
               <div className="space-y-2">
                 {grouped.map((g) => (
@@ -185,7 +227,7 @@ export const DashboardErrorLogs: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {filteredRows.map((r) => (
                   <tr key={r.id} className="border-t border-border-subtle align-top">
                     <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
                     <td className="px-3 py-2">{r.severity}</td>
