@@ -370,6 +370,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvSkipped, setCsvSkipped] = useState<string[]>([]);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvUnknownEvents, setCsvUnknownEvents] = useState<string[]>([]);
+  const [csvDuplicateNames, setCsvDuplicateNames] = useState<string[]>([]);
   const [csvSelectedFilename, setCsvSelectedFilename] = useState<string | null>(null);
   const [csvMappingSummary, setCsvMappingSummary] = useState<{ core: string[]; rsvp: string[]; household: string[]; eventCols: string[] }>({ core: [], rsvp: [], household: [], eventCols: [] });
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -379,6 +380,16 @@ export const DashboardGuests: React.FC = () => {
   const [csvShowMapper, setCsvShowMapper] = useState(false);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
   const csvNameMappingValid = !!csvFieldMap && csvFieldMap.first_name >= 0 && csvFieldMap.last_name >= 0;
+  const csvColumnLetter = (index: number) => {
+    let n = index + 1;
+    let out = '';
+    while (n > 0) {
+      const rem = (n - 1) % 26;
+      out = String.fromCharCode(65 + rem) + out;
+      n = Math.floor((n - 1) / 26);
+    }
+    return out;
+  };
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
@@ -1623,8 +1634,22 @@ Proceed with send?`)) return;
       });
     });
 
+    const duplicateNameCounts = new Map<string, number>();
+    parsed.forEach((row) => {
+      const key = `${String(row.first_name || '').trim().toLowerCase()}|${String(row.last_name || '').trim().toLowerCase()}`;
+      if (!key || key === '|') return;
+      duplicateNameCounts.set(key, (duplicateNameCounts.get(key) || 0) + 1);
+    });
+    const duplicateNames = Array.from(duplicateNameCounts.entries())
+      .filter(([, count]) => count > 1)
+      .map(([key, count]) => {
+        const [first, last] = key.split('|');
+        return `${first} ${last} (${count})`;
+      });
+
     if (parsed.length === 0) {
       setCsvUnknownEvents([]);
+      setCsvDuplicateNames([]);
       toast('No valid guests found in the file. All rows were skipped.', 'error');
       return;
     }
@@ -1632,10 +1657,12 @@ Proceed with send?`)) return;
     setCsvPreview(parsed);
     setCsvSkipped(skipped);
     setCsvUnknownEvents(Array.from(unknownEvents));
+    setCsvDuplicateNames(duplicateNames);
     setCsvShowMapper(false);
     const skippedMsg = skipped.length > 0 ? ` (${skipped.length} skipped)` : '';
     const unknownMsg = unknownEvents.size > 0 ? `, ${unknownEvents.size} unknown event name${unknownEvents.size === 1 ? '' : 's'}` : '';
-    toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}.`, 'success');
+    const dupMsg = duplicateNames.length > 0 ? `, ${duplicateNames.length} duplicate name${duplicateNames.length === 1 ? '' : 's'} flagged` : '';
+    toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}${dupMsg}.`, 'success');
   }, [isDemoMode, itineraryEvents, supabase, user?.id, weddingSiteId, toast]);
 
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1672,6 +1699,7 @@ Proceed with send?`)) return;
 
       if (rows.length < 2) {
         setCsvUnknownEvents([]);
+        setCsvDuplicateNames([]);
         toast('File appears to be empty or missing a header row.', 'error');
         return;
       }
@@ -1681,6 +1709,10 @@ Proceed with send?`)) return;
       const findIdx = (...candidates: string[]) => {
         for (const c of candidates) {
           const i = headers.indexOf(c);
+          if (i >= 0) return i;
+        }
+        for (const c of candidates) {
+          const i = headers.findIndex((h) => h.includes(c));
           if (i >= 0) return i;
         }
         return -1;
@@ -1718,6 +1750,7 @@ Proceed with send?`)) return;
       setCsvShowMapper(true);
     } catch (err) {
       setCsvUnknownEvents([]);
+      setCsvDuplicateNames([]);
       const msg = err instanceof Error ? err.message : 'Failed to parse guest file';
       toast(msg, 'error');
     } finally {
@@ -1768,6 +1801,7 @@ Proceed with send?`)) return;
         setCsvPreview(null);
         setCsvSkipped([]);
         setCsvUnknownEvents([]);
+        setCsvDuplicateNames([]);
         setCsvSelectedFilename(null);
         setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] });
         return;
@@ -1858,6 +1892,7 @@ Proceed with send?`)) return;
       setCsvPreview(null);
       setCsvSkipped([]);
       setCsvUnknownEvents([]);
+      setCsvDuplicateNames([]);
       setCsvSelectedFilename(null);
       setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] });
     } catch (err) {
@@ -3541,7 +3576,7 @@ Proceed with send?`)) return;
                       <option value={-1}>— Not mapped —</option>
                       {csvHeaders.map((header, idx) => (
                         <option key={`${key}-${idx}`} value={idx}>
-                          {header || `(column ${idx + 1})`}{csvColumnSamples[idx] ? ` — e.g. ${csvColumnSamples[idx].slice(0, 40)}` : ''}
+                          ({csvColumnLetter(idx)}) {header || `column ${idx + 1}`} → {csvColumnSamples[idx] ? csvColumnSamples[idx].slice(0, 40) : 'example'}
                         </option>
                       ))}
                     </select>
@@ -3566,7 +3601,7 @@ Proceed with send?`)) return;
 
       {csvPreview && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] }); } }} />
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] }); } }} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-border-subtle">
@@ -3578,7 +3613,7 @@ Proceed with send?`)) return;
                   </p>
                 </div>
                 {!csvImporting && (
-                  <button onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] }); }} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
+                  <button onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] }); }} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
                     <X className="w-5 h-5 text-text-secondary" />
                   </button>
                 )}
@@ -3615,6 +3650,16 @@ Proceed with send?`)) return;
                   </div>
                 )}
 
+                {csvDuplicateNames.length > 0 && (
+                  <div className="mb-4 p-3 bg-warning-light border border-warning/20 rounded-lg">
+                    <p className="text-xs font-medium text-warning mb-1">Duplicate full names flagged ({csvDuplicateNames.length})</p>
+                    <p className="text-xs text-warning/80 mb-1">These guests share the same First + Last name. Import will continue, but review to avoid unintended duplicates.</p>
+                    <ul className="space-y-0.5">
+                      {csvDuplicateNames.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-warning/80">• {name}</li>)}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="divide-y divide-border-subtle">
                   {csvPreview.slice(0, 50).map((g, i) => (
                     <div key={i} className="py-2.5 flex items-center gap-4">
@@ -3647,7 +3692,7 @@ Proceed with send?`)) return;
               </div>
 
               <div className="flex gap-3 p-6 border-t border-border-subtle">
-                <Button variant="outline" fullWidth onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); }} disabled={csvImporting}>
+                <Button variant="outline" fullWidth onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); }} disabled={csvImporting}>
                   Cancel
                 </Button>
                 <Button variant="primary" fullWidth onClick={confirmCsvImport} disabled={csvImporting}>
