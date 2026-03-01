@@ -42,6 +42,9 @@ export const DashboardItinerary: React.FC = () => {
   const [editingEvent, setEditingEvent] = useState<ItineraryEvent | null>(null);
   const [autoCreateAlbum, setAutoCreateAlbum] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
 
   const [formData, setFormData] = useState({
     event_name: '',
@@ -204,11 +207,16 @@ export const DashboardItinerary: React.FC = () => {
         is_visible: true,
       });
     }
+    setSaveError(null);
+    setSaveNotice(null);
     setShowEventForm(true);
   }
 
   async function handleSaveEvent(e: React.FormEvent) {
     e.preventDefault();
+
+    setSaveError(null);
+    setSaveNotice(null);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -216,7 +224,7 @@ export const DashboardItinerary: React.FC = () => {
     selectedDate.setHours(0, 0, 0, 0);
 
     if (!formData.event_date || Number.isNaN(selectedDate.getTime()) || selectedDate <= today) {
-      alert('Event date must be in the future.');
+      setSaveError('Event date must be in the future.');
       return;
     }
 
@@ -226,12 +234,13 @@ export const DashboardItinerary: React.FC = () => {
         return h * 60 + (m || 0);
       };
       if (toMinutes(formData.end_time) <= toMinutes(formData.start_time)) {
-        alert('End time must be after start time.');
+        setSaveError('End time must be after start time.');
         return;
       }
     }
 
     try {
+      setIsSavingEvent(true);
       if (isDemoMode) {
         if (editingEvent) {
           setEvents(prev => prev.map(e => e.id === editingEvent.id ? { ...e, ...formData, end_time: formData.end_time || null, dress_code: formData.dress_code || null, notes: formData.notes || null } : e));
@@ -250,11 +259,15 @@ export const DashboardItinerary: React.FC = () => {
           }] as EventWithInvites[]));
         }
         setShowEventForm(false);
+        setSaveNotice(editingEvent ? 'Event updated.' : 'Event created.');
         return;
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setSaveError('Please log in again and retry.');
+        return;
+      }
 
       const { data: site } = await supabase
         .from('wedding_sites')
@@ -262,7 +275,10 @@ export const DashboardItinerary: React.FC = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (!site) return;
+      if (!site) {
+        setSaveError('Could not find your wedding site. Please refresh and try again.');
+        return;
+      }
 
       const payload: Record<string, unknown> = {
         ...formData,
@@ -333,10 +349,13 @@ export const DashboardItinerary: React.FC = () => {
       }
 
       setShowEventForm(false);
+      setSaveNotice(editingEvent ? 'Event updated.' : 'Event created.');
       loadEvents();
     } catch (err: unknown) {
       const message = (err as { message?: string })?.message || 'Failed to save event. Please try again.';
-      alert(message);
+      setSaveError(message);
+    } finally {
+      setIsSavingEvent(false);
     }
   }
 
@@ -581,9 +600,21 @@ export const DashboardItinerary: React.FC = () => {
               </div>
             )}
 
+            {saveError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {saveError}
+              </div>
+            )}
+
+            {saveNotice && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                {saveNotice}
+              </div>
+            )}
+
             <div className="flex gap-3 pt-4">
-              <Button type="submit">
-                {editingEvent ? 'Save Changes' : 'Create Event'}
+              <Button type="submit" disabled={isSavingEvent}>
+                {isSavingEvent ? 'Saving…' : (editingEvent ? 'Save Changes' : 'Create Event')}
               </Button>
               <Button
                 type="button"
@@ -591,6 +622,7 @@ export const DashboardItinerary: React.FC = () => {
                 onClick={() => {
                   setShowEventForm(false);
                   setEditingEvent(null);
+                  setSaveError(null);
                 }}
               >
                 Cancel
