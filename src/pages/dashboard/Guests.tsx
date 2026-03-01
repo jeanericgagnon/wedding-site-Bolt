@@ -380,7 +380,8 @@ export const DashboardGuests: React.FC = () => {
   const [csvFieldMap, setCsvFieldMap] = useState<CsvFieldMap | null>(null);
   const [csvShowMapper, setCsvShowMapper] = useState(false);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
-  const cleanGuestsView = true;
+  const [showInsights, setShowInsights] = useState(false);
+  const cleanGuestsView = !showInsights;
   const csvNameMappingValid = !!csvFieldMap && csvFieldMap.first_name >= 0 && csvFieldMap.last_name >= 0;
   const csvColumnLetter = (index: number) => {
     let n = index + 1;
@@ -2472,9 +2473,17 @@ Proceed with send?`)) return;
         <div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
           <p className="text-text-secondary">Manage your guest list and see responses</p>
-          <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
-            <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
-            <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
+              <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
+              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+            </div>
+            <button
+              onClick={() => setShowInsights(v => !v)}
+              className="px-3 py-1.5 text-xs rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+            >
+              {showInsights ? 'Hide insights' : 'Show insights'}
+            </button>
           </div>
         </div>
 
@@ -3189,15 +3198,15 @@ Proceed with send?`)) return;
             ) : (
               <>
                 <div className="border border-border rounded-lg overflow-hidden">
-                  <table className="w-full">
+                  <table className="w-full text-sm">
                     <thead className="bg-surface-subtle border-b border-border">
                       <tr>
-                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary">Guest</th>
-                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary">Status</th>
-                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden md:table-cell">Plus One</th>
-                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden lg:table-cell">Meal Choice</th>
-                        <th className="text-left px-6 py-3 text-sm font-semibold text-text-secondary hidden xl:table-cell">Invite Code</th>
-                        <th className="text-right px-6 py-3 text-sm font-semibold text-text-secondary">Actions</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">Guest</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">Status</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary hidden md:table-cell">Plus One</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary hidden lg:table-cell">Meal Choice</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary hidden xl:table-cell">Invite Code</th>
+                        <th className="text-right px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-subtle">
@@ -3207,10 +3216,10 @@ Proceed with send?`)) return;
                           className="hover:bg-surface-subtle transition-colors cursor-pointer"
                           onClick={() => openItineraryDrawer(guest)}
                         >
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-2.5">
                             <div className="flex items-center gap-2">
                               <div>
-                                <p className="font-medium text-text-primary">
+                                <p className="text-sm font-medium text-text-primary">
                                   {guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}
                                 </p>
                                 <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
@@ -3218,7 +3227,7 @@ Proceed with send?`)) return;
                               <ChevronRight className="w-3.5 h-3.5 text-text-tertiary ml-1 opacity-0 group-hover:opacity-100" />
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-2.5">
                             <div className="flex flex-col gap-1">
                               {getStatusBadge(guest.rsvp_status)}
                               {guest.rsvp_received_at && guest.rsvp_status !== 'pending' && (
@@ -3264,18 +3273,18 @@ Proceed with send?`)) return;
                               })()}
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-text-secondary hidden md:table-cell">
+                          <td className="px-4 py-2.5 text-text-secondary hidden md:table-cell">
                             {guest.plus_one_allowed ? (guest.rsvp?.plus_one_name || 'Allowed') : 'No'}
                           </td>
-                          <td className="px-6 py-4 text-text-secondary hidden lg:table-cell">
+                          <td className="px-4 py-2.5 text-text-secondary hidden lg:table-cell">
                             {guest.rsvp?.meal_choice || '—'}
                           </td>
-                          <td className="px-6 py-4 hidden xl:table-cell">
+                          <td className="px-4 py-2.5 hidden xl:table-cell">
                             <code className="text-xs bg-surface-subtle px-2 py-1 rounded font-mono">
                               {guest.invite_token?.slice(0, 12) || '—'}
                             </code>
                           </td>
-                          <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
+                          <td className="px-4 py-2.5 text-right" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-end gap-2">
                               <Button
                                 variant="ghost"
