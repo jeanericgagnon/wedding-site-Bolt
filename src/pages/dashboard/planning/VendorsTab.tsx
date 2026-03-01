@@ -226,7 +226,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-semibold text-text-primary">{vendor.name}</p>
                           <Badge variant="neutral">{vendor.vendor_type}</Badge>
-                          {isDueSoon && <Badge variant="warning">Payment due soon</Badge>}
+                          {isDueSoon && <Badge variant="warning">Payment coming up</Badge>}
                         </div>
                         {vendor.contact_name && (
                           <p className="text-xs text-text-tertiary mt-0.5">{vendor.contact_name}</p>
@@ -236,7 +236,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                             <div className="flex items-center justify-between text-xs text-text-tertiary mb-1">
                               <span>Paid {fmt(vendor.amount_paid)} of {fmt(vendor.contract_total)}</span>
                               <span className={vendor.balance_due > 0 ? 'text-warning font-medium' : 'text-success'}>
-                                {vendor.balance_due > 0 ? `${fmt(vendor.balance_due)} due` : 'Paid in full'}
+                                {vendor.balance_due > 0 ? `${fmt(vendor.balance_due)} remaining` : 'Paid in full'}
                               </span>
                             </div>
                             <div className="h-1.5 bg-surface-subtle rounded-full overflow-hidden">
@@ -282,7 +282,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                         </div>
                         {vendor.next_payment_due && (
                           <p className="text-xs text-text-secondary">
-                            Next payment: <span className={`font-medium ${isDueSoon ? 'text-warning' : 'text-text-primary'}`}>
+                            Next payment date: <span className={`font-medium ${isDueSoon ? 'text-warning' : 'text-text-primary'}`}>
                               {new Date(vendor.next_payment_due).toLocaleDateString()}
                             </span>
                           </p>

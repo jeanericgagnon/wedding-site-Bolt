@@ -63,7 +63,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{overdueTasks.length}</p>
-                <p className="text-sm text-text-secondary">Overdue tasks</p>
+                <p className="text-sm text-text-secondary">Tasks to revisit</p>
               </div>
             </div>
           </Card>
@@ -195,7 +195,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
         <Card padding="md" className="border-warning/40 bg-warning/5">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5 text-warning" />
-            <h3 className="font-semibold text-text-primary">Vendor Payments Due Soon</h3>
+            <h3 className="font-semibold text-text-primary">Upcoming Vendor Payments</h3>
           </div>
           <div className="space-y-2">
             {dueSoonVendors.map(v => (

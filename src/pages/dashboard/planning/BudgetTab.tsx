@@ -210,7 +210,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
         <div className="flex items-start gap-2 p-3 bg-error/5 border border-error/20 rounded-xl text-sm">
           <AlertTriangle className="w-4 h-4 text-error flex-shrink-0 mt-0.5" />
           <span className="text-text-primary">
-            Over budget: <span className="font-medium text-error">{overBudgetCategories.join(', ')}</span>
+            Worth reviewing: <span className="font-medium text-error">{overBudgetCategories.join(', ')}</span>
           </span>
         </div>
       )}
