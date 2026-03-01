@@ -2725,40 +2725,6 @@ Proceed with send?`)) return;
                   {csvImporting ? 'Parsing…' : 'Import Guests'}
                 </Button>
 
-                <div className="relative">
-                  <Button variant="outline" size="md" onClick={() => setShowExportMenu(v => !v)}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Export
-                    <ChevronDown className="w-4 h-4 ml-1" />
-                  </Button>
-                  {showExportMenu && (
-                    <div className="absolute left-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg shadow-lg p-1 flex flex-col gap-1">
-                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowExportMenu(false); }}>
-                        Export all guests
-                      </button>
-                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowExportMenu(false); }}>
-                        Export filtered guests
-                      </button>
-                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowExportMenu(false); }}>
-                        Export RSVP responders
-                      </button>
-                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowExportMenu(false); }}>
-                        Export pending RSVP
-                      </button>
-                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowExportMenu(false); }}>
-                        Export missing meal choices
-                      </button>
-                      <button className="block w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowExportMenu(false); }}>
-                        Copy filtered emails
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <Button variant="outline" size="md" onClick={handleSendBulkInvitations} disabled={bulkSending || reminderCandidates.length === 0} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  {bulkSending ? 'Sending…' : `Remind Filtered (${reminderCandidates.length})`}
-                </Button>
 
                 <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
                   <UserPlus className="w-4 h-4 mr-2" />
@@ -2772,7 +2738,13 @@ Proceed with send?`)) return;
                   </Button>
                   {showOpsMenu && (
                     <div className="absolute right-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg shadow-lg p-1 max-h-96 overflow-auto">
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyOpsSummary(); setShowOpsMenu(false); }}>Copy ops summary</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowOpsMenu(false); }}>Export all guests</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowOpsMenu(false); }}>Export filtered guests</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowOpsMenu(false); }}>Export RSVP responders</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowOpsMenu(false); }}>Export pending RSVP</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowOpsMenu(false); }}>Export missing meal choices</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
                         const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
