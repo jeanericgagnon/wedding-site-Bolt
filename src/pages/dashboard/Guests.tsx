@@ -247,6 +247,7 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
   const [rsvpConflictHistory, setRsvpConflictHistory] = useState<RsvpConflict[]>([]);
   const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
+  const [showConflictDetails, setShowConflictDetails] = useState(false);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const rsvpConfigLoadedRef = useRef(false);
 
@@ -1991,35 +1992,48 @@ Proceed with send?`)) return;
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
-                <p className="text-[10px] uppercase text-error/70">Open now</p>
-                <p className="text-sm font-semibold text-error">{rsvpConflictStats.openNow}</p>
-              </div>
-              <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
-                <p className="text-[10px] uppercase text-error/70">Opened (24h)</p>
-                <p className="text-sm font-semibold text-error">{rsvpConflictStats.opened24h}</p>
-              </div>
-              <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
-                <p className="text-[10px] uppercase text-error/70">Resolved (24h)</p>
-                <p className="text-sm font-semibold text-error">{rsvpConflictStats.resolved24h}</p>
-              </div>
+            <div className="text-xs text-error/90">
+              {rsvpConflictStats.unresolvedOver72h > 0
+                ? `${rsvpConflictStats.unresolvedOver72h} item${rsvpConflictStats.unresolvedOver72h === 1 ? '' : 's'} have been waiting over 3 days.`
+                : rsvpConflictStats.unresolvedOver24h > 0
+                  ? `${rsvpConflictStats.unresolvedOver24h} item${rsvpConflictStats.unresolvedOver24h === 1 ? '' : 's'} have been waiting over a day.`
+                  : 'You have RSVP items ready for review.'}
             </div>
 
-            <div className="flex flex-wrap gap-2 text-[11px]">
-              <span className={`px-2 py-1 rounded border ${rsvpConflictStats.unresolvedOver24h > 0 ? 'bg-warning-light text-warning border-warning/30' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                Unresolved &gt;24h: {rsvpConflictStats.unresolvedOver24h}
-              </span>
-              <span className={`px-2 py-1 rounded border ${rsvpConflictStats.unresolvedOver72h > 0 ? 'bg-error-light text-error border-error/30' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                Unresolved &gt;72h: {rsvpConflictStats.unresolvedOver72h}
-              </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowConflictDetails((v) => !v)}
+              >
+                {showConflictDetails ? 'Hide details' : 'View details'}
+              </Button>
             </div>
 
-            {rsvpConflictStats.topCodes.length > 0 && (
-              <div className="text-[11px] text-error/90">
-                <span className="font-semibold">Top conflict codes:</span>{' '}
-                {rsvpConflictStats.topCodes.map((c) => `${c.code} (${c.count})`).join(' · ')}
-              </div>
+            {showConflictDetails && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
+                    <p className="text-[10px] uppercase text-error/70">Open now</p>
+                    <p className="text-sm font-semibold text-error">{rsvpConflictStats.openNow}</p>
+                  </div>
+                  <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
+                    <p className="text-[10px] uppercase text-error/70">Opened (24h)</p>
+                    <p className="text-sm font-semibold text-error">{rsvpConflictStats.opened24h}</p>
+                  </div>
+                  <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
+                    <p className="text-[10px] uppercase text-error/70">Resolved (24h)</p>
+                    <p className="text-sm font-semibold text-error">{rsvpConflictStats.resolved24h}</p>
+                  </div>
+                </div>
+
+                {rsvpConflictStats.topCodes.length > 0 && (
+                  <div className="text-[11px] text-error/90">
+                    <span className="font-semibold">Top reasons:</span>{' '}
+                    {rsvpConflictStats.topCodes.map((c) => `${c.code} (${c.count})`).join(' · ')}
+                  </div>
+                )}
+              </>
             )}
 
             <ul className="space-y-1.5">
