@@ -241,6 +241,14 @@ export const DashboardGuests: React.FC = () => {
   const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
   const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
   const [eventInviteGuestMap, setEventInviteGuestMap] = useState<Map<string, Set<string>>>(new Map());
+
+  const effectiveItineraryEvents = useMemo<ItineraryEvent[]>(() => {
+    if (itineraryFilterEvents.length > 0) return itineraryFilterEvents;
+    return [
+      { id: 'legacy-ceremony', event_name: 'Ceremony', event_date: '', start_time: '', location_name: '' },
+      { id: 'legacy-reception', event_name: 'Reception', event_date: '', start_time: '', location_name: '' },
+    ];
+  }, [itineraryFilterEvents]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
@@ -789,6 +797,11 @@ export const DashboardGuests: React.FC = () => {
       }
 
       const inviteToken = await generateSecureToken();
+      const selectedEventIds = Array.from(formEventInviteIds);
+      const invitedToCeremony = selectedEventIds.includes('legacy-ceremony');
+      const invitedToReception = selectedEventIds.includes('legacy-reception');
+      const realEventIds = selectedEventIds.filter((id) => !id.startsWith('legacy-'));
+
       const { data: createdGuest, error } = await supabase
         .from('guests')
         .insert([{
@@ -799,8 +812,8 @@ export const DashboardGuests: React.FC = () => {
           email: formData.email || null,
           phone: formData.phone || null,
           plus_one_allowed: formData.plus_one_allowed,
-          invited_to_ceremony: formData.invited_to_ceremony,
-          invited_to_reception: formData.invited_to_reception,
+          invited_to_ceremony: invitedToCeremony,
+          invited_to_reception: invitedToReception,
           invite_token: inviteToken,
           rsvp_status: 'pending',
         }])
@@ -809,8 +822,8 @@ export const DashboardGuests: React.FC = () => {
 
       if (error) throw error;
 
-      if (createdGuest?.id && formEventInviteIds.size > 0) {
-        const rows = Array.from(formEventInviteIds).map((eventId) => ({ event_id: eventId, guest_id: createdGuest.id }));
+      if (createdGuest?.id && realEventIds.length > 0) {
+        const rows = realEventIds.map((eventId) => ({ event_id: eventId, guest_id: createdGuest.id }));
         const { error: inviteError } = await supabase.from('event_invitations').insert(rows);
         if (inviteError) throw inviteError;
       }
@@ -852,6 +865,11 @@ export const DashboardGuests: React.FC = () => {
         return;
       }
 
+      const selectedEventIds = Array.from(formEventInviteIds);
+      const invitedToCeremony = selectedEventIds.includes('legacy-ceremony');
+      const invitedToReception = selectedEventIds.includes('legacy-reception');
+      const realEventIds = selectedEventIds.filter((id) => !id.startsWith('legacy-'));
+
       const { error } = await supabase
         .from('guests')
         .update({
@@ -861,8 +879,8 @@ export const DashboardGuests: React.FC = () => {
           email: formData.email || null,
           phone: formData.phone || null,
           plus_one_allowed: formData.plus_one_allowed,
-          invited_to_ceremony: formData.invited_to_ceremony,
-          invited_to_reception: formData.invited_to_reception,
+          invited_to_ceremony: invitedToCeremony,
+          invited_to_reception: invitedToReception,
         })
         .eq('id', editingGuest.id);
 
@@ -874,8 +892,8 @@ export const DashboardGuests: React.FC = () => {
         .eq('guest_id', editingGuest.id);
       if (clearInvitesError) throw clearInvitesError;
 
-      if (formEventInviteIds.size > 0) {
-        const rows = Array.from(formEventInviteIds).map((eventId) => ({ event_id: eventId, guest_id: editingGuest.id }));
+      if (realEventIds.length > 0) {
+        const rows = realEventIds.map((eventId) => ({ event_id: eventId, guest_id: editingGuest.id }));
         const { error: inviteError } = await supabase.from('event_invitations').insert(rows);
         if (inviteError) throw inviteError;
       }
@@ -1327,7 +1345,7 @@ Proceed with send?`)) return;
       invited_to_ceremony: true,
       invited_to_reception: true,
     });
-    setFormEventInviteIds(new Set(itineraryFilterEvents.map((e) => e.id)));
+    setFormEventInviteIds(new Set(effectiveItineraryEvents.map((e) => e.id)));
   };
 
   const openEditModal = (guest: GuestWithRSVP) => {
@@ -1342,8 +1360,12 @@ Proceed with send?`)) return;
       invited_to_ceremony: guest.invited_to_ceremony,
       invited_to_reception: guest.invited_to_reception,
     });
-    const invitedIds = itineraryFilterEvents
-      .filter((event) => eventInviteGuestMap.get(event.id)?.has(guest.id))
+    const invitedIds = effectiveItineraryEvents
+      .filter((event) => {
+        if (event.id === 'legacy-ceremony') return guest.invited_to_ceremony;
+        if (event.id === 'legacy-reception') return guest.invited_to_reception;
+        return eventInviteGuestMap.get(event.id)?.has(guest.id);
+      })
       .map((event) => event.id);
     setFormEventInviteIds(new Set(invitedIds));
   };
@@ -1571,10 +1593,14 @@ Proceed with send?`)) return;
     const checkFilter = (filter: string) => {
       if (filter.startsWith('event-invited:')) {
         const eventId = filter.replace('event-invited:', '');
+        if (eventId === 'legacy-ceremony') return guest.invited_to_ceremony;
+        if (eventId === 'legacy-reception') return guest.invited_to_reception;
         return eventInviteGuestMap.get(eventId)?.has(guest.id) ?? false;
       }
       if (filter.startsWith('event-not-invited:')) {
         const eventId = filter.replace('event-not-invited:', '');
+        if (eventId === 'legacy-ceremony') return !guest.invited_to_ceremony;
+        if (eventId === 'legacy-reception') return !guest.invited_to_reception;
         return !(eventInviteGuestMap.get(eventId)?.has(guest.id) ?? false);
       }
 
@@ -1786,12 +1812,12 @@ Proceed with send?`)) return;
     if (segmentLabelMap[filter]) return segmentLabelMap[filter];
     if (filter.startsWith('event-invited:')) {
       const eventId = filter.replace('event-invited:', '');
-      const name = itineraryFilterEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
+      const name = effectiveItineraryEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
       return `${name}: Invited`;
     }
     if (filter.startsWith('event-not-invited:')) {
       const eventId = filter.replace('event-not-invited:', '');
-      const name = itineraryFilterEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
+      const name = effectiveItineraryEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
       return `${name}: Not invited`;
     }
     return filter;
@@ -1878,11 +1904,14 @@ Proceed with send?`)) return;
                 </label>
               )}
 
-              {itineraryFilterEvents.length > 0 && (
+              {effectiveItineraryEvents.length > 0 && (
                 <div className="pt-1 border-t border-border-subtle">
                   <p className="text-xs font-medium text-text-secondary mb-2">Itinerary invitations</p>
+                  {itineraryFilterEvents.length === 0 && (
+                    <p className="text-[11px] text-text-tertiary mb-2">No itinerary yet — using Ceremony/Reception defaults until events are created.</p>
+                  )}
                   <div className="space-y-1.5 max-h-40 overflow-auto pr-1">
-                    {itineraryFilterEvents.map((event) => {
+                    {effectiveItineraryEvents.map((event) => {
                       const checked = formEventInviteIds.has(event.id);
                       return (
                         <label key={event.id} className="flex items-center gap-2">
@@ -2591,8 +2620,8 @@ Proceed with send?`)) return;
                       <option value="plusone-missing">Plus-One Missing ({rsvpOps.plusOneMissingName})</option>
                       <option value="pending-no-email">Pending No Email ({rsvpOps.pendingNoEmail})</option>
                       <option value="no-contact">No Contact ({contactStats.withNoContact})</option>
-                      {itineraryFilterEvents.length > 0 && <option value="" disabled>── Itinerary ──</option>}
-                      {itineraryFilterEvents.map((event) => (
+                      {effectiveItineraryEvents.length > 0 && <option value="" disabled>── Itinerary ──</option>}
+                      {effectiveItineraryEvents.map((event) => (
                         <React.Fragment key={event.id}>
                           <option value={`event-invited:${event.id}`}>{event.event_name}: Invited</option>
                           <option value={`event-not-invited:${event.id}`}>{event.event_name}: Not invited</option>
