@@ -353,7 +353,7 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="max-w-3xl mx-auto">
-            <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-8 text-center leading-[1.2] updates-tight">Frequently asked questions</h3>
+            <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 text-center leading-[1.2] updates-tight">Frequently asked questions</h3>
             <div className="space-y-3">
               {[
                 {
@@ -391,7 +391,7 @@ export const Home: React.FC = () => {
               ].map((faq, idx) => (
                 <div
                   key={idx}
-                  className="bg-paper border border-brand/20 rounded-2xl p-6 cursor-pointer hover:border-brand/40 transition-all"
+                  className="bg-paper border border-brand/20 rounded-2xl p-5 cursor-pointer hover:border-brand/40 transition-all"
                   onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
                   role="button"
                   tabIndex={0}

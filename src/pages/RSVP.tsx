@@ -1018,7 +1018,7 @@ export default function RSVP() {
               )}
 
               {formStep === 3 && (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2.5">
                   {formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception && (
                     <div className="text-xs text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
                       Please review: attending is on, but no events are selected.
