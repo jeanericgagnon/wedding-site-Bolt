@@ -429,9 +429,9 @@ export const SiteView: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border rounded-lg p-8 text-center">
-          <AlertCircle className="w-16 h-16 text-error mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Oops!</h1>
+        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-xl p-6 text-center">
+          <AlertCircle className="w-14 h-14 text-error mx-auto mb-3" />
+          <h1 className="text-xl font-semibold text-text-primary mb-2">Something went wrong</h1>
           <p className="text-text-secondary">{error}</p>
         </div>
       </div>
@@ -461,7 +461,7 @@ export const SiteView: React.FC = () => {
   if (!weddingData || !layoutConfig) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border rounded-lg p-8 text-center">
+        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-xl p-6 text-center">
           <p className="text-text-secondary">No wedding site data found</p>
         </div>
       </div>
@@ -472,7 +472,7 @@ export const SiteView: React.FC = () => {
   if (!homePage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border rounded-lg p-8 text-center">
+        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-xl p-6 text-center">
           <p className="text-text-secondary">No page configuration found</p>
         </div>
       </div>

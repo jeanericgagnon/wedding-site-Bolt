@@ -1212,27 +1212,48 @@ export default function RSVP() {
               </p>
             )}
 
-            <Button
-              variant="outline"
-              onClick={() => {
-                setStep('search');
-                setSearchValue('');
-                setGuest(null);
-                setExistingRsvp(null);
-                setAmbiguousGuests([]);
-                setRsvpDeadline(null);
-                setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
-                setCustomAnswers({});
-                setRsvpQuestions([]);
-                setHouseholdGuests([]);
-                setApplyToHousehold(true);
-                setSelectedHouseholdGuestIds([]);
-                setFormStep(1);
-              }}
-              className="w-full"
-            >
-              Submit Another RSVP
-            </Button>
+            <div className="space-y-2">
+              <Button
+                onClick={() => {
+                  setStep('search');
+                  setSearchValue('');
+                  setGuest(null);
+                  setExistingRsvp(null);
+                  setAmbiguousGuests([]);
+                  setRsvpDeadline(null);
+                  setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+                  setCustomAnswers({});
+                  setRsvpQuestions([]);
+                  setHouseholdGuests([]);
+                  setApplyToHousehold(true);
+                  setSelectedHouseholdGuestIds([]);
+                  setFormStep(1);
+                }}
+                className="w-full h-11"
+              >
+                Done
+              </Button>
+              <button
+                onClick={() => {
+                  setStep('search');
+                  setSearchValue('');
+                  setGuest(null);
+                  setExistingRsvp(null);
+                  setAmbiguousGuests([]);
+                  setRsvpDeadline(null);
+                  setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+                  setCustomAnswers({});
+                  setRsvpQuestions([]);
+                  setHouseholdGuests([]);
+                  setApplyToHousehold(true);
+                  setSelectedHouseholdGuestIds([]);
+                  setFormStep(1);
+                }}
+                className="w-full text-sm text-gray-500 hover:text-gray-700"
+              >
+                Submit another RSVP
+              </button>
+            </div>
           </Card>
         )}
       </div>
