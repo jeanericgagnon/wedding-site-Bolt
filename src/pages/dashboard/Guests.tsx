@@ -354,6 +354,8 @@ export const DashboardGuests: React.FC = () => {
   const [csvSkipped, setCsvSkipped] = useState<string[]>([]);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvUnknownEvents, setCsvUnknownEvents] = useState<string[]>([]);
+  const [csvSelectedFilename, setCsvSelectedFilename] = useState<string | null>(null);
+  const csvFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
@@ -1423,6 +1425,7 @@ Proceed with send?`)) return;
       toast('Please choose a CSV or Excel file to import.', 'error');
       return;
     }
+    setCsvSelectedFilename(file.name);
     if (!weddingSiteId) {
       toast('Could not find your wedding site. Refresh and try again.', 'error');
       return;
@@ -1616,6 +1619,7 @@ Proceed with send?`)) return;
         setCsvPreview(null);
         setCsvSkipped([]);
         setCsvUnknownEvents([]);
+        setCsvSelectedFilename(null);
         return;
       }
 
@@ -1676,6 +1680,7 @@ Proceed with send?`)) return;
       setCsvPreview(null);
       setCsvSkipped([]);
       setCsvUnknownEvents([]);
+      setCsvSelectedFilename(null);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       toast(`Import failed: ${msg}`, 'error');
@@ -2475,18 +2480,22 @@ Proceed with send?`)) return;
                 />
               </div>
               <div className="flex gap-2 flex-wrap items-start [&>*]:whitespace-nowrap">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                    onChange={importCSV}
-                    className="hidden"
-                  />
-                  <span className="inline-flex items-center px-3 py-2 border border-border rounded-md text-sm font-medium text-text-primary hover:bg-surface-subtle cursor-pointer">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Import Guests
-                  </span>
-                </label>
+                <input
+                  ref={csvFileInputRef}
+                  type="file"
+                  accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                  onChange={importCSV}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => csvFileInputRef.current?.click()}
+                  disabled={csvImporting}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {csvImporting ? 'Parsing…' : 'Import Guests'}
+                </Button>
 
                 <div className="relative">
                   <Button variant="outline" size="md" onClick={() => setShowExportMenu(v => !v)}>
@@ -2563,6 +2572,10 @@ Proceed with send?`)) return;
                 </div>
               </div>
             </div>
+
+            {csvSelectedFilename && (
+              <p className="text-xs text-text-tertiary mt-2">Selected file: <span className="font-medium text-text-secondary">{csvSelectedFilename}</span></p>
+            )}
 
             <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle">
               <div className="flex items-center justify-between gap-3">
