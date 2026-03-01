@@ -1147,7 +1147,7 @@ export default function RSVP() {
               </p>
             </div>
 
-            <details className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
+            <details className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5">
               <summary className="cursor-pointer text-sm font-semibold text-gray-800 flex items-center justify-between">
                 RSVP summary
                 <span className="text-xs text-gray-500">View details</span>

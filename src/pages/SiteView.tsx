@@ -115,7 +115,7 @@ const InviteOnlyGate: React.FC = () => {
   const { t } = useTranslation();
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-stone-50 to-stone-100 px-4">
-      <div className="flex justify-end p-4">
+      <div className="flex justify-end p-3.5">
         <LanguageSwitcher />
       </div>
       <div className="flex-1 flex items-center justify-center">
