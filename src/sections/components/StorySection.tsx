@@ -8,9 +8,9 @@ interface Props {
 }
 
 export const StorySection: React.FC<Props> = ({ data, instance }) => {
-  const { couple } = data;
+  const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple.story || 'Our story is still being written...';
+  const story = (settings.storyText as string) || couple?.story || 'Our story is still being written...';
   const photoUrl = (settings.photo as string) || '';
 
   return (
@@ -35,9 +35,9 @@ export const StorySection: React.FC<Props> = ({ data, instance }) => {
 };
 
 export const StoryCentered: React.FC<Props> = ({ data, instance }) => {
-  const { couple } = data;
+  const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple.story || 'Our story is still being written...';
+  const story = (settings.storyText as string) || couple?.story || 'Our story is still being written...';
   const photoUrl = (settings.photo as string) || '';
 
   return (
@@ -68,10 +68,11 @@ export const StoryCentered: React.FC<Props> = ({ data, instance }) => {
 };
 
 export const StorySplit: React.FC<Props> = ({ data, instance }) => {
-  const { couple, media } = data;
+  const couple = data?.couple;
+  const media = data?.media;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple.story || 'Our story is still being written...';
-  const photoUrl = (settings.photo as string) || media.heroImageUrl || '';
+  const story = (settings.storyText as string) || couple?.story || 'Our story is still being written...';
+  const photoUrl = (settings.photo as string) || media?.heroImageUrl || '';
 
   return (
     <section className="py-20 bg-surface">
@@ -103,9 +104,9 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
 };
 
 export const StoryTimeline: React.FC<Props> = ({ data, instance }) => {
-  const { couple } = data;
+  const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple.story || 'Our story is still being written...';
+  const story = (settings.storyText as string) || couple?.story || 'Our story is still being written...';
   const baseLines = story
     .split(/\n+/)
     .map((line) => line.trim())
