@@ -630,6 +630,7 @@ export default function RSVP() {
                     }
                   }}
                   placeholder={t('rsvp.search_placeholder')}
+                  className="h-11"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1.5">

@@ -46,13 +46,13 @@ export const Home: React.FC = () => {
       <Header />
 
       {/* HERO */}
-      <section id="top" className="py-20 md:py-32 bg-gradient-to-b from-paper to-white">
+      <section id="top" className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-[2.5rem] md:text-[4.25rem] font-serif font-bold text-ink mb-6 leading-[1.05] updates-tight">
               A wedding site that doesn't break when it matters
             </h1>
-            <p className="text-[1.125rem] md:text-[1.25rem] text-ink/75 mb-10 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-[1.0625rem] md:text-[1.1875rem] text-ink/75 mb-8 leading-relaxed max-w-3xl mx-auto">
               One place for your wedding site, RSVPs, guests, messaging, seating, registry, photo sharing, and timeline, built to make planning easier, not push you through a funnel.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-7">
