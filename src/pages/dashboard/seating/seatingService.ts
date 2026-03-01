@@ -240,11 +240,11 @@ export async function getEligibleGuests(
 
   const { data: invitations } = await supabase
     .from('event_invitations')
-    .select('guest_id, rsvp_status')
-    .eq('itinerary_event_id', itineraryEventId);
+    .select('guest_id')
+    .eq('event_id', itineraryEventId);
 
   const inviteMap = new Map<string, string | null>(
-    (invitations ?? []).map(inv => [inv.guest_id, inv.rsvp_status])
+    (invitations ?? []).map(inv => [inv.guest_id, null])
   );
 
   const hasEventInvitations = (invitations ?? []).length > 0;
@@ -258,7 +258,9 @@ export async function getEligibleGuests(
 
     let isAttending: boolean;
     if (hasEventInvitations) {
-      isAttending = isInvitedToEvent && (eventRsvp === 'attending' || eventRsvp === 'accepted');
+      const baseAccepted = g.rsvp_status === 'attending' || g.rsvp_status === 'accepted';
+      const eventAccepted = eventRsvp === 'attending' || eventRsvp === 'accepted';
+      isAttending = isInvitedToEvent && (eventAccepted || (eventRsvp == null && baseAccepted));
     } else {
       isAttending = g.rsvp_status === 'attending' || g.rsvp_status === 'accepted';
     }
