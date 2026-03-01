@@ -55,18 +55,18 @@ export const Home: React.FC = () => {
             <p className="text-[1.125rem] md:text-[1.25rem] text-ink/75 mb-10 leading-relaxed max-w-3xl mx-auto">
               One place for your wedding site, RSVPs, guests, messaging, seating, registry, photo sharing, and timeline, built to make planning easier, not push you through a funnel.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-7">
               <button
-                className="px-8 py-4 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                className="px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
                 onClick={handleSignUp}
                 aria-label="Sign up for your wedding site"
               >
-                Sign up
+                Start your site
               </button>
               <button
                 onClick={handleDemoLogin}
                 disabled={demoLoading}
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
               >
                 {demoLoading && (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">

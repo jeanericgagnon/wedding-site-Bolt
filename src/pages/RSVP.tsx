@@ -680,15 +680,15 @@ export default function RSVP() {
         )}
 
         {step === 'pick' && (
-          <Card className="p-8">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-serif mb-2">Multiple matches found</h1>
+          <Card className="p-6 md:p-8">
+            <div className="text-center mb-5">
+              <h1 className="text-xl md:text-2xl font-serif mb-2">Multiple matches found</h1>
               <p className="text-gray-600 text-sm">
                 We found {ambiguousGuests.length} guests with that name. Please select yourself below.
               </p>
             </div>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-2.5 mb-5">
               {ambiguousGuests.map((g) => {
                 const hints: string[] = [];
                 if (g.last_name) hints.push(g.last_name);
@@ -704,7 +704,7 @@ export default function RSVP() {
                     key={g.id}
                     onClick={() => handlePickGuest(g)}
                     disabled={loading}
-                    className="w-full flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-rose-300 hover:bg-rose-50 transition-colors text-left group"
+                    className="w-full flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl hover:border-rose-300 hover:bg-rose-50 transition-colors text-left group"
                   >
                     <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-rose-100 flex items-center justify-center flex-shrink-0 transition-colors">
                       <User className="w-5 h-5 text-gray-500 group-hover:text-rose-500 transition-colors" />
@@ -725,7 +725,7 @@ export default function RSVP() {
 
             <button
               onClick={() => { setStep('search'); setError(''); setAmbiguousGuests([]); }}
-              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               Search again
             </button>
