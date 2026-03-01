@@ -378,6 +378,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvFieldMap, setCsvFieldMap] = useState<CsvFieldMap | null>(null);
   const [csvShowMapper, setCsvShowMapper] = useState(false);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
+  const csvNameMappingValid = !!csvFieldMap && (csvFieldMap.full_name >= 0 || csvFieldMap.first_name >= 0 || csvFieldMap.last_name >= 0);
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
@@ -3525,6 +3526,11 @@ Proceed with send?`)) return;
                 </button>
               </div>
               <div className="overflow-y-auto flex-1 p-6 space-y-3">
+                {!csvNameMappingValid && (
+                  <div className="rounded-lg border border-warning/30 bg-warning-light px-3 py-2 text-xs text-warning">
+                    Map at least one name field (First Name, Last Name, or Full Name) before continuing.
+                  </div>
+                )}
                 {([
                   ['first_name', 'First Name (recommended)'],
                   ['last_name', 'Last Name (recommended)'],
@@ -3563,7 +3569,7 @@ Proceed with send?`)) return;
                   variant="primary"
                   fullWidth
                   onClick={() => buildCsvPreviewFromMapping(csvHeaders, csvDataRows, csvFieldMap)}
-                  disabled={csvImporting}
+                  disabled={csvImporting || !csvNameMappingValid}
                 >
                   Continue to Review
                 </Button>
