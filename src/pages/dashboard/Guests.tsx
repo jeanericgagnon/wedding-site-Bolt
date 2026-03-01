@@ -1879,8 +1879,12 @@ Proceed with send?`)) return;
       }
 
       if (rsvpRows.length > 0) {
-        const { error: rsvpError } = await supabase.from('rsvps').upsert(rsvpRows, { onConflict: 'guest_id' });
-        if (rsvpError) throw rsvpError;
+        const rsvpGuestIds = Array.from(new Set(rsvpRows.map((r) => r.guest_id)));
+        const { error: rsvpDeleteError } = await supabase.from('rsvps').delete().in('guest_id', rsvpGuestIds);
+        if (rsvpDeleteError) throw rsvpDeleteError;
+
+        const { error: rsvpInsertError } = await supabase.from('rsvps').insert(rsvpRows);
+        if (rsvpInsertError) throw rsvpInsertError;
       }
 
       await fetchGuests();
