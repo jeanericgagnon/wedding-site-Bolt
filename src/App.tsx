@@ -254,7 +254,7 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/dashboard/errors"
+          path="/admin/errors"
           element={
             <ProtectedRoute>
               <DashboardErrorLogs />

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
+import { Link } from 'react-router-dom';
 
 interface ErrorLogRow {
   id: string;
@@ -17,12 +17,19 @@ interface ErrorLogRow {
 const ADMIN_ERROR_LOG_EMAIL = 'admin@dayof.love';
 
 export const DashboardErrorLogs: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [rows, setRows] = useState<ErrorLogRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [logsLoading, setLogsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isAdmin = (user?.email || '').toLowerCase() === ADMIN_ERROR_LOG_EMAIL;
+
   useEffect(() => {
+    if (!isAdmin) {
+      setLogsLoading(false);
+      return;
+    }
+
     let mounted = true;
     (async () => {
       try {
@@ -36,38 +43,47 @@ export const DashboardErrorLogs: React.FC = () => {
       } catch (err) {
         if (mounted) setError(err instanceof Error ? err.message : 'Couldn’t load error logs right now.');
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setLogsLoading(false);
       }
     })();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [isAdmin]);
 
-  const isAdmin = (user?.email || '').toLowerCase() === ADMIN_ERROR_LOG_EMAIL;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-6xl mx-auto">
+          <Card padding="lg"><p className="text-sm text-text-secondary">Checking access…</p></Card>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return (
-      <DashboardLayout currentPage="settings">
+      <div className="min-h-screen bg-background p-6">
         <div className="max-w-3xl mx-auto">
           <Card padding="lg">
             <h1 className="text-xl font-semibold text-text-primary mb-2">Restricted</h1>
-            <p className="text-sm text-text-secondary">Error logs are visible only to the admin account.</p>
+            <p className="text-sm text-text-secondary mb-4">This admin page is available only to the designated admin account.</p>
+            <Link to="/dashboard/overview" className="text-sm text-primary hover:text-primary-hover">Back to dashboard</Link>
           </Card>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout currentPage="errors">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto space-y-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-1">Error Logs</h1>
+          <h1 className="text-3xl font-bold text-text-primary mb-1">Admin · Error Logs</h1>
           <p className="text-text-secondary">Recent app issues captured from the live client.</p>
         </div>
 
-        {loading ? (
+        {logsLoading ? (
           <Card padding="lg">
             <p className="text-sm text-text-secondary">Loading logs…</p>
           </Card>
@@ -108,6 +124,6 @@ export const DashboardErrorLogs: React.FC = () => {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
