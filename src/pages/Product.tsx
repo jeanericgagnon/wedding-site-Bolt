@@ -649,7 +649,7 @@ export const Product: React.FC = () => {
                   { icon: Zap,          label: 'Auto-fetch title, price, image from URL',         done: true },
                   { icon: CheckCircle2, label: 'Purchase updates with quantity + partial status', done: true },
                   { icon: Heart,        label: 'Honeymoon fund + charity donation links',          done: true },
-                  { icon: DollarSign,   label: 'Cash fund (Venmo, PayPal, Zelle links)',          done: false },
+                  { icon: DollarSign,   label: 'Cash fund (Venmo, PayPal, Zelle links)',          done: true },
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <f.icon className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
