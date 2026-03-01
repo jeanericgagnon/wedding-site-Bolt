@@ -1534,7 +1534,7 @@ Proceed with send?`)) return;
       rsvp: [
         fieldMap.status >= 0 ? 'Status → RSVP status' : '',
         fieldMap.meal_choice >= 0 ? 'Meal Choice → RSVP meal' : '',
-        fieldMap.rsvp_date >= 0 ? 'RSVP Date → RSVP submitted_at' : '',
+        fieldMap.rsvp_date >= 0 ? 'RSVP Date → RSVP responded_at' : '',
         fieldMap.invite_token >= 0 ? 'Invite Token → guest token' : '',
       ].filter(Boolean),
       household: [
@@ -1831,7 +1831,7 @@ Proceed with send?`)) return;
       }
 
       const eventInviteRows: Array<{ event_id: string; guest_id: string }> = [];
-      const rsvpRows: Array<{ guest_id: string; attending: boolean; meal_choice: string | null; submitted_at: string | null }> = [];
+      const rsvpRows: Array<{ guest_id: string; attending: boolean; meal_choice: string | null; responded_at: string | null }> = [];
       guestsWithTokens.forEach((row, idx) => {
         const guestId = inserted[idx]?.id as string | undefined;
         if (!guestId) return;
@@ -1846,7 +1846,7 @@ Proceed with send?`)) return;
             guest_id: guestId,
             attending,
             meal_choice: (row.__meal_choice as string | null | undefined) ?? null,
-            submitted_at: (row.__rsvp_date as string | null | undefined)
+            responded_at: (row.__rsvp_date as string | null | undefined)
               || (row.rsvp_received_at as string | null | undefined)
               || new Date().toISOString(),
           });
