@@ -70,7 +70,7 @@ export const GuestContactUpdate: React.FC = () => {
           setSelectedHouseholdSize(rows[0].household_size ?? 1);
         }
       } else {
-        setResult({ ok: false, message: err instanceof Error ? err.message : 'Search failed' });
+        setResult({ ok: false, message: err instanceof Error ? err.message : 'Couldn’t complete that search. Please try again.' });
       }
     } finally {
       setSearching(false);

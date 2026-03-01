@@ -71,7 +71,7 @@ export const Login: React.FC = () => {
       if (signInError) throw signInError;
       navigate('/dashboard');
     } catch (err: unknown) {
-      setError((err as Error).message || 'Failed to sign in. Please try again.');
+      setError((err as Error).message || 'Couldn’t sign you in right now. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export const Login: React.FC = () => {
       await signIn();
       navigate('/dashboard');
     } catch (err: unknown) {
-      setError((err as Error).message || 'Failed to access demo. Please try again.');
+      setError((err as Error).message || 'Couldn’t open demo mode right now. Please try again.');
     } finally {
       setDemoLoading(false);
     }
@@ -102,7 +102,7 @@ export const Login: React.FC = () => {
       });
       if (oauthError) throw oauthError;
     } catch (err: unknown) {
-      setError((err as Error).message || 'Failed to start Google sign-in. Please try again.');
+      setError((err as Error).message || 'Couldn’t start Google sign-in right now. Please try again.');
       setLoading(false);
     }
   };
@@ -118,7 +118,7 @@ export const Login: React.FC = () => {
       if (resetError) throw resetError;
       setView('forgot-sent');
     } catch (err: unknown) {
-      setError((err as Error).message || 'Failed to send reset email. Please try again.');
+      setError((err as Error).message || 'Couldn’t send reset email right now. Please try again.');
     } finally {
       setLoading(false);
     }

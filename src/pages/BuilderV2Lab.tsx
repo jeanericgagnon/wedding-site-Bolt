@@ -849,7 +849,7 @@ export const BuilderV2Lab: React.FC = () => {
       notify('Imported V2 JSON');
       markSaving();
     } catch {
-      notify('Import failed: invalid JSON');
+      notify('We couldn’t import that file yet — please check the JSON format and try again.');
     }
   };
 

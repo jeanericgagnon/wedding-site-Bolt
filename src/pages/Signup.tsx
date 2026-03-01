@@ -70,7 +70,7 @@ export const Signup: React.FC = () => {
       });
       if (oauthError) throw oauthError;
     } catch (err: unknown) {
-      setError((err as Error).message || 'Failed to start Google sign-in. Please try again.');
+      setError((err as Error).message || 'Couldn’t start Google sign-in right now. Please try again.');
       setLoading(false);
     }
   };
@@ -81,7 +81,7 @@ export const Signup: React.FC = () => {
     setError('');
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError('Use a password with at least 8 characters.');
       setLoading(false);
       return;
     }
@@ -126,7 +126,7 @@ export const Signup: React.FC = () => {
       await ensureMinimalWeddingSite(userId, formData.email);
       navigate('/payment-required?signup=1');
     } catch (err: unknown) {
-      setError((err as Error).message || 'Failed to create account. Please try again.');
+      setError((err as Error).message || 'Couldn’t create your account right now. Please try again.');
     } finally {
       setLoading(false);
     }
