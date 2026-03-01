@@ -661,7 +661,7 @@ export const DashboardRegistry: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="registry">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>

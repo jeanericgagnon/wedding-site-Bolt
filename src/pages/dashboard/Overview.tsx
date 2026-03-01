@@ -339,7 +339,7 @@ export const DashboardOverview: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="overview">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="card-clean px-5 py-4 md:px-6 md:py-5">
           <div className="flex items-center justify-between gap-4">
             <div>

@@ -1754,7 +1754,7 @@ Proceed with send?`)) return;
   if (guestsTab === 'rsvp-config') {
     return (
       <DashboardLayout currentPage="guests">
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
             <p className="text-text-secondary">Manage your guest list and see responses</p>
@@ -1832,7 +1832,7 @@ Proceed with send?`)) return;
 
   return (
     <DashboardLayout currentPage="guests">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
           <p className="text-text-secondary">Manage your guest list and see responses</p>
