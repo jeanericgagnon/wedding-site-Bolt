@@ -2713,7 +2713,7 @@ Proceed with send?`)) return;
                   type="file"
                   accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                   onChange={importCSV}
-                  className="block w-full sm:w-72 rounded-md border border-border bg-surface px-2 py-1.5 text-xs text-text-secondary"
+                  className="hidden"
                 />
                 <Button
                   variant="outline"
