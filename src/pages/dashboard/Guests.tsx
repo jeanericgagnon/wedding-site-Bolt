@@ -1501,7 +1501,10 @@ Proceed with send?`)) return;
       const itineraryByNormalizedName = new Map(itineraryEvents.map((ev) => [normalizeEventName(ev.event_name), ev.id] as const));
       const inviteEventColumns = headers
         .map((h, idx) => ({ h, idx }))
-        .filter(({ h }) => h.startsWith('invite:'));
+        .filter(({ h }) => {
+          if (h.startsWith('invite:')) return true;
+          return itineraryByNormalizedName.has(normalizeEventName(h));
+        });
 
       const dataRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
       const skipped: string[] = [];
@@ -1546,7 +1549,7 @@ Proceed with send?`)) return;
         }
 
         inviteEventColumns.forEach(({ h, idx: colIdx }) => {
-          const eventName = h.replace(/^invite:/, '').trim();
+          const eventName = (h.startsWith('invite:') ? h.replace(/^invite:/, '') : h).trim();
           const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
           if (!eventId) {
             unknownEvents.add(eventName);
@@ -1554,7 +1557,9 @@ Proceed with send?`)) return;
           }
           const raw = (values[colIdx] || '').toLowerCase().trim();
           const truthy = ['yes', 'true', '1', 'y', 'invited', 'include'].includes(raw);
+          const falsey = ['no', 'false', '0', 'n', 'not invited', 'exclude'].includes(raw);
           if (truthy) invitedEventIds.add(eventId);
+          if (falsey) invitedEventIds.delete(eventId);
         });
 
         const guest: Record<string, unknown> = {
