@@ -30,6 +30,7 @@ export const DashboardErrorLogs: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all');
   const [routeFilter, setRouteFilter] = useState('all');
+  const [datePreset, setDatePreset] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
 
   useEffect(() => {
     let mounted = true;
@@ -93,14 +94,44 @@ export const DashboardErrorLogs: React.FC = () => {
   const filteredRows = useMemo(() => rows.filter((row) => {
     const severityOk = severityFilter === 'all' ? true : row.severity === severityFilter;
     const routeOk = routeFilter === 'all' ? true : (row.route || '—') === routeFilter;
-    return severityOk && routeOk;
-  }), [rows, severityFilter, routeFilter]);
+    const now = Date.now();
+    const rowTs = new Date(row.created_at).getTime();
+    const dateOk = datePreset === 'all'
+      ? true
+      : datePreset === '24h'
+        ? rowTs >= now - 24 * 60 * 60 * 1000
+        : datePreset === '7d'
+          ? rowTs >= now - 7 * 24 * 60 * 60 * 1000
+          : rowTs >= now - 30 * 24 * 60 * 60 * 1000;
+    return severityOk && routeOk && dateOk;
+  }), [rows, severityFilter, routeFilter, datePreset]);
 
   const routeOptions = useMemo(() => {
     const values = new Set<string>();
     for (const r of rows) values.add(r.route || '—');
     return ['all', ...Array.from(values).sort()];
   }, [rows]);
+
+  const exportFilteredCsv = () => {
+    const header = ['created_at', 'severity', 'source', 'route', 'message', 'fingerprint'];
+    const rowsCsv = filteredRows.map((r) => [
+      r.created_at,
+      r.severity,
+      r.source,
+      r.route || '',
+      r.message,
+      r.fingerprint || '',
+    ]);
+    const esc = (value: string) => `"${String(value).replace(/"/g, '""')}"`;
+    const csv = [header, ...rowsCsv].map((line) => line.map((v) => esc(String(v))).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `error-logs-${datePreset}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const grouped = useMemo<GroupedError[]>(() => {
     const map = new Map<string, GroupedError>();
@@ -174,6 +205,19 @@ export const DashboardErrorLogs: React.FC = () => {
             <Card variant="bordered" padding="lg" className="space-y-3">
               <div className="flex flex-wrap gap-2 items-end">
                 <label className="text-xs text-text-secondary">
+                  Time range
+                  <select
+                    value={datePreset}
+                    onChange={(e) => setDatePreset(e.target.value as '24h' | '7d' | '30d' | 'all')}
+                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white"
+                  >
+                    <option value="24h">Last 24 hours</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="all">All time</option>
+                  </select>
+                </label>
+                <label className="text-xs text-text-secondary">
                   Severity
                   <select
                     value={severityFilter}
@@ -198,6 +242,12 @@ export const DashboardErrorLogs: React.FC = () => {
                     ))}
                   </select>
                 </label>
+                <button
+                  onClick={exportFilteredCsv}
+                  className="px-3 py-1.5 text-xs border border-border rounded-md bg-white hover:bg-surface-subtle"
+                >
+                  Export CSV
+                </button>
               </div>
 
               <h2 className="text-sm font-semibold text-text-primary mb-2">Top recurring errors</h2>
