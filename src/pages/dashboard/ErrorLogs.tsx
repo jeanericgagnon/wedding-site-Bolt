@@ -33,6 +33,8 @@ export const DashboardErrorLogs: React.FC = () => {
   const [datePreset, setDatePreset] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -120,6 +122,16 @@ export const DashboardErrorLogs: React.FC = () => {
     for (const r of rows) values.add(r.route || '—');
     return ['all', ...Array.from(values).sort()];
   }, [rows]);
+
+  const copyValue = async (value: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(key);
+      setTimeout(() => setCopied((prev) => (prev === key ? null : prev)), 1200);
+    } catch {
+      // no-op
+    }
+  };
 
   const exportFilteredCsv = () => {
     const header = ['created_at', 'severity', 'source', 'route', 'message', 'fingerprint'];
@@ -303,19 +315,55 @@ export const DashboardErrorLogs: React.FC = () => {
                   <th className="text-left px-3 py-2">Route</th>
                   <th className="text-left px-3 py-2">Message</th>
                   <th className="text-left px-3 py-2">Fingerprint</th>
+                  <th className="text-right px-3 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {pagedRows.map((r) => (
-                  <tr key={r.id} className="border-t border-border-subtle align-top">
-                    <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
-                    <td className="px-3 py-2">{r.severity}</td>
-                    <td className="px-3 py-2">{r.source}</td>
-                    <td className="px-3 py-2">{r.route || '—'}</td>
-                    <td className="px-3 py-2 max-w-[420px] break-words">{r.message}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{r.fingerprint || '—'}</td>
-                  </tr>
-                ))}
+                {pagedRows.map((r) => {
+                  const isOpen = expandedId === r.id;
+                  return (
+                    <React.Fragment key={r.id}>
+                      <tr className="border-t border-border-subtle align-top">
+                        <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+                        <td className="px-3 py-2">{r.severity}</td>
+                        <td className="px-3 py-2">{r.source}</td>
+                        <td className="px-3 py-2">{r.route || '—'}</td>
+                        <td className="px-3 py-2 max-w-[420px] break-words">{r.message}</td>
+                        <td className="px-3 py-2 font-mono text-xs">{r.fingerprint || '—'}</td>
+                        <td className="px-3 py-2 text-right">
+                          <button
+                            className="px-2 py-1 border border-border rounded-md text-xs"
+                            onClick={() => setExpandedId((prev) => (prev === r.id ? null : r.id))}
+                          >
+                            {isOpen ? 'Hide' : 'Details'}
+                          </button>
+                        </td>
+                      </tr>
+                      {isOpen && (
+                        <tr className="bg-surface-subtle/40 border-t border-border-subtle">
+                          <td colSpan={8} className="px-3 py-2">
+                            <div className="flex flex-wrap gap-2 items-center mb-2">
+                              <button
+                                className="px-2 py-1 border border-border rounded-md text-xs"
+                                onClick={() => void copyValue(r.fingerprint || '', `fp-${r.id}`)}
+                                disabled={!r.fingerprint}
+                              >
+                                {copied === `fp-${r.id}` ? 'Copied fingerprint' : 'Copy fingerprint'}
+                              </button>
+                              <button
+                                className="px-2 py-1 border border-border rounded-md text-xs"
+                                onClick={() => void copyValue(r.message, `msg-${r.id}`)}
+                              >
+                                {copied === `msg-${r.id}` ? 'Copied message' : 'Copy message'}
+                              </button>
+                            </div>
+                            <p className="text-xs text-text-secondary break-words">{r.message}</p>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
               </table>
             </Card>
