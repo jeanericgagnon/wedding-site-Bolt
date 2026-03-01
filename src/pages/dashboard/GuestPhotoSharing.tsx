@@ -740,7 +740,7 @@ export const GuestPhotoSharing: React.FC = () => {
               </Button>
 
               {actionsMenuOpen && (
-                <div className="absolute right-0 top-10 z-20 w-64 rounded-lg border border-neutral-200 bg-white p-2 shadow-lg space-y-1">
+                <div className="absolute right-0 top-10 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1">
                   <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportAlbumLinksCsv(); setActionsMenuOpen(false); }}>
                     Export album links
                   </Button>

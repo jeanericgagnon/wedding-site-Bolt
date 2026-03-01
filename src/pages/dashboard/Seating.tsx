@@ -1381,8 +1381,8 @@ export const DashboardSeating: React.FC = () => {
 
         <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
-            <span className="text-sm font-medium text-text-primary">Seating insights</span>
-            <span className="text-xs text-text-tertiary">Tap to expand</span>
+            <span className="text-sm font-semibold text-text-primary">Seating insights</span>
+            <span className="text-xs text-text-tertiary">View details</span>
           </summary>
           <div className="mt-3 space-y-3">
             {layoutMode === 'visual' && (
@@ -1432,7 +1432,7 @@ export const DashboardSeating: React.FC = () => {
               Actions <ChevronDown className="w-4 h-4 ml-1" />
             </Button>
             {seatingActionsOpen && (
-              <div className="absolute left-0 top-10 z-20 w-56 rounded-lg border border-border bg-white p-2 shadow-lg space-y-1">
+              <div className="absolute left-0 top-10 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1">
                 <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setShowAutoTablesModal(true); setSeatingActionsOpen(false); }}>
                   <Wand2 className="w-4 h-4 mr-1" /> Auto-Create Tables
                 </Button>

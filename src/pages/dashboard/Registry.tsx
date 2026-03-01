@@ -686,8 +686,8 @@ export const DashboardRegistry: React.FC = () => {
             {nearBudgetCap && (
               <p className="text-xs text-warning mt-1">You’ve used over 80% of this month’s refresh budget. Lean mode can help stretch remaining runs.</p>
             )}
-            <details className="mt-3 rounded-lg border border-border bg-surface-subtle/40 p-2">
-              <summary className="cursor-pointer text-xs font-medium text-text-secondary">Refresh settings</summary>
+            <details className="mt-3 rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
+              <summary className="cursor-pointer text-sm font-semibold text-text-primary">Refresh settings</summary>
               <div className="mt-2 flex flex-wrap items-end gap-2">
                 <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
                   <button className={`px-2 py-1 ${refreshPreset === 'lean' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`} onClick={() => applyRefreshPreset('lean')}>Lean{recommendedPreset === 'lean' ? ' ★' : ''}</button>
@@ -744,7 +744,7 @@ export const DashboardRegistry: React.FC = () => {
                 Actions
               </Button>
               {registryActionsOpen && (
-                <div className="absolute right-0 top-11 z-20 w-64 rounded-lg border border-border bg-white p-2 shadow-lg space-y-1">
+                <div className="absolute right-0 top-11 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1">
                   <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
                     Bulk Import URLs
                   </Button>

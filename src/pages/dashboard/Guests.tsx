@@ -1845,7 +1845,7 @@ Proceed with send?`)) return;
         <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
             <span className="text-sm font-semibold text-text-primary">Snapshot & RSVP insights</span>
-            <span className="text-xs text-text-tertiary">Tap to expand</span>
+            <span className="text-xs text-text-tertiary">View details</span>
           </summary>
           <div className="mt-3 space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -2197,7 +2197,7 @@ Proceed with send?`)) return;
             </div>
 
             <details className="p-3 rounded-xl border border-border-subtle bg-surface-subtle">
-              <summary className="cursor-pointer text-xs font-medium text-text-secondary">Campaign insights & reminders</summary>
+              <summary className="cursor-pointer text-sm font-semibold text-text-primary">Campaign insights & reminders</summary>
               <div className="mt-2 space-y-2">
                 <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
                 {daysToWedding !== null && (
