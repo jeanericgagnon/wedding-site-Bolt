@@ -352,7 +352,7 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto mt-1">
             <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 text-center leading-[1.2] updates-tight">Frequently asked questions</h3>
             <div className="space-y-3">
               {[
