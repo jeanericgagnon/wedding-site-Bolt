@@ -273,7 +273,7 @@ export const DashboardGuests: React.FC = () => {
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [campaignPreset, setCampaignPreset] = useState<'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email'>('pending');
   const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
-  const [sortByPriority, setSortByPriority] = useState(true);
+  const [sortByPriority, setSortByPriority] = useState(false);
   const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
   const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
@@ -1986,9 +1986,27 @@ Proceed with send?`)) return;
     return score;
   };
 
+  const compareGuestsByLastName = (a: GuestWithRSVP, b: GuestWithRSVP) => {
+    const aLast = (a.last_name || '').trim().toLowerCase();
+    const bLast = (b.last_name || '').trim().toLowerCase();
+    if (aLast !== bLast) return aLast.localeCompare(bLast);
+
+    const aFirst = (a.first_name || '').trim().toLowerCase();
+    const bFirst = (b.first_name || '').trim().toLowerCase();
+    if (aFirst !== bFirst) return aFirst.localeCompare(bFirst);
+
+    const aName = (a.name || '').trim().toLowerCase();
+    const bName = (b.name || '').trim().toLowerCase();
+    return aName.localeCompare(bName);
+  };
+
   const displayedGuests = sortByPriority
-    ? [...filteredGuests].sort((a, b) => priorityScore(b) - priorityScore(a))
-    : filteredGuests;
+    ? [...filteredGuests].sort((a, b) => {
+      const scoreDelta = priorityScore(b) - priorityScore(a);
+      if (scoreDelta !== 0) return scoreDelta;
+      return compareGuestsByLastName(a, b);
+    })
+    : [...filteredGuests].sort(compareGuestsByLastName);
 
 
   const nextUnresolvedGuest = displayedGuests.find((g) => issueCountForGuest(g) > 0);
