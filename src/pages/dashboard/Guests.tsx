@@ -66,6 +66,8 @@ interface RsvpConflictStats {
   openNow: number;
   opened24h: number;
   resolved24h: number;
+  unresolvedOver24h: number;
+  unresolvedOver72h: number;
   topCodes: Array<{ code: string; count: number }>;
 }
 
@@ -485,9 +487,12 @@ export const DashboardGuests: React.FC = () => {
   const rsvpConflictStats = useMemo<RsvpConflictStats>(() => {
     const now = Date.now();
     const dayAgo = now - (24 * 60 * 60 * 1000);
+    const threeDaysAgo = now - (72 * 60 * 60 * 1000);
 
     const opened24h = rsvpConflictHistory.filter((c) => new Date(c.created_at).getTime() >= dayAgo).length;
     const resolved24h = rsvpConflictHistory.filter((c) => c.resolved_at && new Date(c.resolved_at).getTime() >= dayAgo).length;
+    const unresolvedOver24h = rsvpConflicts.filter((c) => new Date(c.created_at).getTime() < dayAgo).length;
+    const unresolvedOver72h = rsvpConflicts.filter((c) => new Date(c.created_at).getTime() < threeDaysAgo).length;
 
     const codeCounts = new Map<string, number>();
     for (const c of rsvpConflictHistory) {
@@ -503,6 +508,8 @@ export const DashboardGuests: React.FC = () => {
       openNow: rsvpConflicts.length,
       opened24h,
       resolved24h,
+      unresolvedOver24h,
+      unresolvedOver72h,
       topCodes,
     };
   }, [rsvpConflicts.length, rsvpConflictHistory]);
@@ -1997,6 +2004,15 @@ Proceed with send?`)) return;
                 <p className="text-[10px] uppercase text-error/70">Resolved (24h)</p>
                 <p className="text-sm font-semibold text-error">{rsvpConflictStats.resolved24h}</p>
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 text-[11px]">
+              <span className={`px-2 py-1 rounded border ${rsvpConflictStats.unresolvedOver24h > 0 ? 'bg-warning-light text-warning border-warning/30' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                Unresolved &gt;24h: {rsvpConflictStats.unresolvedOver24h}
+              </span>
+              <span className={`px-2 py-1 rounded border ${rsvpConflictStats.unresolvedOver72h > 0 ? 'bg-error-light text-error border-error/30' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                Unresolved &gt;72h: {rsvpConflictStats.unresolvedOver72h}
+              </span>
             </div>
 
             {rsvpConflictStats.topCodes.length > 0 && (
