@@ -592,13 +592,13 @@ export default function RSVP() {
       </div>
       <div className="container mx-auto px-4 pb-16 max-w-2xl">
         {step === 'search' && (
-          <Card className="p-8">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-serif mb-2">{t('rsvp.title')}</h1>
+          <Card className="p-6 md:p-8">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl md:text-3xl font-serif mb-2">{t('rsvp.title')}</h1>
               <p className="text-gray-600">{t('rsvp.subtitle')}</p>
             </div>
 
-            <form onSubmit={handleSearch} className="space-y-6">
+            <form onSubmit={handleSearch} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium mb-2">
                   {t('rsvp.search_label')}
@@ -667,8 +667,8 @@ export default function RSVP() {
                 </div>
               )}
 
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? 'Searching...' : (
+              <Button type="submit" disabled={loading} className="w-full h-11">
+                {loading ? 'Searching…' : (
                   <>
                     <Search className="w-4 h-4 mr-2" />
                     Find My Invitation
