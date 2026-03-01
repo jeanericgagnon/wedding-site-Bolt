@@ -45,6 +45,7 @@ interface GuestWithRSVP extends Guest {
 
 interface GuestAuditEntry {
   id: string;
+  guest_id?: string;
   action: 'insert' | 'update' | 'delete';
   changed_at: string;
   changed_by: string | null;
@@ -111,6 +112,14 @@ function getAuditActionTone(action: GuestAuditEntry['action']): string {
   if (action === 'insert') return 'bg-success-light text-success border-success/20';
   if (action === 'delete') return 'bg-error-light text-error border-error/20';
   return 'bg-primary-light text-primary border-primary/20';
+}
+
+function getAuditGuestLabel(entry: GuestAuditEntry): string {
+  const preferred = (entry.new_data?.name as string | undefined)
+    || `${entry.new_data?.first_name ?? ''} ${entry.new_data?.last_name ?? ''}`.trim()
+    || (entry.old_data?.name as string | undefined)
+    || `${entry.old_data?.first_name ?? ''} ${entry.old_data?.last_name ?? ''}`.trim();
+  return preferred || 'Guest';
 }
 
 function formatRelativeTime(iso: string): string {
@@ -339,6 +348,8 @@ export const DashboardGuests: React.FC = () => {
   const [loadingDrawer, setLoadingDrawer] = useState(false);
   const [togglingEventId, setTogglingEventId] = useState<string | null>(null);
   const [guestAuditEntries, setGuestAuditEntries] = useState<GuestAuditEntry[]>([]);
+  const [rsvpAuditFeed, setRsvpAuditFeed] = useState<GuestAuditEntry[]>([]);
+  const [rsvpAuditLoading, setRsvpAuditLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -480,6 +491,56 @@ export const DashboardGuests: React.FC = () => {
       fetchGuests();
     }
   }, [weddingSiteId, fetchGuests]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRsvpAuditFeed() {
+      if (guestsTab !== 'rsvp-config') return;
+
+      setRsvpAuditLoading(true);
+      try {
+        if (isDemoMode) {
+          const now = Date.now();
+          const demoEntries: GuestAuditEntry[] = guests.slice(0, 4).map((g, idx) => ({
+            id: `demo-rsvp-audit-${g.id}-${idx}`,
+            guest_id: g.id,
+            action: idx % 3 === 0 ? 'insert' : 'update',
+            changed_at: new Date(now - (idx + 1) * 1000 * 60 * 35).toISOString(),
+            changed_by: null,
+            old_data: { rsvp_status: 'pending', name: g.name },
+            new_data: { rsvp_status: g.rsvp_status, name: g.name },
+          }));
+          if (!cancelled) setRsvpAuditFeed(demoEntries);
+          return;
+        }
+
+        if (!weddingSiteId) {
+          if (!cancelled) setRsvpAuditFeed([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('guest_audit_logs')
+          .select('id, guest_id, action, changed_at, changed_by, old_data, new_data')
+          .eq('wedding_site_id', weddingSiteId)
+          .order('changed_at', { ascending: false })
+          .limit(20);
+
+        if (error) throw error;
+        if (!cancelled) setRsvpAuditFeed((data ?? []) as GuestAuditEntry[]);
+      } catch {
+        if (!cancelled) setRsvpAuditFeed([]);
+      } finally {
+        if (!cancelled) setRsvpAuditLoading(false);
+      }
+    }
+
+    void loadRsvpAuditFeed();
+    return () => {
+      cancelled = true;
+    };
+  }, [guestsTab, isDemoMode, guests, weddingSiteId]);
 
   const visibleRsvpConflicts = useMemo(
     () => rsvpConflicts.filter((c) => conflictFilter === 'all' ? true : c.severity === conflictFilter),
@@ -1822,6 +1883,44 @@ Proceed with send?`)) return;
                 </div>
               </div>
             </div>
+          </Card>
+
+          <Card variant="bordered" padding="lg">
+            <details className="group" open>
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-text-primary">Guest change history</h3>
+                  <p className="text-sm text-text-secondary">Recent guest updates so you can track what changed without leaving RSVP config.</p>
+                </div>
+                <span className="text-xs text-text-tertiary">{rsvpAuditFeed.length} recent</span>
+              </summary>
+
+              <div className="mt-4 space-y-2">
+                {rsvpAuditLoading ? (
+                  <div className="text-sm text-text-secondary">Loading history…</div>
+                ) : rsvpAuditFeed.length === 0 ? (
+                  <div className="text-sm text-text-secondary">No recent guest changes yet.</div>
+                ) : (
+                  rsvpAuditFeed.slice(0, 8).map((entry) => (
+                    <div key={entry.id} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border ${getAuditActionTone(entry.action)}`}>
+                              {getAuditActionIcon(entry.action)}
+                              <span>{entry.action === 'insert' ? 'Created' : entry.action === 'delete' ? 'Removed' : 'Updated'}</span>
+                            </span>
+                            <span className="text-xs text-text-tertiary truncate">{getAuditGuestLabel(entry)}</span>
+                          </div>
+                          <p className="text-sm text-text-secondary leading-relaxed">{summarizeAuditEntry(entry)}</p>
+                        </div>
+                        <span className="text-xs text-text-tertiary whitespace-nowrap">{formatRelativeTime(entry.changed_at)}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </details>
           </Card>
         </div>
       </DashboardLayout>
