@@ -1418,7 +1418,14 @@ Proceed with send?`)) return;
 
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !weddingSiteId) return;
+    if (!file) {
+      toast('Please choose a CSV or Excel file to import.', 'error');
+      return;
+    }
+    if (!weddingSiteId) {
+      toast('Could not find your wedding site. Refresh and try again.', 'error');
+      return;
+    }
 
     try {
       const lowerName = file.name.toLowerCase();
@@ -1525,6 +1532,8 @@ Proceed with send?`)) return;
 
       setCsvPreview(parsed);
       setCsvSkipped(skipped);
+      const skippedMsg = skipped.length > 0 ? ` (${skipped.length} skipped)` : '';
+      toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}.`, 'success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to parse guest file';
       toast(msg, 'error');
