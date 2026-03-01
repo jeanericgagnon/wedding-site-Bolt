@@ -362,7 +362,7 @@ export const DashboardGuests: React.FC = () => {
     }
   }, [campaignLog]);
 
-  const [viewMode, setViewMode] = useState<'list' | 'households'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'households'>('households');
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
   const [householdBusy, setHouseholdBusy] = useState(false);
 
@@ -1358,6 +1358,16 @@ Proceed with send?`)) return;
   }
 
   const households = useMemo(() => {
+    const byName = (a: GuestWithRSVP, b: GuestWithRSVP) => {
+      const aLast = (a.last_name || '').toLowerCase();
+      const bLast = (b.last_name || '').toLowerCase();
+      if (aLast !== bLast) return aLast.localeCompare(bLast);
+      const aFirst = (a.first_name || '').toLowerCase();
+      const bFirst = (b.first_name || '').toLowerCase();
+      if (aFirst !== bFirst) return aFirst.localeCompare(bFirst);
+      return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase());
+    };
+
     const map = new Map<string, GuestWithRSVP[]>();
     const ungrouped: GuestWithRSVP[] = [];
     guests.forEach(g => {
@@ -1368,7 +1378,12 @@ Proceed with send?`)) return;
         ungrouped.push(g);
       }
     });
-    return { grouped: [...map.entries()], ungrouped };
+
+    const grouped = [...map.entries()]
+      .map(([id, members]) => [id, [...members].sort(byName)] as [string, GuestWithRSVP[]])
+      .sort((a, b) => byName(a[1][0], b[1][0]));
+
+    return { grouped, ungrouped: [...ungrouped].sort(byName) };
   }, [guests]);
 
   const resetForm = () => {
@@ -3069,13 +3084,16 @@ Proceed with send?`)) return;
                 {households.grouped.map(([householdId, members]) => {
                   const head = members.find(m => m.id === householdId) ?? members[0];
                   const headName = head ? (head.first_name && head.last_name ? `${head.first_name} ${head.last_name}` : head.name) : 'Household';
+                  const householdLabel = `${headName} household`;
+                  const confirmed = members.filter((m) => m.rsvp_status === 'confirmed').length;
+                  const pending = members.filter((m) => m.rsvp_status === 'pending').length;
                   return (
                     <div key={householdId} className="border border-border rounded-xl overflow-hidden">
                       <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
                         <div className="flex items-center gap-2">
                           <Home className="w-4 h-4 text-text-tertiary" />
-                          <span className="font-semibold text-text-primary text-sm">{headName} household</span>
-                          <span className="text-xs text-text-tertiary break-words">({members.length} guests)</span>
+                          <span className="font-semibold text-text-primary text-sm">{householdLabel}</span>
+                          <span className="text-xs text-text-tertiary break-words">({members.length} guests · {confirmed} confirmed · {pending} pending)</span>
                         </div>
                       </div>
                       <div className="divide-y divide-border-subtle">
