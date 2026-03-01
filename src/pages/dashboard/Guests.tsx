@@ -1789,6 +1789,7 @@ Proceed with send?`)) return;
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
+  const [showCampaignModal, setShowCampaignModal] = useState(false);
 
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
@@ -2298,140 +2299,99 @@ Proceed with send?`)) return;
               </div>
             </div>
 
-            <details className="p-3 rounded-xl border border-border-subtle bg-surface-subtle">
-              <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold text-text-primary">Campaign insights & reminders</span>
-                <span className="text-xs text-text-tertiary">View details</span>
-              </summary>
-              <div className="mt-2 space-y-2">
-                <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
-                {daysToWedding !== null && (
-                  <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
-                    Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
-                  </div>
-                )}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <p className="text-xs text-text-secondary">
-                    Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
-                    Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span> ·
-                    Campaign readiness: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
+            <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Campaign insights & reminders</p>
+                  <p className="text-xs text-text-secondary mt-0.5">
+                    Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> · Eligible: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span>
                   </p>
-                  <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
-                    <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
-                    Skip guests invited in last 24h
-                  </label>
                 </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <label className="text-xs text-text-secondary w-28">Campaign preset</label>
-                  <select
-                    value={campaignPreset}
-                    onChange={(e) => applyCampaignPreset(e.target.value as any)}
-                    className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
-                  >
-                    <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
-                    <option value="missing-meal">Missing meal ({rsvpOps.missingMeal})</option>
-                    <option value="plusone-missing">Missing plus-one name ({rsvpOps.plusOneMissingName})</option>
-                    <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
-                    <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
-                    <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
-                  </select>
-                </div>
-
-              {reminderCandidates.length > 0 && (
-                <div className="space-y-1">
-                  <button
-                    onClick={() => setShowRecipientPreview(v => !v)}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    {showRecipientPreview ? 'Hide' : 'Show'} recipient preview ({reminderCandidates.length})
-                  </button>
-                  {showRecipientPreview && (
-                    <div className="max-h-28 overflow-auto rounded-lg border border-border bg-white p-2 text-xs text-text-secondary">
-                      {reminderCandidates.slice(0, 20).map((g) => (
-                        <div key={g.id} className="py-0.5">
-                          {(g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name}
-                          {g.email ? ` · ${g.email}` : ''}
-                        </div>
-                      ))}
-                      {reminderCandidates.length > 20 && (
-                        <div className="pt-1 text-text-tertiary">+{reminderCandidates.length - 20} more</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <button onClick={() => { setFilterStatus('pending'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
-                <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
-                <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
-                <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
-                <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
-                <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
+                <Button variant="outline" size="sm" onClick={() => setShowCampaignModal(true)}>Open</Button>
               </div>
-
-              {savedSegments.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] text-text-tertiary">Saved segments</p>
-                    <button
-                      onClick={() => setSavedSegments([])}
-                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
-                    >
-                      Clear segments
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {savedSegments.map((seg) => (
-                      <button key={seg.id} onClick={() => { setFilterStatus(seg.filter as any); setViewMode('list'); setSearchQuery(''); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">
-                        {seg.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {followUpTasks.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] text-text-tertiary">Saved follow-up tasks</p>
-                    <button
-                      onClick={() => setFollowUpTasks([])}
-                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
-                    >
-                      Clear tasks
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {followUpTasks.map((task) => (
-                      <span key={task.id} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary">{task.text} · {task.createdAt}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {campaignLog.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] text-text-tertiary">Recent reminder sends</p>
-                    <button
-                      onClick={() => setCampaignLog([])}
-                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
-                    >
-                      Clear log
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {campaignLog.map((log) => (
-                      <span key={log.id} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary">
-                        {log.segment}: {log.count} sent · {log.sentAt}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </details>
+
+            {showCampaignModal && (
+              <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-3">
+                <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-2xl border border-border bg-white shadow-2xl">
+                  <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-text-primary">Campaign insights & reminders</p>
+                      <p className="text-xs text-text-tertiary">Focused controls without cluttering the main screen</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setShowCampaignModal(false)}>Close</Button>
+                  </div>
+
+                  <div className="p-4 space-y-3">
+                    <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
+                    {daysToWedding !== null && (
+                      <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
+                        Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
+                      </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <p className="text-xs text-text-secondary">
+                        Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
+                        Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span> ·
+                        Campaign readiness: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
+                      </p>
+                      <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
+                        <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
+                        Skip guests invited in last 24h
+                      </label>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <label className="text-xs text-text-secondary w-28">Campaign preset</label>
+                      <select
+                        value={campaignPreset}
+                        onChange={(e) => applyCampaignPreset(e.target.value as any)}
+                        className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
+                      >
+                        <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
+                        <option value="missing-meal">Missing meal ({rsvpOps.missingMeal})</option>
+                        <option value="plusone-missing">Missing plus-one name ({rsvpOps.plusOneMissingName})</option>
+                        <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
+                        <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
+                        <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
+                      </select>
+                    </div>
+
+                    {reminderCandidates.length > 0 && (
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => setShowRecipientPreview(v => !v)}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          {showRecipientPreview ? 'Hide' : 'Show'} recipient preview ({reminderCandidates.length})
+                        </button>
+                        {showRecipientPreview && (
+                          <div className="max-h-28 overflow-auto rounded-lg border border-border bg-white p-2 text-xs text-text-secondary">
+                            {reminderCandidates.slice(0, 20).map((g) => (
+                              <div key={g.id} className="py-0.5">
+                                {(g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name}
+                                {g.email ? ` · ${g.email}` : ''}
+                              </div>
+                            ))}
+                            {reminderCandidates.length > 20 && (
+                              <div className="pt-1 text-text-tertiary">+{reminderCandidates.length - 20} more</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
+                      <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
+                      <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
+                      <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
+                      <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
+                      <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border-subtle bg-surface-subtle">
               <p className="text-xs text-text-secondary">
