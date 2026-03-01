@@ -24,7 +24,7 @@ const checks = [
   },
   {
     name: 'name mapping guard present',
-    ok: src.includes('Map at least one name field') && src.includes('csvNameMappingValid'),
+    ok: src.includes('Map both First Name and Last Name before continuing.') && src.includes('csvNameMappingValid'),
   },
 ];
 

@@ -378,7 +378,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvFieldMap, setCsvFieldMap] = useState<CsvFieldMap | null>(null);
   const [csvShowMapper, setCsvShowMapper] = useState(false);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
-  const csvNameMappingValid = !!csvFieldMap && (csvFieldMap.full_name >= 0 || csvFieldMap.first_name >= 0 || csvFieldMap.last_name >= 0);
+  const csvNameMappingValid = !!csvFieldMap && csvFieldMap.first_name >= 0 && csvFieldMap.last_name >= 0;
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
@@ -1493,8 +1493,8 @@ Proceed with send?`)) return;
   };
 
   const buildCsvPreviewFromMapping = useCallback(async (headers: string[], dataRows: string[][], fieldMap: CsvFieldMap) => {
-    if (fieldMap.first_name < 0 && fieldMap.last_name < 0 && fieldMap.full_name < 0) {
-      toast('Please map at least First/Last Name or Full Name.', 'error');
+    if (fieldMap.first_name < 0 || fieldMap.last_name < 0) {
+      toast('Please map both First Name and Last Name.', 'error');
       return;
     }
 
@@ -1526,7 +1526,6 @@ Proceed with send?`)) return;
       core: [
         fieldMap.first_name >= 0 ? 'First Name' : '',
         fieldMap.last_name >= 0 ? 'Last Name' : '',
-        fieldMap.full_name >= 0 ? 'Full Name' : '',
         fieldMap.email >= 0 ? 'Email' : '',
         fieldMap.phone >= 0 ? 'Phone' : '',
         fieldMap.plus_one >= 0 ? 'Plus One' : '',
@@ -1550,21 +1549,8 @@ Proceed with send?`)) return;
 
     dataRows.forEach((row, idx) => {
       const values = (row || []).map((v) => String(v ?? '').trim());
-      let firstName = fieldMap.first_name >= 0 ? (values[fieldMap.first_name] || '') : '';
-      let lastName = fieldMap.last_name >= 0 ? (values[fieldMap.last_name] || '') : '';
-
-      if ((!firstName && !lastName) && fieldMap.full_name >= 0) {
-        const full = (values[fieldMap.full_name] || '').trim();
-        if (full.includes(',')) {
-          const [lastPart, firstPart] = full.split(',').map((p) => p.trim());
-          firstName = firstPart || '';
-          lastName = lastPart || '';
-        } else {
-          const parts = full.split(/\s+/).filter(Boolean);
-          firstName = parts[0] || '';
-          lastName = parts.slice(1).join(' ');
-        }
-      }
+      const firstName = fieldMap.first_name >= 0 ? (values[fieldMap.first_name] || '') : '';
+      const lastName = fieldMap.last_name >= 0 ? (values[fieldMap.last_name] || '') : '';
 
       const email = fieldMap.email >= 0 ? (values[fieldMap.email] || null) : null;
       const phone = fieldMap.phone >= 0 ? (values[fieldMap.phone] || null) : null;
@@ -1609,8 +1595,8 @@ Proceed with send?`)) return;
         if (falsey) invitedEventIds.delete(eventId);
       });
 
-      if (!firstName && !lastName && !email) {
-        skipped.push(`Row ${idx + 2}: missing name/email`);
+      if (!firstName || !lastName) {
+        skipped.push(`Row ${idx + 2}: missing first or last name`);
         return;
       }
 
@@ -1808,7 +1794,7 @@ Proceed with send?`)) return;
 
       const { data: insertedGuests, error } = await supabase
         .from('guests')
-        .upsert(guestRows, { onConflict: 'invite_token' })
+        .insert(guestRows)
         .select('id, first_name, last_name, name, email');
       if (error) throw error;
 
@@ -3527,7 +3513,7 @@ Proceed with send?`)) return;
               <div className="overflow-y-auto flex-1 p-6 space-y-3">
                 {!csvNameMappingValid && (
                   <div className="rounded-lg border border-warning/30 bg-warning-light px-3 py-2 text-xs text-warning">
-                    Map at least one name field (First Name, Last Name, or Full Name) before continuing.
+                    Map both First Name and Last Name before continuing.
                   </div>
                 )}
                 {([
