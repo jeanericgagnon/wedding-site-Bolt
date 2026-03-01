@@ -18,6 +18,7 @@
     "smoke:web": "bash scripts/smoke-sites.sh",
     "smoke:rsvp": "node scripts/rsvp_smoke.js",
     "smoke:rsvp:strict": "node scripts/rsvp_smoke.js --strict",
+    "smoke:site": "node scripts/site_lookup_smoke.js",
     "hardpass:rsvp": "npm test && npm run build && npm run smoke:rsvp:strict"
   },
   "dependencies": {
