@@ -20,7 +20,7 @@
     "smoke:rsvp:strict": "node scripts/rsvp_smoke.js --strict",
     "smoke:csvmapper": "node scripts/smoke_csv_mapper_guard.js",
     "smoke:site": "node scripts/site_lookup_smoke.js",
-    "hardpass:rsvp": "npm test && npm run build && npm run smoke:rsvp:strict"
+    "hardpass:rsvp": "npm test && npm run build && npm run smoke:rsvp:strict && npm run smoke:csvmapper"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
