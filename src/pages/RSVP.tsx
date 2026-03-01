@@ -734,7 +734,7 @@ export default function RSVP() {
         )}
 
         {step === 'form' && guest && (
-          <Card className="p-6 md:p-8">
+          <Card className="p-5 md:p-7">
             <div className="text-center mb-6">
               <h1 className="text-2xl md:text-3xl font-serif mb-2">Welcome, {guestDisplayName}!</h1>
               {existingRsvp && (

@@ -118,7 +118,7 @@ export const Home: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-accent/5 rounded-2xl p-8 border border-accent/20 max-w-2xl mx-auto">
+            <div className="bg-accent/5 rounded-2xl p-7 border border-accent/20 max-w-2xl mx-auto">
               <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-3 leading-[1.2] updates-tight">Built for trust, not tricks</h3>
               <p className="text-[1.0625rem] text-ink/80 mb-6 leading-relaxed">Wedding sites should not make money by stressing you out.</p>
               <ul className="space-y-3 text-[0.9375rem] text-ink/70">
