@@ -785,47 +785,41 @@ export const DashboardOverview: React.FC = () => {
               </Card>
             </div>
 
-            <Card variant="bordered" padding="lg" className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Guest activity snapshot</CardTitle>
-                <CardDescription>A quick look at how guests are interacting with your site</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase updates-wide">Hero clicks</p>
-                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.heroCtr}%</p>
-                  </div>
-                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase updates-wide">Started RSVP</p>
-                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpStartRate}%</p>
-                  </div>
-                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase updates-wide">Finished RSVP</p>
-                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpCompletionRate}%</p>
-                  </div>
-                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase updates-wide">RSVP hiccups</p>
-                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpFailureRate}%</p>
-                  </div>
-                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase updates-wide">Registry clicks</p>
-                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.registryCtr}%</p>
-                  </div>
-                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
-                    <p className="text-[11px] text-text-tertiary uppercase updates-wide">FAQ opens</p>
-                    <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.faqInteractionRate}%</p>
-                  </div>
+            <details className="rounded-xl border border-border-subtle bg-surface p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-text-primary">Engagement insights</summary>
+              <p className="text-xs text-text-secondary mt-1">A quick look at how guests are interacting with your site</p>
+              <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                  <p className="text-[11px] text-text-tertiary uppercase updates-wide">Hero clicks</p>
+                  <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.heroCtr}%</p>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                  <p className="text-[11px] text-text-tertiary uppercase updates-wide">Started RSVP</p>
+                  <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpStartRate}%</p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                  <p className="text-[11px] text-text-tertiary uppercase updates-wide">Finished RSVP</p>
+                  <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpCompletionRate}%</p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                  <p className="text-[11px] text-text-tertiary uppercase updates-wide">RSVP hiccups</p>
+                  <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.rsvpFailureRate}%</p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                  <p className="text-[11px] text-text-tertiary uppercase updates-wide">Registry clicks</p>
+                  <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.registryCtr}%</p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 px-3 py-2">
+                  <p className="text-[11px] text-text-tertiary uppercase updates-wide">FAQ opens</p>
+                  <p className="text-xl font-semibold text-text-primary">{analyticsSnapshot.faqInteractionRate}%</p>
+                </div>
+              </div>
+            </details>
 
-            <Card variant="bordered" padding="lg" className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Connector health</CardTitle>
-                <CardDescription>How connected your core modules are</CardDescription>
-              </CardHeader>
-              <CardContent>
+            <details className="rounded-xl border border-border-subtle bg-surface p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-text-primary">Site health</summary>
+              <p className="text-xs text-text-secondary mt-1">Connection status and setup progress</p>
+              <div className="mt-3 space-y-4">
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between py-2 border-b border-border-subtle">
                     <span className="text-text-secondary">Itinerary → Photos</span>
@@ -850,18 +844,9 @@ export const DashboardOverview: React.FC = () => {
                     <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/messages')}>Open messages</Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card variant="bordered" padding="lg" className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Setup checklist</CardTitle>
-                <CardDescription>
-                  {setupCompletedCount}/{setupChecklist.length} complete
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
                 <div className="space-y-3">
+                  <p className="text-xs text-text-tertiary">Setup checklist · {setupCompletedCount}/{setupChecklist.length} complete</p>
                   {setupChecklist.map((item) => (
                     <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-2 border-b border-border-subtle last:border-0">
                       <label className="flex items-center gap-3 text-sm text-text-primary">
@@ -876,8 +861,8 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </details>
 
           </>
         )}
