@@ -725,6 +725,46 @@ export const Product: React.FC = () => {
               </ul>
             </Card>
 
+            <Card variant="bordered" padding="lg" className="bg-surface">
+              <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
+                <Camera className="w-5 h-5 text-primary" /> Guest Photo Sharing
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  { icon: Camera, label: 'Guest upload link (no app required)', done: true },
+                  { icon: Shield, label: 'Moderation controls before publishing', done: true },
+                  { icon: Users,  label: 'Guest attribution + upload timeline', done: true },
+                  { icon: Download, label: 'Bulk export for keepsakes/vendors', done: true },
+                ].map((f, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <f.icon className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
+                    <span className={`text-sm ${f.done ? 'text-text-secondary' : 'text-text-tertiary'}`}>{f.label}</span>
+                    {!f.done && <Badge variant="secondary" className="text-xs ml-auto">Soon</Badge>}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            <Card variant="bordered" padding="lg" className="bg-surface">
+              <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" /> Anniversary Vault
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  { icon: Clock, label: 'Locked time-capsule vaults by anniversary', done: true },
+                  { icon: FileText, label: 'Save notes, photos, and media messages', done: true },
+                  { icon: Bell, label: 'Unlock notifications when milestones arrive', done: true },
+                  { icon: Shield, label: 'Private vault controls per couple', done: true },
+                ].map((f, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <f.icon className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
+                    <span className={`text-sm ${f.done ? 'text-text-secondary' : 'text-text-tertiary'}`}>{f.label}</span>
+                    {!f.done && <Badge variant="secondary" className="text-xs ml-auto">Soon</Badge>}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
             <Card variant="bordered" padding="lg" className="bg-surface lg:col-span-2">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" /> Privacy + Security
