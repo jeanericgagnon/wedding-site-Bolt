@@ -218,6 +218,16 @@ export const DashboardItinerary: React.FC = () => {
     setSaveError(null);
     setSaveNotice(null);
 
+    if (!formData.event_name.trim()) {
+      setSaveError('Event name is required.');
+      return;
+    }
+
+    if (!formData.event_date) {
+      setSaveError('Event date is required.');
+      return;
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const selectedDate = new Date(formData.event_date);
@@ -466,7 +476,7 @@ export const DashboardItinerary: React.FC = () => {
           <h2 className="text-xl font-semibold text-neutral-900 mb-4">
             {editingEvent ? 'Edit Event' : 'Create New Event'}
           </h2>
-          <form onSubmit={handleSaveEvent} className="space-y-4">
+          <form noValidate onSubmit={handleSaveEvent} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
@@ -476,7 +486,6 @@ export const DashboardItinerary: React.FC = () => {
                   value={formData.event_name}
                   onChange={(e) => setFormData({ ...formData, event_name: e.target.value })}
                   placeholder="e.g., Welcome Dinner, Rehearsal Dinner"
-                  required
                 />
               </div>
 
@@ -488,7 +497,6 @@ export const DashboardItinerary: React.FC = () => {
                   type="date"
                   value={formData.event_date}
                   onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-                  required
                 />
               </div>
 
