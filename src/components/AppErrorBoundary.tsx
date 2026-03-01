@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { logClientError } from '../lib/errorLogger';
 
 interface Props {
   children: React.ReactNode;
@@ -21,6 +22,14 @@ export class AppErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    logClientError({
+      source: 'react-error-boundary',
+      severity: 'error',
+      message: error.message || 'Unknown React runtime error',
+      stack: error.stack,
+      metadata: { componentStack: info.componentStack?.slice(0, 2000) },
+    });
+
     if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>)['Sentry']) {
       (window as unknown as Record<string, { captureException: (e: Error, ctx: unknown) => void }>)['Sentry'].captureException(error, { extra: info });
     }
