@@ -601,7 +601,7 @@ export const Product: React.FC = () => {
                   { icon: AlertTriangle, label: 'Duplicate guest detection',                    done: true },
                   { icon: Upload,        label: 'CSV import with auto column mapping',           done: true },
                   { icon: Download,      label: 'Export for vendor/caterer',                    done: true },
-                  { icon: FileText,      label: 'Audit trail',                                  done: false },
+                  { icon: FileText,      label: 'Guest change history',                         done: true },
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <f.icon className={`w-4 h-4 flex-shrink-0 ${f.done ? 'text-success' : 'text-text-tertiary/50'}`} />
