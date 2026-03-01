@@ -145,7 +145,7 @@ const ComingSoonScreen: React.FC = () => {
   const { t } = useTranslation();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-surface px-4">
-      <div className="flex justify-end w-full max-w-md absolute top-4 right-4">
+      <div className="flex justify-end w-full max-w-md absolute top-3.5 right-4">
         <LanguageSwitcher />
       </div>
       <div className="max-w-md w-full text-center space-y-3">

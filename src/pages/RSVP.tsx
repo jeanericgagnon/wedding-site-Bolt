@@ -1139,7 +1139,7 @@ export default function RSVP() {
                   <CheckCircle className={`w-9 h-9 ${formData.attending ? 'text-green-500' : 'text-neutral-500'}`} />
                 </div>
               </div>
-              <h1 className="text-2xl md:text-3xl font-serif mb-2">
+              <h1 className="text-2xl md:text-3xl font-serif mb-1.5">
                 {formData.attending ? "You're confirmed!" : "Response recorded"}
               </h1>
               <p className="text-gray-500 text-sm">

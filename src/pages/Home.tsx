@@ -341,7 +341,7 @@ export const Home: React.FC = () => {
                 </button>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-border-subtle space-y-2">
+              <div className="mt-5 pt-5 border-t border-border-subtle space-y-2">
                 <p className="text-[0.8125rem] text-ink/55 text-center updates-wide leading-loose">
                   Taxes may apply depending on location.
                 </p>
