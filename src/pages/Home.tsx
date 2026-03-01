@@ -149,8 +149,8 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Users className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Guests + Households</h3>
-              <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
+              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Guests + Households</h3>
+              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <span className="text-brand mt-0.5">•</span>
                   <span>Household grouping</span>
@@ -183,8 +183,8 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <CheckCircle2 className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">RSVP Engine</h3>
-              <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
+              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">RSVP Engine</h3>
+              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Multi-event RSVP</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Household-aware flow</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Meal selection</span></li>
@@ -199,8 +199,8 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Messaging</h3>
-              <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
+              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Messaging</h3>
+              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Email blasts included</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Guest segmentation</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Schedule sends</span></li>
@@ -215,8 +215,8 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Hotel className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Travel + Itinerary</h3>
-              <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
+              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Travel + Itinerary</h3>
+              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Hotel room blocks</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Multi-day timeline</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Venue addresses</span></li>
@@ -231,8 +231,8 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Heart className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Registry</h3>
-              <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
+              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Registry</h3>
+              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Link existing registries</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Link any registry</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Honeymoon fund</span></li>
@@ -247,8 +247,8 @@ export const Home: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-[1.25rem] font-serif font-bold text-ink mb-4 leading-snug updates-tight">Seating</h3>
-              <ul className="space-y-2.5 text-[0.875rem] text-ink/70 leading-relaxed">
+              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Seating</h3>
+              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Drag-and-drop seating board</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table capacity management</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Auto-assign by RSVP</span></li>

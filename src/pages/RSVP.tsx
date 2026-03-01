@@ -814,51 +814,53 @@ export default function RSVP() {
                       </label>
 
                       {applyToHousehold && (
-                        <>
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs text-amber-800">Multi-select household members:</p>
+                        <details className="rounded-lg border border-amber-200 bg-white/60 p-2">
+                          <summary className="cursor-pointer text-xs font-medium text-amber-800 flex items-center justify-between gap-2">
+                            <span>Choose household guests</span>
                             <span className="text-[10px] text-amber-700">{selectedHouseholdGuestIds.length}/{householdGuests.length} selected</span>
+                          </summary>
+                          <div className="mt-2 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedHouseholdGuestIds(householdGuests.map((h) => h.id))}
+                                className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
+                              >
+                                Select all
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedHouseholdGuestIds([])}
+                                className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
+                              >
+                                Clear
+                              </button>
+                            </div>
+                            <div className="space-y-1.5">
+                              {householdGuests.map((h) => {
+                                const label = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
+                                const checked = selectedHouseholdGuestIds.includes(h.id);
+                                const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
+                                return (
+                                  <label key={h.id} className="flex items-center justify-between gap-2 bg-white border border-amber-200 rounded-md px-2 py-1.5">
+                                    <span className="text-xs text-gray-700">{label}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] text-gray-500">{access}</span>
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          setSelectedHouseholdGuestIds((prev) => e.target.checked ? [...new Set([...prev, h.id])] : prev.filter((id) => id !== h.id));
+                                        }}
+                                        className="w-4 h-4"
+                                      />
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedHouseholdGuestIds(householdGuests.map((h) => h.id))}
-                              className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
-                            >
-                              Select all
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedHouseholdGuestIds([])}
-                              className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
-                            >
-                              Clear
-                            </button>
-                          </div>
-                          <div className="space-y-1.5">
-                            {householdGuests.map((h) => {
-                              const label = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
-                              const checked = selectedHouseholdGuestIds.includes(h.id);
-                              const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
-                              return (
-                                <label key={h.id} className="flex items-center justify-between gap-2 bg-white border border-amber-200 rounded-md px-2 py-1.5">
-                                  <span className="text-xs text-gray-700">{label}</span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-gray-500">{access}</span>
-                                    <input
-                                      type="checkbox"
-                                      checked={checked}
-                                      onChange={(e) => {
-                                        setSelectedHouseholdGuestIds((prev) => e.target.checked ? [...new Set([...prev, h.id])] : prev.filter((id) => id !== h.id));
-                                      }}
-                                      className="w-4 h-4"
-                                    />
-                                  </div>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </>
+                        </details>
                       )}
                     </div>
                   )}
