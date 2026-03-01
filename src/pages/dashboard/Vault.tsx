@@ -920,7 +920,7 @@ setWeddingSiteId('demo-site-id');
         setEntries((entryData ?? []) as VaultEntry[]);
       }
     } catch {
-      toast('Failed to load vault data', 'error');
+      toast('Couldn’t load vault data right now. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -966,7 +966,7 @@ setWeddingSiteId('demo-site-id');
 
       const ok = (data as { success?: boolean } | null)?.success;
       if (!ok) {
-        toast('Google Drive connection did not complete. Please reconnect.', 'error');
+        toast('Google Drive connection wasn’t finished. Please reconnect to continue.', 'error');
         return;
       }
 
@@ -1119,7 +1119,7 @@ setWeddingSiteId('demo-site-id');
       .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
       .eq('id', configId);
 
-    if (error) { toast('Failed to update vault', 'error'); return; }
+    if (error) { toast('Couldn’t update this vault. Please try again.', 'error'); return; }
     setVaultConfigs(prev => prev.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c));
     toast(enabled ? 'Vault enabled' : 'Vault disabled');
   }
@@ -1227,7 +1227,7 @@ setWeddingSiteId('demo-site-id');
       return;
     }
     const { error } = await supabase.from('vault_configs').delete().eq('id', configId);
-    if (error) { toast('Failed to delete vault', 'error'); return; }
+    if (error) { toast('Couldn’t remove this vault. Please try again.', 'error'); return; }
     setVaultConfigs(prev => {
       const remaining = prev.filter(c => c.id !== configId);
       return remaining.map((c, i) => ({ ...c, vault_index: i + 1 }));

@@ -130,7 +130,7 @@ export const DashboardRegistry: React.FC = () => {
       const data = await fetchRegistryItems(siteId);
       setItems(data);
     } catch {
-      toast('Failed to load registry items', 'error');
+      toast('Couldn’t load registry items right now. Please try again.', 'error');
     }
   }, []);
 
@@ -314,7 +314,7 @@ export const DashboardRegistry: React.FC = () => {
           : `"${item.item_name}" updated — ${updated.quantity_purchased}/${updated.quantity_needed} purchased`
       );
     } catch {
-      toast('Failed to update purchase status', 'error');
+      toast('Couldn’t update purchase status. Please try again.', 'error');
     }
   }
 
@@ -680,10 +680,10 @@ export const DashboardRegistry: React.FC = () => {
               </p>
             )}
             {daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14 && (
-              <p className="text-xs text-warning mt-1">Near expiry: auto-lean recommended to minimize late-cycle compute.</p>
+              <p className="text-xs text-warning mt-1">Refresh window is almost up. Lean mode is recommended for smoother updates.</p>
             )}
             {nearBudgetCap && (
-              <p className="text-xs text-warning mt-1">You are above 80% of monthly refresh budget. Consider switching to Lean.</p>
+              <p className="text-xs text-warning mt-1">You’ve used over 80% of this month’s refresh budget. Lean mode can help stretch remaining runs.</p>
             )}
             <div className="mt-2 flex flex-wrap items-end gap-2">
               <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
