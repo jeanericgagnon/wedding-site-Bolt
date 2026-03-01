@@ -361,6 +361,7 @@ export const DashboardGuests: React.FC = () => {
     email: '',
     phone: '',
     plus_one_allowed: false,
+    require_plus_one_name: false,
     invited_to_ceremony: true,
     invited_to_reception: true,
   });
@@ -1322,6 +1323,7 @@ Proceed with send?`)) return;
       email: '',
       phone: '',
       plus_one_allowed: false,
+      require_plus_one_name: false,
       invited_to_ceremony: true,
       invited_to_reception: true,
     });
@@ -1336,6 +1338,7 @@ Proceed with send?`)) return;
       email: guest.email || '',
       phone: guest.phone || '',
       plus_one_allowed: guest.plus_one_allowed,
+      require_plus_one_name: false,
       invited_to_ceremony: guest.invited_to_ceremony,
       invited_to_reception: guest.invited_to_reception,
     });
@@ -1857,33 +1860,27 @@ Proceed with send?`)) return;
                 <input
                   type="checkbox"
                   checked={formData.plus_one_allowed}
-                  onChange={(e) => setFormData({ ...formData, plus_one_allowed: e.target.checked })}
+                  onChange={(e) => setFormData({ ...formData, plus_one_allowed: e.target.checked, require_plus_one_name: e.target.checked ? formData.require_plus_one_name : false })}
                   className="rounded"
                 />
                 <span className="text-sm text-text-primary">Allow Plus One</span>
               </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.invited_to_ceremony}
-                  onChange={(e) => setFormData({ ...formData, invited_to_ceremony: e.target.checked })}
-                  className="rounded"
-                />
-                <span className="text-sm text-text-primary">Invited to Ceremony (legacy flag)</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.invited_to_reception}
-                  onChange={(e) => setFormData({ ...formData, invited_to_reception: e.target.checked })}
-                  className="rounded"
-                />
-                <span className="text-sm text-text-primary">Invited to Reception (legacy flag)</span>
-              </label>
+
+              {formData.plus_one_allowed && (
+                <label className="flex items-center gap-2 pl-6">
+                  <input
+                    type="checkbox"
+                    checked={formData.require_plus_one_name}
+                    onChange={(e) => setFormData({ ...formData, require_plus_one_name: e.target.checked })}
+                    className="rounded"
+                  />
+                  <span className="text-sm text-text-primary">Require plus-one name</span>
+                </label>
+              )}
 
               {itineraryFilterEvents.length > 0 && (
                 <div className="pt-1 border-t border-border-subtle">
-                  <p className="text-xs font-medium text-text-secondary mb-2">Itinerary invitations (used by RSVP filters)</p>
+                  <p className="text-xs font-medium text-text-secondary mb-2">Itinerary invitations</p>
                   <div className="space-y-1.5 max-h-40 overflow-auto pr-1">
                     {itineraryFilterEvents.map((event) => {
                       const checked = formEventInviteIds.has(event.id);
