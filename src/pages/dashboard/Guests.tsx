@@ -77,7 +77,7 @@ interface CsvFieldMap {
   invite_token: number;
   household_id: number;
   household_name: number;
-  invited_events: number;
+  invited_events: number[];
 }
 
 interface RsvpConflictStats {
@@ -1583,12 +1583,14 @@ Proceed with send?`)) return;
       const householdKey = householdIdRaw || householdNameRaw;
 
       const invitedEventIds = new Set<string>();
-      if (fieldMap.invited_events >= 0) {
-        const raw = values[fieldMap.invited_events] || '';
-        raw.split(/[|,;]/).map((x) => x.trim()).filter(Boolean).forEach((eventName) => {
-          const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
-          if (eventId) invitedEventIds.add(eventId);
-          else unknownEvents.add(eventName);
+      if (fieldMap.invited_events.length > 0) {
+        fieldMap.invited_events.forEach((colIdx) => {
+          const raw = values[colIdx] || '';
+          raw.split(/[|,;]/).map((x) => x.trim()).filter(Boolean).forEach((eventName) => {
+            const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
+            if (eventId) invitedEventIds.add(eventId);
+            else unknownEvents.add(eventName);
+          });
         });
       }
 
@@ -1731,7 +1733,10 @@ Proceed with send?`)) return;
         invite_token: findIdx('invite token', 'invite_token', 'token', 'invite code'),
         household_id: findIdx('household_id', 'household id', 'household', 'family_id', 'party_id'),
         household_name: findIdx('household_name', 'household name', 'family', 'group_name', 'group', 'household group'),
-        invited_events: findIdx('invited_events', 'invited events', 'events', 'event_invites', 'event invites list'),
+        invited_events: (() => {
+          const i = findIdx('invited_events', 'invited events', 'events', 'event_invites', 'event invites list');
+          return i >= 0 ? [i] : [];
+        })(),
       };
 
       const filteredRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
@@ -3572,18 +3577,41 @@ Proceed with send?`)) return;
                 ] as Array<[keyof CsvFieldMap, string]>).map(([key, label]) => (
                   <label key={key} className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
                     <span className="text-sm text-text-primary">{label}</span>
-                    <select
-                      value={csvFieldMap[key]}
-                      onChange={(e) => setCsvFieldMap(prev => prev ? { ...prev, [key]: Number(e.target.value) } : prev)}
-                      className="w-full rounded-md border border-border px-3 py-2 text-sm bg-surface"
-                    >
-                      <option value={-1}>— Not mapped —</option>
-                      {csvHeaders.map((header, idx) => (
-                        <option key={`${key}-${idx}`} value={idx}>
-                          ({csvColumnLetter(idx)}) {header || `column ${idx + 1}`} → {csvColumnSamples[idx] ? csvColumnSamples[idx].slice(0, 40) : 'example'}
-                        </option>
-                      ))}
-                    </select>
+                    <div>
+                    {key === 'invited_events' ? (
+                      <select
+                        multiple
+                        value={csvFieldMap.invited_events.map(String)}
+                        onChange={(e) => {
+                          const vals = Array.from(e.currentTarget.selectedOptions).map((o) => Number(o.value));
+                          setCsvFieldMap(prev => prev ? { ...prev, invited_events: vals } : prev);
+                        }}
+                        className="w-full rounded-md border border-border px-3 py-2 text-sm bg-surface min-h-[110px]"
+                      >
+                        {csvHeaders.map((header, idx) => (
+                          <option key={`${key}-${idx}`} value={idx}>
+                            ({csvColumnLetter(idx)}) {header || `column ${idx + 1}`} → {csvColumnSamples[idx] ? csvColumnSamples[idx].slice(0, 40) : 'example'}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <select
+                        value={csvFieldMap[key] as number}
+                        onChange={(e) => setCsvFieldMap(prev => prev ? { ...prev, [key]: Number(e.target.value) } : prev)}
+                        className="w-full rounded-md border border-border px-3 py-2 text-sm bg-surface"
+                      >
+                        <option value={-1}>— Not mapped —</option>
+                        {csvHeaders.map((header, idx) => (
+                          <option key={`${key}-${idx}`} value={idx}>
+                            ({csvColumnLetter(idx)}) {header || `column ${idx + 1}`} → {csvColumnSamples[idx] ? csvColumnSamples[idx].slice(0, 40) : 'example'}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {key === 'invited_events' && (
+                      <p className="mt-1 text-[11px] text-text-tertiary">Multi-select supported (Cmd/Ctrl+Click).</p>
+                    )}
+                    </div>
                   </label>
                 ))}
               </div>
