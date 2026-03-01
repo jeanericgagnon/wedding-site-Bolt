@@ -34,6 +34,7 @@ import {
   Sparkles,
   Layers,
   Map,
+  Link2,
 } from 'lucide-react';
 import { getAllTemplatePacks } from '../builder/constants/builderTemplatePacks';
 import { THEME_PRESETS, applyThemeTokens } from '../lib/themePresets';
@@ -601,6 +602,7 @@ export const Product: React.FC = () => {
                   { icon: AlertTriangle, label: 'Duplicate guest detection',                    done: true },
                   { icon: Upload,        label: 'CSV import with auto column mapping',           done: true },
                   { icon: Download,      label: 'Export for vendor/caterer',                    done: true },
+                  { icon: Link2,         label: 'Guest contact update link (self-serve updates)', done: true },
                   { icon: FileText,      label: 'Guest change history',                         done: true },
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
@@ -645,7 +647,7 @@ export const Product: React.FC = () => {
                   { icon: Users,         label: 'Segment by RSVP status, event, household',      done: true },
                   { icon: Clock,         label: 'Scheduled sends + draft saving',                done: true },
                   { icon: Mail,          label: 'Personalized invitations with RSVP link',        done: true },
-                  { icon: MessageSquare, label: 'SMS by segment',                               done: false },
+                  { icon: MessageSquare, label: 'SMS by segment + credit packs',                done: true },
                   { icon: BarChart3,     label: 'Open/click updates',                           done: false },
                 ].map((f, i) => (
                   <li key={i} className="flex items-center gap-3">
@@ -702,8 +704,7 @@ export const Product: React.FC = () => {
 
             <Card variant="bordered" padding="lg" className="bg-surface">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
-                <ClipboardCheck className="w-5 h-5 text-text-tertiary" /> Seating + Check-in
-                <Badge variant="secondary" className="text-xs ml-1">In development</Badge>
+                <ClipboardCheck className="w-5 h-5 text-primary" /> Seating + Check-in
               </h3>
               <ul className="space-y-3">
                 {[
@@ -711,6 +712,7 @@ export const Product: React.FC = () => {
                   { label: 'Household-aware table assignment (assign whole family at once)', done: true },
                   { label: 'Caterer export: CSV + PDF', done: true },
                   { label: 'Excel export', done: true },
+                  { label: 'Place cards CSV export', done: true },
                   { label: 'Day-of check-in mode with arrival updates', done: true },
                   { label: 'Meal headcount by table', done: true },
                 ].map((f, i) => (
