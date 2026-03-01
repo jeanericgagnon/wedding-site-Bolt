@@ -355,6 +355,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvUnknownEvents, setCsvUnknownEvents] = useState<string[]>([]);
   const [csvSelectedFilename, setCsvSelectedFilename] = useState<string | null>(null);
+  const [csvMappingSummary, setCsvMappingSummary] = useState<{ core: string[]; rsvp: string[]; household: string[]; eventCols: string[] }>({ core: [], rsvp: [], household: [], eventCols: [] });
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
@@ -1560,6 +1561,27 @@ Proceed with send?`)) return;
           return itineraryByNormalizedName.has(normalizeEventName(h));
         });
 
+      setCsvMappingSummary({
+        core: [
+          firstNameIdx >= 0 ? 'First Name' : '',
+          lastNameIdx >= 0 ? 'Last Name' : '',
+          emailIdx >= 0 ? 'Email' : '',
+          phoneIdx >= 0 ? 'Phone' : '',
+          plusOneIdx >= 0 ? 'Plus One' : '',
+        ].filter(Boolean),
+        rsvp: [
+          statusIdx >= 0 ? 'Status → RSVP status' : '',
+          mealChoiceIdx >= 0 ? 'Meal Choice → RSVP meal' : '',
+          rsvpDateIdx >= 0 ? 'RSVP Date → RSVP submitted_at' : '',
+          inviteTokenIdx >= 0 ? 'Invite Token → guest token' : '',
+        ].filter(Boolean),
+        household: [
+          householdIdIdx >= 0 ? 'household_id' : '',
+          householdNameIdx >= 0 ? 'household_name / group_name' : '',
+        ].filter(Boolean),
+        eventCols: inviteEventColumns.map(({ h }) => h),
+      });
+
       const dataRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
       const skipped: string[] = [];
       const unknownEvents = new Set<string>();
@@ -1722,6 +1744,7 @@ Proceed with send?`)) return;
         setCsvSkipped([]);
         setCsvUnknownEvents([]);
         setCsvSelectedFilename(null);
+        setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] });
         return;
       }
 
@@ -1811,6 +1834,7 @@ Proceed with send?`)) return;
       setCsvSkipped([]);
       setCsvUnknownEvents([]);
       setCsvSelectedFilename(null);
+      setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] });
     } catch (err) {
       const errObj = err as { message?: string; details?: string; hint?: string; code?: string } | null;
       const msg = errObj?.message || errObj?.details || errObj?.hint || (err instanceof Error ? err.message : 'Unknown error');
@@ -3450,7 +3474,7 @@ Proceed with send?`)) return;
 
       {csvPreview && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); } }} />
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] }); } }} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-border-subtle">
@@ -3462,13 +3486,24 @@ Proceed with send?`)) return;
                   </p>
                 </div>
                 {!csvImporting && (
-                  <button onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); }} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
+                  <button onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] }); }} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
                     <X className="w-5 h-5 text-text-secondary" />
                   </button>
                 )}
               </div>
 
               <div className="overflow-y-auto flex-1 p-6">
+                {(csvMappingSummary.core.length > 0 || csvMappingSummary.rsvp.length > 0 || csvMappingSummary.household.length > 0 || csvMappingSummary.eventCols.length > 0) && (
+                  <div className="mb-4 p-3 bg-surface-subtle border border-border rounded-lg space-y-2">
+                    <p className="text-xs font-medium text-text-primary">Detected mapping</p>
+                    {csvMappingSummary.core.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Core:</span> {csvMappingSummary.core.join(', ')}</p>}
+                    {csvMappingSummary.rsvp.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">RSVP:</span> {csvMappingSummary.rsvp.join(', ')}</p>}
+                    {csvMappingSummary.household.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Households:</span> {csvMappingSummary.household.join(', ')}</p>}
+                    {csvMappingSummary.eventCols.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Itinerary columns:</span> {csvMappingSummary.eventCols.join(', ')}</p>}
+                    <p className="text-[11px] text-text-tertiary">Invite values: Yes/Y/1/True/Included/Invited = invited · No/N/0/False/Excluded/Not Invited = not invited</p>
+                  </div>
+                )}
+
                 {csvSkipped.length > 0 && (
                   <div className="mb-4 p-3 bg-warning-light border border-warning/20 rounded-lg">
                     <p className="text-xs font-medium text-warning mb-1">{csvSkipped.length} row{csvSkipped.length !== 1 ? 's' : ''} will be skipped (missing name)</p>
@@ -3500,6 +3535,11 @@ Proceed with send?`)) return;
                         </p>
                         {Boolean(g.email) && <p className="text-xs text-text-secondary truncate">{String(g.email)}</p>}
                         {Boolean(g.group_name) && <p className="text-[11px] text-text-tertiary truncate">Household: {String(g.group_name)}</p>}
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {Boolean(g.rsvp_status) && <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-border text-text-tertiary">{String(g.rsvp_status)}</span>}
+                          {Boolean(g.__meal_choice) && <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-border text-text-tertiary">Meal: {String(g.__meal_choice)}</span>}
+                          {Array.isArray(g.__invited_event_ids) && (g.__invited_event_ids as unknown[]).length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-primary/30 text-primary">{(g.__invited_event_ids as unknown[]).length} event invites</span>}
+                        </div>
                       </div>
                       {Boolean(g.plus_one_allowed) && (
                         <span className="text-xs px-2 py-0.5 bg-surface-subtle rounded-full text-text-secondary flex-shrink-0">+1</span>
