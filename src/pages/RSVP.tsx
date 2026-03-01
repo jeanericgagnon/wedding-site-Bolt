@@ -590,7 +590,7 @@ export default function RSVP() {
       <div className="flex justify-end px-6 pt-4">
         <LanguageSwitcher />
       </div>
-      <div className="container mx-auto px-4 pb-16 max-w-2xl">
+      <div className="container mx-auto px-4 pb-14 max-w-2xl">
         {step === 'search' && (
           <Card className="p-5 md:p-7">
             <div className="text-center mb-6">
@@ -598,7 +598,7 @@ export default function RSVP() {
               <p className="text-gray-600">{t('rsvp.subtitle')}</p>
             </div>
 
-            <form onSubmit={handleSearch} className="space-y-5">
+            <form onSubmit={handleSearch} className="space-y-4.5">
               <div>
                 <label className="block text-sm font-medium mb-2">
                   {t('rsvp.search_label')}
@@ -705,7 +705,7 @@ export default function RSVP() {
                     key={g.id}
                     onClick={() => handlePickGuest(g)}
                     disabled={loading}
-                    className="w-full flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl hover:border-rose-300 hover:bg-rose-50 transition-colors text-left group"
+                    className="w-full flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors text-left group"
                   >
                     <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-rose-100 flex items-center justify-center flex-shrink-0 transition-colors">
                       <User className="w-5 h-5 text-gray-500 group-hover:text-rose-500 transition-colors" />

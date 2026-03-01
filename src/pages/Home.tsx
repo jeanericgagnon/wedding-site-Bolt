@@ -46,10 +46,10 @@ export const Home: React.FC = () => {
       <Header />
 
       {/* HERO */}
-      <section id="top" className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">
+      <section id="top" className="py-14 md:py-20 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-[2.5rem] md:text-[4.25rem] font-serif font-bold text-ink mb-6 leading-[1.05] updates-tight">
+            <h1 className="text-[2.4rem] md:text-[4rem] font-serif font-bold text-ink mb-5 leading-[1.04] updates-tight">
               A wedding site that doesn't break when it matters
             </h1>
             <p className="text-[1.0625rem] md:text-[1.1875rem] text-ink/75 mb-8 leading-relaxed max-w-3xl mx-auto">
@@ -284,7 +284,7 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="max-w-lg mx-auto mb-14">
-            <div className="bg-white border-2 border-brand/30 rounded-2xl p-7 shadow-lg hover:shadow-xl transition-shadow duration-200">
+            <div className="bg-white border border-brand/25 rounded-2xl p-7 shadow-[0_1px_2px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-shadow duration-200">
               <div className="text-center mb-7">
                 <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 leading-[1.2] updates-tight">Complete Wedding Platform</h3>
                 <div className="mb-5">

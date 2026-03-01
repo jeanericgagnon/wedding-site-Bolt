@@ -60,15 +60,15 @@ const PasswordGate: React.FC<{
       <div className="flex-1 flex items-center justify-center">
       <div className="max-w-sm w-full">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8 text-stone-200" />
+          <div className="w-14 h-14 bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-7 h-7 text-stone-200" />
           </div>
           <h1 className="text-2xl font-light text-stone-800 mb-2">{t('site.password_gate_title')}</h1>
           <p className="text-stone-500 text-sm">{t('site.password_gate_subtitle')}</p>
         </div>
         <form
           onSubmit={e => { e.preventDefault(); onSubmit(pw); }}
-          className="bg-white border border-stone-200 rounded-2xl shadow-sm p-5 space-y-4"
+          className="bg-white border border-stone-200 rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.06)] p-5 space-y-4"
         >
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -99,7 +99,7 @@ const PasswordGate: React.FC<{
           <button
             type="submit"
             disabled={!pw || checking}
-            className="w-full h-11 bg-stone-800 text-white rounded-lg font-medium hover:bg-stone-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full h-11 bg-stone-800 text-white rounded-lg font-semibold hover:bg-stone-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {checking ? t('site.password_checking') : t('site.password_submit')}
           </button>
