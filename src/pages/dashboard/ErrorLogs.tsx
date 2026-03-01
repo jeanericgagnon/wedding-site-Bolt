@@ -31,6 +31,8 @@ export const DashboardErrorLogs: React.FC = () => {
   const [severityFilter, setSeverityFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all');
   const [routeFilter, setRouteFilter] = useState('all');
   const [datePreset, setDatePreset] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let mounted = true;
@@ -103,8 +105,15 @@ export const DashboardErrorLogs: React.FC = () => {
         : datePreset === '7d'
           ? rowTs >= now - 7 * 24 * 60 * 60 * 1000
           : rowTs >= now - 30 * 24 * 60 * 60 * 1000;
-    return severityOk && routeOk && dateOk;
-  }), [rows, severityFilter, routeFilter, datePreset]);
+    const q = searchQuery.trim().toLowerCase();
+    const searchOk = q.length === 0
+      ? true
+      : (row.message || '').toLowerCase().includes(q)
+        || (row.source || '').toLowerCase().includes(q)
+        || (row.route || '').toLowerCase().includes(q)
+        || (row.fingerprint || '').toLowerCase().includes(q);
+    return severityOk && routeOk && dateOk && searchOk;
+  }), [rows, severityFilter, routeFilter, datePreset, searchQuery]);
 
   const routeOptions = useMemo(() => {
     const values = new Set<string>();
@@ -132,6 +141,17 @@ export const DashboardErrorLogs: React.FC = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const pageSize = 25;
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, page]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const grouped = useMemo<GroupedError[]>(() => {
     const map = new Map<string, GroupedError>();
@@ -205,6 +225,15 @@ export const DashboardErrorLogs: React.FC = () => {
             <Card variant="bordered" padding="lg" className="space-y-3">
               <div className="flex flex-wrap gap-2 items-end">
                 <label className="text-xs text-text-secondary">
+                  Search
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                    placeholder="Message, route, source, fingerprint"
+                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white w-64 max-w-full"
+                  />
+                </label>
+                <label className="text-xs text-text-secondary">
                   Time range
                   <select
                     value={datePreset}
@@ -277,7 +306,7 @@ export const DashboardErrorLogs: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((r) => (
+                {pagedRows.map((r) => (
                   <tr key={r.id} className="border-t border-border-subtle align-top">
                     <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
                     <td className="px-3 py-2">{r.severity}</td>
@@ -290,6 +319,27 @@ export const DashboardErrorLogs: React.FC = () => {
               </tbody>
               </table>
             </Card>
+
+            <div className="flex items-center justify-between text-xs text-text-secondary">
+              <span>Showing {pagedRows.length} of {filteredRows.length}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-2 py-1 border border-border rounded-md disabled:opacity-50"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Prev
+                </button>
+                <span>Page {page} / {totalPages}</span>
+                <button
+                  className="px-2 py-1 border border-border rounded-md disabled:opacity-50"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </>
         )}
       </div>
