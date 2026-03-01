@@ -354,8 +354,8 @@ export const DashboardPlanning: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-2 bg-surface-subtle rounded-xl border border-border-subtle">
-          <label className="text-xs text-text-secondary">Section</label>
+        <div className="p-3 bg-surface-subtle/40 rounded-xl border border-border-subtle">
+          <label className="text-sm font-semibold text-text-primary">Section</label>
           <select
             value={activeTab}
             onChange={(e) => setActiveTab(e.target.value as Tab)}
