@@ -294,6 +294,11 @@ export const DashboardItinerary: React.FC = () => {
         ...formData,
         event_name: formData.event_name,
         title: formData.event_name,
+        start_time: formData.start_time || null,
+        end_time: formData.end_time || null,
+        dress_code: formData.dress_code || null,
+        notes: formData.notes || null,
+        location_address: formData.location_address || null,
       };
 
       const driftFields = ['event_name', 'is_visible', 'dress_code', 'notes', 'location_address', 'end_time'];
