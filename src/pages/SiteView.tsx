@@ -119,7 +119,7 @@ const InviteOnlyGate: React.FC = () => {
         <LanguageSwitcher />
       </div>
       <div className="flex-1 flex items-center justify-center">
-        <div className="max-w-md w-full text-center space-y-4">
+        <div className="max-w-md w-full text-center space-y-3">
           <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto">
             <Lock className="w-8 h-8 text-stone-200" />
           </div>
