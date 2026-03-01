@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail, EyeOff, Eye, Flag } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
@@ -100,11 +100,28 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
   const [bulkModerating, setBulkModerating] = useState(false);
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!actionsMenuOpen) return;
+      if (!actionsMenuRef.current?.contains(event.target as Node)) setActionsMenuOpen(false);
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActionsMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [actionsMenuOpen]);
 
   useEffect(() => {
     writeStoredAlbumLinks(albumUploadLinks);
@@ -734,7 +751,7 @@ export const GuestPhotoSharing: React.FC = () => {
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-semibold text-neutral-900">Albums</h2>
-            <div className="relative">
+            <div className="relative" ref={actionsMenuRef}>
               <Button size="sm" variant="outline" onClick={() => setActionsMenuOpen((v) => !v)}>
                 Actions
               </Button>

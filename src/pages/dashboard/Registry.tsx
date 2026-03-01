@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, Button } from '../../components/ui';
 import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle } from 'lucide-react';
@@ -79,6 +79,23 @@ export const DashboardRegistry: React.FC = () => {
   const [bulkImportBusy, setBulkImportBusy] = useState(false);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
+  const registryActionsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!registryActionsOpen) return;
+      if (!registryActionsRef.current?.contains(event.target as Node)) setRegistryActionsOpen(false);
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setRegistryActionsOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [registryActionsOpen]);
 
   function toast(message: string, type: 'success' | 'error' = 'success') {
     const id = Date.now();
@@ -739,7 +756,7 @@ export const DashboardRegistry: React.FC = () => {
             </details>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+            <div className="relative" ref={registryActionsRef}>
               <Button variant="outline" size="md" onClick={() => setRegistryActionsOpen((v) => !v)}>
                 Actions
               </Button>

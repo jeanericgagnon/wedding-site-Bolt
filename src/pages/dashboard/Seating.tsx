@@ -615,6 +615,23 @@ export const DashboardSeating: React.FC = () => {
   const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
   const [seatingActionsOpen, setSeatingActionsOpen] = useState(false);
+  const seatingActionsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!seatingActionsOpen) return;
+      if (!seatingActionsRef.current?.contains(event.target as Node)) setSeatingActionsOpen(false);
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSeatingActionsOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [seatingActionsOpen]);
   const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
 
@@ -1427,7 +1444,7 @@ export const DashboardSeating: React.FC = () => {
           <Button size="sm" onClick={() => setAddingTable(true)}>
             <Plus className="w-4 h-4 mr-1" /> Add Table
           </Button>
-          <div className="relative">
+          <div className="relative" ref={seatingActionsRef}>
             <Button variant="outline" size="sm" onClick={() => setSeatingActionsOpen((v) => !v)}>
               Actions <ChevronDown className="w-4 h-4 ml-1" />
             </Button>
