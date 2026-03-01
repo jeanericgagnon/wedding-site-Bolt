@@ -681,7 +681,7 @@ export default function RSVP() {
         )}
 
         {step === 'pick' && (
-          <Card className="p-6 md:p-8">
+          <Card className="p-5 md:p-7">
             <div className="text-center mb-5">
               <h1 className="text-xl md:text-2xl font-serif mb-2">Multiple matches found</h1>
               <p className="text-gray-600 text-sm">

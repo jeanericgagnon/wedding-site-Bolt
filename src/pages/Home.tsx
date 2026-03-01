@@ -55,7 +55,7 @@ export const Home: React.FC = () => {
             <p className="text-[1.0625rem] md:text-[1.1875rem] text-ink/75 mb-8 leading-relaxed max-w-3xl mx-auto">
               One place for your wedding site, RSVPs, guests, messaging, seating, registry, photo sharing, and timeline, built to make planning easier, not push you through a funnel.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-7">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
               <button
                 className="px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
                 onClick={handleSignUp}

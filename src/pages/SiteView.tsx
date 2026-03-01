@@ -104,7 +104,7 @@ const PasswordGate: React.FC<{
             {checking ? t('site.password_checking') : t('site.password_submit')}
           </button>
         </form>
-        <p className="text-center text-xs text-stone-400 mt-4">Powered by DayOf</p>
+        <p className="text-center text-xs text-stone-400 mt-3">Powered by DayOf</p>
       </div>
       </div>
     </div>
