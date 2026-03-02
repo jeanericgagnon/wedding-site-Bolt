@@ -280,6 +280,7 @@ export const DashboardGuests: React.FC = () => {
   const [sortByPriority, setSortByPriority] = useState(false);
   const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
   const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
+  const [guestsRole, setGuestsRole] = useState<'owner' | 'coordinator' | 'viewer'>('owner');
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
   const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
@@ -321,6 +322,13 @@ export const DashboardGuests: React.FC = () => {
     } catch {
       // noop
     }
+
+    try {
+      const rawRole = localStorage.getItem('dayof.guests.role') as 'owner' | 'coordinator' | 'viewer' | null;
+      if (rawRole === 'owner' || rawRole === 'coordinator' || rawRole === 'viewer') setGuestsRole(rawRole);
+    } catch {
+      // noop
+    }
   }, []);
 
   useEffect(() => {
@@ -346,6 +354,14 @@ export const DashboardGuests: React.FC = () => {
       // noop
     }
   }, [savedSegments]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('dayof.guests.role', guestsRole);
+    } catch {
+      // noop
+    }
+  }, [guestsRole]);
 
 
   useEffect(() => {
@@ -2823,13 +2839,15 @@ Proceed with send?`)) return;
     );
   }
 
+  const canEditGuests = guestsRole !== 'viewer';
+
   return (
     <DashboardLayout currentPage="guests">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
           <p className="text-text-secondary">Manage your guest list and see responses</p>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-end gap-2">
             <div className="inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
               <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
               <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
@@ -2840,6 +2858,18 @@ Proceed with send?`)) return;
             >
               {showInsights ? 'Hide insights' : 'Show insights'}
             </button>
+            <div>
+              <label className="block text-[11px] text-text-tertiary mb-1">Role View</label>
+              <select
+                value={guestsRole}
+                onChange={(e) => setGuestsRole(e.target.value as 'owner' | 'coordinator' | 'viewer')}
+                className="px-3 py-1.5 text-xs rounded-md border border-border bg-white text-text-secondary"
+              >
+                <option value="owner">Owner</option>
+                <option value="coordinator">Coordinator</option>
+                <option value="viewer">Viewer (read-only)</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -3128,18 +3158,19 @@ Proceed with send?`)) return;
                 </Button>
 
 
-                <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }}>
+                <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }} disabled={!canEditGuests}>
                   <UserPlus className="w-4 h-4 mr-2" />
                   Add Guest
                 </Button>
 
                 <div className="relative">
-                  <Button variant="outline" size="md" onClick={() => setShowOpsMenu(v => !v)}>
+                  <Button variant="outline" size="md" onClick={() => setShowOpsMenu(v => !v)} disabled={!canEditGuests}>
                     Actions
                     <ChevronDown className="w-4 h-4 ml-1" />
                   </Button>
                   {showOpsMenu && (
                     <div className="absolute right-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg shadow-lg p-1 max-h-96 overflow-auto">
+                      <fieldset disabled={!canEditGuests} className="disabled:opacity-50">
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowOpsMenu(false); }}>Export all guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowOpsMenu(false); }}>Export filtered guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowOpsMenu(false); }}>Export RSVP responders</button>
@@ -3194,6 +3225,7 @@ Proceed with send?`)) return;
                       >
                         Nuclear delete all guests
                       </button>
+                      </fieldset>
                     </div>
                   )}
                 </div>
