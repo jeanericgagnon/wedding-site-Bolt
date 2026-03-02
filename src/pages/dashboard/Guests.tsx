@@ -2227,13 +2227,22 @@ Proceed with send?`)) return;
     return aName.localeCompare(bName);
   };
 
-  const displayedGuests = sortByPriority
+  const displayedGuestsBase = sortByPriority
     ? [...filteredGuests].sort((a, b) => {
       const scoreDelta = priorityScore(b) - priorityScore(a);
       if (scoreDelta !== 0) return scoreDelta;
       return compareGuestsByLastName(a, b);
     })
     : [...filteredGuests].sort(compareGuestsByLastName);
+
+  const displayedGuests = checkInMode
+    ? [...displayedGuestsBase].sort((a, b) => {
+      const aChecked = !!(a as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at;
+      const bChecked = !!(b as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at;
+      if (aChecked !== bChecked) return aChecked ? 1 : -1;
+      return compareGuestsByLastName(a, b);
+    })
+    : displayedGuestsBase;
 
 
   const nextUnresolvedGuest = displayedGuests.find((g) => issueCountForGuest(g) > 0);
@@ -3403,7 +3412,7 @@ Proceed with send?`)) return;
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-subtle">
-                      {filteredGuests.map((guest) => (
+                      {displayedGuests.map((guest) => (
                         <tr
                           key={guest.id}
                           className="border-b border-border-subtle/70 hover:bg-surface-subtle/60 transition-colors cursor-pointer"
@@ -3416,6 +3425,9 @@ Proceed with send?`)) return;
                                   {guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}
                                 </p>
                                 <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
+                                {checkInMode && (guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at && (
+                                  <p className="text-xs text-success">Checked in {new Date((guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at as string).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+                                )}
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-text-tertiary ml-1 opacity-0 group-hover:opacity-100" />
                             </div>
