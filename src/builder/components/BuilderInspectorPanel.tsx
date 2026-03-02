@@ -99,6 +99,10 @@ export const BuilderInspectorPanel: React.FC = () => {
         <button
           onClick={() => {
             if (!activePage || !state.selectedSectionId || !selectedSection) return;
+            if (activeSections.length <= 1) {
+              window.alert('At least one section is required on this page.');
+              return;
+            }
             const label = getSectionManifest(selectedSection.type).label;
             if (!window.confirm(`Remove section: ${label}?`)) return;
 
@@ -110,7 +114,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               requestAnimationFrame(() => dispatch(builderActions.selectSection(fallbackNext)));
             }
           }}
-          disabled={!state.selectedSectionId}
+          disabled={!state.selectedSectionId || activeSections.length <= 1}
           className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-600 disabled:opacity-40"
           title="Remove section"
         >Del</button>
