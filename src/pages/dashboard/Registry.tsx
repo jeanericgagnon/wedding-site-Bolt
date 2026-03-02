@@ -921,13 +921,13 @@ export const DashboardRegistry: React.FC = () => {
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
             <button
               onClick={() => setShowAlertsOnly((v) => !v)}
-              className={`px-2.5 py-1 rounded-full border ${showAlertsOnly ? 'border-warning/40 bg-warning/10 text-warning' : 'border-border text-text-tertiary'}`}
+              className={`px-2.5 py-1 rounded-full border text-xs font-medium ${showAlertsOnly ? 'border-warning/40 bg-warning/10 text-warning' : 'border-border text-text-tertiary'}`}
             >
               {showAlertsOnly ? 'Showing alerts only' : 'Show alerts only'}
             </button>
             <button
               onClick={() => setShowImageIssuesOnly((v) => !v)}
-              className={`px-2.5 py-1 rounded-full border ${showImageIssuesOnly ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-border text-text-tertiary'}`}
+              className={`px-2.5 py-1 rounded-full border text-xs font-medium ${showImageIssuesOnly ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-border text-text-tertiary'}`}
             >
               {showImageIssuesOnly ? 'Showing image issues' : 'Show image issues'}
             </button>
@@ -936,7 +936,7 @@ export const DashboardRegistry: React.FC = () => {
                 <button
                   onClick={() => void handleRefreshImageIssues()}
                   disabled={imageRefreshBusy}
-                  className="px-2 py-1 rounded-full border border-sky-200 bg-sky-50 text-sky-700 disabled:opacity-60"
+                  className="px-2 py-1 rounded-full border border-sky-200 bg-sky-50 text-sky-700 text-xs font-medium disabled:opacity-60"
                 >
                   {imageRefreshBusy ? 'Refreshing…' : 'Fix image issues now'}
                 </button>

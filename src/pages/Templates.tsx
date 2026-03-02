@@ -208,7 +208,7 @@ export const Templates: React.FC = () => {
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-neutral-500 gap-2">
           <span>{filtered.length} template{filtered.length === 1 ? '' : 's'} shown</span>
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline">Tip: preview before selecting for better section fit.</span>
+            <span className="hidden sm:inline font-medium">Tip: preview before selecting for better section fit.</span>
             <button
               type="button"
               onClick={() => setGroupByStyle((v) => !v)}
