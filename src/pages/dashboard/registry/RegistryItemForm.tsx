@@ -352,15 +352,18 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               <label className="block text-sm font-medium text-text-primary mb-1">
                 Price
               </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={draft.price_amount}
-                onChange={e => set('price_amount', e.target.value)}
-                placeholder="349.99"
-                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-tertiary">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={draft.price_amount}
+                  onChange={e => set('price_amount', e.target.value)}
+                  placeholder="0.00"
+                  className="w-full pl-7 pr-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
             </div>
 
             {/* Merchant */}
