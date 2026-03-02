@@ -262,19 +262,37 @@ export const DashboardSettings: React.FC = () => {
 
   const handleUpdateSlug = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!weddingSiteId) return;
     setSlugSaving(true);
     setSlugError(null);
     setSlugSuccess(null);
     try {
-      const cleaned = siteSlug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-').replace(/^-|-$/g, '');
+      const raw = siteSlug.trim().toLowerCase();
+      const fromUrl = raw.includes('/') ? raw.split('/').filter(Boolean).pop() || '' : raw;
+      const cleaned = fromUrl.replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-').replace(/^-|-$/g, '');
       if (!cleaned) { setSlugError('URL cannot be empty.'); setSlugSaving(false); return; }
+
+      let targetSiteId = weddingSiteId;
+      if (!targetSiteId && user?.id) {
+        const { data: fallbackSite } = await supabase
+          .from('wedding_sites')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        targetSiteId = (fallbackSite?.id as string | null) ?? null;
+        if (targetSiteId) setWeddingSiteId(targetSiteId);
+      }
+      if (!targetSiteId) {
+        setSlugError('Could not find your site. Refresh and try again.');
+        setSlugSaving(false);
+        return;
+      }
+
       const { data: existing } = await supabase
         .from('wedding_sites')
         .select('id')
         .eq('site_slug', cleaned)
         .maybeSingle();
-      if (existing && existing.id !== weddingSiteId) {
+      if (existing && existing.id !== targetSiteId) {
         setSlugError('That URL is already taken. Please choose another.');
         setSlugSaving(false);
         return;
@@ -282,10 +300,10 @@ export const DashboardSettings: React.FC = () => {
       const { error } = await supabase
         .from('wedding_sites')
         .update({ site_slug: cleaned })
-        .eq('id', weddingSiteId);
+        .eq('id', targetSiteId);
       if (error) throw error;
       setSiteSlug(cleaned);
-      setSlugSuccess('Site URL updated.');
+      setSlugSuccess(`Site URL updated to /${cleaned}`);
     } catch (err) {
       setSlugError(err instanceof Error ? err.message : 'Failed to update URL.');
     } finally {
