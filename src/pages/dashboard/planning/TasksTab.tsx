@@ -12,6 +12,7 @@ interface Props {
   onUpdate: (id: string, updates: Partial<PlanningTask>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onCreateMilestones: () => Promise<void>;
+  canEdit?: boolean;
 }
 
 type ViewMode = 'list' | 'kanban';
@@ -128,11 +129,12 @@ function TaskForm({ initial, onSave, onCancel }: {
   );
 }
 
-function TaskCard({ task, onUpdate, onDelete, onEdit }: {
+function TaskCard({ task, onUpdate, onDelete, onEdit, canEdit = true }: {
   task: PlanningTask;
   onUpdate: (id: string, updates: Partial<PlanningTask>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onEdit: () => void;
+  canEdit?: boolean;
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -142,8 +144,9 @@ function TaskCard({ task, onUpdate, onDelete, onEdit }: {
     <div className={`p-3 bg-white rounded-xl border transition-shadow ${isOverdue ? 'border-error/30 bg-error/5 shadow-[0_4px_14px_rgba(220,38,38,0.06)]' : 'border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]'}`}>
       <div className="flex items-start gap-2">
         <button
-          onClick={() => onUpdate(task.id, { status: task.status === 'done' ? 'todo' : 'done' })}
-          className="mt-0.5 flex-shrink-0 text-text-tertiary hover:text-primary transition-colors"
+          onClick={() => canEdit && onUpdate(task.id, { status: task.status === 'done' ? 'todo' : 'done' })}
+          disabled={!canEdit}
+          className="mt-0.5 flex-shrink-0 text-text-tertiary hover:text-primary transition-colors disabled:opacity-40"
         >
           {task.status === 'done' ? <CheckSquare className="w-4 h-4 text-success" /> : <Square className="w-4 h-4" />}
         </button>
@@ -167,10 +170,10 @@ function TaskCard({ task, onUpdate, onDelete, onEdit }: {
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={onEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
+          <button onClick={() => canEdit && onEdit()} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
             <Edit2 className="w-3.5 h-3.5" />
           </button>
-          <button onClick={() => onDelete(task.id)} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
+          <button onClick={() => canEdit && onDelete(task.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -179,7 +182,7 @@ function TaskCard({ task, onUpdate, onDelete, onEdit }: {
   );
 }
 
-export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate, onDelete, onCreateMilestones }) => {
+export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate, onDelete, onCreateMilestones, canEdit = true }) => {
   const [view, setView] = useState<ViewMode>('list');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [filterPriority, setFilterPriority] = useState<FilterPriority>('all');
@@ -272,18 +275,18 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
             </Button>
           )}
           {weddingDate && tasks.length === 0 && (
-            <Button variant="outline" size="sm" onClick={() => setConfirmCreate(true)} disabled={generatingMilestones}>
+            <Button variant="outline" size="sm" onClick={() => setConfirmCreate(true)} disabled={generatingMilestones || !canEdit}>
               <Sparkles className="w-4 h-4 mr-1" />
               Create Checklist
             </Button>
           )}
           {weddingDate && tasks.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setConfirmCreate(true)} disabled={generatingMilestones}>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmCreate(true)} disabled={generatingMilestones || !canEdit}>
               <Sparkles className="w-4 h-4 mr-1" />
               Checklist
             </Button>
           )}
-          <Button size="sm" onClick={() => setShowAddForm(true)}>
+          <Button size="sm" onClick={() => setShowAddForm(true)} disabled={!canEdit}>
             <Plus className="w-4 h-4 mr-1" />
             Add Task
           </Button>
@@ -351,6 +354,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
                     onUpdate={onUpdate}
                     onDelete={onDelete}
                     onEdit={() => setEditingTask(task)}
+                    canEdit={canEdit}
                   />
                 )}
               </div>
@@ -377,6 +381,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
                     onUpdate={onUpdate}
                     onDelete={onDelete}
                     onEdit={() => setEditingTask(task)}
+                    canEdit={canEdit}
                   />
                 ))}
                 {colTasks.length === 0 && (

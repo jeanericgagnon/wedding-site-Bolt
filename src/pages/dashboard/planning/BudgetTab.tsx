@@ -12,6 +12,7 @@ interface Props {
   onAdd: (item: Partial<PlanningBudgetItem>) => Promise<void>;
   onUpdate: (id: string, updates: Partial<PlanningBudgetItem>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  canEdit?: boolean;
 }
 
 const BUDGET_CATEGORIES = [
@@ -154,7 +155,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
   );
 }
 
-export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTotalBudgetChange, onAdd, onUpdate, onDelete }) => {
+export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTotalBudgetChange, onAdd, onUpdate, onDelete, canEdit = true }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingItem, setEditingItem] = useState<PlanningBudgetItem | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'sheet'>('cards');
@@ -248,6 +249,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
               className="w-40 px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               value={budgetInput}
               onChange={(e) => setBudgetInput(Number(e.target.value) || 0)}
+              disabled={!canEdit}
             />
             <p className="mt-1 text-[11px] text-text-tertiary">
               {budgetSaving
@@ -272,7 +274,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
           >
             Spreadsheet
           </button>
-          <Button size="sm" onClick={() => setShowAdd(true)}>
+          <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
             <Plus className="w-4 h-4 mr-1" /> Add Item
           </Button>
         </div>
@@ -314,10 +316,10 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
                   <td className="px-3 py-2 text-right text-success">{fmt(item.paid_amount)}</td>
                   <td className="px-3 py-2">
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => setEditingItem(item)} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
+                      <button onClick={() => canEdit && setEditingItem(item)} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => onDelete(item.id)} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
+                      <button onClick={() => canEdit && onDelete(item.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -365,10 +367,10 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
                             <span className="text-success hidden sm:block">{fmt(item.paid_amount)}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <button onClick={() => setEditingItem(item)} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
+                            <button onClick={() => canEdit && setEditingItem(item)} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => onDelete(item.id)} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
+                            <button onClick={() => canEdit && onDelete(item.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>

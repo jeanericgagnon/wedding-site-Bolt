@@ -420,6 +420,7 @@ export const DashboardPlanning: React.FC = () => {
                 onUpdate={handleUpdateTask}
                 onDelete={handleDeleteTask}
                 onCreateMilestones={handleCreateMilestones}
+                canEdit={planningRole !== 'viewer'}
               />
             )}
             {activeTab === 'budget' && (
@@ -431,6 +432,7 @@ export const DashboardPlanning: React.FC = () => {
                 onAdd={handleAddBudgetItem}
                 onUpdate={handleUpdateBudgetItem}
                 onDelete={handleDeleteBudgetItem}
+                canEdit={planningRole !== 'viewer'}
               />
             )}
             {activeTab === 'vendors' && (
