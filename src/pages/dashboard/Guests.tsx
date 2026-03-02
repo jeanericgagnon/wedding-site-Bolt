@@ -252,7 +252,7 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
   const [extraFilters, setExtraFilters] = useState<string[]>([]);
   const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
   const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
@@ -1170,7 +1170,7 @@ const handleSendBulkInvitations = async () => {
     if (!window.confirm(`Reminder dry-run:
 Segment: ${segmentLabelMap[filterStatus] || filterStatus}
 Recipients: ${reminderCandidates.length}
-Skip recent (24h): ${skipRecentlyInvited ? "On" : "Off"}${noContactWarning}${previewText}
+Skip recent (${reminderCadenceDays}d cadence): ${skipRecentlyInvited ? "On" : "Off"}${noContactWarning}${previewText}
 
 Proceed with send?`)) return;
 
@@ -2009,7 +2009,15 @@ Proceed with send?`)) return;
         (filter === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
         (filter === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
         (filter === 'no-contact' && !guest.email && !guest.phone) ||
-        (filter === 'missing-address' && !(guest as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1)
+        (filter === 'missing-address' && !(guest as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1) ||
+        (filter === 'due-reminder' && (() => {
+          if (!guest.email || guest.rsvp_status !== 'pending') return false;
+          const invitedAt = (guest as GuestWithRSVP & { invitation_sent_at?: string | null }).invitation_sent_at
+            ? new Date((guest as GuestWithRSVP & { invitation_sent_at?: string | null }).invitation_sent_at as string)
+            : null;
+          if (!invitedAt || Number.isNaN(invitedAt.getTime())) return true;
+          return (Date.now() - invitedAt.getTime()) >= (reminderCadenceDays * 24 * 60 * 60 * 1000);
+        })())
       );
     };
 
@@ -2215,6 +2223,7 @@ Proceed with send?`)) return;
     confirmed: 'Confirmed',
     declined: 'Declined',
     pending: 'Pending',
+    'due-reminder': 'Due Reminder',
     'missing-address': 'Missing Address',
     'ceremony-no': 'Ceremony: No',
     'reception-no': 'Reception: No',
@@ -2365,6 +2374,7 @@ Proceed with send?`)) return;
   );
 
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
+  const [reminderCadenceDays, setReminderCadenceDays] = useState<1 | 3 | 7>(3);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
@@ -2372,11 +2382,21 @@ Proceed with send?`)) return;
   const [nuclearConfirmInput, setNuclearConfirmInput] = useState('');
   const [nuclearDeleting, setNuclearDeleting] = useState(false);
 
+  const reminderCadenceMs = reminderCadenceDays * 24 * 60 * 60 * 1000;
+  const dueReminderGuestIds = new Set(
+    guests
+      .filter((g: any) => {
+        if (!g.email || g.rsvp_status !== 'pending') return false;
+        const invitedAt = (g as any).invitation_sent_at ? new Date((g as any).invitation_sent_at) : null;
+        if (!invitedAt || Number.isNaN(invitedAt.getTime())) return true;
+        return (Date.now() - invitedAt.getTime()) >= reminderCadenceMs;
+      })
+      .map((g) => g.id)
+  );
+
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
-    const invitedAt = (g as any).invitation_sent_at ? new Date((g as any).invitation_sent_at) : null;
-    if (!invitedAt || Number.isNaN(invitedAt.getTime())) return true;
-    return (Date.now() - invitedAt.getTime()) > 24 * 60 * 60 * 1000;
+    return dueReminderGuestIds.has(g.id);
   });
 
   const dryRunRecipientPreview = reminderCandidates.slice(0, 8).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ""} ${g.last_name ?? ""}`.trim() : g.name);
@@ -2852,6 +2872,10 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
+                      <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-text-tertiary">Reminder cadence</div>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { setReminderCadenceDays(1); setShowOpsMenu(false); }}>{reminderCadenceDays === 1 ? '✓ ' : ''}Every 1 day</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { setReminderCadenceDays(3); setShowOpsMenu(false); }}>{reminderCadenceDays === 3 ? '✓ ' : ''}Every 3 days</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { setReminderCadenceDays(7); setShowOpsMenu(false); }}>{reminderCadenceDays === 7 ? '✓ ' : ''}Every 7 days</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
                         const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
@@ -3022,6 +3046,7 @@ Proceed with send?`)) return;
                     ['confirmed', `Confirmed (${stats.confirmed})`],
                     ['declined', `Declined (${stats.declined})`],
                     ['pending', `Pending (${stats.pending})`],
+                    ['due-reminder', `Due Reminder (${dueReminderGuestIds.size})`],
                     ['missing-address', `Missing Address (${guests.filter((g) => !(g as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1).length})`],
                   ] as const).map(([value, label]) => (
                     <button
