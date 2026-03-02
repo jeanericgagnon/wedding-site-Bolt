@@ -2945,12 +2945,6 @@ Proceed with send?`)) return;
               </p>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={saveCurrentSegment}
-                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
-                >
-                  Save segment
-                </button>
-                <button
                   onClick={() => { setFilterStatus('all'); setExtraFilters([]); setSearchQuery(''); setViewMode('list'); }}
                   className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
                 >
