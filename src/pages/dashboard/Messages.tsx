@@ -166,6 +166,17 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
+interface DeliveryRow {
+  id: string;
+  message_id: string;
+  status: 'pending' | 'sent' | 'failed' | 'skipped';
+  provider_message_id: string | null;
+  error_message: string | null;
+  attempted_at: string | null;
+  delivered_at: string | null;
+  recipient_email: string;
+}
+
 type MessagesRole = 'owner' | 'coordinator' | 'viewer';
 
 function isPastScheduledTime(scheduledFor: string | null): boolean {
@@ -375,6 +386,7 @@ export const DashboardMessages: React.FC = () => {
   const navigate = useNavigate();
   const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [deliveries, setDeliveries] = useState<DeliveryRow[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -518,6 +530,19 @@ export const DashboardMessages: React.FC = () => {
     setGuests(data || []);
   }, [weddingSite, isDemoMode]);
 
+  const fetchDeliveries = useCallback(async () => {
+    if (!weddingSite) return;
+    if (isDemoMode) {
+      setDeliveries([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('message_deliveries')
+      .select('id, message_id, status, provider_message_id, error_message, attempted_at, delivered_at, recipient_email')
+      .in('message_id', messages.slice(0, 50).map((m) => m.id));
+    if (!error) setDeliveries((data as DeliveryRow[]) || []);
+  }, [weddingSite, isDemoMode, messages]);
+
   const fetchItinerarySegments = useCallback(async () => {
     if (!weddingSite) return;
     try {
@@ -621,6 +646,12 @@ export const DashboardMessages: React.FC = () => {
   useEffect(() => {
     if (weddingSite) { fetchMessages(); fetchGuests(); fetchSmsExpiryPreview(); fetchItinerarySegments(); }
   }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview, fetchItinerarySegments]);
+
+  useEffect(() => {
+    if (weddingSite && messages.length > 0) {
+      fetchDeliveries();
+    }
+  }, [weddingSite, messages, fetchDeliveries]);
 
   useEffect(() => {
     if (!isDemoMode) return;
@@ -977,6 +1008,25 @@ export const DashboardMessages: React.FC = () => {
     const retryBacklog = messages.filter((m) => m.status === 'failed' || m.status === 'partial').length;
     return { successRate, failRate, overdueScheduled, retryBacklog };
   }, [messages]);
+
+  const providerTelemetry = useMemo(() => {
+    const attempted = deliveries.filter((d) => d.status === 'sent' || d.status === 'failed');
+    const sent = deliveries.filter((d) => d.status === 'sent').length;
+    const failed = deliveries.filter((d) => d.status === 'failed').length;
+    const withProviderId = deliveries.filter((d) => !!d.provider_message_id).length;
+    const errorTop = Array.from(
+      deliveries
+        .filter((d) => d.status === 'failed' && d.error_message)
+        .reduce((map, d) => {
+          const key = (d.error_message || 'Unknown').slice(0, 60);
+          map.set(key, (map.get(key) ?? 0) + 1);
+          return map;
+        }, new Map<string, number>())
+        .entries(),
+    ).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const sentRate = attempted.length > 0 ? Math.round((sent / attempted.length) * 100) : 0;
+    return { attempted: attempted.length, sent, failed, withProviderId, sentRate, errorTop };
+  }, [deliveries]);
 
   if (loading) {
     return (
@@ -1558,6 +1608,34 @@ export const DashboardMessages: React.FC = () => {
               <p className="text-[11px] text-text-tertiary">Retry backlog</p>
               <p className="text-sm font-semibold text-text-primary">{deliveryHealth.retryBacklog}</p>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-border/35 bg-white p-3 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+              <div className="rounded-lg border border-border/30 bg-surface-subtle/40 px-2 py-1.5">
+                <p className="text-[10px] text-text-tertiary">Provider attempted</p>
+                <p className="text-xs font-semibold text-text-primary">{providerTelemetry.attempted}</p>
+              </div>
+              <div className="rounded-lg border border-border/30 bg-surface-subtle/40 px-2 py-1.5">
+                <p className="text-[10px] text-text-tertiary">Provider sent rate</p>
+                <p className="text-xs font-semibold text-text-primary">{providerTelemetry.sentRate}%</p>
+              </div>
+              <div className="rounded-lg border border-border/30 bg-surface-subtle/40 px-2 py-1.5">
+                <p className="text-[10px] text-text-tertiary">Provider IDs logged</p>
+                <p className="text-xs font-semibold text-text-primary">{providerTelemetry.withProviderId}</p>
+              </div>
+              <div className="rounded-lg border border-border/30 bg-surface-subtle/40 px-2 py-1.5">
+                <p className="text-[10px] text-text-tertiary">Provider failed</p>
+                <p className="text-xs font-semibold text-text-primary">{providerTelemetry.failed}</p>
+              </div>
+            </div>
+            {providerTelemetry.errorTop.length > 0 && (
+              <div className="space-y-1">
+                {providerTelemetry.errorTop.map(([msg, count]) => (
+                  <p key={msg} className="text-[11px] text-text-tertiary">{count}× {msg}</p>
+                ))}
+              </div>
+            )}
           </div>
 
           {retryCandidates.length > 0 && (
