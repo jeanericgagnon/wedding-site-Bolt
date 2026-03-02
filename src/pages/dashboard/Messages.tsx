@@ -1445,6 +1445,14 @@ export const DashboardMessages: React.FC = () => {
             </div>
           </div>
 
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus failed</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus scheduled</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
             {[
               ['Sent', historyStatusCounts.sent],
