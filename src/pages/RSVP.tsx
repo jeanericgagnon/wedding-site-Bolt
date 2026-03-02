@@ -182,7 +182,7 @@ function mapDemoGuest(g: (typeof demoGuests)[number]): Guest {
   };
 }
 
-function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions: RSVPQuestion[]; rsvpMealConfig: RSVPMealConfig; householdGuests: HouseholdGuest[] } {
+function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions: RSVPQuestion[]; rsvpMealConfig: RSVPMealConfig; musicPlaylistUrl: string | null; householdGuests: HouseholdGuest[] } {
   const trimmed = searchValue.trim().toLowerCase();
   const questions = getDemoQuestions();
   const meal = getDemoMealConfig();
@@ -212,11 +212,11 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
           custom_answers: null,
         }
       : null);
-    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, householdGuests: householdFor(tokenMatch) };
+    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, musicPlaylistUrl: null, householdGuests: householdFor(tokenMatch) };
   }
 
   const matches = demoGuests.filter((g) => g.name.toLowerCase().includes(trimmed) || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim().toLowerCase().includes(trimmed));
-  if (matches.length === 0) return { guest: null, existingRsvp: null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, householdGuests: [] };
+  if (matches.length === 0) return { guest: null, existingRsvp: null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, musicPlaylistUrl: null, householdGuests: [] };
   if (matches.length === 1) {
     const g = matches[0];
     const mapped = mapDemoGuest(g);
@@ -230,10 +230,10 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
           custom_answers: null,
         }
       : null);
-    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, householdGuests: householdFor(g) };
+    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, musicPlaylistUrl: null, householdGuests: householdFor(g) };
   }
 
-  return { guest: null, existingRsvp: null, guests: matches.slice(0, 10).map(mapDemoGuest), rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, householdGuests: [] };
+  return { guest: null, existingRsvp: null, guests: matches.slice(0, 10).map(mapDemoGuest), rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, musicPlaylistUrl: null, householdGuests: [] };
 }
 
 export default function RSVP() {
@@ -245,6 +245,7 @@ export default function RSVP() {
   const [ambiguousGuests, setAmbiguousGuests] = useState<Guest[]>([]);
   const [existingRsvp, setExistingRsvp] = useState<ExistingRSVP | null>(null);
   const [rsvpDeadline, setRsvpDeadline] = useState<string | null>(null);
+  const [musicPlaylistUrl, setMusicPlaylistUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
@@ -278,14 +279,15 @@ export default function RSVP() {
           setTokenAutoLoading(false);
           return;
         }
-        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; householdGuests?: HouseholdGuest[] | null };
+        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
         if (result.guest) {
-          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? []);
+          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
         } else if (result.guests && result.guests.length > 1) {
           setAmbiguousGuests(result.guests);
           setRsvpDeadline(result.rsvpDeadline);
           setRsvpQuestions(result.rsvpQuestions ?? []);
           setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+          setMusicPlaylistUrl(result.musicPlaylistUrl ?? null);
           const hh = result.householdGuests ?? [];
           setHouseholdGuests(hh);
           setApplyToHousehold(hh.length > 0);
@@ -316,13 +318,14 @@ export default function RSVP() {
         return;
       }
 
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; householdGuests?: HouseholdGuest[] | null };
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
 
       if (result.guests && result.guests.length > 1) {
         setAmbiguousGuests(result.guests);
         setRsvpDeadline(result.rsvpDeadline);
         setRsvpQuestions(result.rsvpQuestions ?? []);
         setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+        setMusicPlaylistUrl(result.musicPlaylistUrl ?? null);
         const hh = result.householdGuests ?? [];
         setHouseholdGuests(hh);
         setApplyToHousehold(hh.length > 0);
@@ -332,7 +335,7 @@ export default function RSVP() {
       }
 
       const foundGuest = result.guest!;
-      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? []);
+      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
     } catch {
       setError('An error occurred. Please try again.');
     } finally {
@@ -340,11 +343,12 @@ export default function RSVP() {
     }
   };
 
-  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = []) => {
+  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = [], playlistUrl: string | null = null) => {
     setGuest(foundGuest);
     setRsvpDeadline(deadline);
     setRsvpQuestions(questions);
     setMealConfig(meal);
+    setMusicPlaylistUrl(playlistUrl);
     setHouseholdGuests(household);
     setApplyToHousehold(household.length > 0);
     setSelectedHouseholdGuestIds(household.map((h) => h.id));
@@ -397,8 +401,8 @@ export default function RSVP() {
         selectGuest(picked, null, rsvpDeadline);
         return;
       }
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; householdGuests?: HouseholdGuest[] | null };
-      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? []);
+      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
+      selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
     } catch {
       selectGuest(picked, null, rsvpDeadline);
     } finally {
@@ -936,6 +940,21 @@ export default function RSVP() {
                   )}
 
 
+                  {musicPlaylistUrl && (
+                    <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg">
+                      <p className="text-sm font-medium text-violet-900">Song requests</p>
+                      <p className="text-xs text-violet-800 mt-1">Add your song picks directly to our collaborative Spotify playlist.</p>
+                      <a
+                        href={musicPlaylistUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center mt-3 px-3 py-2 rounded-lg bg-violet-600 text-white text-sm hover:bg-violet-700"
+                      >
+                        Open Spotify playlist
+                      </a>
+                    </div>
+                  )}
+
                   {rsvpQuestions.length > 0 && (
                     <div className="space-y-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                       <p className="text-sm font-medium text-gray-800">A few quick questions from the couple</p>
@@ -1225,6 +1244,7 @@ export default function RSVP() {
                   setExistingRsvp(null);
                   setAmbiguousGuests([]);
                   setRsvpDeadline(null);
+                  setMusicPlaylistUrl(null);
                   setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
                   setCustomAnswers({});
                   setRsvpQuestions([]);
@@ -1245,6 +1265,7 @@ export default function RSVP() {
                   setExistingRsvp(null);
                   setAmbiguousGuests([]);
                   setRsvpDeadline(null);
+                  setMusicPlaylistUrl(null);
                   setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
                   setCustomAnswers({});
                   setRsvpQuestions([]);

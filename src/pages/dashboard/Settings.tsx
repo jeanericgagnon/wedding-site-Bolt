@@ -54,6 +54,7 @@ export const DashboardSettings: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const [siteSlug, setSiteSlug] = useState('');
+  const [musicPlaylistUrl, setMusicPlaylistUrl] = useState('');
   const [slugSaving, setSlugSaving] = useState(false);
   const [slugSuccess, setSlugSuccess] = useState<string | null>(null);
   const [slugError, setSlugError] = useState<string | null>(null);
@@ -152,14 +153,14 @@ export const DashboardSettings: React.FC = () => {
       let data: Record<string, unknown> | null = null;
       const fullQuery = await supabase
         .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token, default_language, rsvp_custom_questions, rsvp_meal_config')
+        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token, default_language, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (fullQuery.error) {
         const fallbackQuery = await supabase
           .from('wedding_sites')
-          .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, rsvp_custom_questions, rsvp_meal_config')
+          .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
           .eq('user_id', user.id)
           .maybeSingle();
         data = (fallbackQuery.data as Record<string, unknown> | null) ?? null;
@@ -175,6 +176,7 @@ export const DashboardSettings: React.FC = () => {
         setAccountEmail(user.email ?? '');
         setCurrentTemplate((data.active_template_id as string) || 'base');
         setSiteSlug((data.site_slug as string) ?? '');
+        setMusicPlaylistUrl((data.music_playlist_url as string) ?? '');
         setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
         setHideFromSearch(!!(data.hide_from_search as boolean | null | undefined));
         setGuestAccessToken((data.guest_access_token as string | null) ?? null);
@@ -391,6 +393,23 @@ export const DashboardSettings: React.FC = () => {
       setVisibilitySuccess(`Default language set to ${next === 'es' ? 'Español' : 'English'}.`);
     } catch (err) {
       setVisibilityError(err instanceof Error ? err.message : 'Failed to save default language.');
+    }
+  };
+
+  const handleSaveMusicPlaylist = async () => {
+    if (!weddingSiteId) return;
+    setVisibilityError(null);
+    setVisibilitySuccess(null);
+    try {
+      const value = musicPlaylistUrl.trim();
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ music_playlist_url: value || null })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+      setVisibilitySuccess('Song request playlist link saved.');
+    } catch (err) {
+      setVisibilityError(err instanceof Error ? err.message : 'Failed to save playlist link.');
     }
   };
 
@@ -1140,6 +1159,26 @@ export const DashboardSettings: React.FC = () => {
                           </div>
                           );
                         })}
+                      </div>
+
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
+                        <p className="text-sm font-medium text-text-primary">Song request playlist (Spotify collaborative)</p>
+                        <Input
+                          label="Playlist URL"
+                          value={musicPlaylistUrl}
+                          onChange={(e) => setMusicPlaylistUrl(e.target.value)}
+                          placeholder="https://open.spotify.com/playlist/..."
+                        />
+                        <div className="flex gap-2">
+                          <Button type="button" variant="outline" size="sm" onClick={handleSaveMusicPlaylist}>
+                            Save playlist link
+                          </Button>
+                          {musicPlaylistUrl && (
+                            <Button type="button" variant="outline" size="sm" onClick={() => window.open(musicPlaylistUrl, '_blank')}>
+                              Open
+                            </Button>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex flex-wrap gap-2 justify-between pt-2">

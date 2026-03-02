@@ -98,9 +98,9 @@ Deno.serve(async (req: Request) => {
 
       const { data: byToken } = await adminClient.from("guests").select(guestSelect).eq("invite_token", trimmed).maybeSingle();
 
-      const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] } }> => {
-        const { data } = await adminClient.from("wedding_sites").select("rsvp_deadline, rsvp_custom_questions, rsvp_meal_config").eq("id", siteId).maybeSingle();
-        const typed = data as { rsvp_deadline?: string | null; rsvp_custom_questions?: unknown; rsvp_meal_config?: unknown } | null;
+      const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] }; musicPlaylistUrl: string | null }> => {
+        const { data } = await adminClient.from("wedding_sites").select("rsvp_deadline, rsvp_custom_questions, rsvp_meal_config, music_playlist_url").eq("id", siteId).maybeSingle();
+        const typed = data as { rsvp_deadline?: string | null; rsvp_custom_questions?: unknown; rsvp_meal_config?: unknown; music_playlist_url?: string | null } | null;
         const parsedQuestions = Array.isArray(typed?.rsvp_custom_questions) ? typed.rsvp_custom_questions : [];
         const mealRaw = typed?.rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
         return {
@@ -112,6 +112,7 @@ Deno.serve(async (req: Request) => {
               ? mealRaw.options.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
               : ["Chicken", "Beef", "Fish", "Vegetarian", "Vegan"],
           },
+          musicPlaylistUrl: typed?.music_playlist_url ?? null,
         };
       };
 
@@ -133,7 +134,7 @@ Deno.serve(async (req: Request) => {
           fetchRsvpConfig(byToken.wedding_site_id),
           fetchHouseholdGuests(byToken.wedding_site_id, (byToken as { household_id?: string | null }).household_id, byToken.id),
         ]);
-        return json({ guest: byToken, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: config.rsvpDeadline, rsvpQuestions: config.rsvpQuestions, rsvpMealConfig: config.rsvpMealConfig, householdGuests });
+        return json({ guest: byToken, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: config.rsvpDeadline, rsvpQuestions: config.rsvpQuestions, rsvpMealConfig: config.rsvpMealConfig, musicPlaylistUrl: config.musicPlaylistUrl, householdGuests });
       }
 
       const lower = trimmed.toLowerCase();
@@ -147,7 +148,7 @@ Deno.serve(async (req: Request) => {
           fetchRsvpConfig(guest.wedding_site_id),
           fetchHouseholdGuests(guest.wedding_site_id, (guest as { household_id?: string | null }).household_id, guest.id),
         ]);
-        return json({ guest, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: config.rsvpDeadline, rsvpQuestions: config.rsvpQuestions, rsvpMealConfig: config.rsvpMealConfig, householdGuests });
+        return json({ guest, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: config.rsvpDeadline, rsvpQuestions: config.rsvpQuestions, rsvpMealConfig: config.rsvpMealConfig, musicPlaylistUrl: config.musicPlaylistUrl, householdGuests });
       }
 
       return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null, rsvpQuestions: [], rsvpMealConfig: { enabled: true, options: ["Chicken", "Beef", "Fish", "Vegetarian", "Vegan"] }, householdGuests: [] });
