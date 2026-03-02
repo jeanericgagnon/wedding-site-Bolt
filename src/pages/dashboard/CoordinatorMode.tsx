@@ -36,6 +36,7 @@ type QnaItem = {
   id: string;
   question: string;
   status: 'new' | 'answered';
+  answer?: string | null;
 };
 
 type CoordinatorRole = 'owner' | 'coordinator' | 'viewer';
@@ -108,10 +109,20 @@ export const DashboardCoordinatorMode: React.FC = () => {
           });
         }
 
+        const { data: qnaData } = await supabase
+          .from('guest_qna_items')
+          .select('id, question, answer, status, created_at')
+          .eq('wedding_site_id', resolvedSiteId)
+          .order('created_at', { ascending: false })
+          .limit(30);
+
         if (!mounted) return;
         setGuests((guestsData as GuestLite[]) || []);
         setEvents((eventsData as EventLite[]) || []);
         setEventGuestIds(inviteMap);
+        if (qnaData && qnaData.length > 0) {
+          setQnaItems((qnaData as Array<{ id: string; question: string; status: 'new' | 'answered'; answer?: string | null }>));
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -128,12 +139,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
       if (rawTimeline) setTimelineState(JSON.parse(rawTimeline) as Record<string, TimelineState>);
       const rawAlerts = localStorage.getItem(`dayof.alertlog.${siteId}`);
       if (rawAlerts) setAlertLog(JSON.parse(rawAlerts) as AlertLog[]);
-      const rawQna = localStorage.getItem(`dayof.qna.${siteId}`);
-      if (rawQna) setQnaItems(JSON.parse(rawQna) as QnaItem[]);
-      else setQnaItems([
-        { id: 'q1', question: 'What time should we arrive?', status: 'new' },
-        { id: 'q2', question: 'Is parking available at the venue?', status: 'answered' },
-      ]);
+      if (isDemoMode) {
+        const rawQna = localStorage.getItem(`dayof.qna.${siteId}`);
+        if (rawQna) setQnaItems(JSON.parse(rawQna) as QnaItem[]);
+        else setQnaItems([
+          { id: 'q1', question: 'What time should we arrive?', status: 'new' },
+          { id: 'q2', question: 'Is parking available at the venue?', status: 'answered' },
+        ]);
+      }
       const rawRole = localStorage.getItem(`dayof.coordinator.role.${siteId}`) as CoordinatorRole | null;
       if (rawRole === 'owner' || rawRole === 'coordinator' || rawRole === 'viewer') setCoordinatorRole(rawRole);
     } catch {}
@@ -150,9 +163,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [siteId, alertLog]);
 
   useEffect(() => {
-    if (!siteId) return;
+    if (!siteId || !isDemoMode) return;
     try { localStorage.setItem(`dayof.qna.${siteId}`, JSON.stringify(qnaItems)); } catch {}
-  }, [siteId, qnaItems]);
+  }, [siteId, qnaItems, isDemoMode]);
 
   useEffect(() => {
     if (!siteId) return;
@@ -271,15 +284,32 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
   };
 
-  const addQnaItem = () => {
+  const addQnaItem = async () => {
     const q = qnaInput.trim();
     if (!q) return;
-    setQnaItems((prev) => [{ id: `${Date.now()}`, question: q, status: 'new' as const }, ...prev].slice(0, 30));
+
+    if (!isDemoMode && siteId) {
+      const { data, error } = await supabase
+        .from('guest_qna_items')
+        .insert({ wedding_site_id: siteId, question: q, status: 'new', source: 'manual' })
+        .select('id, question, answer, status')
+        .single();
+      if (!error && data) {
+        setQnaItems((prev) => [data as QnaItem, ...prev].slice(0, 30));
+      }
+    } else {
+      setQnaItems((prev) => [{ id: `${Date.now()}`, question: q, status: 'new' as const }, ...prev].slice(0, 30));
+    }
     setQnaInput('');
   };
 
-  const toggleQnaStatus = (id: string) => {
-    setQnaItems((prev) => prev.map((item) => item.id === id ? { ...item, status: item.status === 'new' ? 'answered' : 'new' } : item));
+  const toggleQnaStatus = async (id: string) => {
+    const nextStatus = qnaItems.find((i) => i.id === id)?.status === 'new' ? 'answered' : 'new';
+
+    if (!isDemoMode) {
+      await supabase.from('guest_qna_items').update({ status: nextStatus }).eq('id', id);
+    }
+    setQnaItems((prev) => prev.map((item) => item.id === id ? { ...item, status: nextStatus } : item));
   };
 
   return (
