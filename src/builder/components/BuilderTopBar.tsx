@@ -108,6 +108,17 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const [newPageTitle, setNewPageTitle] = React.useState('');
   const [showPhotoTips, setShowPhotoTips] = React.useState(() => shouldOpenPhotoTipsFromSearch(location.search));
   const blockedHints = React.useMemo(() => getPublishBlockedHints(publishValidationError), [publishValidationError]);
+  const [showPublishChecklist, setShowPublishChecklist] = React.useState(false);
+
+  const checklistItems = React.useMemo(() => {
+    const items: Array<{ label: string; done: boolean; detail?: string }> = [];
+    items.push({ label: 'At least one page exists', done: projectPages.length > 0 });
+    items.push({ label: 'Current page has sections', done: (activePage?.sections?.length ?? 0) > 0 });
+    items.push({ label: 'No active publish blockers', done: !publishValidationError, detail: publishValidationError ?? undefined });
+    items.push({ label: 'Latest edits are saved', done: !isDirty });
+    return items;
+  }, [projectPages.length, activePage?.sections?.length, publishValidationError, isDirty]);
+  const checklistDoneCount = checklistItems.filter((i) => i.done).length;
 
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -375,6 +386,36 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             <ul className="list-disc ml-4 mt-1 space-y-0.5">
               {blockedHints.map((hint) => (
                 <li key={hint}>{hint}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setShowPublishChecklist((v) => !v)}
+          className={`hidden sm:inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[11px] font-medium ${
+            checklistDoneCount === checklistItems.length
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <CheckCircle2 size={12} />
+          Publish checklist {checklistDoneCount}/{checklistItems.length}
+        </button>
+
+        {showPublishChecklist && (
+          <div className="w-full rounded border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700">
+            <p className="font-semibold text-gray-800 mb-1">Publish readiness</p>
+            <ul className="space-y-1">
+              {checklistItems.map((item) => (
+                <li key={item.label} className="flex items-start gap-1.5">
+                  <span className={item.done ? 'text-emerald-600' : 'text-amber-600'}>{item.done ? '✓' : '•'}</span>
+                  <span>
+                    {item.label}
+                    {!item.done && item.detail ? <span className="text-amber-700"> — {item.detail}</span> : null}
+                  </span>
+                </li>
               ))}
             </ul>
           </div>
