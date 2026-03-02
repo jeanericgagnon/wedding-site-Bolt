@@ -509,64 +509,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
             </button>
           )}
 
-          {entries.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <select
-                value={recapStyle}
-                onChange={(e) => setRecapStyle(e.target.value as 'classic' | 'playful' | 'cinematic')}
-                className="px-2 py-1.5 rounded-lg border border-border bg-white text-text-secondary text-xs"
-                title="Recap style"
-              >
-                <option value="classic">Classic</option>
-                <option value="playful">Playful</option>
-                <option value="cinematic">Cinematic</option>
-              </select>
-              <select
-                value={recapLength}
-                onChange={(e) => setRecapLength(e.target.value as 'short' | 'medium' | 'long')}
-                className="px-2 py-1.5 rounded-lg border border-border bg-white text-text-secondary text-xs"
-                title="Recap length"
-              >
-                <option value="short">Short</option>
-                <option value="medium">Medium</option>
-                <option value="long">Long</option>
-              </select>
-              <button
-                onClick={() => setPhotosOnlyRecap((v) => !v)}
-                className={`px-2 py-1.5 rounded-lg border text-xs ${photosOnlyRecap ? 'border-primary/35 text-primary bg-primary/5' : 'border-border bg-white text-text-secondary'}`}
-                title="Toggle photo-first recap mode"
-              >
-                {photosOnlyRecap ? 'Photos only' : 'Mixed'}
-              </button>
-              <button
-                onClick={() => void handleGenerateRecap()}
-                disabled={generatingRecap}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 text-xs font-medium disabled:opacity-50"
-                title="Generate AI anniversary recap"
-              >
-                {generatingRecap ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                {generatingRecap ? 'Generating…' : 'Generate recap'}
-              </button>
-              <button
-                onClick={() => void handleRegenerateLatestRecap()}
-                disabled={generatingRecap}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 text-xs font-medium disabled:opacity-50"
-                title="Regenerate latest recap using selected style"
-              >
-                <Sparkles className="w-3 h-3" />
-                {hasRecap ? 'Regenerate' : 'Generate + style'}
-              </button>
-              <button
-                onClick={handleCopyRecapLink}
-                disabled={!hasRecap}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 text-xs font-medium disabled:opacity-50"
-                title="Copy link to view latest recap"
-              >
-                <Link2 className="w-3 h-3" />
-                {recapCopied ? 'Copied!' : 'Share recap'}
-              </button>
-            </div>
-          )}
 
           <button
             onClick={() => onEdit(config)}
