@@ -123,7 +123,7 @@ export const Templates: React.FC = () => {
                 return [...prev, tpl.id].slice(-2);
               });
             }}
-            className={`rounded border px-3 py-2 text-sm ${compareIds.includes(tpl.id) ? 'border-sky-400 bg-sky-50 text-sky-700' : 'border-neutral-300 text-neutral-700 hover:bg-neutral-100'}`}
+            className={`rounded border px-3 py-2 text-sm font-medium transition-colors ${compareIds.includes(tpl.id) ? 'border-sky-400 bg-sky-50 text-sky-700 hover:bg-sky-100' : 'border-neutral-300 text-neutral-700 hover:bg-neutral-100'}`}
           >
             {compareIds.includes(tpl.id) ? 'Comparing' : 'Compare'}
           </button>
