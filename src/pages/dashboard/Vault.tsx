@@ -218,8 +218,22 @@ interface VaultCardProps {
   onEdit: (config: VaultConfig) => void;
 }
 
-function buildAnniversaryRecap(entries: VaultEntry[], years: number, style: 'classic' | 'playful' | 'cinematic' = 'classic'): string {
-  const sorted = [...entries].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+function buildAnniversaryRecap(
+  entries: VaultEntry[],
+  years: number,
+  style: 'classic' | 'playful' | 'cinematic' = 'classic',
+  length: 'short' | 'medium' | 'long' = 'medium',
+  photosOnly = false,
+): string {
+  const source = photosOnly
+    ? entries.filter((e) => {
+        const media = (e.media_type || '').toLowerCase();
+        const file = (e.attachment_name || '').toLowerCase();
+        return media === 'photo' || /\.(jpg|jpeg|png|webp|heic)$/i.test(file);
+      })
+    : entries;
+
+  const sorted = [...source].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   const first = sorted[0];
   const last = sorted[sorted.length - 1];
 
@@ -229,7 +243,10 @@ function buildAnniversaryRecap(entries: VaultEntry[], years: number, style: 'cla
     return media === 'photo' || /\.(jpg|jpeg|png|webp|heic)$/i.test(file);
   });
 
-  const timelineMoments = sorted.slice(0, 10).map((entry) => {
+  const timelineLimit = length === 'short' ? 5 : length === 'long' ? 14 : 10;
+  const photoLimit = length === 'short' ? 4 : length === 'long' ? 10 : 8;
+
+  const timelineMoments = sorted.slice(0, timelineLimit).map((entry) => {
     const date = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const title = (entry.title || '').trim();
     const fileName = (entry.attachment_name || '').trim();
@@ -240,7 +257,7 @@ function buildAnniversaryRecap(entries: VaultEntry[], years: number, style: 'cla
     return `- ${date}: ${cleanCore}`;
   });
 
-  const photoHighlights = photoEntries.slice(0, 8).map((entry) => {
+  const photoHighlights = photoEntries.slice(0, photoLimit).map((entry) => {
     const date = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     const name = (entry.attachment_name || entry.title || 'Captured moment').replace(/[_-]+/g, ' ').trim();
     return `- ${date}: ${name}`;
@@ -255,8 +272,8 @@ function buildAnniversaryRecap(entries: VaultEntry[], years: number, style: 'cla
   const closingDate = last ? new Date(last.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null;
 
   const openingBase = openingDate && closingDate
-    ? `Over ${openingDate} to ${closingDate}, this ${years}-year chapter unfolds through ${entries.length} saved memories, including ${photoEntries.length} photo moments.`
-    : `This ${years}-year chapter unfolds through ${entries.length} saved memories, including ${photoEntries.length} photo moments.`;
+    ? `Over ${openingDate} to ${closingDate}, this ${years}-year chapter unfolds through ${sorted.length} saved memories, including ${photoEntries.length} photo moments.`
+    : `This ${years}-year chapter unfolds through ${sorted.length} saved memories, including ${photoEntries.length} photo moments.`;
 
   const themeLine = themes.length > 0
     ? `The strongest threads are ${themes.join(', ')} — a story of presence, warmth, and shared celebration.`
@@ -276,6 +293,7 @@ function buildAnniversaryRecap(entries: VaultEntry[], years: number, style: 'cla
 
   return [
     `${years}-Year Anniversary Recap (${style[0].toUpperCase()}${style.slice(1)})`,
+    photosOnly ? 'Photo-first mode enabled' : 'Mixed memories mode',
     '',
     styleOpen,
     themeLine,
@@ -302,6 +320,8 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [toggling, setToggling] = useState(false);
   const [generatingRecap, setGeneratingRecap] = useState(false);
   const [recapStyle, setRecapStyle] = useState<'classic' | 'playful' | 'cinematic'>('classic');
+  const [recapLength, setRecapLength] = useState<'short' | 'medium' | 'long'>('medium');
+  const [photosOnlyRecap, setPhotosOnlyRecap] = useState(true);
   const [resolvedEntryLinks, setResolvedEntryLinks] = useState<Record<string, string>>({});
   const [resolvingEntryId, setResolvingEntryId] = useState<string | null>(null);
 
@@ -384,7 +404,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
         vault_config_id: config.id,
         vault_year: config.duration_years,
         title: `${config.duration_years}-Year AI Recap`,
-        content: buildAnniversaryRecap(entries, config.duration_years, recapStyle),
+        content: buildAnniversaryRecap(entries, config.duration_years, recapStyle, recapLength, photosOnlyRecap),
         author_name: 'DayOf AI Recap',
         attachment_url: null,
         attachment_name: null,
@@ -407,7 +427,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
     setGeneratingRecap(true);
     try {
-      const nextContent = buildAnniversaryRecap(entries, config.duration_years, recapStyle);
+      const nextContent = buildAnniversaryRecap(entries, config.duration_years, recapStyle, recapLength, photosOnlyRecap);
       await supabase
         .from('vault_entries')
         .update({
@@ -482,6 +502,23 @@ const VaultCard: React.FC<VaultCardProps> = ({
                 <option value="playful">Playful</option>
                 <option value="cinematic">Cinematic</option>
               </select>
+              <select
+                value={recapLength}
+                onChange={(e) => setRecapLength(e.target.value as 'short' | 'medium' | 'long')}
+                className="px-2 py-1.5 rounded-lg border border-border bg-white text-text-secondary text-xs"
+                title="Recap length"
+              >
+                <option value="short">Short</option>
+                <option value="medium">Medium</option>
+                <option value="long">Long</option>
+              </select>
+              <button
+                onClick={() => setPhotosOnlyRecap((v) => !v)}
+                className={`px-2 py-1.5 rounded-lg border text-xs ${photosOnlyRecap ? 'border-primary/35 text-primary bg-primary/5' : 'border-border bg-white text-text-secondary'}`}
+                title="Toggle photo-first recap mode"
+              >
+                {photosOnlyRecap ? 'Photos only' : 'Mixed'}
+              </button>
               <button
                 onClick={() => void handleGenerateRecap()}
                 disabled={generatingRecap}
