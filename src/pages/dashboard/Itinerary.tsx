@@ -707,27 +707,25 @@ export const DashboardItinerary: React.FC = () => {
                         </div>
                       )}
 
-                      {event.location_name && (
+                      {(event.location_name || event.location_address) && (
                         <div className="flex items-center gap-2 text-neutral-600">
                           <MapPin className="w-4 h-4 flex-shrink-0" />
                           <div className="flex-1">
-                            <div>{event.location_name}</div>
+                            {event.location_name && <div>{event.location_name}</div>}
                             {event.location_address && (
                               <div className="text-sm text-neutral-500">{event.location_address}</div>
                             )}
                           </div>
-                          {(event.location_name || event.location_address) && (
-                            <a
-                              href={getMapUrl(event.location_name || '', event.location_address || '')}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 px-3 py-1 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors"
-                            >
-                              <MapPin className="w-3 h-3" />
-                              Map
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
+                          <a
+                            href={getMapUrl(event.location_name || '', event.location_address || '')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-3 py-1 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            Map
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
                       )}
 
