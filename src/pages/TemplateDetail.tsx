@@ -25,8 +25,8 @@ export const TemplateDetail: React.FC = () => {
     .filter((t) => t.styleTags.some((tag) => tpl.styleTags.includes(tag)))
     .slice(0, 3);
 
-  const useTemplate = () => {
-    localStorage.setItem('dayof.builderV2.selectedTemplate', tpl.id);
+  const useTemplate = (id = tpl.id) => {
+    localStorage.setItem('dayof.builderV2.selectedTemplate', id);
     navigate('/setup/names');
   };
 
@@ -107,7 +107,7 @@ export const TemplateDetail: React.FC = () => {
           </div>
 
           <div className="mt-6 flex items-center gap-2">
-            <button onClick={useTemplate} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Use this template</button>
+            <button onClick={() => useTemplate()} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Use this template</button>
             <Link to="/templates" className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back to gallery</Link>
           </div>
 
@@ -115,19 +115,34 @@ export const TemplateDetail: React.FC = () => {
             <div className="mt-6">
               <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Similar templates</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {relatedTemplates.map((rel) => (
-                  <Link key={rel.id} to={`/templates/${rel.id}`} className="rounded-lg border border-neutral-200 bg-white p-2 hover:border-rose-300">
-                    <img src={rel.previewImage} alt={rel.name} className="h-20 w-full rounded object-cover" />
-                    <p className="mt-1 text-xs font-medium text-neutral-800">{rel.name}</p>
-                  </Link>
-                ))}
+                {relatedTemplates.map((rel) => {
+                  const moduleDelta = rel.includedModules.length - tpl.includedModules.length;
+                  return (
+                    <div key={rel.id} className="rounded-lg border border-neutral-200 bg-white p-2 hover:border-rose-300">
+                      <Link to={`/templates/${rel.id}`}>
+                        <img src={rel.previewImage} alt={rel.name} className="h-20 w-full rounded object-cover" />
+                        <p className="mt-1 text-xs font-medium text-neutral-800">{rel.name}</p>
+                      </Link>
+                      <p className="mt-0.5 text-[11px] text-neutral-500">
+                        {rel.includedModules.length} modules {moduleDelta === 0 ? '(same depth)' : moduleDelta > 0 ? `(+${moduleDelta} vs current)` : `(${moduleDelta} vs current)`}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => useTemplate(rel.id)}
+                        className="mt-1.5 w-full rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 hover:bg-rose-100"
+                      >
+                        Use this
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
       </div>
       <div className="fixed bottom-3 left-3 right-3 md:hidden z-20">
-        <button onClick={useTemplate} className="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-rose-700">Use this template</button>
+        <button onClick={() => useTemplate()} className="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-rose-700">Use this template</button>
       </div>
     </div>
   );
