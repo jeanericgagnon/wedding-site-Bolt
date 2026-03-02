@@ -187,6 +187,7 @@ export const Templates: React.FC = () => {
               setColorway('all');
               setSortBy('recommended');
               setGroupByStyle(false);
+              setCompareIds([]);
             }}
             className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100"
           >
@@ -222,6 +223,10 @@ export const Templates: React.FC = () => {
                   <p className="text-[11px] text-neutral-700 mt-1">Modules: {tpl.includedModules.length} • Sections: {tpl.defaultSectionOrder.length}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {tpl.styleTags.slice(0, 3).map((tag) => <span key={`${tpl.id}-${tag}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700">{tag}</span>)}
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] text-neutral-700 hover:bg-neutral-100">Preview</Link>
+                    <button type="button" onClick={() => useTemplate(tpl.id)} className="rounded bg-rose-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-rose-700">Use this</button>
                   </div>
                 </div>
               ))}
