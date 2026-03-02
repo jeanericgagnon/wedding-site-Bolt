@@ -246,6 +246,23 @@ async function extractProxyTextData(url: string): Promise<{ title?: string; pric
   }
 }
 
+function tuneConfidenceScore(base: number, source: ProductData['source_method'], missingCount: number): number {
+  let score = Number.isFinite(base) ? base : 0.35;
+
+  // Method priors
+  if (source === 'retailer_adapter') score = Math.max(score, 0.72);
+  if (source === 'jsonld') score = Math.max(score, 0.66);
+  if (source === 'opengraph') score = Math.max(score, 0.5);
+  if (source === 'fallback') score = Math.min(score, 0.45);
+
+  // Penalize missing fields to keep confidence interpretable in UI.
+  score -= Math.min(0.3, missingCount * 0.12);
+
+  if (score < 0.15) return 0.15;
+  if (score > 0.98) return 0.98;
+  return Number(score.toFixed(2));
+}
+
 function ensureBaselineMetadata(rawUrl: string, data: ProductData): ProductData {
   const normalized = normalizeUrl(rawUrl);
   const title = data.title?.trim() || deriveFallbackTitle(rawUrl);
@@ -256,12 +273,16 @@ function ensureBaselineMetadata(rawUrl: string, data: ProductData): ProductData 
   if (title) missing.delete('title'); else missing.add('title');
   if (imageUrl) missing.delete('image'); else missing.add('image');
 
+  const missingList = missing.size ? Array.from(missing) : undefined;
+  const confidence = tuneConfidenceScore(data.confidence_score, data.source_method, missing.size);
+
   return {
     ...data,
     title,
     image_url: imageUrl,
+    confidence_score: confidence,
     partial: missing.size > 0,
-    missing_fields: missing.size ? Array.from(missing) : undefined,
+    missing_fields: missingList,
   };
 }
 
