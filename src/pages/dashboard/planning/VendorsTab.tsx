@@ -10,6 +10,7 @@ interface Props {
   onAdd: (v: Partial<PlanningVendor>) => Promise<void>;
   onUpdate: (id: string, updates: Partial<PlanningVendor>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  canEdit?: boolean;
 }
 
 const VENDOR_TYPES = [
@@ -165,7 +166,7 @@ function VendorForm({ initial, onSave, onCancel }: {
   );
 }
 
-export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete }) => {
+export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete, canEdit = true }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingVendor, setEditingVendor] = useState<PlanningVendor | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -186,8 +187,9 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => setShowAdd(true)}>
+      <div className="flex items-center justify-between">
+        {!canEdit && <p className="text-xs text-text-tertiary">Viewer mode: editing is disabled.</p>}
+        <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
           <Plus className="w-4 h-4 mr-1" /> Add Vendor
         </Button>
       </div>
@@ -252,10 +254,10 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                         >
                           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </button>
-                        <button onClick={() => setEditingVendor(vendor)} className="p-1.5 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors">
+                        <button onClick={() => canEdit && setEditingVendor(vendor)} disabled={!canEdit} className="p-1.5 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => onDelete(vendor.id)} className="p-1.5 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors">
+                        <button onClick={() => canEdit && onDelete(vendor.id)} disabled={!canEdit} className="p-1.5 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>

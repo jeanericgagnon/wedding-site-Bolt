@@ -19,6 +19,7 @@ import { BudgetTab } from './planning/BudgetTab';
 import { VendorsTab } from './planning/VendorsTab';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'vendors';
+type PlanningRole = 'owner' | 'coordinator' | 'viewer';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -39,11 +40,17 @@ export const DashboardPlanning: React.FC = () => {
   const [totalBudget, setTotalBudget] = useState(0);
   const [seatingReadiness, setSeatingReadiness] = useState({ attending: 0, seated: 0, unassigned: 0 });
   const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
+  const [planningRole, setPlanningRole] = useState<PlanningRole>('owner');
   const { toast } = useToast();
 
   useEffect(() => {
     loadAll();
   }, [isDemoMode]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try { localStorage.setItem(`dayof.planning.role.${siteId}`, planningRole); } catch {}
+  }, [siteId, planningRole]);
 
   async function loadAll() {
     try {
@@ -61,6 +68,10 @@ export const DashboardPlanning: React.FC = () => {
       const id = await getWeddingSiteId();
       if (!id) return;
       setSiteId(id);
+      try {
+        const rawRole = localStorage.getItem(`dayof.planning.role.${id}`) as PlanningRole | null;
+        if (rawRole === 'owner' || rawRole === 'coordinator' || rawRole === 'viewer') setPlanningRole(rawRole);
+      } catch {}
       const wDate = await getWeddingDate();
       setWeddingDate(wDate);
 
@@ -354,17 +365,31 @@ export const DashboardPlanning: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-3 bg-surface-subtle/40 rounded-xl border border-border-subtle">
-          <label className="text-sm font-semibold text-text-primary">Section</label>
-          <select
-            value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as Tab)}
-            className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            {TABS.map(tab => (
-              <option key={tab.id} value={tab.id}>{tab.label}</option>
-            ))}
-          </select>
+        <div className="p-3 bg-surface-subtle/40 rounded-xl border border-border-subtle grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm font-semibold text-text-primary">Section</label>
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as Tab)}
+              className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {TABS.map(tab => (
+                <option key={tab.id} value={tab.id}>{tab.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-text-primary">Role View</label>
+            <select
+              value={planningRole}
+              onChange={(e) => setPlanningRole(e.target.value as PlanningRole)}
+              className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="owner">Owner (full access)</option>
+              <option value="coordinator">Coordinator (edit-lite)</option>
+              <option value="viewer">Viewer (read-only)</option>
+            </select>
+          </div>
         </div>
 
         {loading ? (
@@ -414,6 +439,7 @@ export const DashboardPlanning: React.FC = () => {
                 onAdd={handleAddVendor}
                 onUpdate={handleUpdateVendor}
                 onDelete={handleDeleteVendor}
+                canEdit={planningRole !== 'viewer'}
               />
             )}
           </>
