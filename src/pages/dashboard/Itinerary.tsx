@@ -736,23 +736,23 @@ export const DashboardItinerary: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="flex items-stretch gap-3 pt-3 border-t border-neutral-200">
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-50 border border-neutral-200 text-sm">
+                    <div className="flex flex-wrap items-stretch gap-2 pt-3 border-t border-neutral-200">
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200 text-sm">
                         <Users className="w-4 h-4 text-neutral-500" />
                         <span className="font-semibold text-neutral-900">{event.invitation_count}</span>
                         <span className="text-neutral-500">invited</span>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-sm">
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-sm">
                         <Check className="w-4 h-4 text-emerald-600" />
                         <span className="font-semibold text-emerald-700">{event.attending_count}</span>
                         <span className="text-emerald-600">yes</span>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-sm">
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-red-50 border border-red-200 text-sm">
                         <X className="w-4 h-4 text-red-500" />
                         <span className="font-semibold text-red-600">{event.declined_count}</span>
                         <span className="text-red-500">no</span>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-sm">
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-sm">
                         <HelpCircle className="w-4 h-4 text-amber-500" />
                         <span className="font-semibold text-amber-600">{pending}</span>
                         <span className="text-amber-500">pending</span>
@@ -760,7 +760,7 @@ export const DashboardItinerary: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-2 ml-2 sm:ml-4">
                     <Button
                       variant="outline"
                       size="sm"
