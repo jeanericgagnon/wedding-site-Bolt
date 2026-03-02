@@ -218,7 +218,7 @@ interface VaultCardProps {
   onEdit: (config: VaultConfig) => void;
 }
 
-function buildAnniversaryRecap(entries: VaultEntry[], years: number): string {
+function buildAnniversaryRecap(entries: VaultEntry[], years: number, style: 'classic' | 'playful' | 'cinematic' = 'classic'): string {
   const sorted = [...entries].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   const first = sorted[0];
   const last = sorted[sorted.length - 1];
@@ -254,7 +254,7 @@ function buildAnniversaryRecap(entries: VaultEntry[], years: number): string {
   const openingDate = first ? new Date(first.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null;
   const closingDate = last ? new Date(last.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null;
 
-  const opening = openingDate && closingDate
+  const openingBase = openingDate && closingDate
     ? `Over ${openingDate} to ${closingDate}, this ${years}-year chapter unfolds through ${entries.length} saved memories, including ${photoEntries.length} photo moments.`
     : `This ${years}-year chapter unfolds through ${entries.length} saved memories, including ${photoEntries.length} photo moments.`;
 
@@ -262,10 +262,22 @@ function buildAnniversaryRecap(entries: VaultEntry[], years: number): string {
     ? `The strongest threads are ${themes.join(', ')} — a story of presence, warmth, and shared celebration.`
     : 'The strongest thread is closeness — the kind of love that shows up in small moments and big celebrations alike.';
 
+  const styleOpen = style === 'cinematic'
+    ? `${openingBase} It feels like a film told in frames, glances, and quiet gestures.`
+    : style === 'playful'
+    ? `${openingBase} It’s full of energy, laughter, and beautifully chaotic joy.`
+    : openingBase;
+
+  const closing = style === 'cinematic'
+    ? 'Looking back, these memories feel like scenes from a beautiful film: vivid, intimate, and timeless.'
+    : style === 'playful'
+    ? 'Looking back, this chapter is pure heart: big laughs, happy tears, and the kind of love that keeps getting better.'
+    : 'Looking back, these memories read like a promise kept: to keep choosing each other, to keep celebrating together, and to keep building a life full of meaning.';
+
   return [
-    `${years}-Year Anniversary Recap`,
+    `${years}-Year Anniversary Recap (${style[0].toUpperCase()}${style.slice(1)})`,
     '',
-    opening,
+    styleOpen,
     themeLine,
     '',
     'Story arc',
@@ -274,7 +286,7 @@ function buildAnniversaryRecap(entries: VaultEntry[], years: number): string {
     photoHighlights.length > 0 ? 'Photo highlights' : 'Highlight moments',
     ...(photoHighlights.length > 0 ? photoHighlights : timelineMoments.slice(0, 5)),
     '',
-    'Looking back, these memories read like a promise kept: to keep choosing each other, to keep celebrating together, and to keep building a life full of meaning.',
+    closing,
     '',
     '— AI recap draft (editable)'
   ].join('\n');
@@ -289,6 +301,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [copied, setCopied] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [generatingRecap, setGeneratingRecap] = useState(false);
+  const [recapStyle, setRecapStyle] = useState<'classic' | 'playful' | 'cinematic'>('classic');
   const [resolvedEntryLinks, setResolvedEntryLinks] = useState<Record<string, string>>({});
   const [resolvingEntryId, setResolvingEntryId] = useState<string | null>(null);
 
@@ -371,7 +384,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
         vault_config_id: config.id,
         vault_year: config.duration_years,
         title: `${config.duration_years}-Year AI Recap`,
-        content: buildAnniversaryRecap(entries, config.duration_years),
+        content: buildAnniversaryRecap(entries, config.duration_years, recapStyle),
         author_name: 'DayOf AI Recap',
         attachment_url: null,
         attachment_name: null,
@@ -429,15 +442,27 @@ const VaultCard: React.FC<VaultCardProps> = ({
           )}
 
           {entries.length > 0 && (
-            <button
-              onClick={() => void handleGenerateRecap()}
-              disabled={generatingRecap}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 text-xs font-medium disabled:opacity-50"
-              title="Generate AI anniversary recap"
-            >
-              {generatingRecap ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              {generatingRecap ? 'Generating…' : 'Generate recap'}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <select
+                value={recapStyle}
+                onChange={(e) => setRecapStyle(e.target.value as 'classic' | 'playful' | 'cinematic')}
+                className="px-2 py-1.5 rounded-lg border border-border bg-white text-text-secondary text-xs"
+                title="Recap style"
+              >
+                <option value="classic">Classic</option>
+                <option value="playful">Playful</option>
+                <option value="cinematic">Cinematic</option>
+              </select>
+              <button
+                onClick={() => void handleGenerateRecap()}
+                disabled={generatingRecap}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 text-xs font-medium disabled:opacity-50"
+                title="Generate AI anniversary recap"
+              >
+                {generatingRecap ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {generatingRecap ? 'Generating…' : 'Generate recap'}
+              </button>
+            </div>
           )}
 
           <button
