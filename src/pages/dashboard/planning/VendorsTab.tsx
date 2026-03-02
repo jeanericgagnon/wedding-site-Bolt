@@ -172,6 +172,18 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
+  const [vendorMeta, setVendorMeta] = useState<Record<string, { lastContacted?: string; nextFollowUp?: string }>>({});
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('dayof.vendor.meta.v1');
+      if (raw) setVendorMeta(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  React.useEffect(() => {
+    try { localStorage.setItem('dayof.vendor.meta.v1', JSON.stringify(vendorMeta)); } catch {}
+  }, [vendorMeta]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -179,6 +191,11 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   in7Days.setDate(in7Days.getDate() + 7);
 
   const totalBalance = vendors.reduce((s, v) => s + (v.balance_due || 0), 0);
+  const followUpDueCount = vendors.filter((v) => {
+    const dt = vendorMeta[v.id]?.nextFollowUp;
+    if (!dt) return false;
+    return new Date(dt) <= in7Days;
+  }).length;
 
   const filteredVendors = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -205,10 +222,16 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
 
   return (
     <div className="space-y-4">
-      {totalBalance > 0 && (
-        <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-shadow">
-          <span className="text-sm text-text-secondary">Total vendor balance due</span>
-          <span className="font-bold text-text-primary">{fmt(totalBalance)}</span>
+      {(totalBalance > 0 || followUpDueCount > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-shadow">
+            <span className="text-sm text-text-secondary">Total vendor balance due</span>
+            <span className="font-bold text-text-primary">{fmt(totalBalance)}</span>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+            <span className="text-sm text-text-secondary">Follow-ups due (7d)</span>
+            <span className="font-bold text-text-primary">{followUpDueCount}</span>
+          </div>
         </div>
       )}
 
@@ -352,6 +375,28 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                             </span>
                           </p>
                         )}
+                        <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-1.5">
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Vendor follow-up</p>
+                          <p className="text-xs text-text-secondary">
+                            Last contacted: {vendorMeta[vendor.id]?.lastContacted ? new Date(vendorMeta[vendor.id]!.lastContacted as string).toLocaleDateString() : 'Not set'}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => canEdit && setVendorMeta((prev) => ({ ...prev, [vendor.id]: { ...(prev[vendor.id] ?? {}), lastContacted: new Date().toISOString() } }))}
+                              disabled={!canEdit}
+                              className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
+                            >
+                              Mark contacted
+                            </button>
+                            <input
+                              type="date"
+                              value={vendorMeta[vendor.id]?.nextFollowUp ? String(vendorMeta[vendor.id]?.nextFollowUp).slice(0, 10) : ''}
+                              onChange={(e) => canEdit && setVendorMeta((prev) => ({ ...prev, [vendor.id]: { ...(prev[vendor.id] ?? {}), nextFollowUp: e.target.value || undefined } }))}
+                              disabled={!canEdit}
+                              className="text-[11px] rounded border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
+                            />
+                          </div>
+                        </div>
                         {vendor.notes && (
                           <p className="text-xs text-text-tertiary">{vendor.notes}</p>
                         )}
