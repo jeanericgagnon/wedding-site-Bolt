@@ -3097,9 +3097,6 @@ Proceed with send?`)) return;
                 )}
 
                 {households.grouped.map(([householdId, members]) => {
-                  const head = members.find(m => m.id === householdId) ?? members[0];
-                  const headName = head ? (head.first_name && head.last_name ? `${head.first_name} ${head.last_name}` : head.name) : 'Household';
-                  const householdLabel = `${headName} household`;
                   const confirmed = members.filter((m) => m.rsvp_status === 'confirmed').length;
                   const pending = members.filter((m) => m.rsvp_status === 'pending').length;
                   return (
@@ -3107,7 +3104,7 @@ Proceed with send?`)) return;
                       <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
                         <div className="flex items-center gap-2">
                           <Home className="w-4 h-4 text-text-tertiary" />
-                          <span className="font-semibold text-text-primary text-sm">{householdLabel}</span>
+                          <span className="font-semibold text-text-primary text-sm">Group</span>
                           <span className="text-xs text-text-tertiary break-words">({members.length} guests · {confirmed} confirmed · {pending} pending)</span>
                         </div>
                         <button
