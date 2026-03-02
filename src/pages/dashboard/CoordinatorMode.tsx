@@ -27,6 +27,7 @@ type AlertLog = {
   audience: string;
   channel: 'email' | 'sms';
   queuedAt: string;
+  sendAt?: string | null;
 };
 
 type QnaItem = {
@@ -51,6 +52,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
     body: 'Quick update from the couple: ',
     audience: 'all',
     channel: 'email' as 'email' | 'sms',
+    scheduleType: 'now' as 'now' | 'later',
+    scheduleDate: '',
+    scheduleTime: '',
   });
 
   useEffect(() => {
@@ -161,6 +165,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const sendDayOfAlert = async () => {
     if (!siteId || !alertForm.subject.trim() || !alertForm.body.trim()) return;
+    const scheduledFor = alertForm.scheduleType === 'later' && alertForm.scheduleDate && alertForm.scheduleTime
+      ? `${alertForm.scheduleDate}T${alertForm.scheduleTime}:00`
+      : null;
+    const status = scheduledFor ? 'scheduled' : 'queued';
+
     setAlertBusy(true);
     try {
       if (!isDemoMode) {
@@ -171,8 +180,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
           channel: alertForm.channel,
           audience_filter: alertForm.audience,
           recipient_filter: { audience: alertForm.audience, recipient_count: alertAudienceCount },
-          status: 'queued',
-          sent_at: new Date().toISOString(),
+          status,
+          sent_at: scheduledFor ? null : new Date().toISOString(),
+          scheduled_for: scheduledFor,
         });
       }
 
@@ -182,6 +192,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         audience: alertForm.audience,
         channel: alertForm.channel,
         queuedAt: new Date().toISOString(),
+        sendAt: scheduledFor,
       }, ...prev].slice(0, 8));
     } finally {
       setAlertBusy(false);
@@ -306,7 +317,33 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <option value="sms">SMS</option>
                   </select>
                 </div>
-                <p className="text-[11px] text-text-tertiary">Will queue to {alertAudienceCount} recipient{alertAudienceCount === 1 ? '' : 's'}.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={alertForm.scheduleType}
+                    onChange={(e) => setAlertForm((prev) => ({ ...prev, scheduleType: e.target.value as 'now' | 'later' }))}
+                    className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
+                  >
+                    <option value="now">Send now</option>
+                    <option value="later">Schedule</option>
+                  </select>
+                  {alertForm.scheduleType === 'later' ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={alertForm.scheduleDate}
+                        onChange={(e) => setAlertForm((prev) => ({ ...prev, scheduleDate: e.target.value }))}
+                        className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
+                      />
+                      <input
+                        type="time"
+                        value={alertForm.scheduleTime}
+                        onChange={(e) => setAlertForm((prev) => ({ ...prev, scheduleTime: e.target.value }))}
+                        className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
+                      />
+                    </div>
+                  ) : <div />}
+                </div>
+                <p className="text-[11px] text-text-tertiary">Will queue to {alertAudienceCount} recipient{alertAudienceCount === 1 ? '' : 's'}{alertForm.scheduleType === 'later' ? ' at scheduled time' : ''}.</p>
                 <button
                   onClick={() => void sendDayOfAlert()}
                   disabled={alertBusy || !alertForm.subject.trim() || !alertForm.body.trim() || alertAudienceCount === 0}
@@ -318,7 +355,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <div className="pt-1 space-y-1.5">
                     {alertLog.slice(0, 3).map((item) => (
                       <div key={item.id} className="text-[11px] text-text-tertiary border border-border/50 rounded-md px-2 py-1.5">
-                        {item.subject} · {item.channel.toUpperCase()} · {item.audience}
+                        {item.subject} · {item.channel.toUpperCase()} · {item.audience}{item.sendAt ? ` · Scheduled ${new Date(item.sendAt).toLocaleString()}` : ''}
                       </div>
                     ))}
                   </div>
