@@ -13,6 +13,7 @@ export const Templates: React.FC = () => {
   const [colorway, setColorway] = useState<Facet>('all');
   const [sortBy, setSortBy] = useState<'recommended' | 'name' | 'style'>('recommended');
   const [groupByStyle, setGroupByStyle] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
   const selectedTemplateId = localStorage.getItem(SELECTED_TEMPLATE_KEY) || '';
 
   const recommendedTemplateIds = useMemo(() => {
@@ -51,6 +52,8 @@ export const Templates: React.FC = () => {
 
     return sorted;
   }, [style, season, colorway, sortBy, recommendedTemplateIds]);
+
+  const comparedTemplates = useMemo(() => templateCatalog.filter((t) => compareIds.includes(t.id)).slice(0, 2), [compareIds]);
 
   const groupedTemplates = useMemo(() => {
     if (!groupByStyle) return null;
@@ -98,10 +101,22 @@ export const Templates: React.FC = () => {
           {tpl.seasonTags.map((tag) => <span key={tag} className="rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">{tag}</span>)}
           <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 text-xs text-sky-700">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 grid grid-cols-3 gap-2">
           <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
             Preview
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setCompareIds((prev) => {
+                if (prev.includes(tpl.id)) return prev.filter((id) => id !== tpl.id);
+                return [...prev, tpl.id].slice(-2);
+              });
+            }}
+            className={`rounded border px-3 py-2 text-sm ${compareIds.includes(tpl.id) ? 'border-sky-400 bg-sky-50 text-sky-700' : 'border-neutral-300 text-neutral-700 hover:bg-neutral-100'}`}
+          >
+            {compareIds.includes(tpl.id) ? 'Comparing' : 'Compare'}
+          </button>
           <button
             type="button"
             onClick={() => useTemplate(tpl.id)}
@@ -192,6 +207,27 @@ export const Templates: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {comparedTemplates.length > 0 && (
+          <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/60 p-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold uppercase updates-wide text-sky-700">Quick compare</p>
+              <button onClick={() => setCompareIds([])} className="text-[11px] text-sky-700 hover:underline">Clear</button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {comparedTemplates.map((tpl) => (
+                <div key={`cmp-${tpl.id}`} className="rounded-lg border border-sky-200 bg-white p-2">
+                  <p className="text-sm font-semibold text-neutral-900">{tpl.name}</p>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">{tpl.designFamily}</p>
+                  <p className="text-[11px] text-neutral-700 mt-1">Modules: {tpl.includedModules.length} • Sections: {tpl.defaultSectionOrder.length}</p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {tpl.styleTags.slice(0, 3).map((tag) => <span key={`${tpl.id}-${tag}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700">{tag}</span>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {recommendedTemplateIds.length > 0 && (
           <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50/60 p-3">
