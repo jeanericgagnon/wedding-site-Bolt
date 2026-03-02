@@ -61,7 +61,13 @@ export const Templates: React.FC = () => {
       arr.push(tpl);
       map.set(key, arr);
     });
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    const facetOrder = new Map<string, number>((templateStyleFacets as readonly string[]).map((facet, idx) => [facet, idx]));
+    return Array.from(map.entries()).sort((a, b) => {
+      const ai = facetOrder.get(a[0]) ?? 999;
+      const bi = facetOrder.get(b[0]) ?? 999;
+      if (ai !== bi) return ai - bi;
+      return a[0].localeCompare(b[0]);
+    });
   }, [groupByStyle, filtered]);
 
   const useTemplate = (templateId: string) => {
@@ -155,6 +161,22 @@ export const Templates: React.FC = () => {
             <option value="name">Sort: Name</option>
             <option value="style">Sort: Style</option>
           </select>
+        </div>
+
+        <div className="mt-2 flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setStyle('all');
+              setSeason('all');
+              setColorway('all');
+              setSortBy('recommended');
+              setGroupByStyle(false);
+            }}
+            className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100"
+          >
+            Reset filters
+          </button>
         </div>
 
         <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 gap-3">
