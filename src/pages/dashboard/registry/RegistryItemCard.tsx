@@ -92,6 +92,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [refetching, setRefetching] = useState(false);
   const [copiedHint, setCopiedHint] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string | null>(item.image_url ?? null);
+  const [imgTriedProxy, setImgTriedProxy] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCashFund = item.item_type === 'cash_fund';
@@ -164,6 +166,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
 
   useEffect(() => {
     setImgFailed(false);
+    setImgTriedProxy(false);
+    setImgSrc(item.image_url ?? null);
   }, [item.id, item.image_url]);
 
   if (isCashFund) {
@@ -236,12 +240,19 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
       )}
 
       <div className="relative aspect-[4/3] bg-surface-subtle flex-shrink-0">
-        {item.image_url && !imgFailed ? (
+        {imgSrc && !imgFailed ? (
           <img
-            src={item.image_url}
+            src={imgSrc}
             alt={item.item_name}
             className={`w-full h-full object-cover transition-opacity ${isPurchased ? 'opacity-40' : ''}`}
-            onError={() => setImgFailed(true)}
+            onError={() => {
+              if (!imgTriedProxy && item.image_url) {
+                setImgTriedProxy(true);
+                setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(item.image_url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`);
+                return;
+              }
+              setImgFailed(true);
+            }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
