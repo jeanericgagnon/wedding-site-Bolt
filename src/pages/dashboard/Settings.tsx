@@ -372,6 +372,11 @@ export const DashboardSettings: React.FC = () => {
     setTimeout(() => setPrivacyCopied(false), 2000);
   };
 
+  const publicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
+  const publicSiteQrUrl = publicSiteUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(publicSiteUrl)}`
+    : '';
+
   const handleDefaultLanguageChange = async (next: 'en' | 'es') => {
     setDefaultLanguage(next);
     setVisibilityError(null);
@@ -697,18 +702,43 @@ export const DashboardSettings: React.FC = () => {
                           <span className="text-text-secondary flex-shrink-0">.dayof.love</span>
                         </div>
                         {siteSlug && (
-                          <p className="text-sm text-text-secondary mt-2">
-                            Your site is accessible at{' '}
-                            <a
-                              href={`https://${siteSlug}.dayof.love`}
-                              className="text-primary hover:text-primary-hover"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {siteSlug}.dayof.love
-                              <ExternalLink className="inline w-3 h-3 ml-1" aria-hidden="true" />
-                            </a>
-                          </p>
+                          <div className="mt-2 space-y-2">
+                            <p className="text-sm text-text-secondary">
+                              Your site is accessible at{' '}
+                              <a
+                                href={publicSiteUrl}
+                                className="text-primary hover:text-primary-hover"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {siteSlug}.dayof.love
+                                <ExternalLink className="inline w-3 h-3 ml-1" aria-hidden="true" />
+                              </a>
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(publicSiteQrUrl, '_blank')}
+                              >
+                                Open QR
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  if (!publicSiteQrUrl) return;
+                                  await navigator.clipboard.writeText(publicSiteQrUrl);
+                                  setSlugSuccess('QR image link copied.');
+                                  setSlugError(null);
+                                }}
+                              >
+                                Copy QR link
+                              </Button>
+                            </div>
+                          </div>
                         )}
                       </div>
                       <div className="flex justify-end pt-2">
