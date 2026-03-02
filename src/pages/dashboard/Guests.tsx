@@ -3062,14 +3062,6 @@ Proceed with send?`)) return;
                                 </div>
                                 <div className="flex items-center gap-3">
                                   {getStatusBadge(guest.rsvp_status)}
-                                  <button
-                                    onClick={() => handleSplitFromHousehold(guest.id)}
-                                    disabled={householdBusy || isDemoMode}
-                                    title="Remove from household"
-                                    className="p-1.5 text-text-tertiary hover:text-error hover:bg-error-light rounded-lg transition-colors disabled:opacity-40"
-                                  >
-                                    <Scissors className="w-3.5 h-3.5" />
-                                  </button>
                                 </div>
                               </div>
                             );
