@@ -515,10 +515,22 @@ export const DashboardRegistry: React.FC = () => {
     setBulkImportBusy(true);
     let createdCount = 0;
     let failedCount = 0;
+    let invalidUrlCount = 0;
+    const skippedExamples: string[] = [];
     for (const url of urls.slice(0, 30)) {
       try {
+        let hostname = '';
+        try {
+          hostname = new URL(url).hostname;
+        } catch {
+          invalidUrlCount += 1;
+          failedCount += 1;
+          if (skippedExamples.length < 3) skippedExamples.push(`${url} (invalid URL)`);
+          continue;
+        }
+
         const preview = await fetchUrlPreview(url, false);
-        const itemName = preview.title?.trim() || new URL(url).hostname;
+        const itemName = preview.title?.trim() || hostname;
         const fields: Partial<RegistryItem> = {
           item_name: itemName,
           price_label: preview.price_label ?? null,
@@ -542,6 +554,7 @@ export const DashboardRegistry: React.FC = () => {
         createdCount += 1;
       } catch {
         failedCount += 1;
+        if (skippedExamples.length < 3) skippedExamples.push(`${url} (fetch failed)`);
       }
     }
 
@@ -550,6 +563,11 @@ export const DashboardRegistry: React.FC = () => {
     setBulkUrls('');
     if (failedCount > 0) {
       toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} (${failedCount} skipped).`, createdCount > 0 ? 'success' : 'error');
+      const details = [
+        invalidUrlCount > 0 ? `${invalidUrlCount} invalid URL${invalidUrlCount === 1 ? '' : 's'}` : null,
+        skippedExamples.length > 0 ? `Examples: ${skippedExamples.join(' • ')}` : null,
+      ].filter(Boolean).join(' — ');
+      if (details) toast(details, 'error');
     } else {
       toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} from URLs.`);
     }
