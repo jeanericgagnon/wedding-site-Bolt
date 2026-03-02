@@ -24,6 +24,8 @@ interface Guest {
   invite_token: string | null;
   rsvp_status: string;
   rsvp_received_at: string | null;
+  checked_in_at?: string | null;
+  checkin_notes?: string | null;
   household_id: string | null;
 }
 
@@ -252,7 +254,7 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'checked-in' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
   const [extraFilters, setExtraFilters] = useState<string[]>([]);
   const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
   const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
@@ -989,6 +991,26 @@ export const DashboardGuests: React.FC = () => {
       toast('Failed to remove guest. Please try again.', 'error');
     } finally {
       setDeletingGuestId(null);
+    }
+  };
+
+  const handleToggleCheckIn = async (guest: GuestWithRSVP) => {
+    if (!weddingSiteId || isDemoMode) {
+      toast('Check-in is unavailable in demo mode.', 'error');
+      return;
+    }
+    try {
+      const nextValue = guest.checked_in_at ? null : new Date().toISOString();
+      const { error } = await supabase
+        .from('guests')
+        .update({ checked_in_at: nextValue })
+        .eq('id', guest.id)
+        .eq('wedding_site_id', weddingSiteId);
+      if (error) throw error;
+      await fetchGuests();
+      toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
+    } catch {
+      toast('Failed to update check-in status', 'error');
     }
   };
 
@@ -2078,7 +2100,8 @@ Proceed with send?`)) return;
         (filter === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
         (filter === 'no-contact' && !guest.email && !guest.phone) ||
         (filter === 'missing-address' && !(guest as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1) ||
-        (filter === 'due-reminder' && isDueReminder(guest))
+        (filter === 'due-reminder' && isDueReminder(guest)) ||
+        (filter === 'checked-in' && !!(guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at)
       );
     };
 
@@ -2284,6 +2307,7 @@ Proceed with send?`)) return;
     confirmed: 'Confirmed',
     declined: 'Declined',
     pending: 'Pending',
+    'checked-in': 'Checked In',
     'due-reminder': 'Due Reminder',
     'missing-address': 'Missing Address',
     'ceremony-no': 'Ceremony: No',
@@ -3112,6 +3136,7 @@ Proceed with send?`)) return;
                     ['confirmed', `Confirmed (${stats.confirmed})`],
                     ['declined', `Declined (${stats.declined})`],
                     ['pending', `Pending (${stats.pending})`],
+                    ['checked-in', `Checked In (${guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length})`],
                     ['due-reminder', `Due Reminder (${dueReminderGuestIds.size})`],
                     ['missing-address', `Missing Address (${guests.filter((g) => !(g as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1).length})`],
                   ] as const).map(([value, label]) => (
@@ -3369,6 +3394,16 @@ Proceed with send?`)) return;
                                   {sendingInviteId === guest.id ? 'Sending…' : 'Invite'}
                                 </Button>
                               )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`px-2 py-1 text-xs ${guest.checked_in_at ? 'text-success' : ''}`}
+                                onClick={() => handleToggleCheckIn(guest)}
+                                title={guest.checked_in_at ? 'Clear check-in' : 'Mark checked in'}
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-1" />
+                                {guest.checked_in_at ? 'Checked in' : 'Check in'}
+                              </Button>
                               <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)}>
                                 Edit
                               </Button>
