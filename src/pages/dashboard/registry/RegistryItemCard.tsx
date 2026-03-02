@@ -97,10 +97,10 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCashFund = item.item_type === 'cash_fund';
-  const displayPrice = item.price_label
-    ? item.price_label
-    : item.price_amount != null
+  const displayPrice = item.price_amount != null
     ? `$${item.price_amount.toFixed(2)}`
+    : item.price_label
+    ? item.price_label
     : null;
 
   const displayUrl = item.item_url ?? item.canonical_url;

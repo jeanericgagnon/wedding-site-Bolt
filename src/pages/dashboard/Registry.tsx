@@ -211,7 +211,7 @@ export const DashboardRegistry: React.FC = () => {
     const fields: Partial<RegistryItem> = {
       item_type: isCashFund ? 'cash_fund' : 'product',
       item_name: draft.item_name.trim(),
-      price_label: isCashFund ? null : (draft.price_label || null),
+      price_label: null,
       price_amount: isCashFund ? null : (parsedPrice !== null && !isNaN(parsedPrice) ? parsedPrice : null),
       merchant: isCashFund ? null : (draft.merchant || null),
       store_name: isCashFund ? null : (draft.merchant || null),

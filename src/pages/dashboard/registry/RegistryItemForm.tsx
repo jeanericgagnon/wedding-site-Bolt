@@ -348,33 +348,19 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
 
             {draft.item_type !== 'cash_fund' ? <>
             {/* Price row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Price Label
-                </label>
-                <input
-                  type="text"
-                  value={draft.price_label}
-                  onChange={e => set('price_label', e.target.value)}
-                  placeholder="e.g. $349.99"
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Price (numeric)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={draft.price_amount}
-                  onChange={e => set('price_amount', e.target.value)}
-                  placeholder="349.99"
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-1">
+                Price
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={draft.price_amount}
+                onChange={e => set('price_amount', e.target.value)}
+                placeholder="349.99"
+                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
             </div>
 
             {/* Merchant */}
