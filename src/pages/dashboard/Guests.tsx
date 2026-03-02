@@ -2958,7 +2958,7 @@ Proceed with send?`)) return;
               </div>
             )}
 
-            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/90 backdrop-blur p-2 rounded-lg border border-border-subtle overflow-hidden">
+            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/95 backdrop-blur p-2.5 rounded-xl border border-border/50 overflow-hidden">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   {([
@@ -2971,10 +2971,10 @@ Proceed with send?`)) return;
                       key={value}
                       type="button"
                       onClick={() => { setFilterStatus(value); setExtraFilters([]); }}
-                      className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                      className={`text-xs px-3.5 py-1.5 rounded-full border transition-colors ${
                         filterStatus === value
-                          ? 'bg-primary text-text-inverse border-primary'
-                          : 'bg-white text-text-secondary border-border hover:border-primary/40 hover:text-primary'
+                          ? 'bg-primary/95 text-text-inverse border-primary/90 shadow-sm'
+                          : 'bg-white text-text-secondary border-border/70 hover:border-primary/35 hover:text-primary'
                       }`}
                     >
                       {label}
@@ -3043,9 +3043,9 @@ Proceed with send?`)) return;
 
                 {households.grouped.map(([householdId, members]) => {
                   return (
-                    <div key={householdId} className="border border-border/60 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
-                      <div className="px-5 py-2 bg-white border-b border-border/70" />
-                      <div className="divide-y divide-border-subtle/80 bg-surface-subtle/20">
+                    <div key={householdId} className="border border-border/40 rounded-2xl overflow-hidden bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-shadow">
+                      <div className="px-5 py-1.5 bg-white border-b border-border/50" />
+                      <div className="divide-y divide-border-subtle/60 bg-white">
                         {members.map(guest => {
                             const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
                             return (
