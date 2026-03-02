@@ -835,6 +835,7 @@ export const DashboardMessages: React.FC = () => {
     { value: 'attending', label: 'Attending Only', count: guests.filter(g => g.rsvp_status === 'confirmed').length },
     { value: 'not_responded', label: 'Not Responded', count: guests.filter(g => g.rsvp_status === 'pending').length },
     { value: 'declined', label: 'Declined', count: guests.filter(g => g.rsvp_status === 'declined').length },
+    ...itineraryAudienceOptions,
   ];
 
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
@@ -904,6 +905,14 @@ export const DashboardMessages: React.FC = () => {
     });
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4);
   }, [messages]);
+
+  const historyStatusCounts = useMemo(() => ({
+    sent: messages.filter((m) => m.status === 'sent').length,
+    scheduled: messages.filter((m) => m.status === 'scheduled').length,
+    partial: messages.filter((m) => m.status === 'partial').length,
+    failed: messages.filter((m) => m.status === 'failed').length,
+    draft: messages.filter((m) => m.status === 'draft').length,
+  }), [messages]);
 
   if (loading) {
     return (
@@ -1409,6 +1418,21 @@ export const DashboardMessages: React.FC = () => {
                 <option value="sms">SMS</option>
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+            {[
+              ['Sent', historyStatusCounts.sent],
+              ['Scheduled', historyStatusCounts.scheduled],
+              ['Partial', historyStatusCounts.partial],
+              ['Failed', historyStatusCounts.failed],
+              ['Drafts', historyStatusCounts.draft],
+            ].map(([label, count]) => (
+              <div key={String(label)} className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
+                <p className="text-[11px] text-text-tertiary">{label}</p>
+                <p className="text-sm font-semibold text-text-primary">{count}</p>
+              </div>
+            ))}
           </div>
 
           {audienceBreakdown.length > 0 && (
