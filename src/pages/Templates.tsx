@@ -12,6 +12,7 @@ export const Templates: React.FC = () => {
   const [season, setSeason] = useState<Facet>('all');
   const [colorway, setColorway] = useState<Facet>('all');
   const [sortBy, setSortBy] = useState<'recommended' | 'name' | 'style'>('recommended');
+  const [groupByStyle, setGroupByStyle] = useState(false);
   const selectedTemplateId = localStorage.getItem(SELECTED_TEMPLATE_KEY) || '';
 
   const recommendedTemplateIds = useMemo(() => {
@@ -51,10 +52,61 @@ export const Templates: React.FC = () => {
     return sorted;
   }, [style, season, colorway, sortBy, recommendedTemplateIds]);
 
+  const groupedTemplates = useMemo(() => {
+    if (!groupByStyle) return null;
+    const map = new Map<string, typeof filtered>();
+    filtered.forEach((tpl) => {
+      const key = tpl.styleTags[0] ?? 'Other';
+      const arr = map.get(key) ?? [];
+      arr.push(tpl);
+      map.set(key, arr);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [groupByStyle, filtered]);
+
   const useTemplate = (templateId: string) => {
     localStorage.setItem(SELECTED_TEMPLATE_KEY, templateId);
     navigate('/setup/names');
   };
+
+  const renderTemplateCard = (tpl: typeof templateCatalog[number]) => (
+    <div key={tpl.id} className={`rounded-xl border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-rose-300 ring-1 ring-rose-100' : 'border-neutral-200'}`}>
+      <img src={tpl.previewImage} alt={tpl.name} className="h-40 w-full object-cover" />
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-lg font-semibold text-neutral-900">{tpl.name}</h2>
+          <div className="flex flex-col items-end gap-1">
+            {recommendedTemplateIds.includes(tpl.id) && (
+              <span className="rounded bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-rose-700">Recommended</span>
+            )}
+            {selectedTemplateId === tpl.id && (
+              <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-emerald-700">Selected</span>
+            )}
+          </div>
+        </div>
+        <p className="mt-1 text-sm text-neutral-600">{tpl.description}</p>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {tpl.styleTags.map((tag) => <span key={tag} className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">{tag}</span>)}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {tpl.seasonTags.map((tag) => <span key={tag} className="rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">{tag}</span>)}
+          <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 text-xs text-sky-700">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
+            Preview
+          </Link>
+          <button
+            type="button"
+            onClick={() => useTemplate(tpl.id)}
+            className="rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700"
+          >
+            Use template
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -105,9 +157,18 @@ export const Templates: React.FC = () => {
           </select>
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-xs text-neutral-500">
+        <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 gap-3">
           <span>{filtered.length} template{filtered.length === 1 ? '' : 's'} shown</span>
-          <span>Tip: preview before selecting for better section fit.</span>
+          <div className="flex items-center gap-2">
+            <span>Tip: preview before selecting for better section fit.</span>
+            <button
+              type="button"
+              onClick={() => setGroupByStyle((v) => !v)}
+              className="rounded border border-neutral-300 bg-white px-2 py-1 text-[11px] text-neutral-700 hover:bg-neutral-100"
+            >
+              {groupByStyle ? 'Flat view' : 'Group by style'}
+            </button>
+          </div>
         </div>
 
         {recommendedTemplateIds.length > 0 && (
@@ -133,46 +194,22 @@ export const Templates: React.FC = () => {
           </div>
         )}
 
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((tpl) => (
-            <div key={tpl.id} className={`rounded-xl border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-rose-300 ring-1 ring-rose-100' : 'border-neutral-200'}`}>
-              <img src={tpl.previewImage} alt={tpl.name} className="h-40 w-full object-cover" />
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-lg font-semibold text-neutral-900">{tpl.name}</h2>
-                  <div className="flex flex-col items-end gap-1">
-                    {recommendedTemplateIds.includes(tpl.id) && (
-                      <span className="rounded bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-rose-700">Recommended</span>
-                    )}
-                    {selectedTemplateId === tpl.id && (
-                      <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-emerald-700">Selected</span>
-                    )}
-                  </div>
-                </div>
-                <p className="mt-1 text-sm text-neutral-600">{tpl.description}</p>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {tpl.styleTags.map((tag) => <span key={tag} className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">{tag}</span>)}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {tpl.seasonTags.map((tag) => <span key={tag} className="rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">{tag}</span>)}
-                  <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 text-xs text-sky-700">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
-                    Preview
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => useTemplate(tpl.id)}
-                    className="rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700"
-                  >
-                    Use template
-                  </button>
+        {groupByStyle && groupedTemplates ? (
+          <div className="mt-3 space-y-5">
+            {groupedTemplates.map(([styleGroup, templates]) => (
+              <div key={styleGroup}>
+                <h3 className="text-sm font-semibold text-neutral-800 mb-2">{styleGroup}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {templates.map((tpl) => renderTemplateCard(tpl))}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((tpl) => renderTemplateCard(tpl))}
+          </div>
+        )}
 
         {filtered.length === 0 && (
           <p className="mt-6 text-sm text-neutral-600">No templates match your current filters.</p>
