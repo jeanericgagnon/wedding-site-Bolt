@@ -66,7 +66,7 @@ const TravelThingsToDo: React.FC<SectionComponentProps<TravelThingsToDoData>> = 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {activities.map((a) => (
-            <article key={a.id} className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5">
+            <article key={a.id} className="rounded-2xl border border-border/30 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] p-5">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <h3 className="text-base font-semibold text-text-primary">{a.name}</h3>
                 {a.category && <span className="text-[11px] px-2 py-1 rounded-full border border-border/50 text-text-tertiary">{a.category}</span>}

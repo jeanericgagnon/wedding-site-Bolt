@@ -38,7 +38,7 @@ export const defaultTravelTiersData: TravelTiersData = {
 };
 
 const TierColumn: React.FC<{ title: string; hotels: z.infer<typeof TierHotelSchema>[]; accent?: boolean }> = ({ title, hotels, accent }) => (
-  <div className={`rounded-2xl border p-4 md:p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] ${accent ? 'bg-primary/5 border-primary/20' : 'bg-white border-border/35'}`}>
+  <div className={`rounded-2xl border p-4 md:p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] ${accent ? 'bg-primary/5 border-primary/20' : 'bg-white border-border/30'}`}>
     <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary mb-3">{title}</p>
     <div className="space-y-2.5">
       {hotels.length === 0 ? (

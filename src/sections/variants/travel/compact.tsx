@@ -43,7 +43,7 @@ const TravelCompact: React.FC<SectionComponentProps<TravelCompactData>> = ({ dat
           {data.intro ? <p className="mt-2.5 text-sm text-text-secondary">{data.intro}</p> : null}
         </div>
 
-        <div className="rounded-2xl border border-border/45 bg-surface p-4 md:p-5 space-y-3">
+        <div className="rounded-2xl border border-border/30 bg-surface p-4 md:p-5 space-y-3">
           {data.airport ? <p className="text-sm text-text-primary">• {data.airport}</p> : null}
           {data.venueAddress ? (
             <p className="text-sm text-text-primary flex items-center gap-2">

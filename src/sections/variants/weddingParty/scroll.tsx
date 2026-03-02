@@ -49,7 +49,7 @@ const WeddingPartyScroll: React.FC<SectionComponentProps<WeddingPartyScrollData>
         ) : (
           <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2" aria-label="Wedding party members">
             {data.members.map((m) => (
-              <article key={m.id} className="snap-start shrink-0 w-[220px] rounded-2xl border border-border/40 bg-white p-3.5">
+              <article key={m.id} className="snap-start shrink-0 w-[220px] rounded-2xl border border-border/30 bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
                 <div className="aspect-[3/4] rounded-xl overflow-hidden bg-surface-subtle mb-3">
                   {m.photo ? (
                     <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />

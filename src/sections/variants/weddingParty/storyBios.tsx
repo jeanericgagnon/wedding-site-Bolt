@@ -29,8 +29,8 @@ export const defaultWeddingPartyStoryBiosData: WeddingPartyStoryBiosData = {
   headline: 'Wedding Party',
   subheadline: 'The friends and family who mean the world to us.',
   groupBySide: true,
-  partner1Label: 'Bridal Party',
-  partner2Label: "Groom's Party",
+  partner1Label: 'Partner 1 Side',
+  partner2Label: 'Partner 2 Side',
   members: [
     {
       id: '1',

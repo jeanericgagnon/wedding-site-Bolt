@@ -45,7 +45,7 @@ export const defaultTravelLocalGuideData: TravelLocalGuideData = {
 };
 
 const GuideColumn: React.FC<{ title: string; icon: React.ReactNode; items: z.infer<typeof GuideItemSchema>[] }> = ({ title, icon, items }) => (
-  <div className="rounded-2xl border border-border/35 bg-white p-4 md:p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+  <div className="rounded-2xl border border-border/30 bg-white p-4 md:p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
     <div className="flex items-center gap-2 mb-3">
       {icon}
       <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wide">{title}</h3>
