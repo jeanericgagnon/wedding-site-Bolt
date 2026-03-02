@@ -47,7 +47,7 @@ const WeddingPartyMinimal: React.FC<SectionComponentProps<WeddingPartyMinimalDat
           {data.subheadline && <p className="mt-3 text-sm text-text-secondary">{data.subheadline}</p>}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
           <div>
             <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary mb-4">{data.partner1Label}</p>
             <ul className="space-y-3">
