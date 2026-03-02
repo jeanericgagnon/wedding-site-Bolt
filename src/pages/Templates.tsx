@@ -205,10 +205,10 @@ export const Templates: React.FC = () => {
           </button>
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 gap-3">
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-neutral-500 gap-2">
           <span>{filtered.length} template{filtered.length === 1 ? '' : 's'} shown</span>
           <div className="flex items-center gap-2">
-            <span>Tip: preview before selecting for better section fit.</span>
+            <span className="hidden sm:inline">Tip: preview before selecting for better section fit.</span>
             <button
               type="button"
               onClick={() => setGroupByStyle((v) => !v)}
@@ -220,9 +220,9 @@ export const Templates: React.FC = () => {
         </div>
 
         {comparedTemplates.length > 0 && (
-          <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/60 p-3">
+          <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/60 p-3 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold uppercase updates-wide text-sky-700">Quick compare</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Quick compare</p>
               <button onClick={() => setCompareIds([])} className="text-[11px] text-sky-700 hover:underline">Clear</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
