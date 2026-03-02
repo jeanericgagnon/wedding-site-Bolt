@@ -372,7 +372,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   ['SMS', alertStats.sms],
                   ['Email', alertStats.email],
                 ].map(([label, value]) => (
-                  <div key={String(label)} className="rounded-md border border-border/40 bg-surface-subtle/40 px-2 py-1.5">
+                  <div key={String(label)} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-2.5 py-2">
                     <p className="text-[10px] uppercase tracking-wide text-text-tertiary">{label}</p>
                     <p className="text-xs font-semibold text-text-primary">{value}</p>
                   </div>

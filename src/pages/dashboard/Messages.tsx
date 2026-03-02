@@ -1453,8 +1453,8 @@ export const DashboardMessages: React.FC = () => {
               ['Failed', historyStatusCounts.failed],
               ['Drafts', historyStatusCounts.draft],
             ].map(([label, count]) => (
-              <div key={String(label)} className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
-                <p className="text-[11px] text-text-tertiary">{label}</p>
+              <div key={String(label)} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-2.5 py-2">
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{label}</p>
                 <p className="text-sm font-semibold text-text-primary">{count}</p>
               </div>
             ))}
@@ -1473,7 +1473,7 @@ export const DashboardMessages: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
             {(['email', 'sms'] as const).map((channel) => (
-              <div key={channel} className="rounded-lg border border-border/35 bg-white px-3 py-2.5">
+              <div key={channel} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-3 py-2.5">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-xs uppercase tracking-wide text-text-tertiary">{channel.toUpperCase()}</p>
                   <p className="text-xs text-text-secondary">{channelBreakdown[channel].targeted} targeted</p>
