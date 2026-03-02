@@ -967,6 +967,17 @@ export const DashboardMessages: React.FC = () => {
     return init;
   }, [messages]);
 
+  const deliveryHealth = useMemo(() => {
+    const delivered = messages.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
+    const failed = messages.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
+    const targeted = messages.reduce((sum, m) => sum + getRecipientCount(m), 0);
+    const successRate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
+    const failRate = targeted > 0 ? Math.round((failed / targeted) * 100) : 0;
+    const overdueScheduled = messages.filter((m) => m.status === 'scheduled' && isPastScheduledTime(m.scheduled_for)).length;
+    const retryBacklog = messages.filter((m) => m.status === 'failed' || m.status === 'partial').length;
+    return { successRate, failRate, overdueScheduled, retryBacklog };
+  }, [messages]);
+
   if (loading) {
     return (
       <DashboardLayout currentPage="messages">
@@ -1528,6 +1539,25 @@ export const DashboardMessages: React.FC = () => {
                 </p>
               </div>
             ))}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
+              <p className="text-[11px] text-text-tertiary">Delivery success</p>
+              <p className="text-sm font-semibold text-text-primary">{deliveryHealth.successRate}%</p>
+            </div>
+            <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
+              <p className="text-[11px] text-text-tertiary">Failure rate</p>
+              <p className="text-sm font-semibold text-text-primary">{deliveryHealth.failRate}%</p>
+            </div>
+            <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
+              <p className="text-[11px] text-text-tertiary">Overdue scheduled</p>
+              <p className="text-sm font-semibold text-text-primary">{deliveryHealth.overdueScheduled}</p>
+            </div>
+            <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
+              <p className="text-[11px] text-text-tertiary">Retry backlog</p>
+              <p className="text-sm font-semibold text-text-primary">{deliveryHealth.retryBacklog}</p>
+            </div>
           </div>
 
           {retryCandidates.length > 0 && (
