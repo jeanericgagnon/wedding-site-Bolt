@@ -3330,10 +3330,6 @@ Proceed with send?`)) return;
                     ['confirmed', `Confirmed (${stats.confirmed})`],
                     ['declined', `Declined (${stats.declined})`],
                     ['pending', `Pending (${stats.pending})`],
-                    ['checked-in', `Checked In (${guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length})`],
-                    ['thank-you-due', `Thank You Due (${dueThankYouGuestIds.size})`],
-                    ['due-reminder', `Due Reminder (${dueReminderGuestIds.size})`],
-                    ['missing-address', `Missing Address (${guests.filter((g) => !(g as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1).length})`],
                   ] as const).map(([value, label]) => (
                     <button
                       key={value}
