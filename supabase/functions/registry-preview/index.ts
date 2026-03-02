@@ -160,6 +160,19 @@ function deriveUltimateImageFallback(hostname: string, title: string): string {
   return `https://ui-avatars.com/api/?name=${label}&size=512&background=f3f4f6&color=374151&bold=true`;
 }
 
+function toDisplayableImageUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.includes('images.weserv.nl')) return url;
+  if (url.includes('ui-avatars.com')) return url;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return undefined;
+    return `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`;
+  } catch {
+    return undefined;
+  }
+}
+
 const MIN_PRICE_CONFIDENCE_SCORE = 2;
 
 async function extractProxyTextData(url: string): Promise<{ title?: string; priceAmount?: number; priceLabel?: string; imageUrl?: string; priceConfidence?: number } | null> {
@@ -234,7 +247,8 @@ async function extractProxyTextData(url: string): Promise<{ title?: string; pric
 function ensureBaselineMetadata(rawUrl: string, data: ProductData): ProductData {
   const normalized = normalizeUrl(rawUrl);
   const title = data.title?.trim() || deriveFallbackTitle(rawUrl);
-  const imageUrl = data.image_url || deriveFallbackImage(rawUrl, normalized.hostname) || deriveUltimateImageFallback(normalized.hostname, title);
+  const rawImageUrl = data.image_url || deriveFallbackImage(rawUrl, normalized.hostname) || deriveUltimateImageFallback(normalized.hostname, title);
+  const imageUrl = toDisplayableImageUrl(rawImageUrl) || deriveUltimateImageFallback(normalized.hostname, title);
 
   const missing = new Set(data.missing_fields ?? []);
   if (title) missing.delete('title'); else missing.add('title');
