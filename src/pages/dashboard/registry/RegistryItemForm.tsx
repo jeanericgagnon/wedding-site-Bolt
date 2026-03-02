@@ -82,6 +82,21 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     }
   })();
 
+  const itemUrlHostHint = (() => {
+    const v = (urlInput || draft.item_url || '').trim();
+    if (!v) return null;
+    try {
+      const host = new URL(normalizeUrl(v)).hostname.toLowerCase();
+      if (host.includes('amazon.')) return 'Amazon tip: Use the full product URL. We’ll auto-fetch image/price; direct image links aren’t required.';
+      if (host.includes('target.')) return 'Target tip: Product links work best with full item pages (not shortened links).';
+      if (host.includes('walmart.')) return 'Walmart tip: Full product links usually import price and image best.';
+      if (host.includes('etsy.')) return 'Etsy tip: Listing pages usually import well; review title/price before save.';
+      return 'Tip: Product page URLs are fine — we’ll try to auto-fetch details and image metadata.';
+    } catch {
+      return null;
+    }
+  })();
+
   function set<K extends keyof RegistryItemDraft>(key: K, value: RegistryItemDraft[K]) {
     setDraft(prev => ({ ...prev, [key]: value }));
   }
@@ -280,6 +295,10 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 </Button>
               )}
             </div>
+
+            {itemUrlHostHint && (
+              <p className="text-xs text-text-tertiary">{itemUrlHostHint}</p>
+            )}
 
             {fetchError && (
               <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">

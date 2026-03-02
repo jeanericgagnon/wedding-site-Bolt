@@ -409,12 +409,20 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             <p className="font-semibold text-gray-800 mb-1">Publish readiness</p>
             <ul className="space-y-1">
               {checklistItems.map((item) => (
-                <li key={item.label} className="flex items-start gap-1.5">
-                  <span className={item.done ? 'text-emerald-600' : 'text-amber-600'}>{item.done ? '✓' : '•'}</span>
-                  <span>
-                    {item.label}
-                    {!item.done && item.detail ? <span className="text-amber-700"> — {item.detail}</span> : null}
+                <li key={item.label} className="flex items-start gap-1.5 justify-between">
+                  <span className="flex items-start gap-1.5">
+                    <span className={item.done ? 'text-emerald-600' : 'text-amber-600'}>{item.done ? '✓' : '•'}</span>
+                    <span>
+                      {item.label}
+                      {!item.done && item.detail ? <span className="text-amber-700"> — {item.detail}</span> : null}
+                    </span>
                   </span>
+                  {!item.done && item.label === 'Latest edits are saved' && (
+                    <button onClick={onSave} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-100">Save</button>
+                  )}
+                  {!item.done && item.label === 'No active publish blockers' && onFixPublishBlockers && (
+                    <button onClick={onFixPublishBlockers} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-800 hover:bg-amber-100">Fix</button>
+                  )}
                 </li>
               ))}
             </ul>
