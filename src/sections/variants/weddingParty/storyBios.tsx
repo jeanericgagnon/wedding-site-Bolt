@@ -89,10 +89,12 @@ const BioCard: React.FC<{ member: z.infer<typeof PartyMemberSchema>; reversed?: 
 const WeddingPartyStoryBios: React.FC<SectionComponentProps<WeddingPartyStoryBiosData>> = ({ data }) => {
   const partner1Members = data.members.filter((m) => m.side === 'partner1' || m.side === 'both');
   const partner2Members = data.members.filter((m) => m.side === 'partner2' || m.side === 'both');
-  const list = data.groupBySide ? [
-    { label: data.partner1Label, members: partner1Members },
-    { label: data.partner2Label, members: partner2Members },
-  ] : [{ label: '', members: data.members }];
+  const list = data.groupBySide
+    ? [
+        { label: data.partner1Label, members: partner1Members },
+        { label: data.partner2Label, members: partner2Members },
+      ].filter((group) => group.members.length > 0)
+    : [{ label: '', members: data.members }];
 
   return (
     <section className="py-20 md:py-28 bg-surface" id="wedding-party">
@@ -104,23 +106,29 @@ const WeddingPartyStoryBios: React.FC<SectionComponentProps<WeddingPartyStoryBio
         </div>
 
         <div className="space-y-10 md:space-y-14">
-          {list.map((group, groupIndex) => (
-            <div key={`${group.label}-${groupIndex}`} className="space-y-4 md:space-y-5">
-              {group.label ? (
-                <div className="flex items-center gap-3">
-                  <Heart className="w-4 h-4 text-primary/70" />
-                  <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary">{group.label}</p>
-                  <div className="h-px flex-1 bg-border/60" />
-                </div>
-              ) : null}
-
-              <div className="space-y-4 md:space-y-6">
-                {group.members.map((member, index) => (
-                  <BioCard key={member.id || `${groupIndex}-${index}`} member={member} reversed={index % 2 === 1} />
-                ))}
-              </div>
+          {list.length === 0 ? (
+            <div className="rounded-2xl border border-border/40 bg-white p-8 text-center">
+              <p className="text-sm text-text-secondary">Add wedding party members to show story bios.</p>
             </div>
-          ))}
+          ) : (
+            list.map((group, groupIndex) => (
+              <div key={`${group.label}-${groupIndex}`} className="space-y-4 md:space-y-5">
+                {group.label ? (
+                  <div className="flex items-center gap-3">
+                    <Heart className="w-4 h-4 text-primary/70" />
+                    <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary">{group.label}</p>
+                    <div className="h-px flex-1 bg-border/60" />
+                  </div>
+                ) : null}
+
+                <div className="space-y-4 md:space-y-6">
+                  {group.members.map((member, index) => (
+                    <BioCard key={member.id || `${groupIndex}-${index}`} member={member} reversed={index % 2 === 1} />
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </section>
