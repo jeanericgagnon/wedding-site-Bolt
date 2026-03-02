@@ -317,6 +317,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [expanded, setExpanded] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [recapCopied, setRecapCopied] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [generatingRecap, setGeneratingRecap] = useState(false);
   const [recapStyle, setRecapStyle] = useState<'classic' | 'playful' | 'cinematic'>('classic');
@@ -368,16 +369,19 @@ const VaultCard: React.FC<VaultCardProps> = ({
     }
   }
 
-  function handleCopyLink() {
-    if (!siteSlug) return;
-
+  function buildVaultShareUrl() {
+    if (!siteSlug) return null;
     const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
     const vaultPath = `/vault/${siteSlug}`;
     const isGitHubPages = window.location.hostname.includes('github.io');
-
-    const url = isGitHubPages
+    return isGitHubPages
       ? `${window.location.origin}${basePath || ''}/?oc_redirect=${encodeURIComponent(vaultPath)}`
       : `${window.location.origin}${basePath}${vaultPath}`;
+  }
+
+  function handleCopyLink() {
+    const url = buildVaultShareUrl();
+    if (!url) return;
 
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
@@ -441,7 +445,22 @@ const VaultCard: React.FC<VaultCardProps> = ({
     }
   }
 
-  const hasRecap = entries.some((entry) => (entry.title || '').toLowerCase().includes('ai recap'));
+  const latestRecap = [...entries]
+    .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  const hasRecap = !!latestRecap;
+
+  function handleCopyRecapLink() {
+    const base = buildVaultShareUrl();
+    if (!base || !latestRecap) return;
+    const url = `${base}?entry=${latestRecap.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setRecapCopied(true);
+      setTimeout(() => setRecapCopied(false), 2000);
+    }).catch(() => {
+      window.prompt('Copy this recap link:', url);
+    });
+  }
 
   return (
     <Card variant="bordered" padding="lg" className={`transition-all shadow-sm hover:shadow-md border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
@@ -536,6 +555,15 @@ const VaultCard: React.FC<VaultCardProps> = ({
               >
                 <Sparkles className="w-3 h-3" />
                 {hasRecap ? 'Regenerate' : 'Generate + style'}
+              </button>
+              <button
+                onClick={handleCopyRecapLink}
+                disabled={!hasRecap}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 text-xs font-medium disabled:opacity-50"
+                title="Copy link to view latest recap"
+              >
+                <Link2 className="w-3 h-3" />
+                {recapCopied ? 'Copied!' : 'Share recap'}
               </button>
             </div>
           )}
