@@ -394,7 +394,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <button
           type="button"
           onClick={() => setShowPublishChecklist((v) => !v)}
-          className={`hidden sm:inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[11px] font-medium ${
+          className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[11px] font-medium ${
             checklistDoneCount === checklistItems.length
               ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
               : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'

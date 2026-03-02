@@ -28,7 +28,7 @@ export const TemplateDetail: React.FC = () => {
   return (
     <div className="min-h-screen bg-neutral-50 px-4 py-10">
       <div className="mx-auto max-w-5xl rounded-xl border border-neutral-200 bg-white overflow-hidden">
-        <img src={tpl.previewImage} alt={tpl.name} className="h-72 w-full object-cover" />
+        <img src={tpl.previewImage} alt={tpl.name} className="h-56 md:h-72 w-full object-cover" />
         <div className="p-6">
           <p className="text-xs uppercase updates-wide text-neutral-500">Design family: {tpl.designFamily}</p>
           <h1 className="mt-1 text-3xl font-bold text-neutral-900">{tpl.name}</h1>
@@ -74,6 +74,9 @@ export const TemplateDetail: React.FC = () => {
             <Link to="/templates" className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back to gallery</Link>
           </div>
         </div>
+      </div>
+      <div className="fixed bottom-3 left-3 right-3 md:hidden z-20">
+        <button onClick={useTemplate} className="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-rose-700">Use this template</button>
       </div>
     </div>
   );
