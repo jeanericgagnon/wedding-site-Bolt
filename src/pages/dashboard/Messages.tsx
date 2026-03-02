@@ -166,6 +166,8 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
+type MessagesRole = 'owner' | 'coordinator' | 'viewer';
+
 function isPastScheduledTime(scheduledFor: string | null): boolean {
   if (!scheduledFor) return false;
   return new Date(scheduledFor) < new Date();
@@ -384,6 +386,7 @@ export const DashboardMessages: React.FC = () => {
   const [smsTransactions, setSmsTransactions] = useState<SmsCreditTransaction[]>([]);
   const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
+  const [messagesRole, setMessagesRole] = useState<MessagesRole>('owner');
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -407,6 +410,19 @@ export const DashboardMessages: React.FC = () => {
       body: prefillBody ?? prev.body,
     }));
   }, [location.search]);
+
+  useEffect(() => {
+    if (!weddingSite?.id) return;
+    try {
+      const raw = localStorage.getItem(`dayof.messages.role.${weddingSite.id}`) as MessagesRole | null;
+      if (raw === 'owner' || raw === 'coordinator' || raw === 'viewer') setMessagesRole(raw);
+    } catch {}
+  }, [weddingSite?.id]);
+
+  useEffect(() => {
+    if (!weddingSite?.id) return;
+    try { localStorage.setItem(`dayof.messages.role.${weddingSite.id}`, messagesRole); } catch {}
+  }, [weddingSite?.id, messagesRole]);
 
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
@@ -870,6 +886,8 @@ export const DashboardMessages: React.FC = () => {
     return { delivered, failed, targeted, rate, scheduled: messages.filter((m) => m.status === 'scheduled').length };
   }, [messages]);
 
+  const canCompose = messagesRole !== 'viewer';
+
   if (loading) {
     return (
       <DashboardLayout currentPage="messages">
@@ -883,11 +901,25 @@ export const DashboardMessages: React.FC = () => {
   return (
     <DashboardLayout currentPage="messages">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-text-primary">Messages</h1>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-text-primary">Messages</h1>
+            </div>
+            <p className="text-text-secondary">Compose and send guest campaigns by email, plus SMS credit setup</p>
           </div>
-          <p className="text-text-secondary">Compose and send guest campaigns by email, plus SMS credit setup</p>
+          <div>
+            <label className="block text-xs text-text-tertiary mb-1">Role View</label>
+            <select
+              value={messagesRole}
+              onChange={(e) => setMessagesRole(e.target.value as MessagesRole)}
+              className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
+            >
+              <option value="owner">Owner</option>
+              <option value="coordinator">Coordinator</option>
+              <option value="viewer">Viewer (read-only)</option>
+            </select>
+          </div>
         </div>
 
         
@@ -970,7 +1002,9 @@ export const DashboardMessages: React.FC = () => {
           <div className="lg:col-span-2">
             <Card variant="bordered" padding="lg">
               <h2 className="text-xl font-semibold text-text-primary mb-6">Compose Message</h2>
+              {!canCompose && <p className="text-xs text-text-tertiary mb-3">Viewer mode: composing/sending is disabled.</p>}
               <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
+                <fieldset disabled={!canCompose} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-2">Channel</label>
                   <div className="inline-flex rounded-lg border border-border overflow-hidden">
@@ -1222,6 +1256,7 @@ export const DashboardMessages: React.FC = () => {
                     Save Draft
                   </Button>
                 </div>
+                </fieldset>
               </form>
             </Card>
           </div>
@@ -1277,6 +1312,7 @@ export const DashboardMessages: React.FC = () => {
                     size="sm"
                     variant="outline"
                     onClick={applySaveTheDatePreset}
+                    disabled={!canCompose}
                   >
                     Save-the-date preset
                   </Button>
@@ -1284,6 +1320,7 @@ export const DashboardMessages: React.FC = () => {
                     size="sm"
                     variant="outline"
                     onClick={applyDayOfAlertPreset}
+                    disabled={!canCompose}
                   >
                     Day-of alert preset
                   </Button>
@@ -1297,6 +1334,7 @@ export const DashboardMessages: React.FC = () => {
                         body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
                       }));
                     }}
+                    disabled={!canCompose}
                   >
                     Insert Photo Template
                   </Button>
@@ -1320,7 +1358,8 @@ export const DashboardMessages: React.FC = () => {
                     key={tpl.label}
                     type="button"
                     onClick={() => setFormData({ ...formData, subject: applyTemplateVariables(tpl.subject), body: applyTemplateVariables(tpl.body) })}
-                    className="w-full text-left px-3 py-2 text-sm bg-surface-subtle hover:bg-surface-raised rounded-lg transition-colors text-text-primary border border-transparent hover:border-border"
+                    disabled={!canCompose}
+                    className="w-full text-left px-3 py-2 text-sm bg-surface-subtle hover:bg-surface-raised rounded-lg transition-colors text-text-primary border border-transparent hover:border-border disabled:opacity-50"
                   >
                     {tpl.label}
                   </button>
