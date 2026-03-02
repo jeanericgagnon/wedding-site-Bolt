@@ -36,6 +36,8 @@ type QnaItem = {
   status: 'new' | 'answered';
 };
 
+type CoordinatorRole = 'owner' | 'coordinator' | 'viewer';
+
 export const DashboardCoordinatorMode: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertLog, setAlertLog] = useState<AlertLog[]>([]);
   const [alertBusy, setAlertBusy] = useState(false);
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
+  const [coordinatorRole, setCoordinatorRole] = useState<CoordinatorRole>('owner');
   const [qnaInput, setQnaInput] = useState('');
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
@@ -109,6 +112,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
         { id: 'q1', question: 'What time should we arrive?', status: 'new' },
         { id: 'q2', question: 'Is parking available at the venue?', status: 'answered' },
       ]);
+      const rawRole = localStorage.getItem(`dayof.coordinator.role.${siteId}`) as CoordinatorRole | null;
+      if (rawRole === 'owner' || rawRole === 'coordinator' || rawRole === 'viewer') setCoordinatorRole(rawRole);
     } catch {}
   }, [siteId]);
 
@@ -126,6 +131,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (!siteId) return;
     try { localStorage.setItem(`dayof.qna.${siteId}`, JSON.stringify(qnaItems)); } catch {}
   }, [siteId, qnaItems]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try { localStorage.setItem(`dayof.coordinator.role.${siteId}`, coordinatorRole); } catch {}
+  }, [siteId, coordinatorRole]);
 
   const stats = useMemo(() => {
     const total = guests.length;
@@ -162,6 +172,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (alertForm.audience === 'pending') return guests.filter((g) => g.rsvp_status === 'pending').length;
     return guests.length;
   })();
+
+  const canEdit = coordinatorRole !== 'viewer';
 
   const sendDayOfAlert = async () => {
     if (!siteId || !alertForm.subject.trim() || !alertForm.body.trim()) return;
@@ -213,9 +225,23 @@ export const DashboardCoordinatorMode: React.FC = () => {
   return (
     <DashboardLayout currentPage="coordinator-mode">
       <div className="max-w-6xl mx-auto space-y-5">
-        <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5">
-          <h1 className="text-2xl font-semibold text-text-primary">Coordinator Mode</h1>
-          <p className="text-sm text-text-secondary mt-1">Event-day command center for check-in + status tracking.</p>
+        <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold text-text-primary">Coordinator Mode</h1>
+            <p className="text-sm text-text-secondary mt-1">Event-day command center for check-in + status tracking.</p>
+          </div>
+          <div>
+            <label className="block text-xs text-text-tertiary mb-1">Role View</label>
+            <select
+              value={coordinatorRole}
+              onChange={(e) => setCoordinatorRole(e.target.value as CoordinatorRole)}
+              className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
+            >
+              <option value="owner">Owner</option>
+              <option value="coordinator">Coordinator</option>
+              <option value="viewer">Viewer (read-only)</option>
+            </select>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -243,8 +269,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <p className="text-xs text-text-tertiary">{g.rsvp_status}</p>
                   </div>
                   <button
-                    onClick={() => void toggleCheckIn(g)}
-                    className={`px-3 py-1.5 text-xs rounded-md border ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : 'border-border text-text-secondary bg-white'}`}
+                    onClick={() => canEdit && void toggleCheckIn(g)}
+                    disabled={!canEdit}
+                    className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : 'border-border text-text-secondary bg-white'}`}
                   >
                     {g.checked_in_at ? 'Checked in' : 'Check in'}
                   </button>
@@ -268,8 +295,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           <p className="text-sm text-text-primary">{e.event_name}</p>
                           <select
                             value={state}
-                            onChange={(ev) => setTimelineState((prev) => ({ ...prev, [e.id]: ev.target.value as TimelineState }))}
-                            className="text-[11px] rounded-md border border-border bg-white px-2 py-1 text-text-secondary"
+                            onChange={(ev) => canEdit && setTimelineState((prev) => ({ ...prev, [e.id]: ev.target.value as TimelineState }))}
+                            disabled={!canEdit}
+                            className="text-[11px] rounded-md border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
                           >
                             <option value="up-next">Up next</option>
                             <option value="live">Live</option>
@@ -286,7 +314,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
             <div className="border-t border-border/60 pt-3">
               <p className="text-sm font-medium text-text-primary mb-2">Day-of Alert</p>
-              <div className="space-y-2.5">
+              <fieldset disabled={!canEdit} className="space-y-2.5">
                 <Input
                   value={alertForm.subject}
                   onChange={(e) => setAlertForm((prev) => ({ ...prev, subject: e.target.value }))}
@@ -360,18 +388,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     ))}
                   </div>
                 )}
-              </div>
+              </fieldset>
             </div>
 
             <div className="border-t border-border/60 pt-3">
               <p className="text-sm font-medium text-text-primary mb-2">Q&A Board (Ops)</p>
+              <fieldset disabled={!canEdit}>
               <div className="flex gap-2 mb-2">
                 <Input
                   value={qnaInput}
                   onChange={(e) => setQnaInput(e.target.value)}
                   placeholder="Add a guest question"
                 />
-                <button onClick={addQnaItem} className="px-3 py-2 text-xs rounded-md border border-border bg-white text-text-secondary">Add</button>
+                <button onClick={addQnaItem} className="px-3 py-2 text-xs rounded-md border border-border bg-white text-text-secondary disabled:opacity-40">Add</button>
               </div>
               <div className="space-y-1.5 max-h-40 overflow-auto">
                 {qnaItems.length === 0 ? (
@@ -390,6 +419,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   ))
                 )}
               </div>
+              </fieldset>
             </div>
           </div>
         </div>
