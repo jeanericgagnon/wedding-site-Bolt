@@ -46,6 +46,21 @@ export const TemplateDetail: React.FC = () => {
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-2">
+              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Preview modes</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded border border-neutral-200 bg-white p-2">
+                  <p className="text-[11px] text-neutral-500 mb-1">Desktop</p>
+                  <img src={tpl.previewImage} alt={`${tpl.name} desktop preview`} className="h-20 w-full rounded object-cover" />
+                </div>
+                <div className="rounded border border-neutral-200 bg-white p-2">
+                  <p className="text-[11px] text-neutral-500 mb-1">Mobile</p>
+                  <div className="mx-auto w-16 rounded border border-neutral-200 bg-white p-1">
+                    <img src={tpl.previewImage} alt={`${tpl.name} mobile preview`} className="h-20 w-full rounded object-cover" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-1">
               <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Default section order</p>
               <div className="flex flex-wrap gap-1.5">
                 {tpl.defaultSectionOrder.map((section) => (
