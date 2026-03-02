@@ -244,9 +244,33 @@ export const Templates: React.FC = () => {
             {sectionDiff && (
               <div className="mt-3 rounded-lg border border-sky-200 bg-white p-2.5">
                 <p className="text-[11px] font-semibold text-sky-800 mb-1">Section order diff</p>
-                <p className="text-[11px] text-neutral-700">Shared: {sectionDiff.shared.join(', ') || 'None'}</p>
-                <p className="text-[11px] text-neutral-700 mt-0.5">Only in {sectionDiff.a.name}: {sectionDiff.onlyA.join(', ') || 'None'}</p>
-                <p className="text-[11px] text-neutral-700 mt-0.5">Only in {sectionDiff.b.name}: {sectionDiff.onlyB.join(', ') || 'None'}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">Shared</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(sectionDiff.shared.length ? sectionDiff.shared : ['None']).map((s) => (
+                        <span key={`shared-${s}`} className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] text-emerald-700">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">Only in A</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(sectionDiff.onlyA.length ? sectionDiff.onlyA : ['None']).map((s) => (
+                        <span key={`a-${s}`} className="rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] text-amber-700">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">Only in B</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(sectionDiff.onlyB.length ? sectionDiff.onlyB : ['None']).map((s) => (
+                        <span key={`b-${s}`} className="rounded bg-rose-50 border border-rose-200 px-1.5 py-0.5 text-[10px] text-rose-700">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-2 text-[10px] text-neutral-500 truncate">A: {sectionDiff.a.name} · B: {sectionDiff.b.name}</p>
               </div>
             )}
           </div>
