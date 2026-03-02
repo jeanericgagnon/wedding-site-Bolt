@@ -3031,7 +3031,7 @@ Proceed with send?`)) return;
                 </button>
               </div>
             ) : viewMode === 'households' ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {selectedGuestIds.size >= 2 && (
                   <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border border-primary/20 rounded-xl">
                     <span className="text-sm font-medium text-primary">{selectedGuestIds.size} guests selected</span>
@@ -3057,12 +3057,12 @@ Proceed with send?`)) return;
 
                 {households.grouped.map(([householdId, members]) => {
                   return (
-                    <div key={householdId} className="border border-border/40 rounded-2xl overflow-hidden bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-shadow">
+                    <div key={householdId} className="border border-border/30 rounded-2xl overflow-hidden bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_26px_rgba(15,23,42,0.09)] transition-shadow">
                       <div className="divide-y divide-border-subtle/60 bg-white">
                         {members.map(guest => {
                             const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
                             return (
-                              <div key={guest.id} className="flex items-center justify-between px-5 py-3">
+                              <div key={guest.id} className="flex items-center justify-between px-5 py-3.5">
                                 <div>
                                   <p className="text-sm font-medium text-text-primary">{name}</p>
                                   <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
