@@ -104,7 +104,7 @@ export const Templates: React.FC = () => {
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {tpl.seasonTags.map((tag) => <span key={tag} className="rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">{tag}</span>)}
-                  <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 text-xs text-sky-700">Best for {tpl.styleTags[0] ?? 'all styles'}</span>
+                  <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 text-xs text-sky-700">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">

@@ -44,6 +44,31 @@ export const TemplateDetail: React.FC = () => {
             <span className="rounded bg-rose-50 px-2 py-1 text-xs text-rose-700">{tpl.colorwayId}</span>
           </div>
 
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-2">
+              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Default section order</p>
+              <div className="flex flex-wrap gap-1.5">
+                {tpl.defaultSectionOrder.map((section) => (
+                  <span key={section} className="rounded bg-white border border-neutral-200 px-2 py-1 text-xs text-neutral-700">{section}</span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Best for</p>
+              <ul className="space-y-1">
+                {tpl.bestFor.map((fit) => <li key={fit} className="text-xs text-neutral-700">• {fit}</li>)}
+              </ul>
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-3">
+              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Included modules</p>
+              <div className="flex flex-wrap gap-1.5">
+                {tpl.includedModules.map((mod) => (
+                  <span key={mod} className="rounded bg-emerald-50 border border-emerald-200 px-2 py-1 text-xs text-emerald-700">{mod}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="mt-6 flex items-center gap-2">
             <button onClick={useTemplate} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Use this template</button>
             <Link to="/templates" className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back to gallery</Link>

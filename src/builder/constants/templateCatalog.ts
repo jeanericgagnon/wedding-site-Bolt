@@ -7,6 +7,9 @@ export type TemplateCatalogItem = {
   colorwayId: string;
   designFamily: string;
   description: string;
+  bestFor: string[];
+  includedModules: string[];
+  defaultSectionOrder: string[];
 };
 
 export const templateCatalog: TemplateCatalogItem[] = [
@@ -19,6 +22,9 @@ export const templateCatalog: TemplateCatalogItem[] = [
     colorwayId: 'ivory-ink',
     designFamily: 'modern-luxe',
     description: 'Editorial modern layout with clean spacing and soft serif accents.',
+    bestFor: ['City weddings', 'Evening events'],
+    includedModules: ['RSVP', 'Schedule', 'Travel', 'Registry', 'FAQ'],
+    defaultSectionOrder: ['Hero', 'Story', 'Schedule', 'Travel', 'Registry', 'RSVP', 'FAQ'],
   },
   {
     id: 'garden-romance',
@@ -29,6 +35,9 @@ export const templateCatalog: TemplateCatalogItem[] = [
     colorwayId: 'blush-sage',
     designFamily: 'garden-romance',
     description: 'Soft floral-forward design with warm romantic typography.',
+    bestFor: ['Garden venues', 'Spring ceremonies'],
+    includedModules: ['RSVP', 'Story', 'Gallery', 'Travel', 'Registry'],
+    defaultSectionOrder: ['Hero', 'Story', 'Gallery', 'Schedule', 'Travel', 'Registry', 'RSVP'],
   },
   {
     id: 'coastal-breeze',
@@ -39,6 +48,9 @@ export const templateCatalog: TemplateCatalogItem[] = [
     colorwayId: 'seafoam-sand',
     designFamily: 'coastal-breeze',
     description: 'Airy destination aesthetic with clean sections and map-friendly blocks.',
+    bestFor: ['Destination weddings', 'Beach weekends'],
+    includedModules: ['RSVP', 'Travel', 'Map', 'Schedule', 'Registry'],
+    defaultSectionOrder: ['Hero', 'Travel', 'Schedule', 'Venue', 'Registry', 'RSVP', 'FAQ'],
   },
   {
     id: 'classic-elegance',
@@ -49,6 +61,9 @@ export const templateCatalog: TemplateCatalogItem[] = [
     colorwayId: 'ivory-black-gold',
     designFamily: 'classic-elegance',
     description: 'Timeless wedding style with formal typography and structured flow.',
+    bestFor: ['Formal ceremonies', 'Black tie receptions'],
+    includedModules: ['RSVP', 'Schedule', 'Wedding Party', 'Registry', 'FAQ'],
+    defaultSectionOrder: ['Hero', 'Wedding Party', 'Story', 'Schedule', 'Registry', 'RSVP', 'FAQ'],
   },
   {
     id: 'rustic-warmth',
@@ -59,6 +74,9 @@ export const templateCatalog: TemplateCatalogItem[] = [
     colorwayId: 'terracotta-cream',
     designFamily: 'rustic-warmth',
     description: 'Organic textures and warm tones for barn, vineyard, and outdoors weddings.',
+    bestFor: ['Barn weddings', 'Vineyard weekends'],
+    includedModules: ['RSVP', 'Story', 'Travel', 'Registry', 'Photo sharing'],
+    defaultSectionOrder: ['Hero', 'Story', 'Venue', 'Schedule', 'Travel', 'RSVP', 'Registry'],
   },
   {
     id: 'bold-minimal',
@@ -69,6 +87,9 @@ export const templateCatalog: TemplateCatalogItem[] = [
     colorwayId: 'mono-contrast',
     designFamily: 'bold-minimal',
     description: 'High-contrast layout with statement headlines and sharp section breaks.',
+    bestFor: ['Modern downtown venues', 'Design-forward couples'],
+    includedModules: ['RSVP', 'Timeline', 'Registry', 'Q&A', 'Messages'],
+    defaultSectionOrder: ['Hero', 'Story', 'Timeline', 'Registry', 'RSVP', 'FAQ'],
   },
 ];
 
