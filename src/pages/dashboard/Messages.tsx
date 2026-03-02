@@ -820,6 +820,26 @@ export const DashboardMessages: React.FC = () => {
   ];
 
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
+
+  const applySaveTheDatePreset = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const dd = String(tomorrow.getDate()).padStart(2, '0');
+
+    setFormData((prev) => ({
+      ...prev,
+      channel: 'email',
+      audience: 'all',
+      scheduleType: 'later',
+      scheduleDate: `${yyyy}-${mm}-${dd}`,
+      scheduleTime: '10:00',
+      subject: applyTemplateVariables('Save the Date!'),
+      body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
+    }));
+    toast('Save-the-date preset loaded (scheduled for tomorrow at 10:00).', 'success');
+  };
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => g.email).length;
   const recipientsWithPhone = getRecipients(formData.audience).filter(g => g.phone).length;
   const activeRecipients = formData.channel === 'sms' ? recipientsWithPhone : recipientsWithEmail;
@@ -1214,6 +1234,13 @@ export const DashboardMessages: React.FC = () => {
                 <div className="pt-2 flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => navigate('/dashboard/photos')}>
                     Open Photos
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={applySaveTheDatePreset}
+                  >
+                    Save-the-date preset
                   </Button>
                   <Button
                     size="sm"
