@@ -17,8 +17,8 @@ export const weddingPartyGridSchema = z.object({
   subheadline: z.string().default(''),
   members: z.array(PartyMemberSchema).default([]),
   groupBySide: z.boolean().default(false),
-  partner1Label: z.string().default("Bridal Party"),
-  partner2Label: z.string().default("Groom's Party"),
+  partner1Label: z.string().default("Partner 1 Side"),
+  partner2Label: z.string().default("Partner 2 Side"),
 });
 
 export type WeddingPartyGridData = z.infer<typeof weddingPartyGridSchema>;
@@ -28,8 +28,8 @@ export const defaultWeddingPartyGridData: WeddingPartyGridData = {
   headline: 'Wedding Party',
   subheadline: '',
   groupBySide: false,
-  partner1Label: 'Bridal Party',
-  partner2Label: "Groom's Party",
+  partner1Label: 'Partner 1 Side',
+  partner2Label: 'Partner 2 Side',
   members: [
     { id: '1', name: 'Emily Chen', role: 'Maid of Honor', photo: 'https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=400', note: '', side: 'partner1' },
     { id: '2', name: 'Olivia Park', role: 'Bridesmaid', photo: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=400', note: '', side: 'partner1' },
