@@ -1277,21 +1277,10 @@ export const DashboardMessages: React.FC = () => {
                     onClick={() => setViewingMessage(message)}
                     className="w-full text-left border border-border rounded-xl p-4 hover:bg-surface-subtle hover:border-primary/30 transition-all group"
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors truncate">
-                          {message.subject}
-                        </h3>
-                        {getStatusBadge(message)}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-text-tertiary flex-shrink-0 ml-3">
-                        <Clock className="w-3.5 h-3.5" />
-                        {message.status === 'scheduled' && message.scheduled_for
-                          ? new Date(message.scheduled_for).toLocaleDateString()
-                          : message.sent_at
-                          ? new Date(message.sent_at).toLocaleDateString()
-                          : 'Draft'}
-                      </div>
+                    <div className="mb-2">
+                      <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors break-words leading-snug">
+                        {message.subject}
+                      </h3>
                     </div>
                     <p className="text-sm text-text-secondary mb-3 line-clamp-2">{message.body}</p>
                     <div className="flex items-center justify-between gap-4 text-xs text-text-tertiary">
@@ -1304,6 +1293,15 @@ export const DashboardMessages: React.FC = () => {
                           {message.channel}
                         </span>
                         <span className="text-text-tertiary">{getAudienceLabel(message)}</span>
+                        <span>{getStatusBadge(message)}</span>
+                        <span className="flex items-center gap-1 text-text-tertiary">
+                          <Clock className="w-3 h-3" />
+                          {message.status === 'scheduled' && message.scheduled_for
+                            ? new Date(message.scheduled_for).toLocaleDateString()
+                            : message.sent_at
+                            ? new Date(message.sent_at).toLocaleDateString()
+                            : 'Draft'}
+                        </span>
                         {(message.delivered_count != null && message.delivered_count > 0) && (
                           <span className="flex items-center gap-1 text-success font-medium">
                             <CheckCircle size={10} />
