@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Armchair,
   MonitorUp,
+  Search,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
@@ -67,6 +68,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     { id: 'itinerary', label: 'Itinerary', icon: Calendar, path: '/dashboard/itinerary' },
     { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
     { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
+    { id: 'seating-lookup', label: 'Seating Lookup', icon: Search, path: '/dashboard/seating-lookup' },
     { id: 'messages', label: 'Messages', icon: Mail, path: '/dashboard/messages' },
     { id: 'rsvp-board', label: 'RSVP Board', icon: MonitorUp, path: '/dashboard/rsvp-board' },
     { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
