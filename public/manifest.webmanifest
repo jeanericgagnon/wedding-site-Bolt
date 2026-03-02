@@ -9,13 +9,13 @@
   "icons": [
     {
       "src": "/image.png",
-      "sizes": "192x192",
+      "sizes": "any",
       "type": "image/png"
     },
     {
-      "src": "/image.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ]
 }
