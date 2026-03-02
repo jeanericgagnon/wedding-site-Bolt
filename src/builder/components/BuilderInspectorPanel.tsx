@@ -12,6 +12,7 @@ type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 export const BuilderInspectorPanel: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
   const [activeTab, setActiveTab] = React.useState<InspectorTab>('content');
+  const [simpleMode, setSimpleMode] = React.useState(true);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
   const selectedSection = selectSelectedSection(state);
   const activePage = selectActivePage(state);
@@ -22,9 +23,17 @@ export const BuilderInspectorPanel: React.FC = () => {
     if (selectedSection) setActiveTab('content');
   }, [selectedSection?.id]);
 
+  const selectedIndex = activeSections.findIndex((s) => s.id === state.selectedSectionId);
+
   const quickSectionRail = activePage ? (
     <div className="border-b border-gray-200 p-3 space-y-2 bg-gray-50/70">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Sections</p>
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Sections</p>
+        <div className="inline-flex rounded-md border border-gray-200 overflow-hidden">
+          <button onClick={() => setSimpleMode(true)} className={`px-2 py-1 text-[10px] ${simpleMode ? 'bg-white text-gray-900' : 'bg-gray-50 text-gray-500'}`}>Simple</button>
+          <button onClick={() => setSimpleMode(false)} className={`px-2 py-1 text-[10px] border-l border-gray-200 ${!simpleMode ? 'bg-white text-gray-900' : 'bg-gray-50 text-gray-500'}`}>Advanced</button>
+        </div>
+      </div>
       <select
         value={state.selectedSectionId ?? ''}
         onChange={(e) => dispatch(builderActions.selectSection(e.target.value || null))}
@@ -35,21 +44,45 @@ export const BuilderInspectorPanel: React.FC = () => {
           <option key={s.id} value={s.id}>{getSectionManifest(s.type).label}</option>
         ))}
       </select>
-      <select
-        defaultValue=""
-        onChange={(e) => {
-          const val = e.target.value;
-          if (!val) return;
-          const manifest = sectionManifests.find((m) => m.type === val);
-          if (!manifest || !activePage) return;
-          dispatch(builderActions.addSectionByType(activePage.id, manifest.type, undefined, manifest.defaultVariant));
-          e.currentTarget.value = '';
-        }}
-        className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700"
-      >
-        <option value="">+ Add section…</option>
-        {sectionManifests.map((m) => <option key={m.type} value={m.type}>{m.label}</option>)}
-      </select>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => {
+            if (!activePage || selectedIndex <= 0) return;
+            const reordered = [...activeSections];
+            const [moved] = reordered.splice(selectedIndex, 1);
+            reordered.splice(selectedIndex - 1, 0, moved);
+            dispatch(builderActions.reorderSections(activePage.id, reordered.map((s) => s.id)));
+          }}
+          disabled={selectedIndex <= 0}
+          className="px-2 py-1 text-xs rounded border border-gray-200 bg-white text-gray-600 disabled:opacity-40"
+        >↑</button>
+        <button
+          onClick={() => {
+            if (!activePage || selectedIndex < 0 || selectedIndex >= activeSections.length - 1) return;
+            const reordered = [...activeSections];
+            const [moved] = reordered.splice(selectedIndex, 1);
+            reordered.splice(selectedIndex + 1, 0, moved);
+            dispatch(builderActions.reorderSections(activePage.id, reordered.map((s) => s.id)));
+          }}
+          disabled={selectedIndex < 0 || selectedIndex >= activeSections.length - 1}
+          className="px-2 py-1 text-xs rounded border border-gray-200 bg-white text-gray-600 disabled:opacity-40"
+        >↓</button>
+        <select
+          defaultValue=""
+          onChange={(e) => {
+            const val = e.target.value;
+            if (!val) return;
+            const manifest = sectionManifests.find((m) => m.type === val);
+            if (!manifest || !activePage) return;
+            dispatch(builderActions.addSectionByType(activePage.id, manifest.type, undefined, manifest.defaultVariant));
+            e.currentTarget.value = '';
+          }}
+          className="flex-1 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700"
+        >
+          <option value="">+ Add section…</option>
+          {sectionManifests.map((m) => <option key={m.type} value={m.type}>{m.label}</option>)}
+        </select>
+      </div>
     </div>
   ) : null;
 
@@ -136,7 +169,8 @@ export const BuilderInspectorPanel: React.FC = () => {
   ].filter(t => t.show);
 
   const visibleTabs = tabs.filter((tab) => {
-    if (tab.id === 'guide' || tab.id === 'content') return true;
+    if (simpleMode) return tab.id === 'content' || tab.id === 'layout';
+    if (tab.id === 'guide' || tab.id === 'content' || tab.id === 'layout') return true;
     return showAdvanced;
   });
 
