@@ -11,6 +11,7 @@ export const Templates: React.FC = () => {
   const [style, setStyle] = useState<Facet>('all');
   const [season, setSeason] = useState<Facet>('all');
   const [colorway, setColorway] = useState<Facet>('all');
+  const [sortBy, setSortBy] = useState<'recommended' | 'name' | 'style'>('recommended');
   const selectedTemplateId = localStorage.getItem(SELECTED_TEMPLATE_KEY) || '';
 
   const recommendedTemplateIds = useMemo(() => {
@@ -26,13 +27,29 @@ export const Templates: React.FC = () => {
   }, []);
 
   const filtered = useMemo(() => {
-    return templateCatalog.filter((t) => {
+    const rows = templateCatalog.filter((t) => {
       const styleOk = style === 'all' || t.styleTags.includes(style);
       const seasonOk = season === 'all' || t.seasonTags.includes(season);
       const colorOk = colorway === 'all' || t.colorwayId === colorway;
       return styleOk && seasonOk && colorOk;
     });
-  }, [style, season, colorway]);
+
+    const sorted = [...rows];
+    if (sortBy === 'name') {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'style') {
+      sorted.sort((a, b) => (a.styleTags[0] ?? '').localeCompare(b.styleTags[0] ?? ''));
+    } else {
+      sorted.sort((a, b) => {
+        const aRec = recommendedTemplateIds.includes(a.id) ? 1 : 0;
+        const bRec = recommendedTemplateIds.includes(b.id) ? 1 : 0;
+        if (aRec !== bRec) return bRec - aRec;
+        return a.name.localeCompare(b.name);
+      });
+    }
+
+    return sorted;
+  }, [style, season, colorway, sortBy, recommendedTemplateIds]);
 
   const useTemplate = (templateId: string) => {
     localStorage.setItem(SELECTED_TEMPLATE_KEY, templateId);
@@ -65,7 +82,7 @@ export const Templates: React.FC = () => {
           )}
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-3">
           <select value={style} onChange={(e) => setStyle(e.target.value)} className="rounded border border-neutral-300 px-3 py-2 text-sm">
             <option value="all">All styles</option>
             {templateStyleFacets.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -80,9 +97,20 @@ export const Templates: React.FC = () => {
             <option value="all">All colorways</option>
             {templateColorwayFacets.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'recommended' | 'name' | 'style')} className="rounded border border-neutral-300 px-3 py-2 text-sm">
+            <option value="recommended">Sort: Recommended</option>
+            <option value="name">Sort: Name</option>
+            <option value="style">Sort: Style</option>
+          </select>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="mt-4 flex items-center justify-between text-xs text-neutral-500">
+          <span>{filtered.length} template{filtered.length === 1 ? '' : 's'} shown</span>
+          <span>Tip: preview before selecting for better section fit.</span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((tpl) => (
             <div key={tpl.id} className={`rounded-xl border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-rose-300 ring-1 ring-rose-100' : 'border-neutral-200'}`}>
               <img src={tpl.previewImage} alt={tpl.name} className="h-40 w-full object-cover" />
