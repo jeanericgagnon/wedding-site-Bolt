@@ -112,12 +112,18 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   const checklistItems = React.useMemo(() => {
     const items: Array<{ label: string; done: boolean; detail?: string }> = [];
-    items.push({ label: 'At least one page exists', done: projectPages.length > 0 });
-    items.push({ label: 'Current page has sections', done: (activePage?.sections?.length ?? 0) > 0 });
-    items.push({ label: 'No active publish blockers', done: !publishValidationError, detail: publishValidationError ?? undefined });
-    items.push({ label: 'Latest edits are saved', done: !isDirty });
+    items.push({ label: 'At least one page exists', done: projectPages.length > 0, detail: projectPages.length > 0 ? `${projectPages.length} page(s)` : 'Add a page from Page manager.' });
+    items.push({
+      label: 'Current page has sections',
+      done: (activePage?.sections?.length ?? 0) > 0,
+      detail: (activePage?.sections?.length ?? 0) > 0
+        ? `${activePage?.sections?.length ?? 0} section(s) on ${activePage?.title ?? 'current page'}`
+        : `No sections on ${activePage?.title ?? 'current page'} — add one from the right panel.`,
+    });
+    items.push({ label: 'No active publish blockers', done: !publishValidationError, detail: publishValidationError ?? 'Ready to publish.' });
+    items.push({ label: 'Latest edits are saved', done: !isDirty, detail: isDirty ? 'Save changes before publishing.' : 'All changes saved.' });
     return items;
-  }, [projectPages.length, activePage?.sections?.length, publishValidationError, isDirty]);
+  }, [projectPages.length, activePage?.sections?.length, activePage?.title, publishValidationError, isDirty]);
   const checklistDoneCount = checklistItems.filter((i) => i.done).length;
 
   React.useEffect(() => {
@@ -413,8 +419,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   <span className="flex items-start gap-1.5">
                     <span className={item.done ? 'text-emerald-600' : 'text-amber-600'}>{item.done ? '✓' : '•'}</span>
                     <span>
-                      {item.label}
-                      {!item.done && item.detail ? <span className="text-amber-700"> — {item.detail}</span> : null}
+                      <span>{item.label}</span>
+                      {item.detail ? <span className={item.done ? 'text-gray-500' : 'text-amber-700'}> — {item.detail}</span> : null}
                     </span>
                   </span>
                   {!item.done && item.label === 'Latest edits are saved' && (

@@ -97,6 +97,14 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     }
   })();
 
+  const imageSourceHint = (() => {
+    const src = (draft.image_url || '').toLowerCase();
+    if (!src && (draft.item_url || '').trim()) return { label: 'Image source: Auto (from product URL)', tone: 'text-sky-700' };
+    if (!src) return { label: 'Image source: Missing', tone: 'text-amber-700' };
+    if (src.includes('thum.io') || src.includes('weserv.nl')) return { label: 'Image source: Fallback screenshot/proxy', tone: 'text-gray-600' };
+    return { label: 'Image source: Direct image URL', tone: 'text-emerald-700' };
+  })();
+
   function set<K extends keyof RegistryItemDraft>(key: K, value: RegistryItemDraft[K]) {
     setDraft(prev => ({ ...prev, [key]: value }));
   }
@@ -359,6 +367,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   placeholder="https://…/product-image.jpg"
                   className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
+                <p className={`mt-1 text-xs ${imageSourceHint.tone}`}>{imageSourceHint.label}</p>
                 {!imageUrlLooksDirect && (
                   <p className="mt-1 text-xs text-warning">Use a direct image URL (.jpg/.png/etc). Product page URLs may open blank and won’t render as images.</p>
                 )}
