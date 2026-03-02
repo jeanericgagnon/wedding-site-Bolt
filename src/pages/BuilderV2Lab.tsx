@@ -1064,16 +1064,44 @@ export const BuilderV2Lab: React.FC = () => {
                         className="w-full border rounded-md px-2.5 py-1.5 text-xs bg-white"
                       />
                       <div className="max-h-44 overflow-auto space-y-1 pr-0.5">
-                        {filteredAddables.map((name) => (
-                          <button
-                            key={name}
-                            onClick={() => setAddPickerType(name)}
-                            className="w-full text-left rounded border border-border px-2.5 py-2 hover:border-primary/40"
-                          >
-                            <div className="h-7 rounded border border-border bg-surface-subtle mb-1.5" />
-                            <p className="text-xs font-medium text-text-primary">{name}</p>
-                          </button>
-                        ))}
+                        {filteredAddables.map((name) => {
+                          const normalizedType = name.toLowerCase().replace(/\s+/g, '-');
+                          const previewVariant = (VARIANTS_BY_TYPE[normalizedType] ?? ['default'])[0];
+                          const mappedType = (SECTION_TYPE_MAP[normalizedType] ?? 'custom') as SectionType;
+                          let PreviewComp: React.FC<{ data: WeddingDataV1; instance: SectionInstance }> | null = null;
+                          try {
+                            PreviewComp = getSectionComponent(mappedType, previewVariant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
+                          } catch {
+                            PreviewComp = null;
+                          }
+                          const previewInstance: SectionInstance = {
+                            id: `add-preview-${normalizedType}`,
+                            type: mappedType,
+                            variant: previewVariant,
+                            enabled: true,
+                            bindings: {},
+                            settings: { showTitle: true, title: name, subtitle: '' },
+                          };
+
+                          return (
+                            <button
+                              key={name}
+                              onClick={() => setAddPickerType(name)}
+                              className="w-full text-left rounded border border-border px-2.5 py-2 hover:border-primary/40"
+                            >
+                              <div className="h-20 rounded border border-border bg-surface-subtle mb-1.5 overflow-hidden">
+                                {PreviewComp ? (
+                                  <div className="origin-top-left scale-[0.22] w-[455%] pointer-events-none">
+                                    <PreviewComp data={previewData} instance={previewInstance} />
+                                  </div>
+                                ) : (
+                                  <div className="h-full w-full" />
+                                )}
+                              </div>
+                              <p className="text-xs font-medium text-text-primary">{name}</p>
+                            </button>
+                          );
+                        })}
                       </div>
                     </>
                   ) : (
@@ -1083,20 +1111,47 @@ export const BuilderV2Lab: React.FC = () => {
                         <button onClick={() => setAddPickerType(null)} className="text-[11px] text-text-tertiary">Back</button>
                       </div>
                       <div className="max-h-44 overflow-auto space-y-1 pr-0.5">
-                        {(VARIANTS_BY_TYPE[addPickerType.toLowerCase().replace(/\s+/g, '-')] ?? ['default']).map((variant) => (
-                          <button
-                            key={variant}
-                            onClick={() => {
-                              addSection(addPickerType, variant);
-                              setShowAddPicker(false);
-                              setAddPickerType(null);
-                            }}
-                            className="w-full text-left rounded border border-border px-2.5 py-2 hover:border-primary/40"
-                          >
-                            <div className="h-7 rounded border border-border bg-surface-subtle mb-1.5" />
-                            <p className="text-xs font-medium text-text-primary">{variant}</p>
-                          </button>
-                        ))}
+                        {(VARIANTS_BY_TYPE[addPickerType.toLowerCase().replace(/\s+/g, '-')] ?? ['default']).map((variant) => {
+                          const normalizedType = addPickerType.toLowerCase().replace(/\s+/g, '-');
+                          const mappedType = (SECTION_TYPE_MAP[normalizedType] ?? 'custom') as SectionType;
+                          let PreviewComp: React.FC<{ data: WeddingDataV1; instance: SectionInstance }> | null = null;
+                          try {
+                            PreviewComp = getSectionComponent(mappedType, variant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
+                          } catch {
+                            PreviewComp = null;
+                          }
+                          const previewInstance: SectionInstance = {
+                            id: `add-preview-${normalizedType}-${variant}`,
+                            type: mappedType,
+                            variant,
+                            enabled: true,
+                            bindings: {},
+                            settings: { showTitle: true, title: addPickerType, subtitle: '' },
+                          };
+
+                          return (
+                            <button
+                              key={variant}
+                              onClick={() => {
+                                addSection(addPickerType, variant);
+                                setShowAddPicker(false);
+                                setAddPickerType(null);
+                              }}
+                              className="w-full text-left rounded border border-border px-2.5 py-2 hover:border-primary/40"
+                            >
+                              <div className="h-24 rounded border border-border bg-surface-subtle mb-1.5 overflow-hidden">
+                                {PreviewComp ? (
+                                  <div className="origin-top-left scale-[0.22] w-[455%] pointer-events-none">
+                                    <PreviewComp data={previewData} instance={previewInstance} />
+                                  </div>
+                                ) : (
+                                  <div className="h-full w-full" />
+                                )}
+                              </div>
+                              <p className="text-xs font-medium text-text-primary">{variant}</p>
+                            </button>
+                          );
+                        })}
                       </div>
                     </>
                   )}
