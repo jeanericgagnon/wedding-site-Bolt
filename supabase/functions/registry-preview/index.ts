@@ -2,6 +2,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { normalizeUrl, isSameProduct } from './urlNormalizer.ts';
 import { TargetAdapter } from './targetAdapter.ts';
+import { AmazonAdapter } from './amazonAdapter.ts';
+import { WalmartAdapter } from './walmartAdapter.ts';
 import { GenericAdapter } from './genericAdapter.ts';
 import type { RetailerAdapter, ProductData } from './adapterTypes.ts';
 
@@ -14,9 +16,8 @@ const corsHeaders = {
 // Initialize adapters
 const adapters: RetailerAdapter[] = [
   new TargetAdapter(),
-  // Add more adapters here as they're implemented
-  // new AmazonAdapter(),
-  // new WalmartAdapter(),
+  new AmazonAdapter(),
+  new WalmartAdapter(),
 ];
 
 const genericAdapter = new GenericAdapter();
