@@ -2958,7 +2958,7 @@ Proceed with send?`)) return;
               </div>
             )}
 
-            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/95 backdrop-blur p-2.5 rounded-xl border border-border/50 overflow-hidden">
+            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/95 backdrop-blur p-2.5 rounded-xl border border-border/50">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   {([
@@ -2971,9 +2971,9 @@ Proceed with send?`)) return;
                       key={value}
                       type="button"
                       onClick={() => { setFilterStatus(value); setExtraFilters([]); }}
-                      className={`text-xs px-3.5 py-1.5 rounded-full border transition-colors ${
+                      className={`text-xs px-3.5 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
                         filterStatus === value
-                          ? 'bg-primary/95 text-text-inverse border-primary/90 shadow-sm'
+                          ? 'bg-primary text-white border-primary shadow-sm'
                           : 'bg-white text-text-secondary border-border/70 hover:border-primary/35 hover:text-primary'
                       }`}
                     >
@@ -3044,7 +3044,6 @@ Proceed with send?`)) return;
                 {households.grouped.map(([householdId, members]) => {
                   return (
                     <div key={householdId} className="border border-border/40 rounded-2xl overflow-hidden bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-shadow">
-                      <div className="px-5 py-1.5 bg-white border-b border-border/50" />
                       <div className="divide-y divide-border-subtle/60 bg-white">
                         {members.map(guest => {
                             const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
