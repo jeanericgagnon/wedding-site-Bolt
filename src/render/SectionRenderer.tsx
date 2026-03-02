@@ -14,16 +14,27 @@ interface ErrorBoundaryState {
 }
 
 class SectionErrorBoundary extends React.Component<
-  { children: React.ReactNode; sectionType: string; isPreview?: boolean; onRetry?: () => void },
+  { children: React.ReactNode; sectionType: string; sectionVariant?: string; sectionId?: string; isPreview?: boolean; onRetry?: () => void },
   ErrorBoundaryState
 > {
-  constructor(props: { children: React.ReactNode; sectionType: string; isPreview?: boolean; onRetry?: () => void }) {
+  constructor(props: { children: React.ReactNode; sectionType: string; sectionVariant?: string; sectionId?: string; isPreview?: boolean; onRetry?: () => void }) {
     super(props);
     this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(): ErrorBoundaryState {
     return { hasError: true };
+  }
+
+  componentDidUpdate(prevProps: Readonly<{ children: React.ReactNode; sectionType: string; sectionVariant?: string; sectionId?: string; isPreview?: boolean; onRetry?: () => void }>): void {
+    if (!this.state.hasError) return;
+    const changed =
+      prevProps.sectionId !== this.props.sectionId ||
+      prevProps.sectionType !== this.props.sectionType ||
+      prevProps.sectionVariant !== this.props.sectionVariant;
+    if (changed) {
+      this.setState({ hasError: false });
+    }
   }
 
   render() {
@@ -70,7 +81,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, siteS
   const { Component } = def;
 
   return (
-    <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
+    <SectionErrorBoundary sectionType={section.type} sectionVariant={section.variant} sectionId={section.id} isPreview={isPreview}>
       <Component data={parsedData as never} siteSlug={siteSlug} />
     </SectionErrorBoundary>
   );
