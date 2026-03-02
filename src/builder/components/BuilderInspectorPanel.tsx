@@ -290,7 +290,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setShowAdvanced((v) => !v);
-                  if (showAdvanced && (activeTab === 'style' || activeTab === 'layout' || activeTab === 'data')) {
+                  if (showAdvanced && (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide')) {
                     setActiveTab('content');
                   }
                 }}
