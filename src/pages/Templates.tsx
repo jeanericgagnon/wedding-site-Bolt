@@ -54,6 +54,16 @@ export const Templates: React.FC = () => {
   }, [style, season, colorway, sortBy, recommendedTemplateIds]);
 
   const comparedTemplates = useMemo(() => templateCatalog.filter((t) => compareIds.includes(t.id)).slice(0, 2), [compareIds]);
+  const sectionDiff = useMemo(() => {
+    if (comparedTemplates.length !== 2) return null;
+    const [a, b] = comparedTemplates;
+    const aSet = new Set(a.defaultSectionOrder);
+    const bSet = new Set(b.defaultSectionOrder);
+    const shared = a.defaultSectionOrder.filter((s) => bSet.has(s));
+    const onlyA = a.defaultSectionOrder.filter((s) => !bSet.has(s));
+    const onlyB = b.defaultSectionOrder.filter((s) => !aSet.has(s));
+    return { a, b, shared, onlyA, onlyB };
+  }, [comparedTemplates]);
 
   const groupedTemplates = useMemo(() => {
     if (!groupByStyle) return null;
@@ -231,6 +241,14 @@ export const Templates: React.FC = () => {
                 </div>
               ))}
             </div>
+            {sectionDiff && (
+              <div className="mt-3 rounded-lg border border-sky-200 bg-white p-2.5">
+                <p className="text-[11px] font-semibold text-sky-800 mb-1">Section order diff</p>
+                <p className="text-[11px] text-neutral-700">Shared: {sectionDiff.shared.join(', ') || 'None'}</p>
+                <p className="text-[11px] text-neutral-700 mt-0.5">Only in {sectionDiff.a.name}: {sectionDiff.onlyA.join(', ') || 'None'}</p>
+                <p className="text-[11px] text-neutral-700 mt-0.5">Only in {sectionDiff.b.name}: {sectionDiff.onlyB.join(', ') || 'None'}</p>
+              </div>
+            )}
           </div>
         )}
 
