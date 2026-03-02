@@ -8,9 +8,9 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className = '', variant = 'default', padding = 'md', children, ...props }, ref) => {
     const variantStyles = {
-      default: 'bg-surface-raised shadow-sm border border-border-subtle',
+      default: 'bg-surface-raised border border-border/35 shadow-[0_6px_20px_rgba(15,23,42,0.06)]',
       subtle: 'bg-surface-subtle border border-border-subtle',
-      bordered: 'bg-surface-raised border border-border',
+      bordered: 'bg-surface-raised border border-border/35 shadow-[0_6px_20px_rgba(15,23,42,0.06)]',
     };
 
     const paddingStyles = {
@@ -23,7 +23,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`rounded-lg ${variantStyles[variant]} ${paddingStyles[padding]} ${className}`}
+        className={`rounded-xl ${variantStyles[variant]} ${paddingStyles[padding]} ${className}`}
         {...props}
       >
         {children}
