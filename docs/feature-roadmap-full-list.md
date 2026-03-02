@@ -22,7 +22,6 @@ Status legend:
 - 🟡 Travel & Hotels
 - ⏳ Things To Do
 - ✅ FAQ page
-- ⏳ Livestream page
 - 🟡 Photo gallery (guest uploads supported)
 
 ## 3) RSVP & Guest Management
