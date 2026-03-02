@@ -421,7 +421,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </button>
 
         {showPublishChecklist && (
-          <div className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm">
+          <div className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm space-y-1">
             <p className="font-semibold text-gray-800 mb-1">Publish readiness</p>
             <ul className="space-y-1">
               {checklistItems.map((item) => (

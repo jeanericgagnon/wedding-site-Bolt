@@ -948,10 +948,10 @@ export const DashboardRegistry: React.FC = () => {
                 </button>
               </>
             )}
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
               Alerts: {alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}
             </span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
               Image issues: {alertCounts.imageIssues}
             </span>
             <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>
