@@ -258,6 +258,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
           ))}
         </div>
 
+        {coordinatorRole === 'viewer' && (
+          <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
+            Viewer mode active — timeline, check-in, alerts, and Q&A edits are disabled.
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] overflow-hidden">
             <div className="px-4 py-3 border-b border-border/60 text-sm font-medium text-text-primary">Check-in Queue</div>

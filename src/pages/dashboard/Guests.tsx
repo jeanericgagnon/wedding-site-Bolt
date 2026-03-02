@@ -2890,6 +2890,12 @@ Proceed with send?`)) return;
           </div>
         </div>
 
+        {guestsRole === 'viewer' && (
+          <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
+            Viewer mode active — guest editing and operations are disabled.
+          </div>
+        )}
+
         {!cleanGuestsView && (
         <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-3">

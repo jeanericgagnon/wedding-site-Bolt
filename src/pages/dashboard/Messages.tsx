@@ -922,8 +922,13 @@ export const DashboardMessages: React.FC = () => {
           </div>
         </div>
 
-        
-<div className="space-y-4">
+        {messagesRole === 'viewer' && (
+          <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
+            Viewer mode active — compose and send actions are disabled.
+          </div>
+        )}
+
+        <div className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               ['Scheduled', deliveryStats.scheduled],
