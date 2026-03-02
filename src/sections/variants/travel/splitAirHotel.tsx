@@ -57,12 +57,14 @@ const TravelSplitAirHotel: React.FC<SectionComponentProps<TravelSplitAirHotelDat
               <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Hotels</p>
             </div>
             <div className="space-y-2.5">
-              {data.hotels.map((h) => (
+              {data.hotels.length === 0 ? (
+                <p className="text-xs text-text-tertiary">No hotel recommendations added yet.</p>
+              ) : data.hotels.map((h) => (
                 <div key={h.id} className="rounded-xl border border-border/35 bg-white px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm text-text-primary font-medium">{h.name}</p>
                     {h.url ? (
-                      <a href={h.url} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary">
+                      <a href={h.url} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary" aria-label={`Open ${h.name} link`}>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     ) : null}

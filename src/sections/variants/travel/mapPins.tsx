@@ -48,7 +48,7 @@ const TravelMapPins: React.FC<SectionComponentProps<TravelMapPinsData>> = ({ dat
             <div className="rounded-xl border border-dashed border-border/60 bg-surface-subtle h-64 flex items-center justify-center text-center px-4">
               <div>
                 <MapPin className="w-5 h-5 text-primary/70 mx-auto mb-2" />
-                <p className="text-sm text-text-secondary">Add your map embed link in custom section if needed.</p>
+                <p className="text-sm text-text-secondary">Map preview placeholder. Use your location links in the pinned list for now.</p>
               </div>
             </div>
           </div>
@@ -56,12 +56,14 @@ const TravelMapPins: React.FC<SectionComponentProps<TravelMapPinsData>> = ({ dat
           <div className="lg:col-span-3 rounded-2xl border border-border/40 bg-white p-4 md:p-5">
             <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-3">Pinned locations</p>
             <div className="space-y-2.5">
-              {data.pins.map((pin) => (
+              {data.pins.length === 0 ? (
+                <p className="text-xs text-text-tertiary">No pinned locations added yet.</p>
+              ) : data.pins.map((pin) => (
                 <div key={pin.id} className="rounded-xl border border-border/35 bg-surface px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm text-text-primary font-medium">{pin.name}</p>
                     {pin.url ? (
-                      <a href={pin.url} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary">
+                      <a href={pin.url} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary" aria-label={`Open ${pin.name} location link`}>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     ) : null}

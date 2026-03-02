@@ -42,21 +42,27 @@ const WeddingPartyScroll: React.FC<SectionComponentProps<WeddingPartyScrollData>
           {data.subheadline ? <p className="mt-3 text-sm text-text-secondary">{data.subheadline}</p> : null}
         </div>
 
-        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2">
-          {data.members.map((m) => (
-            <article key={m.id} className="snap-start shrink-0 w-[220px] rounded-2xl border border-border/40 bg-white p-3.5">
-              <div className="aspect-[3/4] rounded-xl overflow-hidden bg-surface-subtle mb-3">
-                {m.photo ? (
-                  <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-text-tertiary text-3xl font-light">{m.name.charAt(0).toUpperCase()}</div>
-                )}
-              </div>
-              <p className="text-sm font-medium text-text-primary">{m.name}</p>
-              {m.role ? <p className="text-xs text-text-secondary mt-0.5">{m.role}</p> : null}
-            </article>
-          ))}
-        </div>
+        {data.members.length === 0 ? (
+          <div className="rounded-2xl border border-border/40 bg-white p-8 text-center">
+            <p className="text-sm text-text-secondary">Add wedding party members to display the scroll layout.</p>
+          </div>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2" aria-label="Wedding party members">
+            {data.members.map((m) => (
+              <article key={m.id} className="snap-start shrink-0 w-[220px] rounded-2xl border border-border/40 bg-white p-3.5">
+                <div className="aspect-[3/4] rounded-xl overflow-hidden bg-surface-subtle mb-3">
+                  {m.photo ? (
+                    <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-text-tertiary text-3xl font-light">{m.name.charAt(0).toUpperCase()}</div>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-text-primary">{m.name}</p>
+                {m.role ? <p className="text-xs text-text-secondary mt-0.5">{m.role}</p> : null}
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
