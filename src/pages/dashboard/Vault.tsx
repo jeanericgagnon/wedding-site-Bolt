@@ -394,6 +394,35 @@ const VaultCard: React.FC<VaultCardProps> = ({
     }
   }
 
+  async function handleRegenerateLatestRecap() {
+    if (generatingRecap) return;
+    const latestRecap = [...entries]
+      .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+    if (!latestRecap) {
+      await handleGenerateRecap();
+      return;
+    }
+
+    setGeneratingRecap(true);
+    try {
+      const nextContent = buildAnniversaryRecap(entries, config.duration_years, recapStyle);
+      await supabase
+        .from('vault_entries')
+        .update({
+          title: `${config.duration_years}-Year AI Recap (${recapStyle[0].toUpperCase()}${recapStyle.slice(1)})`,
+          content: nextContent,
+          author_name: 'DayOf AI Recap',
+        })
+        .eq('id', latestRecap.id);
+    } finally {
+      setGeneratingRecap(false);
+    }
+  }
+
+  const hasRecap = entries.some((entry) => (entry.title || '').toLowerCase().includes('ai recap'));
+
   return (
     <Card variant="bordered" padding="lg" className={`transition-all shadow-sm hover:shadow-md border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
@@ -461,6 +490,15 @@ const VaultCard: React.FC<VaultCardProps> = ({
               >
                 {generatingRecap ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                 {generatingRecap ? 'Generating…' : 'Generate recap'}
+              </button>
+              <button
+                onClick={() => void handleRegenerateLatestRecap()}
+                disabled={generatingRecap}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 text-xs font-medium disabled:opacity-50"
+                title="Regenerate latest recap using selected style"
+              >
+                <Sparkles className="w-3 h-3" />
+                {hasRecap ? 'Regenerate' : 'Generate + style'}
               </button>
             </div>
           )}
