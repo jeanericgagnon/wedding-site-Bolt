@@ -1244,17 +1244,17 @@ setWeddingSiteId('demo-site-id');
     <DashboardLayout currentPage="vault">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="rounded-2xl border border-primary/15 bg-[linear-gradient(135deg,rgba(59,130,246,0.07),rgba(255,255,255,0.95))] p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <p className="text-[11px] uppercase updates-[0.16em] text-primary/80 font-semibold mb-2">Time Capsule</p>
-              <h1 className="text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
               <p className="text-text-secondary">
                 Time capsule messages sealed until each anniversary milestone. Up to {MAX_VAULTS} vaults supported.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
             {totalEntries > 0 && (
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <p className="text-2xl font-bold text-text-primary leading-none">{totalEntries}</p>
                 <p className="text-xs text-text-secondary mt-1">total {totalEntries === 1 ? 'entry' : 'entries'}</p>
               </div>
@@ -1265,6 +1265,7 @@ setWeddingSiteId('demo-site-id');
                 size="md"
                 onClick={handleAddVault}
                 disabled={addingVault}
+                className="w-full sm:w-auto shrink-0"
               >
                 {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
                 Add Vault
