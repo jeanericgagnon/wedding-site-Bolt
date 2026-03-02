@@ -14,6 +14,8 @@ export const BuilderInspectorPanel: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<InspectorTab>('content');
   const [simpleMode, setSimpleMode] = React.useState(true);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
+  const [showAddSectionPicker, setShowAddSectionPicker] = React.useState(false);
+  const [addSectionType, setAddSectionType] = React.useState<string | null>(null);
   const selectedSection = selectSelectedSection(state);
   const activePage = selectActivePage(state);
   const activeSections = selectActivePageSections(state);
@@ -30,6 +32,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   }, [simpleMode, activeTab]);
 
   const selectedIndex = activeSections.findIndex((s) => s.id === state.selectedSectionId);
+  const addTypeManifest = addSectionType ? sectionManifests.find((m) => m.type === addSectionType) ?? null : null;
 
   const quickSectionRail = activePage ? (
     <div className="border-b border-gray-200 p-2.5 space-y-2 bg-gray-50/40">
@@ -146,22 +149,64 @@ export const BuilderInspectorPanel: React.FC = () => {
           className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-600 disabled:opacity-40"
           title="Remove section"
         >Del</button>
-        <select
-          defaultValue=""
-          onChange={(e) => {
-            const val = e.target.value;
-            if (!val) return;
-            const manifest = sectionManifests.find((m) => m.type === val);
-            if (!manifest || !activePage) return;
-            dispatch(builderActions.addSectionByType(activePage.id, manifest.type, undefined, manifest.defaultVariant));
-            e.currentTarget.value = '';
+        <button
+          type="button"
+          onClick={() => {
+            setShowAddSectionPicker(true);
+            setAddSectionType(null);
           }}
-          className="flex-1 rounded-lg border border-gray-200 bg-white px-2 py-2 text-sm text-gray-700"
+          className="flex-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100"
         >
-          <option value="">+ Add…</option>
-          {sectionManifests.map((m) => <option key={m.type} value={m.type}>{m.label}</option>)}
-        </select>
+          + Add section
+        </button>
       </div>
+
+      {showAddSectionPicker && (
+        <div className="rounded-xl border border-gray-200 bg-white p-2.5 space-y-2">
+          {!addTypeManifest ? (
+            <>
+              <p className="text-[11px] font-semibold text-gray-700">Choose a section</p>
+              <div className="max-h-52 overflow-y-auto space-y-1">
+                {sectionManifests.map((m) => (
+                  <button
+                    key={m.type}
+                    onClick={() => setAddSectionType(m.type)}
+                    className="w-full text-left rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 hover:bg-rose-50 hover:border-rose-200"
+                  >
+                    <p className="text-xs font-medium text-gray-800">{m.label}</p>
+                    <p className="text-[11px] text-gray-500">{m.variantMeta.length} variants</p>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold text-gray-700">{addTypeManifest.label} variants</p>
+                <button onClick={() => setAddSectionType(null)} className="text-[11px] text-gray-500 hover:text-gray-800">Back</button>
+              </div>
+              <div className="max-h-56 overflow-y-auto space-y-1">
+                {addTypeManifest.variantMeta.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => {
+                      if (!activePage) return;
+                      dispatch(builderActions.addSectionByType(activePage.id, addTypeManifest.type, undefined, v.id));
+                      setShowAddSectionPicker(false);
+                      setAddSectionType(null);
+                    }}
+                    className="w-full text-left rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 hover:bg-rose-50 hover:border-rose-200"
+                  >
+                    <p className="text-xs font-medium text-gray-800">{v.label}</p>
+                    <p className="text-[11px] text-gray-500 line-clamp-2">{v.description || 'Clean layout option'}</p>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <button onClick={() => { setShowAddSectionPicker(false); setAddSectionType(null); }} className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-[11px] text-gray-600 hover:bg-gray-50">Cancel</button>
+        </div>
+      )}
     </div>
   ) : null;
 
