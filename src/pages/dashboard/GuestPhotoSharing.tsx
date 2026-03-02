@@ -722,23 +722,33 @@ export const GuestPhotoSharing: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-2 flex-wrap">
-            <Button onClick={createAlbum} disabled={submitting || loading}>
-              <Camera className="w-4 h-4 mr-1" />
-              {submitting ? 'Creating...' : 'Create album'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => void createMissingAlbumsFromItinerary()}
-              disabled={bulkCreating || loading || missingItineraryEvents.length === 0}
-            >
-              {bulkCreating ? 'Creating from itinerary...' : `Create missing itinerary albums (${missingItineraryEvents.length})`}
-            </Button>
-            {uploadLanding && (
-              <Button variant="outline" onClick={() => window.open(uploadLanding, '_blank')}>
-                <ExternalLink className="w-4 h-4 mr-1" /> Open site
+          <div className="mt-4 space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <Button onClick={createAlbum} disabled={submitting || loading} className="w-full sm:w-auto">
+                <Camera className="w-4 h-4 mr-1" />
+                {submitting ? 'Creating...' : 'Create album'}
               </Button>
-            )}
+              {uploadLanding && (
+                <Button variant="outline" onClick={() => window.open(uploadLanding, '_blank')} className="w-full sm:w-auto">
+                  <ExternalLink className="w-4 h-4 mr-1" /> Open site
+                </Button>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2">
+              <p className="text-xs text-text-secondary">
+                Missing itinerary albums: <span className="font-semibold text-text-primary">{missingItineraryEvents.length}</span>
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void createMissingAlbumsFromItinerary()}
+                disabled={bulkCreating || loading || missingItineraryEvents.length === 0}
+                className="w-full sm:w-auto"
+              >
+                {bulkCreating ? 'Creating from itinerary...' : 'Create missing itinerary albums'}
+              </Button>
+            </div>
           </div>
 
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
