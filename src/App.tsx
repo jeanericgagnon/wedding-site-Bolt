@@ -32,6 +32,7 @@ const DashboardSeating = lazy(() => import('./pages/dashboard/Seating').then(m =
 const DashboardSeatingLookup = lazy(() => import('./pages/dashboard/SeatingLookup').then(m => ({ default: m.DashboardSeatingLookup })));
 const DashboardPhotos = lazy(() => import('./pages/dashboard/GuestPhotoSharing').then(m => ({ default: m.GuestPhotoSharing })));
 const DashboardRsvpBoard = lazy(() => import('./pages/dashboard/RsvpBoard').then(m => ({ default: m.DashboardRsvpBoard })));
+const DashboardCoordinatorMode = lazy(() => import('./pages/dashboard/CoordinatorMode').then(m => ({ default: m.DashboardCoordinatorMode })));
 const DashboardErrorLogs = lazy(() => import('./pages/dashboard/ErrorLogs').then(m => ({ default: m.DashboardErrorLogs })));
 const SiteBuilder = lazy(() => import('./builder/BuilderPage').then(m => ({ default: m.BuilderPage })));
 const GuestsFeature = lazy(() => import('./pages/features/Guests').then(m => ({ default: m.GuestsFeature })));
@@ -268,6 +269,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <DashboardRsvpBoard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/coordinator"
+          element={
+            <ProtectedRoute>
+              <DashboardCoordinatorMode />
             </ProtectedRoute>
           }
         />
