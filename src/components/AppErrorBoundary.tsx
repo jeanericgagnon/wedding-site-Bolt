@@ -67,28 +67,25 @@ export class AppErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div className="min-h-screen bg-gray-50 flex items-start justify-center p-4 pt-20">
+          <div className="max-w-md w-full bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <span>Please refresh to continue.</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">Quick refresh needed</h1>
-            <p className="text-gray-500 text-sm mb-6">
-              The app just updated. Please reload to continue.
-            </p>
-            <div className="flex gap-3 justify-center">
+            <div className="mt-3 flex gap-2">
               <button
                 onClick={() => window.location.reload()}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md hover:bg-gray-800 transition-colors"
               >
-                <RefreshCw size={14} />
-                Reload page
+                <RefreshCw size={12} />
+                Refresh
               </button>
               <button
                 onClick={this.handleReset}
-                className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-medium rounded-md hover:bg-gray-50 transition-colors"
               >
-                Try again
+                Dismiss
               </button>
             </div>
           </div>
