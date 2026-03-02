@@ -290,6 +290,7 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
   const [rsvpConflictHistory, setRsvpConflictHistory] = useState<RsvpConflict[]>([]);
   const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
+  const isGuestsReadOnly = guestsRole === 'viewer';
   const [showConflictDetails, setShowConflictDetails] = useState(false);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const rsvpConfigLoadedRef = useRef(false);
@@ -839,6 +840,10 @@ export const DashboardGuests: React.FC = () => {
 
   const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     if (!weddingSiteId) return;
 
     try {
@@ -911,6 +916,10 @@ export const DashboardGuests: React.FC = () => {
 
   const handleEditGuest = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     if (!editingGuest) return;
 
     try {
@@ -982,6 +991,10 @@ export const DashboardGuests: React.FC = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleDeleteGuest = async (guestId: string) => {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     if (confirmDeleteId !== guestId) {
       setConfirmDeleteId(guestId);
       setTimeout(() => setConfirmDeleteId(null), 3000);
@@ -1608,6 +1621,10 @@ Proceed with send?`)) return;
   };
 
   const openEditModal = (guest: GuestWithRSVP) => {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     setEditingGuest(guest);
     setFormData({
       first_name: guest.first_name || '',
@@ -3661,7 +3678,7 @@ Proceed with send?`)) return;
                                       size="sm"
                                       className="px-2 py-1 text-xs"
                                       onClick={() => handleSendInvitation(guest)}
-                                      disabled={sendingInviteId === guest.id}
+                                      disabled={sendingInviteId === guest.id || isGuestsReadOnly}
                                       title={guest.invite_token ? 'Send invitation email' : 'Send invitation'}
                                     >
                                       <Mail className="w-4 h-4 mr-1" />
@@ -3673,6 +3690,7 @@ Proceed with send?`)) return;
                                     size="sm"
                                     className={`px-2 py-1 text-xs ${guest.checked_in_at ? 'text-success' : ''}`}
                                     onClick={() => handleToggleCheckIn(guest)}
+                                    disabled={isGuestsReadOnly}
                                     title={guest.checked_in_at ? 'Clear check-in' : 'Mark checked in'}
                                   >
                                     <CheckCircle2 className="w-4 h-4 mr-1" />
@@ -3683,18 +3701,19 @@ Proceed with send?`)) return;
                                     size="sm"
                                     className={`px-2 py-1 text-xs ${(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'text-success' : ''}`}
                                     onClick={() => handleMarkThankYouSent(guest)}
+                                    disabled={isGuestsReadOnly}
                                     title={(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'Clear thank-you sent' : 'Mark thank-you sent'}
                                   >
                                     {(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'Thanked' : 'Thank-you'}
                                   </Button>
-                                  <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)}>
+                                  <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)} disabled={isGuestsReadOnly}>
                                     Edit
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDeleteGuest(guest.id)}
-                                    disabled={deletingGuestId === guest.id}
+                                    disabled={deletingGuestId === guest.id || isGuestsReadOnly}
                                     className={`px-2 py-1 text-xs ${confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}`}
                                   >
                                     {deletingGuestId === guest.id
