@@ -387,6 +387,8 @@ export const DashboardMessages: React.FC = () => {
   const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
   const [messagesRole, setMessagesRole] = useState<MessagesRole>('owner');
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
+  const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -888,6 +890,21 @@ export const DashboardMessages: React.FC = () => {
 
   const canCompose = messagesRole !== 'viewer';
 
+  const filteredHistory = useMemo(() => messages.filter((m) => {
+    if (historyStatusFilter !== 'all' && m.status !== historyStatusFilter) return false;
+    if (historyChannelFilter !== 'all' && m.channel !== historyChannelFilter) return false;
+    return true;
+  }), [messages, historyStatusFilter, historyChannelFilter]);
+
+  const audienceBreakdown = useMemo(() => {
+    const map = new Map<string, number>();
+    messages.forEach((m) => {
+      const key = getAudienceLabel(m);
+      map.set(key, (map.get(key) ?? 0) + getRecipientCount(m));
+    });
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  }, [messages]);
+
   if (loading) {
     return (
       <DashboardLayout currentPage="messages">
@@ -1375,16 +1392,45 @@ export const DashboardMessages: React.FC = () => {
         </div>
 
         <Card variant="bordered" padding="lg">
-          <h2 className="text-xl font-semibold text-text-primary mb-6">Message History</h2>
-          {messages.length === 0 ? (
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+            <h2 className="text-xl font-semibold text-text-primary">Message History</h2>
+            <div className="flex items-center gap-2">
+              <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value as typeof historyStatusFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
+                <option value="all">All status</option>
+                <option value="sent">Sent</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="partial">Partial</option>
+                <option value="failed">Failed</option>
+                <option value="draft">Draft</option>
+              </select>
+              <select value={historyChannelFilter} onChange={(e) => setHistoryChannelFilter(e.target.value as typeof historyChannelFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
+                <option value="all">All channels</option>
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+              </select>
+            </div>
+          </div>
+
+          {audienceBreakdown.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+              {audienceBreakdown.map(([label, count]) => (
+                <div key={label} className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2">
+                  <p className="text-[11px] text-text-tertiary truncate">{label}</p>
+                  <p className="text-sm font-semibold text-text-primary">{count} targeted</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {filteredHistory.length === 0 ? (
             <div className="text-center py-12">
               <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
-              <p className="text-text-secondary">No messages yet</p>
-              <p className="text-sm text-text-tertiary mt-1">Compose your first message above</p>
+              <p className="text-text-secondary">No messages for current filters</p>
+              <p className="text-sm text-text-tertiary mt-1">Try a different status/channel filter.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {messages.map((message) => {
+              {filteredHistory.map((message) => {
                 const recipientCount = getRecipientCount(message);
                 return (
                   <button
