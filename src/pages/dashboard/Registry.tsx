@@ -47,7 +47,6 @@ const getBackoffMs = (failCount: number) => Math.min(WEEKLY_REFRESH_MS * 4, Math
 const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'available', label: 'Available' },
-  { key: 'partial', label: 'Partial' },
   { key: 'purchased', label: 'Purchased' },
 ];
 
