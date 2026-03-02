@@ -26,6 +26,8 @@ interface Guest {
   rsvp_received_at: string | null;
   checked_in_at?: string | null;
   checkin_notes?: string | null;
+  thank_you_sent_at?: string | null;
+  thank_you_notes?: string | null;
   household_id: string | null;
 }
 
@@ -254,7 +256,7 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'checked-in' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'checked-in' | 'thank-you-due' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
   const [extraFilters, setExtraFilters] = useState<string[]>([]);
   const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
   const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
@@ -1012,6 +1014,46 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+  const handleMarkThankYouSent = async (guest: GuestWithRSVP) => {
+    if (!weddingSiteId || isDemoMode) return;
+    try {
+      const current = (guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at;
+      const nextValue = current ? null : new Date().toISOString();
+      const { error } = await supabase
+        .from('guests')
+        .update({ thank_you_sent_at: nextValue })
+        .eq('id', guest.id)
+        .eq('wedding_site_id', weddingSiteId);
+      if (error) throw error;
+      await fetchGuests();
+      toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
+    } catch {
+      toast('Failed to update thank-you status', 'error');
+    }
+  };
+
+  const handleMarkAllDueThankYous = async () => {
+    if (!weddingSiteId || isDemoMode) return;
+    const ids = guests.filter((g) => dueThankYouGuestIds.has(g.id)).map((g) => g.id);
+    if (ids.length === 0) {
+      toast('No guests currently due for thank-you.', 'error');
+      return;
+    }
+    if (!window.confirm(`Mark thank-you sent for ${ids.length} guest(s)?`)) return;
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .update({ thank_you_sent_at: new Date().toISOString() })
+        .in('id', ids)
+        .eq('wedding_site_id', weddingSiteId);
+      if (error) throw error;
+      await fetchGuests();
+      toast(`Marked ${ids.length} thank-you sent`, 'success');
+    } catch {
+      toast('Failed to mark thank-you statuses', 'error');
+    }
+  };
+
   const handleClearAllCheckIns = async () => {
     if (!weddingSiteId || isDemoMode) return;
     const checkedInCount = guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length;
@@ -1617,6 +1659,29 @@ Proceed with send?`)) return;
     exportCSV(guests.filter((g) => g.rsvp?.attending && !g.rsvp?.meal_choice), 'guests-missing-meal');
   };
 
+  const exportThankYouDueCSV = () => {
+    const due = guests.filter((g) => dueThankYouGuestIds.has(g.id));
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'RSVP Status', 'Thank You Sent At'];
+    const rows = due.map((guest) => [
+      guest.first_name || '',
+      guest.last_name || '',
+      guest.email || '',
+      guest.phone || '',
+      guest.rsvp_status,
+      (guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at || '',
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `thank-you-due_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const exportCheckedInCSV = () => {
     const checkedIn = guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at);
     const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Checked In At'];
@@ -2205,7 +2270,8 @@ Proceed with send?`)) return;
         (filter === 'no-contact' && !guest.email && !guest.phone) ||
         (filter === 'missing-address' && !(guest as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1) ||
         (filter === 'due-reminder' && isDueReminder(guest)) ||
-        (filter === 'checked-in' && !!(guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at)
+        (filter === 'checked-in' && !!(guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at) ||
+        (filter === 'thank-you-due' && dueThankYouGuestIds.has(guest.id))
       );
     };
 
@@ -2421,6 +2487,7 @@ Proceed with send?`)) return;
     declined: 'Declined',
     pending: 'Pending',
     'checked-in': 'Checked In',
+    'thank-you-due': 'Thank You Due',
     'due-reminder': 'Due Reminder',
     'missing-address': 'Missing Address',
     'ceremony-no': 'Ceremony: No',
@@ -2592,6 +2659,15 @@ Proceed with send?`)) return;
   };
 
   const dueReminderGuestIds = new Set(guests.filter(isDueReminder).map((g) => g.id));
+
+  const dueThankYouGuestIds = new Set(
+    guests
+      .filter((g) => {
+        const guest = g as GuestWithRSVP & { thank_you_sent_at?: string | null };
+        return g.rsvp_status === 'confirmed' && !guest.thank_you_sent_at;
+      })
+      .map((g) => g.id)
+  );
 
   const dueReminderCandidatesGlobal = guests.filter((g) => !!g.email && !!g.invite_token && isDueReminder(g));
 
@@ -3071,6 +3147,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowOpsMenu(false); }}>Export missing meal choices</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAddressCollectionCSV(); setShowOpsMenu(false); }}>Export addresses (mailing)</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCheckedInCSV(); setShowOpsMenu(false); }}>Export checked-in guests</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportThankYouDueCSV(); setShowOpsMenu(false); }}>Export thank-you due</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy SMS RSVP links</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
@@ -3081,6 +3158,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { setReminderCadenceDays(3); await persistReminderSettings({ reminder_cadence_days: 3 }); } catch { toast('Failed to save reminder cadence', 'error'); } setShowOpsMenu(false); }}>{reminderCadenceDays === 3 ? '✓ ' : ''}Every 3 days</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { setReminderCadenceDays(7); await persistReminderSettings({ reminder_cadence_days: 7 }); } catch { toast('Failed to save reminder cadence', 'error'); } setShowOpsMenu(false); }}>{reminderCadenceDays === 7 ? '✓ ' : ''}Every 7 days</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { const next = !autoRemindersEnabled; setAutoRemindersEnabled(next); await persistReminderSettings({ auto_reminders_enabled: next }); toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success'); } catch { toast('Failed to save auto reminder setting', 'error'); } setShowOpsMenu(false); }}>{autoRemindersEnabled ? '✓ ' : ''}{autoRemindersEnabled ? 'Auto reminders: On' : 'Auto reminders: Off'}</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleMarkAllDueThankYous(); setShowOpsMenu(false); }}>Mark all thank-you due as sent</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleClearAllCheckIns(); setShowOpsMenu(false); }}>Clear all check-ins</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
@@ -3253,6 +3331,7 @@ Proceed with send?`)) return;
                     ['declined', `Declined (${stats.declined})`],
                     ['pending', `Pending (${stats.pending})`],
                     ['checked-in', `Checked In (${guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length})`],
+                    ['thank-you-due', `Thank You Due (${dueThankYouGuestIds.size})`],
                     ['due-reminder', `Due Reminder (${dueReminderGuestIds.size})`],
                     ['missing-address', `Missing Address (${guests.filter((g) => !(g as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1).length})`],
                   ] as const).map(([value, label]) => (
@@ -3570,6 +3649,15 @@ Proceed with send?`)) return;
                                   >
                                     <CheckCircle2 className="w-4 h-4 mr-1" />
                                     {guest.checked_in_at ? 'Checked in' : 'Check in'}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`px-2 py-1 text-xs ${(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'text-success' : ''}`}
+                                    onClick={() => handleMarkThankYouSent(guest)}
+                                    title={(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'Clear thank-you sent' : 'Mark thank-you sent'}
+                                  >
+                                    {(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'Thanked' : 'Thank-you'}
                                   </Button>
                                   <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)}>
                                     Edit
