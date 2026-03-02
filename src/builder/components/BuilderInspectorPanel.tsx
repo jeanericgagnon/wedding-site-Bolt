@@ -60,7 +60,35 @@ export const BuilderInspectorPanel: React.FC = () => {
         ))}
       </select>
       {selectedIndex >= 0 && (
-        <p className="text-[10px] text-gray-500">Selected: {selectedIndex + 1} / {activeSections.length}</p>
+        <div className="flex items-center justify-between text-[10px] text-gray-500">
+          <p>Selected: {selectedIndex + 1} / {activeSections.length}</p>
+          <div className="inline-flex items-center gap-1">
+            <button
+              onClick={() => {
+                const prevId = activeSections[selectedIndex - 1]?.id;
+                if (!prevId) return;
+                dispatch(builderActions.selectSection(prevId));
+              }}
+              disabled={selectedIndex <= 0}
+              className="px-1.5 py-0.5 rounded border border-gray-200 bg-white text-gray-600 disabled:opacity-40"
+              title="Previous section"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => {
+                const nextId = activeSections[selectedIndex + 1]?.id;
+                if (!nextId) return;
+                dispatch(builderActions.selectSection(nextId));
+              }}
+              disabled={selectedIndex >= activeSections.length - 1}
+              className="px-1.5 py-0.5 rounded border border-gray-200 bg-white text-gray-600 disabled:opacity-40"
+              title="Next section"
+            >
+              →
+            </button>
+          </div>
+        </div>
       )}
       <div className="flex items-center gap-2">
         <button
