@@ -88,7 +88,8 @@ async function saveCache(
   db: ReturnType<typeof createClient>,
   hash: string,
   url: string,
-  data: ProductData
+  data: ProductData,
+  retailer: string
 ): Promise<void> {
   try {
     await db.from("registry_url_cache").upsert(
@@ -106,7 +107,7 @@ async function saveCache(
         canonical_url: data.canonical_url,
         confidence_score: data.confidence_score,
         source_method: data.source_method,
-        retailer: 'generic',
+        retailer,
         fetch_status: 'success',
         error_message: null,
         last_fetched_at: new Date().toISOString(),
@@ -491,7 +492,7 @@ Deno.serve(async (req: Request) => {
     const result = ensureBaselineMetadata(rawUrl, extracted);
 
     // Save to cache in background
-    EdgeRuntime.waitUntil(saveCache(supabaseAdmin, hash, normalized.canonical, result));
+    EdgeRuntime.waitUntil(saveCache(supabaseAdmin, hash, normalized.canonical, result, normalized.retailer));
 
     return new Response(JSON.stringify({ ...result, cached: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
