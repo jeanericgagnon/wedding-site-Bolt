@@ -166,13 +166,21 @@ export const BuilderInspectorPanel: React.FC = () => {
           {!addTypeManifest ? (
             <>
               <p className="text-[11px] font-semibold text-gray-700">Choose a section</p>
-              <div className="max-h-52 overflow-y-auto space-y-1">
+              <div className="max-h-56 overflow-y-auto grid grid-cols-1 gap-2">
                 {sectionManifests.map((m) => (
                   <button
                     key={m.type}
                     onClick={() => setAddSectionType(m.type)}
                     className="w-full text-left rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 hover:bg-rose-50 hover:border-rose-200"
                   >
+                    <div className="rounded border border-gray-200 bg-white p-2 mb-2">
+                      <div className="h-1.5 w-2/3 rounded bg-gray-300 mb-1" />
+                      <div className="h-1.5 w-1/2 rounded bg-gray-200 mb-1.5" />
+                      <div className="flex gap-1">
+                        <div className="h-6 flex-1 rounded bg-gray-100 border border-gray-200" />
+                        <div className="h-6 w-10 rounded bg-gray-100 border border-gray-200" />
+                      </div>
+                    </div>
                     <p className="text-xs font-medium text-gray-800">{m.label}</p>
                     <p className="text-[11px] text-gray-500">{m.variantMeta.length} variants</p>
                   </button>
@@ -185,7 +193,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                 <p className="text-[11px] font-semibold text-gray-700">{addTypeManifest.label} variants</p>
                 <button onClick={() => setAddSectionType(null)} className="text-[11px] text-gray-500 hover:text-gray-800">Back</button>
               </div>
-              <div className="max-h-56 overflow-y-auto space-y-1">
+              <div className="max-h-64 overflow-y-auto grid grid-cols-1 gap-2">
                 {addTypeManifest.variantMeta.map((v) => (
                   <button
                     key={v.id}
@@ -197,6 +205,14 @@ export const BuilderInspectorPanel: React.FC = () => {
                     }}
                     className="w-full text-left rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 hover:bg-rose-50 hover:border-rose-200"
                   >
+                    <div className="rounded border border-gray-200 bg-white p-2 mb-2">
+                      <div className="h-1.5 w-2/3 rounded bg-gray-300 mb-1" />
+                      <div className="h-1.5 w-1/2 rounded bg-gray-200 mb-1.5" />
+                      <div className="grid grid-cols-2 gap-1">
+                        <div className="h-8 rounded bg-gray-100 border border-gray-200" />
+                        <div className="h-8 rounded bg-gray-100 border border-gray-200" />
+                      </div>
+                    </div>
                     <p className="text-xs font-medium text-gray-800">{v.label}</p>
                     <p className="text-[11px] text-gray-500 line-clamp-2">{v.description || 'Clean layout option'}</p>
                   </button>
