@@ -52,6 +52,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertBusy, setAlertBusy] = useState(false);
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
   const [coordinatorRole, setCoordinatorRole] = useState<CoordinatorRole>('owner');
+  const [alertChannelFilter, setAlertChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [qnaInput, setQnaInput] = useState('');
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
@@ -222,6 +223,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }, new Map<string, number>()).entries()).slice(0, 3);
     return { total, scheduled, immediate, sms, email, byAudience };
   }, [alertLog]);
+
+  const filteredAlertLog = useMemo(
+    () => alertLog.filter((a) => alertChannelFilter === 'all' || a.channel === alertChannelFilter),
+    [alertLog, alertChannelFilter],
+  );
 
   const sendDayOfAlert = async () => {
     if (!siteId || !alertForm.subject.trim() || !alertForm.body.trim()) return;
@@ -489,7 +495,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 </button>
                 {alertLog.length > 0 && (
                   <div className="pt-1 space-y-1.5">
-                    {alertLog.slice(0, 3).map((item) => (
+                    <div className="flex gap-1.5">
+                      <button type="button" onClick={() => setAlertChannelFilter('all')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>All</button>
+                      <button type="button" onClick={() => setAlertChannelFilter('email')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'email' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Email</button>
+                      <button type="button" onClick={() => setAlertChannelFilter('sms')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'sms' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>SMS</button>
+                    </div>
+                    {filteredAlertLog.slice(0, 4).map((item) => (
                       <div key={item.id} className="text-[11px] text-text-tertiary border border-border/50 rounded-md px-2 py-1.5">
                         {item.subject} · {item.channel.toUpperCase()} · {item.audience}{item.sendAt ? ` · Scheduled ${new Date(item.sendAt).toLocaleString()}` : ''}
                       </div>
