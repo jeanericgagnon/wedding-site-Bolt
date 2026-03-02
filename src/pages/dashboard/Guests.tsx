@@ -3104,8 +3104,7 @@ Proceed with send?`)) return;
                       <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
                         <div className="flex items-center gap-2">
                           <Home className="w-4 h-4 text-text-tertiary" />
-                          <span className="font-semibold text-text-primary text-sm">Group</span>
-                          <span className="text-xs text-text-tertiary break-words">({members.length} guests · {confirmed} confirmed · {pending} pending)</span>
+                          <span className="text-xs text-text-tertiary break-words">{members.length} guests · {confirmed} confirmed · {pending} pending</span>
                         </div>
                         <button
                           onClick={() => setCollapsedHouseholds(prev => {
