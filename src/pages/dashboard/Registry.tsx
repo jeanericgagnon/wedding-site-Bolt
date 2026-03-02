@@ -816,6 +816,9 @@ export const DashboardRegistry: React.FC = () => {
               align="left"
               menuRef={registryActionsRef}
             >
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setShowImageIssuesOnly(true); setShowAlertsOnly(false); setRegistryActionsOpen(false); }}>
+                Focus image issues
+              </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
                 Bulk Import URLs
               </Button>
@@ -899,6 +902,14 @@ export const DashboardRegistry: React.FC = () => {
             >
               {showImageIssuesOnly ? 'Showing image issues' : 'Show image issues'}
             </button>
+            {showImageIssuesOnly && (
+              <button
+                onClick={() => setShowImageIssuesOnly(false)}
+                className="px-2 py-1 rounded-full border border-border text-text-tertiary"
+              >
+                Clear
+              </button>
+            )}
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">
               Alerts: {alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}
             </span>
