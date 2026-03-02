@@ -957,6 +957,7 @@ export const DashboardRegistry: React.FC = () => {
               <button className="text-text-tertiary hover:text-text-primary" onClick={() => setBulkImportOpen(false)}>Close</button>
             </div>
             <p className="text-sm text-text-secondary">Paste one URL per line (up to 30). We'll auto-fetch metadata and add items.</p>
+            <p className="text-xs text-text-tertiary">If some URLs are skipped, you'll see invalid/fetch-failed examples so you can quickly fix and retry.</p>
             <textarea
               value={bulkUrls}
               onChange={(e) => setBulkUrls(e.target.value)}

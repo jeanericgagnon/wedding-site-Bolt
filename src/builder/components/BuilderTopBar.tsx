@@ -143,6 +143,14 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [showPhotoTips]);
 
+  React.useEffect(() => {
+    if (!showPublishChecklist) return;
+    if (checklistDoneCount === checklistItems.length) {
+      const t = window.setTimeout(() => setShowPublishChecklist(false), 900);
+      return () => window.clearTimeout(t);
+    }
+  }, [showPublishChecklist, checklistDoneCount, checklistItems.length]);
+
   return (
     <>
     <header className="min-h-14 bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-3 md:px-4 py-2 md:py-0 gap-2 md:gap-3 z-50 sticky top-0">
