@@ -14,9 +14,23 @@ Apply in order:
 1. `20260302073000_add_wedding_site_collaborator_rbac.sql`
 2. `20260302080000_add_sms_inbound_rsvp_events.sql`
 
+### CLI (copy/paste)
+
+```bash
+supabase db push --include-all
+```
+
+Or if running individual files in SQL editor, keep the exact order above.
+
 ## Edge functions to deploy
 
 - `sms-rsvp-inbound`
+
+### CLI (copy/paste)
+
+```bash
+supabase functions deploy sms-rsvp-inbound
+```
 
 ## Required external configuration
 
@@ -83,3 +97,35 @@ For first 24 hours:
 - Monitor `sms_inbound_rsvp_events` for error spikes
 - Sample check `messages`/`message_deliveries` telemetry for failures
 - Confirm no role escalation issues in dashboard write paths
+
+### SQL spot checks
+
+```sql
+-- recent inbound SMS processing results
+select process_result, count(*)
+from sms_inbound_rsvp_events
+where created_at > now() - interval '24 hours'
+group by process_result
+order by count(*) desc;
+
+-- failed inbound rows with reasons
+select created_at, from_number, process_result, process_error
+from sms_inbound_rsvp_events
+where process_result in ('failed','unmatched','needs_clarification')
+order by created_at desc
+limit 50;
+
+-- collaborator role distribution
+select role, count(*)
+from wedding_site_collaborators
+group by role;
+```
+
+## Deploy-ready sequence
+
+1. Pull latest `main`
+2. Apply DB migrations
+3. Deploy function
+4. Run smoke gate
+5. Verify Twilio webhook reply flow with YES/NO
+6. Confirm dashboard role enforcement with a viewer account
