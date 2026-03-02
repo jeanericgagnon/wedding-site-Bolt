@@ -116,6 +116,13 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24 * 7;
   const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
   const outOfStock = (item.availability || '').toLowerCase().includes('out');
+  const imageSource = (() => {
+    const src = (item.image_url || '').toLowerCase();
+    if (src.includes('thum.io') || src.includes('weserv.nl')) return { label: 'Image: Fallback', tone: 'neutral' as const, hint: 'Using a screenshot/proxy fallback image.' };
+    if (item.image_url) return { label: 'Image: Direct', tone: 'success' as const, hint: 'Using a direct product image URL.' };
+    if (item.item_url || item.canonical_url) return { label: 'Image: Auto', tone: 'warning' as const, hint: 'Using auto-fetched image metadata from product URL.' };
+    return { label: 'Image: Missing', tone: 'error' as const, hint: 'No image source available yet.' };
+  })();
   const asOfLabel = item.metadata_last_checked_at
     ? new Date(item.metadata_last_checked_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
@@ -318,6 +325,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           {priceChanged && <Badge variant="success">Price changed</Badge>}
           {stale && <Badge variant="neutral">Needs refresh</Badge>}
           {failCount > 0 && <Badge variant="error">Retry {failCount}</Badge>}
+          <span title={imageSource.hint}>
+            <Badge variant={imageSource.tone}>{imageSource.label}</Badge>
+          </span>
         </div>
 
         {item.purchaser_name && item.purchase_status !== 'available' && (
