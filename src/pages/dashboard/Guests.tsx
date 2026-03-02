@@ -3100,8 +3100,8 @@ Proceed with send?`)) return;
                   const confirmed = members.filter((m) => m.rsvp_status === 'confirmed').length;
                   const pending = members.filter((m) => m.rsvp_status === 'pending').length;
                   return (
-                    <div key={householdId} className="border border-border rounded-xl overflow-hidden">
-                      <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
+                    <div key={householdId} className="border border-border/60 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-border/70">
                         <div className="flex items-center gap-2">
                           <Home className="w-4 h-4 text-text-tertiary" />
                           <span className="text-xs text-text-tertiary break-words">{members.length} guests · {confirmed} confirmed · {pending} pending</span>
@@ -3119,7 +3119,7 @@ Proceed with send?`)) return;
                         </button>
                       </div>
                       {!collapsedHouseholds.has(householdId) && (
-                        <div className="divide-y divide-border-subtle">
+                        <div className="divide-y divide-border-subtle/80 bg-surface-subtle/20">
                           {members.map(guest => {
                             const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
                             return (
