@@ -205,6 +205,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const canEdit = coordinatorRole !== 'viewer';
 
+  const alertStats = useMemo(() => {
+    const total = alertLog.length;
+    const scheduled = alertLog.filter((a) => !!a.sendAt).length;
+    const immediate = total - scheduled;
+    const sms = alertLog.filter((a) => a.channel === 'sms').length;
+    const email = alertLog.filter((a) => a.channel === 'email').length;
+    const byAudience = Array.from(alertLog.reduce((map, item) => {
+      map.set(item.audience, (map.get(item.audience) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>()).entries()).slice(0, 3);
+    return { total, scheduled, immediate, sms, email, byAudience };
+  }, [alertLog]);
+
   const sendDayOfAlert = async () => {
     if (!siteId || !alertForm.subject.trim() || !alertForm.body.trim()) return;
     const scheduledFor = alertForm.scheduleType === 'later' && alertForm.scheduleDate && alertForm.scheduleTime
@@ -350,6 +363,36 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
             <div className="border-t border-border/60 pt-3">
               <p className="text-sm font-medium text-text-primary mb-2">Day-of Alert</p>
+
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+                {[
+                  ['Queued', alertStats.total],
+                  ['Send now', alertStats.immediate],
+                  ['Scheduled', alertStats.scheduled],
+                  ['SMS', alertStats.sms],
+                  ['Email', alertStats.email],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-md border border-border/40 bg-surface-subtle/40 px-2 py-1.5">
+                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">{label}</p>
+                    <p className="text-xs font-semibold text-text-primary">{value}</p>
+                  </div>
+                ))}
+              </div>
+              {alertStats.byAudience.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {alertStats.byAudience.map(([audience, count]) => (
+                    <button
+                      key={audience}
+                      type="button"
+                      onClick={() => setAlertForm((prev) => ({ ...prev, audience }))}
+                      className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                    >
+                      {audience} ({count})
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <fieldset disabled={!canEdit} className="space-y-2.5">
                 <Input
                   value={alertForm.subject}
