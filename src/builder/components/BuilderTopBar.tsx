@@ -545,7 +545,14 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             Photo tips
           </button>
           <button
-            onClick={onPublish}
+            onClick={() => {
+              if (publishValidationError) {
+                setShowPublishChecklist(true);
+                setShowBlockedDetails(true);
+                return;
+              }
+              onPublish();
+            }}
             disabled={isPublishDisabled}
             aria-label={publishValidationError ? `Publish blocked: ${publishValidationError}` : 'Publish site'}
             title={publishValidationError ? `${publishValidationError} (⌘⇧P)` : 'Publish site (⌘⇧P)'}
