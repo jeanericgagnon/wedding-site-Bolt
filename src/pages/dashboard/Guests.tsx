@@ -734,13 +734,7 @@ export const DashboardGuests: React.FC = () => {
           options: (q.type === 'single_choice' || q.type === 'multi_choice') ? (q.options ?? []).map((o) => o.trim()).filter(Boolean) : [],
         }));
 
-      const hasBlankLabel = normalizedQuestions.some((q) => q.label.length === 0);
-      if (hasBlankLabel) {
-        toast('Finish or remove blank question prompts before saving.', 'error');
-        return;
-      }
-
-      const cleanedQuestions = normalizedQuestions;
+      const cleanedQuestions = normalizedQuestions.filter((q) => q.label.length > 0);
 
       const missingOptions = cleanedQuestions.find((q) => (q.type === 'single_choice' || q.type === 'multi_choice') && (q.options?.length ?? 0) < 2);
       if (missingOptions) {
@@ -2401,7 +2395,19 @@ Proceed with send?`)) return;
                   <div key={q.id} className="p-4 border border-border rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">Question {idx + 1}</p>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id)); setRsvpConfigDirty(true); }}>Remove</Button>
+                      <button
+                        type="button"
+                        aria-label="Delete question"
+                        title="Delete question"
+                        className="p-1.5 rounded-md text-text-tertiary hover:text-error hover:bg-error-light"
+                        onClick={() => {
+                          if (!window.confirm('Delete this question?')) return;
+                          setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id));
+                          setRsvpConfigDirty(true);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                     <Input value={q.label} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, label: e.target.value } : x)); setRsvpConfigDirty(true); }} placeholder="Question prompt" />
                     <div className="grid md:grid-cols-3 gap-3">
