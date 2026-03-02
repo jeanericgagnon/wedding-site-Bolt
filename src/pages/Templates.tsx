@@ -270,7 +270,29 @@ export const Templates: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <p className="mt-2 text-[10px] text-neutral-500 truncate">A: {sectionDiff.a.name} · B: {sectionDiff.b.name}</p>
+
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="rounded border border-neutral-200 p-2">
+                    <p className="text-[10px] font-semibold text-neutral-600 mb-1 truncate">A order: {sectionDiff.a.name}</p>
+                    <div className="space-y-1">
+                      {sectionDiff.a.defaultSectionOrder.map((s, idx) => (
+                        <div key={`ao-${s}`} className="text-[10px] text-neutral-700 rounded bg-neutral-50 px-1.5 py-0.5">
+                          {idx + 1}. {s}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded border border-neutral-200 p-2">
+                    <p className="text-[10px] font-semibold text-neutral-600 mb-1 truncate">B order: {sectionDiff.b.name}</p>
+                    <div className="space-y-1">
+                      {sectionDiff.b.defaultSectionOrder.map((s, idx) => (
+                        <div key={`bo-${s}`} className="text-[10px] text-neutral-700 rounded bg-neutral-50 px-1.5 py-0.5">
+                          {idx + 1}. {s}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
