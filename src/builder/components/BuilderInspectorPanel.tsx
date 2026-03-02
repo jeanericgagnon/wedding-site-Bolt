@@ -42,12 +42,21 @@ export const BuilderInspectorPanel: React.FC = () => {
       </div>
       <select
         value={state.selectedSectionId ?? ''}
-        onChange={(e) => dispatch(builderActions.selectSection(e.target.value || null))}
+        onChange={(e) => {
+          const sectionId = e.target.value || null;
+          dispatch(builderActions.selectSection(sectionId));
+          if (sectionId) {
+            requestAnimationFrame(() => {
+              const el = document.querySelector(`[data-section-id="${sectionId}"]`);
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          }
+        }}
         className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700"
       >
         <option value="">Select a section…</option>
-        {activeSections.map((s) => (
-          <option key={s.id} value={s.id}>{getSectionManifest(s.type).label}</option>
+        {activeSections.map((s, idx) => (
+          <option key={s.id} value={s.id}>{idx + 1}. {getSectionManifest(s.type).label}</option>
         ))}
       </select>
       <div className="flex items-center gap-2">
@@ -87,7 +96,8 @@ export const BuilderInspectorPanel: React.FC = () => {
         <button
           onClick={() => {
             if (!activePage || !state.selectedSectionId) return;
-            if (!window.confirm('Remove this section?')) return;
+            const label = getSectionManifest(activeSections[selectedIndex]?.type ?? selectedSection?.type ?? 'hero').label;
+            if (!window.confirm(`Remove section: ${label}?`)) return;
             dispatch(builderActions.removeSection(activePage.id, state.selectedSectionId));
           }}
           disabled={!state.selectedSectionId}
