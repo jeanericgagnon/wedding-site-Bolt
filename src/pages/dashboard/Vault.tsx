@@ -220,24 +220,61 @@ interface VaultCardProps {
 
 function buildAnniversaryRecap(entries: VaultEntry[], years: number): string {
   const sorted = [...entries].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  const picked = sorted.slice(0, 6);
-  const highlights = picked.map((entry) => {
-    const text = (entry.content || '').trim();
-    if (!text) return entry.title || 'A heartfelt message';
-    return text.length > 110 ? `${text.slice(0, 107)}…` : text;
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+
+  const photoEntries = sorted.filter((e) => {
+    const media = (e.media_type || '').toLowerCase();
+    const file = (e.attachment_name || '').toLowerCase();
+    return media === 'photo' || /\.(jpg|jpeg|png|webp|heic)$/i.test(file);
   });
 
-  const mentionCount = entries.length;
-  const warmWords = ['love', 'grateful', 'forever', 'family', 'joy', 'home'];
-  const combined = sorted.map((e) => `${e.title || ''} ${e.content || ''}`.toLowerCase()).join(' ');
-  const themes = warmWords.filter((w) => combined.includes(w));
+  const timelineMoments = sorted.slice(0, 10).map((entry) => {
+    const date = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const title = (entry.title || '').trim();
+    const fileName = (entry.attachment_name || '').trim();
+    const content = (entry.content || '').trim();
+
+    const core = title || content || fileName || 'A shared memory';
+    const cleanCore = core.length > 120 ? `${core.slice(0, 117)}…` : core;
+    return `- ${date}: ${cleanCore}`;
+  });
+
+  const photoHighlights = photoEntries.slice(0, 8).map((entry) => {
+    const date = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const name = (entry.attachment_name || entry.title || 'Captured moment').replace(/[_-]+/g, ' ').trim();
+    return `- ${date}: ${name}`;
+  });
+
+  const textCorpus = sorted.map((e) => `${e.title || ''} ${e.content || ''} ${e.attachment_name || ''}`.toLowerCase()).join(' ');
+  const themes = [
+    'family', 'friends', 'dance', 'ceremony', 'sunset', 'travel', 'laughter', 'home', 'joy', 'gratitude'
+  ].filter((w) => textCorpus.includes(w)).slice(0, 4);
+
+  const openingDate = first ? new Date(first.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null;
+  const closingDate = last ? new Date(last.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null;
+
+  const opening = openingDate && closingDate
+    ? `Over ${openingDate} to ${closingDate}, this ${years}-year chapter unfolds through ${entries.length} saved memories, including ${photoEntries.length} photo moments.`
+    : `This ${years}-year chapter unfolds through ${entries.length} saved memories, including ${photoEntries.length} photo moments.`;
+
+  const themeLine = themes.length > 0
+    ? `The strongest threads are ${themes.join(', ')} — a story of presence, warmth, and shared celebration.`
+    : 'The strongest thread is closeness — the kind of love that shows up in small moments and big celebrations alike.';
 
   return [
-    `A ${years}-year anniversary recap generated from ${mentionCount} memory${mentionCount === 1 ? '' : ' entries'}.`,
-    themes.length > 0 ? `Recurring themes: ${themes.join(', ')}.` : 'Recurring themes: celebration, commitment, and shared memories.',
+    `${years}-Year Anniversary Recap`,
     '',
-    'Highlights:',
-    ...highlights.map((h, i) => `${i + 1}. ${h}`),
+    opening,
+    themeLine,
+    '',
+    'Story arc',
+    ...timelineMoments,
+    '',
+    photoHighlights.length > 0 ? 'Photo highlights' : 'Highlight moments',
+    ...(photoHighlights.length > 0 ? photoHighlights : timelineMoments.slice(0, 5)),
+    '',
+    'Looking back, these memories read like a promise kept: to keep choosing each other, to keep celebrating together, and to keep building a life full of meaning.',
     '',
     '— AI recap draft (editable)'
   ].join('\n');
@@ -399,7 +436,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
               title="Generate AI anniversary recap"
             >
               {generatingRecap ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              {generatingRecap ? 'Generating…' : 'AI recap'}
+              {generatingRecap ? 'Generating…' : 'Generate recap'}
             </button>
           )}
 
