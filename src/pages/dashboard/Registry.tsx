@@ -93,6 +93,7 @@ export const DashboardRegistry: React.FC = () => {
   const [editItem, setEditItem] = useState<RegistryItem | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showAlertsOnly, setShowAlertsOnly] = useState(false);
+  const [showImageIssuesOnly, setShowImageIssuesOnly] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkImportBusy, setBulkImportBusy] = useState(false);
@@ -662,8 +663,10 @@ export const DashboardRegistry: React.FC = () => {
       (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS ||
       ((item.availability || '').toLowerCase().includes('out')) ||
       (item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount);
+    const hasImageIssue = !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl');
     const matchesAlerts = !showAlertsOnly || hasAlert;
-    return matchesSearch && matchesFilter && matchesAlerts;
+    const matchesImageIssues = !showImageIssuesOnly || hasImageIssue;
+    return matchesSearch && matchesFilter && matchesAlerts && matchesImageIssues;
   });
 
 
@@ -722,6 +725,7 @@ export const DashboardRegistry: React.FC = () => {
     stale: items.filter((i) => !i.metadata_last_checked_at || (Date.now() - new Date(i.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24).length,
     priceChanged: items.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
     outOfStock: items.filter((i) => (i.availability || '').toLowerCase().includes('out')).length,
+    imageIssues: items.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
   };
 
 
@@ -889,8 +893,17 @@ export const DashboardRegistry: React.FC = () => {
             >
               {showAlertsOnly ? 'Showing alerts only' : 'Show alerts only'}
             </button>
+            <button
+              onClick={() => setShowImageIssuesOnly((v) => !v)}
+              className={`px-2.5 py-1 rounded-full border ${showImageIssuesOnly ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-border text-text-tertiary'}`}
+            >
+              {showImageIssuesOnly ? 'Showing image issues' : 'Show image issues'}
+            </button>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">
               Alerts: {alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}
+            </span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">
+              Image issues: {alertCounts.imageIssues}
             </span>
             <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>
               Budget used: {Math.round(budgetUtilization * 100)}%
