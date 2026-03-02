@@ -727,13 +727,20 @@ export const DashboardGuests: React.FC = () => {
   const handleSaveRsvpConfig = async () => {
     setRsvpConfigSaving(true);
     try {
-      const cleanedQuestions = rsvpQuestions
+      const normalizedQuestions = rsvpQuestions
         .map((q) => ({
           ...q,
           label: q.label.trim(),
           options: (q.type === 'single_choice' || q.type === 'multi_choice') ? (q.options ?? []).map((o) => o.trim()).filter(Boolean) : [],
-        }))
-        .filter((q) => q.label.length > 0);
+        }));
+
+      const hasBlankLabel = normalizedQuestions.some((q) => q.label.length === 0);
+      if (hasBlankLabel) {
+        toast('Finish or remove blank question prompts before saving.', 'error');
+        return;
+      }
+
+      const cleanedQuestions = normalizedQuestions;
 
       const missingOptions = cleanedQuestions.find((q) => (q.type === 'single_choice' || q.type === 'multi_choice') && (q.options?.length ?? 0) < 2);
       if (missingOptions) {
