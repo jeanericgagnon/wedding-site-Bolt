@@ -137,8 +137,16 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
 
       const { data: userRes } = await supabase.auth.getUser();
-      const userId = userRes.user?.id;
-      if (!userId) throw new Error('Please sign in again.');
+      let userId = userRes.user?.id;
+      if (!userId) {
+        const { data: sessionRes } = await supabase.auth.getSession();
+        userId = sessionRes.session?.user?.id;
+      }
+      if (!userId) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        userId = refreshed.session?.user?.id;
+      }
+      if (!userId) throw new Error('Session expired. Refresh and try again.');
 
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
