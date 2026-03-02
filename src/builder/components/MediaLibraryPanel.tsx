@@ -293,7 +293,17 @@ interface AssetTileProps {
   onSelect?: () => void;
 }
 
-const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, onSelect }) => (
+const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, onSelect }) => {
+  const primarySrc = asset.thumbnailUrl ?? asset.url;
+  const [src, setSrc] = useState(primarySrc);
+  const [failed, setFailed] = useState(false);
+
+  React.useEffect(() => {
+    setSrc(primarySrc);
+    setFailed(false);
+  }, [primarySrc, asset.id]);
+
+  return (
   <div
     className={`group relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 ${
       isPickerMode ? 'cursor-pointer hover:ring-2 hover:ring-rose-400' : ''
@@ -301,12 +311,26 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
     onClick={isPickerMode ? onSelect : undefined}
   >
     {asset.assetType === 'image' ? (
+      failed ? (
+        <div className="w-full h-full flex flex-col items-center justify-center text-center px-2">
+          <Image size={20} className="text-gray-400 mb-1" />
+          <p className="text-[10px] text-gray-500 leading-tight">Preview unavailable</p>
+        </div>
+      ) : (
       <img
-        src={asset.thumbnailUrl ?? asset.url}
+        src={src}
         alt={asset.altText ?? asset.originalFilename}
         className="w-full h-full object-cover"
         loading="lazy"
+        onError={() => {
+          if (src !== asset.url && asset.url) {
+            setSrc(asset.url);
+            return;
+          }
+          setFailed(true);
+        }}
       />
+      )
     ) : (
       <div className="w-full h-full flex items-center justify-center">
         <Image size={24} className="text-gray-400" />
@@ -337,4 +361,5 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
       </div>
     )}
   </div>
-);
+  );
+};
