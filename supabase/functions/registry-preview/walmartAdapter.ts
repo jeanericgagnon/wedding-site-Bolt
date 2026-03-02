@@ -57,7 +57,8 @@ export class WalmartAdapter implements RetailerAdapter {
     if (!image) missing.push('image');
 
     const offers = Array.isArray(jsonLd?.offers) ? jsonLd.offers[0] : jsonLd?.offers;
-    const price = offers?.price ? Number.parseFloat(String(offers.price)) : undefined;
+    const rawPrice = offers?.price ? Number.parseFloat(String(offers.price)) : undefined;
+    const price = this.sanitizePrice(rawPrice);
     if (!price || !Number.isFinite(price)) missing.push('price');
 
     return {
@@ -89,16 +90,17 @@ export class WalmartAdapter implements RetailerAdapter {
     const image = og.image || meta['og:image'] || meta['twitter:image'];
     const rawPrice = meta['product:price:amount'] || meta.price || og.price || '';
     const parsed = rawPrice ? parsePrice(rawPrice) : null;
+    const saneAmount = this.sanitizePrice(parsed?.amount);
 
     const missing: string[] = [];
     if (!image) missing.push('image');
-    if (!parsed?.amount) missing.push('price');
+    if (!saneAmount) missing.push('price');
 
     return {
       title,
       image_url: image || undefined,
-      price_amount: parsed?.amount,
-      price_label: parsed ? `$${parsed.amount.toFixed(2)}` : undefined,
+      price_amount: saneAmount,
+      price_label: saneAmount ? `$${saneAmount.toFixed(2)}` : undefined,
       currency: parsed?.currency ?? 'USD',
       store_name: 'Walmart',
       canonical_url: canonical,
@@ -127,5 +129,11 @@ export class WalmartAdapter implements RetailerAdapter {
       .replace(/\s*at Walmart\.?\s*$/i, '')
       .replace(/^Walmart\.?com\s*-\s*/i, '')
       .trim();
+  }
+
+  private sanitizePrice(amount?: number): number | undefined {
+    if (!amount || !Number.isFinite(amount)) return undefined;
+    if (amount < 1 || amount > 10000) return undefined;
+    return amount;
   }
 }
