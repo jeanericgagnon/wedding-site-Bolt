@@ -5,7 +5,7 @@ import { Card, Button } from '../../components/ui';
 import {
   Lock, Unlock, Plus, Trash2, ChevronDown, ChevronUp, Loader2,
   AlertCircle, Paperclip, Link2, Check, Settings2, ToggleLeft,
-  ToggleRight, GripVertical, X
+  ToggleRight, GripVertical, X, Sparkles
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -218,6 +218,31 @@ interface VaultCardProps {
   onEdit: (config: VaultConfig) => void;
 }
 
+function buildAnniversaryRecap(entries: VaultEntry[], years: number): string {
+  const sorted = [...entries].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  const picked = sorted.slice(0, 6);
+  const highlights = picked.map((entry) => {
+    const text = (entry.content || '').trim();
+    if (!text) return entry.title || 'A heartfelt message';
+    return text.length > 110 ? `${text.slice(0, 107)}…` : text;
+  });
+
+  const mentionCount = entries.length;
+  const warmWords = ['love', 'grateful', 'forever', 'family', 'joy', 'home'];
+  const combined = sorted.map((e) => `${e.title || ''} ${e.content || ''}`.toLowerCase()).join(' ');
+  const themes = warmWords.filter((w) => combined.includes(w));
+
+  return [
+    `A ${years}-year anniversary recap generated from ${mentionCount} memory${mentionCount === 1 ? '' : ' entries'}.`,
+    themes.length > 0 ? `Recurring themes: ${themes.join(', ')}.` : 'Recurring themes: celebration, commitment, and shared memories.',
+    '',
+    'Highlights:',
+    ...highlights.map((h, i) => `${i + 1}. ${h}`),
+    '',
+    '— AI recap draft (editable)'
+  ].join('\n');
+}
+
 const VaultCard: React.FC<VaultCardProps> = ({
   config, entries, weddingDate, siteSlug, showForm,
   onAddEntry, onDeleteEntry, onSaveEntry, onCancelForm, onToggleEnabled, onEdit
@@ -226,6 +251,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [generatingRecap, setGeneratingRecap] = useState(false);
   const [resolvedEntryLinks, setResolvedEntryLinks] = useState<Record<string, string>>({});
   const [resolvingEntryId, setResolvingEntryId] = useState<string | null>(null);
 
@@ -300,6 +326,24 @@ const VaultCard: React.FC<VaultCardProps> = ({
     }
   }
 
+  async function handleGenerateRecap() {
+    if (entries.length === 0 || generatingRecap) return;
+    setGeneratingRecap(true);
+    try {
+      await onSaveEntry({
+        vault_config_id: config.id,
+        vault_year: config.duration_years,
+        title: `${config.duration_years}-Year AI Recap`,
+        content: buildAnniversaryRecap(entries, config.duration_years),
+        author_name: 'DayOf AI Recap',
+        attachment_url: null,
+        attachment_name: null,
+      });
+    } finally {
+      setGeneratingRecap(false);
+    }
+  }
+
   return (
     <Card variant="bordered" padding="lg" className={`transition-all shadow-sm hover:shadow-md border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
@@ -344,6 +388,18 @@ const VaultCard: React.FC<VaultCardProps> = ({
             >
               {copied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
               {copied ? 'Copied!' : 'Share'}
+            </button>
+          )}
+
+          {entries.length > 0 && (
+            <button
+              onClick={() => void handleGenerateRecap()}
+              disabled={generatingRecap}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 text-xs font-medium disabled:opacity-50"
+              title="Generate AI anniversary recap"
+            >
+              {generatingRecap ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {generatingRecap ? 'Generating…' : 'AI recap'}
             </button>
           )}
 
