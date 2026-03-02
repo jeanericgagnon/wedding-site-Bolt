@@ -13,6 +13,7 @@ import {
   extractTitle,
   parsePrice,
   generateFallbackTitle,
+  normalizeAvailability,
 } from './adapterTypes.ts';
 import { normalizeUrl } from './urlNormalizer.ts';
 
@@ -68,7 +69,7 @@ export class AmazonAdapter implements RetailerAdapter {
       price_amount: price,
       price_label: price ? `$${price.toFixed(2)}` : undefined,
       currency: (offers?.priceCurrency ?? 'USD') as string,
-      availability: typeof offers?.availability === 'string' ? offers.availability : undefined,
+      availability: normalizeAvailability(typeof offers?.availability === 'string' ? offers.availability : undefined),
       store_name: 'Amazon',
       canonical_url: canonical,
       confidence_score: missing.length === 0 ? 0.9 : 0.76,

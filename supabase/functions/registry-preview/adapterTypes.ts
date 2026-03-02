@@ -31,6 +31,44 @@ export interface RetailerAdapter {
 }
 
 /**
+ * Normalize heterogeneous availability strings into a stable, UI-friendly vocabulary.
+ */
+export function normalizeAvailability(input?: string | null): string | undefined {
+  if (!input) return undefined;
+  const raw = input.toLowerCase().trim();
+  if (!raw) return undefined;
+
+  if (
+    raw.includes('out of stock') ||
+    raw.includes('unavailable') ||
+    raw.includes('sold out') ||
+    raw.includes('currently unavailable')
+  ) {
+    return 'out_of_stock';
+  }
+
+  if (
+    raw.includes('limited') ||
+    raw.includes('few left') ||
+    raw.includes('low stock') ||
+    raw.includes('only')
+  ) {
+    return 'low_stock';
+  }
+
+  if (
+    raw.includes('in stock') ||
+    raw.includes('available') ||
+    raw.includes('ready to ship') ||
+    raw.includes('ships')
+  ) {
+    return 'in_stock';
+  }
+
+  return 'unknown';
+}
+
+/**
  * Extract JSON-LD Product schema from HTML
  */
 export function extractJsonLdProduct(html: string): any | null {

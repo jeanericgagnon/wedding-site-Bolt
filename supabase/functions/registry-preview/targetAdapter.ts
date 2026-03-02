@@ -13,6 +13,7 @@ import {
   extractTitle,
   parsePrice,
   generateFallbackTitle,
+  normalizeAvailability,
 } from './adapterTypes.ts';
 import { normalizeUrl } from './urlNormalizer.ts';
 
@@ -133,7 +134,7 @@ export class TargetAdapter implements RetailerAdapter {
         price_label: priceLabel || undefined,
         price_amount: priceAmount,
         currency,
-        availability: product.availability || undefined,
+        availability: normalizeAvailability(product.availability),
         store_name: 'Target',
         canonical_url: canonical,
         confidence_score: missing.length === 0 ? 0.95 : 0.75,
@@ -183,7 +184,7 @@ export class TargetAdapter implements RetailerAdapter {
         price_label: priceLabel || undefined,
         price_amount: priceAmount,
         currency,
-        availability: offers?.availability || undefined,
+        availability: normalizeAvailability(offers?.availability),
         store_name: 'Target',
         canonical_url: canonical,
         confidence_score: missing.length === 0 ? 0.9 : 0.7,
