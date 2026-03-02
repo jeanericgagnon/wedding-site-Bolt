@@ -2959,82 +2959,28 @@ Proceed with send?`)) return;
             )}
 
             <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/90 backdrop-blur p-2 rounded-lg border border-border-subtle overflow-hidden">
-              <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => setSortByPriority(v => !v)}
-                    className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
-                  >
-                    {sortByPriority ? 'Priority sort: On' : 'Priority sort: Off'}
-                  </button>
-                  <span className="text-[11px] text-text-tertiary">Issue legend: pending, meal, plus-one, contact, event-decline</span>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2 min-w-0">
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => { setFilterStatus(e.target.value as typeof filterStatus); setViewMode('list'); }}
-                    className="w-full sm:w-auto min-w-0 text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
-                  >
-                    <option value="all">All ({stats.total})</option>
-                    <option value="confirmed">Confirmed ({stats.confirmed})</option>
-                    <option value="declined">Declined ({stats.declined})</option>
-                    <option value="pending">Pending ({stats.pending})</option>
-                  </select>
-
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0 w-full sm:w-auto">
-                    <select
-                      value={extraFilterDraft}
-                      onChange={(e) => setExtraFilterDraft(e.target.value)}
-                      className="w-full sm:w-auto min-w-0 text-sm border border-border rounded-md px-2 py-2 bg-white text-text-primary"
-                    >
-                      <option value="">Add filter…</option>
-                      <option value="ceremony-no">Ceremony No ({rsvpOps.ceremonyNo})</option>
-                      <option value="reception-no">Reception No ({rsvpOps.receptionNo})</option>
-                      <option value="missing-meal">Missing Meal ({rsvpOps.missingMeal})</option>
-                      <option value="plusone-missing">Plus-One Missing ({rsvpOps.plusOneMissingName})</option>
-                      <option value="pending-no-email">Pending No Email ({rsvpOps.pendingNoEmail})</option>
-                      <option value="no-contact">No Contact ({contactStats.withNoContact})</option>
-                      {effectiveItineraryEvents.length > 0 && <option value="" disabled>── Itinerary ──</option>}
-                      {effectiveItineraryEvents.map((event) => (
-                        <React.Fragment key={event.id}>
-                          <option value={`event-invited:${event.id}`}>{event.event_name}: Invited</option>
-                          <option value={`event-not-invited:${event.id}`}>{event.event_name}: Not invited</option>
-                        </React.Fragment>
-                      ))}
-                    </select>
+                  {([
+                    ['all', `All (${stats.total})`],
+                    ['confirmed', `Confirmed (${stats.confirmed})`],
+                    ['declined', `Declined (${stats.declined})`],
+                    ['pending', `Pending (${stats.pending})`],
+                  ] as const).map(([value, label]) => (
                     <button
+                      key={value}
                       type="button"
-                      disabled={!extraFilterDraft}
-                      onClick={() => {
-                        if (!extraFilterDraft) return;
-                        setExtraFilters(prev => prev.includes(extraFilterDraft) ? prev : [...prev, extraFilterDraft]);
-                        setExtraFilterDraft('');
-                      }}
-                      className="w-full sm:w-auto text-xs px-2 py-2 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-50"
+                      onClick={() => { setFilterStatus(value); setExtraFilters([]); }}
+                      className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
+                        filterStatus === value
+                          ? 'bg-primary text-text-inverse border-primary'
+                          : 'bg-white text-text-secondary border-border hover:border-primary/40 hover:text-primary'
+                      }`}
                     >
-                      Add
+                      {label}
                     </button>
-                  </div>
+                  ))}
                 </div>
-
-                {extraFilters.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {extraFilters.map((f) => (
-                      <span key={f} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-primary/30 bg-primary/5 text-[11px] text-primary">
-                        {labelForFilter(f)}
-                        <button
-                          type="button"
-                          onClick={() => setExtraFilters(prev => prev.filter((x) => x !== f))}
-                          className="text-primary/80 hover:text-primary"
-                          aria-label={`Remove ${f}`}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
               <button
                 onClick={() => setViewMode(v => v === 'households' ? 'list' : 'households')}
