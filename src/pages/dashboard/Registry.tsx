@@ -932,12 +932,21 @@ export const DashboardRegistry: React.FC = () => {
               {showImageIssuesOnly ? 'Showing image issues' : 'Show image issues'}
             </button>
             {showImageIssuesOnly && (
-              <button
-                onClick={() => setShowImageIssuesOnly(false)}
-                className="px-2 py-1 rounded-full border border-border text-text-tertiary"
-              >
-                Clear
-              </button>
+              <>
+                <button
+                  onClick={() => void handleRefreshImageIssues()}
+                  disabled={imageRefreshBusy}
+                  className="px-2 py-1 rounded-full border border-sky-200 bg-sky-50 text-sky-700 disabled:opacity-60"
+                >
+                  {imageRefreshBusy ? 'Refreshing…' : 'Fix image issues now'}
+                </button>
+                <button
+                  onClick={() => setShowImageIssuesOnly(false)}
+                  className="px-2 py-1 rounded-full border border-border text-text-tertiary"
+                >
+                  Clear
+                </button>
+              </>
             )}
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">
               Alerts: {alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}
