@@ -20,6 +20,11 @@ export const TemplateDetail: React.FC = () => {
     );
   }
 
+  const relatedTemplates = templateCatalog
+    .filter((t) => t.id !== tpl.id)
+    .filter((t) => t.styleTags.some((tag) => tpl.styleTags.includes(tag)))
+    .slice(0, 3);
+
   const useTemplate = () => {
     localStorage.setItem('dayof.builderV2.selectedTemplate', tpl.id);
     navigate('/setup/names');
@@ -97,10 +102,28 @@ export const TemplateDetail: React.FC = () => {
             </div>
           </div>
 
+          <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+            <p className="text-xs text-neutral-700">You can switch templates later in setup — your core wedding details stay intact.</p>
+          </div>
+
           <div className="mt-6 flex items-center gap-2">
             <button onClick={useTemplate} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Use this template</button>
             <Link to="/templates" className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back to gallery</Link>
           </div>
+
+          {relatedTemplates.length > 0 && (
+            <div className="mt-6">
+              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Similar templates</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {relatedTemplates.map((rel) => (
+                  <Link key={rel.id} to={`/templates/${rel.id}`} className="rounded-lg border border-neutral-200 bg-white p-2 hover:border-rose-300">
+                    <img src={rel.previewImage} alt={rel.name} className="h-20 w-full rounded object-cover" />
+                    <p className="mt-1 text-xs font-medium text-neutral-800">{rel.name}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="fixed bottom-3 left-3 right-3 md:hidden z-20">
