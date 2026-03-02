@@ -1455,7 +1455,10 @@ export const DashboardMessages: React.FC = () => {
 
         <Card variant="bordered" padding="lg">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
-            <h2 className="text-xl font-semibold text-text-primary">Message History</h2>
+            <div>
+              <h2 className="text-xl font-semibold text-text-primary">Message History</h2>
+              <p className="text-xs text-text-tertiary mt-0.5">Filter by status, channel, and audience to triage delivery quickly.</p>
+            </div>
             <div className="flex items-center gap-2 flex-wrap">
               <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value as typeof historyStatusFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
                 <option value="all">All status</option>

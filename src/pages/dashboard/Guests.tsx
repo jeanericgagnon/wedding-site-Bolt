@@ -2896,6 +2896,12 @@ Proceed with send?`)) return;
           </div>
         )}
 
+        {guestsRole !== 'viewer' && (
+          <div className="rounded-lg border border-border/30 bg-white px-3 py-2 text-xs text-text-tertiary">
+            Tip: Use <span className="font-medium text-text-secondary">Actions</span> for exports, reminder runs, and checklist workflows.
+          </div>
+        )}
+
         {!cleanGuestsView && (
         <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-3">

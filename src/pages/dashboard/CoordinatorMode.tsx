@@ -379,7 +379,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
             </div>
 
             <div className="border-t border-border/60 pt-3">
-              <p className="text-sm font-medium text-text-primary mb-2">Day-of Alert</p>
+              <p className="text-sm font-medium text-text-primary mb-1">Day-of Alert</p>
+              <p className="text-[11px] text-text-tertiary mb-2">Use quick actions + filters to route updates faster during live operations.</p>
 
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
                 {[
