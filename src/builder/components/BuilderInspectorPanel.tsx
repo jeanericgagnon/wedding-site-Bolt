@@ -23,6 +23,12 @@ export const BuilderInspectorPanel: React.FC = () => {
     if (selectedSection) setActiveTab('content');
   }, [selectedSection?.id]);
 
+  useEffect(() => {
+    if (simpleMode && (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide')) {
+      setActiveTab('content');
+    }
+  }, [simpleMode, activeTab]);
+
   const selectedIndex = activeSections.findIndex((s) => s.id === state.selectedSectionId);
 
   const quickSectionRail = activePage ? (
@@ -144,6 +150,14 @@ export const BuilderInspectorPanel: React.FC = () => {
   const requiredGuideSteps = guideSteps.filter((s) => !s.optional);
   const guideProgress = Math.round((requiredGuideSteps.filter((s) => s.done).length / Math.max(requiredGuideSteps.length, 1)) * 100);
 
+  const nextAction = (() => {
+    if (!hasMeaningfulContent) return { label: 'Add your content', tab: 'content' as InspectorTab, detail: 'Write headline/body so this section is meaningful.' };
+    if (!hasLayoutCustomization) return { label: 'Pick layout & spacing', tab: 'layout' as InspectorTab, detail: 'Choose a variant and tighten section spacing.' };
+    if (!hasStyleOverrides) return { label: 'Tune visual style', tab: 'style' as InspectorTab, detail: 'Match colors to your wedding palette.' };
+    if (!selectedSection.enabled) return { label: 'Enable this section', tab: 'layout' as InspectorTab, detail: 'This section is currently hidden from your site.' };
+    return { label: 'Preview on mobile', tab: 'layout' as InspectorTab, detail: 'Run a quick mobile pass before publish.' };
+  })();
+
   const handleUpdateSetting = (key: string, value: string | boolean | number) => {
     dispatch(
       builderActions.updateSection(activePage.id, selectedSection.id, {
@@ -237,21 +251,42 @@ export const BuilderInspectorPanel: React.FC = () => {
                 {tab.label}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => {
-                setShowAdvanced((v) => !v);
-                if (showAdvanced && (activeTab === 'style' || activeTab === 'layout' || activeTab === 'data')) {
-                  setActiveTab('content');
-                }
-              }}
-              className="ml-auto rounded border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-600 hover:bg-gray-50"
-            >
-              {showAdvanced ? 'Hide advanced' : 'Show advanced'}
-            </button>
+            {!simpleMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAdvanced((v) => !v);
+                  if (showAdvanced && (activeTab === 'style' || activeTab === 'layout' || activeTab === 'data')) {
+                    setActiveTab('content');
+                  }
+                }}
+                className="ml-auto rounded border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-600 hover:bg-gray-50"
+              >
+                {showAdvanced ? 'Hide advanced' : 'Show advanced'}
+              </button>
+            )}
           </div>
         </div>
       )}
+
+      <div className="mx-4 mt-3 rounded-xl border border-sky-100 bg-sky-50 p-3">
+        <p className="text-[11px] font-semibold text-sky-900">Next step: {nextAction.label}</p>
+        <p className="mt-1 text-[11px] text-sky-800">{nextAction.detail}</p>
+        <button
+          onClick={() => {
+            if ((nextAction.tab === 'style' || nextAction.tab === 'data') && simpleMode) {
+              setSimpleMode(false);
+            }
+            if (nextAction.tab === 'style' || nextAction.tab === 'data') {
+              setShowAdvanced(true);
+            }
+            setActiveTab(nextAction.tab);
+          }}
+          className="mt-2 rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
+        >
+          Take me there
+        </button>
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'guide' && (
