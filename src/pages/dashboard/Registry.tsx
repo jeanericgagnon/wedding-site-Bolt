@@ -752,7 +752,7 @@ export const DashboardRegistry: React.FC = () => {
               label="More"
               open={registryActionsOpen}
               onToggle={() => setRegistryActionsOpen((v) => !v)}
-              align="right"
+              align="left"
               menuRef={registryActionsRef}
             >
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>

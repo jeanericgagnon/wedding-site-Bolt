@@ -17,7 +17,7 @@ export const ActionsMenu: React.FC<{
         {label} <ChevronDown className="w-4 h-4 ml-1" />
       </Button>
       {open && (
-        <div className={`absolute ${alignClass} top-10 z-20 w-56 rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1`}>
+        <div className={`absolute ${alignClass} top-10 z-20 w-56 max-w-[calc(100vw-1.5rem)] rounded-xl border border-border-subtle bg-white p-2 shadow-lg space-y-1`}>
           {children}
         </div>
       )}
