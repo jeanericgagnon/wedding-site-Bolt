@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Dayof">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#g)"/>
+  <path d="M256 132c-63 0-114 51-114 114s51 114 114 114 114-51 114-114-51-114-114-114zm0 42c40 0 72 32 72 72s-32 72-72 72-72-32-72-72 32-72 72-72z" fill="#fff"/>
+  <circle cx="256" cy="246" r="22" fill="#fff"/>
+</svg>

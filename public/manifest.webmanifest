@@ -8,12 +8,7 @@
   "theme_color": "#111827",
   "icons": [
     {
-      "src": "/image.png",
-      "sizes": "any",
-      "type": "image/png"
-    },
-    {
-      "src": "/vite.svg",
+      "src": "/app-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }
