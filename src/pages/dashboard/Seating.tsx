@@ -17,6 +17,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
+import { supabase } from '../../lib/supabase';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -1223,7 +1224,20 @@ export const DashboardSeating: React.FC = () => {
         await loadSeatingData();
       }
       toast(checkedIn ? 'Guest marked arrived' : 'Arrival removed', 'success');
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.toLowerCase() : '';
+      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
+      if (!isDemoMode && authish) {
+        try {
+          await supabase.auth.refreshSession();
+          await setGuestCheckedIn(seatingEvent.id, guestId, checkedIn);
+          await loadSeatingData();
+          toast(checkedIn ? 'Guest marked arrived' : 'Arrival removed', 'success');
+          return;
+        } catch {
+          // fall through
+        }
+      }
       toast('Couldn’t update check-in right now. Please try again.', 'error');
     }
   }

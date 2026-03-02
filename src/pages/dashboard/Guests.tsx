@@ -1113,14 +1113,19 @@ export const DashboardGuests: React.FC = () => {
       toast('Check-in is unavailable in demo mode.', 'error');
       return;
     }
-    try {
-      const nextValue = guest.checked_in_at ? null : new Date().toISOString();
+
+    const nextValue = guest.checked_in_at ? null : new Date().toISOString();
+    const updateCheckin = async () => {
       const { error } = await supabase
         .from('guests')
         .update({ checked_in_at: nextValue })
         .eq('id', guest.id)
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
+    };
+
+    try {
+      await updateCheckin();
       await fetchGuests();
       if (nextValue) {
         const guestName = (guest.first_name || guest.last_name)
@@ -1129,7 +1134,20 @@ export const DashboardGuests: React.FC = () => {
         setLastCheckIn({ guestId: guest.id, guestName, at: Date.now() });
       }
       toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.toLowerCase() : '';
+      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
+      if (authish) {
+        try {
+          await supabase.auth.refreshSession();
+          await updateCheckin();
+          await fetchGuests();
+          toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
+          return;
+        } catch {
+          // fall through to canonical error toast
+        }
+      }
       toast('Failed to update check-in status', 'error');
     }
   };

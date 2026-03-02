@@ -142,11 +142,12 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
-  async function load() {
+  async function load(retried = false) {
     try {
       setLoading(true);
       setError(null);
 
+      await supabase.auth.getSession();
       const { data: userRes } = await supabase.auth.getUser();
       let userId = userRes.user?.id;
       if (!userId) {
@@ -204,6 +205,13 @@ export const GuestPhotoSharing: React.FC = () => {
       });
       setWindowDrafts(nextDrafts);
     } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message.toLowerCase() : '';
+      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
+      if (authish && !retried) {
+        await supabase.auth.refreshSession();
+        await load(true);
+        return;
+      }
       setError((err as Error)?.message || 'Failed to load photo sharing.');
     } finally {
       setLoading(false);
