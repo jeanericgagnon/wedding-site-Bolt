@@ -365,6 +365,7 @@ export const DashboardGuests: React.FC = () => {
   }, [campaignLog]);
 
   const [viewMode, setViewMode] = useState<'list' | 'households'>('households');
+  const [checkInMode, setCheckInMode] = useState(false);
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
   const [householdBusy, setHouseholdBusy] = useState(false);
 
@@ -3156,9 +3157,9 @@ Proceed with send?`)) return;
                 </div>
               </div>
               <button
-                onClick={() => setViewMode(v => v === 'households' ? 'list' : 'households')}
+                onClick={() => { setCheckInMode(false); setViewMode(v => v === 'households' ? 'list' : 'households'); }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors border whitespace-nowrap shrink-0 ${
-                  viewMode === 'households'
+                  viewMode === 'households' && !checkInMode
                     ? 'bg-primary text-text-inverse border-primary'
                     : 'text-text-secondary border-border hover:border-primary hover:text-primary'
                 }`}
@@ -3166,8 +3167,31 @@ Proceed with send?`)) return;
                 <Home className="w-3.5 h-3.5" />
                 Households
               </button>
+              <button
+                onClick={() => { setCheckInMode(v => !v); setViewMode('list'); }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors border whitespace-nowrap shrink-0 ${
+                  checkInMode
+                    ? 'bg-success text-white border-success'
+                    : 'text-text-secondary border-border hover:border-success/60 hover:text-success'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Check-in mode
+              </button>
             </div>
 
+
+            {checkInMode && (
+              <div className="mb-3 flex items-center justify-between px-4 py-2.5 bg-success/10 border border-success/25 rounded-xl">
+                <span className="text-sm font-medium text-success">Check-in mode active · {guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length} checked in</span>
+                <button
+                  onClick={() => setFilterStatus('checked-in')}
+                  className="text-xs px-2 py-1 rounded-md border border-success/30 bg-white text-success hover:bg-success/5"
+                >
+                  View checked-in
+                </button>
+              </div>
+            )}
 
             {selectedGuestIds.size > 0 && viewMode === 'list' && (
               <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-xl">
@@ -3371,55 +3395,70 @@ Proceed with send?`)) return;
                           </td>
                           <td className="px-4 py-2.5 text-right" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-end gap-1.5">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="px-2 py-1 text-xs"
-                                onClick={() => openItineraryDrawer(guest)}
-                                title="Manage event invitations"
-                              >
-                                <CalendarDays className="w-4 h-4 mr-1" />
-                                Events
-                              </Button>
-                              {guest.email && (
+                              {checkInMode ? (
                                 <Button
-                                  variant="ghost"
+                                  variant={guest.checked_in_at ? 'outline' : 'primary'}
                                   size="sm"
-                                  className="px-2 py-1 text-xs"
-                                  onClick={() => handleSendInvitation(guest)}
-                                  disabled={sendingInviteId === guest.id}
-                                  title={guest.invite_token ? 'Send invitation email' : 'Send invitation'}
+                                  className={`px-3 py-1.5 text-xs ${guest.checked_in_at ? 'text-success border-success/40' : ''}`}
+                                  onClick={() => handleToggleCheckIn(guest)}
+                                  title={guest.checked_in_at ? 'Clear check-in' : 'Mark checked in'}
                                 >
-                                  <Mail className="w-4 h-4 mr-1" />
-                                  {sendingInviteId === guest.id ? 'Sending…' : 'Invite'}
+                                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                                  {guest.checked_in_at ? 'Checked in' : 'Check in'}
                                 </Button>
+                              ) : (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="px-2 py-1 text-xs"
+                                    onClick={() => openItineraryDrawer(guest)}
+                                    title="Manage event invitations"
+                                  >
+                                    <CalendarDays className="w-4 h-4 mr-1" />
+                                    Events
+                                  </Button>
+                                  {guest.email && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="px-2 py-1 text-xs"
+                                      onClick={() => handleSendInvitation(guest)}
+                                      disabled={sendingInviteId === guest.id}
+                                      title={guest.invite_token ? 'Send invitation email' : 'Send invitation'}
+                                    >
+                                      <Mail className="w-4 h-4 mr-1" />
+                                      {sendingInviteId === guest.id ? 'Sending…' : 'Invite'}
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`px-2 py-1 text-xs ${guest.checked_in_at ? 'text-success' : ''}`}
+                                    onClick={() => handleToggleCheckIn(guest)}
+                                    title={guest.checked_in_at ? 'Clear check-in' : 'Mark checked in'}
+                                  >
+                                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                                    {guest.checked_in_at ? 'Checked in' : 'Check in'}
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)}>
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteGuest(guest.id)}
+                                    disabled={deletingGuestId === guest.id}
+                                    className={`px-2 py-1 text-xs ${confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}`}
+                                  >
+                                    {deletingGuestId === guest.id
+                                      ? 'Removing…'
+                                      : confirmDeleteId === guest.id
+                                      ? 'Confirm?'
+                                      : 'Delete'}
+                                  </Button>
+                                </>
                               )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={`px-2 py-1 text-xs ${guest.checked_in_at ? 'text-success' : ''}`}
-                                onClick={() => handleToggleCheckIn(guest)}
-                                title={guest.checked_in_at ? 'Clear check-in' : 'Mark checked in'}
-                              >
-                                <CheckCircle2 className="w-4 h-4 mr-1" />
-                                {guest.checked_in_at ? 'Checked in' : 'Check in'}
-                              </Button>
-                              <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)}>
-                                Edit
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteGuest(guest.id)}
-                                disabled={deletingGuestId === guest.id}
-                                className={`px-2 py-1 text-xs ${confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}`}
-                              >
-                                {deletingGuestId === guest.id
-                                  ? 'Removing…'
-                                  : confirmDeleteId === guest.id
-                                  ? 'Confirm?'
-                                  : 'Delete'}
-                              </Button>
                             </div>
                           </td>
                         </tr>
