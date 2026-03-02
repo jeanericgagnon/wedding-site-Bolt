@@ -438,6 +438,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                         const pageId = state.activePageId;
                         if (!pageId) return;
                         dispatch(builderActions.addSectionByType(pageId, 'hero'));
+                        setShowPublishChecklist(false);
                       }}
                       className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-100"
                     >

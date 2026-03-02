@@ -368,6 +368,27 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
                 <p className={`mt-1 text-xs ${imageSourceHint.tone}`}>{imageSourceHint.label}</p>
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  {(imageSourceHint.label.includes('Missing') || imageSourceHint.label.includes('Fallback')) && (
+                    <button
+                      type="button"
+                      onClick={() => void handleRefetch()}
+                      disabled={fetching || !(urlInput.trim() || draft.item_url)}
+                      className="text-[11px] rounded border border-border px-2 py-0.5 text-text-secondary hover:border-primary hover:text-primary disabled:opacity-50"
+                    >
+                      Re-fetch from product URL
+                    </button>
+                  )}
+                  {draft.image_url && (
+                    <button
+                      type="button"
+                      onClick={() => set('image_url', '')}
+                      className="text-[11px] rounded border border-border px-2 py-0.5 text-text-secondary hover:border-primary hover:text-primary"
+                    >
+                      Clear image URL
+                    </button>
+                  )}
+                </div>
                 {!imageUrlLooksDirect && (
                   <p className="mt-1 text-xs text-warning">Use a direct image URL (.jpg/.png/etc). Product page URLs may open blank and won’t render as images.</p>
                 )}
