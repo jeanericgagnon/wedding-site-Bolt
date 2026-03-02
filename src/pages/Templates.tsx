@@ -244,6 +244,12 @@ export const Templates: React.FC = () => {
             {sectionDiff && (
               <div className="mt-3 rounded-lg border border-sky-200 bg-white p-2.5">
                 <p className="text-[11px] font-semibold text-sky-800 mb-1">Section order diff</p>
+                <div className="mb-2 flex flex-wrap gap-1.5 text-[10px]">
+                  <span className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-emerald-700">Shared</span>
+                  <span className="rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-amber-700">Only in A</span>
+                  <span className="rounded bg-rose-50 border border-rose-200 px-1.5 py-0.5 text-rose-700">Only in B</span>
+                  <span className="rounded bg-neutral-50 border border-neutral-200 px-1.5 py-0.5 text-neutral-600">Number = section order</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div>
                     <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">Shared</p>

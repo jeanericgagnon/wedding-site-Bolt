@@ -442,6 +442,12 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   {!item.done && item.label === 'No active publish blockers' && publishIssueKind === 'no-enabled-sections' && onFixPublishBlockers && (
                     <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] text-sky-800 hover:bg-sky-100">Go to section</button>
                   )}
+                  {!item.done && item.label === 'No active publish blockers' && publishIssueKind === 'no-pages' && onFixPublishBlockers && (
+                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] text-sky-800 hover:bg-sky-100">Open templates</button>
+                  )}
+                  {!item.done && item.label === 'No active publish blockers' && ['missing-couple-names', 'missing-event-date', 'missing-venue', 'rsvp-disabled'].includes(publishIssueKind ?? '') && onFixPublishBlockers && (
+                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] text-sky-800 hover:bg-sky-100">Open guidance</button>
+                  )}
                   {!item.done && item.label === 'At least one page exists' && (
                     <button
                       onClick={() => {
