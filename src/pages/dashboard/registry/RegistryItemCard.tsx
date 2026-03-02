@@ -130,6 +130,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     ? new Date(item.next_refresh_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null;
   const failCount = item.refresh_fail_count ?? 0;
+  const sourceLabel = item.metadata_source_method ? `Source: ${item.metadata_source_method}` : null;
+  const retailerLabel = item.metadata_retailer ? `Retailer: ${item.metadata_retailer}` : null;
   const goal = item.fund_goal_amount ?? 0;
   const received = item.fund_received_amount ?? 0;
   const fundPct = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
@@ -328,6 +330,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           <span title={imageSource.hint}>
             <Badge variant={imageSource.tone}>{imageSource.label}</Badge>
           </span>
+          {sourceLabel && <Badge variant="neutral">{sourceLabel}</Badge>}
+          {retailerLabel && <Badge variant="neutral">{retailerLabel}</Badge>}
         </div>
         {(imageSource.label === 'Image: Missing' || imageSource.label === 'Image: Fallback') && (
           <p className="text-[11px] text-text-tertiary">

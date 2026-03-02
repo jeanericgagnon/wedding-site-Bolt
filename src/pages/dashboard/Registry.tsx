@@ -154,6 +154,8 @@ export const DashboardRegistry: React.FC = () => {
       metadata_last_checked_at: null,
       metadata_fetch_status: null,
       metadata_confidence_score: null,
+      metadata_source_method: null,
+      metadata_retailer: null,
       previous_price_amount: null,
       price_last_changed_at: null,
       next_refresh_at: null,
@@ -296,6 +298,8 @@ export const DashboardRegistry: React.FC = () => {
           metadata_last_checked_at: new Date().toISOString(),
           metadata_fetch_status: 'manual',
           metadata_confidence_score: null,
+          metadata_source_method: 'manual',
+          metadata_retailer: null,
           previous_price_amount: null,
           price_last_changed_at: null,
           next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
@@ -383,9 +387,11 @@ export const DashboardRegistry: React.FC = () => {
       const preview = await fetchUrlPreview(url, true);
       const fields: Partial<RegistryItem> = {
         metadata_last_checked_at: new Date().toISOString(),
-      next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
+        next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
         metadata_fetch_status: preview.fetch_status ?? 'success',
         metadata_confidence_score: preview.confidence_score ?? null,
+        metadata_source_method: preview.source_method ?? null,
+        metadata_retailer: preview.retailer ?? null,
         availability: preview.availability ?? null,
       };
       if (preview.title && !item.item_name) fields.item_name = preview.title;
@@ -507,6 +513,7 @@ export const DashboardRegistry: React.FC = () => {
           const updated = await updateRegistryItem(item.id, {
             refresh_fail_count: nextFail,
             metadata_fetch_status: 'error',
+            metadata_source_method: null,
             last_auto_refreshed_at: new Date().toISOString(),
             next_refresh_at: retryAt,
           });
