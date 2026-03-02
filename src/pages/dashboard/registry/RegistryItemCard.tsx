@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Badge } from '../../../components/ui';
 import type { RegistryItem, PurchaseStatus } from './registryTypes';
@@ -91,6 +91,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [refetching, setRefetching] = useState(false);
   const [copiedHint, setCopiedHint] = useState<string | null>(null);
+  const [imgFailed, setImgFailed] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCashFund = item.item_type === 'cash_fund';
@@ -160,6 +161,10 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
       setTimeout(() => setCopiedHint(null), 1800);
     }
   }
+
+  useEffect(() => {
+    setImgFailed(false);
+  }, [item.id, item.image_url]);
 
   if (isCashFund) {
     return (
@@ -231,14 +236,12 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
       )}
 
       <div className="relative aspect-[4/3] bg-surface-subtle flex-shrink-0">
-        {item.image_url ? (
+        {item.image_url && !imgFailed ? (
           <img
             src={item.image_url}
             alt={item.item_name}
             className={`w-full h-full object-cover transition-opacity ${isPurchased ? 'opacity-40' : ''}`}
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = 'none';
-            }}
+            onError={() => setImgFailed(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
