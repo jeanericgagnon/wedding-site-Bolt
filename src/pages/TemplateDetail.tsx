@@ -30,6 +30,11 @@ export const TemplateDetail: React.FC = () => {
       <div className="mx-auto max-w-5xl rounded-xl border border-neutral-200 bg-white overflow-hidden">
         <img src={tpl.previewImage} alt={tpl.name} className="h-56 md:h-72 w-full object-cover" />
         <div className="p-6">
+          <div className="mb-4 flex flex-wrap gap-2 text-[11px]">
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">Website + RSVP + Registry + Day-of ready</span>
+            <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-sky-700">No coding required</span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">Publish when you’re ready</span>
+          </div>
           <p className="text-xs uppercase updates-wide text-neutral-500">Design family: {tpl.designFamily}</p>
           <h1 className="mt-1 text-3xl font-bold text-neutral-900">{tpl.name}</h1>
           <p className="mt-3 text-sm text-neutral-600 max-w-3xl">{tpl.description}</p>
@@ -74,13 +79,21 @@ export const TemplateDetail: React.FC = () => {
                 {tpl.bestFor.map((fit) => <li key={fit} className="text-xs text-neutral-700">• {fit}</li>)}
               </ul>
             </div>
-            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-3">
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-2">
               <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Included modules</p>
               <div className="flex flex-wrap gap-1.5">
                 {tpl.includedModules.map((mod) => (
                   <span key={mod} className="rounded bg-emerald-50 border border-emerald-200 px-2 py-1 text-xs text-emerald-700">{mod}</span>
                 ))}
               </div>
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-1">
+              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Fast start</p>
+              <ol className="space-y-1 text-xs text-neutral-700 list-decimal list-inside">
+                <li>Use this template</li>
+                <li>Add your names + date</li>
+                <li>Publish when ready</li>
+              </ol>
             </div>
           </div>
 
