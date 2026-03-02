@@ -110,6 +110,29 @@ export const Templates: React.FC = () => {
           <span>Tip: preview before selecting for better section fit.</span>
         </div>
 
+        {recommendedTemplateIds.length > 0 && (
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50/60 p-3">
+            <p className="text-xs font-semibold uppercase updates-wide text-rose-700 mb-2">Recommended for you</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {templateCatalog
+                .filter((tpl) => recommendedTemplateIds.includes(tpl.id))
+                .slice(0, 3)
+                .map((tpl) => (
+                  <button
+                    key={`rec-${tpl.id}`}
+                    type="button"
+                    onClick={() => useTemplate(tpl.id)}
+                    className="text-left rounded-lg border border-rose-200 bg-white p-2 hover:border-rose-300"
+                  >
+                    <img src={tpl.previewImage} alt={tpl.name} className="h-20 w-full object-cover rounded" />
+                    <p className="mt-1 text-xs font-medium text-neutral-900">{tpl.name}</p>
+                    <p className="text-[11px] text-neutral-500">Use template</p>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((tpl) => (
             <div key={tpl.id} className={`rounded-xl border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-rose-300 ring-1 ring-rose-100' : 'border-neutral-200'}`}>
