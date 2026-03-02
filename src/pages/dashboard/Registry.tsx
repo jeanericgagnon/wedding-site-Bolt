@@ -50,6 +50,25 @@ const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
   { key: 'purchased', label: 'Purchased' },
 ];
 
+const DIRECT_IMAGE_HOST_HINTS = ['images-na.ssl-images-amazon.com', 'm.media-amazon.com', 'cdn', 'images'];
+const IMAGE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|heic)(\?.*)?$/i;
+
+function normalizeRegistryImageUrl(raw: string): string | null {
+  const v = (raw || '').trim();
+  if (!v) return null;
+  try {
+    const u = new URL(v);
+    if (!['http:', 'https:'].includes(u.protocol)) return null;
+    const host = u.hostname.toLowerCase();
+    const path = u.pathname.toLowerCase();
+    if (IMAGE_EXT_RE.test(path)) return u.toString();
+    if (DIRECT_IMAGE_HOST_HINTS.some((h) => host.includes(h)) && !path.includes('/dp/')) return u.toString();
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export const DashboardRegistry: React.FC = () => {
   const { isDemoMode, user } = useAuth();
   const [items, setItems] = useState<RegistryItem[]>([]);
@@ -207,6 +226,11 @@ export const DashboardRegistry: React.FC = () => {
     const parsedReceived = draft.fund_received_amount ? parseFloat(draft.fund_received_amount) : null;
     const isCashFund = draft.item_type === 'cash_fund';
 
+    const normalizedImageUrl = isCashFund ? null : normalizeRegistryImageUrl(draft.image_url || '');
+    if (!isCashFund && draft.image_url.trim() && !normalizedImageUrl) {
+      toast('Image URL must be a direct image file link (not a product page URL).', 'error');
+    }
+
     const fields: Partial<RegistryItem> = {
       item_type: isCashFund ? 'cash_fund' : 'product',
       item_name: draft.item_name.trim(),
@@ -215,7 +239,7 @@ export const DashboardRegistry: React.FC = () => {
       merchant: isCashFund ? null : (draft.merchant || null),
       store_name: isCashFund ? null : (draft.merchant || null),
       item_url: isCashFund ? null : (draft.item_url || null),
-      image_url: isCashFund ? null : (draft.image_url || null),
+      image_url: normalizedImageUrl,
       notes: draft.notes || null,
       quantity_needed: isCashFund ? 1 : (parseInt(draft.desired_quantity) || 1),
       hide_when_purchased: isCashFund ? false : draft.hide_when_purchased,

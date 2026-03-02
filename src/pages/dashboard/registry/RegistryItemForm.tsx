@@ -70,6 +70,18 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const imageUrlLooksDirect = (() => {
+    const v = (draft.image_url || '').trim();
+    if (!v) return true;
+    try {
+      const u = new URL(v);
+      const path = u.pathname.toLowerCase();
+      return /\.(png|jpe?g|webp|gif|avif|heic)(\?.*)?$/i.test(path);
+    } catch {
+      return false;
+    }
+  })();
+
   function set<K extends keyof RegistryItemDraft>(key: K, value: RegistryItemDraft[K]) {
     setDraft(prev => ({ ...prev, [key]: value }));
   }
@@ -328,6 +340,9 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   placeholder="https://…/product-image.jpg"
                   className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
+                {!imageUrlLooksDirect && (
+                  <p className="mt-1 text-xs text-warning">Use a direct image URL (.jpg/.png/etc). Product page URLs may open blank and won’t render as images.</p>
+                )}
               </div>
             </div>}
 
