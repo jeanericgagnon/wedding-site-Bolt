@@ -840,12 +840,35 @@ export const DashboardMessages: React.FC = () => {
     }));
     toast('Save-the-date preset loaded (scheduled for tomorrow at 10:00).', 'success');
   };
+
+  const applyDayOfAlertPreset = () => {
+    setFormData((prev) => ({
+      ...prev,
+      channel: 'sms',
+      audience: 'all',
+      scheduleType: 'now',
+      scheduleDate: '',
+      scheduleTime: '',
+      subject: applyTemplateVariables('Day-of Update'),
+      body: applyTemplateVariables('Quick day-of update: [ADD UPDATE]\n\nPlease arrive 15 minutes early. Reply if you need help finding [VENUE].'),
+    }));
+    toast('Day-of alert preset loaded.', 'info');
+  };
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => g.email).length;
   const recipientsWithPhone = getRecipients(formData.audience).filter(g => g.phone).length;
   const activeRecipients = formData.channel === 'sms' ? recipientsWithPhone : recipientsWithEmail;
   const smsCredits = weddingSite?.sms_credits_balance ?? 0;
   const smsCreditsNeeded = recipientsWithPhone;
   const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
+
+  const deliveryStats = useMemo(() => {
+    const sentish = messages.filter((m) => ['sent', 'partial', 'failed'].includes(m.status));
+    const delivered = sentish.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
+    const failed = sentish.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
+    const targeted = sentish.reduce((sum, m) => sum + getRecipientCount(m), 0);
+    const rate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
+    return { delivered, failed, targeted, rate, scheduled: messages.filter((m) => m.status === 'scheduled').length };
+  }, [messages]);
 
   if (loading) {
     return (
@@ -869,6 +892,21 @@ export const DashboardMessages: React.FC = () => {
 
         
 <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {[
+              ['Scheduled', deliveryStats.scheduled],
+              ['Targeted', deliveryStats.targeted],
+              ['Delivered', deliveryStats.delivered],
+              ['Failed', deliveryStats.failed],
+              ['Delivery Rate', `${deliveryStats.rate}%`],
+            ].map(([label, value]) => (
+              <Card key={String(label)} variant="bordered" padding="md">
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{label}</p>
+                <p className="text-lg font-semibold text-text-primary mt-1">{value}</p>
+              </Card>
+            ))}
+          </div>
+
           {weddingSite?.couple_email && (
             <Card variant="bordered" padding="lg">
               <div className="flex items-center gap-3">
@@ -1241,6 +1279,13 @@ export const DashboardMessages: React.FC = () => {
                     onClick={applySaveTheDatePreset}
                   >
                     Save-the-date preset
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={applyDayOfAlertPreset}
+                  >
+                    Day-of alert preset
                   </Button>
                   <Button
                     size="sm"
