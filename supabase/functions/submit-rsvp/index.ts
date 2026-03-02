@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
     // Look up guest by token
     const { data: guest, error: guestErr } = await adminClient
       .from("guests")
-      .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, token_expires_at, invited_to_ceremony, invited_to_reception, plus_one_allowed")
+      .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, rsvp_status, token_expires_at, invited_to_ceremony, invited_to_reception, plus_one_allowed")
       .eq("invite_token", inviteToken.trim())
       .maybeSingle();
 
@@ -142,19 +142,57 @@ Deno.serve(async (req: Request) => {
       if (insertErr) throw insertErr;
     }
 
-    await adminClient
-      .from("guests")
-      .update({
-        rsvp_status: attending ? "confirmed" : "declined",
-        rsvp_received_at: new Date().toISOString(),
-      })
-      .eq("id", guest.id);
-
     const { data: siteData } = await adminClient
       .from("wedding_sites")
-      .select("couple_email, couple_name_1, couple_name_2, wedding_date, venue_name, rsvp_deadline")
+      .select("couple_email, couple_name_1, couple_name_2, wedding_date, venue_name, rsvp_deadline, rsvp_capacity_limit, rsvp_waitlist_enabled")
       .eq("id", guest.wedding_site_id)
       .maybeSingle();
+
+    let waitlisted = false;
+    if (attending && siteData?.rsvp_capacity_limit && siteData.rsvp_capacity_limit > 0) {
+      const { count: confirmedCount } = await adminClient
+        .from("guests")
+        .select("id", { count: "exact", head: true })
+        .eq("wedding_site_id", guest.wedding_site_id)
+        .eq("rsvp_status", "confirmed");
+
+      const alreadyConfirmed = guest.rsvp_status === "confirmed";
+      const effectiveConfirmed = Math.max(0, Number(confirmedCount || 0) - (alreadyConfirmed ? 1 : 0));
+      if (effectiveConfirmed >= siteData.rsvp_capacity_limit) {
+        if (siteData.rsvp_waitlist_enabled) {
+          waitlisted = true;
+          await adminClient.from("rsvp_waitlist_entries").upsert({
+            wedding_site_id: guest.wedding_site_id,
+            guest_id: guest.id,
+            status: "waiting",
+            source: "web",
+          }, { onConflict: "wedding_site_id,guest_id" });
+
+          await adminClient
+            .from("guests")
+            .update({ rsvp_status: "pending", rsvp_received_at: new Date().toISOString() })
+            .eq("id", guest.id);
+        } else {
+          return json({ error: "This event has reached capacity. Please contact the couple for updates." }, 409);
+        }
+      } else {
+        await adminClient
+          .from("guests")
+          .update({
+            rsvp_status: "confirmed",
+            rsvp_received_at: new Date().toISOString(),
+          })
+          .eq("id", guest.id);
+      }
+    } else {
+      await adminClient
+        .from("guests")
+        .update({
+          rsvp_status: attending ? "confirmed" : "declined",
+          rsvp_received_at: new Date().toISOString(),
+        })
+        .eq("id", guest.id);
+    }
 
     const guestName =
       guest.first_name && guest.last_name
@@ -225,6 +263,7 @@ Deno.serve(async (req: Request) => {
       success: true,
       guestName,
       attending,
+      waitlisted,
       siteData: siteData
         ? {
             coupleName1: siteData.couple_name_1,
