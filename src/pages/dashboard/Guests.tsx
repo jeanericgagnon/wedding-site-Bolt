@@ -781,6 +781,13 @@ export const DashboardGuests: React.FC = () => {
     if (!rsvpConfigLoadedRef.current) return;
     if (!rsvpConfigDirty) return;
 
+    const hasDraftQuestion = rsvpQuestions.some((q) => q.label.trim().length === 0);
+    if (hasDraftQuestion) {
+      setRsvpAutoSaveState('idle');
+      if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
+      return;
+    }
+
     setRsvpAutoSaveState('saving');
 
     if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
