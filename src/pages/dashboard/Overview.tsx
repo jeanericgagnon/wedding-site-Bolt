@@ -321,7 +321,6 @@ export const DashboardOverview: React.FC = () => {
     : [];
 
   const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
-  const nextSetupItem = setupChecklist.find((item) => !item.done) ?? null;
   const publishReadinessItems = buildPublishReadinessItems({
     coupleName1: stats?.coupleName1 ?? '',
     coupleName2: stats?.coupleName2 ?? '',
@@ -421,11 +420,6 @@ export const DashboardOverview: React.FC = () => {
                   </Button>
                 )}
               </>
-            )}
-            {nextSetupItem && !loading && (
-              <Button variant="outline" size="sm" onClick={nextSetupItem.action}>
-                Next step: {nextSetupItem.label}
-              </Button>
             )}
           </div>
         </div>
