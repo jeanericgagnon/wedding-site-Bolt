@@ -915,6 +915,29 @@ export const DashboardMessages: React.FC = () => {
     [messages],
   );
 
+  const segmentPerformance = useMemo(() => {
+    const eventLabelById = new Map<string, string>();
+    itineraryAudienceOptions.forEach((opt) => {
+      const id = opt.value.replace('event:', '');
+      eventLabelById.set(id, opt.label);
+    });
+
+    const map = new Map<string, { sent: number; failed: number; targeted: number }>();
+    messages.forEach((m) => {
+      const audience = m.audience_filter ?? '';
+      if (!audience.startsWith('event:')) return;
+      const eventId = audience.replace('event:', '');
+      const key = eventLabelById.get(eventId) ?? eventId;
+      const prev = map.get(key) ?? { sent: 0, failed: 0, targeted: 0 };
+      if (m.status === 'sent' || m.status === 'partial') prev.sent += 1;
+      if (m.status === 'failed') prev.failed += 1;
+      prev.targeted += getRecipientCount(m);
+      map.set(key, prev);
+    });
+
+    return Array.from(map.entries()).sort((a, b) => b[1].targeted - a[1].targeted).slice(0, 4);
+  }, [messages, itineraryAudienceOptions]);
+
   const historyStatusCounts = useMemo(() => ({
     sent: messages.filter((m) => m.status === 'sent').length,
     scheduled: messages.filter((m) => m.status === 'scheduled').length,
@@ -1513,6 +1536,20 @@ export const DashboardMessages: React.FC = () => {
                     >
                       {retryingMessageId === m.id ? 'Retrying…' : 'Retry'}
                     </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {segmentPerformance.length > 0 && (
+            <div className="rounded-xl border border-border/35 bg-white p-3 mb-4">
+              <p className="text-sm font-medium text-text-primary mb-2">Event segment performance</p>
+              <div className="space-y-2">
+                {segmentPerformance.map(([label, data]) => (
+                  <div key={label} className="rounded-lg border border-border/35 px-2.5 py-2 bg-surface-subtle/40">
+                    <p className="text-sm text-text-primary truncate">{label}</p>
+                    <p className="text-[11px] text-text-tertiary">Targeted {data.targeted} · Sent {data.sent} · Failed {data.failed}</p>
                   </div>
                 ))}
               </div>
