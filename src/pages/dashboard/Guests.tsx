@@ -365,7 +365,6 @@ export const DashboardGuests: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'households'>('households');
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
   const [householdBusy, setHouseholdBusy] = useState(false);
-  const [collapsedHouseholds, setCollapsedHouseholds] = useState<Set<string>>(new Set());
 
   const [csvPreview, setCsvPreview] = useState<Record<string, unknown>[] | null>(null);
   const [csvSkipped, setCsvSkipped] = useState<string[]>([]);
@@ -3097,30 +3096,11 @@ Proceed with send?`)) return;
                 )}
 
                 {households.grouped.map(([householdId, members]) => {
-                  const confirmed = members.filter((m) => m.rsvp_status === 'confirmed').length;
-                  const pending = members.filter((m) => m.rsvp_status === 'pending').length;
                   return (
                     <div key={householdId} className="border border-border/60 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-border/70">
-                        <div className="flex items-center gap-2">
-                          <Home className="w-4 h-4 text-text-tertiary" />
-                          <span className="text-xs text-text-tertiary break-words">{members.length} guests · {confirmed} confirmed · {pending} pending</span>
-                        </div>
-                        <button
-                          onClick={() => setCollapsedHouseholds(prev => {
-                            const next = new Set(prev);
-                            if (next.has(householdId)) next.delete(householdId);
-                            else next.add(householdId);
-                            return next;
-                          })}
-                          className="text-xs px-2 py-1 rounded border border-border text-text-secondary hover:bg-white"
-                        >
-                          {collapsedHouseholds.has(householdId) ? 'Expand' : 'Collapse'}
-                        </button>
-                      </div>
-                      {!collapsedHouseholds.has(householdId) && (
-                        <div className="divide-y divide-border-subtle/80 bg-surface-subtle/20">
-                          {members.map(guest => {
+                      <div className="px-5 py-2 bg-white border-b border-border/70" />
+                      <div className="divide-y divide-border-subtle/80 bg-surface-subtle/20">
+                        {members.map(guest => {
                             const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
                             return (
                               <div key={guest.id} className="flex items-center justify-between px-5 py-3">
@@ -3143,7 +3123,6 @@ Proceed with send?`)) return;
                             );
                           })}
                         </div>
-                      )}
                     </div>
                   );
                 })}
