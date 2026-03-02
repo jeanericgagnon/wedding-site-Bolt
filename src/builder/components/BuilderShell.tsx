@@ -4,7 +4,6 @@ import { builderReducer } from '../state/builderReducer';
 import { builderActions } from '../state/builderActions';
 import { selectActivePage, selectSelectedSection } from '../state/builderSelectors';
 import { BuilderTopBar } from './BuilderTopBar';
-import { BuilderSidebarLibrary } from './BuilderSidebarLibrary';
 import { BuilderCanvas } from './BuilderCanvas';
 import { BuilderInspectorPanel } from './BuilderInspectorPanel';
 import { TemplateGalleryPanel } from './TemplateGalleryPanel';
@@ -329,12 +328,6 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         />
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
-          {state.mode === 'edit' && (
-            <div className="hidden lg:block h-full min-h-0">
-              <BuilderSidebarLibrary activePageId={state.activePageId} />
-            </div>
-          )}
-
           <BuilderCanvas />
 
           {state.mode === 'edit' && (
@@ -383,8 +376,8 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
               <h3 className="text-lg font-semibold text-gray-900">Quick builder walkthrough</h3>
               <p className="mt-1 text-sm text-gray-600">Three fast checks to edit confidently like a pro.</p>
               <ol className="mt-4 space-y-2 text-sm text-gray-700 list-decimal list-inside">
-                <li><span className="font-medium">Left rail:</span> drag sections to reorder and use status chips to spot gaps.</li>
-                <li><span className="font-medium">Canvas:</span> click any section to edit it in the right panel.</li>
+                <li><span className="font-medium">Canvas first:</span> click any section to start editing instantly.</li>
+                <li><span className="font-medium">Right panel:</span> switch between Content / Style / Layout with simple controls.</li>
                 <li><span className="font-medium">Top bar:</span> run desktop/tablet/mobile preview before publish.</li>
               </ol>
               <div className="mt-5 flex items-center justify-end gap-2">

@@ -2,8 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image, Plus, Trash2, Compass, Ruler } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { selectSelectedSection, selectActivePage } from '../state/builderSelectors';
-import { getSectionManifest } from '../registry/sectionManifests';
+import { selectSelectedSection, selectActivePage, selectActivePageSections } from '../state/builderSelectors';
+import { getSectionManifest, getAllSectionManifests } from '../registry/sectionManifests';
 import { BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
 
@@ -15,29 +15,65 @@ export const BuilderInspectorPanel: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = React.useState(false);
   const selectedSection = selectSelectedSection(state);
   const activePage = selectActivePage(state);
+  const activeSections = selectActivePageSections(state);
+  const sectionManifests = React.useMemo(() => getAllSectionManifests(), []);
 
   useEffect(() => {
     if (selectedSection) setActiveTab('content');
   }, [selectedSection?.id]);
 
-  if (!selectedSection || !activePage) {
+  const quickSectionRail = activePage ? (
+    <div className="border-b border-gray-200 p-3 space-y-2 bg-gray-50/70">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Sections</p>
+      <select
+        value={state.selectedSectionId ?? ''}
+        onChange={(e) => dispatch(builderActions.selectSection(e.target.value || null))}
+        className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700"
+      >
+        <option value="">Select a section…</option>
+        {activeSections.map((s) => (
+          <option key={s.id} value={s.id}>{getSectionManifest(s.type).label}</option>
+        ))}
+      </select>
+      <select
+        defaultValue=""
+        onChange={(e) => {
+          const val = e.target.value;
+          if (!val) return;
+          const manifest = sectionManifests.find((m) => m.type === val);
+          if (!manifest || !activePage) return;
+          dispatch(builderActions.addSectionByType(activePage.id, manifest.type, undefined, manifest.defaultVariant));
+          e.currentTarget.value = '';
+        }}
+        className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700"
+      >
+        <option value="">+ Add section…</option>
+        {sectionManifests.map((m) => <option key={m.type} value={m.type}>{m.label}</option>)}
+      </select>
+    </div>
+  ) : null;
+
+  if (!activePage) {
     return (
       <aside className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-6 text-center">
+          <p className="text-sm text-gray-500">No page selected.</p>
+        </div>
+      </aside>
+    );
+  }
+
+  if (!selectedSection) {
+    return (
+      <aside className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
+        {quickSectionRail}
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div className="w-full max-w-xs">
             <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Pencil size={18} className="text-gray-300" />
             </div>
-            <p className="text-sm font-semibold text-gray-600 mb-1">No section selected</p>
-            <p className="text-xs text-gray-400 leading-relaxed mb-4">Click any section on the canvas to open guided editing views.</p>
-            <div className="rounded-xl border border-sky-100 bg-sky-50 p-3 text-left">
-              <p className="text-[11px] font-semibold text-sky-900 mb-1">Quick guide</p>
-              <ul className="space-y-1 text-[11px] text-sky-800">
-                <li>1. Select a section on canvas</li>
-                <li>2. Use Content / Style / Layout views</li>
-                <li>3. Toggle preview for desktop/mobile check</li>
-              </ul>
-            </div>
+            <p className="text-sm font-semibold text-gray-600 mb-1">Select a section to edit</p>
+            <p className="text-xs text-gray-400 leading-relaxed mb-4">Use the section picker above or click directly on the canvas.</p>
           </div>
         </div>
       </aside>
@@ -106,6 +142,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   return (
     <aside className="w-full lg:w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-full overflow-hidden">
+      {quickSectionRail}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
