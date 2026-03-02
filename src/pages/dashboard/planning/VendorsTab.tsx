@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Plus, Edit2, Trash2, Phone, Mail, Globe, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -170,6 +170,8 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   const [showAdd, setShowAdd] = useState(false);
   const [editingVendor, setEditingVendor] = useState<PlanningVendor | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -177,6 +179,29 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   in7Days.setDate(in7Days.getDate() + 7);
 
   const totalBalance = vendors.reduce((s, v) => s + (v.balance_due || 0), 0);
+
+  const filteredVendors = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return vendors;
+    return vendors.filter((v) =>
+      [v.name, v.vendor_type, v.contact_name, v.email, v.phone]
+        .filter(Boolean)
+        .some((val) => String(val).toLowerCase().includes(q))
+    );
+  }, [vendors, search]);
+
+  const vendorStage = (vendor: PlanningVendor): 'due-soon' | 'open-balance' | 'paid' => {
+    const dueSoon = vendor.next_payment_due && vendor.balance_due > 0 && new Date(vendor.next_payment_due) <= in7Days;
+    if (dueSoon) return 'due-soon';
+    if ((vendor.balance_due || 0) > 0) return 'open-balance';
+    return 'paid';
+  };
+
+  const pipelineGroups = {
+    'due-soon': filteredVendors.filter((v) => vendorStage(v) === 'due-soon'),
+    'open-balance': filteredVendors.filter((v) => vendorStage(v) === 'open-balance'),
+    paid: filteredVendors.filter((v) => vendorStage(v) === 'paid'),
+  };
 
   return (
     <div className="space-y-4">
@@ -187,11 +212,25 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        {!canEdit && <p className="text-xs text-text-tertiary">Viewer mode: editing is disabled.</p>}
-        <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
-          <Plus className="w-4 h-4 mr-1" /> Add Vendor
-        </Button>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search vendors"
+            className="px-3 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary"
+          />
+          <div className="inline-flex rounded-lg border border-border overflow-hidden">
+            <button onClick={() => setViewMode('list')} className={`px-2.5 py-1 text-xs ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`}>List</button>
+            <button onClick={() => setViewMode('pipeline')} className={`px-2.5 py-1 text-xs border-l border-border ${viewMode === 'pipeline' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`}>Pipeline</button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {!canEdit && <p className="text-xs text-text-tertiary">Viewer mode: editing is disabled.</p>}
+          <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
+            <Plus className="w-4 h-4 mr-1" /> Add Vendor
+          </Button>
+        </div>
       </div>
 
       {showAdd && (
@@ -201,14 +240,38 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
         />
       )}
 
-      {vendors.length === 0 && !showAdd ? (
+      {filteredVendors.length === 0 && !showAdd ? (
         <Card padding="lg" className="text-center">
-          <p className="text-text-secondary mb-1">No vendors yet.</p>
-          <p className="text-sm text-text-tertiary">Keep all your vendor contacts and payment details in one place.</p>
+          <p className="text-text-secondary mb-1">No vendors found.</p>
+          <p className="text-sm text-text-tertiary">Try a different search or add a new vendor.</p>
         </Card>
+      ) : viewMode === 'pipeline' ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {([
+            ['due-soon', 'Due Soon'],
+            ['open-balance', 'Open Balance'],
+            ['paid', 'Paid'],
+          ] as const).map(([key, label]) => (
+            <div key={key} className="rounded-xl border border-border/35 bg-white p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">{label}</p>
+                <span className="text-xs text-text-secondary">{pipelineGroups[key].length}</span>
+              </div>
+              <div className="space-y-2">
+                {pipelineGroups[key].slice(0, 8).map((vendor) => (
+                  <div key={vendor.id} className="rounded-lg border border-border/35 px-2.5 py-2 bg-surface-subtle/40">
+                    <p className="text-sm text-text-primary font-medium truncate">{vendor.name}</p>
+                    <p className="text-[11px] text-text-tertiary">{vendor.vendor_type} · {fmt(vendor.balance_due || 0)} due</p>
+                  </div>
+                ))}
+                {pipelineGroups[key].length === 0 && <p className="text-xs text-text-tertiary">No vendors</p>}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="space-y-3">
-          {vendors.map(vendor => {
+          {filteredVendors.map(vendor => {
             const isExpanded = expandedId === vendor.id;
             const isDueSoon = vendor.next_payment_due && vendor.balance_due > 0 && new Date(vendor.next_payment_due) <= in7Days;
             const balancePct = vendor.contract_total > 0 ? (vendor.amount_paid / vendor.contract_total) * 100 : 0;
