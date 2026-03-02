@@ -39,11 +39,25 @@ export const GuestContactUpdate: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [rsvpStatus, setRsvpStatus] = useState<'pending' | 'confirmed' | 'declined' | ''>('');
   const [smsConsent, setSmsConsent] = useState(false);
+  const [mailingAddressLine1, setMailingAddressLine1] = useState('');
+  const [mailingAddressLine2, setMailingAddressLine2] = useState('');
+  const [mailingCity, setMailingCity] = useState('');
+  const [mailingState, setMailingState] = useState('');
+  const [mailingPostalCode, setMailingPostalCode] = useState('');
+  const [mailingCountry, setMailingCountry] = useState('');
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const canSubmit = useMemo(() => !!selectedGuestId && (!!email.trim() || !!phone.trim() || !!rsvpStatus), [selectedGuestId, email, phone, rsvpStatus]);
+  const canSubmit = useMemo(() => !!selectedGuestId && (
+    !!email.trim() ||
+    !!phone.trim() ||
+    !!rsvpStatus ||
+    !!mailingAddressLine1.trim() ||
+    !!mailingCity.trim() ||
+    !!mailingPostalCode.trim() ||
+    !!mailingCountry.trim()
+  ), [selectedGuestId, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
 
   async function handleSearch() {
     if (query.trim().length < 2) return;
@@ -92,6 +106,12 @@ export const GuestContactUpdate: React.FC = () => {
           phone: phone.trim() || null,
           rsvp_status: rsvpStatus || null,
           sms_consent: smsConsent,
+          mailing_address_line1: mailingAddressLine1.trim() || null,
+          mailing_address_line2: mailingAddressLine2.trim() || null,
+          mailing_city: mailingCity.trim() || null,
+          mailing_state: mailingState.trim() || null,
+          mailing_postal_code: mailingPostalCode.trim() || null,
+          mailing_country: mailingCountry.trim() || null,
         });
         if ((data as any)?.error) throw new Error((data as any).error);
       }
@@ -156,6 +176,20 @@ export const GuestContactUpdate: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Phone (optional)</label>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle" placeholder="(555) 123-4567" />
+          </div>
+
+          <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3 space-y-2">
+            <p className="text-sm font-medium text-text-primary">Mailing address (optional)</p>
+            <input value={mailingAddressLine1} onChange={(e) => setMailingAddressLine1(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Address line 1" />
+            <input value={mailingAddressLine2} onChange={(e) => setMailingAddressLine2(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Address line 2" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input value={mailingCity} onChange={(e) => setMailingCity(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="City" />
+              <input value={mailingState} onChange={(e) => setMailingState(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="State / Province" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input value={mailingPostalCode} onChange={(e) => setMailingPostalCode(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="ZIP / Postal code" />
+              <input value={mailingCountry} onChange={(e) => setMailingCountry(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Country" />
+            </div>
           </div>
 
           <div>

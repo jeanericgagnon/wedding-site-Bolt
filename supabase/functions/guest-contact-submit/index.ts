@@ -19,6 +19,12 @@ Deno.serve(async (req: Request) => {
     const phone = String(body.phone ?? "").trim() || null;
     const rsvpStatus = String(body.rsvp_status ?? "").trim() || null;
     const smsConsent = Boolean(body.sms_consent ?? false);
+    const mailingAddressLine1 = String(body.mailing_address_line1 ?? '').trim() || null;
+    const mailingAddressLine2 = String(body.mailing_address_line2 ?? '').trim() || null;
+    const mailingCity = String(body.mailing_city ?? '').trim() || null;
+    const mailingState = String(body.mailing_state ?? '').trim() || null;
+    const mailingPostalCode = String(body.mailing_postal_code ?? '').trim() || null;
+    const mailingCountry = String(body.mailing_country ?? '').trim() || null;
 
     if (!siteRef || !guestId) {
       return new Response(JSON.stringify({ error: "Missing site/guest" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -51,6 +57,12 @@ Deno.serve(async (req: Request) => {
     if (email) patch.email = email;
     if (phone) patch.phone = phone;
     if (rsvpStatus && ["pending", "confirmed", "declined"].includes(rsvpStatus)) patch.rsvp_status = rsvpStatus;
+    if (mailingAddressLine1) patch.mailing_address_line1 = mailingAddressLine1;
+    if (mailingAddressLine2) patch.mailing_address_line2 = mailingAddressLine2;
+    if (mailingCity) patch.mailing_city = mailingCity;
+    if (mailingState) patch.mailing_state = mailingState;
+    if (mailingPostalCode) patch.mailing_postal_code = mailingPostalCode;
+    if (mailingCountry) patch.mailing_country = mailingCountry;
     // SMS consent will be handled in a dedicated field in a follow-up migration.
 
     if (Object.keys(patch).length === 0) {
