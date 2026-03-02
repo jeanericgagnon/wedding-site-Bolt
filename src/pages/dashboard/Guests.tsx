@@ -1639,6 +1639,39 @@ Proceed with send?`)) return;
     URL.revokeObjectURL(url);
   };
 
+  const copySmsRsvpLinksForFiltered = async () => {
+    if (!weddingSiteId) {
+      toast('Missing wedding site context', 'error');
+      return;
+    }
+
+    const { data: siteData, error: siteError } = await supabase
+      .from('wedding_sites')
+      .select('site_slug')
+      .eq('id', weddingSiteId)
+      .single();
+    if (siteError || !siteData?.site_slug) {
+      toast('Missing site slug', 'error');
+      return;
+    }
+
+    const rows = reminderCandidates
+      .filter((g) => !!g.invite_token)
+      .map((g) => {
+        const name = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
+        const link = `https://${siteData.site_slug}.dayof.love/rsvp?token=${g.invite_token}`;
+        return `${name}: ${link}`;
+      });
+
+    if (rows.length === 0) {
+      toast('No RSVP links available for this segment.', 'error');
+      return;
+    }
+
+    await navigator.clipboard.writeText(rows.join('\n'));
+    toast(`Copied ${rows.length} SMS RSVP link${rows.length === 1 ? '' : 's'}`, 'success');
+  };
+
   const exportAddressCollectionCSV = () => {
     const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Address Line 1', 'Address Line 2', 'City', 'State/Province', 'ZIP/Postal', 'Country'];
     const rows = guests.map((guest) => {
@@ -3039,6 +3072,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAddressCollectionCSV(); setShowOpsMenu(false); }}>Export addresses (mailing)</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCheckedInCSV(); setShowOpsMenu(false); }}>Export checked-in guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy SMS RSVP links</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || dueReminderCandidatesGlobal.length === 0} onClick={() => { handleSendDueRemindersNow(); setShowOpsMenu(false); }} title={dueReminderCandidatesGlobal.length === 0 ? 'No guests due for reminders' : undefined}>{bulkSending ? 'Sending…' : `Send due reminders (${dueReminderCandidatesGlobal.length})`}</button>
