@@ -185,11 +185,11 @@ export const BuilderInspectorPanel: React.FC = () => {
   const guideProgress = Math.round((requiredGuideSteps.filter((s) => s.done).length / Math.max(requiredGuideSteps.length, 1)) * 100);
 
   const nextAction = (() => {
-    if (!hasMeaningfulContent) return { label: 'Add your content', tab: 'content' as InspectorTab, detail: 'Write headline/body so this section is meaningful.' };
-    if (!hasLayoutCustomization) return { label: 'Pick layout & spacing', tab: 'layout' as InspectorTab, detail: 'Choose a variant and tighten section spacing.' };
-    if (!hasStyleOverrides) return { label: 'Tune visual style', tab: 'style' as InspectorTab, detail: 'Match colors to your wedding palette.' };
-    if (!selectedSection.enabled) return { label: 'Enable this section', tab: 'layout' as InspectorTab, detail: 'This section is currently hidden from your site.' };
-    return { label: 'Preview on mobile', tab: 'layout' as InspectorTab, detail: 'Run a quick mobile pass before publish.' };
+    if (!hasMeaningfulContent) return { key: 'content', cta: 'Open content', label: 'Add your content', tab: 'content' as InspectorTab, detail: 'Write headline/body so this section is meaningful.' };
+    if (!hasLayoutCustomization) return { key: 'layout', cta: 'Open layout', label: 'Pick layout & spacing', tab: 'layout' as InspectorTab, detail: 'Choose a variant and tighten section spacing.' };
+    if (!hasStyleOverrides) return { key: 'style', cta: 'Open style', label: 'Tune visual style', tab: 'style' as InspectorTab, detail: 'Match colors to your wedding palette.' };
+    if (!selectedSection.enabled) return { key: 'visibility', cta: 'Open layout', label: 'Enable this section', tab: 'layout' as InspectorTab, detail: 'This section is currently hidden from your site.' };
+    return { key: 'preview-mobile', cta: 'Preview mobile', label: 'Preview on mobile', tab: 'layout' as InspectorTab, detail: 'Run a quick mobile pass before publish.' };
   })();
 
   const handleUpdateSetting = (key: string, value: string | boolean | number) => {
@@ -309,6 +309,11 @@ export const BuilderInspectorPanel: React.FC = () => {
           <p className="mt-1 text-[11px] text-sky-800">{nextAction.detail}</p>
           <button
             onClick={() => {
+              if (nextAction.key === 'preview-mobile') {
+                dispatch(builderActions.setPreviewViewport('mobile'));
+                dispatch(builderActions.setMode('preview'));
+                return;
+              }
               if ((nextAction.tab === 'style' || nextAction.tab === 'data') && simpleMode) {
                 setSimpleMode(false);
               }
@@ -319,7 +324,7 @@ export const BuilderInspectorPanel: React.FC = () => {
             }}
             className="mt-2 rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
           >
-            Take me there
+            {nextAction.cta}
           </button>
         </div>
       )}
