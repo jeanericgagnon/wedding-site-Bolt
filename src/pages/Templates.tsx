@@ -212,7 +212,7 @@ export const Templates: React.FC = () => {
             <button
               type="button"
               onClick={() => setGroupByStyle((v) => !v)}
-              className="rounded border border-neutral-300 bg-white px-2 py-1 text-[11px] text-neutral-700 hover:bg-neutral-100"
+              className="rounded border border-neutral-300 bg-white px-2 py-1 text-[11px] font-medium text-neutral-700 transition-colors hover:bg-neutral-100"
             >
               {groupByStyle ? 'Flat view' : 'Group by style'}
             </button>
@@ -223,7 +223,7 @@ export const Templates: React.FC = () => {
           <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/60 p-3 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Quick compare</p>
-              <button onClick={() => setCompareIds([])} className="text-[11px] text-sky-700 hover:underline">Clear</button>
+              <button onClick={() => setCompareIds([])} className="text-[11px] font-medium text-sky-700 hover:underline">Clear</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {comparedTemplates.map((tpl) => (
