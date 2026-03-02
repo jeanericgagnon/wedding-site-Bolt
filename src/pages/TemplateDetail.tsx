@@ -59,11 +59,11 @@ export const TemplateDetail: React.FC = () => {
               <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Preview modes</p>
               <div className="grid grid-cols-2 gap-2">
                 <div className="rounded border border-neutral-200 bg-white p-2">
-                  <p className="text-[11px] text-neutral-500 mb-1">Desktop</p>
+                  <p className="text-xs text-neutral-500 mb-1">Desktop</p>
                   <img src={tpl.previewImage} alt={`${tpl.name} desktop preview`} className="h-20 w-full rounded object-cover" />
                 </div>
                 <div className="rounded border border-neutral-200 bg-white p-2">
-                  <p className="text-[11px] text-neutral-500 mb-1">Mobile</p>
+                  <p className="text-xs text-neutral-500 mb-1">Mobile</p>
                   <div className="mx-auto w-16 rounded border border-neutral-200 bg-white p-1">
                     <img src={tpl.previewImage} alt={`${tpl.name} mobile preview`} className="h-20 w-full rounded object-cover" />
                   </div>
@@ -123,13 +123,13 @@ export const TemplateDetail: React.FC = () => {
                         <img src={rel.previewImage} alt={rel.name} className="h-20 w-full rounded object-cover" />
                         <p className="mt-1 text-xs font-medium text-neutral-800">{rel.name}</p>
                       </Link>
-                      <p className="mt-0.5 text-[11px] text-neutral-500">
+                      <p className="mt-0.5 text-xs text-neutral-500">
                         {rel.includedModules.length} modules {moduleDelta === 0 ? '(same depth)' : moduleDelta > 0 ? `(+${moduleDelta} vs current)` : `(${moduleDelta} vs current)`}
                       </p>
                       <button
                         type="button"
                         onClick={() => useTemplate(rel.id)}
-                        className="mt-1.5 w-full rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 hover:bg-rose-100"
+                        className="mt-1.5 w-full rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100"
                       >
                         Use this
                       </button>
