@@ -241,6 +241,12 @@ export const Templates: React.FC = () => {
                 </div>
               ))}
             </div>
+            {!sectionDiff && comparedTemplates.length === 1 && (
+              <div className="mt-2 rounded-lg border border-sky-200 bg-white px-2.5 py-2 text-[11px] text-sky-800">
+                Select one more template to unlock section-by-section comparison.
+              </div>
+            )}
+
             {sectionDiff && (
               <div className="mt-3 rounded-lg border border-sky-200 bg-white p-2.5">
                 <p className="text-[11px] font-semibold text-sky-800 mb-1">Section order diff</p>

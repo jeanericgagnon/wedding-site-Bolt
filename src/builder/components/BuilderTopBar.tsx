@@ -421,7 +421,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </button>
 
         {showPublishChecklist && (
-          <div className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm space-y-1">
+          <div className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm space-y-1 max-h-64 overflow-y-auto">
             <p className="font-semibold text-gray-800 mb-1">Publish readiness</p>
             <ul className="space-y-1">
               {checklistItems.map((item) => (
@@ -454,7 +454,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                         dispatch(builderActions.addPage('Home'));
                         setShowPublishChecklist(false);
                       }}
-                      className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-100"
+                      className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
                     >
                       Add page
                     </button>
@@ -471,7 +471,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                         dispatch(builderActions.addSectionByType(pageId, 'hero'));
                         setShowPublishChecklist(false);
                       }}
-                      className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-100"
+                      className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
                     >
                       Add section
                     </button>
