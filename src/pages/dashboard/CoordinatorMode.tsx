@@ -205,6 +205,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const canEdit = coordinatorRole !== 'viewer';
 
+  const liveEventAudience = useMemo(() => {
+    const live = events.find((e) => (timelineState[e.id] || 'up-next') === 'live');
+    return live ? `event:${live.id}` : null;
+  }, [events, timelineState]);
+
   const alertStats = useMemo(() => {
     const total = alertLog.length;
     const scheduled = alertLog.filter((a) => !!a.sendAt).length;
@@ -378,20 +383,41 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   </div>
                 ))}
               </div>
-              {alertStats.byAudience.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {alertStats.byAudience.map(([audience, count]) => (
-                    <button
-                      key={audience}
-                      type="button"
-                      onClick={() => setAlertForm((prev) => ({ ...prev, audience }))}
-                      className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
-                    >
-                      {audience} ({count})
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {liveEventAudience && (
+                  <button
+                    type="button"
+                    onClick={() => setAlertForm((prev) => ({ ...prev, audience: liveEventAudience }))}
+                    className="text-[11px] px-2 py-1 rounded-full border border-primary/25 bg-primary/5 text-primary hover:bg-primary/10"
+                  >
+                    Target live event
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' }))}
+                  className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                >
+                  Quick SMS now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'email', scheduleType: 'later' }))}
+                  className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                >
+                  Queue email
+                </button>
+                {alertStats.byAudience.map(([audience, count]) => (
+                  <button
+                    key={audience}
+                    type="button"
+                    onClick={() => setAlertForm((prev) => ({ ...prev, audience }))}
+                    className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                  >
+                    {audience} ({count})
+                  </button>
+                ))}
+              </div>
 
               <fieldset disabled={!canEdit} className="space-y-2.5">
                 <Input
