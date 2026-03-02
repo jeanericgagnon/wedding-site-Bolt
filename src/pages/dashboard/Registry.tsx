@@ -514,6 +514,7 @@ export const DashboardRegistry: React.FC = () => {
 
     setBulkImportBusy(true);
     let createdCount = 0;
+    let failedCount = 0;
     for (const url of urls.slice(0, 30)) {
       try {
         const preview = await fetchUrlPreview(url, false);
@@ -540,14 +541,18 @@ export const DashboardRegistry: React.FC = () => {
         setItems(prev => [...prev, created]);
         createdCount += 1;
       } catch {
-        // continue importing
+        failedCount += 1;
       }
     }
 
     setBulkImportBusy(false);
     setBulkImportOpen(false);
     setBulkUrls('');
-    toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} from URLs.`);
+    if (failedCount > 0) {
+      toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} (${failedCount} skipped).`, createdCount > 0 ? 'success' : 'error');
+    } else {
+      toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} from URLs.`);
+    }
   }
 
 
