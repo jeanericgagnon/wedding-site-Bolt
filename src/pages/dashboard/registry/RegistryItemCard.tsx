@@ -8,7 +8,7 @@ interface Props {
   onEdit: (item: RegistryItem) => void;
   onDelete: (id: string) => void;
   onMarkPurchased?: (item: RegistryItem, qty: number) => Promise<void>;
-  onRefetchMetadata?: (item: RegistryItem) => Promise<void>;
+  onRefetchMetadata?: (item: RegistryItem) => Promise<unknown>;
 }
 
 function statusBadge(status: PurchaseStatus, qty: number, needed: number) {

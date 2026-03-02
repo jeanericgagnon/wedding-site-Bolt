@@ -94,6 +94,7 @@ export const DashboardRegistry: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showAlertsOnly, setShowAlertsOnly] = useState(false);
   const [showImageIssuesOnly, setShowImageIssuesOnly] = useState(false);
+  const [imageRefreshBusy, setImageRefreshBusy] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkImportBusy, setBulkImportBusy] = useState(false);
@@ -371,12 +372,12 @@ export const DashboardRegistry: React.FC = () => {
     }
   }
 
-  async function handleRefetchMetadata(item: RegistryItem) {
+  async function handleRefetchMetadata(item: RegistryItem, silent = false) {
     const url = item.item_url ?? item.canonical_url;
-    if (!url) return;
+    if (!url) return false;
     if (isDemoMode) {
-      toast('Demo: sample product details are already populated', 'success');
-      return;
+      if (!silent) toast('Demo: sample product details are already populated', 'success');
+      return true;
     }
     try {
       const preview = await fetchUrlPreview(url, true);
@@ -402,13 +403,38 @@ export const DashboardRegistry: React.FC = () => {
       if (Object.keys(fields).length > 0) {
         const updated = await updateRegistryItem(item.id, fields);
         setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
-        toast('Product details refreshed');
-      } else {
+        if (!silent) toast('Product details refreshed');
+      } else if (!silent) {
         toast('No new details found — details are up to date');
       }
+      return true;
     } catch {
-      toast('Couldn’t refresh product details right now. Please try again.', 'error');
+      if (!silent) toast('Couldn’t refresh product details right now. Please try again.', 'error');
+      return false;
     }
+  }
+
+  async function handleRefreshImageIssues() {
+    if (isDemoMode || imageRefreshBusy) return;
+    const candidates = items
+      .filter((i) => (!i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')))
+      .filter((i) => !!(i.item_url || i.canonical_url))
+      .slice(0, 12);
+
+    if (candidates.length === 0) {
+      toast('No image issues with refreshable URLs found.');
+      return;
+    }
+
+    setImageRefreshBusy(true);
+    let ok = 0;
+    for (const item of candidates) {
+      // eslint-disable-next-line no-await-in-loop
+      const refreshed = await handleRefetchMetadata(item, true);
+      if (refreshed) ok += 1;
+    }
+    setImageRefreshBusy(false);
+    toast(`Refreshed ${ok}/${candidates.length} image-issue item${candidates.length === 1 ? '' : 's'}.`, ok > 0 ? 'success' : 'error');
   }
 
 
@@ -818,6 +844,9 @@ export const DashboardRegistry: React.FC = () => {
             >
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setShowImageIssuesOnly(true); setShowAlertsOnly(false); setRegistryActionsOpen(false); }}>
                 Focus image issues
+              </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleRefreshImageIssues(); setRegistryActionsOpen(false); }} disabled={imageRefreshBusy}>
+                {imageRefreshBusy ? 'Refreshing image issues…' : 'Refresh image issues'}
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
                 Bulk Import URLs
