@@ -995,6 +995,28 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+  const handleClearAllCheckIns = async () => {
+    if (!weddingSiteId || isDemoMode) return;
+    const checkedInCount = guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length;
+    if (checkedInCount === 0) {
+      toast('No checked-in guests to clear.', 'error');
+      return;
+    }
+    if (!window.confirm(`Clear check-in for ${checkedInCount} guest(s)?`)) return;
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .update({ checked_in_at: null, checkin_notes: null })
+        .eq('wedding_site_id', weddingSiteId)
+        .not('checked_in_at', 'is', null);
+      if (error) throw error;
+      await fetchGuests();
+      toast('Cleared all check-ins', 'success');
+    } catch {
+      toast('Failed to clear check-ins', 'error');
+    }
+  };
+
   const handleToggleCheckIn = async (guest: GuestWithRSVP) => {
     if (!weddingSiteId || isDemoMode) {
       toast('Check-in is unavailable in demo mode.', 'error');
@@ -1567,6 +1589,28 @@ Proceed with send?`)) return;
 
   const exportMissingMealCSV = () => {
     exportCSV(guests.filter((g) => g.rsvp?.attending && !g.rsvp?.meal_choice), 'guests-missing-meal');
+  };
+
+  const exportCheckedInCSV = () => {
+    const checkedIn = guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at);
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Checked In At'];
+    const rows = checkedIn.map((guest) => [
+      guest.first_name || '',
+      guest.last_name || '',
+      guest.email || '',
+      guest.phone || '',
+      (guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at || '',
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `checked-in-guests_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const exportAddressCollectionCSV = () => {
@@ -2958,6 +3002,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowOpsMenu(false); }}>Export pending RSVP</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowOpsMenu(false); }}>Export missing meal choices</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAddressCollectionCSV(); setShowOpsMenu(false); }}>Export addresses (mailing)</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCheckedInCSV(); setShowOpsMenu(false); }}>Export checked-in guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
@@ -2967,6 +3012,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { setReminderCadenceDays(3); await persistReminderSettings({ reminder_cadence_days: 3 }); } catch { toast('Failed to save reminder cadence', 'error'); } setShowOpsMenu(false); }}>{reminderCadenceDays === 3 ? '✓ ' : ''}Every 3 days</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { setReminderCadenceDays(7); await persistReminderSettings({ reminder_cadence_days: 7 }); } catch { toast('Failed to save reminder cadence', 'error'); } setShowOpsMenu(false); }}>{reminderCadenceDays === 7 ? '✓ ' : ''}Every 7 days</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { const next = !autoRemindersEnabled; setAutoRemindersEnabled(next); await persistReminderSettings({ auto_reminders_enabled: next }); toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success'); } catch { toast('Failed to save auto reminder setting', 'error'); } setShowOpsMenu(false); }}>{autoRemindersEnabled ? '✓ ' : ''}{autoRemindersEnabled ? 'Auto reminders: On' : 'Auto reminders: Off'}</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleClearAllCheckIns(); setShowOpsMenu(false); }}>Clear all check-ins</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
                         const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
