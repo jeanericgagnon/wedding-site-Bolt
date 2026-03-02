@@ -94,6 +94,12 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [imgFailed, setImgFailed] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | null>(item.image_url ?? null);
   const [imgTriedProxy, setImgTriedProxy] = useState(false);
+
+  const buildPagePreviewUrl = (url?: string | null) => {
+    const v = (url || '').trim();
+    if (!v) return null;
+    return `https://image.thum.io/get/width/1200/noanimate/${encodeURIComponent(v)}`;
+  };
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCashFund = item.item_type === 'cash_fund';
@@ -167,8 +173,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   useEffect(() => {
     setImgFailed(false);
     setImgTriedProxy(false);
-    setImgSrc(item.image_url ?? null);
-  }, [item.id, item.image_url]);
+    setImgSrc(item.image_url ?? buildPagePreviewUrl(item.item_url) ?? null);
+  }, [item.id, item.image_url, item.item_url]);
 
   if (isCashFund) {
     return (
@@ -249,6 +255,12 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
               if (!imgTriedProxy && item.image_url) {
                 setImgTriedProxy(true);
                 setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(item.image_url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`);
+                return;
+              }
+              const pagePreview = buildPagePreviewUrl(item.item_url);
+              if (!imgTriedProxy && pagePreview && imgSrc !== pagePreview) {
+                setImgTriedProxy(true);
+                setImgSrc(pagePreview);
                 return;
               }
               setImgFailed(true);
