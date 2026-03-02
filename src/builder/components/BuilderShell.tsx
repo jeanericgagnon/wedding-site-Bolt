@@ -325,6 +325,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           saveError={saveError}
           publishError={publishError}
           publishValidationError={state.project ? getPublishValidationError(state.project, state.weddingData) : null}
+          publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData)?.kind ?? null : null}
         />
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">

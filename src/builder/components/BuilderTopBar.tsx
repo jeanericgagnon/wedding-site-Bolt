@@ -40,6 +40,7 @@ interface BuilderTopBarProps {
   saveError?: string | null;
   publishError?: string | null;
   publishValidationError?: string | null;
+  publishIssueKind?: string | null;
 }
 
 function slugifyPage(input: string): string {
@@ -79,6 +80,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   saveError,
   publishError,
   publishValidationError,
+  publishIssueKind,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -436,6 +438,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   )}
                   {!item.done && item.label === 'No active publish blockers' && onFixPublishBlockers && (
                     <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-800 hover:bg-amber-100">Fix</button>
+                  )}
+                  {!item.done && item.label === 'No active publish blockers' && publishIssueKind === 'no-enabled-sections' && onFixPublishBlockers && (
+                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] text-sky-800 hover:bg-sky-100">Go to section</button>
                   )}
                   {!item.done && item.label === 'At least one page exists' && (
                     <button
