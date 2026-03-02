@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -159,10 +159,32 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
   const [editingItem, setEditingItem] = useState<PlanningBudgetItem | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'sheet'>('cards');
   const [budgetInput, setBudgetInput] = useState<number>(totalBudget || 0);
+  const [budgetSaving, setBudgetSaving] = useState(false);
+  const [budgetSavedAt, setBudgetSavedAt] = useState<number | null>(null);
+  const budgetAutoSaveTimer = useRef<number | null>(null);
 
   useEffect(() => {
     setBudgetInput(totalBudget || 0);
   }, [totalBudget]);
+
+  useEffect(() => {
+    if (budgetInput === (totalBudget || 0)) return;
+
+    if (budgetAutoSaveTimer.current) window.clearTimeout(budgetAutoSaveTimer.current);
+    budgetAutoSaveTimer.current = window.setTimeout(async () => {
+      setBudgetSaving(true);
+      try {
+        await onTotalBudgetChange(budgetInput);
+        setBudgetSavedAt(Date.now());
+      } finally {
+        setBudgetSaving(false);
+      }
+    }, 700);
+
+    return () => {
+      if (budgetAutoSaveTimer.current) window.clearTimeout(budgetAutoSaveTimer.current);
+    };
+  }, [budgetInput, totalBudget, onTotalBudgetChange]);
 
   const totalEstimated = items.reduce((s, i) => s + (i.estimated_amount || 0), 0);
   const totalActual = items.reduce((s, i) => s + (i.actual_amount || 0), 0);
@@ -227,14 +249,14 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
               value={budgetInput}
               onChange={(e) => setBudgetInput(Number(e.target.value) || 0)}
             />
+            <p className="mt-1 text-[11px] text-text-tertiary">
+              {budgetSaving
+                ? 'Saving…'
+                : budgetSavedAt
+                ? `Saved ${new Date(budgetSavedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+                : 'Auto-saves'}
+            </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onTotalBudgetChange(budgetInput)}
-          >
-            Save Budget
-          </Button>
         </div>
 
         <div className="flex items-center gap-2">
