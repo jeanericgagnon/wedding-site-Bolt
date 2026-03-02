@@ -329,6 +329,11 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             <Badge variant={imageSource.tone}>{imageSource.label}</Badge>
           </span>
         </div>
+        {(imageSource.label === 'Image: Missing' || imageSource.label === 'Image: Fallback') && (
+          <p className="text-[11px] text-text-tertiary">
+            Tip: paste a direct image link in Edit, or refresh metadata from the product URL.
+          </p>
+        )}
 
         {item.purchaser_name && item.purchase_status !== 'available' && (
           <p className="text-xs text-text-secondary">by {item.purchaser_name}</p>

@@ -429,6 +429,21 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   {!item.done && item.label === 'No active publish blockers' && onFixPublishBlockers && (
                     <button onClick={onFixPublishBlockers} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-800 hover:bg-amber-100">Fix</button>
                   )}
+                  {!item.done && item.label === 'At least one page exists' && (
+                    <button onClick={() => setShowPageManager(true)} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-100">Pages</button>
+                  )}
+                  {!item.done && item.label === 'Current page has sections' && (
+                    <button
+                      onClick={() => {
+                        const pageId = state.activePageId;
+                        if (!pageId) return;
+                        dispatch(builderActions.addSectionByType(pageId, 'hero'));
+                      }}
+                      className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-100"
+                    >
+                      Add section
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
