@@ -128,8 +128,19 @@ export const GuestPhotoSharing: React.FC = () => {
     writeStoredAlbumLinks(albumUploadLinks);
   }, [albumUploadLinks]);
 
-  const invokeOrThrow = (fnName: string, body: Record<string, unknown>) =>
-    invokeFunctionOrThrow(supabase, fnName, body);
+  const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {
+    try {
+      return await invokeFunctionOrThrow(supabase, fnName, body);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.toLowerCase() : '';
+      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
+      if (!authish) throw err;
+
+      const { data } = await supabase.auth.refreshSession();
+      if (!data.session) throw err;
+      return await invokeFunctionOrThrow(supabase, fnName, body);
+    }
+  };
 
   async function load() {
     try {
@@ -669,7 +680,7 @@ export const GuestPhotoSharing: React.FC = () => {
           <p className="mt-2 text-neutral-600">Create event albums and share guest upload links backed by Google Drive.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Card className="p-4">
             <p className="text-xs text-neutral-500">Albums</p>
             <p className="text-2xl font-semibold text-neutral-900">{albums.length}</p>
@@ -680,17 +691,7 @@ export const GuestPhotoSharing: React.FC = () => {
             <p className="text-2xl font-semibold text-neutral-900">{totalUploads}</p>
             <p className="text-xs text-neutral-500">Across all albums</p>
           </Card>
-          <Card className="p-4">
-            <p className="text-xs text-neutral-500">Quick actions</p>
-            <div className="mt-2 flex gap-2 flex-wrap">
-              <Button size="sm" variant="outline" onClick={() => void setAllAlbumsActive(true)} disabled={bulkUpdatingStatus}>
-                Activate all
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => void setAllAlbumsActive(false)} disabled={bulkUpdatingStatus}>
-                Pause all
-              </Button>
-            </div>
-          </Card>
+
         </div>
 
         <Card className="p-6">
