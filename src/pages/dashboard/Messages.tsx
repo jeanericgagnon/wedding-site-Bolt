@@ -378,6 +378,7 @@ export const DashboardMessages: React.FC = () => {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [viewingMessage, setViewingMessage] = useState<Message | null>(null);
@@ -806,6 +807,7 @@ export const DashboardMessages: React.FC = () => {
   };
 
   async function handleRetry(message: Message) {
+    setRetryingMessageId(message.id);
     try {
       const { error } = await supabase
         .from('messages')
@@ -827,6 +829,8 @@ export const DashboardMessages: React.FC = () => {
       await fetchMessages();
     } catch {
       toast('Couldn’t retry that message right now. Please try again.', 'error');
+    } finally {
+      setRetryingMessageId(null);
     }
   }
 
@@ -905,6 +909,11 @@ export const DashboardMessages: React.FC = () => {
     });
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4);
   }, [messages]);
+
+  const retryCandidates = useMemo(
+    () => messages.filter((m) => m.status === 'failed' || m.status === 'partial').slice(0, 5),
+    [messages],
+  );
 
   const historyStatusCounts = useMemo(() => ({
     sent: messages.filter((m) => m.status === 'sent').length,
@@ -1443,6 +1452,32 @@ export const DashboardMessages: React.FC = () => {
                   <p className="text-sm font-semibold text-text-primary">{count} targeted</p>
                 </div>
               ))}
+            </div>
+          )}
+
+          {retryCandidates.length > 0 && (
+            <div className="rounded-xl border border-border/35 bg-white p-3 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-text-primary">Needs retry</p>
+                <button onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View failed</button>
+              </div>
+              <div className="space-y-2">
+                {retryCandidates.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/35 px-2.5 py-2 bg-surface-subtle/40">
+                    <div className="min-w-0">
+                      <p className="text-sm text-text-primary truncate">{m.subject}</p>
+                      <p className="text-[11px] text-text-tertiary">{m.status} · {m.channel}</p>
+                    </div>
+                    <button
+                      onClick={() => void handleRetry(m)}
+                      disabled={retryingMessageId !== null}
+                      className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-50"
+                    >
+                      {retryingMessageId === m.id ? 'Retrying…' : 'Retry'}
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

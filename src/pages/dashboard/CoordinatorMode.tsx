@@ -13,6 +13,8 @@ type GuestLite = {
   checked_in_at?: string | null;
 };
 
+type AudienceOption = { value: string; label: string; count: number };
+
 type EventLite = {
   id: string;
   event_name: string;
@@ -44,6 +46,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [guests, setGuests] = useState<GuestLite[]>([]);
   const [events, setEvents] = useState<EventLite[]>([]);
   const [siteId, setSiteId] = useState<string | null>(null);
+  const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
   const [timelineState, setTimelineState] = useState<Record<string, TimelineState>>({});
   const [alertLog, setAlertLog] = useState<AlertLog[]>([]);
   const [alertBusy, setAlertBusy] = useState(false);
@@ -73,6 +76,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
             { id: '2', first_name: 'Sam', last_name: 'Lee', name: 'Sam Lee', rsvp_status: 'pending', checked_in_at: null },
           ]);
           setEvents([{ id: 'e1', event_name: 'Ceremony', start_time: new Date().toISOString() }]);
+          setEventGuestIds({ e1: new Set(['1', '2']) });
           return;
         }
 
@@ -87,9 +91,25 @@ export const DashboardCoordinatorMode: React.FC = () => {
           supabase.from('itinerary_events').select('id, event_name, start_time').eq('wedding_site_id', resolvedSiteId).order('start_time', { ascending: true }),
         ]);
 
+        const eventIds = ((eventsData as EventLite[]) || []).map((e) => e.id);
+        let inviteMap: Record<string, Set<string>> = {};
+        if (eventIds.length > 0) {
+          const { data: inviteRows } = await supabase
+            .from('event_invitations')
+            .select('event_id, guest_id')
+            .in('event_id', eventIds);
+          inviteMap = {};
+          eventIds.forEach((id) => { inviteMap[id] = new Set<string>(); });
+          (inviteRows ?? []).forEach((row: any) => {
+            if (!inviteMap[row.event_id]) inviteMap[row.event_id] = new Set<string>();
+            inviteMap[row.event_id].add(row.guest_id as string);
+          });
+        }
+
         if (!mounted) return;
         setGuests((guestsData as GuestLite[]) || []);
         setEvents((eventsData as EventLite[]) || []);
+        setEventGuestIds(inviteMap);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -167,7 +187,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
     return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase());
   });
 
+  const eventAudienceOptions: AudienceOption[] = events.map((e) => ({
+    value: `event:${e.id}`,
+    label: `${e.event_name}${e.start_time ? ` — ${new Date(e.start_time).toLocaleString()}` : ''}`,
+    count: eventGuestIds[e.id]?.size ?? 0,
+  }));
+
   const alertAudienceCount = (() => {
+    if (alertForm.audience.startsWith('event:')) {
+      const eventId = alertForm.audience.replace('event:', '');
+      return eventGuestIds[eventId]?.size ?? 0;
+    }
     if (alertForm.audience === 'checked-in') return guests.filter((g) => !!g.checked_in_at).length;
     if (alertForm.audience === 'pending') return guests.filter((g) => g.rsvp_status === 'pending').length;
     return guests.length;
@@ -341,6 +371,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <option value="all">All guests</option>
                     <option value="checked-in">Checked-in guests</option>
                     <option value="pending">Pending RSVP</option>
+                    {eventAudienceOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label} ({opt.count})</option>
+                    ))}
                   </select>
                   <select
                     value={alertForm.channel}
