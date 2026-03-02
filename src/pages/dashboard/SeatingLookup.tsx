@@ -96,7 +96,7 @@ export const DashboardSeatingLookup: React.FC = () => {
   }, [rows, query]);
 
   return (
-    <DashboardLayout currentPage="seating-lookup">
+    <DashboardLayout currentPage="seating">
       <div className="max-w-5xl mx-auto space-y-5">
         <div className="rounded-2xl border border-border/40 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5">
           <h1 className="text-2xl font-semibold text-text-primary">Guest Seating Lookup</h1>

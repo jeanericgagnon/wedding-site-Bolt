@@ -313,7 +313,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   };
 
   return (
-    <DashboardLayout currentPage="coordinator-mode">
+    <DashboardLayout currentPage="planning">
       <div className="max-w-6xl mx-auto space-y-5">
         <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
