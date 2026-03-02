@@ -372,6 +372,22 @@ export const DashboardSettings: React.FC = () => {
     setTimeout(() => setPrivacyCopied(false), 2000);
   };
 
+  const handleDefaultLanguageChange = async (next: 'en' | 'es') => {
+    setDefaultLanguage(next);
+    setVisibilityError(null);
+    setVisibilitySuccess(null);
+    if (!weddingSiteId) return;
+    try {
+      const { error } = await supabase
+        .from('wedding_sites')
+        .update({ default_language: next })
+        .eq('id', weddingSiteId);
+      if (error) throw error;
+      setVisibilitySuccess(`Default language set to ${next === 'es' ? 'Español' : 'English'}.`);
+    } catch (err) {
+      setVisibilityError(err instanceof Error ? err.message : 'Failed to save default language.');
+    }
+  };
 
   const handleSaveRsvpQuestions = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -707,19 +723,6 @@ export const DashboardSettings: React.FC = () => {
 
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
-                    <CardTitle>Custom Domain</CardTitle>
-                    <CardDescription>Use your own domain name</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Badge variant="primary">Coming Soon</Badge>
-                    <p className="text-sm text-text-secondary">
-                      Custom domain support is in development. You will be able to connect your own domain once it launches.
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
                     <CardTitle>Privacy Settings</CardTitle>
                     <CardDescription>Control who can view your site</CardDescription>
                   </CardHeader>
@@ -753,7 +756,7 @@ export const DashboardSettings: React.FC = () => {
                                 name="default_language"
                                 value={opt.value}
                                 checked={defaultLanguage === opt.value}
-                                onChange={() => setDefaultLanguage(opt.value)}
+                                onChange={() => { void handleDefaultLanguageChange(opt.value); }}
                                 className="text-primary focus:ring-primary"
                               />
                               <span className="text-sm font-medium text-text-primary">{opt.label}</span>
