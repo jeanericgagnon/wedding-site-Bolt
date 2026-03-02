@@ -139,7 +139,7 @@ function TaskCard({ task, onUpdate, onDelete, onEdit }: {
   const isOverdue = task.due_date && task.status !== 'done' && new Date(task.due_date) < today;
 
   return (
-    <div className={`p-3 bg-surface rounded-xl border transition-all ${isOverdue ? 'border-error/30 bg-error/5' : 'border-border-subtle'}`}>
+    <div className={`p-3 bg-white rounded-xl border transition-shadow ${isOverdue ? 'border-error/30 bg-error/5 shadow-[0_4px_14px_rgba(220,38,38,0.06)]' : 'border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]'}`}>
       <div className="flex items-start gap-2">
         <button
           onClick={() => onUpdate(task.id, { status: task.status === 'done' ? 'todo' : 'done' })}

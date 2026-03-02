@@ -180,7 +180,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   return (
     <div className="space-y-4">
       {totalBalance > 0 && (
-        <div className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border-subtle">
+        <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-shadow">
           <span className="text-sm text-text-secondary">Total vendor balance due</span>
           <span className="font-bold text-text-primary">{fmt(totalBalance)}</span>
         </div>

@@ -207,7 +207,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
       </Card>
 
       {overBudgetCategories.length > 0 && (
-        <div className="flex items-start gap-2 p-3 bg-error/5 border border-error/20 rounded-xl text-sm">
+        <div className="flex items-start gap-2 p-3 bg-white border border-error/25 rounded-xl shadow-[0_4px_14px_rgba(15,23,42,0.04)] text-sm">
           <AlertTriangle className="w-4 h-4 text-error flex-shrink-0 mt-0.5" />
           <span className="text-text-primary">
             Worth reviewing: <span className="font-medium text-error">{overBudgetCategories.join(', ')}</span>
@@ -306,7 +306,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
           </table>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-7">
           {categories.map(cat => {
             const catItems = items.filter(i => i.category === cat);
             const catEst = catItems.reduce((s, i) => s + i.estimated_amount, 0);
@@ -332,7 +332,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
                           onCancel={() => setEditingItem(null)}
                         />
                       ) : (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-surface rounded-lg border border-border-subtle hover:border-border transition-colors">
+                        <div className="flex items-center gap-2 px-3 py-2.5 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-shadow">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-text-primary truncate">{item.item_name}</p>
                             {item.notes && <p className="text-xs text-text-tertiary truncate">{item.notes}</p>}
