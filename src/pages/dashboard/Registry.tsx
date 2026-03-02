@@ -226,9 +226,19 @@ export const DashboardRegistry: React.FC = () => {
     const parsedReceived = draft.fund_received_amount ? parseFloat(draft.fund_received_amount) : null;
     const isCashFund = draft.item_type === 'cash_fund';
 
-    const normalizedImageUrl = isCashFund ? null : normalizeRegistryImageUrl(draft.image_url || '');
+    let normalizedImageUrl = isCashFund ? null : normalizeRegistryImageUrl(draft.image_url || '');
+    if (!isCashFund && !normalizedImageUrl && draft.item_url?.trim()) {
+      try {
+        const preview = await fetchUrlPreview(draft.item_url.trim(), false);
+        normalizedImageUrl = normalizeRegistryImageUrl(preview.image_url || '');
+      } catch {
+        // ignore preview fetch failures
+      }
+    }
+
     if (!isCashFund && draft.image_url.trim() && !normalizedImageUrl) {
-      toast('Image URL must be a direct image file link (not a product page URL).', 'error');
+      toast('Image URL must be a direct image file link (or leave it blank and we’ll auto-pull one).', 'error');
+      return;
     }
 
     const fields: Partial<RegistryItem> = {
