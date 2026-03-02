@@ -21,6 +21,12 @@ export class AppErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error };
   }
 
+  componentDidMount(): void {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('dayof_chunk_reload_once_v1');
+    }
+  }
+
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     logClientError({
       source: 'react-error-boundary',
@@ -30,8 +36,27 @@ export class AppErrorBoundary extends React.Component<Props, State> {
       metadata: { componentStack: info.componentStack?.slice(0, 2000) },
     });
 
-    if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>)['Sentry']) {
-      (window as unknown as Record<string, { captureException: (e: Error, ctx: unknown) => void }>)['Sentry'].captureException(error, { extra: info });
+    if (typeof window !== 'undefined') {
+      const msg = (error?.message || '').toLowerCase();
+      const isChunkLoadIssue =
+        msg.includes('failed to fetch dynamically imported module') ||
+        msg.includes('chunkloaderror') ||
+        msg.includes('loading chunk') ||
+        msg.includes('importing a module script failed');
+
+      if (isChunkLoadIssue) {
+        const key = 'dayof_chunk_reload_once_v1';
+        const alreadyRetried = window.sessionStorage.getItem(key) === '1';
+        if (!alreadyRetried) {
+          window.sessionStorage.setItem(key, '1');
+          window.location.reload();
+          return;
+        }
+      }
+
+      if ((window as unknown as Record<string, unknown>)['Sentry']) {
+        (window as unknown as Record<string, { captureException: (e: Error, ctx: unknown) => void }>)['Sentry'].captureException(error, { extra: info });
+      }
     }
   }
 
