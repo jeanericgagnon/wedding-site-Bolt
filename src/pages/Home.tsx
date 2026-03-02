@@ -63,6 +63,13 @@ export const Home: React.FC = () => {
               >
                 Start your site
               </button>
+              <Link
+                to="/templates"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+              >
+                Browse templates
+                <ArrowRight className="w-4 h-4" />
+              </Link>
               <button
                 onClick={handleDemoLogin}
                 disabled={demoLoading}
@@ -80,6 +87,11 @@ export const Home: React.FC = () => {
             <p className="text-[0.8125rem] text-ink/60 updates-wide leading-loose">
               $49 flat fee for 2 years • Auto-renew OFF by default • Private by default
             </p>
+            <div className="mt-4 inline-flex flex-wrap justify-center gap-2">
+              <span className="text-[11px] px-2.5 py-1 rounded-full border border-brand/20 bg-brand/5 text-brand">Website + RSVP + Registry + Day-of</span>
+              <span className="text-[11px] px-2.5 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">No forced upsells</span>
+              <span className="text-[11px] px-2.5 py-1 rounded-full border border-sky-200 bg-sky-50 text-sky-700">Built for guests of all ages</span>
+            </div>
           </div>
         </div>
       </section>

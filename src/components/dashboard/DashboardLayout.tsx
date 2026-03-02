@@ -17,6 +17,7 @@ import {
   ExternalLink,
   ClipboardList,
   Armchair,
+  Radio,
 
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -68,6 +69,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
     { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
     { id: 'messages', label: 'Messages', icon: Mail, path: '/dashboard/messages' },
+    { id: 'coordinator', label: 'Day-of', icon: Radio, path: '/dashboard/coordinator' },
     { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
     { id: 'photos', label: 'Photo Sharing', icon: Camera, path: '/dashboard/photos' },
     { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },

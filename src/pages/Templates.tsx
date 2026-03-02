@@ -47,6 +47,13 @@ export const Templates: React.FC = () => {
             <h1 className="text-3xl font-bold text-neutral-900">Choose a template</h1>
             <p className="mt-2 text-sm text-neutral-600">Filter by style, season, and colorway to find your starting point.</p>
             <p className="mt-1 text-xs text-neutral-500">Template selection is carried into setup and builder defaults.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button onClick={() => { setStyle('all'); setSeason('all'); setColorway('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">All templates</button>
+              <button onClick={() => { setStyle('Modern'); setSeason('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Modern</button>
+              <button onClick={() => { setStyle('Floral'); setSeason('Spring'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Spring Floral</button>
+              <button onClick={() => { setStyle('Destination'); setSeason('Summer'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Destination</button>
+              <button onClick={() => { setStyle('Classic'); setSeason('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Classic Formal</button>
+            </div>
           </div>
           {selectedTemplateId && (
             <button
@@ -94,6 +101,10 @@ export const Templates: React.FC = () => {
                 <p className="mt-1 text-sm text-neutral-600">{tpl.description}</p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {tpl.styleTags.map((tag) => <span key={tag} className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">{tag}</span>)}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {tpl.seasonTags.map((tag) => <span key={tag} className="rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">{tag}</span>)}
+                  <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 text-xs text-sky-700">Best for {tpl.styleTags[0] ?? 'all styles'}</span>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
