@@ -32,9 +32,9 @@ export const BuilderInspectorPanel: React.FC = () => {
   const selectedIndex = activeSections.findIndex((s) => s.id === state.selectedSectionId);
 
   const quickSectionRail = activePage ? (
-    <div className="border-b border-gray-200 p-3 space-y-2 bg-gray-50/70">
+    <div className="border-b border-gray-200 p-2.5 space-y-2 bg-gray-50/40">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Sections</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Sections ({activeSections.length})</p>
         <div className="inline-flex rounded-md border border-gray-200 overflow-hidden">
           <button onClick={() => setSimpleMode(true)} className={`px-2 py-1 text-[10px] ${simpleMode ? 'bg-white text-gray-900' : 'bg-gray-50 text-gray-500'}`}>Simple</button>
           <button onClick={() => setSimpleMode(false)} className={`px-2 py-1 text-[10px] border-l border-gray-200 ${!simpleMode ? 'bg-white text-gray-900' : 'bg-gray-50 text-gray-500'}`}>Advanced</button>
@@ -59,6 +59,9 @@ export const BuilderInspectorPanel: React.FC = () => {
           <option key={s.id} value={s.id}>{idx + 1}. {getSectionManifest(s.type).label}</option>
         ))}
       </select>
+      {selectedIndex >= 0 && (
+        <p className="text-[10px] text-gray-500">Selected: {selectedIndex + 1} / {activeSections.length}</p>
+      )}
       <div className="flex items-center gap-2">
         <button
           onClick={() => {
@@ -300,24 +303,26 @@ export const BuilderInspectorPanel: React.FC = () => {
         </div>
       )}
 
-      <div className="mx-4 mt-3 rounded-xl border border-sky-100 bg-sky-50 p-3">
-        <p className="text-[11px] font-semibold text-sky-900">Next step: {nextAction.label}</p>
-        <p className="mt-1 text-[11px] text-sky-800">{nextAction.detail}</p>
-        <button
-          onClick={() => {
-            if ((nextAction.tab === 'style' || nextAction.tab === 'data') && simpleMode) {
-              setSimpleMode(false);
-            }
-            if (nextAction.tab === 'style' || nextAction.tab === 'data') {
-              setShowAdvanced(true);
-            }
-            setActiveTab(nextAction.tab);
-          }}
-          className="mt-2 rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
-        >
-          Take me there
-        </button>
-      </div>
+      {simpleMode && (
+        <div className="mx-4 mt-3 rounded-xl border border-sky-100 bg-sky-50 p-3">
+          <p className="text-[11px] font-semibold text-sky-900">Next step: {nextAction.label}</p>
+          <p className="mt-1 text-[11px] text-sky-800">{nextAction.detail}</p>
+          <button
+            onClick={() => {
+              if ((nextAction.tab === 'style' || nextAction.tab === 'data') && simpleMode) {
+                setSimpleMode(false);
+              }
+              if (nextAction.tab === 'style' || nextAction.tab === 'data') {
+                setShowAdvanced(true);
+              }
+              setActiveTab(nextAction.tab);
+            }}
+            className="mt-2 rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
+          >
+            Take me there
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'guide' && (
