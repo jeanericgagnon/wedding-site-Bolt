@@ -61,6 +61,7 @@ export const BuilderInspectorPanel: React.FC = () => {
           }}
           disabled={selectedIndex <= 0}
           className="px-2 py-1 text-xs rounded border border-gray-200 bg-white text-gray-600 disabled:opacity-40"
+          title="Move section up"
         >↑</button>
         <button
           onClick={() => {
@@ -72,7 +73,27 @@ export const BuilderInspectorPanel: React.FC = () => {
           }}
           disabled={selectedIndex < 0 || selectedIndex >= activeSections.length - 1}
           className="px-2 py-1 text-xs rounded border border-gray-200 bg-white text-gray-600 disabled:opacity-40"
+          title="Move section down"
         >↓</button>
+        <button
+          onClick={() => {
+            if (!activePage || !state.selectedSectionId) return;
+            dispatch(builderActions.duplicateSection(activePage.id, state.selectedSectionId));
+          }}
+          disabled={!state.selectedSectionId}
+          className="px-2 py-1 text-xs rounded border border-gray-200 bg-white text-gray-600 disabled:opacity-40"
+          title="Duplicate section"
+        >Copy</button>
+        <button
+          onClick={() => {
+            if (!activePage || !state.selectedSectionId) return;
+            if (!window.confirm('Remove this section?')) return;
+            dispatch(builderActions.removeSection(activePage.id, state.selectedSectionId));
+          }}
+          disabled={!state.selectedSectionId}
+          className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-600 disabled:opacity-40"
+          title="Remove section"
+        >Del</button>
         <select
           defaultValue=""
           onChange={(e) => {
@@ -83,9 +104,9 @@ export const BuilderInspectorPanel: React.FC = () => {
             dispatch(builderActions.addSectionByType(activePage.id, manifest.type, undefined, manifest.defaultVariant));
             e.currentTarget.value = '';
           }}
-          className="flex-1 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700"
+          className="flex-1 rounded-lg border border-gray-200 bg-white px-2 py-2 text-sm text-gray-700"
         >
-          <option value="">+ Add section…</option>
+          <option value="">+ Add…</option>
           {sectionManifests.map((m) => <option key={m.type} value={m.type}>{m.label}</option>)}
         </select>
       </div>
