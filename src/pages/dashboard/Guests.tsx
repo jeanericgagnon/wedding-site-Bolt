@@ -995,6 +995,23 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+  const handleUndoLastCheckIn = async () => {
+    if (!weddingSiteId || !lastCheckIn || isDemoMode) return;
+    try {
+      const { error } = await supabase
+        .from('guests')
+        .update({ checked_in_at: null })
+        .eq('id', lastCheckIn.guestId)
+        .eq('wedding_site_id', weddingSiteId);
+      if (error) throw error;
+      await fetchGuests();
+      toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
+      setLastCheckIn(null);
+    } catch {
+      toast('Failed to undo last check-in', 'error');
+    }
+  };
+
   const handleClearAllCheckIns = async () => {
     if (!weddingSiteId || isDemoMode) return;
     const checkedInCount = guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length;
@@ -1011,11 +1028,14 @@ export const DashboardGuests: React.FC = () => {
         .not('checked_in_at', 'is', null);
       if (error) throw error;
       await fetchGuests();
+      setLastCheckIn(null);
       toast('Cleared all check-ins', 'success');
     } catch {
       toast('Failed to clear check-ins', 'error');
     }
   };
+
+  const [lastCheckIn, setLastCheckIn] = useState<{ guestId: string; guestName: string; at: number } | null>(null);
 
   const handleToggleCheckIn = async (guest: GuestWithRSVP) => {
     if (!weddingSiteId || isDemoMode) {
@@ -1031,6 +1051,12 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
+      if (nextValue) {
+        const guestName = (guest.first_name || guest.last_name)
+          ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
+          : guest.name;
+        setLastCheckIn({ guestId: guest.id, guestName, at: Date.now() });
+      }
       toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
     } catch {
       toast('Failed to update check-in status', 'error');
@@ -3235,6 +3261,18 @@ Proceed with send?`)) return;
                   className="text-xs px-2 py-1 rounded-md border border-success/30 bg-white text-success hover:bg-success/5"
                 >
                   View checked-in
+                </button>
+              </div>
+            )}
+
+            {checkInMode && lastCheckIn && (
+              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-surface-subtle border border-border rounded-xl">
+                <span className="text-xs text-text-secondary">Last check-in: <span className="font-medium text-text-primary">{lastCheckIn.guestName}</span></span>
+                <button
+                  onClick={handleUndoLastCheckIn}
+                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                >
+                  Undo
                 </button>
               </div>
             )}
