@@ -1146,7 +1146,7 @@ export const DashboardGuests: React.FC = () => {
             siteUrl: weddingSiteInfo?.site_url ?? null,
             inviteToken: guest.invite_token ?? null,
           });
-          await supabase.from('guests').update({ invitation_sent_at: new Date().toISOString() }).eq('id', guest.id);
+          await supabase.from('guests').update({ invitation_sent_at: new Date().toISOString(), reminder_last_sent_at: new Date().toISOString() }).eq('id', guest.id);
           successCount += 1;
         } catch {
           // continue
@@ -1206,7 +1206,7 @@ Proceed with send?`)) return;
 
           await supabase
             .from('guests')
-            .update({ invitation_sent_at: new Date().toISOString() })
+            .update({ invitation_sent_at: new Date().toISOString(), reminder_last_sent_at: new Date().toISOString() })
             .eq('id', guest.id);
 
           successCount += 1;
@@ -1221,6 +1221,62 @@ Proceed with send?`)) return;
         toast(`Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`, 'success');
       } else {
         toast('No reminders were sent. Please try again.', 'error');
+      }
+    } finally {
+      setBulkSending(false);
+    }
+  };
+
+  const handleSendDueRemindersNow = async () => {
+    if (dueReminderCandidatesGlobal.length === 0) {
+      toast('No guests are currently due for reminders.', 'error');
+      return;
+    }
+
+    if (!window.confirm(`Send due reminders now?\nRecipients: ${dueReminderCandidatesGlobal.length}\nCadence: ${reminderCadenceDays} day(s)`)) return;
+
+    if (isDemoMode) {
+      const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: dueReminderCandidatesGlobal.length, sentAt }, ...prev].slice(0, 6));
+      toast(`Demo: simulated reminders for ${dueReminderCandidatesGlobal.length} due guests`, 'success');
+      return;
+    }
+
+    setBulkSending(true);
+    let successCount = 0;
+    try {
+      for (const guest of dueReminderCandidatesGlobal) {
+        if (!guest.email) continue;
+        const guestName = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
+        try {
+          await sendWeddingInvitation({
+            guestEmail: guest.email,
+            guestName,
+            coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
+            coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
+            weddingDate: weddingSiteInfo?.wedding_date ?? null,
+            venueName: weddingSiteInfo?.venue_name ?? null,
+            venueAddress: weddingSiteInfo?.venue_address ?? null,
+            siteUrl: weddingSiteInfo?.site_url ?? null,
+            inviteToken: guest.invite_token ?? null,
+          });
+          await supabase
+            .from('guests')
+            .update({ reminder_last_sent_at: new Date().toISOString() })
+            .eq('id', guest.id);
+          successCount += 1;
+        } catch {
+          // continue
+        }
+      }
+
+      if (successCount > 0) {
+        const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: successCount, sentAt }, ...prev].slice(0, 6));
+        toast(`Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}`, 'success');
+        await fetchGuests();
+      } else {
+        toast('No due reminders were sent. Please try again.', 'error');
       }
     } finally {
       setBulkSending(false);
@@ -2010,14 +2066,7 @@ Proceed with send?`)) return;
         (filter === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
         (filter === 'no-contact' && !guest.email && !guest.phone) ||
         (filter === 'missing-address' && !(guest as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1) ||
-        (filter === 'due-reminder' && (() => {
-          if (!guest.email || guest.rsvp_status !== 'pending') return false;
-          const invitedAt = (guest as GuestWithRSVP & { invitation_sent_at?: string | null }).invitation_sent_at
-            ? new Date((guest as GuestWithRSVP & { invitation_sent_at?: string | null }).invitation_sent_at as string)
-            : null;
-          if (!invitedAt || Number.isNaN(invitedAt.getTime())) return true;
-          return (Date.now() - invitedAt.getTime()) >= (reminderCadenceDays * 24 * 60 * 60 * 1000);
-        })())
+        (filter === 'due-reminder' && isDueReminder(guest))
       );
     };
 
@@ -2383,16 +2432,18 @@ Proceed with send?`)) return;
   const [nuclearDeleting, setNuclearDeleting] = useState(false);
 
   const reminderCadenceMs = reminderCadenceDays * 24 * 60 * 60 * 1000;
-  const dueReminderGuestIds = new Set(
-    guests
-      .filter((g: any) => {
-        if (!g.email || g.rsvp_status !== 'pending') return false;
-        const invitedAt = (g as any).invitation_sent_at ? new Date((g as any).invitation_sent_at) : null;
-        if (!invitedAt || Number.isNaN(invitedAt.getTime())) return true;
-        return (Date.now() - invitedAt.getTime()) >= reminderCadenceMs;
-      })
-      .map((g) => g.id)
-  );
+  const isDueReminder = (g: GuestWithRSVP) => {
+    const guest = g as GuestWithRSVP & { reminder_last_sent_at?: string | null; invitation_sent_at?: string | null };
+    if (!guest.email || guest.rsvp_status !== 'pending') return false;
+    const lastSentRaw = guest.reminder_last_sent_at || guest.invitation_sent_at;
+    const lastSent = lastSentRaw ? new Date(lastSentRaw) : null;
+    if (!lastSent || Number.isNaN(lastSent.getTime())) return true;
+    return (Date.now() - lastSent.getTime()) >= reminderCadenceMs;
+  };
+
+  const dueReminderGuestIds = new Set(guests.filter(isDueReminder).map((g) => g.id));
+
+  const dueReminderCandidatesGlobal = guests.filter((g) => !!g.email && !!g.invite_token && isDueReminder(g));
 
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
@@ -2872,6 +2923,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || dueReminderCandidatesGlobal.length === 0} onClick={() => { handleSendDueRemindersNow(); setShowOpsMenu(false); }} title={dueReminderCandidatesGlobal.length === 0 ? 'No guests due for reminders' : undefined}>{bulkSending ? 'Sending…' : `Send due reminders (${dueReminderCandidatesGlobal.length})`}</button>
                       <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-text-tertiary">Reminder cadence</div>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { setReminderCadenceDays(1); setShowOpsMenu(false); }}>{reminderCadenceDays === 1 ? '✓ ' : ''}Every 1 day</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { setReminderCadenceDays(3); setShowOpsMenu(false); }}>{reminderCadenceDays === 3 ? '✓ ' : ''}Every 3 days</button>
