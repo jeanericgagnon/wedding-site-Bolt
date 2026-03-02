@@ -252,7 +252,7 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
   const [extraFilters, setExtraFilters] = useState<string[]>([]);
   const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
   const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
@@ -1284,7 +1284,7 @@ Proceed with send?`)) return;
     }
   }
 
-  async function copyContactRequestLink(_guest: GuestWithRSVP) {
+  async function copyContactRequestLink() {
     if (!weddingSiteId) {
       toast('Missing wedding site context', 'error');
       return;
@@ -2008,7 +2008,8 @@ Proceed with send?`)) return;
         (filter === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
         (filter === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
         (filter === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
-        (filter === 'no-contact' && !guest.email && !guest.phone)
+        (filter === 'no-contact' && !guest.email && !guest.phone) ||
+        (filter === 'missing-address' && !(guest as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1)
       );
     };
 
@@ -2214,6 +2215,7 @@ Proceed with send?`)) return;
     confirmed: 'Confirmed',
     declined: 'Declined',
     pending: 'Pending',
+    'missing-address': 'Missing Address',
     'ceremony-no': 'Ceremony: No',
     'reception-no': 'Reception: No',
     'missing-meal': 'Missing Meal',
@@ -2847,6 +2849,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowOpsMenu(false); }}>Export pending RSVP</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowOpsMenu(false); }}>Export missing meal choices</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAddressCollectionCSV(); setShowOpsMenu(false); }}>Export addresses (mailing)</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
@@ -3019,6 +3022,7 @@ Proceed with send?`)) return;
                     ['confirmed', `Confirmed (${stats.confirmed})`],
                     ['declined', `Declined (${stats.declined})`],
                     ['pending', `Pending (${stats.pending})`],
+                    ['missing-address', `Missing Address (${guests.filter((g) => !(g as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1).length})`],
                   ] as const).map(([value, label]) => (
                     <button
                       key={value}
@@ -3343,7 +3347,7 @@ Proceed with send?`)) return;
                 </h2>
                 <p className="text-xs text-text-secondary mt-0.5">Guest updates and itinerary invitations</p>
                 <button
-                  onClick={() => copyContactRequestLink(itineraryDrawerGuest)}
+                  onClick={() => copyContactRequestLink()}
                   className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
                 >
                   <Copy className="w-3.5 h-3.5" />
