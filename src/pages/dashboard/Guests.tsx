@@ -466,6 +466,9 @@ export const DashboardGuests: React.FC = () => {
       const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
       setRsvpMealEnabled(typeof mealCfg?.enabled === 'boolean' ? mealCfg.enabled : true);
       setRsvpMealOptions(Array.isArray(mealCfg?.options) ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+      const cadence = Number((data as { reminder_cadence_days?: unknown }).reminder_cadence_days);
+      if ([1, 3, 7].includes(cadence)) setReminderCadenceDays(cadence as 1 | 3 | 7);
+      setAutoRemindersEnabled(Boolean((data as { auto_reminders_enabled?: unknown }).auto_reminders_enabled));
       rsvpConfigLoadedRef.current = true;
     }
   }, [user, isDemoMode]);
@@ -1339,6 +1342,15 @@ Proceed with send?`)) return;
       toast('Failed to reassign guest', 'error');
     }
   }
+
+  const persistReminderSettings = async (patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean }) => {
+    if (!weddingSiteId || isDemoMode) return;
+    const { error } = await supabase
+      .from('wedding_sites')
+      .update(patch)
+      .eq('id', weddingSiteId);
+    if (error) throw error;
+  };
 
   async function copyContactRequestLink() {
     if (!weddingSiteId) {
@@ -2424,6 +2436,7 @@ Proceed with send?`)) return;
 
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
   const [reminderCadenceDays, setReminderCadenceDays] = useState<1 | 3 | 7>(3);
+  const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
@@ -2925,9 +2938,10 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || dueReminderCandidatesGlobal.length === 0} onClick={() => { handleSendDueRemindersNow(); setShowOpsMenu(false); }} title={dueReminderCandidatesGlobal.length === 0 ? 'No guests due for reminders' : undefined}>{bulkSending ? 'Sending…' : `Send due reminders (${dueReminderCandidatesGlobal.length})`}</button>
                       <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-text-tertiary">Reminder cadence</div>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { setReminderCadenceDays(1); setShowOpsMenu(false); }}>{reminderCadenceDays === 1 ? '✓ ' : ''}Every 1 day</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { setReminderCadenceDays(3); setShowOpsMenu(false); }}>{reminderCadenceDays === 3 ? '✓ ' : ''}Every 3 days</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { setReminderCadenceDays(7); setShowOpsMenu(false); }}>{reminderCadenceDays === 7 ? '✓ ' : ''}Every 7 days</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { setReminderCadenceDays(1); await persistReminderSettings({ reminder_cadence_days: 1 }); } catch { toast('Failed to save reminder cadence', 'error'); } setShowOpsMenu(false); }}>{reminderCadenceDays === 1 ? '✓ ' : ''}Every 1 day</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { setReminderCadenceDays(3); await persistReminderSettings({ reminder_cadence_days: 3 }); } catch { toast('Failed to save reminder cadence', 'error'); } setShowOpsMenu(false); }}>{reminderCadenceDays === 3 ? '✓ ' : ''}Every 3 days</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { setReminderCadenceDays(7); await persistReminderSettings({ reminder_cadence_days: 7 }); } catch { toast('Failed to save reminder cadence', 'error'); } setShowOpsMenu(false); }}>{reminderCadenceDays === 7 ? '✓ ' : ''}Every 7 days</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { try { const next = !autoRemindersEnabled; setAutoRemindersEnabled(next); await persistReminderSettings({ auto_reminders_enabled: next }); toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success'); } catch { toast('Failed to save auto reminder setting', 'error'); } setShowOpsMenu(false); }}>{autoRemindersEnabled ? '✓ ' : ''}{autoRemindersEnabled ? 'Auto reminders: On' : 'Auto reminders: Off'}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
                         const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
