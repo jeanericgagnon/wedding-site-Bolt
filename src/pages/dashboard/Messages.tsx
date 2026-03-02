@@ -390,6 +390,7 @@ export const DashboardMessages: React.FC = () => {
   const [messagesRole, setMessagesRole] = useState<MessagesRole>('owner');
   const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
+  const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -898,8 +899,12 @@ export const DashboardMessages: React.FC = () => {
   const filteredHistory = useMemo(() => messages.filter((m) => {
     if (historyStatusFilter !== 'all' && m.status !== historyStatusFilter) return false;
     if (historyChannelFilter !== 'all' && m.channel !== historyChannelFilter) return false;
+    if (historyAudienceFilter !== 'all') {
+      const aud = m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all';
+      if (aud !== historyAudienceFilter) return false;
+    }
     return true;
-  }), [messages, historyStatusFilter, historyChannelFilter]);
+  }), [messages, historyStatusFilter, historyChannelFilter, historyAudienceFilter]);
 
   const audienceBreakdown = useMemo(() => {
     const map = new Map<string, number>();
@@ -1451,7 +1456,7 @@ export const DashboardMessages: React.FC = () => {
         <Card variant="bordered" padding="lg">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
             <h2 className="text-xl font-semibold text-text-primary">Message History</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value as typeof historyStatusFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
                 <option value="all">All status</option>
                 <option value="sent">Sent</option>
@@ -1465,6 +1470,12 @@ export const DashboardMessages: React.FC = () => {
                 <option value="email">Email</option>
                 <option value="sms">SMS</option>
               </select>
+              <select value={historyAudienceFilter} onChange={(e) => setHistoryAudienceFilter(e.target.value)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
+                <option value="all">All audiences</option>
+                {Array.from(new Set(messages.map((m) => m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all'))).slice(0, 12).map((aud) => (
+                  <option key={aud} value={aud}>{aud}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -1473,7 +1484,7 @@ export const DashboardMessages: React.FC = () => {
             <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus scheduled</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">

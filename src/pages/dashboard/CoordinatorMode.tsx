@@ -53,6 +53,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
   const [coordinatorRole, setCoordinatorRole] = useState<CoordinatorRole>('owner');
   const [alertChannelFilter, setAlertChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
+  const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
   const [qnaInput, setQnaInput] = useState('');
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
@@ -225,8 +226,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [alertLog]);
 
   const filteredAlertLog = useMemo(
-    () => alertLog.filter((a) => alertChannelFilter === 'all' || a.channel === alertChannelFilter),
-    [alertLog, alertChannelFilter],
+    () => alertLog.filter((a) => {
+      if (alertChannelFilter !== 'all' && a.channel !== alertChannelFilter) return false;
+      if (alertTimingFilter === 'scheduled' && !a.sendAt) return false;
+      if (alertTimingFilter === 'now' && !!a.sendAt) return false;
+      return true;
+    }),
+    [alertLog, alertChannelFilter, alertTimingFilter],
   );
 
   const sendDayOfAlert = async () => {
@@ -495,10 +501,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 </button>
                 {alertLog.length > 0 && (
                   <div className="pt-1 space-y-1.5">
-                    <div className="flex gap-1.5">
+                    <div className="flex flex-wrap gap-1.5">
                       <button type="button" onClick={() => setAlertChannelFilter('all')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>All</button>
                       <button type="button" onClick={() => setAlertChannelFilter('email')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'email' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Email</button>
                       <button type="button" onClick={() => setAlertChannelFilter('sms')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'sms' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>SMS</button>
+                      <button type="button" onClick={() => setAlertTimingFilter('all')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Any time</button>
+                      <button type="button" onClick={() => setAlertTimingFilter('now')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'now' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Send now</button>
+                      <button type="button" onClick={() => setAlertTimingFilter('scheduled')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'scheduled' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Scheduled</button>
                     </div>
                     {filteredAlertLog.slice(0, 4).map((item) => (
                       <div key={item.id} className="text-[11px] text-text-tertiary border border-border/50 rounded-md px-2 py-1.5">
