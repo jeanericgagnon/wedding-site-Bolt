@@ -98,10 +98,17 @@ export const BuilderInspectorPanel: React.FC = () => {
         >Copy</button>
         <button
           onClick={() => {
-            if (!activePage || !state.selectedSectionId) return;
-            const label = getSectionManifest(activeSections[selectedIndex]?.type ?? selectedSection?.type ?? 'hero').label;
+            if (!activePage || !state.selectedSectionId || !selectedSection) return;
+            const label = getSectionManifest(selectedSection.type).label;
             if (!window.confirm(`Remove section: ${label}?`)) return;
+
+            const currentIdx = activeSections.findIndex((s) => s.id === state.selectedSectionId);
+            const fallbackNext = activeSections[currentIdx + 1]?.id ?? activeSections[currentIdx - 1]?.id ?? null;
+
             dispatch(builderActions.removeSection(activePage.id, state.selectedSectionId));
+            if (fallbackNext) {
+              requestAnimationFrame(() => dispatch(builderActions.selectSection(fallbackNext)));
+            }
           }}
           disabled={!state.selectedSectionId}
           className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-600 disabled:opacity-40"
