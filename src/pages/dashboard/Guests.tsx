@@ -2729,6 +2729,7 @@ Proceed with send?`)) return;
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
             <p className="text-text-secondary">Manage your guest list and see responses</p>
+            <a href="/dashboard/rsvp-board" className="text-xs text-primary hover:text-primary-hover">Open RSVP Board</a>
             <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
               <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
               <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
@@ -2864,6 +2865,7 @@ Proceed with send?`)) return;
         <div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
           <p className="text-text-secondary">Manage your guest list and see responses</p>
+          <a href="/dashboard/rsvp-board" className="text-xs text-primary hover:text-primary-hover">Open RSVP Board</a>
           <div className="mt-4 flex flex-wrap items-end gap-2">
             <div className="inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
               <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
