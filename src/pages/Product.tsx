@@ -492,7 +492,7 @@ export const Product: React.FC = () => {
         <div className="container-custom">
           <div className="mb-6 text-center">
             <h2 className="section-title text-text-primary">Feature walkthrough</h2>
-            <p className="section-subtitle max-w-xl mx-auto">A clean overview of the same feature set for mobile and tablet.</p>
+            <p className="section-subtitle max-w-2xl mx-auto">A clean overview of the same feature set for mobile and tablet.</p>
           </div>
           <div className="space-y-3">
             {desktopInteractiveSteps.map((step) => {
@@ -877,7 +877,7 @@ export const Product: React.FC = () => {
             <h2 className="section-title mb-4 text-text-primary">
               Full feature breakdown
             </h2>
-            <p className="section-subtitle max-w-3xl mx-auto">
+            <p className="section-subtitle max-w-2xl mx-auto">
               A full-stack wedding platform built around RSVP correctness, privacy-first defaults, and calm logistics.
             </p>
             <div className="flex items-center justify-center gap-6 mt-5">
@@ -893,7 +893,7 @@ export const Product: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" /> Guests + Households
               </h3>
@@ -917,7 +917,7 @@ export const Product: React.FC = () => {
               </ul>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-primary" /> RSVP Engine
               </h3>
@@ -940,7 +940,7 @@ export const Product: React.FC = () => {
               </ul>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <Send className="w-5 h-5 text-primary" /> Messaging
               </h3>
@@ -962,7 +962,7 @@ export const Product: React.FC = () => {
               </ul>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <Map className="w-5 h-5 text-primary" /> Travel + Itinerary
               </h3>
@@ -984,7 +984,7 @@ export const Product: React.FC = () => {
               </ul>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-primary" /> Registry
               </h3>
@@ -1005,7 +1005,7 @@ export const Product: React.FC = () => {
               </ul>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <ClipboardCheck className="w-5 h-5 text-primary" /> Seating + Check-in
               </h3>
@@ -1028,7 +1028,7 @@ export const Product: React.FC = () => {
               </ul>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <Camera className="w-5 h-5 text-primary" /> Guest Photo Sharing
               </h3>
@@ -1048,7 +1048,7 @@ export const Product: React.FC = () => {
               </ul>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" /> Anniversary Vault
               </h3>
@@ -1102,13 +1102,13 @@ export const Product: React.FC = () => {
             <h2 className="section-title mb-4 text-text-primary">
               See how <span className="text-primary">RSVP actually works</span>
             </h2>
-            <p className="section-subtitle">
+            <p className="section-subtitle max-w-2xl mx-auto">
               Multi-step, household-aware, with clear validation at each stage.
             </p>
           </div>
 
           <div className="max-w-lg mx-auto">
-            <Card variant="bordered" padding="lg" className="bg-surface">
+            <Card variant="bordered" padding="lg" className="bg-surface border-border shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 {[1, 2, 3, 4].map(step => (
                   <div key={step} className="flex items-center">
@@ -1453,7 +1453,7 @@ export const Product: React.FC = () => {
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="section-title mb-4 text-text-primary">Simple pricing. No surprises.</h2>
-            <p className="section-subtitle mb-8">One flat fee, 2 years of access, everything included. Auto-renew is off by default.</p>
+            <p className="section-subtitle mb-8 max-w-2xl mx-auto">One flat fee, 2 years of access, everything included. Auto-renew is off by default.</p>
             <div className="bg-surface border-2 border-primary/20 rounded-2xl p-8 md:p-10 shadow-sm">
               <div className="flex flex-col items-center gap-2 mb-6">
                 <span className="text-5xl font-bold text-text-primary">$49</span>
