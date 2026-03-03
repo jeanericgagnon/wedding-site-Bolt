@@ -185,7 +185,7 @@ export const Product: React.FC = () => {
         const next = visible[0]?.target?.getAttribute('data-step-id');
         if (next) setDesktopActiveStep(next);
       },
-      { root: null, rootMargin: '-35% 0px -45% 0px', threshold: [0.15, 0.4, 0.75] }
+      { root: null, rootMargin: '-30% 0px -50% 0px', threshold: [0.1, 0.35, 0.7] }
     );
 
     sentinels.forEach((node) => observer.observe(node));
@@ -234,6 +234,7 @@ export const Product: React.FC = () => {
 
   const maxCarouselIndex = Math.max(0, pains.length - slidesPerView);
   const carouselPageCount = maxCarouselIndex + 1;
+  const desktopActiveIndex = Math.max(0, desktopInteractiveSteps.findIndex((step) => step.id === desktopActiveStep));
 
   useEffect(() => {
     setCarouselIndex((prev) => Math.min(prev, maxCarouselIndex));
@@ -301,10 +302,16 @@ export const Product: React.FC = () => {
             <p className="section-subtitle max-w-2xl mx-auto">Scroll to move through each feature while the rail and preview stay pinned.</p>
           </div>
 
-          <div className="relative" style={{ height: `${desktopInteractiveSteps.length * 95}vh` }}>
-            <div className="sticky top-24 grid grid-cols-12 gap-6 h-[76vh]">
+          <div className="relative" style={{ height: `${desktopInteractiveSteps.length * 100}vh` }}>
+            <div className="sticky top-20 grid grid-cols-12 gap-6 h-[78vh]">
               <div className="col-span-4 rounded-2xl border border-border bg-surface p-4 shadow-sm">
-                <p className="text-xs uppercase updates-wide text-text-tertiary mb-3">Features</p>
+                <p className="text-xs uppercase updates-wide text-text-tertiary mb-2">Features</p>
+                <div className="h-1.5 rounded-full bg-surface-subtle mb-4 overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-500 ease-out"
+                    style={{ width: `${((desktopActiveIndex + 1) / desktopInteractiveSteps.length) * 100}%` }}
+                  />
+                </div>
                 <div className="space-y-2">
                   {desktopInteractiveSteps.map((step, idx) => {
                     const active = desktopActiveStep === step.id;
@@ -313,7 +320,7 @@ export const Product: React.FC = () => {
                       <button
                         key={step.id}
                         onClick={() => document.getElementById(`desktop-step-${step.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${active ? 'bg-primary text-white shadow-sm' : 'text-text-secondary hover:bg-surface-subtle'}`}
+                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-300 ease-out ${active ? 'bg-primary text-white shadow-sm scale-[1.01]' : 'text-text-secondary hover:bg-surface-subtle'}`}
                       >
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${active ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
                           <Icon className="w-4 h-4" />
@@ -328,18 +335,21 @@ export const Product: React.FC = () => {
                 </div>
               </div>
 
-              <div className="col-span-8 rounded-2xl border border-border bg-surface p-6 shadow-sm flex flex-col justify-between">
+              <div className="col-span-8 rounded-2xl border border-border bg-surface p-6 shadow-sm relative overflow-hidden">
                 {desktopInteractiveSteps.map((step) => {
-                  if (step.id !== desktopActiveStep) return null;
+                  const active = step.id === desktopActiveStep;
                   const Icon = step.icon;
                   return (
-                    <div key={step.id} className="h-full flex flex-col">
+                    <div
+                      key={step.id}
+                      className={`absolute inset-0 p-6 flex flex-col transition-all duration-500 ease-out ${active ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'}`}
+                    >
                       <div className="inline-flex items-center gap-2 text-primary font-medium mb-4">
                         <Icon className="w-4 h-4" />
                         <span>{step.label}</span>
                       </div>
-                      <h3 className="text-3xl font-semibold text-text-primary mb-4 max-w-2xl">{step.title}</h3>
-                      <p className="text-text-secondary text-lg max-w-2xl mb-6">{step.body}</p>
+                      <h3 className="text-[2rem] leading-tight font-semibold text-text-primary mb-4 max-w-2xl">{step.title}</h3>
+                      <p className="text-text-secondary text-lg leading-relaxed max-w-2xl mb-6">{step.body}</p>
                       <div className="flex flex-wrap gap-2 mb-8">
                         {step.chips.map((chip) => (
                           <span key={chip} className="px-3 py-1.5 rounded-full border border-border text-sm text-text-secondary bg-surface-subtle">{chip}</span>
@@ -373,7 +383,7 @@ export const Product: React.FC = () => {
                   key={step.id}
                   id={`desktop-step-${step.id}`}
                   data-step-id={step.id}
-                  className="h-[95vh]"
+                  className="h-[100vh]"
                 />
               ))}
             </div>
