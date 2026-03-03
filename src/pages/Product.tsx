@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
 import { Button, Card, CardContent, Badge } from '../components/ui';
@@ -84,8 +84,17 @@ export const Product: React.FC = () => {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [slidesPerView, setSlidesPerView] = useState(1);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
+  const [activeAnchor, setActiveAnchor] = useState('website');
+  const [hideMobileAnchorBar, setHideMobileAnchorBar] = useState(false);
 
   const templates = getAllTemplatePacks();
+  const mobileFeatureAnchors = useMemo(() => ([
+    { id: 'website', label: 'Website' },
+    { id: 'registry', label: 'Registry' },
+    { id: 'guest-list', label: 'Guest List' },
+    { id: 'save-the-dates', label: 'Save the Dates' },
+    { id: 'invitations', label: 'Invitations' },
+  ]), []);
 
   const showToast = (message: string) => {
     const t: ToastMsg = { id: Date.now(), message };
@@ -117,6 +126,46 @@ export const Product: React.FC = () => {
     window.addEventListener('resize', apply);
     return () => window.removeEventListener('resize', apply);
   }, []);
+
+  useEffect(() => {
+    const sections = mobileFeatureAnchors
+      .map(({ id }) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]?.target?.id) setActiveAnchor(visible[0].target.id);
+      },
+      { root: null, rootMargin: '-40% 0px -45% 0px', threshold: [0.1, 0.3, 0.6] }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [mobileFeatureAnchors]);
+
+  useEffect(() => {
+    const footerEl = document.getElementById('marketing-footer');
+    if (!footerEl) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setHideMobileAnchorBar(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+
+    observer.observe(footerEl);
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToAnchor = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const handlePreviewTheme = (themeId: string) => {
     const preset = THEME_PRESETS[themeId];
@@ -171,7 +220,7 @@ export const Product: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-text-primary">
+    <div className="min-h-screen flex flex-col bg-background text-text-primary pb-24 md:pb-0">
       <Header />
 
       {toasts.length > 0 && (
@@ -185,7 +234,7 @@ export const Product: React.FC = () => {
       )}
 
       {/* HERO */}
-      <section className="section-shell md:py-24 bg-gradient-to-b from-background to-surface">
+      <section id="website" className="section-shell md:py-24 bg-gradient-to-b from-background to-surface">
         <div className="container-custom">
           <div className="text-center max-w-4xl mx-auto">
             <Badge variant="primary" className="mb-4">Complete Product Tour</Badge>
@@ -292,6 +341,7 @@ export const Product: React.FC = () => {
         </div>
       </section>
 
+      <div id="guest-list" className="scroll-mt-24" />
       {/* FEATURE TABS */}
       <section id="features" className="section-shell bg-background">
         <div className="container-custom">
@@ -569,6 +619,7 @@ export const Product: React.FC = () => {
         </div>
       </section>
 
+      <div id="registry" className="scroll-mt-24" />
       {/* FULL FEATURE LIST */}
       <section id="full-features" className="section-shell bg-surface-subtle mt-4 md:mt-6">
         <div className="container-custom">
@@ -793,6 +844,7 @@ export const Product: React.FC = () => {
         </div>
       </section>
 
+      <div id="save-the-dates" className="scroll-mt-24" />
       {/* RSVP DEMO */}
       <section id="rsvp-demo" className="section-shell bg-background">
         <div className="container-custom">
@@ -1145,6 +1197,7 @@ export const Product: React.FC = () => {
         </div>
       </section>
 
+      <div id="invitations" className="scroll-mt-24" />
       {/* PRICING CTA */}
       <section className="section-shell bg-surface-subtle">
         <div className="container-custom">
@@ -1188,7 +1241,32 @@ export const Product: React.FC = () => {
         </div>
       </section>
 
-      <Footer />
+      <div
+        className={`md:hidden fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1rem)] max-w-md transition-transform duration-300 ${hideMobileAnchorBar ? 'translate-y-40 pointer-events-none' : 'translate-y-0'}`}
+        style={{ bottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      >
+        <div className="rounded-2xl border border-border-subtle bg-surface/95 backdrop-blur shadow-lg px-2 py-2">
+          <div className="grid grid-cols-5 gap-1">
+            {mobileFeatureAnchors.map((item) => {
+              const active = activeAnchor === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToAnchor(item.id)}
+                  className={`rounded-xl px-1.5 py-2 text-[10px] leading-tight font-medium transition-colors ${active ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-subtle'}`}
+                  aria-label={`Go to ${item.label}`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div id="marketing-footer">
+        <Footer />
+      </div>
     </div>
   );
 };
