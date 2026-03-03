@@ -392,7 +392,7 @@ export const Product: React.FC = () => {
       {/* DESKTOP INTERACTIVE FEATURE RAIL */}
       <section className="hidden lg:block section-shell bg-surface-subtle">
         <div className="container-custom">
-          <div className="mb-8 text-center">
+          <div className="mb-10 text-center">
             <h2 className="section-title text-text-primary">Guided product walkthrough</h2>
             <p className="section-subtitle max-w-2xl mx-auto">Scroll to move through each feature while the rail and preview stay pinned.</p>
           </div>
@@ -490,7 +490,7 @@ export const Product: React.FC = () => {
 
       <section className="lg:hidden section-shell bg-surface-subtle">
         <div className="container-custom">
-          <div className="mb-6 text-center">
+          <div className="mb-10 text-center">
             <h2 className="section-title text-text-primary">Feature walkthrough</h2>
             <p className="section-subtitle max-w-2xl mx-auto">A clean overview of the same feature set for mobile and tablet.</p>
           </div>
@@ -1220,7 +1220,7 @@ export const Product: React.FC = () => {
       <section id="templates" className="section-shell bg-surface-subtle">
         <div className="container-custom">
           <div className="section-intro">
-            <h2 className="section-title mb-3 text-text-primary">
+            <h2 className="section-title mb-4 text-text-primary">
               {templates.length} professionally designed templates
             </h2>
             <p className="section-subtitle max-w-2xl mx-auto">
