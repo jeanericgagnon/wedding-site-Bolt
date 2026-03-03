@@ -363,13 +363,13 @@ export const Product: React.FC = () => {
       {/* HERO */}
       <section id="website" className="section-shell md:py-24 bg-gradient-to-b from-background to-surface">
         <div className="container-custom">
-          <div className="text-center max-w-4xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto">
             <Badge variant="primary" className="mb-4">Complete Product Tour</Badge>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-text-primary mb-6 leading-tight">
               Everything your wedding site needs,<br className="hidden md:block" />
               <span className="text-primary"> built right</span>
             </h1>
-            <p className="text-lg md:text-xl text-text-secondary mb-10 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
               Explore every feature, demo the RSVP flow, browse real templates, and see how DayOf keeps planning simple when wedding details get busy.
             </p>
             <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
@@ -871,7 +871,7 @@ export const Product: React.FC = () => {
 
       <div id="registry" className="scroll-mt-24" />
       {/* FULL FEATURE LIST */}
-      <section id="full-features" className="section-shell bg-surface-subtle mt-4 md:mt-6">
+      <section id="full-features" className="section-shell bg-surface-subtle">
         <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="section-title mb-4 text-text-primary">
@@ -1451,7 +1451,7 @@ export const Product: React.FC = () => {
       {/* PRICING CTA */}
       <section className="section-shell bg-surface-subtle">
         <div className="container-custom">
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="max-w-2xl mx-auto text-center">
             <h2 className="section-title mb-4 text-text-primary">Simple pricing. No surprises.</h2>
             <p className="section-subtitle mb-8 max-w-2xl mx-auto">One flat fee, 2 years of access, everything included. Auto-renew is off by default.</p>
             <div className="bg-surface border-2 border-primary/20 rounded-2xl p-8 md:p-10 shadow-sm">
