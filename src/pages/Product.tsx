@@ -252,19 +252,39 @@ export const Product: React.FC = () => {
 
     if (!sentinels.length) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        const next = visible[0]?.target?.getAttribute('data-step-id');
-        if (next) setDesktopActiveStep(next);
-      },
-      { root: null, rootMargin: '-30% 0px -50% 0px', threshold: [0.1, 0.35, 0.7] }
-    );
+    let ticking = false;
 
-    sentinels.forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
+    const updateActiveStep = () => {
+      const focusLine = window.innerHeight * 0.42;
+      let bestId = desktopInteractiveSteps[0]?.id;
+      let bestDistance = Number.POSITIVE_INFINITY;
+
+      for (const node of sentinels) {
+        const distance = Math.abs(node.getBoundingClientRect().top - focusLine);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestId = node.getAttribute('data-step-id') ?? bestId;
+        }
+      }
+
+      if (bestId) setDesktopActiveStep(bestId);
+      ticking = false;
+    };
+
+    const onScrollOrResize = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateActiveStep);
+    };
+
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+    onScrollOrResize();
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
   }, [desktopInteractiveSteps]);
 
   const scrollToAnchor = (id: string) => {
@@ -377,7 +397,7 @@ export const Product: React.FC = () => {
             <p className="section-subtitle max-w-2xl mx-auto">Scroll to move through each feature while the rail and preview stay pinned.</p>
           </div>
 
-          <div className="relative" style={{ height: `${desktopInteractiveSteps.length * 100}vh` }}>
+          <div className="relative" style={{ height: `${desktopInteractiveSteps.length * 105}vh` }}>
             <div className="sticky top-20 grid grid-cols-12 gap-6 h-[78vh]">
               <div className="col-span-4 rounded-2xl border border-border bg-surface p-4 shadow-sm">
                 <p className="text-xs uppercase updates-wide text-text-tertiary mb-2">Features</p>
@@ -460,7 +480,7 @@ export const Product: React.FC = () => {
                   key={step.id}
                   id={`desktop-step-${step.id}`}
                   data-step-id={step.id}
-                  className="h-[100vh]"
+                  className="h-[105vh]"
                 />
               ))}
             </div>
