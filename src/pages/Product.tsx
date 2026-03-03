@@ -89,11 +89,11 @@ export const Product: React.FC = () => {
 
   const templates = getAllTemplatePacks();
   const mobileFeatureAnchors = useMemo(() => ([
-    { id: 'website', label: 'Website' },
-    { id: 'registry', label: 'Registry' },
-    { id: 'guest-list', label: 'Guest List' },
-    { id: 'save-the-dates', label: 'Save the Dates' },
-    { id: 'invitations', label: 'Invitations' },
+    { id: 'website', label: 'Website', icon: Globe },
+    { id: 'registry', label: 'Registry', icon: Wallet },
+    { id: 'guest-list', label: 'Guest List', icon: Users },
+    { id: 'save-the-dates', label: 'Save the Dates', icon: Calendar },
+    { id: 'invitations', label: 'Invitations', icon: Mail },
   ]), []);
 
   const showToast = (message: string) => {
@@ -1249,6 +1249,7 @@ export const Product: React.FC = () => {
           <div className="grid grid-cols-5 gap-1">
             {mobileFeatureAnchors.map((item) => {
               const active = activeAnchor === item.id;
+              const Icon = item.icon;
               return (
                 <button
                   key={item.id}
@@ -1256,7 +1257,10 @@ export const Product: React.FC = () => {
                   className={`rounded-xl px-1.5 py-2 text-[10px] leading-tight font-medium transition-colors ${active ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-subtle'}`}
                   aria-label={`Go to ${item.label}`}
                 >
-                  {item.label}
+                  <span className="flex flex-col items-center gap-1">
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                  </span>
                 </button>
               );
             })}
