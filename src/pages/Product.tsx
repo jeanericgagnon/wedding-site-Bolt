@@ -86,6 +86,7 @@ export const Product: React.FC = () => {
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   const [activeAnchor, setActiveAnchor] = useState('website');
   const [hideMobileAnchorBar, setHideMobileAnchorBar] = useState(false);
+  const [desktopActiveStep, setDesktopActiveStep] = useState('website');
 
   const templates = getAllTemplatePacks();
   const mobileFeatureAnchors = useMemo(() => ([
@@ -94,6 +95,14 @@ export const Product: React.FC = () => {
     { id: 'guest-list', label: 'Guest List', icon: Users },
     { id: 'save-the-dates', label: 'Save the Dates', icon: Calendar },
     { id: 'invitations', label: 'Invitations', icon: Mail },
+  ]), []);
+
+  const desktopInteractiveSteps = useMemo(() => ([
+    { id: 'website', label: 'Website', icon: Globe, title: 'Website that feels bespoke, not templated', body: 'Launch a polished wedding site with modern typography, premium spacing, and privacy controls built-in.', chips: ['Custom themes', 'Private by default', 'Fast publish'] },
+    { id: 'registry', label: 'Registry', icon: Wallet, title: 'Registry links from anywhere', body: 'Keep your preferred stores and avoid lock-in. Guests see clean cards with clear context.', chips: ['Any retailer', 'Clean cards', 'No clutter'] },
+    { id: 'guest-list', label: 'Guest List', icon: Users, title: 'Guest list and households without chaos', body: 'Organize households, plus-ones, and statuses in one flow that scales to large weddings.', chips: ['Households', 'Plus-ones', 'Status visibility'] },
+    { id: 'save-the-dates', label: 'Save the Dates', icon: Calendar, title: 'Save-the-dates and timing that stay consistent', body: 'Coordinate key dates and communications with timezone-safe timing and calm, clear UX.', chips: ['Timezone-safe', 'Clear milestones', 'Reliable scheduling'] },
+    { id: 'invitations', label: 'Invitations', icon: Mail, title: 'Invitations tied directly to RSVP flow', body: 'Move from invitation to response with less friction and better guest clarity.', chips: ['Invite links', 'RSVP handoff', 'Fewer drop-offs'] },
   ]), []);
 
   const showToast = (message: string) => {
@@ -160,6 +169,28 @@ export const Product: React.FC = () => {
     observer.observe(footerEl);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const sentinels = desktopInteractiveSteps
+      .map((step) => document.getElementById(`desktop-step-${step.id}`))
+      .filter(Boolean) as HTMLElement[];
+
+    if (!sentinels.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const next = visible[0]?.target?.getAttribute('data-step-id');
+        if (next) setDesktopActiveStep(next);
+      },
+      { root: null, rootMargin: '-35% 0px -45% 0px', threshold: [0.15, 0.4, 0.75] }
+    );
+
+    sentinels.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [desktopInteractiveSteps]);
 
   const scrollToAnchor = (id: string) => {
     const el = document.getElementById(id);
@@ -258,6 +289,118 @@ export const Product: React.FC = () => {
               </a>
             </div>
             <p className="mt-4 text-sm text-text-tertiary">2-year access · No subscription · Private by default</p>
+          </div>
+        </div>
+      </section>
+
+      {/* DESKTOP INTERACTIVE FEATURE RAIL */}
+      <section className="hidden lg:block section-shell bg-surface-subtle">
+        <div className="container-custom">
+          <div className="mb-8 text-center">
+            <h2 className="section-title text-text-primary">Guided product walkthrough</h2>
+            <p className="section-subtitle max-w-2xl mx-auto">Scroll to move through each feature while the rail and preview stay pinned.</p>
+          </div>
+
+          <div className="relative" style={{ height: `${desktopInteractiveSteps.length * 95}vh` }}>
+            <div className="sticky top-24 grid grid-cols-12 gap-6 h-[76vh]">
+              <div className="col-span-4 rounded-2xl border border-border bg-surface p-4 shadow-sm">
+                <p className="text-xs uppercase updates-wide text-text-tertiary mb-3">Features</p>
+                <div className="space-y-2">
+                  {desktopInteractiveSteps.map((step, idx) => {
+                    const active = desktopActiveStep === step.id;
+                    const Icon = step.icon;
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => document.getElementById(`desktop-step-${step.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${active ? 'bg-primary text-white shadow-sm' : 'text-text-secondary hover:bg-surface-subtle'}`}
+                      >
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${active ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
+                          <Icon className="w-4 h-4" />
+                        </span>
+                        <div>
+                          <p className="text-[11px] opacity-75">0{idx + 1}</p>
+                          <p className="text-sm font-medium leading-tight">{step.label}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="col-span-8 rounded-2xl border border-border bg-surface p-6 shadow-sm flex flex-col justify-between">
+                {desktopInteractiveSteps.map((step) => {
+                  if (step.id !== desktopActiveStep) return null;
+                  const Icon = step.icon;
+                  return (
+                    <div key={step.id} className="h-full flex flex-col">
+                      <div className="inline-flex items-center gap-2 text-primary font-medium mb-4">
+                        <Icon className="w-4 h-4" />
+                        <span>{step.label}</span>
+                      </div>
+                      <h3 className="text-3xl font-semibold text-text-primary mb-4 max-w-2xl">{step.title}</h3>
+                      <p className="text-text-secondary text-lg max-w-2xl mb-6">{step.body}</p>
+                      <div className="flex flex-wrap gap-2 mb-8">
+                        {step.chips.map((chip) => (
+                          <span key={chip} className="px-3 py-1.5 rounded-full border border-border text-sm text-text-secondary bg-surface-subtle">{chip}</span>
+                        ))}
+                      </div>
+                      <div className="mt-auto rounded-xl border border-primary/20 bg-primary/5 p-5">
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="rounded-lg bg-surface p-3 border border-border-subtle">
+                            <p className="text-xs text-text-tertiary">Consistency</p>
+                            <p className="text-lg font-semibold text-text-primary">High</p>
+                          </div>
+                          <div className="rounded-lg bg-surface p-3 border border-border-subtle">
+                            <p className="text-xs text-text-tertiary">Setup effort</p>
+                            <p className="text-lg font-semibold text-text-primary">Low</p>
+                          </div>
+                          <div className="rounded-lg bg-surface p-3 border border-border-subtle">
+                            <p className="text-xs text-text-tertiary">Guest clarity</p>
+                            <p className="text-lg font-semibold text-text-primary">Strong</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="absolute inset-0 pointer-events-none">
+              {desktopInteractiveSteps.map((step) => (
+                <div
+                  key={step.id}
+                  id={`desktop-step-${step.id}`}
+                  data-step-id={step.id}
+                  className="h-[95vh]"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="lg:hidden section-shell bg-surface-subtle">
+        <div className="container-custom">
+          <div className="mb-6 text-center">
+            <h2 className="section-title text-text-primary">Feature walkthrough</h2>
+            <p className="section-subtitle max-w-xl mx-auto">A clean overview of the same feature set for mobile and tablet.</p>
+          </div>
+          <div className="space-y-3">
+            {desktopInteractiveSteps.map((step) => {
+              const Icon = step.icon;
+              return (
+                <div key={step.id} className="rounded-xl border border-border bg-surface p-4">
+                  <div className="flex items-center gap-2 mb-2 text-primary">
+                    <Icon className="w-4 h-4" />
+                    <p className="font-medium">{step.label}</p>
+                  </div>
+                  <p className="text-text-primary font-semibold mb-1">{step.title}</p>
+                  <p className="text-sm text-text-secondary">{step.body}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
