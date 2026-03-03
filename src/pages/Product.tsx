@@ -246,24 +246,20 @@ export const Product: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const section = document.querySelector('section.hidden.lg\\:block.section-shell.bg-surface-subtle') as HTMLElement | null;
-    if (!section) return;
+    const sentinels = desktopInteractiveSteps
+      .map((step) => document.getElementById(`desktop-step-${step.id}`))
+      .filter(Boolean) as HTMLElement[];
+    if (!sentinels.length) return;
 
     let ticking = false;
 
     const updateActiveStep = () => {
-      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-      const sectionHeight = section.offsetHeight;
-      const viewportHeight = window.innerHeight;
+      const probeY = window.scrollY + window.innerHeight * 0.42;
+      const points = sentinels.map((node) => node.getBoundingClientRect().top + window.scrollY);
 
-      const pinStart = sectionTop;
-      const pinEnd = sectionTop + sectionHeight - viewportHeight;
-      const clamped = Math.min(Math.max(window.scrollY, pinStart), pinEnd);
-      const progress = pinEnd > pinStart ? (clamped - pinStart) / (pinEnd - pinStart) : 0;
-      const index = Math.min(
-        desktopInteractiveSteps.length - 1,
-        Math.max(0, Math.floor(progress * desktopInteractiveSteps.length))
-      );
+      let index = points.findIndex((p) => probeY < p) - 1;
+      if (index < 0) index = 0;
+      if (index >= desktopInteractiveSteps.length) index = desktopInteractiveSteps.length - 1;
 
       const nextId = desktopInteractiveSteps[index]?.id;
       if (nextId) setDesktopActiveStep(nextId);
