@@ -257,7 +257,8 @@ export const Product: React.FC = () => {
       const probeY = window.scrollY + window.innerHeight * 0.42;
       const points = sentinels.map((node) => node.getBoundingClientRect().top + window.scrollY);
 
-      let index = points.findIndex((p) => probeY < p) - 1;
+      const firstGreater = points.findIndex((p) => probeY < p);
+      let index = firstGreater === -1 ? desktopInteractiveSteps.length - 1 : firstGreater - 1;
       if (index < 0) index = 0;
       if (index >= desktopInteractiveSteps.length) index = desktopInteractiveSteps.length - 1;
 
