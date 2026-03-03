@@ -16,7 +16,7 @@ export function generateInitialLayout(
   const sections: SectionInstance[] = template.defaultLayout.sections.map((sectionDef) => {
     const section: SectionInstance = {
       id: generateId(),
-      type: sectionDef.type,
+      type: sectionDef.type as SectionInstance['type'],
       variant: sectionDef.variant,
       enabled: sectionDef.enabled,
       bindings: { ...sectionDef.bindings },

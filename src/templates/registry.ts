@@ -1,4 +1,9 @@
-import { SectionInstance } from '../types/layoutConfig';
+import { SectionInstance, SectionType } from '../types/layoutConfig';
+
+type TemplateSection = Omit<SectionInstance, 'id' | 'type'> & {
+  // Keep compatibility with imported template artifacts while preserving known section keys.
+  type: SectionType | string;
+};
 
 export interface TemplateDefinition {
   id: string;
@@ -6,7 +11,7 @@ export interface TemplateDefinition {
   description: string;
   defaultThemePreset: string;
   defaultLayout: {
-    sections: Omit<SectionInstance, 'id'>[];
+    sections: TemplateSection[];
   };
 }
 
