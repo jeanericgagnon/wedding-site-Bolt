@@ -246,28 +246,27 @@ export const Product: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const sentinels = desktopInteractiveSteps
-      .map((step) => document.getElementById(`desktop-step-${step.id}`))
-      .filter(Boolean) as HTMLElement[];
-
-    if (!sentinels.length) return;
+    const section = document.querySelector('section.hidden.lg\\:block.section-shell.bg-surface-subtle') as HTMLElement | null;
+    if (!section) return;
 
     let ticking = false;
 
     const updateActiveStep = () => {
-      const focusLine = window.innerHeight * 0.42;
-      let bestId = desktopInteractiveSteps[0]?.id;
-      let bestDistance = Number.POSITIVE_INFINITY;
+      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+      const sectionHeight = section.offsetHeight;
+      const viewportHeight = window.innerHeight;
 
-      for (const node of sentinels) {
-        const distance = Math.abs(node.getBoundingClientRect().top - focusLine);
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          bestId = node.getAttribute('data-step-id') ?? bestId;
-        }
-      }
+      const pinStart = sectionTop;
+      const pinEnd = sectionTop + sectionHeight - viewportHeight;
+      const clamped = Math.min(Math.max(window.scrollY, pinStart), pinEnd);
+      const progress = pinEnd > pinStart ? (clamped - pinStart) / (pinEnd - pinStart) : 0;
+      const index = Math.min(
+        desktopInteractiveSteps.length - 1,
+        Math.max(0, Math.floor(progress * desktopInteractiveSteps.length))
+      );
 
-      if (bestId) setDesktopActiveStep(bestId);
+      const nextId = desktopInteractiveSteps[index]?.id;
+      if (nextId) setDesktopActiveStep(nextId);
       ticking = false;
     };
 
