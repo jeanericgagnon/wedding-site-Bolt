@@ -110,6 +110,41 @@ export const defaultRegistryFeaturedData: RegistryFeaturedData = {
   ],
 };
 
+const TITLE_MAX = 88;
+
+const cleanGiftTitle = (value: string): string => {
+  const normalized = (value || '')
+    .replace(/\s+/g, ' ')
+    .replace(/[|•·]+\s*(Amazon(?:\.com)?|Target|Walmart|Etsy|Crate\s*&\s*Barrel|Williams\s*Sonoma).*$/i, '')
+    .trim();
+
+  if (!normalized) return 'Registry item';
+  if (normalized.length <= TITLE_MAX) return normalized;
+
+  const clipped = normalized.slice(0, TITLE_MAX);
+  const boundary = clipped.lastIndexOf(' ');
+  return `${(boundary > 50 ? clipped.slice(0, boundary) : clipped).trim()}…`;
+};
+
+const normalizePriceLabel = (priceLabel?: string | null, amount?: number | null): string => {
+  if (typeof amount === 'number' && Number.isFinite(amount)) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: amount % 1 === 0 ? 0 : 2 }).format(amount);
+  }
+
+  const raw = (priceLabel ?? '').trim();
+  if (!raw) return '';
+
+  const plainNumber = raw.replace(/,/g, '').match(/^\$?\s*(\d+(?:\.\d{1,2})?)$/);
+  if (plainNumber) {
+    const n = Number(plainNumber[1]);
+    if (Number.isFinite(n)) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: n % 1 === 0 ? 0 : 2 }).format(n);
+    }
+  }
+
+  return raw.replace(/\s+/g, ' ');
+};
+
 const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: boolean }> = ({ gift, compact }) => (
   <a
     href={gift.isClaimed ? undefined : (gift.url || '#')}
@@ -173,9 +208,9 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
 function registryItemToGift(item: RegistryItem): z.infer<typeof FeaturedGiftSchema> {
   return {
     id: item.id,
-    name: item.item_name,
+    name: cleanGiftTitle(item.item_name),
     store: item.store_name ?? item.merchant ?? '',
-    price: item.price_label ?? (item.price_amount != null ? `$${item.price_amount}` : ''),
+    price: normalizePriceLabel(item.price_label, item.price_amount),
     description: item.description ?? item.notes ?? '',
     image: item.image_url ?? '',
     url: item.item_url ?? item.canonical_url ?? '',
@@ -196,9 +231,14 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
       .catch(() => setLiveItems(null));
   }, [weddingSiteId]);
 
-  const displayGifts = liveItems
+  const displayGifts = (liveItems
     ? liveItems.map(registryItemToGift)
-    : data.featuredGifts;
+    : data.featuredGifts
+  ).map(gift => ({
+    ...gift,
+    name: cleanGiftTitle(gift.name),
+    price: normalizePriceLabel(gift.price),
+  }));
 
   const colClass = data.layout === '3col'
     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
