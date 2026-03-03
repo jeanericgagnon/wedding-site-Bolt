@@ -25,6 +25,7 @@ export function buildSiteUrlLookupCandidates(slug: string): string[] {
 
   const bare = `${normalized}.dayof.love`;
   return [
+    normalized,
     bare,
     `https://${bare}`,
     `http://${bare}`,

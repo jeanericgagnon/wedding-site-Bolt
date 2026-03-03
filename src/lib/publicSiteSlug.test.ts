@@ -22,6 +22,7 @@ describe('normalizePublicSiteSlug', () => {
 describe('buildSiteUrlLookupCandidates', () => {
   it('builds exact match candidates for legacy site_url rows', () => {
     expect(buildSiteUrlLookupCandidates('alex-jordan-demo')).toEqual([
+      'alex-jordan-demo',
       'alex-jordan-demo.dayof.love',
       'https://alex-jordan-demo.dayof.love',
       'http://alex-jordan-demo.dayof.love',
