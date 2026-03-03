@@ -1,0 +1,66 @@
+{
+  "Footer": [
+    "FooterClassic",
+    "FooterExpanded",
+    "FooterMinimal"
+  ],
+  "Schedule": [
+    "ScheduleCards",
+    "ScheduleClassic",
+    "ScheduleMinimal"
+  ],
+  "Countdown": [
+    "CountdownClassic"
+  ],
+  "FAQ": [
+    "FAQAccordion",
+    "FAQClassic",
+    "FAQGrid"
+  ],
+  "Gallery": [
+    "GalleryCarousel",
+    "GalleryClassic",
+    "GalleryFullwidth",
+    "GalleryMasonry"
+  ],
+  "Registry": [
+    "RegistryCards",
+    "RegistryClassic",
+    "RegistryMinimal"
+  ],
+  "Venue": [
+    "VenueCards",
+    "VenueClassic",
+    "VenueMinimal",
+    "VenueSplit"
+  ],
+  "RSVP": [
+    "RSVPClassic",
+    "RSVPForm",
+    "RSVPMinimal"
+  ],
+  "Hero": [
+    "HeroClassic",
+    "HeroCoastal",
+    "HeroEditorial",
+    "HeroFullscreen",
+    "HeroGarden",
+    "HeroLuxury",
+    "HeroMinimal",
+    "HeroMoody",
+    "HeroPlayful",
+    "HeroSplit",
+    "HeroStacked"
+  ],
+  "Travel": [
+    "TravelClassic",
+    "TravelCompact",
+    "TravelMap"
+  ],
+  "Story": [
+    "StoryCards",
+    "StoryClassic",
+    "StorySplit",
+    "StoryTimeline"
+  ]
+}
