@@ -23,6 +23,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
 import { supabase } from '../../lib/supabase';
+import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -46,11 +47,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
     supabase
       .from('wedding_sites')
-      .select('site_slug')
+      .select('site_slug, site_url')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (data?.site_slug) setSiteSlug(data.site_slug);
+        const resolved = resolvePublicSiteSlugFromRow((data as Record<string, unknown> | null) ?? null);
+        if (resolved) setSiteSlug(resolved);
       });
   }, [user, isDemoMode]);
 

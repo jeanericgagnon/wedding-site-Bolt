@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { PersistedSection, PersistedSectionSchema, parseSections, SectionTypeValue } from '../sections/schemas';
 import { BuilderSectionInstance } from '../types/builder/section';
+import { buildSiteUrlLookupCandidates, normalizePublicSiteSlug } from '../lib/publicSiteSlug';
 
 export interface SectionReorderItem {
   id: string;
@@ -23,6 +24,34 @@ function builderToPersistedSection(s: BuilderSectionInstance, siteId: string): O
 }
 
 export const siteRepository = {
+  async fetchPublicSiteBySlug(slugInput: string): Promise<Record<string, unknown> | null> {
+    const slug = normalizePublicSiteSlug(slugInput);
+    if (!slug) return null;
+
+    const bySlug = await supabase
+      .from('wedding_sites')
+      .select('*')
+      .eq('site_slug', slug)
+      .maybeSingle();
+
+    if (bySlug.error) throw bySlug.error;
+    if (bySlug.data) return bySlug.data as Record<string, unknown>;
+
+    const urlCandidates = buildSiteUrlLookupCandidates(slug);
+    for (const candidate of urlCandidates) {
+      const bySiteUrl = await supabase
+        .from('wedding_sites')
+        .select('*')
+        .eq('site_url', candidate)
+        .maybeSingle();
+
+      if (bySiteUrl.error) throw bySiteUrl.error;
+      if (bySiteUrl.data) return bySiteUrl.data as Record<string, unknown>;
+    }
+
+    return null;
+  },
+
   async fetchSections(siteId: string): Promise<PersistedSection[]> {
     const { data, error } = await supabase
       .from('sections')

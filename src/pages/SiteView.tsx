@@ -15,6 +15,7 @@ import { PageRenderer } from '../render/PageRenderer';
 import { safeJsonParse } from '../lib/jsonUtils';
 import { SiteViewContext } from '../contexts/SiteViewContext';
 import { siteRepository } from '../data/siteRepository';
+import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
 
 const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string }> = ({ siteId, siteSlug }) => {
   const [sections, setSections] = useState<import('../sections/schemas').PersistedSection[]>([]);
@@ -177,14 +178,14 @@ export const SiteView: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
 
   const resolvedSlug = React.useMemo(() => {
-    if (slug) return slug;
+    if (slug) return normalizePublicSiteSlug(slug);
     const host = window.location.hostname.toLowerCase();
     if (!host.endsWith('dayof.love')) return null;
     const parts = host.split('.');
     if (parts.length < 3) return null; // dayof.love
     const sub = parts[0];
     if (!sub || sub === 'www') return null;
-    return sub;
+    return normalizePublicSiteSlug(sub);
   }, [slug]);
   const [searchParams] = useSearchParams();
   const { i18n } = useTranslation();
@@ -234,24 +235,7 @@ export const SiteView: React.FC = () => {
       }
 
       try {
-        let { data, error: fetchError } = await supabase
-          .from('wedding_sites')
-          .select('*')
-          .eq('site_slug', resolvedSlug)
-          .maybeSingle();
-
-        // Fallback for legacy/incomplete rows where site_slug is missing but site_url exists.
-        if (!data && !fetchError) {
-          const byUrl = await supabase
-            .from('wedding_sites')
-            .select('*')
-            .eq('site_url', `${resolvedSlug}.dayof.love`)
-            .maybeSingle();
-          data = byUrl.data;
-          fetchError = byUrl.error;
-        }
-
-        if (fetchError) throw fetchError;
+        const data = await siteRepository.fetchPublicSiteBySlug(resolvedSlug);
 
         if (!data) {
           setError('Wedding site not found');

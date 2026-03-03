@@ -16,6 +16,7 @@ import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, AlertCircle, Cl
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
+import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 
 interface OverviewStats {
   publishedVersion: number | null;
@@ -174,7 +175,7 @@ export const DashboardOverview: React.FC = () => {
           pendingGuests: pending.length,
           daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
           weddingDate,
-          siteSlug: demoWeddingSite.site_url,
+          siteSlug: resolvePublicSiteSlugFromRow(demoWeddingSite as unknown as Record<string, unknown>),
           isPublished: true,
           siteUpdatedAt: new Date().toISOString(),
           templateName: 'classic',
@@ -192,7 +193,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, is_published, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+        .select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -265,7 +266,7 @@ export const DashboardOverview: React.FC = () => {
         pendingGuests: pending.length,
         daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
         weddingDate,
-        siteSlug: site?.site_slug ?? null,
+        siteSlug: resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null),
         isPublished,
         siteUpdatedAt: site?.updated_at ?? null,
         templateName,
