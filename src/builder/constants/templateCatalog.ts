@@ -1,9 +1,11 @@
 import { getAllTemplates } from '../../templates/registry';
+import { getTemplatePreviewSource } from './templatePreviewSource';
 
 export type TemplateCatalogItem = {
   id: string;
   name: string;
   previewImage: string;
+  previewFallbackImage: string;
   styleTags: string[];
   seasonTags: string[];
   colorwayId: string;
@@ -13,15 +15,6 @@ export type TemplateCatalogItem = {
   includedModules: string[];
   defaultSectionOrder: string[];
 };
-
-const PREVIEW_POOL = [
-  'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg',
-  'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg',
-  'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg',
-  'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg',
-  'https://images.pexels.com/photos/265947/pexels-photo-265947.jpeg',
-  'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg',
-];
 
 const THEME_TO_COLORWAY: Record<string, string> = {
   editorial: 'ivory-ink',
@@ -84,17 +77,19 @@ const titleCase = (s: string) =>
     .join(' ');
 
 const buildCatalog = (): TemplateCatalogItem[] => {
-  return getAllTemplates().map((tpl, idx) => {
+  return getAllTemplates().map((tpl) => {
     const styleTags = inferStyleTags(tpl.id, tpl.name, tpl.description);
     const seasonTags = inferSeasonTags(tpl.id, tpl.name, tpl.description);
     const defaultSectionOrder = tpl.defaultLayout.sections.map((s) => titleCase(String(s.type)));
     const includedModules = Array.from(new Set(defaultSectionOrder));
     const colorwayId = THEME_TO_COLORWAY[tpl.defaultThemePreset] ?? 'ivory-ink';
+    const preview = getTemplatePreviewSource(tpl.id);
 
     return {
       id: tpl.id,
       name: tpl.name,
-      previewImage: PREVIEW_POOL[idx % PREVIEW_POOL.length],
+      previewImage: preview.src,
+      previewFallbackImage: preview.fallbackSrc,
       styleTags,
       seasonTags,
       colorwayId,

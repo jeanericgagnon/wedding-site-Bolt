@@ -90,7 +90,17 @@ export const Templates: React.FC = () => {
 
   const renderTemplateCard = (tpl: typeof templateCatalog[number]) => (
     <div key={tpl.id} className={`rounded-xl border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-rose-300 ring-1 ring-rose-100' : 'border-neutral-200'}`}>
-      <img src={tpl.previewImage} alt={tpl.name} className="h-40 w-full object-cover" />
+      <img
+        src={tpl.previewImage}
+        alt={tpl.name}
+        className="h-40 w-full object-cover"
+        onError={(event) => {
+          const img = event.currentTarget;
+          if (img.dataset.previewFallbackApplied === '1') return;
+          img.dataset.previewFallbackApplied = '1';
+          img.src = tpl.previewFallbackImage;
+        }}
+      />
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-lg font-semibold text-neutral-900">{tpl.name}</h2>
