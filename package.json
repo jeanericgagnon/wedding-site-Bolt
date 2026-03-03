@@ -21,6 +21,7 @@
     "smoke:csvmapper": "node scripts/smoke_csv_mapper_guard.js",
     "smoke:checkin": "node scripts/smoke_checkin_guard.js",
     "smoke:site": "node scripts/site_lookup_smoke.js",
+    "previews:manifest": "node scripts/generate_template_preview_manifest.cjs",
     "hardpass:rsvp": "npm test && npm run build && npm run smoke:rsvp:strict && npm run smoke:csvmapper && npm run smoke:checkin"
   },
   "dependencies": {

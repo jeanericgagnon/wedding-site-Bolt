@@ -1,0 +1,183 @@
+{
+  "generatedAt": "2026-03-03T22:02:58.271Z",
+  "source": "src/templates/registry.ts",
+  "fallback": "/template-previews/_fallback.svg",
+  "count": 35,
+  "previews": [
+    {
+      "id": "editorial-impact",
+      "src": "/template-previews/editorial-impact.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "cinematic-immersion",
+      "src": "/template-previews/cinematic-immersion.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "romantic-dreamy",
+      "src": "/template-previews/romantic-dreamy.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "playful-celebration",
+      "src": "/template-previews/playful-celebration.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "timeless-classic",
+      "src": "/template-previews/timeless-classic.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "coastal-breeze",
+      "src": "/template-previews/coastal-breeze.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "garden-escape",
+      "src": "/template-previews/garden-escape.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "modern-clean",
+      "src": "/template-previews/modern-clean.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "luxury-opulent",
+      "src": "/template-previews/luxury-opulent.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "destination-adventure",
+      "src": "/template-previews/destination-adventure.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "photo-storytelling",
+      "src": "/template-previews/photo-storytelling.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "minimal-essentials",
+      "src": "/template-previews/minimal-essentials.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "magazine-narrative",
+      "src": "/template-previews/magazine-narrative.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "bold-statement",
+      "src": "/template-previews/bold-statement.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "artistic-expression",
+      "src": "/template-previews/artistic-expression.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "refined-elegance",
+      "src": "/template-previews/refined-elegance.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "rustic-charm",
+      "src": "/template-previews/rustic-charm.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "moody-dramatic",
+      "src": "/template-previews/moody-dramatic.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "contemporary-fusion",
+      "src": "/template-previews/contemporary-fusion.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "floating-elements",
+      "src": "/template-previews/floating-elements.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "full-featured-classic",
+      "src": "/template-previews/full-featured-classic.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "full-featured-modern",
+      "src": "/template-previews/full-featured-modern.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "full-featured-luxury",
+      "src": "/template-previews/full-featured-luxury.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "full-featured-playful",
+      "src": "/template-previews/full-featured-playful.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "full-featured-minimal",
+      "src": "/template-previews/full-featured-minimal.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "guest-experience-first",
+      "src": "/template-previews/guest-experience-first.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "wedding-party-showcase",
+      "src": "/template-previews/wedding-party-showcase.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "timeline-narrative",
+      "src": "/template-previews/timeline-narrative.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "registry-wish-focused",
+      "src": "/template-previews/registry-wish-focused.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "ultra-compact-mobile",
+      "src": "/template-previews/ultra-compact-mobile.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "immersive-experience",
+      "src": "/template-previews/immersive-experience.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "elopement-intimate",
+      "src": "/template-previews/elopement-intimate.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "bold-typography-driven",
+      "src": "/template-previews/bold-typography-driven.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "split-screen-modern",
+      "src": "/template-previews/split-screen-modern.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    },
+    {
+      "id": "experience-collection",
+      "src": "/template-previews/experience-collection.webp",
+      "fallbackSrc": "/template-previews/_fallback.svg"
+    }
+  ]
+}
