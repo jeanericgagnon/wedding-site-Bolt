@@ -374,12 +374,12 @@ export const Product: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
               <Link to="/signup" className="w-full sm:w-auto">
-                <Button variant="primary" size="lg" fullWidth>
+                <Button variant="primary" size="lg" fullWidth className="shadow-sm hover:shadow-md transition-shadow">
                   Start free — $49 flat
                 </Button>
               </Link>
               <a href="#templates" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" fullWidth>
+                <Button variant="outline" size="lg" fullWidth className="border-border text-text-secondary hover:text-text-primary">
                   Browse templates
                 </Button>
               </a>
@@ -1385,8 +1385,8 @@ export const Product: React.FC = () => {
 
           <div className="text-center">
             <p className="text-text-secondary mb-4">All templates include: drag-and-drop sections · real-time preview · theme customization · RSVP integration</p>
-            <Link to="/signup">
-              <Button variant="primary" size="lg">
+            <Link to="/signup" className="inline-block w-full max-w-sm">
+              <Button variant="primary" size="lg" fullWidth className="shadow-sm hover:shadow-md transition-shadow">
                 <Sparkles className="w-5 h-5 mr-2" />
                 Start free — $49 flat
               </Button>
@@ -1479,7 +1479,7 @@ export const Product: React.FC = () => {
                 ))}
               </div>
               <Link to="/signup">
-                <Button variant="primary" size="lg" fullWidth>
+                <Button variant="primary" size="lg" fullWidth className="shadow-sm hover:shadow-md transition-shadow">
                   Start free — $49 flat
                 </Button>
               </Link>
