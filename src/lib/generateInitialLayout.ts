@@ -1,6 +1,7 @@
 import { LayoutConfigV1, SectionInstance } from '../types/layoutConfig';
 import { WeddingDataV1 } from '../types/weddingData';
 import { getTemplate } from '../templates/registry';
+import { resolveBuilderVariant } from './sectionVariantCompatibility';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -17,7 +18,7 @@ export function generateInitialLayout(
     const section: SectionInstance = {
       id: generateId(),
       type: sectionDef.type as SectionInstance['type'],
-      variant: sectionDef.variant,
+      variant: resolveBuilderVariant(sectionDef.type as SectionInstance['type'], sectionDef.variant),
       enabled: sectionDef.enabled,
       bindings: { ...sectionDef.bindings },
       settings: { ...sectionDef.settings },
