@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
@@ -16,6 +16,24 @@ import { safeJsonParse } from '../lib/jsonUtils';
 import { SiteViewContext } from '../contexts/SiteViewContext';
 import { siteRepository } from '../data/siteRepository';
 import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
+
+const FALLBACK_IMAGE_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(
+  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 675'>
+    <defs>
+      <linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+        <stop offset='0%' stop-color='#f5f5f4'/>
+        <stop offset='100%' stop-color='#e7e5e4'/>
+      </linearGradient>
+    </defs>
+    <rect width='1200' height='675' fill='url(#g)'/>
+    <g fill='none' stroke='#a8a29e' stroke-width='16' opacity='0.8'>
+      <rect x='420' y='212' width='360' height='250' rx='22'/>
+      <path d='M452 430l90-95 84 74 58-54 68 75'/>
+      <circle cx='688' cy='286' r='22' fill='#a8a29e' stroke='none'/>
+    </g>
+    <text x='600' y='528' text-anchor='middle' fill='#78716c' font-size='34' font-family='Inter,Arial,sans-serif'>Image unavailable</text>
+  </svg>`
+)}`;
 
 const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string }> = ({ siteId, siteSlug }) => {
   const [sections, setSections] = useState<import('../sections/schemas').PersistedSection[]>([]);
@@ -204,6 +222,22 @@ export const SiteView: React.FC = () => {
   const [passwordGateChecking, setPasswordGateChecking] = useState(false);
 
   const STORAGE_KEY = `dayof_pw_unlocked_${resolvedSlug ?? 'unknown'}`;
+
+  const handleImageErrorCapture = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+
+    if (target.dataset.fallbackApplied === '1') {
+      target.style.visibility = 'hidden';
+      return;
+    }
+
+    target.dataset.fallbackApplied = '1';
+    target.src = FALLBACK_IMAGE_DATA_URI;
+    if (!target.alt || target.alt.trim().length === 0) {
+      target.alt = 'Image unavailable';
+    }
+  }, []);
 
   const handlePasswordSubmit = async (pw: string) => {
     setPasswordGateChecking(true);
@@ -425,7 +459,9 @@ export const SiteView: React.FC = () => {
   if (useNewRenderer && weddingSiteId) {
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
-        <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} />
+        <div onErrorCapture={handleImageErrorCapture}>
+          <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} />
+        </div>
       </SiteViewContext.Provider>
     );
   }
@@ -433,7 +469,7 @@ export const SiteView: React.FC = () => {
   if (builderSections && weddingData) {
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
-        <div className="builder-themed-canvas min-h-screen bg-background">
+        <div className="builder-themed-canvas min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
           {builderSections.map(section => (
             <SectionRenderer key={section.id} section={section} weddingData={weddingData} />
           ))}
@@ -467,7 +503,7 @@ export const SiteView: React.FC = () => {
 
   return (
     <SiteViewContext.Provider value={{ weddingSiteId }}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
         {enabledSections.map((sectionInstance) => {
           try {
             const SectionComponent = getSectionComponent(
