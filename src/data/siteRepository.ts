@@ -49,6 +49,20 @@ export const siteRepository = {
       if (bySiteUrl.data) return bySiteUrl.data as Record<string, unknown>;
     }
 
+    // Last-pass fallback for legacy rows that stored full URLs with extra path/query/trailing slash.
+    const fuzzy = await supabase
+      .from('wedding_sites')
+      .select('*')
+      .ilike('site_url', `%${slug}%`)
+      .limit(20);
+
+    if (fuzzy.error) throw fuzzy.error;
+    const match = (fuzzy.data ?? []).find((row) => {
+      const candidate = normalizePublicSiteSlug(typeof row.site_url === 'string' ? row.site_url : null);
+      return candidate === slug;
+    });
+    if (match) return match as Record<string, unknown>;
+
     return null;
   },
 
