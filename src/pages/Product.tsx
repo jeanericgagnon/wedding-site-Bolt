@@ -98,11 +98,86 @@ export const Product: React.FC = () => {
   ]), []);
 
   const desktopInteractiveSteps = useMemo(() => ([
-    { id: 'website', label: 'Website', icon: Globe, title: 'Website that feels bespoke, not templated', body: 'Launch a polished wedding site with modern typography, premium spacing, and privacy controls built-in.', chips: ['Custom themes', 'Private by default', 'Fast publish'] },
-    { id: 'registry', label: 'Registry', icon: Wallet, title: 'Registry links from anywhere', body: 'Keep your preferred stores and avoid lock-in. Guests see clean cards with clear context.', chips: ['Any retailer', 'Clean cards', 'No clutter'] },
-    { id: 'guest-list', label: 'Guest List', icon: Users, title: 'Guest list and households without chaos', body: 'Organize households, plus-ones, and statuses in one flow that scales to large weddings.', chips: ['Households', 'Plus-ones', 'Status visibility'] },
-    { id: 'save-the-dates', label: 'Save the Dates', icon: Calendar, title: 'Save-the-dates and timing that stay consistent', body: 'Coordinate key dates and communications with timezone-safe timing and calm, clear UX.', chips: ['Timezone-safe', 'Clear milestones', 'Reliable scheduling'] },
-    { id: 'invitations', label: 'Invitations', icon: Mail, title: 'Invitations tied directly to RSVP flow', body: 'Move from invitation to response with less friction and better guest clarity.', chips: ['Invite links', 'RSVP handoff', 'Fewer drop-offs'] },
+    {
+      id: 'website',
+      label: 'Website launch',
+      railDescription: 'Publish a polished site in minutes.',
+      icon: Globe,
+      title: 'A premium website, live without the scramble',
+      body: 'Ship a refined wedding site with elegant spacing, strong readability, and privacy-first defaults from day one.',
+      accentLine: 'Live fast. Stay polished.',
+      chips: ['Theme-ready', 'Private by default', 'Fast publish'],
+      statA: '3 min',
+      statALabel: 'To first publish',
+      statB: 'A+',
+      statBLabel: 'Visual clarity',
+      statC: '0',
+      statCLabel: 'Setup friction',
+    },
+    {
+      id: 'registry',
+      label: 'Registry clarity',
+      railDescription: 'Keep gifts clean and easy to browse.',
+      icon: Wallet,
+      title: 'Registry links that feel organized, not chaotic',
+      body: 'Connect any retailer and present gifts in a calm, premium layout guests can scan quickly with confidence.',
+      accentLine: 'Any store. One elegant flow.',
+      chips: ['Any retailer', 'Clean cards', 'No clutter'],
+      statA: 'Any',
+      statALabel: 'Retailer supported',
+      statB: '1 view',
+      statBLabel: 'Unified display',
+      statC: 'Low',
+      statCLabel: 'Guest confusion',
+    },
+    {
+      id: 'guest-list',
+      label: 'Guest control',
+      railDescription: 'Households and plus-ones, cleanly mapped.',
+      icon: Users,
+      title: 'Guest management that stays calm at scale',
+      body: 'Track households, plus-ones, and statuses in one structured flow that keeps planning clear as counts grow.',
+      accentLine: 'Structure without spreadsheet chaos.',
+      chips: ['Households', 'Plus-ones', 'Status visibility'],
+      statA: '1 hub',
+      statALabel: 'Guest source of truth',
+      statB: 'Clear',
+      statBLabel: 'Status tracking',
+      statC: 'Fast',
+      statCLabel: 'Updates',
+    },
+    {
+      id: 'save-the-dates',
+      label: 'Date confidence',
+      railDescription: 'Milestones that stay timezone-safe.',
+      icon: Calendar,
+      title: 'Save-the-dates that remain accurate everywhere',
+      body: 'Coordinate timing with timezone-safe handling so guests get the right information the first time.',
+      accentLine: 'Right date. Right time. Every region.',
+      chips: ['Timezone-safe', 'Clear milestones', 'Reliable scheduling'],
+      statA: '24/7',
+      statALabel: 'Timing reliability',
+      statB: 'Global',
+      statBLabel: 'Timezone support',
+      statC: 'Low',
+      statCLabel: 'Resend risk',
+    },
+    {
+      id: 'invitations',
+      label: 'Invite-to-RSVP',
+      railDescription: 'A smoother path from invite to response.',
+      icon: Mail,
+      title: 'Invitations that convert cleanly into RSVPs',
+      body: 'Guide guests from invite to response with less friction and a clearer path to completion.',
+      accentLine: 'Fewer drop-offs. Better response flow.',
+      chips: ['Invite links', 'RSVP handoff', 'Fewer drop-offs'],
+      statA: 'Direct',
+      statALabel: 'RSVP path',
+      statB: 'Clear',
+      statBLabel: 'Guest guidance',
+      statC: 'High',
+      statCLabel: 'Completion confidence',
+    },
   ]), []);
 
   const showToast = (message: string) => {
@@ -328,6 +403,7 @@ export const Product: React.FC = () => {
                         <div>
                           <p className="text-[11px] opacity-75">0{idx + 1}</p>
                           <p className="text-sm font-medium leading-tight">{step.label}</p>
+                          <p className={`text-[11px] leading-tight mt-0.5 ${active ? 'text-white/80' : 'text-text-tertiary'}`}>{step.railDescription}</p>
                         </div>
                       </button>
                     );
@@ -348,8 +424,9 @@ export const Product: React.FC = () => {
                         <Icon className="w-4 h-4" />
                         <span>{step.label}</span>
                       </div>
-                      <h3 className="text-[2rem] leading-tight font-semibold text-text-primary mb-4 max-w-2xl">{step.title}</h3>
-                      <p className="text-text-secondary text-lg leading-relaxed max-w-2xl mb-6">{step.body}</p>
+                      <h3 className="text-[2rem] leading-tight font-semibold text-text-primary mb-3 max-w-2xl">{step.title}</h3>
+                      <p className="text-text-secondary text-lg leading-relaxed max-w-2xl mb-3">{step.body}</p>
+                      <p className="text-sm font-medium text-primary/90 mb-6">{step.accentLine}</p>
                       <div className="flex flex-wrap gap-2 mb-8">
                         {step.chips.map((chip) => (
                           <span key={chip} className="px-3 py-1.5 rounded-full border border-border text-sm text-text-secondary bg-surface-subtle">{chip}</span>
@@ -358,16 +435,16 @@ export const Product: React.FC = () => {
                       <div className="mt-auto rounded-xl border border-primary/20 bg-primary/5 p-5">
                         <div className="grid grid-cols-3 gap-3">
                           <div className="rounded-lg bg-surface p-3 border border-border-subtle">
-                            <p className="text-xs text-text-tertiary">Consistency</p>
-                            <p className="text-lg font-semibold text-text-primary">High</p>
+                            <p className="text-xs text-text-tertiary">{step.statALabel}</p>
+                            <p className="text-lg font-semibold text-text-primary">{step.statA}</p>
                           </div>
                           <div className="rounded-lg bg-surface p-3 border border-border-subtle">
-                            <p className="text-xs text-text-tertiary">Setup effort</p>
-                            <p className="text-lg font-semibold text-text-primary">Low</p>
+                            <p className="text-xs text-text-tertiary">{step.statBLabel}</p>
+                            <p className="text-lg font-semibold text-text-primary">{step.statB}</p>
                           </div>
                           <div className="rounded-lg bg-surface p-3 border border-border-subtle">
-                            <p className="text-xs text-text-tertiary">Guest clarity</p>
-                            <p className="text-lg font-semibold text-text-primary">Strong</p>
+                            <p className="text-xs text-text-tertiary">{step.statCLabel}</p>
+                            <p className="text-lg font-semibold text-text-primary">{step.statC}</p>
                           </div>
                         </div>
                       </div>
