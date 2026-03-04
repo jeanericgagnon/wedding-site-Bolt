@@ -3,7 +3,8 @@ import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Imag
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { selectSelectedSection, selectActivePage, selectActivePageSections } from '../state/builderSelectors';
-import { getSectionManifest, getAllSectionManifests } from '../registry/sectionManifests';
+import { getSectionManifest } from '../registry/sectionManifests';
+import { BuilderSectionRail } from './BuilderSectionRail';
 import { BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
 
@@ -14,12 +15,9 @@ export const BuilderInspectorPanel: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<InspectorTab>('content');
   const [simpleMode, setSimpleMode] = React.useState(true);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
-  const [showAddSectionPicker, setShowAddSectionPicker] = React.useState(false);
-  const [addSectionType, setAddSectionType] = React.useState<string | null>(null);
   const selectedSection = selectSelectedSection(state);
   const activePage = selectActivePage(state);
   const activeSections = selectActivePageSections(state);
-  const sectionManifests = React.useMemo(() => getAllSectionManifests(), []);
 
   useEffect(() => {
     if (selectedSection) setActiveTab('content');
@@ -32,117 +30,15 @@ export const BuilderInspectorPanel: React.FC = () => {
   }, [simpleMode, activeTab]);
 
   const selectedIndex = activeSections.findIndex((s) => s.id === state.selectedSectionId);
-  const addTypeManifest = addSectionType ? sectionManifests.find((m) => m.type === addSectionType) ?? null : null;
 
   const quickSectionRail = activePage ? (
-    <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
-      <div className="px-2.5 py-1.5 border-b border-neutral-100">
-        <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-neutral-500">Website settings</p>
-      </div>
-
-      <div className="max-h-[52vh] overflow-y-auto">
-        {activeSections.map((section, idx) => {
-          const isActive = state.selectedSectionId === section.id;
-          return (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => {
-                dispatch(builderActions.selectSection(section.id));
-                requestAnimationFrame(() => {
-                  const el = document.querySelector(`[data-section-id="${section.id}"]`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-              }}
-              className={`w-full border-b border-neutral-100 px-2.5 py-1 text-left text-[12px] leading-5 transition-colors ${
-                isActive
-                  ? 'bg-neutral-100 text-neutral-900 font-medium'
-                  : 'bg-white text-neutral-700 hover:bg-neutral-50'
-              }`}
-            >
-              <span className="text-neutral-400 mr-2 text-xs">{idx + 1}.</span>
-              {getSectionManifest(section.type).label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="p-1.5 border-t border-neutral-100 sticky bottom-0 bg-white">
-        <button
-          type="button"
-          onClick={() => {
-            setShowAddSectionPicker(true);
-            setAddSectionType(null);
-          }}
-          className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-[12px] font-medium text-neutral-800 hover:bg-neutral-50"
-        >
-          + Add section
-        </button>
-      </div>
-
-      {showAddSectionPicker && (
-        <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white p-2.5 space-y-2">
-          {!addTypeManifest ? (
-            <>
-              <p className="text-[11px] font-semibold text-[var(--color-text-primary)]">Choose a section</p>
-              <div className="max-h-56 overflow-y-auto grid grid-cols-1 gap-2">
-                {sectionManifests.map((m) => (
-                  <button
-                    key={m.type}
-                    onClick={() => setAddSectionType(m.type)}
-                    className="w-full text-left rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-2.5 py-2 hover:bg-[var(--color-surface-subtle)] hover:border-[var(--color-border)]"
-                  >
-                    <div className="rounded border border-[var(--color-border-subtle)] bg-white p-2 mb-2">
-                      <div className="h-1.5 w-2/3 rounded bg-gray-300 mb-1" />
-                      <div className="h-1.5 w-1/2 rounded bg-gray-200 mb-1.5" />
-                      <div className="flex gap-1">
-                        <div className="h-6 flex-1 rounded bg-gray-100 border border-[var(--color-border-subtle)]" />
-                        <div className="h-6 w-10 rounded bg-gray-100 border border-[var(--color-border-subtle)]" />
-                      </div>
-                    </div>
-                    <p className="text-xs font-medium text-gray-800">{m.label}</p>
-                    <p className="text-[11px] text-[var(--color-text-tertiary)]">{m.variantMeta.length} variants</p>
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold text-[var(--color-text-primary)]">{addTypeManifest.label} variants</p>
-                <button onClick={() => setAddSectionType(null)} className="text-[11px] text-[var(--color-text-tertiary)] hover:text-gray-800">Back</button>
-              </div>
-              <div className="max-h-64 overflow-y-auto grid grid-cols-1 gap-2">
-                {addTypeManifest.variantMeta.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => {
-                      if (!activePage) return;
-                      dispatch(builderActions.addSectionByType(activePage.id, addTypeManifest.type, undefined, v.id));
-                      setShowAddSectionPicker(false);
-                      setAddSectionType(null);
-                    }}
-                    className="w-full text-left rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-2.5 py-2 hover:bg-[var(--color-surface-subtle)] hover:border-[var(--color-border)]"
-                  >
-                    <div className="rounded border border-[var(--color-border-subtle)] bg-white p-2 mb-2">
-                      <div className="h-1.5 w-2/3 rounded bg-gray-300 mb-1" />
-                      <div className="h-1.5 w-1/2 rounded bg-gray-200 mb-1.5" />
-                      <div className="grid grid-cols-2 gap-1">
-                        <div className="h-8 rounded bg-gray-100 border border-[var(--color-border-subtle)]" />
-                        <div className="h-8 rounded bg-gray-100 border border-[var(--color-border-subtle)]" />
-                      </div>
-                    </div>
-                    <p className="text-xs font-medium text-gray-800">{v.label}</p>
-                    <p className="text-[11px] text-[var(--color-text-tertiary)] line-clamp-2">{v.description || 'Clean layout option'}</p>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          <button onClick={() => { setShowAddSectionPicker(false); setAddSectionType(null); }} className="w-full rounded-lg border border-[var(--color-border-subtle)] px-2 py-1.5 text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]">Cancel</button>
-        </div>
-      )}
-    </div>
+    <BuilderSectionRail
+      activePageId={activePage.id}
+      activeSections={activeSections as Array<{ id: string; type: string }>}
+      selectedSectionId={state.selectedSectionId}
+      onSelectSection={(sectionId) => dispatch(builderActions.selectSection(sectionId))}
+      onAddSection={(type, variantId) => dispatch(builderActions.addSectionByType(activePage.id, type as any, undefined, variantId))}
+    />
   ) : null;
 
   if (!activePage) {
