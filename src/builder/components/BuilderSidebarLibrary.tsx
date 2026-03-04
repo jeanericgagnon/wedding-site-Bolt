@@ -712,13 +712,13 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
         </div>
       </div>
 
-      <div className="px-3.5 pt-3 pb-3 border-b border-gray-100 bg-gradient-to-b from-white to-gray-50/70">
+      <div className="px-3.5 pt-3 pb-3 border-b border-neutral-200 bg-white">
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-[0.14em]">Choose a style</p>
             <p className="mt-1 text-[11px] leading-relaxed text-gray-500">Each style has a different layout feel. Pick one to add this section.</p>
           </div>
-          <div className="rounded-md border border-gray-200 bg-white px-2 py-1 text-[10px] font-semibold text-gray-700">
+          <div className="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-semibold text-neutral-700">
             {manifest.variantMeta.length} variants
           </div>
         </div>
@@ -1085,7 +1085,7 @@ const VariantCard: React.FC<VariantCardProps> = ({
       title={variant.description}
       aria-label={`Add ${variant.label} variant`}
     >
-      <div className={`pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-br ${tone.accent} opacity-90`} />
+      <div className={`pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-br ${tone.accent} opacity-75`} />
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_80%_14%,rgba(255,255,255,0.7),transparent_38%)]" />
       <BuilderVariantCardPreview
         sectionType={sectionType}

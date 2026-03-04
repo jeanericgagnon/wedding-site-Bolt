@@ -697,11 +697,11 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleCloseGallery} />
       <div className="relative ml-auto w-full max-w-5xl bg-white h-full flex flex-col shadow-2xl">
-        <div className="px-7 py-5 border-b border-gray-100 bg-gradient-to-b from-white to-gray-50/60">
+        <div className="px-7 py-5 border-b border-neutral-200 bg-white">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Template Gallery</h2>
-              <p className="text-sm text-gray-500 mt-0.5">Choose a visual identity for your wedding site</p>
+              <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Template Gallery</h2>
+              <p className="text-sm text-neutral-600 mt-0.5">Choose a visual identity for your wedding site</p>
             </div>
             <button
               onClick={handleCloseGallery}
@@ -710,23 +710,16 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               <X size={20} />
             </button>
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-2 max-w-md">
-            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wide text-gray-500">Total</div>
-              <div className="text-sm font-semibold text-gray-900">{templates.length}</div>
-            </div>
-            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wide text-gray-500">Filtered</div>
-              <div className="text-sm font-semibold text-gray-900">{filtered.length}</div>
-            </div>
-            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wide text-gray-500">Active</div>
-              <div className="text-sm font-semibold text-gray-900 truncate">{templates.find(t => t.id === currentTemplateId)?.displayName ?? '—'}</div>
-            </div>
+          <div className="mt-3 flex items-center gap-2 text-xs text-neutral-600">
+            <span>{templates.length} total</span>
+            <span>•</span>
+            <span>{filtered.length} shown</span>
+            <span>•</span>
+            <span className="truncate">Active: {templates.find(t => t.id === currentTemplateId)?.displayName ?? '—'}</span>
           </div>
         </div>
 
-        <div className="px-7 py-3 border-b border-gray-50 space-y-3 bg-white">
+        <div className="px-7 py-3 border-b border-neutral-200 space-y-3 bg-white">
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -745,10 +738,10 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               <button
                 key={f.id}
                 onClick={() => setActiveFilter(f.id)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                   activeFilter === f.id
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                 }`}
               >
                 {f.label}
@@ -811,7 +804,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             </div>
           </div>
 
-          <div className="mb-4 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 px-3 py-2 flex items-center justify-between gap-3">
+          <div className="mb-4 rounded-xl border border-neutral-200 bg-white px-3 py-2 flex items-center justify-between gap-3">
             <div className="text-xs text-sky-900">
               {compareTemplates.length === 0 && 'Select up to 2 templates to compare side-by-side.'}
               {compareTemplates.length === 1 && `Selected for compare: ${compareTemplates[0].displayName}. Pick one more.`}
