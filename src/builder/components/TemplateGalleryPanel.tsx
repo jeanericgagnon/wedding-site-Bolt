@@ -446,13 +446,15 @@ const TEMPLATE_PREVIEWS: Record<string, React.FC> = {
   'floral-garden-rose': FloralGardenRosePreview,
 };
 
-function TemplatePreview({ templateId }: { templateId: string }) {
+function TemplatePreview({ templateId, fallbackSrc }: { templateId: string; fallbackSrc?: string }) {
   const preview = getTemplatePreviewSource(templateId);
-  const [src, setSrc] = useState(preview.src);
+  const initial = preview.src;
+  const fallback = fallbackSrc || preview.fallbackSrc;
+  const [src, setSrc] = useState(initial);
 
   React.useEffect(() => {
-    setSrc(preview.src);
-  }, [preview.src, templateId]);
+    setSrc(initial);
+  }, [initial, templateId]);
 
   return (
     <img
@@ -461,7 +463,7 @@ function TemplatePreview({ templateId }: { templateId: string }) {
       className="w-full h-full object-cover"
       loading="lazy"
       onError={() => {
-        if (src !== preview.fallbackSrc) setSrc(preview.fallbackSrc);
+        if (src !== fallback) setSrc(fallback);
       }}
     />
   );
@@ -941,12 +943,12 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
           ? 'border-neutral-300 shadow-sm'
           : 'border-neutral-200'
       }`}
-      onClick={onApply}
+      onClick={onDetails}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       <div className="aspect-[4/3] relative overflow-hidden bg-gray-50">
-        <TemplatePreview templateId={template.id} />
+        <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
 
         <div className={`absolute inset-0 transition-opacity duration-200 ${hovered && !isCurrent ? 'opacity-100' : 'opacity-0'}`}
           style={{ background: 'rgba(0,0,0,0.12)' }}
@@ -974,7 +976,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         {hovered && !isCurrent && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-lg">
-              Use Template
+              View Template
             </div>
           </div>
         )}
@@ -1008,7 +1010,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
             onClick={e => { e.stopPropagation(); onDetails(); }}
             className="w-full py-2 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50"
           >
-            Details
+            View template
           </button>
           <button
             onClick={e => { e.stopPropagation(); onCompare(); }}
@@ -1021,25 +1023,19 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
             {isCompared ? 'Compared' : 'Compare'}
           </button>
           <button
-            onClick={e => { e.stopPropagation(); onApply(); }}
-            disabled={isApplying}
+            onClick={e => { e.stopPropagation(); onDetails(); }}
             className={`w-full py-2 rounded-xl text-xs font-semibold transition-all ${
               isCurrent
                 ? 'bg-rose-50 text-rose-500 border border-rose-200/80'
                 : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
             }`}
           >
-          {isApplying ? (
-            <span className="flex items-center justify-center gap-1.5">
-              <Loader2 size={11} className="animate-spin" />
-              Applying…
-            </span>
-          ) : isCurrent ? (
+          {isCurrent ? (
             <span className="flex items-center justify-center gap-1.5">
               <Check size={11} />
               Current Template
             </span>
-          ) : 'Use Template'}
+          ) : 'View Template'}
         </button>
       </div>
       </div>
@@ -1074,7 +1070,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
           ].map(({ template, dots, onApply }) => (
             <div key={template.id} className="rounded-xl border border-gray-200 p-3">
               <div className="aspect-[4/3] rounded-lg border border-gray-100 overflow-hidden bg-gray-50 mb-3">
-                <TemplatePreview templateId={template.id} />
+                <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -1113,7 +1109,7 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
-      <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-2xl w-full mx-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-4xl w-full mx-4">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{template.displayName}</h3>
@@ -1128,8 +1124,8 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="rounded-xl border border-gray-100 overflow-hidden bg-gray-50 aspect-[4/3]">
-            <TemplatePreview templateId={template.id} />
+          <div className="rounded-xl border border-gray-100 overflow-hidden bg-gray-50 aspect-[16/10]">
+            <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
           </div>
           <div className="space-y-3">
             <div>
@@ -1142,12 +1138,15 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
                 {sections.map((label) => <li key={label}>• {label}</li>)}
               </ul>
             </div>
+            <div className="rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-xs text-green-700">
+              Your names, date, photos, and details map into this layout automatically.
+            </div>
           </div>
         </div>
 
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm border border-gray-200 text-gray-600 hover:bg-gray-50">Close</button>
-          <button onClick={onApply} className="px-4 py-2 rounded-xl text-sm bg-gray-900 text-white hover:bg-gray-800">Apply template</button>
+          <button onClick={onApply} className="px-4 py-2 rounded-xl text-sm bg-gray-900 text-white hover:bg-gray-800">Use this template</button>
         </div>
       </div>
     </div>
@@ -1167,7 +1166,7 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center flex-shrink-0">
           <div className="w-5 h-5 rounded relative overflow-hidden">
-            <TemplatePreview templateId={template.id} />
+            <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
           </div>
         </div>
         <div>
