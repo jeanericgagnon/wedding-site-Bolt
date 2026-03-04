@@ -13,7 +13,7 @@ type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 export const BuilderInspectorPanel: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
   const [activeTab, setActiveTab] = React.useState<InspectorTab>('content');
-  const [simpleMode, setSimpleMode] = React.useState(true);
+  const [simpleMode, setSimpleMode] = React.useState(false);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
   const [showVariantPicker, setShowVariantPicker] = React.useState(false);
   const selectedSection = selectSelectedSection(state);
@@ -148,6 +148,20 @@ export const BuilderInspectorPanel: React.FC = () => {
             Change layout
           </button>
         </div>
+        <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-[var(--color-text-tertiary)]">
+          <span>Mode: Advanced</span>
+          <button
+            type="button"
+            onClick={() => {
+              setSimpleMode(true);
+              setShowAdvanced(false);
+              if (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide') setActiveTab('content');
+            }}
+            className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+          >
+            Switch to basic
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => dispatch(builderActions.selectSection(null))}
@@ -162,31 +176,7 @@ export const BuilderInspectorPanel: React.FC = () => {
         <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Edit content and styling for this section</p>
       </div>
 
-      <div className="px-3 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] space-y-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setSimpleMode(true);
-              setShowAdvanced(false);
-              if (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide') setActiveTab('content');
-            }}
-            className={`rounded-md px-2.5 py-1 text-[11px] font-medium border ${simpleMode ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]' : 'border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]'}`}
-          >
-            Basic
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSimpleMode(false);
-              setShowAdvanced(true);
-            }}
-            className={`rounded-md px-2.5 py-1 text-[11px] font-medium border ${!simpleMode ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]' : 'border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]'}`}
-          >
-            Advanced
-          </button>
-        </div>
-
+      <div className="px-3 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
         <div className="flex items-center flex-wrap gap-1">
           {visibleTabs.map(tab => (
             <button
