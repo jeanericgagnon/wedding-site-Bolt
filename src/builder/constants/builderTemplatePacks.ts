@@ -8,7 +8,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Modern Luxe',
     description: 'Editorial photography, razor-sharp typography, and a sophisticated black-and-gold palette. Built for couples who want their wedding site to feel like a luxury brand.',
     moodTags: ['modern', 'luxe', 'editorial'],
-    previewThumbnailPath: withBasePath('/templates/modern-luxe/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/luxury-opulent.webp'),
     defaultThemeId: 'elegant',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -42,7 +42,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Editorial Romance',
     description: 'Film-grain warmth meets fashion-magazine typography. Moody photography, generous white space, and a story-first layout that puts your love narrative front and center.',
     moodTags: ['editorial', 'romantic', 'modern'],
-    previewThumbnailPath: withBasePath('/templates/editorial-romance/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/editorial-impact.webp'),
     defaultThemeId: 'editorial',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -73,7 +73,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Timeless Classic',
     description: 'Deep navy, heirloom ivory, and 22-karat gold filigree. Formal invitation energy from the first scroll. The standard for traditional elegance.',
     moodTags: ['classic', 'romantic', 'luxe'],
-    previewThumbnailPath: withBasePath('/templates/timeless-classic/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/timeless-classic.webp'),
     defaultThemeId: 'classic',
     sectionComposition: [
       { type: 'hero', variant: 'minimal', enabled: true, locked: false, settings: { showTitle: true } },
@@ -106,7 +106,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Destination Escape',
     description: 'Coastal blues, map-forward layouts, and breezy white space. Purpose-built for destination weddings — venue and travel logistics lead the experience.',
     moodTags: ['minimal', 'destination', 'modern'],
-    previewThumbnailPath: withBasePath('/templates/destination-minimal/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/destination-adventure.webp'),
     defaultThemeId: 'ocean',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -137,7 +137,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Bold Contemporary',
     description: 'Supersized type, sharp contrast, and asymmetric grid energy. For couples who refuse to blend in. A fearlessly modern statement.',
     moodTags: ['bold', 'modern', 'editorial'],
-    previewThumbnailPath: withBasePath('/templates/bold-contemporary/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/bold-statement.webp'),
     defaultThemeId: 'elegant',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -171,7 +171,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Photo Storytelling',
     description: 'Every pixel is framed around your photography. Masonry galleries, full-bleed moments, and minimal text so your images do the talking.',
     moodTags: ['photo', 'romantic', 'editorial'],
-    previewThumbnailPath: withBasePath('/templates/photo-storytelling/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/photo-storytelling.webp'),
     defaultThemeId: 'romantic',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -203,7 +203,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Floral Garden',
     description: 'Lush botanical energy, sage and terracotta, and hand-crafted warmth. Perfect for garden, greenhouse, or outdoor weddings with a romantic, natural spirit.',
     moodTags: ['floral', 'garden', 'romantic'],
-    previewThumbnailPath: withBasePath('/templates/floral-garden/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/garden-escape.webp'),
     defaultThemeId: 'garden',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -238,7 +238,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Editorial Romance · Ivory',
     description: 'An airy editorial look with warm ivory tones and fashion-forward typography.',
     moodTags: ['editorial', 'romantic', 'classic'],
-    previewThumbnailPath: withBasePath('/templates/editorial-romance/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/editorial-impact.webp'),
     defaultThemeId: 'editorial',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -263,7 +263,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Editorial Romance · Midnight',
     description: 'Moody editorial romance with dramatic contrast and cinematic storytelling energy.',
     moodTags: ['editorial', 'romantic', 'modern'],
-    previewThumbnailPath: withBasePath('/templates/editorial-romance/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/editorial-impact.webp'),
     defaultThemeId: 'elegant',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -288,7 +288,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Floral Garden · Sage',
     description: 'Soft botanical greens and elegant florals for outdoor and garden celebrations.',
     moodTags: ['floral', 'garden', 'romantic'],
-    previewThumbnailPath: withBasePath('/templates/floral-garden/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/garden-escape.webp'),
     defaultThemeId: 'garden',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -313,7 +313,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Floral Garden · Rose',
     description: 'A blush-forward floral composition with a romantic, invitation-inspired atmosphere.',
     moodTags: ['floral', 'romantic', 'classic'],
-    previewThumbnailPath: withBasePath('/templates/floral-garden/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/garden-escape.webp'),
     defaultThemeId: 'romantic',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -338,7 +338,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Modern Luxe · Ivory',
     description: 'A bright luxury look with ivory tones, clean lines, and elevated editorial spacing.',
     moodTags: ['modern', 'luxe', 'minimal'],
-    previewThumbnailPath: withBasePath('/templates/modern-luxe/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/luxury-opulent.webp'),
     defaultThemeId: 'classic',
     sectionComposition: [
       { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
@@ -363,7 +363,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     displayName: 'Timeless Classic · Navy',
     description: 'Formal navy-and-gold invitation energy with traditional structure and polish.',
     moodTags: ['classic', 'luxe', 'romantic'],
-    previewThumbnailPath: withBasePath('/templates/timeless-classic/preview.jpg'),
+    previewThumbnailPath: withBasePath('/template-previews/timeless-classic.webp'),
     defaultThemeId: 'classic',
     sectionComposition: [
       { type: 'hero', variant: 'minimal', enabled: true, locked: false, settings: { showTitle: true } },
