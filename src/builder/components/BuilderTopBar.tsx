@@ -165,14 +165,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="hidden sm:block h-5 w-px bg-gray-200 flex-shrink-0" />
 
-      <div className="flex items-center gap-2 min-w-0">
-        <div className="w-7 h-7 bg-rose-600 rounded-md flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-xs font-bold">W</span>
-        </div>
-        <span className="text-sm font-medium text-gray-700 truncate max-w-[180px]">
-          {projectName ?? 'Wedding Site Builder'}
-        </span>
-        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+      <div className="hidden md:flex items-center text-xs text-gray-500">
+        {projectName ?? 'Wedding Site Builder'}
       </div>
 
       <button
