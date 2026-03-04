@@ -12,7 +12,6 @@ import {
   AlertCircle,
   XCircle,
   Clock,
-  Palette,
   ArrowLeft,
   Monitor,
   Tablet,
@@ -30,7 +29,6 @@ import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getPublishBlockedHints, shouldOpenPhotoTipsFromSearch } from '../utils/publishUiHints';
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
-import { getAllThemePresets } from '../../lib/themePresets';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -98,12 +96,6 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const activePage = projectPages.find((p) => p.id === state.activePageId) ?? null;
   const isPublishDisabled = state.isPublishing || state.isSaving || !!publishValidationError;
   const showPublishReady = !publishValidationError && !state.isPublishing && !state.isSaving;
-  const isThemePanelOpen = state.themePanelOpen;
-  const activeThemeId = state.project?.themeId ?? 'romantic';
-  const activeTheme = getAllThemePresets().find(p => p.id === activeThemeId);
-  const themeSwatchColors = activeTheme
-    ? [activeTheme.tokens.colorPrimary, activeTheme.tokens.colorAccent, activeTheme.tokens.colorSecondary]
-    : ['#C0697B', '#E8A0A0', '#C89F56'];
   const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
   const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
   const [showPageManager, setShowPageManager] = React.useState(false);
@@ -186,7 +178,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       <button
         type="button"
         onClick={() => setShowPageManager(true)}
-        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+        className="hidden inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
       >
         <Files size={13} />
         Pages ({projectPages.length})
@@ -217,38 +209,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="hidden md:block h-5 w-px bg-gray-200 mx-1" />
 
-      <div className="hidden 2xl:flex items-center gap-1 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded px-2 py-1">
-        <span>⌘S Save</span>
-        <span>•</span>
-        <span>⌘P Preview</span>
-        <span>•</span>
-        <span>⌘⇧P Publish</span>
-        <span>•</span>
-        <span>Use Fix blockers if needed</span>
-      </div>
 
-      <button
-        onClick={() =>
-          dispatch(isThemePanelOpen ? builderActions.closeThemePanel() : builderActions.openThemePanel())
-        }
-        title="Color palette"
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-          isThemePanelOpen
-            ? 'bg-gray-900 text-white'
-            : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
-        }`}
-      >
-        <Palette size={14} />
-        <div className="flex gap-0.5">
-          {themeSwatchColors.map((c, i) => (
-            <div
-              key={i}
-              className="w-3 h-3 rounded-full border border-black/10"
-              style={{ backgroundColor: c }}
-            />
-          ))}
-        </div>
-      </button>
 
       <div className="flex-1" />
 
