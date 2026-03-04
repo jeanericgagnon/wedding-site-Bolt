@@ -43,7 +43,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   if (!activePage) {
     return (
-      <aside className="w-full lg:w-[392px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
+      <aside className="w-full lg:w-[520px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <p className="text-sm text-[var(--color-text-tertiary)]">No page selected.</p>
         </div>
@@ -53,17 +53,8 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   if (!selectedSection) {
     return (
-      <aside className="w-full lg:w-[392px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
+      <aside className="w-full lg:w-[520px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
         {quickSectionRail}
-        <div className="flex-1 flex items-center justify-center p-6 text-center">
-          <div className="w-full max-w-xs">
-            <div className="w-12 h-12 bg-[var(--color-surface-subtle)] border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Pencil size={18} className="text-gray-300" />
-            </div>
-            <p className="text-sm font-semibold text-[var(--color-text-secondary)] mb-1">Select a section to edit</p>
-            <p className="text-xs text-[var(--color-text-tertiary)] leading-relaxed mb-4">Use the section picker above or click directly on the canvas.</p>
-          </div>
-        </div>
       </aside>
     );
   }
@@ -138,7 +129,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   });
 
   return (
-    <aside className="w-full lg:w-[392px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
+    <aside className="w-full lg:w-[520px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
       <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
         <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
           <h3 className="text-[24px] font-semibold text-[var(--color-text-primary)]">{manifest.label} Section</h3>
@@ -152,119 +143,11 @@ export const BuilderInspectorPanel: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)] truncate">{manifest.label}</h3>
-            {!selectedSection.enabled && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-100">Hidden</span>
-            )}
-          </div>
-          <div className="mt-1.5">
-            <div className="text-[10px] text-[var(--color-text-tertiary)] mb-1">Variant styles</div>
-            <div className="flex flex-wrap gap-1">
-              {manifest.variantMeta.map((v) => {
-                const isActiveVariant = selectedSection.variant === v.id;
-                return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => handleChangeVariant(v.id)}
-                    title={v.description || v.label}
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
-                      isActiveVariant
-                        ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)] text-[var(--color-accent)]'
-                        : 'border-[var(--color-border-subtle)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]'
-                    }`}
-                  >
-                    {v.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button
-            onClick={handleToggleVisibility}
-            title={selectedSection.enabled ? 'Hide section' : 'Show section'}
-            className={`p-1.5 rounded-lg transition-colors ${
-              selectedSection.enabled
-                ? 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-gray-100'
-                : 'text-amber-500 bg-amber-50 hover:bg-amber-100'
-            }`}
-          >
-            {selectedSection.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
-          </button>
-          <button
-            onClick={() => dispatch(builderActions.selectSection(null))}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] transition-colors"
-          >
-            <X size={14} />
-          </button>
-        </div>
+      <div className="px-4 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
+        <h3 className="text-[42px] hidden" />
+        <h3 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{manifest.label}</h3>
+        <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Edit content and styling for this section</p>
       </div>
-
-      {tabs.length > 1 && (
-        <div className="border-b border-[var(--color-border-subtle)] px-2.5">
-          <div className="flex items-center">
-            {visibleTabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium border-b transition-colors mr-0.5 ${
-                  activeTab === tab.id
-                    ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-light)]'
-                    : 'border-transparent text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
-                }`}
-              >
-                <tab.icon size={12} />
-                {tab.label}
-              </button>
-            ))}
-            {!simpleMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAdvanced((v) => !v);
-                  if (showAdvanced && (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide')) {
-                    setActiveTab('content');
-                  }
-                }}
-                className="ml-auto rounded border border-[var(--color-border-subtle)] px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
-              >
-                {showAdvanced ? 'Hide advanced' : 'Show advanced'}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {simpleMode && (
-        <div className="mx-2.5 mt-2 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-2.5">
-          <p className="text-[11px] font-semibold text-[var(--color-text-primary)]">Next step: {nextAction.label}</p>
-          <p className="mt-1 text-[11px] text-[var(--color-text-secondary)]">{nextAction.detail}</p>
-          <button
-            onClick={() => {
-              if (nextAction.key === 'preview-mobile') {
-                dispatch(builderActions.setPreviewViewport('mobile'));
-                dispatch(builderActions.setMode('preview'));
-                return;
-              }
-              if ((nextAction.tab === 'style' || nextAction.tab === 'data') && simpleMode) {
-                setSimpleMode(false);
-              }
-              if (nextAction.tab === 'style' || nextAction.tab === 'data') {
-                setShowAdvanced(true);
-              }
-              setActiveTab(nextAction.tab);
-            }}
-            className="mt-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
-          >
-            {nextAction.cta}
-          </button>
-        </div>
-      )}
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'guide' && (
