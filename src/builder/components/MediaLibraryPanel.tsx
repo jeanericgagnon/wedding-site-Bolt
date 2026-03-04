@@ -167,6 +167,13 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
         });
       }
     }));
+
+    try {
+      const freshAssets = await mediaService.listAssets(weddingId);
+      dispatch(builderActions.setMediaAssets(freshAssets));
+    } catch {
+      // Keep optimistic local assets if refresh fails.
+    }
   }, [weddingId, dispatch]);
 
   return (
