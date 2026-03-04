@@ -9,6 +9,8 @@ import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { selectActivePage } from '../state/builderSelectors';
 import { getTemplatePreviewSource } from '../constants/templatePreviewSource';
+import { SectionRenderer } from './SectionRenderer';
+import { createEmptyWeddingData } from '../../types/weddingData';
 
 function preserveContentAcrossTemplate(
   existingSections: BuilderSectionInstance[],
@@ -1105,6 +1107,46 @@ interface TemplateDetailsModalProps {
 
 const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, onApply, onClose }) => {
   const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
+  const previewSections = useMemo(
+    () => template.sectionComposition.map((s, idx) => createBuilderSectionFromLibrary(s.type, s.variant, idx)),
+    [template]
+  );
+  const previewScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(true);
+
+  React.useEffect(() => {
+    setPreviewLoading(true);
+    const t = setTimeout(() => setPreviewLoading(false), 280);
+    return () => clearTimeout(t);
+  }, [template.id]);
+
+  const jumpToSection = (idx: number) => {
+    const root = previewScrollRef.current;
+    if (!root) return;
+    const target = root.querySelector(`[data-preview-section-index="${idx}"]`) as HTMLElement | null;
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const previewData = useMemo(() => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Kara';
+    data.couple.partner2Name = 'Eric';
+    data.couple.displayName = 'Kara & Eric';
+    data.event.weddingDateISO = '2027-01-17';
+    data.media.heroImageUrl = '/preview-photos/header-anchor.jpg';
+    data.media.gallery = [
+      { id: 'g1', url: '/preview-photos/header-anchor.jpg', caption: 'Kara & Eric' },
+      { id: 'g2', url: '/preview-photos/002-engagement-landscape.jpg', caption: 'Engagement' },
+      { id: 'g3', url: '/preview-photos/004-engagement-landscape.jpg', caption: 'Moments' },
+    ];
+    data.venues = [{ id: 'v1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
+    data.schedule = [
+      { id: 's1', label: 'Welcome Dinner', startTimeISO: '2027-01-16T18:00:00.000Z', venueId: 'v1', notes: 'A relaxed night with everyone' },
+      { id: 's2', label: 'Ceremony', startTimeISO: '2027-01-17T17:00:00.000Z', venueId: 'v1', notes: 'Please arrive 20 minutes early' },
+      { id: 's3', label: 'Reception', startTimeISO: '2027-01-17T19:00:00.000Z', venueId: 'v1', notes: 'Dinner and dancing right after' },
+    ];
+    return data;
+  }, []);
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
@@ -1126,30 +1168,26 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
         </div>
 
         <div className="flex-1 min-h-0 grid grid-cols-12 gap-0">
-          <div className="col-span-8 border-r border-gray-200 overflow-y-auto bg-gray-50">
-            <div className="p-4 space-y-4">
-              <div className="rounded-xl border border-gray-200 overflow-hidden bg-white aspect-[16/10]">
-                <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
-              </div>
-              {template.sectionComposition.map((section, idx) => (
-                <div key={`${section.type}-${idx}`} className="rounded-xl border border-gray-200 overflow-hidden bg-white">
-                  <div className="aspect-[16/9] bg-gray-50">
-                    <img
-                      src={`/variant-previews/${section.type}__${section.variant}.webp`}
-                      className="w-full h-full object-cover"
-                      alt={`${section.type} preview`}
-                      onError={(e) => {
-                        const t = e.currentTarget;
-                        t.onerror = null;
-                        t.src = '/template-previews/_fallback.svg';
-                      }}
+          <div ref={previewScrollRef} className="col-span-8 border-r border-gray-200 overflow-y-auto bg-gray-50">
+            <div className="mx-auto my-4 w-full max-w-[980px] rounded-xl border border-gray-200 bg-white overflow-hidden">
+              {previewLoading ? (
+                <div className="p-4 space-y-3">
+                  <div className="h-56 rounded-lg bg-gray-100 animate-pulse" />
+                  <div className="h-40 rounded-lg bg-gray-100 animate-pulse" />
+                  <div className="h-64 rounded-lg bg-gray-100 animate-pulse" />
+                </div>
+              ) : (
+                previewSections.map((section, idx) => (
+                  <div key={section.id} data-preview-section-index={idx}>
+                    <SectionRenderer
+                      section={section}
+                      weddingData={previewData}
+                      isPreview
+                      siteSlug="preview"
                     />
                   </div>
-                  <div className="px-3 py-2 text-xs text-gray-700 border-t border-gray-100">
-                    {idx + 1}. {getSectionManifest(section.type).label}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -1160,9 +1198,18 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
             </div>
             <div>
               <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Sections</div>
-              <ul className="text-sm text-gray-700 space-y-1">
-                {template.sectionComposition.map((s, i) => <li key={`${s.type}-${i}`}>• {getSectionManifest(s.type).label}</li>)}
-              </ul>
+              <div className="space-y-1">
+                {template.sectionComposition.map((s, i) => (
+                  <button
+                    key={`${s.type}-${i}`}
+                    type="button"
+                    onClick={() => jumpToSection(i)}
+                    className="w-full text-left text-sm text-gray-700 rounded-md border border-gray-200 px-2.5 py-1.5 hover:bg-gray-50"
+                  >
+                    {i + 1}. {getSectionManifest(s.type).label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-xs text-green-700">
               Your names, date, photos, and details map into this layout automatically.

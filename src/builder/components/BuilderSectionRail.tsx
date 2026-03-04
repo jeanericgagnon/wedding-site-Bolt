@@ -109,64 +109,95 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
             setShowAddSectionPicker(true);
             setAddSectionType(null);
           }}
-          className="w-full text-[12px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+          className="w-full rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
         >
-          Add section instead
+          + Add section
         </button>
       </div>
 
       {showAddSectionPicker && (
-        <div className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-2.5 space-y-2">
-          {!addTypeManifest ? (
-            <>
-              <p className="text-[11px] font-semibold text-[var(--color-text-primary)]">Choose a section</p>
-              <div className="max-h-56 overflow-y-auto grid grid-cols-1 gap-2">
-                {sectionManifests.map((m) => (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
+          <div className="w-[94vw] h-[90vh] max-w-6xl bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-subtle)] shadow-2xl overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                  {!addTypeManifest ? 'Add section' : `${addTypeManifest.label} variants`}
+                </h3>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                  {!addTypeManifest ? 'Pick a section type, then choose a layout variant.' : 'Choose the layout you want to add.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {addTypeManifest && (
                   <button
-                    key={m.type}
-                    onClick={() => setAddSectionType(m.type)}
-                    className="w-full text-left rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-2.5 py-2 hover:border-[var(--color-border)]"
+                    type="button"
+                    onClick={() => setAddSectionType(null)}
+                    className="px-3 py-1.5 rounded-lg border border-[var(--color-border-subtle)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
                   >
-                    <p className="text-xs font-medium text-[var(--color-text-primary)]">{m.label}</p>
-                    <p className="text-[11px] text-[var(--color-text-tertiary)]">{m.variantMeta.length} variants</p>
+                    Back
                   </button>
-                ))}
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddSectionPicker(false);
+                    setAddSectionType(null);
+                  }}
+                  className="px-3 py-1.5 rounded-lg border border-[var(--color-border-subtle)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+                >
+                  Close
+                </button>
               </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold text-[var(--color-text-primary)]">{addTypeManifest.label} variants</p>
-                <button onClick={() => setAddSectionType(null)} className="text-[11px] text-[var(--color-text-secondary)]">Back</button>
-              </div>
-              <div className="max-h-64 overflow-y-auto grid grid-cols-1 gap-2">
-                {addTypeManifest.variantMeta.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => {
-                      if (!activePageId) return;
-                      onAddSection(addTypeManifest.type, v.id);
-                      setShowAddSectionPicker(false);
-                      setAddSectionType(null);
-                    }}
-                    className="w-full text-left rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-2.5 py-2 hover:border-[var(--color-border)]"
-                  >
-                    <p className="text-xs font-medium text-[var(--color-text-primary)]">{v.label}</p>
-                    <p className="text-[11px] text-[var(--color-text-tertiary)] line-clamp-2">{v.description || 'Clean layout option'}</p>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          <button
-            onClick={() => {
-              setShowAddSectionPicker(false);
-              setAddSectionType(null);
-            }}
-            className="w-full rounded-lg border border-[var(--color-border-subtle)] px-2 py-1.5 text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
-          >
-            Cancel
-          </button>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto p-4">
+              {!addTypeManifest ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {sectionManifests.map((m) => (
+                    <button
+                      key={m.type}
+                      onClick={() => setAddSectionType(m.type)}
+                      className="w-full text-left rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-3 hover:border-[var(--color-border)]"
+                    >
+                      <p className="text-sm font-medium text-[var(--color-text-primary)]">{m.label}</p>
+                      <p className="text-xs text-[var(--color-text-tertiary)] mt-1">{m.variantMeta.length} variants</p>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {addTypeManifest.variantMeta.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => {
+                        if (!activePageId) return;
+                        onAddSection(addTypeManifest.type, v.id);
+                        setShowAddSectionPicker(false);
+                        setAddSectionType(null);
+                      }}
+                      className="w-full text-left rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-3 hover:border-[var(--color-border)]"
+                    >
+                      <div className="mb-2 h-28 overflow-hidden rounded-md border border-[var(--color-border-subtle)] bg-white">
+                        <img
+                          src={`/variant-previews/${addTypeManifest.type}__${v.id}.webp`}
+                          alt={`${addTypeManifest.label} ${v.label} preview`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            const t = e.currentTarget;
+                            t.onerror = null;
+                            t.src = '/template-previews/_fallback.svg';
+                          }}
+                        />
+                      </div>
+                      <p className="text-sm font-medium text-[var(--color-text-primary)]">{v.label}</p>
+                      <p className="text-xs text-[var(--color-text-tertiary)] mt-1 line-clamp-2">{v.description || 'Clean layout option'}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
