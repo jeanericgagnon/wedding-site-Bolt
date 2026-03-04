@@ -81,27 +81,27 @@ export const BuilderInspectorPanel: React.FC = () => {
       </div>
 
       {showAddSectionPicker && (
-        <div className="rounded-xl border border-gray-200 bg-white p-2.5 space-y-2">
+        <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white p-2.5 space-y-2">
           {!addTypeManifest ? (
             <>
-              <p className="text-[11px] font-semibold text-gray-700">Choose a section</p>
+              <p className="text-[11px] font-semibold text-[var(--color-text-primary)]">Choose a section</p>
               <div className="max-h-56 overflow-y-auto grid grid-cols-1 gap-2">
                 {sectionManifests.map((m) => (
                   <button
                     key={m.type}
                     onClick={() => setAddSectionType(m.type)}
-                    className="w-full text-left rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 hover:bg-rose-50 hover:border-rose-200"
+                    className="w-full text-left rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-2.5 py-2 hover:bg-[var(--color-surface-subtle)] hover:border-[var(--color-border)]"
                   >
-                    <div className="rounded border border-gray-200 bg-white p-2 mb-2">
+                    <div className="rounded border border-[var(--color-border-subtle)] bg-white p-2 mb-2">
                       <div className="h-1.5 w-2/3 rounded bg-gray-300 mb-1" />
                       <div className="h-1.5 w-1/2 rounded bg-gray-200 mb-1.5" />
                       <div className="flex gap-1">
-                        <div className="h-6 flex-1 rounded bg-gray-100 border border-gray-200" />
-                        <div className="h-6 w-10 rounded bg-gray-100 border border-gray-200" />
+                        <div className="h-6 flex-1 rounded bg-gray-100 border border-[var(--color-border-subtle)]" />
+                        <div className="h-6 w-10 rounded bg-gray-100 border border-[var(--color-border-subtle)]" />
                       </div>
                     </div>
                     <p className="text-xs font-medium text-gray-800">{m.label}</p>
-                    <p className="text-[11px] text-gray-500">{m.variantMeta.length} variants</p>
+                    <p className="text-[11px] text-[var(--color-text-tertiary)]">{m.variantMeta.length} variants</p>
                   </button>
                 ))}
               </div>
@@ -109,8 +109,8 @@ export const BuilderInspectorPanel: React.FC = () => {
           ) : (
             <>
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold text-gray-700">{addTypeManifest.label} variants</p>
-                <button onClick={() => setAddSectionType(null)} className="text-[11px] text-gray-500 hover:text-gray-800">Back</button>
+                <p className="text-[11px] font-semibold text-[var(--color-text-primary)]">{addTypeManifest.label} variants</p>
+                <button onClick={() => setAddSectionType(null)} className="text-[11px] text-[var(--color-text-tertiary)] hover:text-gray-800">Back</button>
               </div>
               <div className="max-h-64 overflow-y-auto grid grid-cols-1 gap-2">
                 {addTypeManifest.variantMeta.map((v) => (
@@ -122,24 +122,24 @@ export const BuilderInspectorPanel: React.FC = () => {
                       setShowAddSectionPicker(false);
                       setAddSectionType(null);
                     }}
-                    className="w-full text-left rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 hover:bg-rose-50 hover:border-rose-200"
+                    className="w-full text-left rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-2.5 py-2 hover:bg-[var(--color-surface-subtle)] hover:border-[var(--color-border)]"
                   >
-                    <div className="rounded border border-gray-200 bg-white p-2 mb-2">
+                    <div className="rounded border border-[var(--color-border-subtle)] bg-white p-2 mb-2">
                       <div className="h-1.5 w-2/3 rounded bg-gray-300 mb-1" />
                       <div className="h-1.5 w-1/2 rounded bg-gray-200 mb-1.5" />
                       <div className="grid grid-cols-2 gap-1">
-                        <div className="h-8 rounded bg-gray-100 border border-gray-200" />
-                        <div className="h-8 rounded bg-gray-100 border border-gray-200" />
+                        <div className="h-8 rounded bg-gray-100 border border-[var(--color-border-subtle)]" />
+                        <div className="h-8 rounded bg-gray-100 border border-[var(--color-border-subtle)]" />
                       </div>
                     </div>
                     <p className="text-xs font-medium text-gray-800">{v.label}</p>
-                    <p className="text-[11px] text-gray-500 line-clamp-2">{v.description || 'Clean layout option'}</p>
+                    <p className="text-[11px] text-[var(--color-text-tertiary)] line-clamp-2">{v.description || 'Clean layout option'}</p>
                   </button>
                 ))}
               </div>
             </>
           )}
-          <button onClick={() => { setShowAddSectionPicker(false); setAddSectionType(null); }} className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-[11px] text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button onClick={() => { setShowAddSectionPicker(false); setAddSectionType(null); }} className="w-full rounded-lg border border-[var(--color-border-subtle)] px-2 py-1.5 text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]">Cancel</button>
         </div>
       )}
     </div>
@@ -149,7 +149,7 @@ export const BuilderInspectorPanel: React.FC = () => {
     return (
       <aside className="w-full lg:w-[392px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
-          <p className="text-sm text-gray-500">No page selected.</p>
+          <p className="text-sm text-[var(--color-text-tertiary)]">No page selected.</p>
         </div>
       </aside>
     );
@@ -161,11 +161,11 @@ export const BuilderInspectorPanel: React.FC = () => {
         {quickSectionRail}
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div className="w-full max-w-xs">
-            <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 bg-[var(--color-surface-subtle)] border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Pencil size={18} className="text-gray-300" />
             </div>
-            <p className="text-sm font-semibold text-gray-600 mb-1">Select a section to edit</p>
-            <p className="text-xs text-gray-400 leading-relaxed mb-4">Use the section picker above or click directly on the canvas.</p>
+            <p className="text-sm font-semibold text-[var(--color-text-secondary)] mb-1">Select a section to edit</p>
+            <p className="text-xs text-[var(--color-text-tertiary)] leading-relaxed mb-4">Use the section picker above or click directly on the canvas.</p>
           </div>
         </div>
       </aside>
@@ -282,7 +282,7 @@ export const BuilderInspectorPanel: React.FC = () => {
             title={selectedSection.enabled ? 'Hide section' : 'Show section'}
             className={`p-1.5 rounded-lg transition-colors ${
               selectedSection.enabled
-                ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                ? 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] hover:bg-gray-100'
                 : 'text-amber-500 bg-amber-50 hover:bg-amber-100'
             }`}
           >
@@ -290,7 +290,7 @@ export const BuilderInspectorPanel: React.FC = () => {
           </button>
           <button
             onClick={() => dispatch(builderActions.selectSection(null))}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] transition-colors"
           >
             <X size={14} />
           </button>
@@ -323,7 +323,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                     setActiveTab('content');
                   }
                 }}
-                className="ml-auto rounded border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-600 hover:bg-gray-50"
+                className="ml-auto rounded border border-[var(--color-border-subtle)] px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
               >
                 {showAdvanced ? 'Hide advanced' : 'Show advanced'}
               </button>
@@ -378,7 +378,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   key={step.id}
                   onClick={() => !step.optional && setActiveTab(step.id === 'visibility' ? 'layout' : (step.id as InspectorTab))}
                   disabled={step.optional}
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${step.done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-white text-gray-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700'} ${step.optional ? 'opacity-60 cursor-default' : ''}`}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${step.done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-[var(--color-border-subtle)] bg-white text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]'} ${step.optional ? 'opacity-60 cursor-default' : ''}`}
                 >
                   <span className="font-medium">{step.label}</span>
                   <span className="ml-2 text-[10px]">{step.optional ? 'optional' : step.done ? 'done' : 'needs work'}</span>
@@ -399,31 +399,31 @@ export const BuilderInspectorPanel: React.FC = () => {
                     if (view.id !== 'content' && view.id !== 'guide') setShowAdvanced(true);
                     setActiveTab(view.id as InspectorTab);
                   }}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                  className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-3 py-2 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] transition-colors"
                 >
                   {view.label}
                 </button>
               ))}
             </div>
-            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-[11px] text-gray-600 space-y-2">
+            <div className="rounded-xl border border-gray-100 bg-[var(--color-surface-subtle)] p-3 text-[11px] text-[var(--color-text-secondary)] space-y-2">
               <p><span className="font-semibold">Tip:</span> layout changes preserve your content and bindings.</p>
               <p><span className="font-semibold">Tip:</span> run a quick viewport pass before publish.</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('desktop'))}
-                  className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] font-medium text-gray-600 hover:border-rose-200 hover:text-rose-700"
+                  className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
                   Desktop check
                 </button>
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('tablet'))}
-                  className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] font-medium text-gray-600 hover:border-rose-200 hover:text-rose-700"
+                  className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
                   Tablet check
                 </button>
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('mobile'))}
-                  className="rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] font-medium text-gray-600 hover:border-rose-200 hover:text-rose-700"
+                  className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
                   Mobile check
                 </button>
@@ -457,7 +457,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               />
             )}
             {manifest.settingsSchema.fields.length === 0 && selectedSection.type !== 'custom' && !manifest.capabilities.mediaAware && (
-              <p className="text-xs text-gray-400 text-center py-6">No editable content fields for this section.</p>
+              <p className="text-xs text-[var(--color-text-tertiary)] text-center py-6">No editable content fields for this section.</p>
             )}
           </div>
         )}
@@ -465,10 +465,10 @@ export const BuilderInspectorPanel: React.FC = () => {
         {activeTab === 'style' && (
           <div className="p-4 space-y-5">
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Colors</p>
+              <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Colors</p>
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1.5">Background</label>
+                  <label className="text-xs font-medium text-[var(--color-text-secondary)] block mb-1.5">Background</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
@@ -476,7 +476,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                       onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
                         styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
                       }))}
-                      className="w-8 h-8 rounded-md cursor-pointer border border-gray-200 p-0.5 flex-shrink-0"
+                      className="w-8 h-8 rounded-md cursor-pointer border border-[var(--color-border-subtle)] p-0.5 flex-shrink-0"
                     />
                     <input
                       type="text"
@@ -485,7 +485,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                         styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
                       }))}
                       placeholder="inherit"
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono bg-gray-50 focus:bg-white transition-colors"
+                      className="flex-1 border border-[var(--color-border-subtle)] rounded-lg px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
                     />
                     {selectedSection.styleOverrides?.backgroundColor && (
                       <button
@@ -493,7 +493,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                           styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: undefined },
                         }))}
                         title="Clear"
-                        className="text-gray-300 hover:text-gray-500 flex-shrink-0 transition-colors"
+                        className="text-gray-300 hover:text-[var(--color-text-tertiary)] flex-shrink-0 transition-colors"
                       >
                         <X size={13} />
                       </button>
@@ -501,7 +501,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1.5">Text Color</label>
+                  <label className="text-xs font-medium text-[var(--color-text-secondary)] block mb-1.5">Text Color</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
@@ -509,7 +509,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                       onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
                         styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
                       }))}
-                      className="w-8 h-8 rounded-md cursor-pointer border border-gray-200 p-0.5 flex-shrink-0"
+                      className="w-8 h-8 rounded-md cursor-pointer border border-[var(--color-border-subtle)] p-0.5 flex-shrink-0"
                     />
                     <input
                       type="text"
@@ -518,7 +518,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                         styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
                       }))}
                       placeholder="inherit"
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono bg-gray-50 focus:bg-white transition-colors"
+                      className="flex-1 border border-[var(--color-border-subtle)] rounded-lg px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
                     />
                     {selectedSection.styleOverrides?.textColor && (
                       <button
@@ -526,7 +526,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                           styleOverrides: { ...selectedSection.styleOverrides, textColor: undefined },
                         }))}
                         title="Clear"
-                        className="text-gray-300 hover:text-gray-500 flex-shrink-0 transition-colors"
+                        className="text-gray-300 hover:text-[var(--color-text-tertiary)] flex-shrink-0 transition-colors"
                       >
                         <X size={13} />
                       </button>
@@ -537,7 +537,7 @@ export const BuilderInspectorPanel: React.FC = () => {
             </div>
 
             <div className="border-t border-gray-100 pt-4">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Animation</p>
+              <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Animation</p>
               <div className="grid grid-cols-3 gap-1.5 mb-3">
                 {[
                   ['none', 'None'],
@@ -554,8 +554,8 @@ export const BuilderInspectorPanel: React.FC = () => {
                     }))}
                     className={`rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors ${
                       (selectedSection.styleOverrides?.animationPreset ?? 'none') === id
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
+                        : 'bg-gray-100 text-[var(--color-text-secondary)] hover:bg-gray-200'
                     }`}
                   >
                     {label}
@@ -564,7 +564,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Side Image</p>
+                <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest">Side Image</p>
                 {selectedSection.styleOverrides?.sideImage && (
                   <button
                     onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
@@ -579,7 +579,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
               {selectedSection.styleOverrides?.sideImage ? (
                 <div className="space-y-3">
-                  <div className="relative rounded-xl overflow-hidden border border-gray-200 aspect-video bg-gray-100 group">
+                  <div className="relative rounded-xl overflow-hidden border border-[var(--color-border-subtle)] aspect-video bg-gray-100 group">
                     <img
                       src={selectedSection.styleOverrides.sideImage}
                       alt=""
@@ -594,7 +594,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-gray-600 block mb-1.5">Position</label>
+                    <label className="text-xs font-medium text-[var(--color-text-secondary)] block mb-1.5">Position</label>
                     <div className="flex gap-1.5">
                       {(['left', 'right'] as const).map(pos => (
                         <button
@@ -604,8 +604,8 @@ export const BuilderInspectorPanel: React.FC = () => {
                           }))}
                           className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
                             (selectedSection.styleOverrides?.sideImagePosition ?? 'right') === pos
-                              ? 'bg-gray-900 text-white'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
+                              : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
                           }`}
                         >
                           {pos}
@@ -615,7 +615,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-gray-600 block mb-1.5">Width</label>
+                    <label className="text-xs font-medium text-[var(--color-text-secondary)] block mb-1.5">Width</label>
                     <div className="flex gap-1.5">
                       {([['sm', '25%'], ['md', '40%'], ['lg', '50%']] as const).map(([key, label]) => (
                         <button
@@ -625,8 +625,8 @@ export const BuilderInspectorPanel: React.FC = () => {
                           }))}
                           className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${
                             (selectedSection.styleOverrides?.sideImageSize ?? 'md') === key
-                              ? 'bg-gray-900 text-white'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
+                              : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
                           }`}
                         >
                           {label}
@@ -636,7 +636,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-gray-600 block mb-1.5">Fit</label>
+                    <label className="text-xs font-medium text-[var(--color-text-secondary)] block mb-1.5">Fit</label>
                     <div className="flex gap-1.5">
                       {(['cover', 'contain'] as const).map(fit => (
                         <button
@@ -646,8 +646,8 @@ export const BuilderInspectorPanel: React.FC = () => {
                           }))}
                           className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
                             (selectedSection.styleOverrides?.sideImageFit ?? 'cover') === fit
-                              ? 'bg-gray-900 text-white'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
+                              : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
                           }`}
                         >
                           {fit}
@@ -659,7 +659,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               ) : (
                 <button
                   onClick={() => dispatch(builderActions.openSideImagePicker(selectedSection.id))}
-                  className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-4 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                  className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[var(--color-border-subtle)] rounded-xl p-4 text-xs text-[var(--color-text-tertiary)] hover:border-rose-300 hover:text-rose-500 hover:bg-[var(--color-surface-subtle)] transition-all"
                 >
                   <ImageIcon size={15} />
                   Add a side image
@@ -673,24 +673,24 @@ export const BuilderInspectorPanel: React.FC = () => {
         {activeTab === 'layout' && (
           <div className="p-4 space-y-5">
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Layout Variant</p>
+              <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Layout Variant</p>
               <div className="relative">
                 <select
                   value={selectedSection.variant}
                   onChange={e => handleChangeVariant(e.target.value)}
-                  className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-700 pr-8 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-colors"
+                  className="w-full appearance-none border border-[var(--color-border-subtle)] rounded-lg px-3 py-2 text-sm bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)] pr-8 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:bg-white transition-colors"
                 >
                   {manifest.variantMeta.map(v => (
                     <option key={v.id} value={v.id}>{v.label} — {v.description}</option>
                   ))}
                 </select>
-                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] pointer-events-none" />
               </div>
-              <p className="mt-1.5 text-[11px] text-gray-500">Changing layout keeps your content and bindings intact.</p>
+              <p className="mt-1.5 text-[11px] text-[var(--color-text-tertiary)]">Changing layout keeps your content and bindings intact.</p>
             </div>
 
             <div className="border-t border-gray-100 pt-4">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Spacing</p>
+              <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Spacing</p>
               <SpacingControl
                 label="Padding Top"
                 value={selectedSection.styleOverrides?.paddingTop ?? ''}
@@ -711,13 +711,13 @@ export const BuilderInspectorPanel: React.FC = () => {
 
         {activeTab === 'data' && hasBindings && (
           <div className="p-4 space-y-3">
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-xs text-[var(--color-text-tertiary)] leading-relaxed">
               This section automatically pulls data from your wedding information. Manage the source data from the dashboard.
             </p>
             {manifest.bindingsSchema.slots.map(slot => (
-              <div key={slot.key} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <p className="text-xs font-semibold text-gray-700 mb-0.5">{slot.label}</p>
-                <p className="text-xs text-gray-400">Auto-bound from <span className="font-medium text-gray-500">{slot.dataSource}</span> data</p>
+              <div key={slot.key} className="p-3 bg-[var(--color-surface-subtle)] rounded-xl border border-gray-100">
+                <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-0.5">{slot.label}</p>
+                <p className="text-xs text-[var(--color-text-tertiary)]">Auto-bound from <span className="font-medium text-[var(--color-text-tertiary)]">{slot.dataSource}</span> data</p>
               </div>
             ))}
           </div>
@@ -749,7 +749,7 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
     case 'toggle':
       return (
         <div className="flex items-center justify-between py-2">
-          <label className="text-sm text-gray-700 font-medium">{field.label}</label>
+          <label className="text-sm text-[var(--color-text-primary)] font-medium">{field.label}</label>
           <button
             onClick={() => onChange(!(value as boolean))}
             className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${value ? 'bg-rose-500' : 'bg-gray-200'}`}
@@ -762,14 +762,14 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
     case 'textarea':
       return (
         <div className="py-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
+          <label className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider block mb-1.5">{field.label}</label>
           <textarea
             ref={textareaRef}
             value={(value as string) ?? ''}
             onChange={e => onChange(e.target.value)}
             placeholder={field.placeholder}
             rows={3}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none bg-gray-50 focus:bg-white transition-colors"
+            className="w-full border border-[var(--color-border-subtle)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] resize-none bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
           />
         </div>
       );
@@ -777,18 +777,18 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
     case 'select':
       return (
         <div className="py-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
+          <label className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider block mb-1.5">{field.label}</label>
           <div className="relative">
             <select
               value={(value as string) ?? ''}
               onChange={e => onChange(e.target.value)}
-              className="w-full appearance-none border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 text-gray-700 pr-8 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-colors"
+              className="w-full appearance-none border border-[var(--color-border-subtle)] rounded-xl px-3 py-2.5 text-sm bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)] pr-8 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:bg-white transition-colors"
             >
               {field.options?.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
-            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] pointer-events-none" />
           </div>
         </div>
       );
@@ -796,20 +796,20 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
     case 'color':
       return (
         <div className="py-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
+          <label className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider block mb-1.5">{field.label}</label>
           <div className="flex items-center gap-2">
             <input
               type="color"
               value={(value as string) ?? '#000000'}
               onChange={e => onChange(e.target.value)}
-              className="w-9 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5"
+              className="w-9 h-9 rounded-lg cursor-pointer border border-[var(--color-border-subtle)] p-0.5"
             />
             <input
               type="text"
               value={(value as string) ?? ''}
               onChange={e => onChange(e.target.value)}
               placeholder={field.placeholder ?? 'e.g. #000000'}
-              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono bg-gray-50"
+              className="flex-1 border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)]"
             />
           </div>
         </div>
@@ -818,14 +818,14 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
     case 'image':
       return (
         <div className="py-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
+          <label className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider block mb-1.5">{field.label}</label>
           {value ? (
-            <div className="relative rounded-xl overflow-hidden border border-gray-200 aspect-video bg-gray-100 mb-2 group">
+            <div className="relative rounded-xl overflow-hidden border border-[var(--color-border-subtle)] aspect-video bg-gray-100 mb-2 group">
               <img src={value as string} alt="" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button
                   onClick={() => onChange('')}
-                  className="px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  className="px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-[var(--color-text-primary)] hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                   Remove
                 </button>
@@ -834,7 +834,7 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
           ) : null}
           <button
             onClick={() => dispatch(builderActions.openMediaLibrary(sectionId))}
-            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-3 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[var(--color-border-subtle)] rounded-xl p-3 text-xs text-[var(--color-text-tertiary)] hover:border-rose-300 hover:text-rose-500 hover:bg-[var(--color-surface-subtle)] transition-all"
           >
             <ImageIcon size={14} />
             {value ? 'Change image' : 'Choose from media library'}
@@ -845,12 +845,12 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
     case 'number':
       return (
         <div className="py-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
+          <label className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider block mb-1.5">{field.label}</label>
           <input
             type="number"
             value={(value as number) ?? 0}
             onChange={e => onChange(Number(e.target.value))}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
+            className="w-full border border-[var(--color-border-subtle)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
           />
         </div>
       );
@@ -858,13 +858,13 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
     default:
       return (
         <div className="py-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">{field.label}</label>
+          <label className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider block mb-1.5">{field.label}</label>
           <input
             type="text"
             value={(value as string) ?? ''}
             onChange={e => onChange(e.target.value)}
             placeholder={field.placeholder}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
+            className="w-full border border-[var(--color-border-subtle)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
           />
         </div>
       );
@@ -912,10 +912,10 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
   return (
     <div className="pt-2 border-t border-gray-100 mt-2">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Photos ({images.length})</p>
+        <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest">Photos ({images.length})</p>
         <button
           onClick={handleAddImage}
-          className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 font-medium transition-colors"
+          className="flex items-center gap-1 text-xs text-rose-500 hover:text-[var(--color-text-primary)] font-medium transition-colors"
         >
           <Plus size={12} />
           Add photo
@@ -923,7 +923,7 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
       </div>
       <div className="space-y-2 max-h-96 overflow-y-auto pr-0.5">
         {images.map((img, i) => (
-          <div key={img.id} className="group border border-gray-100 rounded-xl overflow-hidden bg-gray-50 hover:border-gray-200 transition-colors">
+          <div key={img.id} className="group border border-gray-100 rounded-xl overflow-hidden bg-[var(--color-surface-subtle)] hover:border-[var(--color-border-subtle)] transition-colors">
             <div className="relative aspect-video bg-gray-200">
               {img.url ? (
                 <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
@@ -935,14 +935,14 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <button
                   onClick={() => dispatch(builderActions.openImageArrayPicker(sectionId, i))}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-lg text-xs font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-lg text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] hover:text-rose-600 transition-colors"
                 >
                   <Image size={12} />
                   Change
                 </button>
                 <button
                   onClick={() => handleRemoveImage(i)}
-                  className="p-1.5 bg-white rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  className="p-1.5 bg-white rounded-lg text-[var(--color-text-tertiary)] hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -957,14 +957,14 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
                 value={img.alt}
                 onChange={e => handleUpdateImage(i, { alt: e.target.value })}
                 placeholder="Alt text"
-                className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white transition-colors"
+                className="w-full border border-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
               />
               <input
                 type="text"
                 value={img.caption}
                 onChange={e => handleUpdateImage(i, { caption: e.target.value })}
                 placeholder="Caption (optional)"
-                className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white transition-colors"
+                className="w-full border border-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
               />
             </div>
           </div>
@@ -972,7 +972,7 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
         {images.length === 0 && (
           <button
             onClick={handleAddImage}
-            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-4 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[var(--color-border-subtle)] rounded-xl p-4 text-xs text-[var(--color-text-tertiary)] hover:border-rose-300 hover:text-rose-500 hover:bg-[var(--color-surface-subtle)] transition-all"
           >
             <Plus size={14} />
             Add your first photo
@@ -1016,13 +1016,13 @@ const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[
 
   return (
     <div className="pt-2">
-      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Images</p>
+      <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Images</p>
       <div className="space-y-3">
         {imageBlocks.map(({ block, path, label }) => (
           <div key={`${path.blockId}-${path.columnBlockId ?? ''}`} className="space-y-1.5">
-            <p className="text-xs font-medium text-gray-600">{label}</p>
+            <p className="text-xs font-medium text-[var(--color-text-secondary)]">{label}</p>
             {block.imageUrl ? (
-              <div className="relative rounded-xl overflow-hidden border border-gray-200 aspect-video bg-gray-100 group">
+              <div className="relative rounded-xl overflow-hidden border border-[var(--color-border-subtle)] aspect-video bg-gray-100 group">
                 <img src={block.imageUrl} alt={block.imageAlt ?? ''} className="w-full h-full object-cover" />
                 <button
                   onClick={() => dispatch(builderActions.openCustomBlockImagePicker(sectionId, path))}
@@ -1035,7 +1035,7 @@ const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[
             ) : (
               <button
                 onClick={() => dispatch(builderActions.openCustomBlockImagePicker(sectionId, path))}
-                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl p-3 text-xs text-gray-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[var(--color-border-subtle)] rounded-xl p-3 text-xs text-[var(--color-text-tertiary)] hover:border-rose-300 hover:text-rose-500 hover:bg-[var(--color-surface-subtle)] transition-all"
               >
                 <ImageIcon size={14} />
                 Choose image
@@ -1056,7 +1056,7 @@ const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[
                 ));
               }}
               placeholder="Alt text (optional)"
-              className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
+              className="w-full border border-[var(--color-border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
             />
           </div>
         ))}
@@ -1083,9 +1083,9 @@ const SpacingControl: React.FC<{
   return (
     <div className="mb-3">
       <div className="flex items-center justify-between mb-1.5">
-        <label className="text-xs font-medium text-gray-600">{label}</label>
+        <label className="text-xs font-medium text-[var(--color-text-secondary)]">{label}</label>
         {value && (
-          <span className="text-[10px] font-mono text-gray-400">{value}</span>
+          <span className="text-[10px] font-mono text-[var(--color-text-tertiary)]">{value}</span>
         )}
       </div>
       <div className="flex gap-1 mb-2">
@@ -1095,8 +1095,8 @@ const SpacingControl: React.FC<{
             onClick={() => onChange(preset.value === value ? '' : preset.value)}
             className={`flex-1 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
               activePreset?.value === preset.value
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
+                : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
             }`}
           >
             {preset.label}
@@ -1108,7 +1108,7 @@ const SpacingControl: React.FC<{
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder="e.g. 4rem, 64px, 10%"
-        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-400 font-mono bg-gray-50 focus:bg-white transition-colors"
+        className="w-full border border-[var(--color-border-subtle)] rounded-lg px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
       />
     </div>
   );
