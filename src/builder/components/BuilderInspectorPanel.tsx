@@ -5,8 +5,10 @@ import { builderActions } from '../state/builderActions';
 import { selectSelectedSection, selectActivePage, selectActivePageSections } from '../state/builderSelectors';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionRail } from './BuilderSectionRail';
+import { SectionRenderer } from './SectionRenderer';
 import { BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
+import { createEmptyWeddingData } from '../../types/weddingData';
 
 type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 
@@ -224,6 +226,16 @@ export const BuilderInspectorPanel: React.FC = () => {
                   onClick={() => handleChangeVariant(v.id)}
                   className={`text-left rounded-lg border px-2.5 py-2 ${active ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]' : 'border-[var(--color-border-subtle)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'}`}
                 >
+                  <div className="mb-2 h-20 overflow-hidden rounded-md border border-[var(--color-border-subtle)] bg-white">
+                    <div className="origin-top-left scale-[0.36] w-[278%] h-[278%] pointer-events-none">
+                      <SectionRenderer
+                        section={{ ...selectedSection, variant: v.id }}
+                        weddingData={state.weddingData ?? createEmptyWeddingData()}
+                        isPreview
+                        siteSlug="preview"
+                      />
+                    </div>
+                  </div>
                   <p className="text-xs font-medium text-[var(--color-text-primary)]">{v.label}</p>
                   <p className="text-[10px] text-[var(--color-text-tertiary)] line-clamp-2">{v.description || 'Layout option'}</p>
                 </button>
