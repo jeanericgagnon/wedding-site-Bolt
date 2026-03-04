@@ -8,6 +8,7 @@ import { createBuilderSectionFromLibrary } from '../adapters/layoutAdapter';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { selectActivePage } from '../state/builderSelectors';
+import { getTemplatePreviewSource } from '../constants/templatePreviewSource';
 
 function preserveContentAcrossTemplate(
   existingSections: BuilderSectionInstance[],
@@ -446,12 +447,23 @@ const TEMPLATE_PREVIEWS: Record<string, React.FC> = {
 };
 
 function TemplatePreview({ templateId }: { templateId: string }) {
-  const Preview = TEMPLATE_PREVIEWS[templateId];
-  if (Preview) return <Preview />;
+  const preview = getTemplatePreviewSource(templateId);
+  const [src, setSrc] = useState(preview.src);
+
+  React.useEffect(() => {
+    setSrc(preview.src);
+  }, [preview.src, templateId]);
+
   return (
-    <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-      <span className="text-gray-400 text-xs">Preview</span>
-    </div>
+    <img
+      src={src}
+      alt={`${preview.name} preview`}
+      className="w-full h-full object-cover"
+      loading="lazy"
+      onError={() => {
+        if (src !== preview.fallbackSrc) setSrc(preview.fallbackSrc);
+      }}
+    />
   );
 }
 
