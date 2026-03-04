@@ -22,9 +22,10 @@ async function run() {
     const tmpPngPath = path.join(outDir, `.__tmp_${item.sectionType}__${variantId}.png`);
     const url = `${baseUrl}/variant-preview-capture?sectionType=${encodeURIComponent(item.sectionType)}&variant=${encodeURIComponent(variantId)}`;
 
-    await page.goto(url, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(250);
-    await page.screenshot({ path: tmpPngPath, type: 'png' });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#variant-preview-root[data-variant-preview-ready="true"]', { timeout: 10000 });
+    await page.waitForTimeout(350);
+    await page.locator('#variant-preview-root').screenshot({ path: tmpPngPath, type: 'png' });
     await sharp(tmpPngPath).webp({ quality: 88 }).toFile(outPath);
     fs.unlinkSync(tmpPngPath);
     if ((idx + 1) % 20 === 0) console.log(`Captured ${idx + 1}/${manifest.items.length}`);

@@ -51,8 +51,9 @@ function overlaySvg(tpl) {
   </defs>
   <rect width="960" height="540" fill="url(#fade)"/>
   <rect x="28" y="28" width="904" height="484" rx="16" fill="none" stroke="#ffffff" stroke-opacity="0.72" stroke-width="2"/>
-  <text x="56" y="404" fill="#ffffff" font-size="36" font-weight="700" font-family="Inter,Arial,sans-serif">${esc(tpl.name)}</text>
-  <text x="56" y="436" fill="#f3f4f6" font-size="16" font-family="Inter,Arial,sans-serif">${esc(tpl.theme)} theme</text>
+  <text x="56" y="404" fill="#ffffff" font-size="34" font-weight="700" font-family="Inter,Arial,sans-serif">Kara &amp; Eric</text>
+  <text x="56" y="432" fill="#f3f4f6" font-size="16" font-family="Inter,Arial,sans-serif">June 12, 2027 · Napa Valley</text>
+  <text x="56" y="458" fill="#f3f4f6" font-size="14" font-family="Inter,Arial,sans-serif">We are really happy you are here.</text>
 </svg>`);
 }
 
