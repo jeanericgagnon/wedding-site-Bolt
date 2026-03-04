@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronRight, GripVertical } from 'lucide-react';
 import { getAllSectionManifests, getSectionManifest } from '../registry/sectionManifests';
 
 interface RailSection {
@@ -47,52 +47,46 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
         {activeSections.map((section, idx) => {
           const isActive = selectedSectionId === section.id;
           return (
-            <div
+            <button
               key={section.id}
-              className={`w-full rounded-lg border px-3 py-3.5 transition-colors ${
+              type="button"
+              onClick={() => {
+                onSelectSection(section.id);
+                requestAnimationFrame(() => {
+                  const el = document.querySelector(`[data-section-id="${section.id}"]`);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+              }}
+              className={`w-full rounded-lg border px-3 py-2.5 transition-colors text-left ${
                 isActive
                   ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]'
                   : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'
               }`}
             >
-              <button
-                type="button"
-                onClick={() => {
-                  onSelectSection(section.id);
-                  requestAnimationFrame(() => {
-                    const el = document.querySelector(`[data-section-id="${section.id}"]`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  });
-                }}
-                className="w-full text-left"
-              >
-                <div className="flex items-center gap-2.5 text-[var(--color-text-primary)]">
-                  <GripVertical size={14} className="text-[var(--color-text-tertiary)]" />
-                  <span className="text-[14px] font-medium">{getSectionManifest(section.type as any).label}</span>
-                  <ChevronRight size={15} className="ml-auto text-[var(--color-text-tertiary)]" />
-                </div>
-              </button>
-              <div className="mt-2 flex items-center gap-1 justify-end">
-                <button
-                  type="button"
-                  onClick={() => moveSection(idx, idx - 1)}
-                  disabled={idx === 0}
-                  className="p-1 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] disabled:opacity-40"
-                  title="Move up"
+              <div className="flex items-center gap-2.5 text-[var(--color-text-primary)]">
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    moveSection(idx, idx + 1 >= activeSections.length ? 0 : idx + 1);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      moveSection(idx, idx + 1 >= activeSections.length ? 0 : idx + 1);
+                    }
+                  }}
+                  className="inline-flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
+                  title="Move section"
                 >
-                  <ArrowUp size={12} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveSection(idx, idx + 1)}
-                  disabled={idx === activeSections.length - 1}
-                  className="p-1 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] disabled:opacity-40"
-                  title="Move down"
-                >
-                  <ArrowDown size={12} />
-                </button>
+                  <GripVertical size={14} />
+                </span>
+                <span className="text-[13px] font-medium">{getSectionManifest(section.type as any).label}</span>
+                <ChevronRight size={15} className="ml-auto text-[var(--color-text-tertiary)]" />
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

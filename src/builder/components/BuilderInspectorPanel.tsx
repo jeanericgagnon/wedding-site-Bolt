@@ -181,24 +181,26 @@ export const BuilderInspectorPanel: React.FC = () => {
         <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Edit content and styling for this section</p>
       </div>
 
-      <div className="px-3 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
-        <div className="flex items-center flex-wrap gap-1">
-          {visibleTabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-md border transition-colors ${
-                activeTab === tab.id
-                  ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-light)]'
-                  : 'border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
-              }`}
-            >
-              <tab.icon size={12} />
-              {tab.label}
-            </button>
-          ))}
+      {!simpleMode && (
+        <div className="px-3 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
+          <div className="flex items-center flex-wrap gap-1">
+            {visibleTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-md border transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-light)]'
+                    : 'border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
+                }`}
+              >
+                <tab.icon size={12} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {showVariantPicker && (
         <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-3 space-y-2">
