@@ -179,13 +179,14 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
       ref={setNodeRef}
       style={style}
       data-section-id={section.id}
-      className={`relative group scroll-mt-24 transition-all duration-150 ${
-        isHighlighted ? 'ring-2 ring-blue-400 ring-inset' : ''
+      className={`relative group scroll-mt-24 transition-all duration-150 cursor-pointer ${
+        isHighlighted ? 'ring-2 ring-blue-500 ring-inset' : ''
       }`}
       onClick={handleSelect}
       onMouseEnter={() => dispatch(builderActions.hoverSection(section.id))}
       onMouseLeave={() => dispatch(builderActions.hoverSection(null))}
     >
+
       {isHighlighted && (
         <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-1.5 bg-blue-600 text-white text-xs font-medium">
           <div className="flex items-center gap-2">

@@ -74,6 +74,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
   const [showCoachmarks, setShowCoachmarks] = useState(false);
+  const [inspectorHidden, setInspectorHidden] = useState(false);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -326,12 +327,14 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishError={publishError}
           publishValidationError={state.project ? getPublishValidationError(state.project, state.weddingData) : null}
           publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData)?.kind ?? null : null}
+          inspectorHidden={inspectorHidden}
+          onToggleInspector={() => setInspectorHidden((v) => !v)}
         />
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden px-0 pt-0 pb-0 gap-0">
           <BuilderCanvas />
 
-          {state.mode === 'edit' && (
+          {state.mode === 'edit' && !inspectorHidden && (
             <div className="hidden lg:block h-full min-h-0 shrink-0">
               <BuilderInspectorPanel />
             </div>

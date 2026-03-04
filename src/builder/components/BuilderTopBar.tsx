@@ -22,6 +22,8 @@ import {
   Trash2,
   ArrowUp,
   ArrowDown,
+  PanelRightClose,
+  PanelRightOpen,
 } from 'lucide-react';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -39,6 +41,8 @@ interface BuilderTopBarProps {
   publishError?: string | null;
   publishValidationError?: string | null;
   publishIssueKind?: string | null;
+  inspectorHidden?: boolean;
+  onToggleInspector?: () => void;
 }
 
 function slugifyPage(input: string): string {
@@ -79,6 +83,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   publishError,
   publishValidationError,
   publishIssueKind,
+  inspectorHidden = false,
+  onToggleInspector,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -197,6 +203,17 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
+        {onToggleInspector && (
+          <button
+            type="button"
+            onClick={onToggleInspector}
+            className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-2 py-1 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+            title={inspectorHidden ? 'Exit full screen' : 'Full screen canvas'}
+          >
+            {inspectorHidden ? <PanelRightOpen size={14} /> : <PanelRightClose size={14} />}
+            {inspectorHidden ? 'Show panel' : 'Full screen'}
+          </button>
+        )}
         <button
           onClick={() => {
             if (publishValidationError) {

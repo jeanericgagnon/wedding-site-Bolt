@@ -115,14 +115,7 @@ export const BuilderCanvas: React.FC = () => {
                 : undefined
             : undefined}
         >
-          {!isPreview && (
-            <div className="bg-neutral-100 border-b border-neutral-200 flex items-center gap-1.5 px-3 py-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
-              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
-              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
-              <div className="flex-1 bg-white border border-neutral-200 rounded h-6 mx-4" />
-            </div>
-          )}
+
 
           <BuilderDropZone
             pageId={activePage.id}

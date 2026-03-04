@@ -8,6 +8,19 @@ export interface MediaRepositoryUploadResult {
   path: string;
 }
 
+function extractBucketPathFromUrl(url: string, bucket: string): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const idx = u.pathname.indexOf(marker);
+    if (idx === -1) return null;
+    return decodeURIComponent(u.pathname.slice(idx + marker.length));
+  } catch {
+    return null;
+  }
+}
+
 export const mediaRepository = {
   async upload(
     weddingId: string,
@@ -43,7 +56,29 @@ export const mediaRepository = {
       .order('uploaded_at', { ascending: false });
 
     if (error) throw error;
-    return (data ?? []).map(mapRowToAsset);
+
+    const baseAssets = (data ?? []).map(mapRowToAsset);
+
+    const hydrated = await Promise.all(
+      baseAssets.map(async (asset) => {
+        const path = extractBucketPathFromUrl(asset.url, STORAGE_BUCKET);
+        if (!path) return asset;
+
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .createSignedUrl(path, 60 * 60 * 24);
+
+        if (signedError || !signedData?.signedUrl) return asset;
+
+        return {
+          ...asset,
+          url: signedData.signedUrl,
+          thumbnailUrl: signedData.signedUrl,
+        } satisfies BuilderMediaAsset;
+      })
+    );
+
+    return hydrated;
   },
 
   async save(asset: Omit<BuilderMediaAsset, 'id'>): Promise<BuilderMediaAsset> {
