@@ -96,7 +96,7 @@ export const BuilderCanvas: React.FC = () => {
 
   return (
     <div
-      className={`flex-1 min-h-0 overflow-y-auto overscroll-contain ${isPreview ? 'bg-white' : 'bg-neutral-100'} ${isPreview && previewViewport === 'mobile' ? 'px-3 py-4' : ''}`}
+      className={`flex-1 min-h-0 overflow-y-auto overscroll-contain ${isPreview ? 'bg-white' : 'bg-transparent'} ${isPreview && previewViewport === 'mobile' ? 'px-3 py-4' : ''}`}
       onClick={() => dispatch(builderActions.selectSection(null))}
     >
       <DndContext
@@ -106,7 +106,7 @@ export const BuilderCanvas: React.FC = () => {
         onDragEnd={handleDragEnd}
       >
         <div
-          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1280px] mx-auto my-6 shadow-sm rounded-xl overflow-hidden border border-neutral-200'} bg-white min-h-full`}
+          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1160px] mx-auto shadow-sm rounded-2xl overflow-hidden border border-neutral-200'} bg-white min-h-full`}
           style={isPreview
             ? previewViewport === 'mobile'
               ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)' }
