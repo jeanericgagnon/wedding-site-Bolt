@@ -160,7 +160,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors flex-shrink-0"
       >
         <ArrowLeft size={15} />
-        <span className="hidden sm:inline">Dashboard</span>
+        <span className="hidden sm:inline">Exit</span>
       </button>
 
       <div className="hidden sm:block h-5 w-px bg-gray-200 flex-shrink-0" />
@@ -186,7 +186,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="hidden md:block h-5 w-px bg-gray-200 mx-1" />
 
-      <div className="hidden sm:flex items-center gap-1">
+      <div className="hidden">
         <button
           onClick={() => dispatch(builderActions.undo())}
           disabled={!undoRedo.canUndo}
@@ -213,7 +213,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="flex-1" />
 
-      <div className="w-full lg:hidden">
+      <div className="hidden">
         <div className="flex items-center gap-2">
           <label htmlFor="mobile-section-nav" className="text-xs text-gray-500 whitespace-nowrap">Section</label>
           <select
@@ -241,7 +241,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </div>
       </div>
 
-      <div className="hidden xl:flex items-center gap-1.5 max-w-[520px] overflow-x-auto pr-2">
+      <div className="hidden">
         {(activePage?.sections ?? []).slice(0, 8).map((section, idx) => {
           const isSelected = state.selectedSectionId === section.id;
           return (
@@ -371,7 +371,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <button
           type="button"
           onClick={() => setShowPublishChecklist((v) => !v)}
-          className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[11px] font-medium ${
+          className={`hidden inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[11px] font-medium ${
             checklistDoneCount === checklistItems.length
               ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
               : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
@@ -445,7 +445,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
         <button
           onClick={() => dispatch(builderActions.setMode(isPreview ? 'edit' : 'preview'))}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          className={`hidden flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
             isPreview
               ? 'bg-gray-900 text-white hover:bg-gray-800'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -456,7 +456,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </button>
 
         {isPreview && (
-          <div className="hidden sm:flex items-center rounded-md border border-gray-200 bg-white p-0.5">
+          <div className="hidden">
             <button
               type="button"
               onClick={() => dispatch(builderActions.setPreviewViewport('desktop'))}
@@ -496,7 +496,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </div>
         )}
 
-        <div className="relative group">
+        <div className="hidden">
           <button
             onClick={onSave}
             disabled={state.isSaving || !isDirty}
@@ -523,7 +523,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             onClick={() => setShowPhotoTips((v) => !v)}
             aria-expanded={showPhotoTips}
             aria-controls="builder-photo-tips-panel"
-            className="inline-flex items-center rounded border border-sky-300 bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-800 hover:bg-sky-100 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
+            className="hidden inline-flex items-center rounded border border-sky-300 bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-800 hover:bg-sky-100 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
             title="Show photo placement tips"
           >
             Photo tips
