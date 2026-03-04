@@ -106,7 +106,7 @@ export const BuilderCanvas: React.FC = () => {
         onDragEnd={handleDragEnd}
       >
         <div
-          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1220px] mx-auto shadow-sm rounded-xl overflow-hidden border border-neutral-200'} bg-white min-h-full`}
+          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1240px] mx-auto shadow-sm rounded-xl overflow-hidden border border-neutral-200'} bg-white min-h-full`}
           style={isPreview
             ? previewViewport === 'mobile'
               ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)' }

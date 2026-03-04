@@ -36,7 +36,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   const quickSectionRail = activePage ? (
     <div className="border-b border-neutral-200 bg-white">
-      <div className="px-3.5 py-2.5 border-b border-neutral-100">
+      <div className="px-3 py-2 border-b border-neutral-100">
         <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-neutral-500">Website settings</p>
       </div>
 
@@ -54,7 +54,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
               }}
-              className={`w-full border-b border-neutral-100 px-3.5 py-2 text-left text-[13px] transition-colors ${
+              className={`w-full border-b border-neutral-100 px-3 py-1.5 text-left text-[13px] leading-5 transition-colors ${
                 isActive
                   ? 'bg-neutral-100 text-neutral-900 font-medium'
                   : 'bg-white text-neutral-700 hover:bg-neutral-50'
@@ -67,14 +67,14 @@ export const BuilderInspectorPanel: React.FC = () => {
         })}
       </div>
 
-      <div className="p-2.5 border-t border-neutral-100 sticky bottom-0 bg-white">
+      <div className="p-2 border-t border-neutral-100 sticky bottom-0 bg-white">
         <button
           type="button"
           onClick={() => {
             setShowAddSectionPicker(true);
             setAddSectionType(null);
           }}
-          className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-[13px] font-medium text-neutral-800 hover:bg-neutral-50"
+          className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-[13px] font-medium text-neutral-800 hover:bg-neutral-50"
         >
           + Add section
         </button>
