@@ -40,6 +40,10 @@ export const BuilderInspectorPanel: React.FC = () => {
       onSelectSection={(sectionId) => dispatch(builderActions.selectSection(sectionId))}
       onAddSection={(type, variantId) => dispatch(builderActions.addSectionByType(activePage.id, type as any, undefined, variantId))}
       onReorderSections={(orderedIds) => dispatch(builderActions.reorderSections(activePage.id, orderedIds))}
+      onSwitchTemplate={() => {
+        dispatch(builderActions.selectSection(null));
+        dispatch(builderActions.openTemplateGallery());
+      }}
     />
   ) : null;
 

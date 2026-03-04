@@ -14,6 +14,7 @@ interface BuilderSectionRailProps {
   onSelectSection: (sectionId: string) => void;
   onAddSection: (type: string, variantId?: string) => void;
   onReorderSections: (orderedIds: string[]) => void;
+  onSwitchTemplate?: () => void;
 }
 
 export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
@@ -23,6 +24,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
   onSelectSection,
   onAddSection,
   onReorderSections,
+  onSwitchTemplate,
 }) => {
   const [showAddSectionPicker, setShowAddSectionPicker] = React.useState(false);
   const [addSectionType, setAddSectionType] = React.useState<string | null>(null);
@@ -91,7 +93,16 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
         })}
       </div>
 
-      <div className="p-2.5 border-t border-[var(--color-border-subtle)] sticky bottom-0 bg-[var(--color-surface)]">
+      <div className="p-2.5 border-t border-[var(--color-border-subtle)] sticky bottom-0 bg-[var(--color-surface)] space-y-2">
+        {onSwitchTemplate && (
+          <button
+            type="button"
+            onClick={onSwitchTemplate}
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+          >
+            Switch template
+          </button>
+        )}
         <button
           type="button"
           onClick={() => {
