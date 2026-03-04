@@ -24,11 +24,10 @@ if (!photos.length) {
   throw new Error('No photos found. Run scripts/sync_preview_photos_from_kara.mjs first.');
 }
 
-const landscapeFirst = [
-  ...photos.filter((p) => p.orientation === 'landscape' && p.bucket !== 'root'),
-  ...photos.filter((p) => p.orientation === 'landscape' && p.bucket === 'root'),
-  ...photos.filter((p) => p.orientation !== 'landscape'),
-];
+const GLOBAL_HEADER_PHOTO = path.join(repoRoot, 'public', 'preview-photos', 'header-anchor.jpg');
+if (!fs.existsSync(GLOBAL_HEADER_PHOTO)) {
+  throw new Error('Missing global header photo at public/preview-photos/header-anchor.jpg');
+}
 
 function hash(str) {
   let h = 0;
@@ -52,7 +51,7 @@ function overlaySvg(tpl) {
   <rect width="960" height="540" fill="url(#fade)"/>
   <rect x="28" y="28" width="904" height="484" rx="16" fill="none" stroke="#ffffff" stroke-opacity="0.72" stroke-width="2"/>
   <text x="56" y="404" fill="#ffffff" font-size="34" font-weight="700" font-family="Inter,Arial,sans-serif">Kara &amp; Eric</text>
-  <text x="56" y="432" fill="#f3f4f6" font-size="16" font-family="Inter,Arial,sans-serif">June 12, 2027 · Napa Valley</text>
+  <text x="56" y="432" fill="#f3f4f6" font-size="16" font-family="Inter,Arial,sans-serif">January 17, 2027 · Napa Valley</text>
   <text x="56" y="458" fill="#f3f4f6" font-size="14" font-family="Inter,Arial,sans-serif">We are really happy you are here.</text>
 </svg>`);
 }
@@ -61,8 +60,7 @@ function overlaySvg(tpl) {
   fs.mkdirSync(outDir, { recursive: true });
 
   for (const tpl of entries) {
-    const idx = hash(`${tpl.id}:${tpl.theme}`) % landscapeFirst.length;
-    const bg = path.join(repoRoot, 'public', landscapeFirst[idx].url.replace(/^\//, ''));
+    const bg = GLOBAL_HEADER_PHOTO;
     const outFile = path.join(outDir, `${tpl.id}.webp`);
 
     await sharp(bg)

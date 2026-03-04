@@ -14,6 +14,8 @@ const VALID_TYPES: BuilderSectionType[] = [
   'hero','story','venue','schedule','travel','registry','faq','rsvp','gallery','countdown','wedding-party','dress-code','accommodations','contact','footer-cta','custom','quotes','menu','music','directions','video'
 ];
 
+const GLOBAL_HEADER_PHOTO = '/preview-photos/header-anchor.jpg';
+
 const ORIENTATION_BY_SECTION: Partial<Record<BuilderSectionType, Array<'portrait' | 'landscape' | 'square'>>> = {
   hero: ['landscape'],
   story: ['landscape', 'portrait'],
@@ -116,13 +118,12 @@ export default function VariantPreviewCapture() {
     const s = createDefaultSectionInstance(safeType, variant, 0);
     const picks = pickPhotos(photos, safeType, variant);
 
-    if (picks.hero) {
-      (s.settings as Record<string, unknown>).backgroundImage = picks.hero;
-      (s.settings as Record<string, unknown>).imageUrl = picks.hero;
-      (s.settings as Record<string, unknown>).heroImage = picks.hero;
-      (s.settings as Record<string, unknown>).photo = picks.hero;
-      (s.settings as Record<string, unknown>).overlayOpacity = 28;
-    }
+    const headerPhoto = GLOBAL_HEADER_PHOTO;
+    (s.settings as Record<string, unknown>).backgroundImage = headerPhoto;
+    (s.settings as Record<string, unknown>).imageUrl = headerPhoto;
+    (s.settings as Record<string, unknown>).heroImage = headerPhoto;
+    (s.settings as Record<string, unknown>).photo = headerPhoto;
+    (s.settings as Record<string, unknown>).overlayOpacity = 28;
 
     return { ...s, id: 'preview-section' };
   }, [safeType, variant, photos]);
@@ -136,13 +137,13 @@ export default function VariantPreviewCapture() {
     data.venues = [{ id: 'v1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
 
     const picks = pickPhotos(photos, safeType, variant);
-    if (picks.hero) data.media.heroImageUrl = picks.hero;
+    data.media.heroImageUrl = GLOBAL_HEADER_PHOTO;
     data.media.gallery = picks.gallery.map((url, i) => ({ id: `g${i + 1}`, url, caption: `Moment ${i + 1}` }));
 
     data.schedule = [
-      { id: 's1', label: 'Welcome Dinner', startTimeISO: '2027-06-11T18:00:00.000Z', venueId: 'v1', notes: 'A relaxed night with everyone' },
-      { id: 's2', label: 'Ceremony', startTimeISO: '2027-06-12T17:00:00.000Z', venueId: 'v1', notes: 'Please arrive 20 minutes early' },
-      { id: 's3', label: 'Reception', startTimeISO: '2027-06-12T19:00:00.000Z', venueId: 'v1', notes: 'Dinner and dancing right after' },
+      { id: 's1', label: 'Welcome Dinner', startTimeISO: '2027-01-16T18:00:00.000Z', venueId: 'v1', notes: 'A relaxed night with everyone' },
+      { id: 's2', label: 'Ceremony', startTimeISO: '2027-01-17T17:00:00.000Z', venueId: 'v1', notes: 'Please arrive 20 minutes early' },
+      { id: 's3', label: 'Reception', startTimeISO: '2027-01-17T19:00:00.000Z', venueId: 'v1', notes: 'Dinner and dancing right after' },
     ];
 
     return data;

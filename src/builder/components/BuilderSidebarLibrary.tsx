@@ -44,7 +44,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
 const LEGACY_PLACEHOLDER_TYPES = new Set<BuilderSectionType>(['quotes', 'menu', 'music', 'directions', 'video'] as BuilderSectionType[]);
 
 const PREVIEW_FIXTURES_BY_TYPE: Partial<Record<BuilderSectionType, Record<string, unknown>>> = {
-  hero: { title: 'We are getting married', headline: 'Alex & Sam', subtitle: 'June 12, 2027 · Rosewood Estate', showTitle: true },
+  hero: { title: 'We are getting married', headline: 'Alex & Sam', subtitle: 'January 17, 2027 · Rosewood Estate', showTitle: true },
   story: { title: 'Our Story', showTitle: true },
   venue: { title: 'Venue', showMap: true, showTitle: true },
   schedule: { title: 'Weekend Timeline', showTitle: true },
@@ -212,12 +212,12 @@ const buildPreviewWeddingData = (photoSet: PreviewPhotoSet, sectionType: string 
   data.couple.partner2Name = 'Sam';
   data.couple.displayName = 'Alex & Sam';
   data.couple.story = recipe.story ?? 'From quiet coffee-shop mornings to a candlelit first dance, this weekend is curated as an editorial love story for everyone we cherish.';
-  data.event.weddingDateISO = new Date('2027-06-12T17:00:00.000Z').toISOString();
+  data.event.weddingDateISO = new Date('2027-01-17T17:00:00.000Z').toISOString();
   data.venues = [{ id: 'venue-1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
   data.schedule = [
-    { id: 's1', label: 'Welcome Dinner', startTimeISO: '2027-06-11T18:00:00.000Z', venueId: 'venue-1', notes: 'Cocktails and sunset toasts' },
-    { id: 's2', label: 'Ceremony', startTimeISO: '2027-06-12T17:00:00.000Z', venueId: 'venue-1', notes: 'Please arrive 20 minutes early' },
-    { id: 's3', label: 'Reception', startTimeISO: '2027-06-12T19:00:00.000Z', venueId: 'venue-1', notes: 'Dinner, dancing, and late-night bites' },
+    { id: 's1', label: 'Welcome Dinner', startTimeISO: '2027-01-16T18:00:00.000Z', venueId: 'venue-1', notes: 'Cocktails and sunset toasts' },
+    { id: 's2', label: 'Ceremony', startTimeISO: '2027-01-17T17:00:00.000Z', venueId: 'venue-1', notes: 'Please arrive 20 minutes early' },
+    { id: 's3', label: 'Reception', startTimeISO: '2027-01-17T19:00:00.000Z', venueId: 'venue-1', notes: 'Dinner, dancing, and late-night bites' },
   ];
   data.travel = {
     notes: 'We suggest arriving by Friday afternoon to enjoy the full weekend experience.',
@@ -3111,7 +3111,7 @@ function getSectionHealth(section: BuilderSectionInstance): SectionHealth {
 function getStarterContentPatch(section: BuilderSectionInstance): Partial<BuilderSectionInstance> {
   const now = new Date().toISOString();
   const starterByType: Partial<Record<BuilderSectionType, Record<string, unknown>>> = {
-    hero: { title: 'We are getting married', headline: 'Alex & Sam', subtitle: 'June 12, 2027 · Rosewood Estate' },
+    hero: { title: 'We are getting married', headline: 'Alex & Sam', subtitle: 'January 17, 2027 · Rosewood Estate' },
     story: { title: 'Our Story', content: 'From first coffee to forever — we cannot wait to celebrate with you.' },
     schedule: { title: 'Weekend Schedule' },
     travel: { title: 'Travel & Stay', notes: 'Use the recommended hotels for easiest shuttle access.' },
