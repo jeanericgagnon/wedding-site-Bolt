@@ -244,16 +244,16 @@ export const BuilderInspectorPanel: React.FC = () => {
   return (
     <aside className="w-full lg:w-[392px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
       {quickSectionRail}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-gray-800 truncate">{manifest.label}</h3>
+            <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)] truncate">{manifest.label}</h3>
             {!selectedSection.enabled && (
               <span className="text-[10px] font-medium px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-100">Hidden</span>
             )}
           </div>
           <div className="mt-1.5">
-            <div className="text-[10px] text-gray-400 mb-1">Variant styles</div>
+            <div className="text-[10px] text-[var(--color-text-tertiary)] mb-1">Variant styles</div>
             <div className="flex flex-wrap gap-1">
               {manifest.variantMeta.map((v) => {
                 const isActiveVariant = selectedSection.variant === v.id;
@@ -265,8 +265,8 @@ export const BuilderInspectorPanel: React.FC = () => {
                     title={v.description || v.label}
                     className={`rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
                       isActiveVariant
-                        ? 'border-rose-200 bg-rose-50 text-rose-700'
-                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                        ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)] text-[var(--color-accent)]'
+                        : 'border-[var(--color-border-subtle)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]'
                     }`}
                   >
                     {v.label}
@@ -298,16 +298,16 @@ export const BuilderInspectorPanel: React.FC = () => {
       </div>
 
       {tabs.length > 1 && (
-        <div className="border-b border-gray-100 px-4">
+        <div className="border-b border-[var(--color-border-subtle)] px-2.5">
           <div className="flex items-center">
             {visibleTabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-colors mr-1 ${
+                className={`flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium border-b transition-colors mr-0.5 ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-400 hover:text-gray-600'
+                    ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-light)]'
+                    : 'border-transparent text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
                 }`}
               >
                 <tab.icon size={12} />
@@ -333,9 +333,9 @@ export const BuilderInspectorPanel: React.FC = () => {
       )}
 
       {simpleMode && (
-        <div className="mx-4 mt-3 rounded-xl border border-sky-100 bg-sky-50 p-3">
-          <p className="text-[11px] font-semibold text-sky-900">Next step: {nextAction.label}</p>
-          <p className="mt-1 text-[11px] text-sky-800">{nextAction.detail}</p>
+        <div className="mx-2.5 mt-2 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-2.5">
+          <p className="text-[11px] font-semibold text-[var(--color-text-primary)]">Next step: {nextAction.label}</p>
+          <p className="mt-1 text-[11px] text-[var(--color-text-secondary)]">{nextAction.detail}</p>
           <button
             onClick={() => {
               if (nextAction.key === 'preview-mobile') {
@@ -351,7 +351,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               }
               setActiveTab(nextAction.tab);
             }}
-            className="mt-2 rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
+            className="mt-2 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
           >
             {nextAction.cta}
           </button>
