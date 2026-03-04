@@ -1,4 +1,5 @@
 import React, { useReducer, useMemo, useEffect, useCallback, useRef, useState } from 'react';
+import { LayoutGrid, Layers3, Sparkles } from 'lucide-react';
 import { BuilderContext, initialBuilderState } from '../state/builderStore';
 import { builderReducer } from '../state/builderReducer';
 import { builderActions } from '../state/builderActions';
@@ -17,6 +18,7 @@ import { applyThemePreset, applyThemeTokens } from '../../lib/themePresets';
 import { getPublishIssue, getPublishValidationError } from '../utils/publishReadiness';
 import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
 import { getPublishNowAction } from '../utils/publishNowFlow';
+import { getAllTemplatePacks } from '../constants/builderTemplatePacks';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -26,6 +28,8 @@ interface BuilderShellProps {
   onSave?: (project: BuilderProject, weddingData?: WeddingDataV1 | null) => Promise<void>;
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
 }
+
+type WorkspaceTab = 'editor' | 'templates' | 'variants';
 
 export const BuilderShell: React.FC<BuilderShellProps> = ({
   initialProject,
@@ -74,6 +78,14 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
   const [showCoachmarks, setShowCoachmarks] = useState(false);
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>('editor');
+
+  const templateCount = useMemo(() => getAllTemplatePacks().length, []);
+  const totalSectionCount = useMemo(
+    () => state.project?.pages.reduce((sum, page) => sum + page.sections.length, 0) ?? 0,
+    [state.project?.pages]
+  );
+  const activePageSectionCount = activePage?.sections.length ?? 0;
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -120,6 +132,14 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       setShowCoachmarks(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (state.templateGalleryOpen) {
+      setWorkspaceTab('templates');
+    } else if (workspaceTab === 'templates') {
+      setWorkspaceTab('editor');
+    }
+  }, [state.templateGalleryOpen, workspaceTab]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     const currentState = stateRef.current;
@@ -329,38 +349,84 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         />
 
         <div className="border-b border-gray-200 bg-white px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-gray-900">Builder Workspace</h2>
-              <p className="text-xs text-gray-500">UI refresh in progress — functionality preserved</p>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-gray-900">Builder Workspace</h2>
+                <p className="text-xs text-gray-500">Template-driven editing with preserved Bolt functionality</p>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWorkspaceTab('editor');
+                    dispatch(builderActions.closeTemplateGallery());
+                  }}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    workspaceTab === 'editor'
+                      ? 'bg-gray-900 text-white'
+                      : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <LayoutGrid size={13} />
+                  Editor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWorkspaceTab('templates');
+                    dispatch(builderActions.openTemplateGallery());
+                  }}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    workspaceTab === 'templates'
+                      ? 'bg-gray-900 text-white'
+                      : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Sparkles size={13} />
+                  Templates
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWorkspaceTab('variants');
+                    dispatch(builderActions.closeTemplateGallery());
+                  }}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    workspaceTab === 'variants'
+                      ? 'bg-gray-900 text-white'
+                      : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Layers3 size={13} />
+                  Variants
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
-              <button
-                type="button"
-                className="rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white"
-              >
-                Editor
-              </button>
-              <button
-                type="button"
-                onClick={() => dispatch(builderActions.openTemplateGallery())}
-                className="rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
-              >
-                Templates
-              </button>
-              <button
-                type="button"
-                disabled
-                className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-400"
-                title="Variant board wiring is part of the next batches"
-              >
-                Variants
-              </button>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <div className="text-[11px] uppercase tracking-wide text-gray-500">Templates</div>
+                <div className="mt-1 text-sm font-semibold text-gray-900">{templateCount}</div>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <div className="text-[11px] uppercase tracking-wide text-gray-500">Page sections</div>
+                <div className="mt-1 text-sm font-semibold text-gray-900">{activePageSectionCount}</div>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <div className="text-[11px] uppercase tracking-wide text-gray-500">Total sections</div>
+                <div className="mt-1 text-sm font-semibold text-gray-900">{totalSectionCount}</div>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+          {workspaceTab === 'variants' && (
+            <div className="mx-4 mt-3 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+              Variant board mode is active. Use the section library + inspector variant controls to review and apply variants.
+            </div>
+          )}
           <BuilderCanvas />
 
           {state.mode === 'edit' && (

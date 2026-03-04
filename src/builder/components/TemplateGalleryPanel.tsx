@@ -567,7 +567,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
         return;
       }
 
-      dispatch(builderActions.closeTemplateGallery());
+      handleCloseGallery();
     };
 
     window.addEventListener('keydown', onKeyDown);
@@ -578,8 +578,16 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     confirmTemplate,
     detailsTemplate,
     showCompareModal,
-    dispatch,
+    handleCloseGallery,
   ]);
+
+  function handleCloseGallery() {
+    setConfirmTemplate(null);
+    setDetailsTemplate(null);
+    setShowCompareModal(false);
+    setCompareTemplateIds([]);
+    dispatch(builderActions.closeTemplateGallery());
+  }
 
   const toggleCompareTemplate = useCallback((templateId: string) => {
     setCompareTemplateIds((prev) => {
@@ -674,7 +682,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           <button
             onClick={() => {
               setApplyResult(null);
-              dispatch(builderActions.closeTemplateGallery());
+              handleCloseGallery();
             }}
             className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors"
           >
@@ -687,31 +695,47 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => dispatch(builderActions.closeTemplateGallery())} />
-      <div className="relative ml-auto w-full max-w-4xl bg-white h-full flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Template Gallery</h2>
-            <p className="text-sm text-gray-400 mt-0.5">Choose a visual identity for your wedding site</p>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleCloseGallery} />
+      <div className="relative ml-auto w-full max-w-5xl bg-white h-full flex flex-col shadow-2xl">
+        <div className="px-7 py-5 border-b border-gray-100 bg-gradient-to-b from-white to-gray-50/60">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Template Gallery</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Choose a visual identity for your wedding site</p>
+            </div>
+            <button
+              onClick={handleCloseGallery}
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
-          <button
-            onClick={() => dispatch(builderActions.closeTemplateGallery())}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X size={20} />
-          </button>
+          <div className="mt-3 grid grid-cols-3 gap-2 max-w-md">
+            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+              <div className="text-[10px] uppercase tracking-wide text-gray-500">Total</div>
+              <div className="text-sm font-semibold text-gray-900">{templates.length}</div>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+              <div className="text-[10px] uppercase tracking-wide text-gray-500">Filtered</div>
+              <div className="text-sm font-semibold text-gray-900">{filtered.length}</div>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+              <div className="text-[10px] uppercase tracking-wide text-gray-500">Active</div>
+              <div className="text-sm font-semibold text-gray-900 truncate">{templates.find(t => t.id === currentTemplateId)?.displayName ?? '—'}</div>
+            </div>
+          </div>
         </div>
 
-        <div className="px-7 py-3 border-b border-gray-50 space-y-3">
+        <div className="px-7 py-3 border-b border-gray-50 space-y-3 bg-white">
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search templates by name, vibe, or description"
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200"
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200"
             />
-            <span className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+            <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-semibold text-gray-700">
               {filtered.length}
             </span>
           </div>
@@ -787,7 +811,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             </div>
           </div>
 
-          <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 flex items-center justify-between gap-3">
+          <div className="mb-4 rounded-xl border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 px-3 py-2 flex items-center justify-between gap-3">
             <div className="text-xs text-sky-900">
               {compareTemplates.length === 0 && 'Select up to 2 templates to compare side-by-side.'}
               {compareTemplates.length === 1 && `Selected for compare: ${compareTemplates[0].displayName}. Pick one more.`}
@@ -813,7 +837,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {filtered.map(template => (
               <TemplateCard
                 key={template.id}
@@ -903,7 +927,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
 
   return (
     <div
-      className={`group rounded-2xl overflow-hidden border-2 transition-all cursor-pointer ${
+      className={`group rounded-2xl overflow-hidden border-2 transition-all cursor-pointer bg-white ${
         isCurrent
           ? 'border-rose-400 shadow-lg shadow-rose-100/60'
           : isCompared
