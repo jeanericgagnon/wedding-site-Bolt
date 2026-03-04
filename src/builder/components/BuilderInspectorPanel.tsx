@@ -41,7 +41,7 @@ export const BuilderInspectorPanel: React.FC = () => {
         <p className="text-xs text-neutral-500">{activeSections.length} sections</p>
       </div>
 
-      <div className="p-3 space-y-2 max-h-[45vh] overflow-y-auto">
+      <div className="max-h-[46vh] overflow-y-auto">
         {activeSections.map((section, idx) => {
           const isActive = state.selectedSectionId === section.id;
           return (
@@ -55,26 +55,27 @@ export const BuilderInspectorPanel: React.FC = () => {
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
               }}
-              className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+              className={`w-full border-b border-neutral-100 px-4 py-3 text-left text-sm transition-colors ${
                 isActive
-                  ? 'border-blue-300 bg-blue-50 text-blue-700'
-                  : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50'
+                  ? 'bg-neutral-100 text-neutral-900'
+                  : 'bg-white text-neutral-700 hover:bg-neutral-50'
               }`}
             >
-              {idx + 1}. {getSectionManifest(section.type).label}
+              <span className="text-neutral-400 mr-2">{idx + 1}.</span>
+              {getSectionManifest(section.type).label}
             </button>
           );
         })}
       </div>
 
-      <div className="p-3 border-t border-neutral-100">
+      <div className="p-3 border-t border-neutral-100 sticky bottom-0 bg-white">
         <button
           type="button"
           onClick={() => {
             setShowAddSectionPicker(true);
             setAddSectionType(null);
           }}
-          className="w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
+          className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-100"
         >
           + Add section
         </button>
