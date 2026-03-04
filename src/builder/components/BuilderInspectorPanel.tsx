@@ -13,7 +13,7 @@ type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 export const BuilderInspectorPanel: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
   const [activeTab, setActiveTab] = React.useState<InspectorTab>('content');
-  const [simpleMode, setSimpleMode] = React.useState(false);
+  const [simpleMode, setSimpleMode] = React.useState(true);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
   const [showVariantPicker, setShowVariantPicker] = React.useState(false);
   const selectedSection = selectSelectedSection(state);
@@ -149,17 +149,22 @@ export const BuilderInspectorPanel: React.FC = () => {
           </button>
         </div>
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-[var(--color-text-tertiary)]">
-          <span>Mode: Advanced</span>
+          <span>Mode: {simpleMode ? 'Basic' : 'Advanced'}</span>
           <button
             type="button"
             onClick={() => {
-              setSimpleMode(true);
-              setShowAdvanced(false);
-              if (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide') setActiveTab('content');
+              if (simpleMode) {
+                setSimpleMode(false);
+                setShowAdvanced(true);
+              } else {
+                setSimpleMode(true);
+                setShowAdvanced(false);
+                if (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide') setActiveTab('content');
+              }
             }}
             className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
-            Switch to basic
+            {simpleMode ? 'Switch to advanced' : 'Switch to basic'}
           </button>
         </div>
         <button
