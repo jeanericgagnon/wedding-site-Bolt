@@ -163,11 +163,6 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <span className="hidden sm:inline">Exit</span>
       </button>
 
-      <div className="hidden sm:block h-5 w-px bg-gray-200 flex-shrink-0" />
-
-      <div className="hidden md:flex items-center text-xs text-gray-500">
-        {projectName ?? 'Wedding Site Builder'}
-      </div>
 
       <button
         type="button"
@@ -206,6 +201,28 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
 
       <div className="flex-1" />
+
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => {
+            if (publishValidationError) {
+              setShowPublishChecklist(true);
+              setShowBlockedDetails(true);
+              return;
+            }
+            onPublish();
+          }}
+          disabled={isPublishDisabled}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {state.isPublishing || state.isSaving ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Globe size={14} />
+          )}
+          {state.isPublishing ? 'Publishing…' : 'Publish'}
+        </button>
+      </div>
 
       <div className="hidden">
         <div className="flex items-center gap-2">
@@ -261,7 +278,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         })}
       </div>
 
-      <div className="w-full md:w-auto flex items-center justify-end gap-2 flex-wrap">
+      <div className="hidden">
         {state.isSaving && (
           <span className="hidden sm:flex text-xs text-gray-500 items-center gap-1.5">
             <Loader2 size={12} className="animate-spin" />
