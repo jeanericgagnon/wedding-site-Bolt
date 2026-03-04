@@ -147,7 +147,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   return (
     <>
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-3 md:px-4 py-1 md:py-0 gap-2 md:gap-3 z-50 sticky top-0">
+    <header className="h-[52px] bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-3 md:px-3.5 py-0 gap-2 z-50 sticky top-0">
       <button
         onClick={() => {
           if (isDirty) {
@@ -173,8 +173,6 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         Pages ({projectPages.length})
       </button>
 
-      <div className="hidden md:block h-5 w-px bg-gray-200 mx-1" />
-
       <div className="hidden">
         <button
           onClick={() => dispatch(builderActions.undo())}
@@ -195,10 +193,6 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <Redo2 size={16} />
         </button>
       </div>
-
-      <div className="hidden md:block h-5 w-px bg-gray-200 mx-1" />
-
-
 
       <div className="flex-1" />
 
