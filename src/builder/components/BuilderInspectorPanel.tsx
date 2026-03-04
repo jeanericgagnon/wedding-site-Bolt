@@ -147,7 +147,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   if (!activePage) {
     return (
-      <aside className="w-full lg:w-[320px] bg-white border border-neutral-200 rounded-2xl flex flex-col h-full overflow-hidden">
+      <aside className="w-full lg:w-[360px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <p className="text-sm text-gray-500">No page selected.</p>
         </div>
@@ -157,7 +157,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   if (!selectedSection) {
     return (
-      <aside className="w-full lg:w-[320px] bg-white border border-neutral-200 rounded-2xl flex flex-col h-full overflow-hidden">
+      <aside className="w-full lg:w-[360px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
         {quickSectionRail}
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div className="w-full max-w-xs">
@@ -242,7 +242,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   });
 
   return (
-    <aside className="w-full lg:w-[320px] bg-white border border-neutral-200 rounded-2xl flex flex-col h-full overflow-hidden">
+    <aside className="w-full lg:w-[360px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
       {quickSectionRail}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="min-w-0 flex-1">
