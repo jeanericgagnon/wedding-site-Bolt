@@ -1077,11 +1077,11 @@ const VariantCard: React.FC<VariantCardProps> = ({
       onMouseLeave={() => onHover(null)}
       onFocus={onFocusIndex}
       onClick={() => onSelect(variant.id)}
-      className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left will-change-transform transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/80 focus-visible:ring-offset-2 active:scale-[0.992] ${
+      className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left will-change-transform transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 active:scale-[0.995] ${
         isHovered || isKeyboardActive
-          ? 'border-rose-300 shadow-[0_20px_40px_-22px_rgba(190,24,93,0.58)] -translate-y-[2px]'
-          : 'border-gray-200 hover:border-rose-200 hover:-translate-y-[1px] hover:shadow-[0_16px_30px_-18px_rgba(15,23,42,0.38)]'
-      } ${isDefault ? 'ring-1 ring-rose-100/70' : ''}`}
+          ? 'border-blue-300 shadow-sm -translate-y-[1px]'
+          : 'border-neutral-200 hover:border-neutral-300 hover:shadow-sm'
+      } ${isDefault ? 'ring-1 ring-blue-100/80' : ''}`}
       title={variant.description}
       aria-label={`Add ${variant.label} variant`}
     >

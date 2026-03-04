@@ -830,7 +830,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filtered.map(template => (
               <TemplateCard
                 key={template.id}
@@ -920,14 +920,14 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
 
   return (
     <div
-      className={`group rounded-2xl overflow-hidden border-2 transition-all cursor-pointer bg-white ${
+      className={`group rounded-2xl overflow-hidden border transition-all cursor-pointer bg-white ${
         isCurrent
-          ? 'border-rose-400 shadow-lg shadow-rose-100/60'
+          ? 'border-blue-500 shadow-sm'
           : isCompared
-          ? 'border-sky-400 shadow-lg shadow-sky-100/70'
+          ? 'border-blue-300 shadow-sm'
           : hovered
-          ? 'border-gray-300 shadow-lg shadow-gray-100/80'
-          : 'border-gray-100 shadow-sm'
+          ? 'border-neutral-300 shadow-sm'
+          : 'border-neutral-200'
       }`}
       onClick={onApply}
       onMouseEnter={() => setHovered(true)}
@@ -937,7 +937,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         <TemplatePreview templateId={template.id} />
 
         <div className={`absolute inset-0 transition-opacity duration-200 ${hovered && !isCurrent ? 'opacity-100' : 'opacity-0'}`}
-          style={{ background: 'rgba(0,0,0,0.15)' }}
+          style={{ background: 'rgba(0,0,0,0.12)' }}
         />
 
         {isCurrent && (
