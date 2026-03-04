@@ -18,7 +18,6 @@ import { applyThemePreset, applyThemeTokens } from '../../lib/themePresets';
 import { getPublishIssue, getPublishValidationError } from '../utils/publishReadiness';
 import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
 import { getPublishNowAction } from '../utils/publishNowFlow';
-import { getAllTemplatePacks } from '../constants/builderTemplatePacks';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -29,7 +28,7 @@ interface BuilderShellProps {
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
 }
 
-type WorkspaceTab = 'editor' | 'templates' | 'variants';
+type WorkspaceTab = 'editor' | 'templates' | 'variants' | 'manifest';
 
 export const BuilderShell: React.FC<BuilderShellProps> = ({
   initialProject,
@@ -80,12 +79,6 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const [showCoachmarks, setShowCoachmarks] = useState(false);
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>('editor');
 
-  const templateCount = useMemo(() => getAllTemplatePacks().length, []);
-  const totalSectionCount = useMemo(
-    () => state.project?.pages.reduce((sum, page) => sum + page.sections.length, 0) ?? 0,
-    [state.project?.pages]
-  );
-  const activePageSectionCount = activePage?.sections.length ?? 0;
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -348,75 +341,58 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData)?.kind ?? null : null}
         />
 
-        <div className="border-b border-gray-200 bg-white px-4 py-3">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-              <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-gray-900">Builder Workspace</h2>
-                <p className="text-xs text-gray-500">Template-driven editing with preserved Bolt functionality</p>
-              </div>
-              <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWorkspaceTab('editor');
-                    dispatch(builderActions.closeTemplateGallery());
-                  }}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                    workspaceTab === 'editor'
-                      ? 'bg-gray-900 text-white'
-                      : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <LayoutGrid size={13} />
-                  Editor
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWorkspaceTab('templates');
-                    dispatch(builderActions.openTemplateGallery());
-                  }}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                    workspaceTab === 'templates'
-                      ? 'bg-gray-900 text-white'
-                      : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Sparkles size={13} />
-                  Templates
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setWorkspaceTab('variants');
-                    dispatch(builderActions.closeTemplateGallery());
-                  }}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                    workspaceTab === 'variants'
-                      ? 'bg-gray-900 text-white'
-                      : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Layers3 size={13} />
-                  Variants
-                </button>
-              </div>
+        <div className="border-b border-gray-200 bg-white px-4 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-2xl font-bold text-neutral-900">Dayof Builder</h2>
+              <p className="text-sm text-neutral-600">Section-based wedding site framework</p>
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Templates</div>
-                <div className="mt-1 text-sm font-semibold text-gray-900">{templateCount}</div>
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Page sections</div>
-                <div className="mt-1 text-sm font-semibold text-gray-900">{activePageSectionCount}</div>
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">Total sections</div>
-                <div className="mt-1 text-sm font-semibold text-gray-900">{totalSectionCount}</div>
-              </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkspaceTab('templates');
+                  dispatch(builderActions.openTemplateGallery());
+                }}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors ${
+                  workspaceTab === 'templates'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                }`}
+              >
+                <LayoutGrid size={16} />
+                Templates
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkspaceTab('variants');
+                  dispatch(builderActions.closeTemplateGallery());
+                }}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors ${
+                  workspaceTab === 'variants'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                }`}
+              >
+                <Layers3 size={16} />
+                Variants
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkspaceTab('manifest');
+                  dispatch(builderActions.closeTemplateGallery());
+                }}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors ${
+                  workspaceTab === 'manifest'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                }`}
+              >
+                <Sparkles size={16} />
+                Manifest
+              </button>
             </div>
           </div>
         </div>
@@ -425,6 +401,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           {workspaceTab === 'variants' && (
             <div className="mx-4 mt-3 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
               Variant board mode is active. Use the section library + inspector variant controls to review and apply variants.
+            </div>
+          )}
+          {workspaceTab === 'manifest' && (
+            <div className="mx-4 mt-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
+              Manifest mode: review builder composition, template usage, and publish-readiness signals while editing.
             </div>
           )}
           <BuilderCanvas />
