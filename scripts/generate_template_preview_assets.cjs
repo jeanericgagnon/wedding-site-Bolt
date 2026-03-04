@@ -5,6 +5,7 @@ const sharp = require('sharp');
 
 const repoRoot = path.resolve(__dirname, '..');
 const registryPath = path.join(repoRoot, 'src', 'templates', 'registry.ts');
+const photoManifestPath = path.join(repoRoot, 'public', 'preview-photos', 'manifest.json');
 const outDir = path.join(repoRoot, 'public', 'template-previews');
 
 const src = fs.readFileSync(registryPath, 'utf8');
@@ -17,60 +18,58 @@ while ((m = re.exec(src))) {
   entries.push({ id, name, theme, sectionTypes });
 }
 
-const themeColors = {
-  editorial: ['#111827', '#6b7280'],
-  moody: ['#1f2937', '#374151'],
-  romantic: ['#fbcfe8', '#f9a8d4'],
-  playful: ['#f59e0b', '#fb7185'],
-  classic: ['#e5e7eb', '#9ca3af'],
-  coastal: ['#93c5fd', '#67e8f9'],
-  garden: ['#86efac', '#4ade80'],
-  minimal: ['#f5f5f4', '#d6d3d1'],
-  luxury: ['#111827', '#f59e0b'],
-  destination: ['#7dd3fc', '#a7f3d0'],
-  photography: ['#d1d5db', '#9ca3af'],
-  rustic: ['#fdba74', '#f59e0b'],
-  boho: ['#fed7aa', '#fdba74'],
-};
-
-function escapeXml(v) {
-  return v.replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c]));
+const manifest = JSON.parse(fs.readFileSync(photoManifestPath, 'utf8'));
+const photos = manifest.items || [];
+if (!photos.length) {
+  throw new Error('No photos found. Run scripts/sync_preview_photos_from_kara.mjs first.');
 }
 
-function svgForTemplate(tpl) {
-  const [c1, c2] = themeColors[tpl.theme] || ['#e5e7eb', '#9ca3af'];
-  const chips = tpl.sectionTypes.slice(0, 6);
-  const chipSvg = chips
-    .map((s, i) => {
-      const x = 84 + (i % 3) * 420;
-      const y = 380 + Math.floor(i / 3) * 92;
-      return `<rect x="${x}" y="${y}" width="350" height="58" rx="14" fill="#ffffff" fill-opacity="0.72"/><text x="${x + 20}" y="${y + 37}" fill="#111827" font-size="28" font-family="Inter,Arial,sans-serif">${escapeXml(s)}</text>`;
-    })
-    .join('');
+const landscapeFirst = [
+  ...photos.filter((p) => p.orientation === 'landscape' && p.bucket !== 'root'),
+  ...photos.filter((p) => p.orientation === 'landscape' && p.bucket === 'root'),
+  ...photos.filter((p) => p.orientation !== 'landscape'),
+];
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900">
+function hash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function esc(v) {
+  return String(v).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c]));
+}
+
+function overlaySvg(tpl) {
+  return Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="${c1}"/>
-      <stop offset="100%" stop-color="${c2}"/>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.48"/>
     </linearGradient>
   </defs>
-  <rect width="1440" height="900" fill="url(#g)"/>
-  <rect x="64" y="64" width="1312" height="772" rx="28" fill="#ffffff" fill-opacity="0.16"/>
-  <text x="96" y="164" fill="#ffffff" font-size="44" font-weight="700" font-family="Inter,Arial,sans-serif">${escapeXml(tpl.name)}</text>
-  <text x="96" y="214" fill="#f3f4f6" font-size="28" font-family="Inter,Arial,sans-serif">Theme: ${escapeXml(tpl.theme)} · ${tpl.sectionTypes.length} sections</text>
-  ${chipSvg}
-  <text x="96" y="790" fill="#f3f4f6" font-size="24" font-family="Inter,Arial,sans-serif">${escapeXml(tpl.id)}</text>
-</svg>`;
+  <rect width="960" height="540" fill="url(#fade)"/>
+  <rect x="28" y="28" width="904" height="484" rx="16" fill="none" stroke="#ffffff" stroke-opacity="0.72" stroke-width="2"/>
+  <text x="56" y="404" fill="#ffffff" font-size="36" font-weight="700" font-family="Inter,Arial,sans-serif">${esc(tpl.name)}</text>
+  <text x="56" y="436" fill="#f3f4f6" font-size="16" font-family="Inter,Arial,sans-serif">${esc(tpl.theme)} theme</text>
+</svg>`);
 }
 
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
+
   for (const tpl of entries) {
-    const svg = svgForTemplate(tpl);
+    const idx = hash(`${tpl.id}:${tpl.theme}`) % landscapeFirst.length;
+    const bg = path.join(repoRoot, 'public', landscapeFirst[idx].url.replace(/^\//, ''));
     const outFile = path.join(outDir, `${tpl.id}.webp`);
-    await sharp(Buffer.from(svg)).webp({ quality: 82 }).toFile(outFile);
+
+    await sharp(bg)
+      .resize(960, 540, { fit: 'cover', position: 'attention' })
+      .composite([{ input: overlaySvg(tpl), top: 0, left: 0 }])
+      .webp({ quality: 86 })
+      .toFile(outFile);
   }
-  console.log(`Generated ${entries.length} preview assets in ${outDir}`);
+
+  console.log(`Generated ${entries.length} template preview assets in ${outDir}`);
 })();
