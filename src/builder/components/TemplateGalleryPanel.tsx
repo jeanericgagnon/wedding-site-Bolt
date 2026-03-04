@@ -486,6 +486,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const [activeFilter, setActiveFilter] = useState<TemplateMoodTag | 'all'>('all');
   const [activeColorFilter, setActiveColorFilter] = useState<ColorFilter>('all');
   const [activeSeasonFilter, setActiveSeasonFilter] = useState<SeasonFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
   const [confirmTemplate, setConfirmTemplate] = useState<BuilderTemplateDefinition | null>(null);
   const [detailsTemplate, setDetailsTemplate] = useState<BuilderTemplateDefinition | null>(null);
@@ -521,7 +522,19 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     const colorOk = activeColorFilter === 'all' || colorClass === activeColorFilter;
     const seasonClass = inferSeason(t);
     const seasonOk = activeSeasonFilter === 'all' || seasonClass === activeSeasonFilter;
-    return moodOk && colorOk && seasonOk;
+
+    const searchNeedle = searchQuery.trim().toLowerCase();
+    const searchableText = [
+      t.displayName,
+      t.description ?? '',
+      t.moodTags.join(' '),
+      t.id,
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    const searchOk = searchNeedle.length === 0 || searchableText.includes(searchNeedle);
+    return moodOk && colorOk && seasonOk && searchOk;
   });
 
   const currentTemplateId = state.project?.templateId;
@@ -530,6 +543,43 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const compareTemplates = compareTemplateIds
     .map((id) => templates.find((t) => t.id === id))
     .filter((t): t is BuilderTemplateDefinition => Boolean(t));
+
+  React.useEffect(() => {
+    if (!state.templateGalleryOpen && !applyResult) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+
+      if (confirmTemplate) {
+        setConfirmTemplate(null);
+        return;
+      }
+      if (detailsTemplate) {
+        setDetailsTemplate(null);
+        return;
+      }
+      if (showCompareModal) {
+        setShowCompareModal(false);
+        return;
+      }
+      if (applyResult) {
+        setApplyResult(null);
+        return;
+      }
+
+      dispatch(builderActions.closeTemplateGallery());
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [
+    state.templateGalleryOpen,
+    applyResult,
+    confirmTemplate,
+    detailsTemplate,
+    showCompareModal,
+    dispatch,
+  ]);
 
   const toggleCompareTemplate = useCallback((templateId: string) => {
     setCompareTemplateIds((prev) => {
@@ -622,10 +672,13 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </p>
 
           <button
-            onClick={() => setApplyResult(null)}
+            onClick={() => {
+              setApplyResult(null);
+              dispatch(builderActions.closeTemplateGallery());
+            }}
             className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors"
           >
-            Got it — continue editing
+            Use template and continue editing
           </button>
         </div>
       </div>
@@ -649,7 +702,20 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </button>
         </div>
 
-        <div className="px-7 py-3 border-b border-gray-50 space-y-2">
+        <div className="px-7 py-3 border-b border-gray-50 space-y-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search templates by name, vibe, or description"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200"
+            />
+            <span className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+              {filtered.length}
+            </span>
+          </div>
+
           <div className="flex gap-1.5 overflow-x-auto">
             {MOOD_FILTERS.map(f => (
               <button
@@ -763,7 +829,19 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </div>
           {filtered.length === 0 && (
             <div className="text-center py-20 text-gray-400 text-sm">
-              No templates match this filter.
+              <p>No templates match your current filters.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setActiveFilter('all');
+                  setActiveColorFilter('all');
+                  setActiveSeasonFilter('all');
+                }}
+                className="mt-3 inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Reset filters
+              </button>
             </div>
           )}
         </div>
@@ -867,7 +945,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         {hovered && !isCurrent && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-lg">
-              Apply Template
+              Use Template
             </div>
           </div>
         )}
@@ -932,7 +1010,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
               <Check size={11} />
               Current Template
             </span>
-          ) : 'Apply Template'}
+          ) : 'Use Template'}
         </button>
       </div>
       </div>
@@ -1100,7 +1178,7 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
               <Loader2 size={13} className="animate-spin" />
               Applying…
             </span>
-          ) : 'Apply Template'}
+          ) : 'Use Template'}
         </button>
       </div>
     </div>

@@ -333,18 +333,28 @@ export const BuilderInspectorPanel: React.FC = () => {
               <span className="text-[10px] font-medium px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-100">Hidden</span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-[10px] text-gray-400">Variant:</span>
-            <select
-              value={selectedSection.variant}
-              onChange={e => handleChangeVariant(e.target.value)}
-              className="text-[10px] text-gray-700 font-medium bg-transparent border-none outline-none cursor-pointer max-w-[170px] truncate"
-              title="Switch layout variant"
-            >
-              {manifest.variantMeta.map(v => (
-                <option key={v.id} value={v.id}>{v.label}</option>
-              ))}
-            </select>
+          <div className="mt-1.5">
+            <div className="text-[10px] text-gray-400 mb-1">Variant styles</div>
+            <div className="flex flex-wrap gap-1">
+              {manifest.variantMeta.map((v) => {
+                const isActiveVariant = selectedSection.variant === v.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => handleChangeVariant(v.id)}
+                    title={v.description || v.label}
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                      isActiveVariant
+                        ? 'border-rose-200 bg-rose-50 text-rose-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">

@@ -655,7 +655,44 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
   previewWeddingData,
 }) => {
   const [hoveredVariant, setHoveredVariant] = useState<string | null>(null);
+  const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
+
+  React.useEffect(() => {
+    setActiveVariantIndex(0);
+  }, [manifest.type]);
+
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping = !!target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      );
+      if (isTyping) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setActiveVariantIndex((idx) => Math.min(idx + 1, manifest.variantMeta.length - 1));
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setActiveVariantIndex((idx) => Math.max(idx - 1, 0));
+      }
+      if (event.key === 'Enter') {
+        const current = manifest.variantMeta[activeVariantIndex];
+        if (current) {
+          event.preventDefault();
+          onSelect(current.id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeVariantIndex, manifest.variantMeta, onSelect]);
 
   return (
     <div className="flex flex-col h-full">
@@ -701,15 +738,17 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
 
       <div className="flex-1 overflow-y-auto px-3.5 pb-3.5">
         <div className="grid grid-cols-1 gap-3">
-          {manifest.variantMeta.map((variant: VariantMeta) => (
+          {manifest.variantMeta.map((variant: VariantMeta, idx) => (
             <VariantCard
               key={variant.id}
               variant={variant}
               sectionType={manifest.type}
               isDefault={variant.id === manifest.defaultVariant}
               isHovered={hoveredVariant === variant.id}
+              isKeyboardActive={activeVariantIndex === idx}
               onHover={setHoveredVariant}
               onSelect={onSelect}
+              onFocusIndex={() => setActiveVariantIndex(idx)}
               previewWeddingData={previewWeddingData}
               previewPhotoSet={previewPhotoSet}
             />
@@ -725,8 +764,10 @@ interface VariantCardProps {
   sectionType: string;
   isDefault: boolean;
   isHovered: boolean;
+  isKeyboardActive: boolean;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
+  onFocusIndex: () => void;
   previewWeddingData: WeddingDataV1;
   previewPhotoSet: PreviewPhotoSet;
 }
@@ -1000,8 +1041,10 @@ const VariantCard: React.FC<VariantCardProps> = ({
   sectionType,
   isDefault,
   isHovered,
+  isKeyboardActive,
   onHover,
   onSelect,
+  onFocusIndex,
   previewWeddingData,
   previewPhotoSet,
 }) => {
@@ -1018,9 +1061,10 @@ const VariantCard: React.FC<VariantCardProps> = ({
     <button
       onMouseEnter={() => onHover(variant.id)}
       onMouseLeave={() => onHover(null)}
+      onFocus={onFocusIndex}
       onClick={() => onSelect(variant.id)}
       className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left will-change-transform transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/80 focus-visible:ring-offset-2 active:scale-[0.992] ${
-        isHovered
+        isHovered || isKeyboardActive
           ? 'border-rose-300 shadow-[0_20px_40px_-22px_rgba(190,24,93,0.58)] -translate-y-[2px]'
           : 'border-gray-200 hover:border-rose-200 hover:-translate-y-[1px] hover:shadow-[0_16px_30px_-18px_rgba(15,23,42,0.38)]'
       } ${isDefault ? 'ring-1 ring-rose-100/70' : ''}`}

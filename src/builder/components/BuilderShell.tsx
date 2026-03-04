@@ -328,6 +328,38 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData)?.kind ?? null : null}
         />
 
+        <div className="border-b border-gray-200 bg-white px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-gray-900">Builder Workspace</h2>
+              <p className="text-xs text-gray-500">UI refresh in progress — functionality preserved</p>
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+              <button
+                type="button"
+                className="rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white"
+              >
+                Editor
+              </button>
+              <button
+                type="button"
+                onClick={() => dispatch(builderActions.openTemplateGallery())}
+                className="rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+              >
+                Templates
+              </button>
+              <button
+                type="button"
+                disabled
+                className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-400"
+                title="Variant board wiring is part of the next batches"
+              >
+                Variants
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
           <BuilderCanvas />
 
