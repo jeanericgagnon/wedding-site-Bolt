@@ -37,11 +37,10 @@ export const BuilderInspectorPanel: React.FC = () => {
   const quickSectionRail = activePage ? (
     <div className="border-b border-neutral-200 bg-white">
       <div className="px-4 py-3 border-b border-neutral-100">
-        <p className="text-sm font-semibold text-neutral-900">Website settings</p>
-        <p className="text-xs text-neutral-500">{activeSections.length} sections</p>
+        <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-neutral-500">Website settings</p>
       </div>
 
-      <div className="max-h-[46vh] overflow-y-auto">
+      <div className="max-h-[52vh] overflow-y-auto">
         {activeSections.map((section, idx) => {
           const isActive = state.selectedSectionId === section.id;
           return (
@@ -55,13 +54,13 @@ export const BuilderInspectorPanel: React.FC = () => {
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
               }}
-              className={`w-full border-b border-neutral-100 px-4 py-3 text-left text-sm transition-colors ${
+              className={`w-full border-b border-neutral-100 px-4 py-2.5 text-left text-[13px] transition-colors ${
                 isActive
-                  ? 'bg-neutral-100 text-neutral-900'
+                  ? 'bg-neutral-100 text-neutral-900 font-medium'
                   : 'bg-white text-neutral-700 hover:bg-neutral-50'
               }`}
             >
-              <span className="text-neutral-400 mr-2">{idx + 1}.</span>
+              <span className="text-neutral-400 mr-2 text-xs">{idx + 1}.</span>
               {getSectionManifest(section.type).label}
             </button>
           );
@@ -75,7 +74,7 @@ export const BuilderInspectorPanel: React.FC = () => {
             setShowAddSectionPicker(true);
             setAddSectionType(null);
           }}
-          className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-100"
+          className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-[13px] font-medium text-neutral-800 hover:bg-neutral-50"
         >
           + Add section
         </button>
