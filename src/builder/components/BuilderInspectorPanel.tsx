@@ -134,6 +134,19 @@ export const BuilderInspectorPanel: React.FC = () => {
         <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
           <h3 className="text-[24px] font-semibold text-[var(--color-text-primary)]">{manifest.label} Section</h3>
         </div>
+        <div className="px-3 py-2.5 space-y-2 border-b border-[var(--color-border-subtle)]">
+          <button
+            type="button"
+            onClick={() => {
+              setSimpleMode(false);
+              setShowAdvanced(true);
+              setActiveTab('layout');
+            }}
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+          >
+            Change layout
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => dispatch(builderActions.selectSection(null))}
