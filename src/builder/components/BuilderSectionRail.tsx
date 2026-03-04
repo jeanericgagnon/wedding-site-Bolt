@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, GripVertical } from 'lucide-react';
+import { ChevronRight, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { getAllSectionManifests, getSectionManifest } from '../registry/sectionManifests';
 
 interface RailSection {
@@ -13,6 +13,7 @@ interface BuilderSectionRailProps {
   selectedSectionId: string | null;
   onSelectSection: (sectionId: string) => void;
   onAddSection: (type: string, variantId?: string) => void;
+  onReorderSections: (orderedIds: string[]) => void;
 }
 
 export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
@@ -21,11 +22,20 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
   selectedSectionId,
   onSelectSection,
   onAddSection,
+  onReorderSections,
 }) => {
   const [showAddSectionPicker, setShowAddSectionPicker] = React.useState(false);
   const [addSectionType, setAddSectionType] = React.useState<string | null>(null);
   const sectionManifests = React.useMemo(() => getAllSectionManifests(), []);
   const addTypeManifest = addSectionType ? sectionManifests.find((m) => m.type === addSectionType) ?? null : null;
+
+  const moveSection = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= activeSections.length || fromIndex === toIndex) return;
+    const next = [...activeSections];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    onReorderSections(next.map((s) => s.id));
+  };
 
   return (
     <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] h-full flex flex-col">
@@ -34,31 +44,55 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-1.5">
-        {activeSections.map((section) => {
+        {activeSections.map((section, idx) => {
           const isActive = selectedSectionId === section.id;
           return (
-            <button
+            <div
               key={section.id}
-              type="button"
-              onClick={() => {
-                onSelectSection(section.id);
-                requestAnimationFrame(() => {
-                  const el = document.querySelector(`[data-section-id="${section.id}"]`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-              }}
-              className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+              className={`w-full rounded-lg border px-3 py-3.5 transition-colors ${
                 isActive
                   ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]'
                   : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'
               }`}
             >
-              <div className="flex items-center gap-2.5 text-[var(--color-text-primary)]">
-                <GripVertical size={14} className="text-[var(--color-text-tertiary)]" />
-                <span className="text-[12px] font-medium">{getSectionManifest(section.type as any).label}</span>
-                <ChevronRight size={15} className="ml-auto text-[var(--color-text-tertiary)]" />
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectSection(section.id);
+                  requestAnimationFrame(() => {
+                    const el = document.querySelector(`[data-section-id="${section.id}"]`);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  });
+                }}
+                className="w-full text-left"
+              >
+                <div className="flex items-center gap-2.5 text-[var(--color-text-primary)]">
+                  <GripVertical size={14} className="text-[var(--color-text-tertiary)]" />
+                  <span className="text-[14px] font-medium">{getSectionManifest(section.type as any).label}</span>
+                  <ChevronRight size={15} className="ml-auto text-[var(--color-text-tertiary)]" />
+                </div>
+              </button>
+              <div className="mt-2 flex items-center gap-1 justify-end">
+                <button
+                  type="button"
+                  onClick={() => moveSection(idx, idx - 1)}
+                  disabled={idx === 0}
+                  className="p-1 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] disabled:opacity-40"
+                  title="Move up"
+                >
+                  <ArrowUp size={12} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveSection(idx, idx + 1)}
+                  disabled={idx === activeSections.length - 1}
+                  className="p-1 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] disabled:opacity-40"
+                  title="Move down"
+                >
+                  <ArrowDown size={12} />
+                </button>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
