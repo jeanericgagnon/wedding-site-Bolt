@@ -147,7 +147,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   return (
     <>
-    <header className="h-[42px] bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-2 md:px-2.5 py-0 gap-1 z-50 sticky top-0">
+    <header className="h-[42px] bg-[var(--color-surface)] border-b border-[var(--color-border-subtle)] flex items-center flex-wrap md:flex-nowrap px-2 md:px-2.5 py-0 gap-1 z-50 sticky top-0">
       <button
         onClick={() => {
           if (isDirty) {
@@ -207,7 +207,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             onPublish();
           }}
           disabled={isPublishDisabled}
-          className="flex items-center gap-1 px-3 py-1 rounded-md text-[12px] font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 px-3 py-1 rounded-md text-[12px] font-medium bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {state.isPublishing || state.isSaving ? (
             <Loader2 size={14} className="animate-spin" />

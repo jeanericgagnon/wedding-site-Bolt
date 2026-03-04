@@ -316,7 +316,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   return (
     <BuilderContext.Provider value={contextValue}>
-      <div className="h-screen flex flex-col bg-neutral-100 overflow-hidden">
+      <div className="h-screen flex flex-col bg-[var(--color-surface-subtle)] overflow-hidden">
         <BuilderTopBar
           onSave={handleSave}
           onPublish={handlePublish}

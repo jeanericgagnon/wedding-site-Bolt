@@ -35,7 +35,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   const addTypeManifest = addSectionType ? sectionManifests.find((m) => m.type === addSectionType) ?? null : null;
 
   const quickSectionRail = activePage ? (
-    <div className="border-b border-neutral-200 bg-white">
+    <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
       <div className="px-2.5 py-1.5 border-b border-neutral-100">
         <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-neutral-500">Website settings</p>
       </div>
