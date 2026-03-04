@@ -29,11 +29,11 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
 
   return (
     <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] h-full flex flex-col">
-      <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
-        <h3 className="text-[32px] font-semibold text-[var(--color-text-primary)]">Website settings</h3>
+      <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
+        <h3 className="text-[20px] font-semibold text-[var(--color-text-primary)]">Website settings</h3>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-1.5">
         {activeSections.map((section) => {
           const isActive = selectedSectionId === section.id;
           return (
@@ -47,28 +47,30 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
               }}
-              className={`w-full rounded-xl border border-[var(--color-border)] px-4 py-3 text-left transition-colors ${
-                isActive ? 'bg-[var(--color-surface-subtle)]' : 'bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'
+              className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                isActive
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]'
+                  : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'
               }`}
             >
-              <div className="flex items-center gap-3 text-[var(--color-text-primary)]">
-                <GripVertical size={15} className="text-[var(--color-text-tertiary)]" />
-                <span className="text-[13px] font-medium">{getSectionManifest(section.type as any).label}</span>
-                <ChevronRight size={16} className="ml-auto text-[var(--color-text-tertiary)]" />
+              <div className="flex items-center gap-2.5 text-[var(--color-text-primary)]">
+                <GripVertical size={14} className="text-[var(--color-text-tertiary)]" />
+                <span className="text-[12px] font-medium">{getSectionManifest(section.type as any).label}</span>
+                <ChevronRight size={15} className="ml-auto text-[var(--color-text-tertiary)]" />
               </div>
             </button>
           );
         })}
       </div>
 
-      <div className="p-3 border-t border-[var(--color-border-subtle)] sticky bottom-0 bg-[var(--color-surface)]">
+      <div className="p-2.5 border-t border-[var(--color-border-subtle)] sticky bottom-0 bg-[var(--color-surface)]">
         <button
           type="button"
           onClick={() => {
             setShowAddSectionPicker(true);
             setAddSectionType(null);
           }}
-          className="w-full rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[14px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+          className="w-full rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
         >
           + Add section
         </button>
