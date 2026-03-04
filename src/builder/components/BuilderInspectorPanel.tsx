@@ -139,7 +139,19 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   return (
     <aside className="w-full lg:w-[392px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
-      {quickSectionRail}
+      <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
+        <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
+          <h3 className="text-[24px] font-semibold text-[var(--color-text-primary)]">{manifest.label} Section</h3>
+        </div>
+        <button
+          type="button"
+          onClick={() => dispatch(builderActions.selectSection(null))}
+          className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--color-primary)] hover:bg-[var(--color-surface-subtle)]"
+        >
+          ← Back to Sections
+        </button>
+      </div>
+
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

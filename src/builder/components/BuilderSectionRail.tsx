@@ -28,12 +28,12 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
   const addTypeManifest = addSectionType ? sectionManifests.find((m) => m.type === addSectionType) ?? null : null;
 
   return (
-    <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
+    <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] h-full flex flex-col">
       <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
         <h3 className="text-[32px] font-semibold text-[var(--color-text-primary)]">Website settings</h3>
       </div>
 
-      <div className="max-h-[62vh] overflow-y-auto px-4 py-3 space-y-2">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
         {activeSections.map((section) => {
           const isActive = selectedSectionId === section.id;
           return (
