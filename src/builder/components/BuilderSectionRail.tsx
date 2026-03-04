@@ -98,9 +98,9 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
           <button
             type="button"
             onClick={onSwitchTemplate}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
           >
-            Switch template
+            Browse templates
           </button>
         )}
         <button
@@ -109,9 +109,9 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
             setShowAddSectionPicker(true);
             setAddSectionType(null);
           }}
-          className="w-full rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+          className="w-full text-[12px] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
         >
-          + Add section
+          Add section instead
         </button>
       </div>
 

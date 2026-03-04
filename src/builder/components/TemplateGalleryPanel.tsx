@@ -1105,12 +1105,11 @@ interface TemplateDetailsModalProps {
 
 const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, onApply, onClose }) => {
   const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
-  const sections = template.sectionComposition.slice(0, 6).map((s) => getSectionManifest(s.type).label);
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
-      <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-4xl w-full mx-4">
-        <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-[94vw] h-[90vh] max-w-7xl overflow-hidden flex flex-col">
+        <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-200">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{template.displayName}</h3>
             <p className="text-sm text-gray-500 mt-1">{template.description}</p>
@@ -1120,33 +1119,55 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
               ))}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
+          <div className="flex items-center gap-2">
+            <button onClick={onApply} className="px-4 py-2 rounded-xl text-sm bg-gray-900 text-white hover:bg-gray-800">Use this template</button>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="rounded-xl border border-gray-100 overflow-hidden bg-gray-50 aspect-[16/10]">
-            <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
+        <div className="flex-1 min-h-0 grid grid-cols-12 gap-0">
+          <div className="col-span-8 border-r border-gray-200 overflow-y-auto bg-gray-50">
+            <div className="p-4 space-y-4">
+              <div className="rounded-xl border border-gray-200 overflow-hidden bg-white aspect-[16/10]">
+                <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
+              </div>
+              {template.sectionComposition.map((section, idx) => (
+                <div key={`${section.type}-${idx}`} className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                  <div className="aspect-[16/9] bg-gray-50">
+                    <img
+                      src={`/variant-previews/${section.type}__${section.variant}.webp`}
+                      className="w-full h-full object-cover"
+                      alt={`${section.type} preview`}
+                      onError={(e) => {
+                        const t = e.currentTarget;
+                        t.onerror = null;
+                        t.src = '/template-previews/_fallback.svg';
+                      }}
+                    />
+                  </div>
+                  <div className="px-3 py-2 text-xs text-gray-700 border-t border-gray-100">
+                    {idx + 1}. {getSectionManifest(section.type).label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="space-y-3">
+
+          <div className="col-span-4 overflow-y-auto p-4 space-y-3">
             <div>
               <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Palette</div>
               <div className="flex gap-1.5">{dots.map((c, i) => <div key={i} className="w-5 h-5 rounded-full border border-gray-200" style={{ background: c }} />)}</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Includes sections</div>
+              <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Sections</div>
               <ul className="text-sm text-gray-700 space-y-1">
-                {sections.map((label) => <li key={label}>• {label}</li>)}
+                {template.sectionComposition.map((s, i) => <li key={`${s.type}-${i}`}>• {getSectionManifest(s.type).label}</li>)}
               </ul>
             </div>
             <div className="rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-xs text-green-700">
               Your names, date, photos, and details map into this layout automatically.
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm border border-gray-200 text-gray-600 hover:bg-gray-50">Close</button>
-          <button onClick={onApply} className="px-4 py-2 rounded-xl text-sm bg-gray-900 text-white hover:bg-gray-800">Use this template</button>
         </div>
       </div>
     </div>
