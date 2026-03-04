@@ -127,7 +127,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
         onMouseLeave={() => dispatch(builderActions.hoverSection(null))}
       >
         <div className={`flex items-center justify-between px-3 py-2 border border-dashed transition-colors ${
-          isHighlighted ? 'border-rose-300 bg-rose-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+          isHighlighted ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
         }`}>
           <div className="flex items-center gap-2">
             {manifest.capabilities.draggable && !section.locked && (
@@ -180,20 +180,20 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
       style={style}
       data-section-id={section.id}
       className={`relative group scroll-mt-24 transition-all duration-150 ${
-        isHighlighted ? 'ring-2 ring-rose-400 ring-inset' : ''
+        isHighlighted ? 'ring-2 ring-blue-400 ring-inset' : ''
       }`}
       onClick={handleSelect}
       onMouseEnter={() => dispatch(builderActions.hoverSection(section.id))}
       onMouseLeave={() => dispatch(builderActions.hoverSection(null))}
     >
       {isHighlighted && (
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-1.5 bg-rose-500 text-white text-xs font-medium">
+        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-1.5 bg-blue-600 text-white text-xs font-medium">
           <div className="flex items-center gap-2">
             {manifest.capabilities.draggable && !section.locked && (
               <button
                 {...attributes}
                 {...listeners}
-                className="cursor-grab active:cursor-grabbing p-0.5 hover:bg-rose-600 rounded"
+                className="cursor-grab active:cursor-grabbing p-0.5 hover:bg-blue-700 rounded"
                 onClick={e => e.stopPropagation()}
                 aria-label="Drag to reorder"
               >
@@ -202,7 +202,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
             )}
             <span>{manifest.label}</span>
             {section.variant !== 'default' && (
-              <span className="bg-rose-600 px-1.5 py-0.5 rounded text-[10px]">{section.variant}</span>
+              <span className="bg-blue-700 px-1.5 py-0.5 rounded text-[10px]">{section.variant}</span>
             )}
           </div>
 
@@ -212,7 +212,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
                 onClick={e => { e.stopPropagation(); setInlineEditOpen(v => !v); }}
                 title="Quick edit text"
                 className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                  inlineEditOpen ? 'bg-white text-rose-600' : 'hover:bg-rose-600'
+                  inlineEditOpen ? 'bg-white text-blue-600' : 'hover:bg-blue-700'
                 }`}
               >
                 <Pencil size={11} />
@@ -223,7 +223,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
             <button
               onClick={handleToggleVisibility}
               title="Hide section"
-              className="p-1 hover:bg-rose-600 rounded transition-colors"
+              className="p-1 hover:bg-blue-700 rounded transition-colors"
             >
               <Eye size={12} />
             </button>
@@ -231,7 +231,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
               <button
                 onClick={handleDuplicate}
                 title="Duplicate section"
-                className="p-1 hover:bg-rose-600 rounded transition-colors"
+                className="p-1 hover:bg-blue-700 rounded transition-colors"
               >
                 <Copy size={12} />
               </button>
@@ -239,7 +239,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
             <button
               onClick={handleSelect}
               title="Section settings"
-              className="p-1 hover:bg-rose-600 rounded transition-colors"
+              className="p-1 hover:bg-blue-700 rounded transition-colors"
             >
               <Settings2 size={12} />
             </button>
@@ -306,7 +306,7 @@ const InlineEditPanel: React.FC<{
         </div>
         <button
           onClick={onClose}
-          className="text-rose-400 hover:text-rose-600 transition-colors p-1 rounded hover:bg-rose-100"
+          className="text-rose-400 hover:text-blue-600 transition-colors p-1 rounded hover:bg-rose-100"
         >
           <ChevronUp size={14} />
         </button>
