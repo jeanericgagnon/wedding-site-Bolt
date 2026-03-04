@@ -59,26 +59,30 @@ export const mediaRepository = {
 
     const baseAssets = (data ?? []).map(mapRowToAsset);
 
-    const hydrated = await Promise.all(
-      baseAssets.map(async (asset) => {
-        const path = extractBucketPathFromUrl(asset.url, STORAGE_BUCKET);
-        if (!path) return asset;
+    const indexedPaths = baseAssets
+      .map((asset, index) => ({ index, path: extractBucketPathFromUrl(asset.url, STORAGE_BUCKET) }))
+      .filter((item): item is { index: number; path: string } => !!item.path);
 
-        const { data: signedData, error: signedError } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .createSignedUrl(path, 60 * 60 * 24);
+    if (indexedPaths.length === 0) return baseAssets;
 
-        if (signedError || !signedData?.signedUrl) return asset;
+    const { data: signedList, error: signedError } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .createSignedUrls(indexedPaths.map((p) => p.path), 60 * 60 * 24);
 
-        return {
-          ...asset,
-          url: signedData.signedUrl,
-          thumbnailUrl: signedData.signedUrl,
-        } satisfies BuilderMediaAsset;
-      })
-    );
+    if (signedError || !signedList) return baseAssets;
 
-    return hydrated;
+    const nextAssets = [...baseAssets];
+    indexedPaths.forEach((item, i) => {
+      const signedUrl = signedList[i]?.signedUrl;
+      if (!signedUrl) return;
+      nextAssets[item.index] = {
+        ...nextAssets[item.index],
+        url: signedUrl,
+        thumbnailUrl: signedUrl,
+      };
+    });
+
+    return nextAssets;
   },
 
   async save(asset: Omit<BuilderMediaAsset, 'id'>): Promise<BuilderMediaAsset> {
