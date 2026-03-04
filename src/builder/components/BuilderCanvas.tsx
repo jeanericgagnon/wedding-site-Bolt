@@ -106,7 +106,7 @@ export const BuilderCanvas: React.FC = () => {
         onDragEnd={handleDragEnd}
       >
         <div
-          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1160px] mx-auto shadow-sm rounded-2xl overflow-hidden border border-neutral-200'} bg-white min-h-full`}
+          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1120px] mx-auto shadow-sm rounded-2xl overflow-hidden border border-neutral-200'} bg-white min-h-full`}
           style={isPreview
             ? previewViewport === 'mobile'
               ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)' }
@@ -115,6 +115,16 @@ export const BuilderCanvas: React.FC = () => {
                 : undefined
             : undefined}
         >
+          {!isPreview && (
+            <div className="bg-neutral-100 border-b border-neutral-200 flex items-center gap-1.5 px-4 py-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
+              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
+              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
+              <div className="flex-1 bg-white border border-neutral-200 rounded h-6 mx-4 text-xs text-neutral-500 flex items-center justify-center">
+                yourwedding.com
+              </div>
+            </div>
+          )}
 
           <BuilderDropZone
             pageId={activePage.id}
