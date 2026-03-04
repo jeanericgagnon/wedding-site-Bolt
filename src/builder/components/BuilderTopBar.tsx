@@ -147,7 +147,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   return (
     <>
-    <header className="h-[46px] bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-2.5 md:px-3 py-0 gap-1.5 z-50 sticky top-0">
+    <header className="h-[42px] bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-2 md:px-2.5 py-0 gap-1 z-50 sticky top-0">
       <button
         onClick={() => {
           if (isDirty) {
@@ -157,7 +157,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           navigate('/dashboard');
         }}
         title="Back to Dashboard"
-        className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[13px] text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors flex-shrink-0"
+        className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors flex-shrink-0"
       >
         <ArrowLeft size={15} />
         <span className="hidden sm:inline">Exit</span>
@@ -207,7 +207,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             onPublish();
           }}
           disabled={isPublishDisabled}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[13px] font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 px-3 py-1 rounded-md text-[12px] font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {state.isPublishing || state.isSaving ? (
             <Loader2 size={14} className="animate-spin" />

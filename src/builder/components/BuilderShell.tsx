@@ -328,7 +328,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData)?.kind ?? null : null}
         />
 
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden px-0 pt-1 pb-0 gap-0">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden px-0 pt-0 pb-0 gap-0">
           <BuilderCanvas />
 
           {state.mode === 'edit' && (
