@@ -147,7 +147,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   return (
     <>
-    <header className="min-h-14 bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-3 md:px-4 py-2 md:py-0 gap-2 md:gap-3 z-50 sticky top-0">
+    <header className="h-14 bg-white border-b border-gray-200 flex items-center flex-wrap md:flex-nowrap px-3 md:px-4 py-1 md:py-0 gap-2 md:gap-3 z-50 sticky top-0">
       <button
         onClick={() => {
           if (isDirty) {

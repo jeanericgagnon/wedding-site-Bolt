@@ -106,7 +106,7 @@ export const BuilderCanvas: React.FC = () => {
         onDragEnd={handleDragEnd}
       >
         <div
-          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1400px] mx-auto my-5 shadow-sm rounded-xl overflow-hidden border border-neutral-200'} bg-white min-h-full`}
+          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1280px] mx-auto my-6 shadow-sm rounded-xl overflow-hidden border border-neutral-200'} bg-white min-h-full`}
           style={isPreview
             ? previewViewport === 'mobile'
               ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)' }
@@ -127,7 +127,7 @@ export const BuilderCanvas: React.FC = () => {
               </div>
               {!state.selectedSectionId && (
                 <div className="px-4 py-2.5 text-xs bg-blue-50 text-blue-800 border-b border-blue-100">
-                  Tip: click any section to edit it, or drag sections in the left rail to reorder.
+                  Tip: click any section to edit it, or use the right panel to select and reorder.
                 </div>
               )}
             </>

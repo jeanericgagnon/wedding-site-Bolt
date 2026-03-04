@@ -316,7 +316,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   return (
     <BuilderContext.Provider value={contextValue}>
-      <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      <div className="h-screen flex flex-col bg-neutral-100 overflow-hidden">
         <BuilderTopBar
           onSave={handleSave}
           onPublish={handlePublish}
@@ -332,7 +332,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           <BuilderCanvas />
 
           {state.mode === 'edit' && (
-            <div className="hidden lg:block h-full min-h-0">
+            <div className="hidden lg:block h-full min-h-0 shrink-0">
               <BuilderInspectorPanel />
             </div>
           )}
