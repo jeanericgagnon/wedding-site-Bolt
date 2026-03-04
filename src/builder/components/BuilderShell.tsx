@@ -1,5 +1,4 @@
 import React, { useReducer, useMemo, useEffect, useCallback, useRef, useState } from 'react';
-import { LayoutGrid, Layers3, Sparkles } from 'lucide-react';
 import { BuilderContext, initialBuilderState } from '../state/builderStore';
 import { builderReducer } from '../state/builderReducer';
 import { builderActions } from '../state/builderActions';
@@ -28,9 +27,7 @@ interface BuilderShellProps {
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
 }
 
-type WorkspaceTab = 'editor' | 'templates' | 'variants' | 'manifest';
-
-export const BuilderShell: React.FC<BuilderShellProps> = ({
+export const BuilderShell: React.FC<BuilderShellProps> = ({ 
   initialProject,
   initialWeddingData,
   projectName,
@@ -77,8 +74,6 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
   const [showCoachmarks, setShowCoachmarks] = useState(false);
-  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>('editor');
-
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -125,14 +120,6 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       setShowCoachmarks(true);
     }
   }, []);
-
-  useEffect(() => {
-    if (state.templateGalleryOpen) {
-      setWorkspaceTab('templates');
-    } else if (workspaceTab === 'templates') {
-      setWorkspaceTab('editor');
-    }
-  }, [state.templateGalleryOpen, workspaceTab]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     const currentState = stateRef.current;
@@ -341,73 +328,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData)?.kind ?? null : null}
         />
 
-        <div className="border-b border-gray-200 bg-white px-4 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-2xl font-bold text-neutral-900">Dayof Builder</h2>
-              <p className="text-sm text-neutral-600">Section-based wedding site framework</p>
-            </div>
-            <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setWorkspaceTab('templates');
-                  dispatch(builderActions.openTemplateGallery());
-                }}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors ${
-                  workspaceTab === 'templates'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                }`}
-              >
-                <LayoutGrid size={16} />
-                Templates
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setWorkspaceTab('variants');
-                  dispatch(builderActions.closeTemplateGallery());
-                }}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors ${
-                  workspaceTab === 'variants'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                }`}
-              >
-                <Layers3 size={16} />
-                Variants
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setWorkspaceTab('manifest');
-                  dispatch(builderActions.closeTemplateGallery());
-                }}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors ${
-                  workspaceTab === 'manifest'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                }`}
-              >
-                <Sparkles size={16} />
-                Manifest
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
-          {workspaceTab === 'variants' && (
-            <div className="mx-4 mt-3 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-              Variant board mode is active. Use the section library + inspector variant controls to review and apply variants.
-            </div>
-          )}
-          {workspaceTab === 'manifest' && (
-            <div className="mx-4 mt-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
-              Manifest mode: review builder composition, template usage, and publish-readiness signals while editing.
-            </div>
-          )}
           <BuilderCanvas />
 
           {state.mode === 'edit' && (
