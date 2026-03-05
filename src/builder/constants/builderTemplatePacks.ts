@@ -1,4 +1,6 @@
-import { BuilderTemplateDefinition } from '../../types/builder/template';
+import { BuilderTemplateDefinition, TemplateMoodTag } from '../../types/builder/template';
+import { getAllTemplates } from '../../templates/registry';
+import { BuilderSectionType } from '../../types/builder/section';
 
 const withBasePath = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
 
@@ -385,10 +387,73 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
   },
 };
 
+const LEGACY_MOOD_BY_THEME: Record<string, TemplateMoodTag[]> = {
+  romantic: ['romantic'],
+  editorial: ['editorial', 'modern'],
+  classic: ['classic', 'romantic'],
+  minimal: ['minimal', 'modern'],
+  luxury: ['luxe', 'classic'],
+  destination: ['destination', 'modern'],
+  coastal: ['destination', 'romantic'],
+  garden: ['garden', 'floral', 'romantic'],
+  playful: ['bold', 'modern'],
+  moody: ['editorial', 'bold'],
+  modern: ['modern'],
+};
+
+function inferMoodTags(themeId: string, id: string, name: string): TemplateMoodTag[] {
+  const fromTheme = LEGACY_MOOD_BY_THEME[themeId] ?? ['modern'];
+  const text = `${id} ${name}`.toLowerCase();
+  const extra: TemplateMoodTag[] = [];
+  if (text.includes('photo')) extra.push('photo');
+  if (text.includes('garden') || text.includes('floral')) extra.push('floral');
+  if (text.includes('destination') || text.includes('coastal')) extra.push('destination');
+  if (text.includes('bold')) extra.push('bold');
+  return Array.from(new Set([...fromTheme, ...extra])).slice(0, 3);
+}
+
+function toBuilderTemplateFromLegacy(template: ReturnType<typeof getAllTemplates>[number]): BuilderTemplateDefinition {
+  const sectionComposition = template.defaultLayout.sections.map((section, idx) => ({
+    type: section.type as BuilderSectionType,
+    variant: section.variant,
+    enabled: section.enabled,
+    locked: false,
+    settings: { showTitle: true, ...(section.settings ?? {}) },
+    orderIndex: idx,
+  }));
+
+  const sectionVariantMap: Record<string, string> = {};
+  sectionComposition.forEach((s) => {
+    if (!(s.type in sectionVariantMap)) sectionVariantMap[s.type] = s.variant;
+  });
+
+  return {
+    id: template.id,
+    displayName: template.name,
+    description: template.description,
+    moodTags: inferMoodTags(template.defaultThemePreset, template.id, template.name),
+    previewThumbnailPath: withBasePath(`/template-previews/${template.id}.webp`),
+    defaultThemeId: template.defaultThemePreset,
+    sectionComposition,
+    sectionVariantMap,
+    suggestedFonts: { heading: 'Playfair Display', body: 'Inter' },
+    spacingProfile: 'balanced',
+  };
+}
+
+const LEGACY_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> = Object.fromEntries(
+  getAllTemplates().map((t) => [t.id, toBuilderTemplateFromLegacy(t)])
+);
+
+const MERGED_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> = {
+  ...LEGACY_TEMPLATE_PACKS,
+  ...BUILDER_TEMPLATE_PACKS,
+};
+
 export function getAllTemplatePacks(): BuilderTemplateDefinition[] {
-  return Object.values(BUILDER_TEMPLATE_PACKS);
+  return Object.values(MERGED_TEMPLATE_PACKS);
 }
 
 export function getTemplatePack(id: string): BuilderTemplateDefinition | null {
-  return BUILDER_TEMPLATE_PACKS[id] ?? null;
+  return MERGED_TEMPLATE_PACKS[id] ?? null;
 }
