@@ -31,3 +31,6 @@ supabase/.temp/
 # local photo intake (do not commit personal source photos)
 assets/photos/raw-*/
 assets/photos/raw-engagement-*/
+
+# deploy guard runtime artifacts
+.tmp/
