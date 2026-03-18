@@ -21,6 +21,7 @@ export const venueSplitMapSchema = z.object({
   eyebrow: z.string().default('Where we gather'),
   headline: z.string().default('Venue'),
   subheadline: z.string().default(''),
+  showMap: z.boolean().default(true),
   imagePosition: z.enum(['left', 'right']).default('right'),
   venues: z.array(VenueItemSchema).default([]),
 });
@@ -31,6 +32,7 @@ export const defaultVenueSplitMapData: VenueSplitMapData = {
   eyebrow: 'Where we gather',
   headline: 'Venue',
   subheadline: '',
+  showMap: true,
   imagePosition: 'right',
   venues: [
     {
@@ -68,6 +70,8 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
         <div className="space-y-10">
           {data.venues.map((venue, idx) => {
             const imgRight = idx % 2 === 0 ? data.imagePosition === 'right' : data.imagePosition === 'left';
+            const mapsQuery = [venue.name, venue.address, venue.city].filter(Boolean).join(', ');
+            const embedUrl = venue.mapEmbedUrl || (mapsQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed` : '');
             return (
               <div
                 key={venue.id}
@@ -127,9 +131,9 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
                 </div>
 
                 <div className="relative min-h-[280px] md:min-h-0 bg-stone-100">
-                  {venue.mapEmbedUrl ? (
+                  {data.showMap && embedUrl ? (
                     <iframe
-                      src={venue.mapEmbedUrl}
+                      src={embedUrl}
                       className="absolute inset-0 w-full h-full border-0"
                       allowFullScreen
                       loading="lazy"
