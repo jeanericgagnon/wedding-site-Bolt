@@ -73,6 +73,13 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     transport: 'pin',
     fromHotel: 'pin',
   },
+  registry: {
+    fundHighlight: 'featured',
+    honeymoon: 'featured',
+    tabs: 'cards',
+    illustrated: 'cards',
+    minimal: 'cards',
+  },
 };
 
 function makeKey(type: string, variant: string): RegistryKey {
