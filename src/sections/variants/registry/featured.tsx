@@ -77,7 +77,7 @@ export const defaultRegistryFeaturedData: RegistryFeaturedData = {
       store: 'Williams Sonoma',
       price: '$500',
       description: 'In Matte Black — for weekend baking projects',
-      image: 'https://images.pexels.com/photos/4224218/pexels-photo-4224218.jpeg?auto=compress&cs=tinysrgb&w=600',
+      image: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=600',
       url: '#',
       category: 'Kitchen',
       isPriority: false,
