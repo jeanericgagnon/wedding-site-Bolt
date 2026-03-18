@@ -61,6 +61,20 @@ type RegistryKey = string;
 
 const SECTION_REGISTRY = new Map<RegistryKey, SectionDefinition<any>>();
 
+const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
+  venue: {
+    banner: 'splitMap',
+    stacked: 'detailsFirst',
+    minimal: 'card',
+  },
+  directions: {
+    illustrated: 'split',
+    multiVenue: 'split',
+    transport: 'pin',
+    fromHotel: 'pin',
+  },
+};
+
 function makeKey(type: string, variant: string): RegistryKey {
   return `${type}::${variant}`;
 }
@@ -150,7 +164,9 @@ export function resolveAndParse(
   variant: string,
   rawData: Record<string, unknown>
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
+  const aliasVariant = VARIANT_FALLBACKS[type]?.[variant];
   const def = getDefinition(type, variant)
+    ?? (aliasVariant ? getDefinition(type, aliasVariant) : null)
     ?? getDefinition(type, 'default')
     ?? getVariantsForType(type)[0]
     ?? null;
