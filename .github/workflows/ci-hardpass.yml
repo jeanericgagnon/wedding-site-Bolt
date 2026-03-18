@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install
@@ -31,5 +31,16 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Hardpass RSVP/CSV
-        run: npm run hardpass:rsvp
+      - name: Hardpass core (tests/build/csv/checkin)
+        run: npm test && npm run build && npm run smoke:csvmapper && npm run smoke:checkin
+
+      - name: Hardpass RSVP strict (Supabase-backed)
+        if: ${{ secrets.VITE_SUPABASE_URL != '' && secrets.VITE_SUPABASE_ANON_KEY != '' }}
+        run: npm run smoke:rsvp:strict
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: RSVP strict skipped notice
+        if: ${{ !(secrets.VITE_SUPABASE_URL != '' && secrets.VITE_SUPABASE_ANON_KEY != '') }}
+        run: echo "Skipping smoke:rsvp:strict (missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY secrets)."
