@@ -1,19 +1,35 @@
 import fs from 'node:fs';
 
-const env = Object.fromEntries(
-  fs.readFileSync('.env.local', 'utf8')
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const i = line.indexOf('=');
-      return [line.slice(0, i), line.slice(i + 1)];
-    })
-);
+const normalizeEnvValue = (value) => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim().replace(/[\r\n]+/g, '');
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+};
 
-const base = env.VITE_SUPABASE_URL;
-const key = env.VITE_SUPABASE_ANON_KEY;
+const fileEnv = fs.existsSync('.env.local')
+  ? Object.fromEntries(
+      fs.readFileSync('.env.local', 'utf8')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((line) => line && !line.startsWith('#') && line.includes('='))
+        .map((line) => {
+          const i = line.indexOf('=');
+          return [line.slice(0, i), normalizeEnvValue(line.slice(i + 1))];
+        })
+    )
+  : {};
+
+const base = normalizeEnvValue(process.env.VITE_SUPABASE_URL || fileEnv.VITE_SUPABASE_URL);
+const key = normalizeEnvValue(process.env.VITE_SUPABASE_ANON_KEY || fileEnv.VITE_SUPABASE_ANON_KEY);
 const strict = process.argv.includes('--strict');
+
+if (!base || !key) {
+  console.log(JSON.stringify({ ok: false, step: 'env_missing', message: 'VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY missing' }, null, 2));
+  process.exit(1);
+}
 
 async function req(url, opts = {}) {
   const res = await fetch(url, {
