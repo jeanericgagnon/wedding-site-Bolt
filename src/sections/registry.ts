@@ -150,7 +150,10 @@ export function resolveAndParse(
   variant: string,
   rawData: Record<string, unknown>
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
-  const def = getDefinition(type, variant);
+  const def = getDefinition(type, variant)
+    ?? getDefinition(type, 'default')
+    ?? getVariantsForType(type)[0]
+    ?? null;
   if (!def) return null;
   const parsedData = parseSectionData(def.schema, rawData, def.defaultData) as Record<string, unknown>;
   return { def, parsedData };
