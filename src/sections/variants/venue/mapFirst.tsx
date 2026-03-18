@@ -18,6 +18,7 @@ const VenueItemSchema = z.object({
 export const venueMapFirstSchema = z.object({
   eyebrow: z.string().default('Where we gather'),
   headline: z.string().default('Venue'),
+  showMap: z.boolean().default(true),
   venues: z.array(VenueItemSchema).default([]),
   mapHeight: z.enum(['sm', 'md', 'lg']).default('md'),
 });
@@ -27,6 +28,7 @@ export type VenueMapFirstData = z.infer<typeof venueMapFirstSchema>;
 export const defaultVenueMapFirstData: VenueMapFirstData = {
   eyebrow: 'Where we gather',
   headline: 'Venue',
+  showMap: true,
   mapHeight: 'md',
   venues: [
     {
@@ -49,6 +51,11 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
   const primaryVenue = data.venues[0];
   const extraVenues = data.venues.slice(1);
   const heightClass = MAP_HEIGHT[data.mapHeight];
+  const mapsQuery = primaryVenue
+    ? [primaryVenue.name, primaryVenue.address, primaryVenue.city].filter(Boolean).join(', ')
+    : '';
+  const fallbackEmbedUrl = mapsQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed` : '';
+  const primaryEmbedUrl = primaryVenue?.mapEmbedUrl || fallbackEmbedUrl;
 
   return (
     <section className="py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white" id="venue">
@@ -65,9 +72,9 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
         {primaryVenue && (
           <div className="bg-white rounded-2xl overflow-hidden border border-stone-100 shadow-sm">
             <div className={`relative w-full ${heightClass} bg-stone-200`}>
-              {primaryVenue.mapEmbedUrl ? (
+              {data.showMap && primaryEmbedUrl ? (
                 <iframe
-                  src={primaryVenue.mapEmbedUrl}
+                  src={primaryEmbedUrl}
                   className="w-full h-full border-0"
                   allowFullScreen
                   loading="lazy"

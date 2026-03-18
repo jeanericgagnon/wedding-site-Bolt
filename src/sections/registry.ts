@@ -24,6 +24,10 @@ import { galleryMasonryDefinition } from './variants/gallery/masonry';
 import { galleryGridDefinition } from './variants/gallery/grid';
 import { galleryFilmStripDefinition } from './variants/gallery/filmStrip';
 import { galleryPolaroidDefinition } from './variants/gallery/polaroid';
+import { galleryCarouselDefinition } from './variants/gallery/carousel';
+import { gallerySpotlightDefinition } from './variants/gallery/spotlight';
+import { galleryMosaicDefinition } from './variants/gallery/mosaic';
+import { galleryCategorizedDefinition } from './variants/gallery/categorized';
 import { countdownSimpleDefinition } from './variants/countdown/simple';
 import { weddingPartyGridDefinition } from './variants/weddingParty/grid';
 import { weddingPartyStoryBiosDefinition } from './variants/weddingParty/storyBios';
@@ -56,6 +60,27 @@ import { videoInlineDefinition } from './variants/video/inline';
 type RegistryKey = string;
 
 const SECTION_REGISTRY = new Map<RegistryKey, SectionDefinition<any>>();
+
+const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
+  venue: {
+    banner: 'splitMap',
+    stacked: 'detailsFirst',
+    minimal: 'card',
+  },
+  directions: {
+    illustrated: 'split',
+    multiVenue: 'split',
+    transport: 'pin',
+    fromHotel: 'pin',
+  },
+  registry: {
+    fundHighlight: 'featured',
+    honeymoon: 'featured',
+    tabs: 'cards',
+    illustrated: 'cards',
+    minimal: 'cards',
+  },
+};
 
 function makeKey(type: string, variant: string): RegistryKey {
   return `${type}::${variant}`;
@@ -90,6 +115,10 @@ registerDefinition(galleryMasonryDefinition);
 registerDefinition(galleryGridDefinition);
 registerDefinition(galleryFilmStripDefinition);
 registerDefinition(galleryPolaroidDefinition);
+registerDefinition(galleryCarouselDefinition);
+registerDefinition(gallerySpotlightDefinition);
+registerDefinition(galleryMosaicDefinition);
+registerDefinition(galleryCategorizedDefinition);
 registerDefinition(countdownSimpleDefinition);
 registerDefinition(weddingPartyGridDefinition);
 registerDefinition(weddingPartyStoryBiosDefinition);
@@ -142,7 +171,12 @@ export function resolveAndParse(
   variant: string,
   rawData: Record<string, unknown>
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
-  const def = getDefinition(type, variant);
+  const aliasVariant = VARIANT_FALLBACKS[type]?.[variant];
+  const def = getDefinition(type, variant)
+    ?? (aliasVariant ? getDefinition(type, aliasVariant) : null)
+    ?? getDefinition(type, 'default')
+    ?? getVariantsForType(type)[0]
+    ?? null;
   if (!def) return null;
   const parsedData = parseSectionData(def.schema, rawData, def.defaultData) as Record<string, unknown>;
   return { def, parsedData };
