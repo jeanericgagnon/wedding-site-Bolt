@@ -14,6 +14,9 @@ jobs:
   hardpass-rsvp:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
     steps:
       - name: Checkout
@@ -35,12 +38,9 @@ jobs:
         run: npm test && npm run build && npm run smoke:csvmapper && npm run smoke:checkin
 
       - name: Hardpass RSVP strict (Supabase-backed)
-        if: ${{ secrets.VITE_SUPABASE_URL != '' && secrets.VITE_SUPABASE_ANON_KEY != '' }}
+        if: ${{ env.VITE_SUPABASE_URL != '' && env.VITE_SUPABASE_ANON_KEY != '' }}
         run: npm run smoke:rsvp:strict
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: RSVP strict skipped notice
-        if: ${{ !(secrets.VITE_SUPABASE_URL != '' && secrets.VITE_SUPABASE_ANON_KEY != '') }}
+        if: ${{ env.VITE_SUPABASE_URL == '' || env.VITE_SUPABASE_ANON_KEY == '' }}
         run: echo "Skipping smoke:rsvp:strict (missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY secrets)."
