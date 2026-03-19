@@ -53,15 +53,20 @@ function pickByIds<T extends { id: string }>(items: T[], ids?: string[]): T[] {
 }
 
 function bindVenue(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
-  const selectedVenues = pickByIds(weddingData.venues, section.bindings?.venueIds)
+  const venues = Array.isArray((weddingData as Partial<WeddingDataV1>).venues)
+    ? (weddingData as Partial<WeddingDataV1>).venues!
+    : [];
+  const weddingDateISO = (weddingData as Partial<WeddingDataV1>).event?.weddingDateISO;
+
+  const selectedVenues = pickByIds(venues, section.bindings?.venueIds)
     .filter((v) => !!v.name || !!v.address);
 
   if (selectedVenues.length === 0) return section.data;
 
-  const dateText = formatDate(weddingData.event.weddingDateISO);
-  const timeText = weddingData.event.weddingDateISO ? formatTime(weddingData.event.weddingDateISO) : '';
+  const dateText = formatDate(weddingDateISO);
+  const timeText = weddingDateISO ? formatTime(weddingDateISO) : '';
 
-  const venues = selectedVenues.map((venue, index) => ({
+  const mappedVenues = selectedVenues.map((venue, index) => ({
     id: venue.id,
     name: venue.name ?? '',
     role: index === 0 ? 'Ceremony & Reception' : 'Venue',
@@ -83,19 +88,27 @@ function bindVenue(section: BindableSection, weddingData: WeddingDataV1): Record
 
   return {
     ...section.data,
-    venues,
+    venues: mappedVenues,
   };
 }
 
 function bindSchedule(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
-  const selectedItems = pickByIds(weddingData.schedule, section.bindings?.scheduleItemIds)
+  const schedule = Array.isArray((weddingData as Partial<WeddingDataV1>).schedule)
+    ? (weddingData as Partial<WeddingDataV1>).schedule!
+    : [];
+  const venues = Array.isArray((weddingData as Partial<WeddingDataV1>).venues)
+    ? (weddingData as Partial<WeddingDataV1>).venues!
+    : [];
+  const weddingDateISO = (weddingData as Partial<WeddingDataV1>).event?.weddingDateISO;
+
+  const selectedItems = pickByIds(schedule, section.bindings?.scheduleItemIds)
     .filter((item) => !!item.label);
-  const fallbackItems = weddingData.schedule.filter((item) => !!item.label);
+  const fallbackItems = schedule.filter((item) => !!item.label);
   const itemsToUse = selectedItems.length > 0 ? selectedItems : fallbackItems;
 
   if (itemsToUse.length === 0) return section.data;
 
-  const venueLookup = new Map(weddingData.venues.map((v) => [v.id, v]));
+  const venueLookup = new Map(venues.map((v) => [v.id, v]));
 
   const events = itemsToUse.map((item, index) => {
     const venue = item.venueId ? venueLookup.get(item.venueId) : null;
@@ -113,7 +126,7 @@ function bindSchedule(section: BindableSection, weddingData: WeddingDataV1): Rec
     };
   });
 
-  const dayLabel = formatDate(weddingData.event.weddingDateISO);
+  const dayLabel = formatDate(weddingDateISO);
 
   return {
     ...section.data,
@@ -138,7 +151,11 @@ function bindSchedule(section: BindableSection, weddingData: WeddingDataV1): Rec
 }
 
 function bindRegistry(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
-  const selectedLinks = pickByIds(weddingData.registry.links, section.bindings?.linkIds)
+  const registryLinks = Array.isArray((weddingData as Partial<WeddingDataV1>).registry?.links)
+    ? (weddingData as Partial<WeddingDataV1>).registry!.links
+    : [];
+
+  const selectedLinks = pickByIds(registryLinks, section.bindings?.linkIds)
     .filter((link) => !!link.url);
 
   if (selectedLinks.length === 0) return section.data;
@@ -166,18 +183,27 @@ function bindRegistry(section: BindableSection, weddingData: WeddingDataV1): Rec
 }
 
 function bindRsvp(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
-  const venueLookup = new Map(weddingData.venues.map((v) => [v.id, v]));
-  const events = weddingData.schedule
+  const venues = Array.isArray((weddingData as Partial<WeddingDataV1>).venues)
+    ? (weddingData as Partial<WeddingDataV1>).venues!
+    : [];
+  const schedule = Array.isArray((weddingData as Partial<WeddingDataV1>).schedule)
+    ? (weddingData as Partial<WeddingDataV1>).schedule!
+    : [];
+  const weddingDateISO = (weddingData as Partial<WeddingDataV1>).event?.weddingDateISO;
+  const rsvpDeadlineISO = (weddingData as Partial<WeddingDataV1>).rsvp?.deadlineISO;
+
+  const venueLookup = new Map(venues.map((v) => [v.id, v]));
+  const events = schedule
     .filter((item) => !!item.label)
     .map((item) => ({
       id: item.id,
       label: item.label,
       description: item.notes ?? '',
-      date: formatDate(item.startTimeISO) || formatDate(weddingData.event.weddingDateISO),
+      date: formatDate(item.startTimeISO) || formatDate(weddingDateISO),
       location: (item.venueId ? venueLookup.get(item.venueId)?.name : '') ?? '',
     }));
 
-  const deadline = weddingData.rsvp.deadlineISO ? formatDate(weddingData.rsvp.deadlineISO) : '';
+  const deadline = rsvpDeadlineISO ? formatDate(rsvpDeadlineISO) : '';
 
   return {
     ...section.data,
