@@ -9,13 +9,15 @@ import { LayoutConfigV1 } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
 import { applyThemePreset, applyThemeTokens } from '../lib/themePresets';
 import { BuilderProject } from '../types/builder/project';
-import { BuilderSectionInstance } from '../types/builder/section';
+import { BuilderSectionInstance, createDefaultSectionInstance } from '../types/builder/section';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { PageRenderer } from '../render/PageRenderer';
 import { safeJsonParse } from '../lib/jsonUtils';
 import { SiteViewContext } from '../contexts/SiteViewContext';
 import { siteRepository } from '../data/siteRepository';
 import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
+import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
+import { demoWeddingSite } from '../lib/demoData';
 
 interface PublicItineraryRow {
   id?: string;
@@ -109,6 +111,30 @@ async function hydrateWeddingDataFromItinerary(siteId: string, siteSlug: string,
   } catch {
     return base;
   }
+}
+
+function createDemoFallbackSections(templateId = 'modern-luxe'): BuilderSectionInstance[] {
+  const template = getTemplatePack(templateId);
+  if (!template) return [];
+
+  return template.sectionComposition.map((section, index) => ({
+    ...createDefaultSectionInstance(section.type, section.variant, index),
+    enabled: section.enabled,
+    locked: section.locked,
+    settings: { ...section.settings },
+  }));
+}
+
+function createAlexJordanDemoWeddingData(): WeddingDataV1 {
+  const data = createEmptyWeddingData();
+  data.couple.partner1Name = demoWeddingSite.couple_name_1;
+  data.couple.partner2Name = demoWeddingSite.couple_name_2;
+  data.couple.displayName = `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`;
+  data.event.weddingDateISO = new Date(demoWeddingSite.wedding_date).toISOString();
+  data.venues = [{ id: 'demo-venue-1', name: demoWeddingSite.venue_name, address: demoWeddingSite.venue_location }];
+  data.media.heroImageUrl = demoWeddingSite.hero_image_url;
+  data.theme.preset = 'elegant';
+  return data;
 }
 
 const FALLBACK_IMAGE_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -450,6 +476,20 @@ export const SiteView: React.FC = () => {
           const sections = homePage.sections.filter(s => s.enabled);
 
           if (sections.length === 0) {
+            if (resolvedSlug === 'alex-jordan-demo') {
+              const demoSections = createDemoFallbackSections(siteJson.templateId || 'modern-luxe');
+              if (demoSections.length > 0) {
+                setBuilderSections(demoSections);
+                setWeddingData(createAlexJordanDemoWeddingData());
+                if (siteJson.themeId) {
+                  applyThemePreset(siteJson.themeId);
+                } else {
+                  applyThemePreset('elegant');
+                }
+                return;
+              }
+            }
+
             setIsComingSoon(true);
             return;
           }
