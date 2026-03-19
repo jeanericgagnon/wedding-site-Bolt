@@ -17,6 +17,89 @@ import { SiteViewContext } from '../contexts/SiteViewContext';
 import { siteRepository } from '../data/siteRepository';
 import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
 
+interface PublicItineraryRow {
+  id?: string;
+  event_name?: string;
+  title?: string;
+  description?: string;
+  notes?: string | null;
+  event_date?: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  location_name?: string | null;
+  location_address?: string | null;
+  is_visible?: boolean | null;
+}
+
+function combineDateAndTime(date?: string, time?: string | null): string | undefined {
+  if (!date) return undefined;
+  if (!time) return undefined;
+  const t = time.length === 5 ? `${time}:00` : time;
+  const iso = `${date}T${t}`;
+  const dt = new Date(iso);
+  return Number.isNaN(dt.getTime()) ? undefined : dt.toISOString();
+}
+
+async function hydrateWeddingDataFromItinerary(siteId: string, base: WeddingDataV1): Promise<WeddingDataV1> {
+  try {
+    const { data, error } = await supabase
+      .from('itinerary_events')
+      .select('id,event_name,title,description,notes,event_date,start_time,end_time,location_name,location_address,is_visible')
+      .eq('wedding_site_id', siteId)
+      .order('event_date', { ascending: true })
+      .order('start_time', { ascending: true });
+
+    if (error || !Array.isArray(data) || data.length === 0) return base;
+
+    const rows = (data as PublicItineraryRow[]).filter((row) => row.is_visible !== false);
+    if (rows.length === 0) return base;
+
+    const derivedVenues: WeddingDataV1['venues'] = [];
+    const venueIdByKey = new Map<string, string>();
+
+    const schedule = rows.map((row, index) => {
+      const locationName = row.location_name?.trim();
+      const locationAddress = row.location_address?.trim();
+      let venueId: string | undefined;
+
+      if (locationName || locationAddress) {
+        const key = `${locationName ?? ''}|${locationAddress ?? ''}`;
+        const existing = venueIdByKey.get(key);
+        if (existing) {
+          venueId = existing;
+        } else {
+          venueId = `itinerary-venue-${index}`;
+          venueIdByKey.set(key, venueId);
+          derivedVenues.push({
+            id: venueId,
+            name: locationName || locationAddress || 'Event Location',
+            address: locationAddress || undefined,
+          });
+        }
+      }
+
+      return {
+        id: row.id || `itinerary-${index}`,
+        label: row.event_name || row.title || 'Event',
+        startTimeISO: combineDateAndTime(row.event_date, row.start_time),
+        endTimeISO: combineDateAndTime(row.event_date, row.end_time),
+        venueId,
+        notes: row.description || row.notes || undefined,
+      };
+    });
+
+    if (schedule.length === 0) return base;
+
+    return {
+      ...base,
+      venues: [...base.venues, ...derivedVenues],
+      schedule,
+    };
+  } catch {
+    return base;
+  }
+}
+
 const FALLBACK_IMAGE_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 675'>
     <defs>
@@ -341,7 +424,8 @@ export const SiteView: React.FC = () => {
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
 
         if (persistedSections.length > 0) {
-          const wData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
+          const rawWData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
+          const wData = await hydrateWeddingDataFromItinerary(data.id as string, rawWData);
           setUseNewRenderer(true);
           setBuilderSections(null);
           setLayoutConfig(null);
@@ -353,7 +437,8 @@ export const SiteView: React.FC = () => {
         if (siteJson && siteJson.pages?.length > 0) {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
           const sections = homePage.sections.filter(s => s.enabled);
-          const wData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
+          const rawWData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
+          const wData = await hydrateWeddingDataFromItinerary(data.id as string, rawWData);
 
           if (siteJson.themeTokens) {
             applyThemeTokens(siteJson.themeTokens);
@@ -366,14 +451,16 @@ export const SiteView: React.FC = () => {
           setBuilderSections(sections);
           setWeddingData(wData);
         } else {
-          const wData = safeJsonParse<WeddingDataV1 | null>(data.wedding_data, null);
+          const rawWData = safeJsonParse<WeddingDataV1 | null>(data.wedding_data, null);
           const lConfig = safeJsonParse<LayoutConfigV1 | null>(data.layout_config, null);
 
-          if (!wData || !lConfig) {
+          if (!rawWData || !lConfig) {
             setError('This wedding site is still being set up. Check back soon!');
             setLoading(false);
             return;
           }
+
+          const wData = await hydrateWeddingDataFromItinerary(data.id as string, rawWData);
 
           if (wData.theme?.preset) {
             applyThemePreset(wData.theme.preset);
