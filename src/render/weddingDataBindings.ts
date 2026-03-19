@@ -90,12 +90,14 @@ function bindVenue(section: BindableSection, weddingData: WeddingDataV1): Record
 function bindSchedule(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
   const selectedItems = pickByIds(weddingData.schedule, section.bindings?.scheduleItemIds)
     .filter((item) => !!item.label);
+  const fallbackItems = weddingData.schedule.filter((item) => !!item.label);
+  const itemsToUse = selectedItems.length > 0 ? selectedItems : fallbackItems;
 
-  if (selectedItems.length === 0) return section.data;
+  if (itemsToUse.length === 0) return section.data;
 
   const venueLookup = new Map(weddingData.venues.map((v) => [v.id, v]));
 
-  const events = selectedItems.map((item, index) => {
+  const events = itemsToUse.map((item, index) => {
     const venue = item.venueId ? venueLookup.get(item.venueId) : null;
     return {
       id: item.id,

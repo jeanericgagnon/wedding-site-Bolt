@@ -24,6 +24,24 @@ describe('applyWeddingDataBindings', () => {
     expect(events[0].location).toBe('Main Hall');
   });
 
+  it('falls back to all schedule events when binding ids are stale', () => {
+    const data = createEmptyWeddingData();
+    data.schedule = [
+      { id: 'live-1', label: 'Welcome Dinner', startTimeISO: '2026-05-08T23:00:00.000Z' },
+    ];
+
+    const result = applyWeddingDataBindings({
+      type: 'schedule',
+      variant: 'agendaCards',
+      data: { events: [{ id: 'demo', label: 'Demo Event' }] },
+      bindings: { scheduleItemIds: ['old-id-that-no-longer-exists'] },
+    }, data);
+
+    const events = result.events as Array<Record<string, unknown>>;
+    expect(events).toHaveLength(1);
+    expect(events[0].label).toBe('Welcome Dinner');
+  });
+
   it('binds registry links from wedding data', () => {
     const data = createEmptyWeddingData();
     data.registry.links = [{ id: 'r1', label: 'Amazon', url: 'https://amazon.com/registry' }];
