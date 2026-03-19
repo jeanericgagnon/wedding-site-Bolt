@@ -448,6 +448,12 @@ export const SiteView: React.FC = () => {
         if (siteJson && siteJson.pages?.length > 0) {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
           const sections = homePage.sections.filter(s => s.enabled);
+
+          if (sections.length === 0) {
+            setIsComingSoon(true);
+            return;
+          }
+
           const rawWData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
           const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
 
@@ -565,7 +571,7 @@ export const SiteView: React.FC = () => {
     );
   }
 
-  if (builderSections && weddingData) {
+  if (builderSections && builderSections.length > 0 && weddingData) {
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
         <div className="builder-themed-canvas min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
