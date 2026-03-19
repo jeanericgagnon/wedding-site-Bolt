@@ -40,18 +40,29 @@ function combineDateAndTime(date?: string, time?: string | null): string | undef
   return Number.isNaN(dt.getTime()) ? undefined : dt.toISOString();
 }
 
-async function hydrateWeddingDataFromItinerary(siteId: string, base: WeddingDataV1): Promise<WeddingDataV1> {
+async function fetchPublicItineraryRows(siteId: string, siteSlug: string): Promise<PublicItineraryRow[]> {
+  const { data: fnData, error: fnError } = await supabase.functions.invoke('public-itinerary-by-slug', {
+    body: { slug: siteSlug },
+  });
+
+  if (!fnError && Array.isArray(fnData?.events) && fnData.events.length > 0) {
+    return fnData.events as PublicItineraryRow[];
+  }
+
+  const { data, error } = await supabase
+    .from('itinerary_events')
+    .select('id,event_name,title,description,notes,event_date,start_time,end_time,location_name,location_address,is_visible')
+    .eq('wedding_site_id', siteId)
+    .order('event_date', { ascending: true })
+    .order('start_time', { ascending: true });
+
+  if (error || !Array.isArray(data)) return [];
+  return data as PublicItineraryRow[];
+}
+
+async function hydrateWeddingDataFromItinerary(siteId: string, siteSlug: string, base: WeddingDataV1): Promise<WeddingDataV1> {
   try {
-    const { data, error } = await supabase
-      .from('itinerary_events')
-      .select('id,event_name,title,description,notes,event_date,start_time,end_time,location_name,location_address,is_visible')
-      .eq('wedding_site_id', siteId)
-      .order('event_date', { ascending: true })
-      .order('start_time', { ascending: true });
-
-    if (error || !Array.isArray(data) || data.length === 0) return base;
-
-    const rows = (data as PublicItineraryRow[]).filter((row) => row.is_visible !== false);
+    const rows = (await fetchPublicItineraryRows(siteId, siteSlug)).filter((row) => row.is_visible !== false);
     if (rows.length === 0) return base;
 
     const derivedVenues: WeddingDataV1['venues'] = [];
@@ -425,7 +436,7 @@ export const SiteView: React.FC = () => {
 
         if (persistedSections.length > 0) {
           const rawWData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, rawWData);
+          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
           setUseNewRenderer(true);
           setBuilderSections(null);
           setLayoutConfig(null);
@@ -438,7 +449,7 @@ export const SiteView: React.FC = () => {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
           const sections = homePage.sections.filter(s => s.enabled);
           const rawWData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, rawWData);
+          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
 
           if (siteJson.themeTokens) {
             applyThemeTokens(siteJson.themeTokens);
@@ -460,7 +471,7 @@ export const SiteView: React.FC = () => {
             return;
           }
 
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, rawWData);
+          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
 
           if (wData.theme?.preset) {
             applyThemePreset(wData.theme.preset);
