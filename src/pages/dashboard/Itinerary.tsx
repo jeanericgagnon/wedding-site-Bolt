@@ -27,6 +27,7 @@ interface ItineraryEvent {
 }
 
 const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
+let hasEventRsvpsTable: boolean | null = null;
 
 interface EventWithInvites extends ItineraryEvent {
   invitation_count: number;
@@ -261,12 +262,21 @@ export const DashboardItinerary: React.FC = () => {
           const inviteCount = invitationIds.length;
 
           let rsvps: Array<{ attending: boolean | null }> = [];
-          if (invitationIds.length > 0) {
-            const { data } = await supabase
+          if (invitationIds.length > 0 && hasEventRsvpsTable !== false) {
+            const { data, error } = await supabase
               .from('event_rsvps')
               .select('attending')
               .in('event_invitation_id', invitationIds);
-            rsvps = (data ?? []) as Array<{ attending: boolean | null }>;
+
+            if (error) {
+              const msg = (error.message || '').toLowerCase();
+              if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
+                hasEventRsvpsTable = false;
+              }
+            } else {
+              hasEventRsvpsTable = true;
+              rsvps = (data ?? []) as Array<{ attending: boolean | null }>;
+            }
           }
 
           const rsvpCount = rsvps.length;

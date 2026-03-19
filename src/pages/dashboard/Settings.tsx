@@ -150,23 +150,13 @@ export const DashboardSettings: React.FC = () => {
     }
 
     try {
-      let data: Record<string, unknown> | null = null;
-      const fullQuery = await supabase
+      const { data: queryData } = await supabase
         .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, site_visibility, notification_prefs, privacy_mode, hide_from_search, guest_access_token, default_language, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
+        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (fullQuery.error) {
-        const fallbackQuery = await supabase
-          .from('wedding_sites')
-          .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        data = (fallbackQuery.data as Record<string, unknown> | null) ?? null;
-      } else {
-        data = (fullQuery.data as Record<string, unknown> | null) ?? null;
-      }
+      const data = (queryData as Record<string, unknown> | null) ?? null;
 
       if (data) {
         setWeddingSiteId((data.id as string) ?? null);

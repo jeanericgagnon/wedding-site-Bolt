@@ -8,6 +8,8 @@ import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Header, Footer } from '../components/layout';
 
+let hasEventRsvpsTable: boolean | null = null;
+
 interface Guest {
   id: string;
   name: string;
@@ -107,17 +109,36 @@ export default function EventRSVP() {
 
       const invitationsWithRsvps = await Promise.all(
         (invitationsData || []).map(async (invitation) => {
-          const { data: rsvpData } = await supabase
-            .from('event_rsvps')
-            .select('attending, dietary_restrictions, notes')
-            .eq('event_invitation_id', invitation.id)
-            .maybeSingle();
+          let rsvpData: { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null = null;
+          if (hasEventRsvpsTable !== false) {
+            const { data, error } = await supabase
+              .from('event_rsvps')
+              .select('attending, dietary_restrictions, notes')
+              .eq('event_invitation_id', invitation.id)
+              .maybeSingle();
+
+            if (error) {
+              const msg = (error.message || '').toLowerCase();
+              if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
+                hasEventRsvpsTable = false;
+              }
+            } else {
+              hasEventRsvpsTable = true;
+              rsvpData = (data as { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null) ?? null;
+            }
+          }
 
           return {
             id: invitation.id,
             event_id: invitation.event_id,
             event: invitation.itinerary_events as unknown as ItineraryEvent,
-            rsvp: rsvpData || undefined,
+            rsvp: rsvpData
+              ? {
+                  attending: rsvpData.attending ?? true,
+                  dietary_restrictions: rsvpData.dietary_restrictions,
+                  notes: rsvpData.notes,
+                }
+              : undefined,
           };
         })
       );
@@ -183,6 +204,11 @@ export default function EventRSVP() {
       const invitation = invitations.find((i) => i.id === selectedEvent);
       if (!invitation) return;
 
+      if (hasEventRsvpsTable === false) {
+        setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
+        return;
+      }
+
       if (invitation.rsvp) {
         const { error } = await supabase
           .from('event_rsvps')
@@ -194,7 +220,13 @@ export default function EventRSVP() {
           })
           .eq('event_invitation_id', selectedEvent);
 
-        if (error) throw error;
+        if (error) {
+          const msg = (error.message || '').toLowerCase();
+          if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
+            hasEventRsvpsTable = false;
+          }
+          throw error;
+        }
       } else {
         const { error } = await supabase
           .from('event_rsvps')
@@ -207,7 +239,13 @@ export default function EventRSVP() {
             },
           ]);
 
-        if (error) throw error;
+        if (error) {
+          const msg = (error.message || '').toLowerCase();
+          if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
+            hasEventRsvpsTable = false;
+          }
+          throw error;
+        }
       }
 
       setSubmitSuccess(true);

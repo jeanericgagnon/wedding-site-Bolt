@@ -12,6 +12,7 @@ import { createSmsCreditsSession } from '../../lib/stripeService';
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
 
+let hasMessageDeliveriesTable: boolean | null = null;
 
 
 function buildDemoMessageSeed(): Message[] {
@@ -536,11 +537,29 @@ export const DashboardMessages: React.FC = () => {
       setDeliveries([]);
       return;
     }
+
+    const messageIds = messages.slice(0, 50).map((m) => m.id);
+    if (messageIds.length === 0 || hasMessageDeliveriesTable === false) {
+      setDeliveries([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('message_deliveries')
       .select('id, message_id, status, provider_message_id, error_message, attempted_at, delivered_at, recipient_email')
-      .in('message_id', messages.slice(0, 50).map((m) => m.id));
-    if (!error) setDeliveries((data as DeliveryRow[]) || []);
+      .in('message_id', messageIds);
+
+    if (error) {
+      const msg = (error.message || '').toLowerCase();
+      if (msg.includes('message_deliveries') || msg.includes('does not exist') || msg.includes('404')) {
+        hasMessageDeliveriesTable = false;
+      }
+      setDeliveries([]);
+      return;
+    }
+
+    hasMessageDeliveriesTable = true;
+    setDeliveries((data as DeliveryRow[]) || []);
   }, [weddingSite, isDemoMode, messages]);
 
   const fetchItinerarySegments = useCallback(async () => {
