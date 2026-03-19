@@ -11,13 +11,12 @@ type PublicItineraryEvent = {
   event_name: string | null;
   title: string | null;
   description: string | null;
-  notes: string | null;
   event_date: string | null;
   start_time: string | null;
   end_time: string | null;
   location_name: string | null;
   location_address: string | null;
-  is_visible: boolean | null;
+  is_private: boolean | null;
 };
 
 Deno.serve(async (req) => {
@@ -50,11 +49,11 @@ Deno.serve(async (req) => {
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
-      .select("id,is_published,privacy_mode")
+      .select("id,is_published")
       .eq("site_slug", slug)
       .maybeSingle();
 
-    if (siteError || !site || site.is_published !== true || (site.privacy_mode ?? "public") !== "public") {
+    if (siteError || !site || site.is_published !== true) {
       return new Response(JSON.stringify({ events: [] }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -63,9 +62,9 @@ Deno.serve(async (req) => {
 
     const { data: events, error: eventsError } = await admin
       .from("itinerary_events")
-      .select("id,event_name,title,description,notes,event_date,start_time,end_time,location_name,location_address,is_visible")
+      .select("id,event_name,title,description,event_date,start_time,end_time,location_name,location_address,is_private")
       .eq("wedding_site_id", site.id)
-      .eq("is_visible", true)
+      .or("is_private.is.null,is_private.eq.false")
       .order("event_date", { ascending: true })
       .order("start_time", { ascending: true });
 
