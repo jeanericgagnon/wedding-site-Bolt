@@ -5,6 +5,7 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { resolveAndParse } from '../../sections/registry';
 import { getSectionComponent } from '../../sections/sectionRegistry';
+import { applyWeddingDataBindings } from '../../render/weddingDataBindings';
 
 interface SectionRendererProps {
   section: BuilderSectionInstance;
@@ -170,11 +171,18 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
   } as React.CSSProperties;
 
+  const boundSettings = applyWeddingDataBindings({
+    type: section.type,
+    variant: section.variant,
+    data: section.settings as Record<string, unknown>,
+    bindings: section.bindings,
+  }, weddingData);
+
   const resolved = !preferLegacyRenderer
     ? resolveAndParse(
       section.type,
       section.variant,
-      section.settings as Record<string, unknown>
+      boundSettings
     )
     : null;
 

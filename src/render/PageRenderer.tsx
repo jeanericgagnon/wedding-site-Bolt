@@ -3,9 +3,12 @@ import { AlertTriangle } from 'lucide-react';
 import { SectionInstance } from '../sections/types';
 import { getDefinition, resolveAndParse } from '../sections/registry';
 import { PersistedSection } from '../sections/schemas';
+import { WeddingDataV1 } from '../types/weddingData';
+import { applyWeddingDataBindings } from './weddingDataBindings';
 
 interface PageRendererProps {
   sections: SectionInstance[] | PersistedSection[];
+  weddingData?: WeddingDataV1 | null;
   siteSlug?: string;
   className?: string;
 }
@@ -22,6 +25,7 @@ function normalise(s: SectionInstance | PersistedSection): {
   order: number;
   visible: boolean;
   styleOverrides?: Record<string, string | undefined>;
+  bindings?: { venueIds?: string[]; scheduleItemIds?: string[]; linkIds?: string[]; faqIds?: string[] };
 } {
   if (isPersistedSection(s)) {
     return {
@@ -32,8 +36,10 @@ function normalise(s: SectionInstance | PersistedSection): {
       order: s.order,
       visible: s.visible,
       styleOverrides: s.style_overrides as Record<string, string | undefined> | undefined,
+      bindings: s.bindings,
     };
   }
+  const maybeBindings = (s as unknown as { bindings?: { venueIds?: string[]; scheduleItemIds?: string[]; linkIds?: string[]; faqIds?: string[] } }).bindings;
   return {
     id: s.id,
     type: s.type,
@@ -41,6 +47,7 @@ function normalise(s: SectionInstance | PersistedSection): {
     data: s.data,
     order: s.order,
     visible: s.visible,
+    bindings: maybeBindings,
   };
 }
 
@@ -76,7 +83,7 @@ class SectionErrorBoundary extends React.Component<SectionErrorBoundaryProps, Se
   }
 }
 
-export const PageRenderer: React.FC<PageRendererProps> = ({ sections, siteSlug, className = '' }) => {
+export const PageRenderer: React.FC<PageRendererProps> = ({ sections, weddingData, siteSlug, className = '' }) => {
   const sorted = [...sections]
     .map(normalise)
     .filter(s => s.visible)
@@ -85,7 +92,8 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ sections, siteSlug, 
   return (
     <div className={`min-h-screen ${className}`}>
       {sorted.map(section => {
-        const resolved = resolveAndParse(section.type, section.variant, section.data);
+        const dataWithBindings = applyWeddingDataBindings(section, weddingData);
+        const resolved = resolveAndParse(section.type, section.variant, dataWithBindings);
 
         if (!resolved) {
           const def = getDefinition(section.type, section.variant);

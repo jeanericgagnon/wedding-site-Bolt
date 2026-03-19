@@ -35,7 +35,7 @@ const FALLBACK_IMAGE_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(
   </svg>`
 )}`;
 
-const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string }> = ({ siteId, siteSlug }) => {
+const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string; weddingData?: WeddingDataV1 | null }> = ({ siteId, siteSlug, weddingData }) => {
   const [sections, setSections] = useState<import('../sections/schemas').PersistedSection[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +54,7 @@ const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string }> = ({ si
     );
   }
 
-  return <PageRenderer sections={sections} siteSlug={siteSlug} />;
+  return <PageRenderer sections={sections} weddingData={weddingData} siteSlug={siteSlug} />;
 };
 
 type PrivacyGateState = 'loading' | 'open' | 'password_required' | 'invite_only' | 'unlocked';
@@ -341,10 +341,11 @@ export const SiteView: React.FC = () => {
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
 
         if (persistedSections.length > 0) {
+          const wData = safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData());
           setUseNewRenderer(true);
           setBuilderSections(null);
           setLayoutConfig(null);
-          setWeddingData(null);
+          setWeddingData(wData);
           setWeddingSiteId(data.id as string);
           return;
         }
@@ -460,7 +461,7 @@ export const SiteView: React.FC = () => {
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
         <div onErrorCapture={handleImageErrorCapture}>
-          <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} />
+          <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} weddingData={weddingData} />
         </div>
       </SiteViewContext.Provider>
     );
