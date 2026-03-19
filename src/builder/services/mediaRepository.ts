@@ -57,32 +57,9 @@ export const mediaRepository = {
 
     if (error) throw error;
 
-    const baseAssets = (data ?? []).map(mapRowToAsset);
-
-    const indexedPaths = baseAssets
-      .map((asset, index) => ({ index, path: extractBucketPathFromUrl(asset.url, STORAGE_BUCKET) }))
-      .filter((item): item is { index: number; path: string } => !!item.path);
-
-    if (indexedPaths.length === 0) return baseAssets;
-
-    const { data: signedList, error: signedError } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .createSignedUrls(indexedPaths.map((p) => p.path), 60 * 60 * 24);
-
-    if (signedError || !signedList) return baseAssets;
-
-    const nextAssets = [...baseAssets];
-    indexedPaths.forEach((item, i) => {
-      const signedUrl = signedList[i]?.signedUrl;
-      if (!signedUrl) return;
-      nextAssets[item.index] = {
-        ...nextAssets[item.index],
-        url: signedUrl,
-        thumbnailUrl: signedUrl,
-      };
-    });
-
-    return nextAssets;
+    // IMPORTANT: keep canonical, durable media URLs in builder state.
+    // Persisting temporary signed URLs into section settings causes production breakage later.
+    return (data ?? []).map(mapRowToAsset);
   },
 
   async save(asset: Omit<BuilderMediaAsset, 'id'>): Promise<BuilderMediaAsset> {

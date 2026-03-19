@@ -6,6 +6,7 @@ import { safeJsonParse } from '../../lib/jsonUtils';
 import { fromExistingLayoutToBuilderProject, fromBuilderProjectToExistingLayout } from '../adapters/layoutAdapter';
 import { serializeBuilderProject } from '../serializers/projectSerializer';
 import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from './versionHistory';
+import { rewriteSignedMediaUrlsToPublicDeep } from '../../lib/mediaUrl';
 
 export const builderProjectService = {
   async loadProject(weddingSiteId: string): Promise<BuilderProject | null> {
@@ -23,7 +24,8 @@ export const builderProjectService = {
     if (data.site_json) {
       const parsed = safeJsonParse<BuilderProject>(data.site_json, null as unknown as BuilderProject);
       if (parsed && parsed.pages && Array.isArray(parsed.pages)) {
-        return { ...parsed, weddingId: weddingSiteId };
+        const durableParsed = rewriteSignedMediaUrlsToPublicDeep(parsed);
+        return { ...durableParsed, weddingId: weddingSiteId };
       }
     }
 
@@ -49,7 +51,7 @@ export const builderProjectService = {
 
     if (data.wedding_data) {
       const parsed = safeJsonParse<WeddingDataV1>(data.wedding_data, null as unknown as WeddingDataV1);
-      if (parsed && parsed.version === '1') return parsed;
+      if (parsed && parsed.version === '1') return rewriteSignedMediaUrlsToPublicDeep(parsed);
     }
 
     const row = data as Record<string, unknown>;
@@ -85,8 +87,9 @@ export const builderProjectService = {
 
   async saveDraft(project: BuilderProject, weddingData?: WeddingDataV1): Promise<void> {
     const normalizedProject = serializeBuilderProject(project);
-    const layoutConfig = fromBuilderProjectToExistingLayout(normalizedProject);
-    const projectJson = normalizedProject;
+    const normalizedProjectWithDurableMedia = rewriteSignedMediaUrlsToPublicDeep(normalizedProject);
+    const layoutConfig = fromBuilderProjectToExistingLayout(normalizedProjectWithDurableMedia);
+    const projectJson = normalizedProjectWithDurableMedia;
     const layoutJson = layoutConfig;
 
     const updatePayload: Record<string, unknown> = {
@@ -98,7 +101,8 @@ export const builderProjectService = {
     };
 
     if (weddingData) {
-      updatePayload.wedding_data = weddingData;
+      const durableWeddingData = rewriteSignedMediaUrlsToPublicDeep(weddingData);
+      updatePayload.wedding_data = durableWeddingData;
 
       const p1 = weddingData.couple?.partner1Name?.trim() || null;
       const p2 = weddingData.couple?.partner2Name?.trim() || null;
@@ -181,7 +185,7 @@ export const builderProjectService = {
     }
 
     const currentSiteJsonObj = (currentSiteJson && typeof currentSiteJson === 'object')
-      ? (currentSiteJson as Record<string, unknown>)
+      ? (rewriteSignedMediaUrlsToPublicDeep(currentSiteJson) as Record<string, unknown>)
       : {};
 
     const nextPublishedVersion =
