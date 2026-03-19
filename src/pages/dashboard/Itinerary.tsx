@@ -42,6 +42,23 @@ function combineDateAndTimeISO(date: string, time: string | null): string | unde
   return Number.isNaN(new Date(iso).getTime()) ? undefined : iso;
 }
 
+function toScheduleSectionEvents(events: ItineraryEvent[]) {
+  return [...events]
+    .filter((event) => event.is_visible !== false)
+    .sort((a, b) => {
+      const left = `${a.event_date || ''}T${a.start_time || '00:00'}`;
+      const right = `${b.event_date || ''}T${b.start_time || '00:00'}`;
+      return left.localeCompare(right);
+    })
+    .map((event, index) => ({
+      id: event.id || `itinerary-${index + 1}`,
+      title: event.event_name || 'Event',
+      time: [event.start_time, event.end_time].filter(Boolean).join(' - ') || 'Time TBD',
+      description: event.description || event.notes || '',
+      location: [event.location_name, event.location_address].filter(Boolean).join(' · ') || undefined,
+    }));
+}
+
 function toWeddingSchedule(events: ItineraryEvent[]): WeddingDataV1['schedule'] {
   return [...events]
     .filter((event) => event.is_visible !== false)
@@ -132,6 +149,28 @@ export const DashboardItinerary: React.FC = () => {
         .eq('id', siteId);
 
       if (updateError) throw updateError;
+
+      const sectionEvents = toScheduleSectionEvents(eventList);
+      const { data: scheduleSections, error: sectionsReadError } = await supabase
+        .from('sections')
+        .select('id,data')
+        .eq('site_id', siteId)
+        .eq('type', 'schedule');
+
+      if (sectionsReadError) throw sectionsReadError;
+
+      for (const section of scheduleSections ?? []) {
+        const currentData = (section.data as Record<string, unknown> | null) ?? {};
+        const nextData = { ...currentData, events: sectionEvents };
+        if (JSON.stringify(currentData) === JSON.stringify(nextData)) continue;
+
+        const { error: sectionUpdateError } = await supabase
+          .from('sections')
+          .update({ data: nextData, updated_at: new Date().toISOString() })
+          .eq('id', section.id);
+
+        if (sectionUpdateError) throw sectionUpdateError;
+      }
     } catch {
       // non-blocking mirror write; itinerary CRUD still succeeds
     }
