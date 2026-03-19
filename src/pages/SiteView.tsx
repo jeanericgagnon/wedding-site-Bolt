@@ -53,7 +53,7 @@ async function fetchPublicItineraryRows(siteId: string, siteSlug: string): Promi
 
   const { data, error } = await supabase
     .from('itinerary_events')
-    .select('id,event_name,description,notes,event_date,start_time,end_time,location_name,location_address,is_visible')
+    .select('id,event_name,description,event_date,start_time,end_time,location_name,location_address')
     .eq('wedding_site_id', siteId)
     .order('event_date', { ascending: true })
     .order('start_time', { ascending: true });
