@@ -9,6 +9,7 @@ import { demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
+import type { WeddingDataV1 } from '../../types/weddingData';
 
 interface ItineraryEvent {
   id: string;
@@ -32,6 +33,37 @@ interface EventWithInvites extends ItineraryEvent {
   rsvp_count: number;
   attending_count: number;
   declined_count: number;
+}
+
+function combineDateAndTimeISO(date: string, time: string | null): string | undefined {
+  if (!date) return undefined;
+  const normalizedTime = time && time.trim().length > 0 ? time : '00:00';
+  const iso = new Date(`${date}T${normalizedTime}:00`).toISOString();
+  return Number.isNaN(new Date(iso).getTime()) ? undefined : iso;
+}
+
+function toWeddingSchedule(events: ItineraryEvent[]): WeddingDataV1['schedule'] {
+  return [...events]
+    .filter((event) => event.is_visible !== false)
+    .sort((a, b) => {
+      const left = `${a.event_date || ''}T${a.start_time || '00:00'}`;
+      const right = `${b.event_date || ''}T${b.start_time || '00:00'}`;
+      return left.localeCompare(right);
+    })
+    .map((event, index) => {
+      const locationBits = [event.location_name, event.location_address].filter(Boolean).join(' · ');
+      const descriptionBits = [event.description, event.notes].filter(Boolean).join(' · ');
+      const notes = [locationBits, descriptionBits].filter(Boolean).join(' — ');
+
+      return {
+        id: event.id || `itinerary-${index + 1}`,
+        label: event.event_name || 'Event',
+        startTimeISO: combineDateAndTimeISO(event.event_date, event.start_time) || '',
+        endTimeISO: combineDateAndTimeISO(event.event_date, event.end_time) || undefined,
+        notes: notes || undefined,
+      };
+    })
+    .filter((item) => !!item.startTimeISO && !!item.label);
 }
 
 export const DashboardItinerary: React.FC = () => {
@@ -69,6 +101,41 @@ export const DashboardItinerary: React.FC = () => {
       localStorage.setItem(DEMO_ITINERARY_STORAGE_KEY, JSON.stringify(events));
     } catch {}
   }, [isDemoMode, events]);
+
+  async function syncWeddingDataSchedule(siteId: string, eventList: ItineraryEvent[]) {
+    try {
+      const { data: siteData, error: readError } = await supabase
+        .from('wedding_sites')
+        .select('wedding_data')
+        .eq('id', siteId)
+        .maybeSingle();
+
+      if (readError) throw readError;
+
+      const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
+      const nextSchedule = toWeddingSchedule(eventList);
+      const currentSchedule = Array.isArray((weddingData as { schedule?: unknown }).schedule)
+        ? (weddingData as { schedule: unknown[] }).schedule
+        : [];
+
+      if (JSON.stringify(currentSchedule) === JSON.stringify(nextSchedule)) return;
+
+      const { error: updateError } = await supabase
+        .from('wedding_sites')
+        .update({
+          wedding_data: {
+            ...weddingData,
+            schedule: nextSchedule,
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', siteId);
+
+      if (updateError) throw updateError;
+    } catch {
+      // non-blocking mirror write; itinerary CRUD still succeeds
+    }
+  }
 
   async function loadEvents() {
     try {
@@ -141,6 +208,8 @@ export const DashboardItinerary: React.FC = () => {
         display_order: (event.display_order as number) ?? (event.sort_order as number) ?? 0,
         is_visible: (event.is_visible as boolean) ?? true,
       }));
+
+      await syncWeddingDataSchedule(sites.id, normalizedEvents);
 
       const eventsWithCounts = await Promise.all(
         normalizedEvents.map(async (event) => {
