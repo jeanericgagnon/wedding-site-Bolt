@@ -191,7 +191,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     const { Component } = def;
 
     return (
-      <SectionErrorBoundary sectionType={section.type} isPreview={isPreview} onError={() => setPreferLegacyRenderer(true)}>
+      <SectionErrorBoundary
+        sectionType={section.type}
+        isPreview={isPreview}
+        onError={isPreview ? () => setPreferLegacyRenderer(true) : undefined}
+      >
         <SideImageWrapper overrides={styleOverrides}>
           <div className={animationClass} style={mergedStyle}>
             <Component data={parsedData as never} siteSlug={siteSlug} />

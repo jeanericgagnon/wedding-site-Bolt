@@ -227,13 +227,19 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
   useEffect(() => {
     if (!weddingSiteId) return;
     publicFetchRegistryItems(weddingSiteId)
-      .then(items => setLiveItems(items.filter(i => !i.hide_when_purchased || i.purchase_status !== 'purchased')))
+      .then((items) => {
+        const safeItems = Array.isArray(items) ? items : [];
+        setLiveItems(safeItems.filter((i) => !i.hide_when_purchased || i.purchase_status !== 'purchased'));
+      })
       .catch(() => setLiveItems(null));
   }, [weddingSiteId]);
 
+  const safeFeaturedGifts = Array.isArray(data.featuredGifts) ? data.featuredGifts : [];
+  const safeStoreLinks = Array.isArray(data.storeLinks) ? data.storeLinks : [];
+
   const displayGifts = (liveItems
     ? liveItems.map(registryItemToGift)
-    : data.featuredGifts
+    : safeFeaturedGifts
   ).map(gift => ({
     ...gift,
     name: cleanGiftTitle(gift.name),
@@ -244,7 +250,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
     : 'grid-cols-1 sm:grid-cols-2';
 
-  const hasStoreLinks = data.storeLinks.length > 0;
+  const hasStoreLinks = safeStoreLinks.length > 0;
 
   const heroGift = data.layout === 'hero' && displayGifts[0];
   const restGifts = data.layout === 'hero' ? displayGifts.slice(1) : displayGifts;
@@ -317,7 +323,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
               <div className="flex-1 h-px bg-stone-100" />
             </div>
             <div className="flex flex-wrap gap-3">
-              {data.storeLinks.map(link => (
+              {safeStoreLinks.map(link => (
                 <a
                   key={link.id}
                   href={link.url || '#'}

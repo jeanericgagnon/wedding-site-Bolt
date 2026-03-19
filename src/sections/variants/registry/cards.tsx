@@ -63,10 +63,14 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
   useEffect(() => {
     if (!weddingSiteId) return;
     publicFetchRegistryItems(weddingSiteId)
-      .then(items => setLiveItems(items.filter(i => !i.hide_when_purchased || i.purchase_status !== 'purchased')))
+      .then((items) => {
+        const safeItems = Array.isArray(items) ? items : [];
+        setLiveItems(safeItems.filter((i) => !i.hide_when_purchased || i.purchase_status !== 'purchased'));
+      })
       .catch(() => setLiveItems(null));
   }, [weddingSiteId]);
 
+  const safeLinks = Array.isArray(data.links) ? data.links : [];
   const storeGroups = liveItems ? groupByStore(liveItems) : null;
 
   return (
@@ -113,7 +117,7 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-            {data.links.map(link => (
+            {safeLinks.map(link => (
               <a
                 key={link.id}
                 href={link.url || '#'}
