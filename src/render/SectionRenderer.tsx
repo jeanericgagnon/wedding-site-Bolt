@@ -2,6 +2,8 @@ import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { SectionInstance } from '../sections/types';
 import { resolveAndParse } from '../sections/registry';
+import { logClientError } from '../lib/errorLogger';
+import { sanitizeSignedMediaUrlsDeep } from '../lib/mediaUrl';
 
 interface SectionRendererProps {
   section: SectionInstance;
@@ -24,6 +26,28 @@ class SectionErrorBoundary extends React.Component<
 
   static getDerivedStateFromError(): ErrorBoundaryState {
     return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    const sectionMeta = {
+      sectionType: this.props.sectionType,
+      sectionVariant: this.props.sectionVariant,
+      sectionId: this.props.sectionId,
+      path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+      componentStack: info.componentStack?.slice(0, 2000),
+    };
+
+    if (typeof window !== 'undefined') {
+      (window as unknown as Record<string, unknown>).__dayof_last_section_error = sectionMeta;
+    }
+
+    logClientError({
+      source: 'react-section-error-boundary',
+      severity: 'error',
+      message: error.message || 'Section render failed',
+      stack: error.stack,
+      metadata: sectionMeta,
+    });
   }
 
   componentDidUpdate(prevProps: Readonly<{ children: React.ReactNode; sectionType: string; sectionVariant?: string; sectionId?: string; isPreview?: boolean; onRetry?: () => void }>): void {
@@ -66,7 +90,8 @@ class SectionErrorBoundary extends React.Component<
 }
 
 export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, siteSlug, isPreview }) => {
-  const resolved = resolveAndParse(section.type, section.variant, section.data);
+  const sanitizedData = sanitizeSignedMediaUrlsDeep(section.data);
+  const resolved = resolveAndParse(section.type, section.variant, sanitizedData);
 
   if (!resolved) {
     if (isPreview) return null;

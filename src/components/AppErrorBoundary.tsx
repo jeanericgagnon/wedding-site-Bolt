@@ -28,12 +28,23 @@ export class AppErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    const runtimeMetadata = {
+      componentStack: info.componentStack?.slice(0, 2000),
+      path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+      search: typeof window !== 'undefined' ? window.location.search : undefined,
+      hash: typeof window !== 'undefined' ? window.location.hash : undefined,
+      lastSectionError:
+        typeof window !== 'undefined'
+          ? (window as unknown as Record<string, unknown>).__dayof_last_section_error
+          : undefined,
+    };
+
     logClientError({
       source: 'react-error-boundary',
       severity: 'error',
       message: error.message || 'Unknown React runtime error',
       stack: error.stack,
-      metadata: { componentStack: info.componentStack?.slice(0, 2000) },
+      metadata: runtimeMetadata,
     });
 
     if (typeof window !== 'undefined') {

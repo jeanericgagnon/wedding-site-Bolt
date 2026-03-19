@@ -5,6 +5,8 @@ import { getDefinition, resolveAndParse } from '../sections/registry';
 import { PersistedSection } from '../sections/schemas';
 import { WeddingDataV1 } from '../types/weddingData';
 import { applyWeddingDataBindings } from './weddingDataBindings';
+import { sanitizeSignedMediaUrlsDeep } from '../lib/mediaUrl';
+import { logClientError } from '../lib/errorLogger';
 
 interface PageRendererProps {
   sections: SectionInstance[] | PersistedSection[];
@@ -54,6 +56,9 @@ function normalise(s: SectionInstance | PersistedSection): {
 interface SectionErrorBoundaryProps {
   children: React.ReactNode;
   sectionType: string;
+  sectionVariant?: string;
+  sectionId?: string;
+  siteSlug?: string;
 }
 
 interface SectionErrorBoundaryState {
@@ -68,6 +73,29 @@ class SectionErrorBoundary extends React.Component<SectionErrorBoundaryProps, Se
 
   static getDerivedStateFromError(): SectionErrorBoundaryState {
     return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    const sectionMeta = {
+      sectionType: this.props.sectionType,
+      sectionVariant: this.props.sectionVariant,
+      sectionId: this.props.sectionId,
+      siteSlug: this.props.siteSlug,
+      path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+      componentStack: info.componentStack?.slice(0, 2000),
+    };
+
+    if (typeof window !== 'undefined') {
+      (window as unknown as Record<string, unknown>).__dayof_last_section_error = sectionMeta;
+    }
+
+    logClientError({
+      source: 'react-section-error-boundary',
+      severity: 'error',
+      message: error.message || 'Section render failed',
+      stack: error.stack,
+      metadata: sectionMeta,
+    });
   }
 
   render() {
@@ -93,7 +121,8 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ sections, weddingDat
     <div className={`min-h-screen ${className}`}>
       {sorted.map(section => {
         const dataWithBindings = applyWeddingDataBindings(section, weddingData);
-        const resolved = resolveAndParse(section.type, section.variant, dataWithBindings);
+        const sanitizedData = sanitizeSignedMediaUrlsDeep(dataWithBindings);
+        const resolved = resolveAndParse(section.type, section.variant, sanitizedData);
 
         if (!resolved) {
           const def = getDefinition(section.type, section.variant);
@@ -110,7 +139,13 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ sections, weddingDat
         };
 
         return (
-          <SectionErrorBoundary key={section.id} sectionType={section.type}>
+          <SectionErrorBoundary
+            key={section.id}
+            sectionType={section.type}
+            sectionVariant={section.variant}
+            sectionId={section.id}
+            siteSlug={siteSlug}
+          >
             <div style={style}>
               <Component data={parsedData as never} siteSlug={siteSlug} />
             </div>
