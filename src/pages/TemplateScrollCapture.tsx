@@ -84,15 +84,20 @@ export default function TemplateScrollCapture() {
       },
     ];
 
+    const engagementEventLandscape = photos
+      .filter((p) => p.bucket.toLowerCase() === 'engagement_event' && p.orientation === 'landscape')
+      .map((p) => p.url);
     const engagementLandscape = photos
       .filter((p) => p.bucket.toLowerCase().includes('engagement') && p.orientation === 'landscape')
       .map((p) => p.url);
     const anyLandscape = photos.filter((p) => p.orientation === 'landscape').map((p) => p.url);
     const allPicked = pickPhotos(photos, templateId, 48);
 
+    const preferredPool = engagementEventLandscape.length ? engagementEventLandscape : engagementLandscape;
+
     const engagementPicked = pickPhotos(
-      engagementLandscape.map((url) => ({ url, bucket: 'engagement', orientation: 'landscape' })),
-      `engagement-${templateId}`,
+      preferredPool.map((url) => ({ url, bucket: 'engagement_event', orientation: 'landscape' })),
+      `engagement-event-${templateId}`,
       24
     );
 
@@ -100,7 +105,7 @@ export default function TemplateScrollCapture() {
 
     const hero =
       engagementPicked[0] ||
-      engagementLandscape[(hash(`hero-${templateId}`) % (engagementLandscape.length || 1))] ||
+      preferredPool[(hash(`hero-${templateId}`) % (preferredPool.length || 1))] ||
       anyLandscape[(hash(`hero-fallback-${templateId}`) % (anyLandscape.length || 1))] ||
       selected[0] ||
       '/preview-photos/header-anchor.jpg';
