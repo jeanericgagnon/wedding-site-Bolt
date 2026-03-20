@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ArrowRight,
 } from 'lucide-react';
+import { Reveal, RevealItem, RevealStagger } from '../components/marketing/Reveal';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export const Home: React.FC = () => {
       {/* HERO */}
       <section id="top" className="py-14 md:py-20 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
-          <div className="max-w-4xl mx-auto text-center">
+          <Reveal className="max-w-4xl mx-auto text-center">
             <h1 className="text-[2.4rem] md:text-[4rem] font-serif font-bold text-ink mb-5 leading-[1.04] updates-tight">
               A wedding site that doesn't break when it matters
             </h1>
@@ -92,14 +93,14 @@ export const Home: React.FC = () => {
               <span className="text-[11px] px-2.5 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">No forced upsells</span>
               <span className="text-[11px] px-2.5 py-1 rounded-full border border-sky-200 bg-sky-50 text-sky-700">Built for guests of all ages</span>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* WHY I BUILT THIS */}
       <section id="why" className="section-shell bg-white">
         <div className="container-custom">
-          <div className="max-w-3xl mx-auto">
+          <Reveal className="max-w-3xl mx-auto">
             <h2 className="section-title mb-10 text-center">
               Why I built this
             </h2>
@@ -142,22 +143,23 @@ export const Home: React.FC = () => {
                 <li className="leading-relaxed">Privacy first defaults, so your details are not accidentally public.</li>
               </ul>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* FEATURES */}
       <section id="features" className="section-shell bg-paper">
         <div className="container-custom">
-          <div className="section-intro">
+          <Reveal className="section-intro">
             <h2 className="section-title mb-4">
               Everything you need—nothing you don't
             </h2>
-          </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+          <RevealStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             {/* Guests + Households */}
-            <Link to="/features/guests" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <RevealItem>
+              <Link to="/features/guests" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Users className="w-6 h-6 text-brand" />
               </div>
@@ -188,10 +190,12 @@ export const Home: React.FC = () => {
                   <span>Export for vendors</span>
                 </li>
               </ul>
-            </Link>
+              </Link>
+            </RevealItem>
 
             {/* RSVP Engine */}
-            <Link to="/features/rsvp" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <RevealItem>
+              <Link to="/features/rsvp" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <CheckCircle2 className="w-6 h-6 text-brand" />
               </div>
@@ -204,10 +208,12 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Deadline handling</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Live response view</span></li>
               </ul>
-            </Link>
+              </Link>
+            </RevealItem>
 
             {/* Messaging */}
-            <Link to="/features/messaging" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <RevealItem>
+              <Link to="/features/messaging" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
@@ -220,10 +226,12 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Draft + scheduled send flow</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Ready to send templates</span></li>
               </ul>
-            </Link>
+              </Link>
+            </RevealItem>
 
             {/* Travel + Itinerary */}
-            <Link to="/features/travel" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <RevealItem>
+              <Link to="/features/travel" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Hotel className="w-6 h-6 text-brand" />
               </div>
@@ -236,10 +244,12 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Timezone support</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Travel FAQs</span></li>
               </ul>
-            </Link>
+              </Link>
+            </RevealItem>
 
             {/* Registry */}
-            <Link to="/features/registry" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <RevealItem>
+              <Link to="/features/registry" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Heart className="w-6 h-6 text-brand" />
               </div>
@@ -252,10 +262,12 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Simple gift cards and links</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>No sponsored clutter</span></li>
               </ul>
-            </Link>
+              </Link>
+            </RevealItem>
 
             {/* Seating + Check-in */}
-            <Link to="/features/seating" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <RevealItem>
+              <Link to="/features/seating" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
@@ -268,10 +280,11 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Export for caterer</span></li>
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Per-event seating</span></li>
               </ul>
-            </Link>
-          </div>
+              </Link>
+            </RevealItem>
+          </RevealStagger>
 
-          <div className="text-center">
+          <Reveal className="text-center">
             <Link
               to="/product"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
@@ -279,7 +292,7 @@ export const Home: React.FC = () => {
               See full product tour
               <ArrowRight className="w-5 h-5" />
             </Link>
-          </div>
+          </Reveal>
         </div>
       </section>
 
