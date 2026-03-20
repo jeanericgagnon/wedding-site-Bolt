@@ -4,6 +4,7 @@ import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
 import { createDefaultSectionInstance } from '../types/builder/section';
 import { createEmptyWeddingData } from '../types/weddingData';
 import { getSectionComponent } from '../sections/sectionRegistry';
+import { applyThemePreset } from '../lib/themePresets';
 
 type PreviewPhoto = {
   url: string;
@@ -57,6 +58,11 @@ export default function TemplateScrollCapture() {
   }, []);
 
   const template = getTemplatePack(templateId);
+
+  React.useEffect(() => {
+    if (!template?.defaultThemeId) return;
+    applyThemePreset(template.defaultThemeId);
+  }, [template?.id, template?.defaultThemeId]);
 
   const sections = React.useMemo(() => {
     if (!template) return [];
