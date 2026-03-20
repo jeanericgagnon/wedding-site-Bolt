@@ -76,6 +76,8 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     modern: 'fullBleed',
     luxury: 'fullBleed',
     elegant: 'fullBleed',
+    minimal: 'fullBleed',
+    magazine: 'fullBleed',
   },
   story: {
     editorial: 'twoColumn',
@@ -85,6 +87,10 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     playful: 'twoColumn',
     luxury: 'twoColumn',
     elegant: 'twoColumn',
+    split: 'twoColumn',
+    timeline: 'twoColumn',
+    compact: 'twoColumn',
+    minimal: 'twoColumn',
   },
   gallery: {
     fullwidth: 'filmStrip',
@@ -93,6 +99,7 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     playful: 'polaroid',
     luxury: 'spotlight',
     elegant: 'masonry',
+    minimal: 'grid',
   },
   venue: {
     banner: 'splitMap',
@@ -117,6 +124,8 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     itinerary: 'timeline',
     vertical: 'timeline',
     detailed: 'agendaCards',
+    elegant: 'timeline',
+    flip: 'dayTabs',
   },
   rsvp: {
     form: 'multiEvent',
@@ -125,6 +134,7 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     playful: 'inline',
     luxury: 'multiEvent',
     extended: 'multiEvent',
+    minimal: 'inline',
   },
   travel: {
     map: 'mapPins',
@@ -132,6 +142,7 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     modern: 'localGuide',
     luxury: 'hotelBlock',
     cards: 'tiers',
+    minimal: 'compact',
   },
   faq: {
     grid: 'accordion',
@@ -139,6 +150,15 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     luxury: 'accordion',
   },
   footer: {
+    classic: 'rsvpPush',
+    elegant: 'rsvpPush',
+    modern: 'rsvpPush',
+    expanded: 'rsvpPush',
+    minimal: 'rsvpPush',
+    playful: 'rsvpPush',
+    luxury: 'rsvpPush',
+  },
+  'footer-cta': {
     classic: 'rsvpPush',
     elegant: 'rsvpPush',
     modern: 'rsvpPush',
@@ -161,6 +181,24 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     minimal: 'cards',
     classic: 'cards',
     luxury: 'featured',
+  },
+  countdown: {
+    detailed: 'simple',
+    flip: 'simple',
+    elegant: 'simple',
+    playful: 'simple',
+    classic: 'simple',
+    modern: 'simple',
+    luxury: 'simple',
+  },
+  'wedding-party': {
+    luxury: 'grid',
+    polaroid: 'grid',
+    classic: 'grid',
+    modern: 'grid',
+  },
+  accommodations: {
+    showcase: 'cards',
   },
 };
 
