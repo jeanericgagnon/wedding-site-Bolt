@@ -169,14 +169,21 @@ export function getVariantsForType(type: string): SectionDefinition[] {
 export function resolveAndParse(
   type: string,
   variant: string,
-  rawData: Record<string, unknown>
+  rawData: Record<string, unknown>,
+  options?: { strictVariant?: boolean }
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
-  const aliasVariant = VARIANT_FALLBACKS[type]?.[variant];
-  const def = getDefinition(type, variant)
-    ?? (aliasVariant ? getDefinition(type, aliasVariant) : null)
-    ?? getDefinition(type, 'default')
-    ?? getVariantsForType(type)[0]
-    ?? null;
+  const strictVariant = options?.strictVariant === true;
+
+  const def = strictVariant
+    ? (getDefinition(type, variant) ?? null)
+    : (
+      getDefinition(type, variant)
+      ?? (VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(type, VARIANT_FALLBACKS[type][variant]) : null)
+      ?? getDefinition(type, 'default')
+      ?? getVariantsForType(type)[0]
+      ?? null
+    );
+
   if (!def) return null;
   const parsedData = parseSectionData(def.schema, rawData, def.defaultData) as Record<string, unknown>;
   return { def, parsedData };

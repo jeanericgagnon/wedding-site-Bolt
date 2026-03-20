@@ -165,7 +165,14 @@ export default function TemplateScrollCapture() {
       </section>
 
       {sections.map((section) => (
-        <SectionRenderer key={section.id} section={section} weddingData={weddingData} isPreview siteSlug="template-preview" />
+        <SectionRenderer
+          key={section.id}
+          section={section}
+          weddingData={weddingData}
+          isPreview
+          siteSlug="template-preview"
+          strictVariantMatching
+        />
       ))}
     </div>
   );

@@ -13,6 +13,7 @@ interface SectionRendererProps {
   isPreview?: boolean;
   siteSlug?: string;
   globalAnimationPreset?: BuilderSectionStyleOverrides['animationPreset'];
+  strictVariantMatching?: boolean;
 }
 
 function toSectionInstance(section: BuilderSectionInstance): SectionInstance {
@@ -159,7 +160,7 @@ class SectionErrorBoundary extends React.Component<
   }
 }
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug, globalAnimationPreset }) => {
+export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug, globalAnimationPreset, strictVariantMatching }) => {
   const [preferLegacyRenderer, setPreferLegacyRenderer] = React.useState(false);
 
   const styleOverrides = section.styleOverrides ?? {};
@@ -182,7 +183,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     ? resolveAndParse(
       section.type,
       section.variant,
-      boundSettings
+      boundSettings,
+      { strictVariant: strictVariantMatching }
     )
     : null;
 
@@ -203,6 +205,17 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
         </SideImageWrapper>
       </SectionErrorBoundary>
     );
+  }
+
+  if (strictVariantMatching) {
+    if (isPreview) {
+      return (
+        <div className="py-6 px-4 bg-red-50 border border-red-200 text-center rounded-lg m-3">
+          <p className="text-sm text-red-700">Missing exact section variant: <code className="font-mono">{section.type}::{section.variant}</code></p>
+        </div>
+      );
+    }
+    return null;
   }
 
   let LegacyComponent;
