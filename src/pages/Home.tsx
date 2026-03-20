@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
@@ -22,6 +22,54 @@ export const Home: React.FC = () => {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [demoLoading, setDemoLoading] = useState(false);
   const proposalImageUrl = `${import.meta.env.BASE_URL}7641B308-4D92-48B2-8332-E6AB193A128D_1_105_c.jpeg`;
+  const [selectedFeature, setSelectedFeature] = useState('guests');
+  const featureRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+
+  const featurePanels = [
+    {
+      id: 'guests',
+      title: 'Guests + Households',
+      icon: Users,
+      href: '/features/guests',
+      bullets: ['Household grouping', 'Plus-one rules', 'Event access', 'CSV import', 'Duplicate prevention', 'Export for vendors'],
+    },
+    {
+      id: 'rsvp',
+      title: 'RSVP Engine',
+      icon: CheckCircle2,
+      href: '/features/rsvp',
+      bullets: ['Multi-event RSVP', 'Household-aware flow', 'Meal selection', 'Dietary updates', 'Deadline handling', 'Live response view'],
+    },
+    {
+      id: 'messaging',
+      title: 'Messaging',
+      icon: Mail,
+      href: '/features/messaging',
+      bullets: ['Email blasts included', 'Guest segmentation', 'Schedule sends', 'Delivery status updates', 'Draft + scheduled send flow', 'Ready-to-send templates'],
+    },
+    {
+      id: 'travel',
+      title: 'Travel + Itinerary',
+      icon: Hotel,
+      href: '/features/travel',
+      bullets: ['Hotel room blocks', 'Multi-day timeline', 'Venue addresses', 'Add-to-calendar', 'Timezone support', 'Travel FAQs'],
+    },
+    {
+      id: 'registry',
+      title: 'Registry',
+      icon: Heart,
+      href: '/features/registry',
+      bullets: ['Link existing registries', 'Link any registry', 'Honeymoon fund', 'Charity donations', 'Simple gift cards and links', 'No sponsored clutter'],
+    },
+    {
+      id: 'seating',
+      title: 'Seating',
+      icon: Calendar,
+      href: '/features/seating',
+      bullets: ['Drag-and-drop seating board', 'Table capacity management', 'Auto-assign by RSVP', 'Table assignment workflows', 'Export for caterer', 'Per-event seating'],
+    },
+  ] as const;
 
   const handleSignUp = async () => {
     navigate('/templates');
@@ -41,6 +89,36 @@ export const Home: React.FC = () => {
       setDemoLoading(false);
     }
   };
+
+  const focusFeature = (id: string) => {
+    setSelectedFeature(id);
+    featureRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  };
+
+  const scrollCarouselBy = (dir: 'left' | 'right') => {
+    const node = carouselRef.current;
+    if (!node) return;
+    const amount = Math.max(280, Math.floor(node.clientWidth * 0.72));
+    node.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const node = carouselRef.current;
+    if (!node) return;
+
+    const speedPx = 1; // perceptible slow drift
+    const timer = window.setInterval(() => {
+      const el = carouselRef.current;
+      if (!el) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 0) return;
+
+      const next = el.scrollLeft + speedPx;
+      el.scrollLeft = next >= max ? 0 : next;
+    }, 24);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink">
@@ -166,133 +244,98 @@ export const Home: React.FC = () => {
             </h2>
           </SlideReveal>
 
-          <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-            {/* Guests + Households */}
-            <GridItem>
-              <Link to="/features/guests" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
-                <Users className="w-6 h-6 text-brand" />
+          <div className="mb-8 sticky top-20 z-10">
+            <div className="bg-white/90 backdrop-blur border border-border-subtle rounded-2xl p-2 overflow-x-auto">
+              <div className="flex gap-2 min-w-max">
+                {featurePanels.map((feature) => (
+                  <button
+                    key={feature.id}
+                    type="button"
+                    onClick={() => focusFeature(feature.id)}
+                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all whitespace-nowrap ${selectedFeature === feature.id
+                      ? 'bg-brand text-paper border-brand shadow-sm'
+                      : 'bg-white text-ink/80 border-border hover:border-brand/40 hover:bg-brand/5'}`}
+                  >
+                    {feature.title}
+                  </button>
+                ))}
               </div>
-              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Guests + Households</h3>
-              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
-                <li className="flex items-start gap-2">
-                  <span className="text-brand mt-0.5">•</span>
-                  <span>Household grouping</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand mt-0.5">•</span>
-                  <span>Plus-one rules</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand mt-0.5">•</span>
-                  <span>Event access</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand mt-0.5">•</span>
-                  <span>CSV import</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand mt-0.5">•</span>
-                  <span>Duplicate prevention</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand mt-0.5">•</span>
-                  <span>Export for vendors</span>
-                </li>
-              </ul>
-              </Link>
-            </GridItem>
+            </div>
+          </div>
 
-            {/* RSVP Engine */}
-            <GridItem>
-              <Link to="/features/rsvp" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
-                <CheckCircle2 className="w-6 h-6 text-brand" />
-              </div>
-              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">RSVP Engine</h3>
-              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Multi-event RSVP</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Household-aware flow</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Meal selection</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Dietary updates</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Deadline handling</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Live response view</span></li>
-              </ul>
-              </Link>
-            </GridItem>
+          <div className="mb-3 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => scrollCarouselBy('left')}
+              className="px-3 py-1.5 rounded-lg border border-border bg-white text-ink/80 hover:text-brand hover:border-brand/40"
+              aria-label="Scroll features left"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollCarouselBy('right')}
+              className="px-3 py-1.5 rounded-lg border border-border bg-white text-ink/80 hover:text-brand hover:border-brand/40"
+              aria-label="Scroll features right"
+            >
+              ›
+            </button>
+          </div>
 
-            {/* Messaging */}
-            <GridItem>
-              <Link to="/features/messaging" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
-                <Mail className="w-6 h-6 text-brand" />
-              </div>
-              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Messaging</h3>
-              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Email blasts included</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Guest segmentation</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Schedule sends</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Delivery status updates</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Draft + scheduled send flow</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Ready to send templates</span></li>
-              </ul>
-              </Link>
-            </GridItem>
+          <div ref={carouselRef} className="mb-10 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-4 min-w-max pr-2">
+            {featurePanels.map((feature, idx) => {
+              const Icon = feature.icon;
+              return (
+                <SlideReveal key={feature.id} from={idx % 2 === 0 ? 'left' : 'right'}>
+                  <div
+                    ref={(el) => {
+                      featureRefs.current[feature.id] = el;
+                    }}
+                    className={`shrink-0 w-[88vw] md:w-[62vw] lg:w-[48vw] rounded-2xl border p-6 md:p-7 transition-all ${selectedFeature === feature.id
+                      ? 'bg-white border-brand/35 shadow-lg'
+                      : 'bg-white/80 border-border-subtle shadow-sm'}`}
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-3 rounded-xl ${selectedFeature === feature.id ? 'bg-brand/12' : 'bg-brand/8'}`}>
+                          <Icon className="w-6 h-6 text-brand" />
+                        </div>
+                        <h3 className="text-[1.3rem] font-serif font-bold text-ink leading-snug updates-tight">{feature.title}</h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => focusFeature(feature.id)}
+                        className="text-xs font-semibold px-3 py-2 rounded-lg border border-border hover:border-brand/50 text-ink/70 hover:text-brand bg-white"
+                      >
+                        Focus
+                      </button>
+                    </div>
 
-            {/* Travel + Itinerary */}
-            <GridItem>
-              <Link to="/features/travel" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
-                <Hotel className="w-6 h-6 text-brand" />
-              </div>
-              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Travel + Itinerary</h3>
-              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Hotel room blocks</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Multi-day timeline</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Venue addresses</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Add-to-calendar</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Timezone support</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Travel FAQs</span></li>
-              </ul>
-              </Link>
-            </GridItem>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-[0.92rem] text-ink/75 leading-relaxed">
+                      {feature.bullets.map((bullet) => (
+                        <li key={bullet} className="flex items-start gap-2">
+                          <span className="text-brand mt-0.5">•</span>
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
 
-            {/* Registry */}
-            <GridItem>
-              <Link to="/features/registry" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
-                <Heart className="w-6 h-6 text-brand" />
-              </div>
-              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Registry</h3>
-              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Link existing registries</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Link any registry</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Honeymoon fund</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Charity donations</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Simple gift cards and links</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>No sponsored clutter</span></li>
-              </ul>
-              </Link>
-            </GridItem>
-
-            {/* Seating + Check-in */}
-            <GridItem>
-              <Link to="/features/seating" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
-                <Calendar className="w-6 h-6 text-brand" />
-              </div>
-              <h3 className="text-[1.2rem] font-serif font-bold text-ink mb-3 leading-snug updates-tight">Seating</h3>
-              <ul className="space-y-2 text-[0.85rem] text-ink/70 leading-relaxed">
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Drag-and-drop seating board</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table capacity management</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Auto-assign by RSVP</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Table assignment workflows</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Export for caterer</span></li>
-                <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Per-event seating</span></li>
-              </ul>
-              </Link>
-            </GridItem>
-          </StaggerGrid>
+                    <div className="mt-5">
+                      <Link
+                        to={feature.href}
+                        className="group inline-flex items-center gap-2 text-sm font-semibold text-brand hover:text-brand/85"
+                      >
+                        Explore this feature
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
+                    </div>
+                  </div>
+                </SlideReveal>
+              );
+            })}
+            </div>
+          </div>
 
           <SlideReveal from="right" className="text-center">
             <Link
