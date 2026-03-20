@@ -212,19 +212,64 @@ function bindRsvp(section: BindableSection, weddingData: WeddingDataV1): Record<
   };
 }
 
+function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
+  const coupleName = weddingData.couple.displayName || [weddingData.couple.partner1Name, weddingData.couple.partner2Name].filter(Boolean).join(' & ');
+  const weddingDate = formatDate(weddingData.event?.weddingDateISO);
+  const primaryVenue = (weddingData.venues || [])[0];
+  const venueName = primaryVenue?.name || '';
+  const venueAddress = primaryVenue?.address || '';
+  const locationLine = [venueName, venueAddress].filter(Boolean).join(' · ');
+  const hero = weddingData.media?.heroImageUrl || '';
+  const gallery = (weddingData.media?.gallery || []).map((g) => g.url).filter(Boolean);
+
+  return {
+    ...section.data,
+    // Core names/text
+    headline: coupleName || section.data.headline,
+    title: section.data.title ?? coupleName,
+    coupleName: section.data.coupleName ?? coupleName,
+    names: section.data.names ?? coupleName,
+    subheadline: section.data.subheadline ?? (weddingDate || section.data.subheadline),
+
+    // Date/time/location
+    weddingDate: section.data.weddingDate ?? weddingDate,
+    date: section.data.date ?? weddingDate,
+    eventDate: section.data.eventDate ?? weddingDate,
+    location: section.data.location ?? locationLine,
+    venueName: section.data.venueName ?? venueName,
+    venueAddress: section.data.venueAddress ?? venueAddress,
+    address: section.data.address ?? venueAddress,
+
+    // Images/media (content only, no style changes)
+    heroImage: section.data.heroImage ?? hero,
+    heroImageUrl: section.data.heroImageUrl ?? hero,
+    backgroundImage: section.data.backgroundImage ?? hero,
+    image: section.data.image ?? hero,
+    coverImage: section.data.coverImage ?? hero,
+    images: Array.isArray(section.data.images) && section.data.images.length ? section.data.images : gallery,
+    photos: Array.isArray(section.data.photos) && section.data.photos.length ? section.data.photos : gallery,
+    galleryImages: Array.isArray(section.data.galleryImages) && section.data.galleryImages.length ? section.data.galleryImages : gallery,
+
+    // Footer defaults
+    copyrightText: section.data.copyrightText ?? (coupleName && weddingDate ? `${coupleName} · ${weddingDate}` : section.data.copyrightText),
+  };
+}
+
 export function applyWeddingDataBindings(section: BindableSection, weddingData?: WeddingDataV1 | null): Record<string, unknown> {
   if (!weddingData) return section.data;
 
+  const withCommon = { ...section, data: bindCommon(section, weddingData) };
+
   switch (section.type) {
     case 'venue':
-      return bindVenue(section, weddingData);
+      return bindVenue(withCommon, weddingData);
     case 'schedule':
-      return bindSchedule(section, weddingData);
+      return bindSchedule(withCommon, weddingData);
     case 'registry':
-      return bindRegistry(section, weddingData);
+      return bindRegistry(withCommon, weddingData);
     case 'rsvp':
-      return bindRsvp(section, weddingData);
+      return bindRsvp(withCommon, weddingData);
     default:
-      return section.data;
+      return withCommon.data;
   }
 }

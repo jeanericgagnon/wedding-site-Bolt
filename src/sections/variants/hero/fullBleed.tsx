@@ -17,7 +17,7 @@ export const heroFullBleedSchema = z.object({
 export type HeroFullBleedData = z.infer<typeof heroFullBleedSchema>;
 
 export const defaultHeroFullBleedData: HeroFullBleedData = {
-  headline: 'Sarah & James',
+  headline: 'Kara & Eric',
   subheadline: 'June 14, 2025 · The Grand Pavilion, New York',
   eyebrow: 'We are getting married',
   backgroundImage: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=1920',

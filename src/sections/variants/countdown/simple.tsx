@@ -15,7 +15,7 @@ export type CountdownSimpleData = z.infer<typeof countdownSimpleSchema>;
 
 export const defaultCountdownSimpleData: CountdownSimpleData = {
   eyebrow: 'Counting down to',
-  headline: 'Sarah & James',
+  headline: 'Kara & Eric',
   targetDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   messageAfter: 'Today is the day!',
   showSeconds: true,

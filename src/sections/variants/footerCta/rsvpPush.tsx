@@ -27,7 +27,7 @@ export const defaultFooterCtaRsvpPushData: FooterCtaRsvpPushData = {
   ctaHref: '#rsvp',
   showDivider: true,
   footerNote: 'Please RSVP by May 15th, 2025',
-  copyrightText: 'Sarah & James · June 2025',
+  copyrightText: 'Kara & Eric · January 2027',
   poweredByLabel: '',
 };
 
