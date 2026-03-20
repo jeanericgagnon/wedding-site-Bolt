@@ -85,7 +85,17 @@ export default function TemplateScrollCapture() {
     ];
 
     const selected = pickPhotos(photos, templateId, 24);
-    const hero = selected[0] || '/preview-photos/header-anchor.jpg';
+    const engagementLandscape = photos
+      .filter((p) => p.bucket.toLowerCase().includes('engagement') && p.orientation === 'landscape')
+      .map((p) => p.url);
+    const anyLandscape = photos.filter((p) => p.orientation === 'landscape').map((p) => p.url);
+
+    const hero =
+      engagementLandscape[(hash(`hero-${templateId}`) % (engagementLandscape.length || 1))] ||
+      anyLandscape[(hash(`hero-fallback-${templateId}`) % (anyLandscape.length || 1))] ||
+      selected[0] ||
+      '/preview-photos/header-anchor.jpg';
+
     data.media.heroImageUrl = hero;
     data.media.gallery = selected.map((url, i) => ({ id: `g-${i + 1}`, url, caption: `Moment ${i + 1}` }));
 
