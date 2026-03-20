@@ -25,6 +25,7 @@ export const Home: React.FC = () => {
   const [selectedFeature, setSelectedFeature] = useState('guests');
   const featureRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const carouselRef = useRef<HTMLDivElement | null>(null);
+  const autoScrollPauseUntilRef = useRef(0);
 
   const featurePanels = [
     {
@@ -92,12 +93,20 @@ export const Home: React.FC = () => {
 
   const focusFeature = (id: string) => {
     setSelectedFeature(id);
-    featureRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    autoScrollPauseUntilRef.current = Date.now() + 2200;
+
+    const node = carouselRef.current;
+    const target = featureRefs.current[id];
+    if (!node || !target) return;
+
+    const left = target.offsetLeft - (node.clientWidth - target.clientWidth) / 2;
+    node.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
   };
 
   const scrollCarouselBy = (dir: 'left' | 'right') => {
     const node = carouselRef.current;
     if (!node) return;
+    autoScrollPauseUntilRef.current = Date.now() + 1800;
     const amount = Math.max(280, Math.floor(node.clientWidth * 0.72));
     node.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
   };
@@ -108,6 +117,8 @@ export const Home: React.FC = () => {
 
     const speedPx = 1; // perceptible slow drift
     const timer = window.setInterval(() => {
+      if (Date.now() < autoScrollPauseUntilRef.current) return;
+
       const el = carouselRef.current;
       if (!el) return;
       const max = el.scrollWidth - el.clientWidth;

@@ -109,7 +109,7 @@ export const Templates: React.FC = () => {
               <span className="rounded bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-rose-700">Recommended</span>
             )}
             {selectedTemplateId === tpl.id && (
-              <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-emerald-700">Selected</span>
+              <span className="rounded bg-brand/10 px-2 py-0.5 text-[10px] font-semibold uppercase updates-wide text-brand">Selected</span>
             )}
           </div>
         </div>
@@ -119,7 +119,7 @@ export const Templates: React.FC = () => {
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
           {tpl.seasonTags.map((tag) => <span key={tag} className="rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">{tag}</span>)}
-          <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 text-xs text-sky-700">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
+          <span className="rounded bg-brand/5 border border-brand/20 px-2 py-0.5 text-xs text-brand">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2">
           <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
@@ -133,7 +133,7 @@ export const Templates: React.FC = () => {
                 return [...prev, tpl.id].slice(-2);
               });
             }}
-            className={`rounded border px-3 py-2 text-sm font-medium transition-colors ${compareIds.includes(tpl.id) ? 'border-sky-400 bg-sky-50 text-sky-700 hover:bg-sky-100' : 'border-neutral-300 text-neutral-700 hover:bg-neutral-100'}`}
+            className={`rounded border px-3 py-2 text-sm font-medium transition-colors ${compareIds.includes(tpl.id) ? 'border-brand/40 bg-brand/5 text-brand hover:bg-brand/10' : 'border-neutral-300 text-neutral-700 hover:bg-neutral-100'}`}
           >
             {compareIds.includes(tpl.id) ? 'Comparing' : 'Compare'}
           </button>
@@ -230,14 +230,14 @@ export const Templates: React.FC = () => {
         </div>
 
         {comparedTemplates.length > 0 && (
-          <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50/60 p-3 shadow-sm">
+          <div className="mt-4 rounded-xl border border-brand/20 bg-brand/5 p-3 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Quick compare</p>
-              <button onClick={() => setCompareIds([])} className="text-[11px] font-medium text-sky-700 hover:underline">Clear</button>
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand">Quick compare</p>
+              <button onClick={() => setCompareIds([])} className="text-[11px] font-medium text-brand hover:underline">Clear</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {comparedTemplates.map((tpl) => (
-                <div key={`cmp-${tpl.id}`} className="rounded-lg border border-sky-200 bg-white p-2">
+                <div key={`cmp-${tpl.id}`} className="rounded-lg border border-brand/20 bg-white p-2">
                   <p className="text-sm font-semibold text-neutral-900">{tpl.name}</p>
                   <p className="text-[11px] text-neutral-500 mt-0.5">{tpl.designFamily}</p>
                   <p className="text-[11px] text-neutral-700 mt-1">Modules: {tpl.includedModules.length} • Sections: {tpl.defaultSectionOrder.length}</p>
@@ -252,16 +252,16 @@ export const Templates: React.FC = () => {
               ))}
             </div>
             {!sectionDiff && comparedTemplates.length === 1 && (
-              <div className="mt-2 rounded-lg border border-sky-200 bg-white px-2.5 py-2 text-[11px] text-sky-800">
+              <div className="mt-2 rounded-lg border border-brand/20 bg-white px-2.5 py-2 text-[11px] text-brand">
                 Select one more template to unlock section-by-section comparison.
               </div>
             )}
 
             {sectionDiff && (
-              <div className="mt-3 rounded-lg border border-sky-200 bg-white p-2.5">
-                <p className="text-[11px] font-semibold text-sky-800 mb-1">Section order diff</p>
+              <div className="mt-3 rounded-lg border border-brand/20 bg-white p-2.5">
+                <p className="text-[11px] font-semibold text-brand mb-1">Section order diff</p>
                 <div className="mb-2 flex flex-wrap gap-1.5 text-[10px]">
-                  <span className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-emerald-700">Shared</span>
+                  <span className="rounded bg-brand/5 border border-brand/20 px-1.5 py-0.5 text-brand">Shared</span>
                   <span className="rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-amber-700">Only in A</span>
                   <span className="rounded bg-rose-50 border border-rose-200 px-1.5 py-0.5 text-rose-700">Only in B</span>
                   <span className="rounded bg-neutral-50 border border-neutral-200 px-1.5 py-0.5 text-neutral-600">Number = section order</span>
@@ -271,7 +271,7 @@ export const Templates: React.FC = () => {
                     <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">Shared</p>
                     <div className="flex flex-wrap gap-1">
                       {(sectionDiff.shared.length ? sectionDiff.shared : ['None']).map((s) => (
-                        <span key={`shared-${s}`} className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] text-emerald-700">{s}</span>
+                        <span key={`shared-${s}`} className="rounded bg-brand/5 border border-brand/20 px-1.5 py-0.5 text-[10px] text-brand">{s}</span>
                       ))}
                     </div>
                   </div>
