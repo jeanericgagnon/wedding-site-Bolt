@@ -78,6 +78,11 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     elegant: 'fullBleed',
     minimal: 'fullBleed',
     magazine: 'fullBleed',
+    bold: 'fullBleed',
+    floating: 'fullBleed',
+    layered: 'fullBleed',
+    moody: 'fullBleed',
+    refined: 'fullBleed',
   },
   story: {
     editorial: 'twoColumn',
@@ -91,6 +96,9 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     timeline: 'twoColumn',
     compact: 'twoColumn',
     minimal: 'twoColumn',
+    bold: 'twoColumn',
+    immersive: 'twoColumn',
+    magazine: 'twoColumn',
   },
   gallery: {
     fullwidth: 'filmStrip',
@@ -100,6 +108,9 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     luxury: 'spotlight',
     elegant: 'masonry',
     minimal: 'grid',
+    bold: 'spotlight',
+    split: 'mosaic',
+    timeline: 'categorized',
   },
   venue: {
     banner: 'splitMap',
@@ -112,7 +123,15 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     modern: 'splitMap',
     luxury: 'detailsFirst',
     playfull: 'card',
+    playful: 'card',
     garden: 'card',
+    artistic: 'splitMap',
+    bold: 'splitMap',
+    compact: 'card',
+    immersive: 'splitMap',
+    magazine: 'splitMap',
+    refined: 'detailsFirst',
+    timeline: 'detailsFirst',
   },
   schedule: {
     minimal: 'agendaCards',
@@ -126,28 +145,40 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     detailed: 'agendaCards',
     elegant: 'timeline',
     flip: 'dayTabs',
+    bold: 'dayTabs',
+    compact: 'agendaCards',
+    program: 'timeline',
   },
   rsvp: {
     form: 'multiEvent',
     classic: 'multiEvent',
-    modern: 'inline',
-    playful: 'inline',
+    modern: 'multiEvent',
+    playful: 'multiEvent',
     luxury: 'multiEvent',
     extended: 'multiEvent',
-    minimal: 'inline',
+    minimal: 'multiEvent',
+    bold: 'multiEvent',
+    elegant: 'multiEvent',
+    quick: 'multiEvent',
   },
   travel: {
-    map: 'mapPins',
+    map: 'splitAirHotel',
     classic: 'list',
     modern: 'localGuide',
     luxury: 'hotelBlock',
     cards: 'tiers',
     minimal: 'compact',
+    playful: 'thingsToDo',
+    split: 'splitAirHotel',
   },
   faq: {
     grid: 'accordion',
     categorized: 'accordion',
     luxury: 'accordion',
+    minimal: 'accordion',
+    modern: 'accordion',
+    playful: 'accordion',
+    tabbed: 'accordion',
   },
   footer: {
     classic: 'rsvpPush',
@@ -166,6 +197,7 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     minimal: 'rsvpPush',
     playful: 'rsvpPush',
     luxury: 'rsvpPush',
+    bold: 'rsvpPush',
   },
   directions: {
     illustrated: 'split',
@@ -181,6 +213,9 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     minimal: 'cards',
     classic: 'cards',
     luxury: 'featured',
+    experiences: 'featured',
+    modern: 'cards',
+    playful: 'cards',
   },
   countdown: {
     detailed: 'simple',
@@ -190,15 +225,40 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     classic: 'simple',
     modern: 'simple',
     luxury: 'simple',
+    bold: 'simple',
+    compact: 'simple',
+    floating: 'simple',
+    minimal: 'simple',
+    progress: 'simple',
   },
   'wedding-party': {
     luxury: 'grid',
     polaroid: 'grid',
     classic: 'grid',
     modern: 'grid',
+    artistic: 'grid',
+    cards: 'grid',
+    filmstrip: 'scroll',
+    grid: 'grid',
+    magazine: 'storyBios',
+    minimal: 'minimal',
+  },
+  'dress-code': {
+    cards: 'moodBoard',
+    classic: 'moodBoard',
+    creative: 'moodBoard',
+    elegant: 'moodBoard',
+    luxury: 'moodBoard',
+    minimal: 'moodBoard',
+    modern: 'moodBoard',
+    playful: 'moodBoard',
   },
   accommodations: {
     showcase: 'cards',
+    classic: 'cards',
+    luxury: 'cards',
+    minimal: 'cards',
+    modern: 'cards',
   },
 };
 
@@ -293,14 +353,20 @@ export function resolveAndParse(
   options?: { strictVariant?: boolean }
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
   const strictVariant = options?.strictVariant === true;
+  const normalizedType = ({
+    'footer-cta': 'footerCta',
+    'wedding-party': 'weddingParty',
+    'dress-code': 'dressCode',
+  } as Record<string, string>)[type] ?? type;
 
   const def = strictVariant
-    ? (getDefinition(type, variant) ?? null)
+    ? (getDefinition(normalizedType, variant) ?? null)
     : (
-      getDefinition(type, variant)
-      ?? (VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(type, VARIANT_FALLBACKS[type][variant]) : null)
-      ?? getDefinition(type, 'default')
-      ?? getVariantsForType(type)[0]
+      getDefinition(normalizedType, variant)
+      ?? (VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][variant]) : null)
+      ?? (VARIANT_FALLBACKS[normalizedType]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[normalizedType][variant]) : null)
+      ?? getDefinition(normalizedType, 'default')
+      ?? getVariantsForType(normalizedType)[0]
       ?? null
     );
 
