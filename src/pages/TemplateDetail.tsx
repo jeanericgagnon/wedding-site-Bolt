@@ -56,19 +56,23 @@ export const TemplateDetail: React.FC = () => {
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-2">
-              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Preview modes</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded border border-neutral-200 bg-white p-2">
-                  <p className="text-xs text-neutral-500 mb-1">Desktop</p>
-                  <img src={tpl.previewImage} alt={`${tpl.name} desktop preview`} className="h-20 w-full rounded object-cover" />
-                </div>
-                <div className="rounded border border-neutral-200 bg-white p-2">
-                  <p className="text-xs text-neutral-500 mb-1">Mobile</p>
-                  <div className="mx-auto w-16 rounded border border-neutral-200 bg-white p-1">
-                    <img src={tpl.previewImage} alt={`${tpl.name} mobile preview`} className="h-20 w-full rounded object-cover" />
-                  </div>
-                </div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase updates-wide text-neutral-500">Live populated preview</p>
+                <Link
+                  to={`/template-scroll-capture?templateId=${tpl.id}`}
+                  className="rounded border border-neutral-300 bg-white px-2 py-1 text-[11px] text-neutral-700 hover:bg-neutral-100"
+                >
+                  Open full preview
+                </Link>
               </div>
+              <div className="rounded border border-neutral-200 bg-white overflow-hidden">
+                <iframe
+                  title={`${tpl.name} live preview`}
+                  src={`/template-scroll-capture?templateId=${tpl.id}`}
+                  className="h-[360px] w-full"
+                />
+              </div>
+              <p className="mt-2 text-[11px] text-neutral-500">Uses populated Eric + Kara preview data (names, date, location, schedule, photos).</p>
             </div>
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-1">
               <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Default section order</p>
