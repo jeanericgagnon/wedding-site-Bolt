@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
 import { createDefaultSectionInstance } from '../types/builder/section';
 import { createEmptyWeddingData } from '../types/weddingData';
-import { SectionRenderer } from '../builder/components/SectionRenderer';
+import { getSectionComponent } from '../sections/sectionRegistry';
 
 type PreviewPhoto = {
   url: string;
@@ -158,9 +158,14 @@ export default function TemplateScrollCapture() {
         <p className="mt-1 text-neutral-600">Amor Boutique Hotel · Pescadores S/N, 63734 Sayulita, Nay., Mexico</p>
       </section>
 
-      {sections.map((section) => (
-        <SectionRenderer key={section.id} section={section} weddingData={weddingData} isPreview siteSlug="template-preview" />
-      ))}
+      {sections.map((section) => {
+        try {
+          const LegacyComponent = getSectionComponent(section.type, section.variant);
+          return <LegacyComponent key={section.id} data={weddingData} instance={section as any} />;
+        } catch {
+          return null;
+        }
+      })}
     </div>
   );
 }
