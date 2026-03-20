@@ -348,19 +348,12 @@ export const DashboardItinerary: React.FC = () => {
       return;
     }
 
-    if (!formData.event_date) {
-      setSaveError('Event date is required.');
-      return;
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selectedDate = new Date(formData.event_date);
-    selectedDate.setHours(0, 0, 0, 0);
-
-    if (!formData.event_date || Number.isNaN(selectedDate.getTime()) || selectedDate <= today) {
-      setSaveError('Event date must be in the future.');
-      return;
+    if (formData.event_date) {
+      const selectedDate = new Date(formData.event_date);
+      if (Number.isNaN(selectedDate.getTime())) {
+        setSaveError('Event date is invalid.');
+        return;
+      }
     }
 
     if (formData.start_time && formData.end_time) {
@@ -419,6 +412,7 @@ export const DashboardItinerary: React.FC = () => {
         ...formData,
         event_name: formData.event_name,
         title: formData.event_name,
+        event_date: formData.event_date || null,
         start_time: formData.start_time || null,
         end_time: formData.end_time || null,
         dress_code: formData.dress_code || null,
@@ -621,7 +615,7 @@ export const DashboardItinerary: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Date *
+                  Date
                 </label>
                 <Input
                   type="date"
