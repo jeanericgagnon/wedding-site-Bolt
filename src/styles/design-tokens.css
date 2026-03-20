@@ -2,30 +2,30 @@
   /* Core Brand Foundation - Trust First */
 
   /* Brand Color RGB Values (for Tailwind) */
-  --brand: 91 42 74;         /* Deep Plum #5B2A4A */
-  --brand-2: 176 141 87;     /* Champagne Gold #B08D57 */
-  --accent: 112 95 125;      /* Dusty Violet #705F7D */
-  --paper: 247 243 237;      /* Soft Ivory #F7F3ED */
-  --ink: 31 26 23;           /* Rich Charcoal */
+  --brand: 42 93 103;        /* Deep Teal #2A5D67 */
+  --brand-2: 200 159 86;     /* Burnt Gold #C89F56 */
+  --accent: 215 121 93;      /* Muted Coral #D7795D */
+  --paper: 247 248 250;      /* Cool Light Gray #F7F8FA */
+  --ink: 34 34 34;           /* Charcoal */
 
   /* Core Brand */
-  --brand-primary: #5B2A4A;
-  --brand-hover: #4A223C;
-  --brand-soft: #EEDFE7;
+  --brand-primary: #2A5D67;
+  --brand-hover: #234B53;
+  --brand-soft: #E5EDEF;
 
   /* Neutrals */
-  --neutral-background: #F7F3ED;
+  --neutral-background: #F7F8FA;
   --neutral-surface: #FFFFFF;
   --neutral-card: #FFFFFF;
-  --neutral-border: #E6DED4;
-  --neutral-text-primary: #1F1A17;
-  --neutral-text-secondary: #6B625A;
+  --neutral-border: #E0DCD5;
+  --neutral-text-primary: #2B2B2B;
+  --neutral-text-secondary: #5C5C5C;
   --neutral-text-inverse: #FFFFFF;
 
   /* Accents */
-  --accent-warm: #705F7D;
-  --accent-gold: #B08D57;
-  --accent-plum: #5B2A4A;
+  --accent-warm: #D7795D;
+  --accent-gold: #C89F56;
+  --accent-plum: #2A5D67;
 
   /* Semantic States */
   --state-success: #4F8A5B;
@@ -41,27 +41,27 @@
   --color-background: var(--neutral-background);
   --color-surface: var(--neutral-surface);
   --color-surface-raised: var(--neutral-card);
-  --color-surface-subtle: #FBF8F3;
+  --color-surface-subtle: #F2F4F7;
 
   --color-primary: var(--brand-primary);
   --color-primary-hover: var(--brand-hover);
   --color-primary-light: var(--brand-soft);
 
   --color-accent: var(--accent-warm);
-  --color-accent-hover: #5D4F69;
-  --color-accent-light: #F2EDF6;
+  --color-accent-hover: #C2664A;
+  --color-accent-light: #FAF0ED;
 
   --color-secondary: var(--accent-gold);
-  --color-secondary-hover: #9A7A4B;
+  --color-secondary-hover: #B38D47;
 
   --color-text-primary: var(--neutral-text-primary);
   --color-text-secondary: var(--neutral-text-secondary);
-  --color-text-tertiary: #8C8178;
+  --color-text-tertiary: #978F85;
   --color-text-inverse: var(--neutral-text-inverse);
 
   --color-border: var(--neutral-border);
-  --color-border-subtle: #EFE8DF;
-  --color-border-strong: #D9CEC1;
+  --color-border-subtle: #EBE7E1;
+  --color-border-strong: #D0CBC3;
 
   --color-success: var(--state-success);
   --color-success-light: var(--state-success-light);

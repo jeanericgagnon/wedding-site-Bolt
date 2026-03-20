@@ -13,7 +13,7 @@ import {
   ChevronDown,
   ArrowRight,
 } from 'lucide-react';
-import { Reveal, RevealItem, RevealStagger } from '../components/marketing/Reveal';
+import { GridItem, HeroReveal, Reveal, SlideReveal, StaggerGrid } from '../components/marketing/Reveal';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -49,15 +49,20 @@ export const Home: React.FC = () => {
       {/* HERO */}
       <section id="top" className="py-14 md:py-20 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
-          <Reveal className="max-w-4xl mx-auto text-center">
-            <h1 className="text-[2.4rem] md:text-[4rem] font-serif font-bold text-ink mb-5 leading-[1.04] updates-tight">
-              A wedding site that doesn't break when it matters
-            </h1>
-            <p className="text-[1.0625rem] md:text-[1.1875rem] text-ink/75 mb-8 leading-relaxed max-w-3xl mx-auto">
-              One place for your wedding site, RSVPs, guests, messaging, seating, registry, photo sharing, and timeline, built to make planning easier, not push you through a funnel.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-              <button
+          <div className="max-w-4xl mx-auto text-center">
+            <HeroReveal>
+              <h1 className="text-[2.4rem] md:text-[4rem] font-serif font-bold text-ink mb-5 leading-[1.04] updates-tight">
+                A wedding site that doesn't break when it matters
+              </h1>
+            </HeroReveal>
+            <HeroReveal delay={0.1}>
+              <p className="text-[1.0625rem] md:text-[1.1875rem] text-ink/75 mb-8 leading-relaxed max-w-3xl mx-auto">
+                One place for your wedding site, RSVPs, guests, messaging, seating, registry, photo sharing, and timeline, built to make planning easier, not push you through a funnel.
+              </p>
+            </HeroReveal>
+            <HeroReveal delay={0.2}>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+                <button
                 className="px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
                 onClick={handleSignUp}
                 aria-label="Sign up for your wedding site"
@@ -66,10 +71,10 @@ export const Home: React.FC = () => {
               </button>
               <Link
                 to="/templates"
-                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
               >
                 Browse templates
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <button
                 onClick={handleDemoLogin}
@@ -84,16 +89,21 @@ export const Home: React.FC = () => {
                 )}
                 {demoLoading ? 'Opening demo...' : 'Try demo'}
               </button>
-            </div>
-            <p className="text-[0.8125rem] text-ink/60 updates-wide leading-loose">
-              $49 flat fee for 2 years • Auto-renew OFF by default • Private by default
-            </p>
-            <div className="mt-4 inline-flex flex-wrap justify-center gap-2">
-              <span className="text-[11px] px-2.5 py-1 rounded-full border border-brand/20 bg-brand/5 text-brand">Website + RSVP + Registry + Day-of</span>
-              <span className="text-[11px] px-2.5 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">No forced upsells</span>
-              <span className="text-[11px] px-2.5 py-1 rounded-full border border-sky-200 bg-sky-50 text-sky-700">Built for guests of all ages</span>
-            </div>
-          </Reveal>
+              </div>
+            </HeroReveal>
+            <HeroReveal delay={0.3}>
+              <p className="text-[0.8125rem] text-ink/60 updates-wide leading-loose">
+                $49 flat fee for 2 years • Auto-renew OFF by default • Private by default
+              </p>
+            </HeroReveal>
+            <HeroReveal delay={0.38}>
+              <div className="mt-4 inline-flex flex-wrap justify-center gap-2">
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-brand/20 bg-brand/5 text-brand">Website + RSVP + Registry + Day-of</span>
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">No forced upsells</span>
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Built for guests of all ages</span>
+              </div>
+            </HeroReveal>
+          </div>
         </div>
       </section>
 
@@ -150,16 +160,16 @@ export const Home: React.FC = () => {
       {/* FEATURES */}
       <section id="features" className="section-shell bg-paper">
         <div className="container-custom">
-          <Reveal className="section-intro">
+          <SlideReveal from="left" className="section-intro">
             <h2 className="section-title mb-4">
               Everything you need—nothing you don't
             </h2>
-          </Reveal>
+          </SlideReveal>
 
-          <RevealStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             {/* Guests + Households */}
-            <RevealItem>
-              <Link to="/features/guests" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <GridItem>
+              <Link to="/features/guests" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Users className="w-6 h-6 text-brand" />
               </div>
@@ -191,11 +201,11 @@ export const Home: React.FC = () => {
                 </li>
               </ul>
               </Link>
-            </RevealItem>
+            </GridItem>
 
             {/* RSVP Engine */}
-            <RevealItem>
-              <Link to="/features/rsvp" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <GridItem>
+              <Link to="/features/rsvp" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <CheckCircle2 className="w-6 h-6 text-brand" />
               </div>
@@ -209,11 +219,11 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Live response view</span></li>
               </ul>
               </Link>
-            </RevealItem>
+            </GridItem>
 
             {/* Messaging */}
-            <RevealItem>
-              <Link to="/features/messaging" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <GridItem>
+              <Link to="/features/messaging" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
@@ -227,11 +237,11 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Ready to send templates</span></li>
               </ul>
               </Link>
-            </RevealItem>
+            </GridItem>
 
             {/* Travel + Itinerary */}
-            <RevealItem>
-              <Link to="/features/travel" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <GridItem>
+              <Link to="/features/travel" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Hotel className="w-6 h-6 text-brand" />
               </div>
@@ -245,11 +255,11 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Travel FAQs</span></li>
               </ul>
               </Link>
-            </RevealItem>
+            </GridItem>
 
             {/* Registry */}
-            <RevealItem>
-              <Link to="/features/registry" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <GridItem>
+              <Link to="/features/registry" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Heart className="w-6 h-6 text-brand" />
               </div>
@@ -263,11 +273,11 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>No sponsored clutter</span></li>
               </ul>
               </Link>
-            </RevealItem>
+            </GridItem>
 
             {/* Seating + Check-in */}
-            <RevealItem>
-              <Link to="/features/seating" className="card-clean p-5 hover:border-brand/40 hover:shadow-md transition-all h-full">
+            <GridItem>
+              <Link to="/features/seating" className="block card-clean p-5 hover:border-brand/40 hover:shadow-lg hover:-translate-y-1 ui-motion-emphasis h-full">
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-5">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
@@ -281,18 +291,18 @@ export const Home: React.FC = () => {
                 <li className="flex items-start gap-2"><span className="text-brand mt-0.5">•</span><span>Per-event seating</span></li>
               </ul>
               </Link>
-            </RevealItem>
-          </RevealStagger>
+            </GridItem>
+          </StaggerGrid>
 
-          <Reveal className="text-center">
+          <SlideReveal from="right" className="text-center">
             <Link
               to="/product"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              className="group inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
               See full product tour
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
-          </Reveal>
+          </SlideReveal>
         </div>
       </section>
 
