@@ -84,13 +84,22 @@ export default function TemplateScrollCapture() {
       },
     ];
 
-    const selected = pickPhotos(photos, templateId, 24);
     const engagementLandscape = photos
       .filter((p) => p.bucket.toLowerCase().includes('engagement') && p.orientation === 'landscape')
       .map((p) => p.url);
     const anyLandscape = photos.filter((p) => p.orientation === 'landscape').map((p) => p.url);
+    const allPicked = pickPhotos(photos, templateId, 48);
+
+    const engagementPicked = pickPhotos(
+      engagementLandscape.map((url) => ({ url, bucket: 'engagement', orientation: 'landscape' })),
+      `engagement-${templateId}`,
+      24
+    );
+
+    const selected = Array.from(new Set([...engagementPicked, ...allPicked])).slice(0, 24);
 
     const hero =
+      engagementPicked[0] ||
       engagementLandscape[(hash(`hero-${templateId}`) % (engagementLandscape.length || 1))] ||
       anyLandscape[(hash(`hero-fallback-${templateId}`) % (anyLandscape.length || 1))] ||
       selected[0] ||
