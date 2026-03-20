@@ -122,8 +122,8 @@ export const Templates: React.FC = () => {
           <span className="rounded bg-brand/5 border border-brand/20 px-2 py-0.5 text-xs text-brand">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
-            Preview
+          <Link to={`/template-scroll-capture?templateId=${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
+            View template
           </Link>
           <button
             type="button"
@@ -245,7 +245,7 @@ export const Templates: React.FC = () => {
                     {tpl.styleTags.slice(0, 3).map((tag) => <span key={`${tpl.id}-${tag}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700">{tag}</span>)}
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] font-medium text-neutral-700 hover:bg-neutral-100">Preview</Link>
+                    <Link to={`/template-scroll-capture?templateId=${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] font-medium text-neutral-700 hover:bg-neutral-100">View template</Link>
                     <button type="button" onClick={() => useTemplate(tpl.id)} className="rounded bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700">Use this</button>
                   </div>
                 </div>
