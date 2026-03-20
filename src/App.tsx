@@ -46,6 +46,7 @@ const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ 
 const VaultContribute = lazy(() => import('./pages/VaultContribute').then(m => ({ default: m.VaultContribute })));
 const BuilderV2Lab = lazy(() => import('./pages/BuilderV2Lab').then(m => ({ default: m.BuilderV2Lab })));
 const VariantPreviewCapture = lazy(() => import('./pages/VariantPreviewCapture'));
+const TemplateScrollCapture = lazy(() => import('./pages/TemplateScrollCapture'));
 const PhotoUpload = lazy(() => import('./pages/PhotoUpload').then(m => ({ default: m.PhotoUpload })));
 
 const PageLoader = () => (
@@ -75,6 +76,7 @@ const AppContent = () => {
         <Route path="/templates/:templateId" element={<TemplateDetail />} />
         <Route path="/builder-v2-lab" element={<BuilderV2Lab />} />
         <Route path="/variant-preview-capture" element={<VariantPreviewCapture />} />
+        <Route path="/template-scroll-capture" element={<TemplateScrollCapture />} />
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />
         <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
