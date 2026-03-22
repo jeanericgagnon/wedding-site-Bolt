@@ -29,9 +29,15 @@ if (!photos.length) {
   throw new Error('No photos found. Run scripts/sync_preview_photos_from_kara.mjs first.');
 }
 
-const GLOBAL_HEADER_PHOTO = path.join(repoRoot, 'public', 'preview-photos', 'header-anchor.jpg');
-if (!fs.existsSync(GLOBAL_HEADER_PHOTO)) {
-  throw new Error('Missing global header photo at public/preview-photos/header-anchor.jpg');
+const photoPool = photos
+  .map((p) => p.url || p.path || '')
+  .map((rel) => String(rel).replace(/^\//, ''))
+  .map((rel) => path.join(repoRoot, 'public', rel.replace(/^preview-photos\//, 'preview-photos/')))
+  .filter((p) => fs.existsSync(p))
+  .filter((p) => /\.(jpe?g|png|webp)$/i.test(p));
+
+if (!photoPool.length) {
+  throw new Error('No usable preview photos found in manifest paths.');
 }
 
 function hash(str) {
@@ -66,9 +72,9 @@ function overlaySvg(tpl) {
 
   const positions = ['attention', 'centre', 'north', 'south', 'east', 'west'];
   for (const tpl of entries) {
-    const bg = GLOBAL_HEADER_PHOTO;
+    const bg = photoPool[hash(tpl.id) % photoPool.length];
     const outFile = path.join(outDir, `${tpl.id}.webp`);
-    const pos = positions[hash(tpl.id) % positions.length];
+    const pos = positions[hash(`${tpl.id}-pos`) % positions.length];
 
     await sharp(bg)
       .resize(960, 540, { fit: 'cover', position: pos })
