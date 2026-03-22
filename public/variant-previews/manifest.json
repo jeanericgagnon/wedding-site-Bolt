@@ -1,227 +1,52 @@
 {
-  "generatedAt": "2026-03-22T17:11:55.752Z",
-  "source": "src/builder/registry/sectionManifests.ts",
-  "count": 133,
+  "generatedAt": "2026-03-22T18:09:49.892Z",
+  "source": "src/sections/registry.ts (registered strict variants)",
+  "count": 57,
   "items": [
     {
-      "sectionType": "hero",
-      "variantKey": "hero:default",
-      "displayName": "Classic"
+      "sectionType": "accommodations",
+      "variantKey": "accommodations:cards",
+      "displayName": "Cards"
     },
     {
-      "sectionType": "hero",
-      "variantKey": "hero:minimal",
-      "displayName": "Minimal"
+      "sectionType": "contact",
+      "variantKey": "contact:form",
+      "displayName": "Message Form"
     },
     {
-      "sectionType": "hero",
-      "variantKey": "hero:fullbleed",
-      "displayName": "Full Bleed"
+      "sectionType": "contact",
+      "variantKey": "contact:interactiveHub",
+      "displayName": "Interactive Hub"
     },
     {
-      "sectionType": "hero",
-      "variantKey": "hero:split",
+      "sectionType": "countdown",
+      "variantKey": "countdown:simple",
+      "displayName": "Simple"
+    },
+    {
+      "sectionType": "custom",
+      "variantKey": "custom:default",
+      "displayName": "Custom"
+    },
+    {
+      "sectionType": "directions",
+      "variantKey": "directions:card",
+      "displayName": "Map Card"
+    },
+    {
+      "sectionType": "directions",
+      "variantKey": "directions:pin",
+      "displayName": "Pin & Details"
+    },
+    {
+      "sectionType": "directions",
+      "variantKey": "directions:split",
       "displayName": "Split Screen"
     },
     {
-      "sectionType": "hero",
-      "variantKey": "hero:botanical",
-      "displayName": "Botanical"
-    },
-    {
-      "sectionType": "hero",
-      "variantKey": "hero:video",
-      "displayName": "Video Background"
-    },
-    {
-      "sectionType": "hero",
-      "variantKey": "hero:invitation",
-      "displayName": "Invitation Card"
-    },
-    {
-      "sectionType": "hero",
-      "variantKey": "hero:countdown",
-      "displayName": "Countdown Hero"
-    },
-    {
-      "sectionType": "story",
-      "variantKey": "story:default",
-      "displayName": "Classic"
-    },
-    {
-      "sectionType": "story",
-      "variantKey": "story:centered",
-      "displayName": "Centered"
-    },
-    {
-      "sectionType": "story",
-      "variantKey": "story:split",
-      "displayName": "Split"
-    },
-    {
-      "sectionType": "story",
-      "variantKey": "story:timeline",
-      "displayName": "Timeline"
-    },
-    {
-      "sectionType": "story",
-      "variantKey": "story:chapters",
-      "displayName": "Chapters"
-    },
-    {
-      "sectionType": "story",
-      "variantKey": "story:duoColumn",
-      "displayName": "His & Hers"
-    },
-    {
-      "sectionType": "story",
-      "variantKey": "story:milestones",
-      "displayName": "Milestones"
-    },
-    {
-      "sectionType": "venue",
-      "variantKey": "venue:card",
-      "displayName": "Card"
-    },
-    {
-      "sectionType": "venue",
-      "variantKey": "venue:mapFirst",
-      "displayName": "Map First"
-    },
-    {
-      "sectionType": "venue",
-      "variantKey": "venue:splitMap",
-      "displayName": "Split Map"
-    },
-    {
-      "sectionType": "venue",
-      "variantKey": "venue:detailsFirst",
-      "displayName": "Details First"
-    },
-    {
-      "sectionType": "venue",
-      "variantKey": "venue:banner",
-      "displayName": "Aerial Banner"
-    },
-    {
-      "sectionType": "venue",
-      "variantKey": "venue:stacked",
-      "displayName": "Stacked"
-    },
-    {
-      "sectionType": "venue",
-      "variantKey": "venue:minimal",
-      "displayName": "Minimal"
-    },
-    {
-      "sectionType": "schedule",
-      "variantKey": "schedule:timeline",
-      "displayName": "Timeline"
-    },
-    {
-      "sectionType": "schedule",
-      "variantKey": "schedule:dayTabs",
-      "displayName": "Day Tabs"
-    },
-    {
-      "sectionType": "schedule",
-      "variantKey": "schedule:agendaCards",
-      "displayName": "Agenda Cards"
-    },
-    {
-      "sectionType": "schedule",
-      "variantKey": "schedule:bands",
-      "displayName": "Program Bands"
-    },
-    {
-      "sectionType": "schedule",
-      "variantKey": "schedule:horizontal",
-      "displayName": "Horizontal"
-    },
-    {
-      "sectionType": "schedule",
-      "variantKey": "schedule:program",
-      "displayName": "Split Two-Column"
-    },
-    {
-      "sectionType": "travel",
-      "variantKey": "travel:list",
-      "displayName": "List"
-    },
-    {
-      "sectionType": "travel",
-      "variantKey": "travel:hotelBlock",
-      "displayName": "Hotel Block"
-    },
-    {
-      "sectionType": "travel",
-      "variantKey": "travel:thingsToDo",
-      "displayName": "Things To Do"
-    },
-    {
-      "sectionType": "travel",
-      "variantKey": "travel:localGuide",
-      "displayName": "Local Guide"
-    },
-    {
-      "sectionType": "travel",
-      "variantKey": "travel:tiers",
-      "displayName": "Tiered Options"
-    },
-    {
-      "sectionType": "travel",
-      "variantKey": "travel:mapPins",
-      "displayName": "Map & Pins"
-    },
-    {
-      "sectionType": "travel",
-      "variantKey": "travel:splitAirHotel",
-      "displayName": "Air & Hotel Split"
-    },
-    {
-      "sectionType": "travel",
-      "variantKey": "travel:compact",
-      "displayName": "Compact List"
-    },
-    {
-      "sectionType": "registry",
-      "variantKey": "registry:cards",
-      "displayName": "Store Links"
-    },
-    {
-      "sectionType": "registry",
-      "variantKey": "registry:fundHighlight",
-      "displayName": "Fund Highlight"
-    },
-    {
-      "sectionType": "registry",
-      "variantKey": "registry:featured",
-      "displayName": "Featured Gifts"
-    },
-    {
-      "sectionType": "registry",
-      "variantKey": "registry:minimal",
-      "displayName": "Minimal"
-    },
-    {
-      "sectionType": "registry",
-      "variantKey": "registry:honeymoon",
-      "displayName": "Honeymoon Fund"
-    },
-    {
-      "sectionType": "registry",
-      "variantKey": "registry:tabs",
-      "displayName": "Tabbed"
-    },
-    {
-      "sectionType": "registry",
-      "variantKey": "registry:illustrated",
-      "displayName": "Illustrated"
-    },
-    {
-      "sectionType": "faq",
-      "variantKey": "faq:default",
-      "displayName": "Open List"
+      "sectionType": "dress-code",
+      "variantKey": "dress-code:moodBoard",
+      "displayName": "Mood Board"
     },
     {
       "sectionType": "faq",
@@ -229,64 +54,24 @@
       "displayName": "Accordion"
     },
     {
-      "sectionType": "faq",
-      "variantKey": "faq:iconGrid",
-      "displayName": "Icon Grid"
-    },
-    {
-      "sectionType": "faq",
-      "variantKey": "faq:twoColumn",
-      "displayName": "Two Column"
-    },
-    {
-      "sectionType": "faq",
-      "variantKey": "faq:tabbed",
-      "displayName": "Tabbed"
-    },
-    {
-      "sectionType": "faq",
-      "variantKey": "faq:chat",
-      "displayName": "Chat Bubbles"
-    },
-    {
-      "sectionType": "faq",
-      "variantKey": "faq:numbered",
-      "displayName": "Numbered"
-    },
-    {
-      "sectionType": "rsvp",
-      "variantKey": "rsvp:default",
-      "displayName": "Full Form"
-    },
-    {
-      "sectionType": "rsvp",
-      "variantKey": "rsvp:inline",
-      "displayName": "Inline"
-    },
-    {
-      "sectionType": "rsvp",
-      "variantKey": "rsvp:card",
-      "displayName": "Card Steps"
-    },
-    {
-      "sectionType": "rsvp",
-      "variantKey": "rsvp:illustrated",
-      "displayName": "Illustrated"
-    },
-    {
-      "sectionType": "rsvp",
-      "variantKey": "rsvp:formal",
-      "displayName": "Formal"
-    },
-    {
-      "sectionType": "rsvp",
-      "variantKey": "rsvp:multiEvent",
-      "displayName": "Multi-Event"
+      "sectionType": "footer-cta",
+      "variantKey": "footer-cta:rsvpPush",
+      "displayName": "Rsvp Push"
     },
     {
       "sectionType": "gallery",
-      "variantKey": "gallery:masonry",
-      "displayName": "Masonry"
+      "variantKey": "gallery:carousel",
+      "displayName": "Carousel"
+    },
+    {
+      "sectionType": "gallery",
+      "variantKey": "gallery:categorized",
+      "displayName": "Categorized"
+    },
+    {
+      "sectionType": "gallery",
+      "variantKey": "gallery:filmStrip",
+      "displayName": "Film Strip"
     },
     {
       "sectionType": "gallery",
@@ -295,8 +80,13 @@
     },
     {
       "sectionType": "gallery",
-      "variantKey": "gallery:filmStrip",
-      "displayName": "Film Strip"
+      "variantKey": "gallery:masonry",
+      "displayName": "Masonry"
+    },
+    {
+      "sectionType": "gallery",
+      "variantKey": "gallery:mosaic",
+      "displayName": "Mosaic"
     },
     {
       "sectionType": "gallery",
@@ -309,244 +99,9 @@
       "displayName": "Spotlight"
     },
     {
-      "sectionType": "gallery",
-      "variantKey": "gallery:carousel",
-      "displayName": "Carousel"
-    },
-    {
-      "sectionType": "gallery",
-      "variantKey": "gallery:mosaic",
-      "displayName": "Mosaic"
-    },
-    {
-      "sectionType": "gallery",
-      "variantKey": "gallery:categorized",
-      "displayName": "Categorized"
-    },
-    {
-      "sectionType": "countdown",
-      "variantKey": "countdown:default",
-      "displayName": "Centered"
-    },
-    {
-      "sectionType": "countdown",
-      "variantKey": "countdown:banner",
-      "displayName": "Banner"
-    },
-    {
-      "sectionType": "countdown",
-      "variantKey": "countdown:rings",
-      "displayName": "Rings"
-    },
-    {
-      "sectionType": "countdown",
-      "variantKey": "countdown:minimal",
-      "displayName": "Typographic"
-    },
-    {
-      "sectionType": "countdown",
-      "variantKey": "countdown:dark",
-      "displayName": "Dark & Bold"
-    },
-    {
-      "sectionType": "countdown",
-      "variantKey": "countdown:photo",
-      "displayName": "Photo Background"
-    },
-    {
-      "sectionType": "wedding-party",
-      "variantKey": "wedding-party:default",
-      "displayName": "Two Sides"
-    },
-    {
-      "sectionType": "wedding-party",
-      "variantKey": "wedding-party:grid",
-      "displayName": "Combined Grid"
-    },
-    {
-      "sectionType": "wedding-party",
-      "variantKey": "wedding-party:scroll",
-      "displayName": "Horizontal Scroll"
-    },
-    {
-      "sectionType": "wedding-party",
-      "variantKey": "wedding-party:storyBios",
-      "displayName": "Story Bios"
-    },
-    {
-      "sectionType": "wedding-party",
-      "variantKey": "wedding-party:minimal",
-      "displayName": "Name List"
-    },
-    {
-      "sectionType": "wedding-party",
-      "variantKey": "wedding-party:splitSides",
-      "displayName": "Split Panel"
-    },
-    {
-      "sectionType": "dress-code",
-      "variantKey": "dress-code:default",
-      "displayName": "Full"
-    },
-    {
-      "sectionType": "dress-code",
-      "variantKey": "dress-code:banner",
-      "displayName": "Banner"
-    },
-    {
-      "sectionType": "dress-code",
-      "variantKey": "dress-code:palette",
-      "displayName": "Color Palette"
-    },
-    {
-      "sectionType": "dress-code",
-      "variantKey": "dress-code:illustrated",
-      "displayName": "Illustrated"
-    },
-    {
-      "sectionType": "dress-code",
-      "variantKey": "dress-code:card",
-      "displayName": "Do & Don\\"
-    },
-    {
-      "sectionType": "dress-code",
-      "variantKey": "dress-code:scale",
-      "displayName": "Formality Scale"
-    },
-    {
-      "sectionType": "accommodations",
-      "variantKey": "accommodations:default",
-      "displayName": "List"
-    },
-    {
-      "sectionType": "accommodations",
-      "variantKey": "accommodations:cards",
-      "displayName": "Cards"
-    },
-    {
-      "sectionType": "accommodations",
-      "variantKey": "accommodations:featured",
-      "displayName": "Featured Block"
-    },
-    {
-      "sectionType": "accommodations",
-      "variantKey": "accommodations:mapList",
-      "displayName": "Map & List"
-    },
-    {
-      "sectionType": "accommodations",
-      "variantKey": "accommodations:faqStyle",
-      "displayName": "FAQ Style"
-    },
-    {
-      "sectionType": "accommodations",
-      "variantKey": "accommodations:onSite",
-      "displayName": "On-Site Lodging"
-    },
-    {
-      "sectionType": "contact",
-      "variantKey": "contact:default",
-      "displayName": "Full"
-    },
-    {
-      "sectionType": "contact",
-      "variantKey": "contact:minimal",
-      "displayName": "Minimal"
-    },
-    {
-      "sectionType": "contact",
-      "variantKey": "contact:form",
-      "displayName": "Message Form"
-    },
-    {
-      "sectionType": "contact",
-      "variantKey": "contact:split",
-      "displayName": "Form & Details"
-    },
-    {
-      "sectionType": "contact",
-      "variantKey": "contact:casual",
-      "displayName": "Casual Ask"
-    },
-    {
-      "sectionType": "contact",
-      "variantKey": "contact:coordinator",
-      "displayName": "Coordinator"
-    },
-    {
-      "sectionType": "contact",
-      "variantKey": "contact:interactiveHub",
-      "displayName": "Interactive Hub"
-    },
-    {
-      "sectionType": "footer-cta",
-      "variantKey": "footer-cta:default",
-      "displayName": "Bold"
-    },
-    {
-      "sectionType": "footer-cta",
-      "variantKey": "footer-cta:minimal",
-      "displayName": "Minimal"
-    },
-    {
-      "sectionType": "footer-cta",
-      "variantKey": "footer-cta:monogram",
-      "displayName": "Monogram"
-    },
-    {
-      "sectionType": "footer-cta",
-      "variantKey": "footer-cta:hashtag",
-      "displayName": "Hashtag CTA"
-    },
-    {
-      "sectionType": "footer-cta",
-      "variantKey": "footer-cta:photo",
-      "displayName": "Closing Photo"
-    },
-    {
-      "sectionType": "footer-cta",
-      "variantKey": "footer-cta:countdown",
-      "displayName": "Countdown Push"
-    },
-    {
-      "sectionType": "custom",
-      "variantKey": "custom:default",
-      "displayName": "Custom"
-    },
-    {
-      "sectionType": "quotes",
-      "variantKey": "quotes:carousel",
-      "displayName": "Carousel"
-    },
-    {
-      "sectionType": "quotes",
-      "variantKey": "quotes:grid",
-      "displayName": "Grid"
-    },
-    {
-      "sectionType": "quotes",
-      "variantKey": "quotes:featured",
-      "displayName": "Featured"
-    },
-    {
-      "sectionType": "quotes",
-      "variantKey": "quotes:pullQuote",
-      "displayName": "Pull Quote"
-    },
-    {
-      "sectionType": "quotes",
-      "variantKey": "quotes:guestbook",
-      "displayName": "Guestbook"
-    },
-    {
-      "sectionType": "quotes",
-      "variantKey": "quotes:letter",
-      "displayName": "Love Letter"
-    },
-    {
-      "sectionType": "menu",
-      "variantKey": "menu:tabs",
-      "displayName": "Course Tabs"
+      "sectionType": "hero",
+      "variantKey": "hero:fullBleed",
+      "displayName": "Full Bleed"
     },
     {
       "sectionType": "menu",
@@ -560,18 +115,13 @@
     },
     {
       "sectionType": "menu",
-      "variantKey": "menu:printed",
-      "displayName": "Printed Menu"
+      "variantKey": "menu:tabs",
+      "displayName": "Course Tabs"
     },
     {
-      "sectionType": "menu",
-      "variantKey": "menu:cocktailDinner",
-      "displayName": "Cocktail & Dinner"
-    },
-    {
-      "sectionType": "menu",
-      "variantKey": "menu:illustrated",
-      "displayName": "Illustrated"
+      "sectionType": "music",
+      "variantKey": "music:compact",
+      "displayName": "Compact List"
     },
     {
       "sectionType": "music",
@@ -584,64 +134,119 @@
       "displayName": "Special Songs"
     },
     {
-      "sectionType": "music",
-      "variantKey": "music:compact",
+      "sectionType": "quotes",
+      "variantKey": "quotes:carousel",
+      "displayName": "Carousel"
+    },
+    {
+      "sectionType": "quotes",
+      "variantKey": "quotes:featured",
+      "displayName": "Featured"
+    },
+    {
+      "sectionType": "quotes",
+      "variantKey": "quotes:grid",
+      "displayName": "Grid"
+    },
+    {
+      "sectionType": "quotes",
+      "variantKey": "quotes:guestbook",
+      "displayName": "Guestbook"
+    },
+    {
+      "sectionType": "registry",
+      "variantKey": "registry:cards",
+      "displayName": "Store Links"
+    },
+    {
+      "sectionType": "registry",
+      "variantKey": "registry:featured",
+      "displayName": "Featured Gifts"
+    },
+    {
+      "sectionType": "rsvp",
+      "variantKey": "rsvp:multiEvent",
+      "displayName": "Multi-Event"
+    },
+    {
+      "sectionType": "schedule",
+      "variantKey": "schedule:agendaCards",
+      "displayName": "Agenda Cards"
+    },
+    {
+      "sectionType": "schedule",
+      "variantKey": "schedule:dayTabs",
+      "displayName": "Day Tabs"
+    },
+    {
+      "sectionType": "schedule",
+      "variantKey": "schedule:timeline",
+      "displayName": "Timeline"
+    },
+    {
+      "sectionType": "story",
+      "variantKey": "story:twoColumn",
+      "displayName": "Two Column"
+    },
+    {
+      "sectionType": "travel",
+      "variantKey": "travel:compact",
       "displayName": "Compact List"
     },
     {
-      "sectionType": "music",
-      "variantKey": "music:vinyl",
-      "displayName": "Vinyl Record"
+      "sectionType": "travel",
+      "variantKey": "travel:hotelBlock",
+      "displayName": "Hotel Block"
     },
     {
-      "sectionType": "music",
-      "variantKey": "music:requestForm",
-      "displayName": "Song Request"
+      "sectionType": "travel",
+      "variantKey": "travel:list",
+      "displayName": "List"
     },
     {
-      "sectionType": "music",
-      "variantKey": "music:journey",
-      "displayName": "Music Journey"
+      "sectionType": "travel",
+      "variantKey": "travel:localGuide",
+      "displayName": "Local Guide"
     },
     {
-      "sectionType": "directions",
-      "variantKey": "directions:pin",
-      "displayName": "Pin & Details"
+      "sectionType": "travel",
+      "variantKey": "travel:mapPins",
+      "displayName": "Map & Pins"
     },
     {
-      "sectionType": "directions",
-      "variantKey": "directions:split",
-      "displayName": "Split Screen"
+      "sectionType": "travel",
+      "variantKey": "travel:splitAirHotel",
+      "displayName": "Air & Hotel Split"
     },
     {
-      "sectionType": "directions",
-      "variantKey": "directions:card",
-      "displayName": "Map Card"
+      "sectionType": "travel",
+      "variantKey": "travel:thingsToDo",
+      "displayName": "Things To Do"
     },
     {
-      "sectionType": "directions",
-      "variantKey": "directions:illustrated",
-      "displayName": "Illustrated Map"
+      "sectionType": "travel",
+      "variantKey": "travel:tiers",
+      "displayName": "Tiered Options"
     },
     {
-      "sectionType": "directions",
-      "variantKey": "directions:multiVenue",
-      "displayName": "Multi-Venue Pins"
+      "sectionType": "venue",
+      "variantKey": "venue:card",
+      "displayName": "Card"
     },
     {
-      "sectionType": "directions",
-      "variantKey": "directions:transport",
-      "displayName": "By Air / Car / Train"
+      "sectionType": "venue",
+      "variantKey": "venue:detailsFirst",
+      "displayName": "Details First"
     },
     {
-      "sectionType": "directions",
-      "variantKey": "directions:fromHotel",
-      "displayName": "From Your Hotel"
+      "sectionType": "venue",
+      "variantKey": "venue:mapFirst",
+      "displayName": "Map First"
     },
     {
-      "sectionType": "video",
-      "variantKey": "video:full",
-      "displayName": "Full Width"
+      "sectionType": "venue",
+      "variantKey": "venue:splitMap",
+      "displayName": "Split Map"
     },
     {
       "sectionType": "video",
@@ -650,23 +255,38 @@
     },
     {
       "sectionType": "video",
+      "variantKey": "video:full",
+      "displayName": "Full Width"
+    },
+    {
+      "sectionType": "video",
       "variantKey": "video:inline",
       "displayName": "Inline"
     },
     {
-      "sectionType": "video",
-      "variantKey": "video:background",
-      "displayName": "Video Background"
+      "sectionType": "wedding-party",
+      "variantKey": "wedding-party:grid",
+      "displayName": "Combined Grid"
     },
     {
-      "sectionType": "video",
-      "variantKey": "video:lightbox",
-      "displayName": "Lightbox Trigger"
+      "sectionType": "wedding-party",
+      "variantKey": "wedding-party:minimal",
+      "displayName": "Name List"
     },
     {
-      "sectionType": "video",
-      "variantKey": "video:reel",
-      "displayName": "Short Reel"
+      "sectionType": "wedding-party",
+      "variantKey": "wedding-party:scroll",
+      "displayName": "Horizontal Scroll"
+    },
+    {
+      "sectionType": "wedding-party",
+      "variantKey": "wedding-party:splitSides",
+      "displayName": "Split Panel"
+    },
+    {
+      "sectionType": "wedding-party",
+      "variantKey": "wedding-party:storyBios",
+      "displayName": "Story Bios"
     }
   ]
 }
