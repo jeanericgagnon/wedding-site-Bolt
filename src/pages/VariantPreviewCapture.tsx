@@ -16,37 +16,6 @@ const VALID_TYPES: BuilderSectionType[] = [
 
 const GLOBAL_HEADER_PHOTO = '/preview-photos/header-anchor.jpg';
 
-const CAPTURE_VARIANT_FALLBACKS: Partial<Record<BuilderSectionType, Record<string, string>>> = {
-  countdown: {
-    banner: 'default',
-  },
-  directions: {
-    fromHotel: 'pin',
-    illustrated: 'pin',
-    multiVenue: 'split',
-    transport: 'card',
-  },
-  menu: {
-    cocktailDinner: 'card',
-    illustrated: 'card',
-    printed: 'tabs',
-  },
-  music: {
-    journey: 'playlist',
-    requestForm: 'playlist',
-    vinyl: 'setlist',
-  },
-  quotes: {
-    letter: 'featured',
-    pullQuote: 'carousel',
-  },
-  video: {
-    background: 'card',
-    lightbox: 'inline',
-    reel: 'full',
-  },
-};
-
 const ORIENTATION_BY_SECTION: Partial<Record<BuilderSectionType, Array<'portrait' | 'landscape' | 'square'>>> = {
   hero: ['landscape'],
   story: ['landscape', 'portrait'],
@@ -145,11 +114,9 @@ export default function VariantPreviewCapture() {
     };
   }, []);
 
-  const captureVariant = CAPTURE_VARIANT_FALLBACKS[safeType]?.[variant] ?? variant;
-
   const section = React.useMemo(() => {
-    const s = createDefaultSectionInstance(safeType, captureVariant, 0);
-    const picks = pickPhotos(photos, safeType, captureVariant);
+    const s = createDefaultSectionInstance(safeType, variant, 0);
+    const picks = pickPhotos(photos, safeType, variant);
 
     const headerPhoto = GLOBAL_HEADER_PHOTO;
     (s.settings as Record<string, unknown>).backgroundImage = headerPhoto;
@@ -159,7 +126,7 @@ export default function VariantPreviewCapture() {
     (s.settings as Record<string, unknown>).overlayOpacity = 28;
 
     return { ...s, id: 'preview-section' };
-  }, [safeType, captureVariant, photos]);
+  }, [safeType, variant, photos]);
 
   const weddingData = React.useMemo(() => {
     const data = createEmptyWeddingData();
@@ -169,7 +136,7 @@ export default function VariantPreviewCapture() {
     data.couple.story = 'We are getting married. We are really happy you are here.';
     data.venues = [{ id: 'v1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
 
-    const picks = pickPhotos(photos, safeType, captureVariant);
+    const picks = pickPhotos(photos, safeType, variant);
     data.media.heroImageUrl = GLOBAL_HEADER_PHOTO;
     data.media.gallery = picks.gallery.map((url, i) => ({ id: `g${i + 1}`, url, caption: `Moment ${i + 1}` }));
 
@@ -180,7 +147,7 @@ export default function VariantPreviewCapture() {
     ];
 
     return data;
-  }, [photos, safeType, captureVariant]);
+  }, [photos, safeType, variant]);
 
   return (
     <div
@@ -188,7 +155,7 @@ export default function VariantPreviewCapture() {
       data-variant-preview-ready={ready ? 'true' : 'false'}
       style={{ width: 960, height: 540, overflow: 'hidden', background: '#fff' }}
     >
-      <SectionRenderer section={section} weddingData={weddingData} isPreview siteSlug="preview" />
+      <SectionRenderer section={section} weddingData={weddingData} isPreview siteSlug="preview" strictVariantMatching />
     </div>
   );
 }

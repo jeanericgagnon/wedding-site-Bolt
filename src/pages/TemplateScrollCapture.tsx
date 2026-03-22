@@ -171,6 +171,7 @@ export default function TemplateScrollCapture() {
           weddingData={weddingData}
           isPreview
           siteSlug="template-preview"
+          strictVariantMatching
         />
       ))}
     </div>

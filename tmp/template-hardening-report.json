@@ -1,0 +1,814 @@
+{
+  "generatedAt": "2026-03-22T17:18:43.211Z",
+  "baseUrl": "http://127.0.0.1:4173",
+  "templateAudit": {
+    "total": 35,
+    "passed": 35,
+    "distinct": 35,
+    "allDistinct": true,
+    "allPassed": true,
+    "rows": [
+      {
+        "templateId": "editorial-impact",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "91a95c618be40d42465488c5169c2f0ddd10b927287ffe4e323db6a76d4b071d",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "cinematic-immersion",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "84b047a6e852da6b7eb8247976ad35fbf328d837f72f003bd943688c6fb6dc7e",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "romantic-dreamy",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "96cc8386302c51b78e61d23db167d8004d2bc6a993eec96b2ea1a8c708f0713d",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "playful-celebration",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "1c5066e800bb73620617e750a19819b01fe56486fc4c16f574b8a55ce51ce7c3",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "timeless-classic",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "bbb1eef7249880c9475c438daae3aec3a6a9ac4fc293df50c43b847df328115a",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "coastal-breeze",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "51418aa245ac0791bcc2a3f7a8827f8f31607b480d7bf8a846fd8d95c9393260",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "garden-escape",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "0514a7fe2a489534a84591fb579c1e8a7eb4df8ecaeeaa8085e2e85d7f55b7f6",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "modern-clean",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "ae2f39881697e3eecfde0f344a6ba52e19e3e0b73ff87c7b6fe7dc26d10f833e",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "luxury-opulent",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "eaa39360d4e64d39f35859735a5809479c364ac5795d18ebe4a42158dca205fb",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "destination-adventure",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "3fa90adaf2d69fa971b12bd866eea1e58d7c7114a9c0be051dffb1397fcbeb3d",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "photo-storytelling",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "6d5dba8c842f08b175a92479ba0d719162ba14c0a326f959905ffd7db0773613",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "minimal-essentials",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "b2e39c2d673be5e7b39aea4d7d4ab688a2771c40d1dd603cd4c1a567f59b5393",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "magazine-narrative",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "ad90b68e158e4f4be3dfaf9d329d04ead1559807c199c7e868587a8827438a1d",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "bold-statement",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "03558ade5c5ddaf45a4c4d46c7767dcfe750931f72db7a665cca360fc9c46589",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "artistic-expression",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "b812dee11f1345b51d2d4dd74d57f36d324d8e84b8937a8eac63eefa6d839f64",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "refined-elegance",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "646b0438aece4c051ec1719cb695db06e6f5b9788aea0d48a252b5455e12e277",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "rustic-charm",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "5ac91d9f16783b30303e5a62d1844b6e4606f18bd3a55878849396d5187e8c5a",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "moody-dramatic",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "5ebbc4a47c141b20db0974c4aa08fc85249ba091ba68e44db114a239912e58d9",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "contemporary-fusion",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "016a60109d550883b72afcf84fe3f9583a4044dbe0bfed97260848c4ba4d84d1",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "floating-elements",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "d500a1e773e5914b1e30fbcc74c1de2c8b0556dd5bbab0ac977f7a7cc62600d4",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "full-featured-classic",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "7cb3e2baa80dc7903c238078e38da04967ca294dcc9adaeacd0ea7c110b51f1a",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "full-featured-modern",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "1e66ef5fd7b5698d1411938c2d24d22a4aaacee010b49bd936e5e1ca1c6dc9da",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "full-featured-luxury",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "72932a6153318add92704003a998e0f6f8d2bbbbb05827141c13441434777d87",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "full-featured-playful",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "0294eaf6f4e6ac050f289061125d06dfa70f6f774f4525fc5d2f7803000c2157",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "full-featured-minimal",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "a0d4d844432d7a8ae8d38d099457eded69ae21b79c8e57f47da998f61c88ec78",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "guest-experience-first",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "88aca787dc91bc43cf876bc81e43767a771af285177628bdeaaa639afb8fdabd",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "wedding-party-showcase",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "eb072c49448db5069eedaa6548b04742d284c4a8bdf548445c4b9942cdc81306",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "timeline-narrative",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "eb70b3949b5c016c93819ed335937e5371c3334b4df0441a5a76a11aca761cb5",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "registry-wish-focused",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "89c6af293ee6de4cfdaf1c99caa462d254db06e60478d626c2b5bf76c774d847",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "ultra-compact-mobile",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "8dbfbc6e5ec439071500affeb13129ce952d19c7573a0c80330cbeafe8af2a5a",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "immersive-experience",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "4165d5b957eabeddf7f01830760d14645d0b3c858b90e78a4773d07f40cc12de",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "elopement-intimate",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "7aeb11b99dc05aae414750c95c05e2ac66d4d33ed462d7691d3de653935583f9",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "bold-typography-driven",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "6efe3526883de0435951758a8d53553927254ed034b45baaeb35bae6aecab314",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "split-screen-modern",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "c5f48e5351f5254971c4755b27a5b5288828058d39c98b021cadd14bb32e75fc",
+        "distinct": true,
+        "pass": true
+      },
+      {
+        "templateId": "experience-collection",
+        "requiredTokenHits": [
+          "kara & eric",
+          "sayulita"
+        ],
+        "leakHits": [],
+        "sectionHash": "c9aecbeb83b47addcec04ee442f3d20679fd7ecdc964f3d71d345dd065d945fd",
+        "distinct": true,
+        "pass": true
+      }
+    ]
+  },
+  "strictVariantAudit": {
+    "total": 133,
+    "strictResolved": 52,
+    "strictFailed": 81,
+    "failedRows": [
+      {
+        "sectionType": "hero",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "hero",
+        "variant": "minimal",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "hero",
+        "variant": "fullbleed",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "hero",
+        "variant": "split",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "hero",
+        "variant": "botanical",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "hero",
+        "variant": "video",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "hero",
+        "variant": "invitation",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "hero",
+        "variant": "countdown",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "story",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "story",
+        "variant": "centered",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "story",
+        "variant": "split",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "story",
+        "variant": "timeline",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "story",
+        "variant": "chapters",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "story",
+        "variant": "duoColumn",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "story",
+        "variant": "milestones",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "venue",
+        "variant": "banner",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "venue",
+        "variant": "stacked",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "venue",
+        "variant": "minimal",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "schedule",
+        "variant": "bands",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "schedule",
+        "variant": "horizontal",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "schedule",
+        "variant": "program",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "registry",
+        "variant": "fundHighlight",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "registry",
+        "variant": "minimal",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "registry",
+        "variant": "honeymoon",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "registry",
+        "variant": "tabs",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "registry",
+        "variant": "illustrated",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "faq",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "faq",
+        "variant": "iconGrid",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "faq",
+        "variant": "twoColumn",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "faq",
+        "variant": "tabbed",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "faq",
+        "variant": "chat",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "faq",
+        "variant": "numbered",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "rsvp",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "rsvp",
+        "variant": "inline",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "rsvp",
+        "variant": "card",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "rsvp",
+        "variant": "illustrated",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "rsvp",
+        "variant": "formal",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "countdown",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "countdown",
+        "variant": "banner",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "countdown",
+        "variant": "rings",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "countdown",
+        "variant": "minimal",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "countdown",
+        "variant": "dark",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "countdown",
+        "variant": "photo",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "wedding-party",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "dress-code",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "dress-code",
+        "variant": "banner",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "dress-code",
+        "variant": "palette",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "dress-code",
+        "variant": "illustrated",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "dress-code",
+        "variant": "card",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "dress-code",
+        "variant": "scale",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "accommodations",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "accommodations",
+        "variant": "featured",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "accommodations",
+        "variant": "mapList",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "accommodations",
+        "variant": "faqStyle",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "accommodations",
+        "variant": "onSite",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "contact",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "contact",
+        "variant": "minimal",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "contact",
+        "variant": "split",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "contact",
+        "variant": "casual",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "contact",
+        "variant": "coordinator",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "footer-cta",
+        "variant": "default",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "footer-cta",
+        "variant": "minimal",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "footer-cta",
+        "variant": "monogram",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "footer-cta",
+        "variant": "hashtag",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "footer-cta",
+        "variant": "photo",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "footer-cta",
+        "variant": "countdown",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "quotes",
+        "variant": "pullQuote",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "quotes",
+        "variant": "letter",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "menu",
+        "variant": "printed",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "menu",
+        "variant": "cocktailDinner",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "menu",
+        "variant": "illustrated",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "music",
+        "variant": "vinyl",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "music",
+        "variant": "requestForm",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "music",
+        "variant": "journey",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "directions",
+        "variant": "illustrated",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "directions",
+        "variant": "multiVenue",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "directions",
+        "variant": "transport",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "directions",
+        "variant": "fromHotel",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "video",
+        "variant": "background",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "video",
+        "variant": "lightbox",
+        "strictResolved": false
+      },
+      {
+        "sectionType": "video",
+        "variant": "reel",
+        "strictResolved": false
+      }
+    ]
+  },
+  "readiness": {
+    "templateReady": true,
+    "strictVariantReady": false
+  }
+}
