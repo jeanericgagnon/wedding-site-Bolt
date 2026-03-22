@@ -1,0 +1,431 @@
+{
+  "summary": {
+    "baseUrl": "http://127.0.0.1:4173",
+    "totalChecks": 54,
+    "passed": 54,
+    "failed": 0,
+    "consoleErrorCount": 0,
+    "runtimeErrorCount": 0,
+    "startedAt": "2026-03-22T22:13:36.710Z"
+  },
+  "results": [
+    {
+      "area": "public-route",
+      "route": "/",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/product",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/product",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/templates",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/templates",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/builder-v2-lab",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/builder-v2-lab",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/variant-preview-capture",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/variant-preview-capture",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/template-scroll-capture",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/template-scroll-capture",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/rsvp",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/rsvp",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/events",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/events",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/features/guests",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/features/guests",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/features/rsvp",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/features/rsvp",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/features/messaging",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/features/messaging",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/features/travel",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/features/travel",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/features/registry",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/features/registry",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/features/seating",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/features/seating",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/login",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/signup",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/signup",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/site/alex-jordan-demo",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/site/alex-jordan-demo",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/vault/alex-jordan-demo",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/vault/alex-jordan-demo",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/vault/alex-jordan-demo/2026",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/vault/alex-jordan-demo/2026",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/photos/upload",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/photos/upload",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "public-route",
+      "route": "/guest-contact/demo-token",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/guest-contact/demo-token",
+      "title": "Dayof Wedding SaaS Frontend",
+      "pass": true
+    },
+    {
+      "area": "template-flow",
+      "route": "/templates",
+      "pass": true,
+      "finalUrl": "http://127.0.0.1:4173/templates/artistic-expression"
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/overview",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/builder",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/guests",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/itinerary",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/planning",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/seating",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/seating-lookup",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/vault",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/photos",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/registry",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/settings",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/messages",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/rsvp-board",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/dashboard/coordinator",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/admin/errors",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/builder",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/setup",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/setup/names",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/onboarding",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/onboarding/status",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/onboarding/celebration",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/onboarding/quick-start",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/onboarding/guided",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/payment-required",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "protected-route",
+      "route": "/payment/success",
+      "statusCode": 200,
+      "finalUrl": "http://127.0.0.1:4173/login",
+      "pass": true
+    },
+    {
+      "area": "site-section-keyword",
+      "route": "/template-scroll-capture?templateId=full-featured-classic",
+      "check": "RSVP section",
+      "expectedAny": [
+        "rsvp",
+        "respond",
+        "attending"
+      ],
+      "pass": true
+    },
+    {
+      "area": "site-section-keyword",
+      "route": "/template-scroll-capture?templateId=full-featured-classic",
+      "check": "Registry section",
+      "expectedAny": [
+        "registry",
+        "gift"
+      ],
+      "pass": true
+    },
+    {
+      "area": "site-section-keyword",
+      "route": "/template-scroll-capture?templateId=full-featured-classic",
+      "check": "Schedule section",
+      "expectedAny": [
+        "schedule",
+        "itinerary",
+        "timeline"
+      ],
+      "pass": true
+    },
+    {
+      "area": "site-section-keyword",
+      "route": "/template-scroll-capture?templateId=full-featured-classic",
+      "check": "Travel section",
+      "expectedAny": [
+        "travel",
+        "accommodations",
+        "hotel"
+      ],
+      "pass": true
+    },
+    {
+      "area": "site-section-keyword",
+      "route": "/template-scroll-capture?templateId=full-featured-classic",
+      "check": "Venue section",
+      "expectedAny": [
+        "venue",
+        "location",
+        "where"
+      ],
+      "pass": true
+    },
+    {
+      "area": "routing-utility",
+      "route": "/definitely-not-real-route-123",
+      "finalUrl": "http://127.0.0.1:4173/",
+      "pass": true
+    }
+  ],
+  "consoleErrors": [],
+  "runtimeErrors": []
+}
