@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 const normalizeEnvValue = (value) => {
   if (typeof value !== 'string') return '';
-  const trimmed = value.trim().replace(/[\r\n]+/g, '');
+  const trimmed = value.trim().replace(/[\r\n]+/g, '').replace(/\\n/g, '').replace(/\\r/g, '');
   if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
     return trimmed.slice(1, -1).trim();
   }
@@ -50,18 +50,83 @@ async function req(url, opts = {}) {
   return { status: res.status, data };
 }
 
-const guestsResp = await req(`${base}/rest/v1/guests?select=id,invite_token,plus_one_allowed,invited_to_ceremony,invited_to_reception,first_name,last_name,name&invite_token=not.is.null&limit=500`);
-if (guestsResp.status >= 300 || !Array.isArray(guestsResp.data) || guestsResp.data.length === 0) {
-  console.log(JSON.stringify({ ok: false, step: 'guest_fetch_failed', guestsResp }, null, 2));
-  process.exit(1);
+const fn = `${base}/functions/v1/validate-rsvp-token`;
+
+const preflight = await req(fn, {
+  method: 'POST',
+  body: JSON.stringify({ action: 'lookup', searchValue: 'smoke-preflight-token' }),
+});
+
+if (preflight.status === 401) {
+  const output = {
+    ok: !strict,
+    strict,
+    skipped: true,
+    step: 'external_fixture_required',
+    message: 'validate-rsvp-token function is not callable with current anon credentials (401).',
+    recommendation: 'Provide anon-callable function auth in this environment or run with credentials that can invoke the function.',
+  };
+  console.log(JSON.stringify(output, null, 2));
+  if (strict) process.exit(1);
+  process.exit(0);
 }
 
-const guests = guestsResp.data;
+async function lookupByToken(inviteToken) {
+  const lookup = await req(fn, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'lookup', searchValue: inviteToken }),
+  });
+
+  if (lookup.status === 401) {
+    return { unauthorized: true };
+  }
+  if (lookup.status !== 200 || !lookup.data?.guest?.id) return null;
+
+  const guest = lookup.data.guest;
+  return {
+    id: guest.id,
+    invite_token: guest.invite_token,
+    plus_one_allowed: !!guest.plus_one_allowed,
+    invited_to_ceremony: !!guest.invited_to_ceremony,
+    invited_to_reception: !!guest.invited_to_reception,
+    first_name: guest.first_name ?? null,
+    last_name: guest.last_name ?? null,
+    name: guest.name ?? null,
+  };
+}
+
+const guestsResp = await req(`${base}/rest/v1/guests?select=id,invite_token,plus_one_allowed,invited_to_ceremony,invited_to_reception,first_name,last_name,name&invite_token=not.is.null&limit=500`);
+
+let guests = Array.isArray(guestsResp.data) ? guestsResp.data : [];
+let usingFixtureFallback = false;
+
+if (guestsResp.status >= 300 || guests.length === 0) {
+  const fixtureTokens = ['smoke-ceremony-only-token', 'smoke-reception-only-token'];
+  const fixtureGuests = [];
+  for (const token of fixtureTokens) {
+    const g = await lookupByToken(token);
+    if (g) fixtureGuests.push(g);
+  }
+
+  if (fixtureGuests.length > 0) {
+    guests = fixtureGuests;
+    usingFixtureFallback = true;
+  } else {
+    console.log(JSON.stringify({
+      ok: false,
+      step: 'guest_fixture_missing',
+      message: 'Could not fetch guests from REST and deterministic smoke fixture tokens were not found.',
+      guestsResp,
+      expectedFixtureTokens: fixtureTokens,
+    }, null, 2));
+    process.exit(1);
+  }
+}
+
 const baselineGuest = guests.find((x) => x.invited_to_ceremony === true && x.invited_to_reception === true) || guests[0];
 const noCeremonyGuest = guests.find((x) => x.invited_to_ceremony === false && x.id !== baselineGuest.id);
 const noReceptionGuest = guests.find((x) => x.invited_to_reception === false && x.id !== baselineGuest.id);
 
-const fn = `${base}/functions/v1/validate-rsvp-token`;
 const cases = [
   {
     name: 'valid_submit_baseline',
@@ -196,6 +261,7 @@ for (const r of results) {
 const output = {
   ok: failures.length === 0,
   strict,
+  usingFixtureFallback,
   selectedGuests: {
     baseline: {
       id: baselineGuest.id,

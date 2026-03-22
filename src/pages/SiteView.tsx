@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { supabase } from '../lib/supabase';
-import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
+import { WeddingDataV1, createEmptyWeddingData, normalizeWeddingData } from '../types/weddingData';
 import { LayoutConfigV1 } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
 import { applyThemePreset, applyThemeTokens } from '../lib/themePresets';
@@ -463,8 +463,10 @@ export const SiteView: React.FC = () => {
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
 
         if (persistedSections.length > 0) {
-          const rawWData = rewriteSignedMediaUrlsToPublicDeep(
-            safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData())
+          const rawWData = normalizeWeddingData(
+            rewriteSignedMediaUrlsToPublicDeep(
+              safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData())
+            )
           );
           const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
           setUseNewRenderer(true);
@@ -498,8 +500,10 @@ export const SiteView: React.FC = () => {
             return;
           }
 
-          const rawWData = rewriteSignedMediaUrlsToPublicDeep(
-            safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData())
+          const rawWData = normalizeWeddingData(
+            rewriteSignedMediaUrlsToPublicDeep(
+              safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData())
+            )
           );
           const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
 
@@ -514,9 +518,10 @@ export const SiteView: React.FC = () => {
           setBuilderSections(sections);
           setWeddingData(wData);
         } else {
-          const rawWData = rewriteSignedMediaUrlsToPublicDeep(
-            safeJsonParse<WeddingDataV1 | null>(data.wedding_data, null)
-          );
+          const parsedWData = safeJsonParse<WeddingDataV1 | null>(data.wedding_data, null);
+          const rawWData = parsedWData
+            ? normalizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsedWData))
+            : null;
           const lConfig = safeJsonParse<LayoutConfigV1 | null>(data.layout_config, null);
 
           if (!rawWData || !lConfig) {
