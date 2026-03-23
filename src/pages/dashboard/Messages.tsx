@@ -12,7 +12,9 @@ import { createSmsCreditsSession } from '../../lib/stripeService';
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
 
-let hasMessageDeliveriesTable: boolean | null = null;
+// Optional table: can be missing in lean deployments.
+// Default false to avoid noisy 404 probing on each page load.
+let hasMessageDeliveriesTable: boolean | null = false;
 
 
 function buildDemoMessageSeed(): Message[] {
@@ -542,20 +544,6 @@ export const DashboardMessages: React.FC = () => {
     if (messageIds.length === 0 || hasMessageDeliveriesTable === false) {
       setDeliveries([]);
       return;
-    }
-
-    if (hasMessageDeliveriesTable !== true) {
-      const { error: probeError } = await supabase.from('message_deliveries').select('id').limit(1);
-      if (probeError) {
-        const msg = (probeError.message || '').toLowerCase();
-        if (msg.includes('message_deliveries') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
-          hasMessageDeliveriesTable = false;
-          setDeliveries([]);
-          return;
-        }
-      } else {
-        hasMessageDeliveriesTable = true;
-      }
     }
 
     const { data, error } = await supabase

@@ -27,7 +27,9 @@ interface ItineraryEvent {
 }
 
 const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
-let hasEventRsvpsTable: boolean | null = null;
+// Optional table: many environments do not provision event_rsvps yet.
+// Default false to avoid noisy 404 probing on every dashboard load.
+let hasEventRsvpsTable: boolean | null = false;
 
 interface EventWithInvites extends ItineraryEvent {
   invitation_count: number;
@@ -250,18 +252,6 @@ export const DashboardItinerary: React.FC = () => {
       }));
 
       await syncWeddingDataSchedule(sites.id, normalizedEvents);
-
-      if (hasEventRsvpsTable !== false) {
-        const { error } = await supabase.from('event_rsvps').select('attending').limit(1);
-        if (error) {
-          const msg = (error.message || '').toLowerCase();
-          if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
-            hasEventRsvpsTable = false;
-          }
-        } else {
-          hasEventRsvpsTable = true;
-        }
-      }
 
       const eventsWithCounts = await Promise.all(
         normalizedEvents.map(async (event) => {
