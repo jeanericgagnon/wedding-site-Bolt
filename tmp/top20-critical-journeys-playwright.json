@@ -1,0 +1,303 @@
+{
+  "summary": {
+    "baseUrl": "http://127.0.0.1:4173",
+    "total": 20,
+    "pass": 20,
+    "partial": 0,
+    "fail": 0,
+    "generatedAt": "2026-03-23T01:53:16.835Z"
+  },
+  "journeys": [
+    {
+      "id": "J01",
+      "area": "public",
+      "name": "Landing page render",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/",
+        "title": "Dayof Wedding SaaS Frontend"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J02",
+      "area": "public",
+      "name": "Product page render",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/product",
+        "title": "Dayof Wedding SaaS Frontend"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J03",
+      "area": "templates",
+      "name": "Template gallery loads with detail links",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/templates",
+        "templateLinks": 35
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J04",
+      "area": "templates",
+      "name": "Template detail click-through",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "finalUrl": "http://127.0.0.1:4173/templates/artistic-expression",
+        "path": "/templates/artistic-expression"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J05",
+      "area": "templates",
+      "name": "Template public view route render",
+      "status": "pass",
+      "severity": "medium",
+      "evidence": {
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/",
+        "hasRSVP": true,
+        "hasRegistry": true
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J06",
+      "area": "public-site",
+      "name": "Published couple site render",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/site/alex-jordan-demo",
+        "title": "Dayof Wedding SaaS Frontend"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J07",
+      "area": "rsvp",
+      "name": "RSVP route render",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/rsvp",
+        "hasRsvpCue": true
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J08",
+      "area": "routing",
+      "name": "Unknown route redirect/fallback",
+      "status": "pass",
+      "severity": "medium",
+      "evidence": {
+        "finalUrl": "http://127.0.0.1:4173/",
+        "path": "/"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J09",
+      "area": "auth",
+      "name": "Login form renders email/password",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "hasEmail": true,
+        "hasPassword": true
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J10",
+      "area": "auth",
+      "name": "Signup form renders",
+      "status": "pass",
+      "severity": "medium",
+      "evidence": {
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/signup",
+        "hasEmail": true,
+        "hasPassword": true
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J11",
+      "area": "protected-route",
+      "name": "Dashboard overview protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/overview",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J12",
+      "area": "protected-route",
+      "name": "Builder protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/builder",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J13",
+      "area": "protected-route",
+      "name": "Guests protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/guests",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J14",
+      "area": "protected-route",
+      "name": "Itinerary protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/itinerary",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J15",
+      "area": "protected-route",
+      "name": "Planning protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/planning",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J16",
+      "area": "protected-route",
+      "name": "Seating protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/seating",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J17",
+      "area": "protected-route",
+      "name": "Messages protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/messages",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J18",
+      "area": "protected-route",
+      "name": "Vault protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/vault",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J19",
+      "area": "protected-route",
+      "name": "Photos protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/photos",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    },
+    {
+      "id": "J20",
+      "area": "protected-route",
+      "name": "Registry protected route redirect",
+      "status": "pass",
+      "severity": "high",
+      "evidence": {
+        "requested": "/dashboard/registry",
+        "status": 200,
+        "finalUrl": "http://127.0.0.1:4173/login",
+        "finalPath": "/login"
+      },
+      "blocker": null,
+      "workaround": null
+    }
+  ]
+}

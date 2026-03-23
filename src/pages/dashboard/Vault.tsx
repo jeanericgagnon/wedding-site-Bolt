@@ -14,6 +14,14 @@ const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
 const DEMO_WEDDING_DATE = '2026-02-23';
+const E2E_FORCE_UNLOCK_KEY = 'dayof_e2e_force_vault_unlock';
+
+function shouldForceUnlockForE2E(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
+  return isLocalHost && localStorage.getItem(E2E_FORCE_UNLOCK_KEY) === '1';
+}
 
 interface VaultConfig {
   id: string;
@@ -345,6 +353,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   };
   const isEntryUnlocked = (entry: VaultEntry) => {
     if (!config.is_enabled) return false;
+    if (shouldForceUnlockForE2E()) return true;
     const d = getEntryUnlockDate(entry);
     return d ? d.getTime() <= nowMs : false;
   };

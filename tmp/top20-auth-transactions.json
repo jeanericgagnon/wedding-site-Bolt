@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-03-23T01:53:17.012Z",
+  "baseUrl": "http://127.0.0.1:4173",
+  "journeys": [
+    {
+      "id": "J06",
+      "name": "Builder edit/save/publish transaction",
+      "status": "pass",
+      "evidence": {
+        "url": "http://127.0.0.1:4173/dashboard/builder",
+        "hasSaveCue": true,
+        "hasPublishCue": true
+      },
+      "error": null
+    },
+    {
+      "id": "J08",
+      "name": "Guests CRUD transaction",
+      "status": "pass",
+      "evidence": {
+        "url": "http://127.0.0.1:4173/dashboard/guests",
+        "created": true,
+        "email": "top20+1774230801154@example.com"
+      },
+      "error": null
+    },
+    {
+      "id": "J12",
+      "name": "Messages compose/send transaction",
+      "status": "pass",
+      "evidence": {
+        "url": "http://127.0.0.1:4173/dashboard/messages",
+        "deliveryCue": true
+      },
+      "error": null
+    },
+    {
+      "id": "J13",
+      "name": "Vault connect/upload/unlock lifecycle",
+      "status": "pass",
+      "evidence": {
+        "url": "http://127.0.0.1:4173/dashboard/vault",
+        "hasConnectedCue": true,
+        "hasEntryCue": true
+      },
+      "error": null
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "pass": 4,
+    "fail": 0
+  }
+}
