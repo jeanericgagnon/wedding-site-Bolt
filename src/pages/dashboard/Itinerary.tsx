@@ -251,6 +251,18 @@ export const DashboardItinerary: React.FC = () => {
 
       await syncWeddingDataSchedule(sites.id, normalizedEvents);
 
+      if (hasEventRsvpsTable !== false) {
+        const { error } = await supabase.from('event_rsvps').select('attending').limit(1);
+        if (error) {
+          const msg = (error.message || '').toLowerCase();
+          if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
+            hasEventRsvpsTable = false;
+          }
+        } else {
+          hasEventRsvpsTable = true;
+        }
+      }
+
       const eventsWithCounts = await Promise.all(
         normalizedEvents.map(async (event) => {
           const { data: invites } = await supabase
@@ -270,7 +282,7 @@ export const DashboardItinerary: React.FC = () => {
 
             if (error) {
               const msg = (error.message || '').toLowerCase();
-              if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
+              if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
                 hasEventRsvpsTable = false;
               }
             } else {

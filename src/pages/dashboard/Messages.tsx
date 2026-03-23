@@ -544,6 +544,20 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
+    if (hasMessageDeliveriesTable !== true) {
+      const { error: probeError } = await supabase.from('message_deliveries').select('id').limit(1);
+      if (probeError) {
+        const msg = (probeError.message || '').toLowerCase();
+        if (msg.includes('message_deliveries') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
+          hasMessageDeliveriesTable = false;
+          setDeliveries([]);
+          return;
+        }
+      } else {
+        hasMessageDeliveriesTable = true;
+      }
+    }
+
     const { data, error } = await supabase
       .from('message_deliveries')
       .select('id, message_id, status, provider_message_id, error_message, attempted_at, delivered_at, recipient_email')

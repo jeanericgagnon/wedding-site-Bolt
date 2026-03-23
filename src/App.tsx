@@ -184,7 +184,7 @@ const AppContent = () => {
           path="/dashboard/builder"
           element={
             <ProtectedRoute>
-              <Navigate to="/builder" replace />
+              <SiteBuilder />
             </ProtectedRoute>
           }
         />
