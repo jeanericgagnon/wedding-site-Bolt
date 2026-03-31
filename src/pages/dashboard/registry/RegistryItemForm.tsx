@@ -152,15 +152,31 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         const urlChanged = previousNormalized !== targetUrl;
         const missing = new Set(preview.missing_fields ?? []);
 
+        const nextMerchant = preview.store_name
+          ?? preview.merchant
+          ?? preview.retailer
+          ?? preview.brand
+          ?? (urlChanged ? '' : prev.merchant);
+
+        const nextNotes = (() => {
+          const existing = (prev.notes || '').trim();
+          if (existing) return prev.notes;
+
+          const parts = [preview.description?.trim(), preview.availability?.trim()]
+            .filter((value): value is string => Boolean(value && value.length > 0));
+
+          return parts.length > 0 ? parts.join('\n\n') : prev.notes;
+        })();
+
         return {
           ...prev,
           item_name: preview.title ?? (urlChanged ? '' : prev.item_name),
           price_label: preview.price_label ?? (urlChanged ? '' : prev.price_label),
           price_amount: preview.price_amount != null ? String(preview.price_amount) : (urlChanged ? '' : prev.price_amount),
-          merchant: preview.store_name ?? preview.merchant ?? (preview.brand ?? null) ?? (urlChanged ? '' : prev.merchant),
+          merchant: nextMerchant,
           item_url: targetUrl,
           image_url: preview.image_url ?? (urlChanged || missing.has('image') ? '' : prev.image_url),
-          notes: preview.description && !prev.notes ? preview.description : prev.notes,
+          notes: nextNotes,
         };
       });
     } catch (err: unknown) {
