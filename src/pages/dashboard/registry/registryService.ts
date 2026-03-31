@@ -152,31 +152,11 @@ export async function ownerMarkPurchased(
   itemId: string,
   incrementBy: number
 ): Promise<RegistryItem> {
-  const { data: current, error: fetchErr } = await supabase
-    .from('registry_items')
-    .select('quantity_needed, quantity_purchased')
-    .eq('id', itemId)
-    .single();
-
-  if (fetchErr) throw new Error(fetchErr.message);
-
-  const newQty = Math.min(
-    (current.quantity_purchased as number) + incrementBy,
-    current.quantity_needed as number
-  );
-  const newStatus: string =
-    newQty >= (current.quantity_needed as number) ? 'purchased' : newQty > 0 ? 'partial' : 'available';
-
-  const { data, error } = await supabase
-    .from('registry_items')
-    .update({
-      quantity_purchased: newQty,
-      purchase_status: newStatus,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', itemId)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('increment_registry_purchase', {
+    p_item_id: itemId,
+    p_purchaser_name: null,
+    p_increment_by: incrementBy,
+  });
 
   if (error) throw new Error(error.message);
   return data as RegistryItem;

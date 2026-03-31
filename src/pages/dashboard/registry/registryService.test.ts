@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RegistryItem, RegistryPreview } from './registryTypes';
-import { fetchUrlPreview, findDuplicateItem } from './registryService';
+import { fetchUrlPreview, findDuplicateItem, ownerMarkPurchased } from './registryService';
 
 const mockRpcResult = {
   data: null as unknown,
@@ -246,6 +246,23 @@ describe('findDuplicateItem', () => {
 
     expect(duplicate).not.toBeNull();
     expect(duplicate?.id).toBe('item-1');
+  });
+});
+
+describe('ownerMarkPurchased', () => {
+  it('uses the increment_registry_purchase RPC so owner and public paths stay consistent', async () => {
+    const rpcResultItem = {
+      id: 'item-1',
+      quantity_purchased: 1,
+      quantity_needed: 1,
+      purchase_status: 'purchased',
+    };
+    mockRpcResult.data = rpcResultItem;
+    mockRpcResult.error = null;
+
+    const result = await ownerMarkPurchased('item-1', 1);
+
+    expect(result).toBe(rpcResultItem);
   });
 });
 
