@@ -207,25 +207,33 @@ export function generateFallbackTitle(url: string): string {
     const parsed = new URL(url);
     const pathParts = parsed.pathname.split('/').filter(Boolean);
 
-    // Find the part that looks like a product name (usually has hyphens)
-    const productSlug = pathParts.find(part => part.includes('-') && part.length > 5);
+    const cleanedCandidates = pathParts
+      .map((part) => part.replace(/\.html?$/i, ''))
+      .filter((part) => /[a-zA-Z]/.test(part))
+      .filter((part) => !/^dp$/i.test(part))
+      .filter((part) => !/^gp$/i.test(part))
+      .filter((part) => !/^product$/i.test(part))
+      .filter((part) => !/^listing$/i.test(part))
+      .filter((part) => !/^ip$/i.test(part))
+      .filter((part) => !/^[A-Z0-9]{8,}$/i.test(part))
+      .filter((part) => !/^A-\d+$/i.test(part));
 
-    if (productSlug) {
-      // Convert slug to title case
-      return productSlug
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+    const slugLike = cleanedCandidates.find(part => /[-_]/.test(part) && part.length > 5)
+      ?? cleanedCandidates[cleanedCandidates.length - 1];
+
+    if (slugLike) {
+      const title = slugLike
+        .replace(/[-_]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, c => c.toUpperCase());
+
+      if (title && title.length > 2) return title;
     }
 
-    // Last resort: use last path segment
-    const lastSegment = pathParts[pathParts.length - 1];
-    if (lastSegment) {
-      return lastSegment.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    }
-
-    return 'Untitled Product';
+    const host = parsed.hostname.replace(/^www\./, '').split('.')[0];
+    return `${host.charAt(0).toUpperCase()}${host.slice(1)} item`;
   } catch {
-    return 'Untitled Product';
+    return 'Registry Item';
   }
 }

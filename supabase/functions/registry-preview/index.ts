@@ -152,6 +152,10 @@ function deriveFallbackImage(url: string, hostname: string): string | undefined 
     const asin = extractAsin(url);
     if (asin) return `https://images-na.ssl-images-amazon.com/images/P/${asin}.01.L.jpg`;
   }
+  if (/target\./i.test(hostname)) {
+    const tcin = url.match(/A-(\d+)/i)?.[1];
+    if (tcin) return `https://target.scene7.com/is/image/Target/GUEST_${tcin}?wid=1200&hei=1200&fmt=webp`;
+  }
   // Clearbit first, with a universally available avatar fallback when logos are blocked.
   return `https://logo.clearbit.com/${cleanHost}`;
 }

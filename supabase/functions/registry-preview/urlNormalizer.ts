@@ -14,7 +14,7 @@ export interface NormalizedUrl {
 const TRACKING_PARAMS = [
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
   'ref', 'referrer', 'source', 'fbclid', 'gclid', 'msclkid',
-  'preselect', 'clkid', 'irclickid', 'siteID', 'sid',
+  'preselect', 'clkid', 'irclickid', 'siteID', 'sid', 'tag',
 ];
 
 const RETAILER_PATTERNS: Record<string, RegExp> = {
