@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Heart,
@@ -18,7 +18,8 @@ import {
   ClipboardList,
   Armchair,
   Radio,
-
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
@@ -34,6 +35,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
+  const [showMoreFeatures, setShowMoreFeatures] = useState(false);
+  const [enabledFeatureIds, setEnabledFeatureIds] = useState<string[]>([]);
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
@@ -64,19 +67,51 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   };
 
   const navItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/dashboard/overview' },
-    { id: 'builder', label: 'Builder', icon: Palette, path: '/dashboard/builder' },
-    { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
-    { id: 'itinerary', label: 'Itinerary', icon: Calendar, path: '/dashboard/itinerary' },
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/dashboard/overview', pinned: true },
+    { id: 'builder', label: 'Your Site', icon: Palette, path: '/dashboard/builder', pinned: true },
+    { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests', pinned: true },
+    { id: 'itinerary', label: 'Itinerary', icon: Calendar, path: '/dashboard/itinerary', pinned: true },
     { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
     { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
     { id: 'messages', label: 'Messages', icon: Mail, path: '/dashboard/messages' },
-    { id: 'coordinator', label: 'Day-of', icon: Radio, path: '/dashboard/coordinator' },
     { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
     { id: 'photos', label: 'Photo Sharing', icon: Camera, path: '/dashboard/photos' },
-    { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
+    { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry', pinned: true },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
-  ];
+  ] as const;
+
+  const pinnedNavItems = navItems.filter((item) => item.pinned);
+  const optionalNavItems = navItems.filter((item) => !item.pinned);
+  const enabledOptionalNavItems = optionalNavItems.filter((item) => enabledFeatureIds.includes(item.id));
+  const hiddenOptionalNavItems = optionalNavItems.filter((item) => !enabledFeatureIds.includes(item.id));
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('dashboard-enabled-features');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setEnabledFeatureIds(parsed.filter((v): v is string => typeof v === 'string'));
+          return;
+        }
+      }
+    } catch {
+      // ignore localStorage issues
+    }
+    setEnabledFeatureIds(['registry', 'settings']);
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dashboard-enabled-features', JSON.stringify(enabledFeatureIds));
+    } catch {
+      // ignore localStorage issues
+    }
+  }, [enabledFeatureIds]);
+
+  const toggleFeature = (id: string) => {
+    setEnabledFeatureIds((prev) => prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]);
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -105,7 +140,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
           <nav className="flex-1 p-4 overflow-y-auto" aria-label="Dashboard navigation">
             <ul className="space-y-1">
-              {navItems.map((item) => {
+              {pinnedNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.id;
                 return (
@@ -129,6 +164,76 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                   </li>
                 );
               })}
+
+              {enabledOptionalNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentPage === item.id;
+                return (
+                  <li key={item.id}>
+                    <Link
+                      to={item.path}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-lg text-base
+                        transition-colors no-underline min-h-[44px]
+                        ${
+                          isActive
+                            ? 'bg-primary-light text-primary font-medium'
+                            : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
+                        }
+                      `}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setShowMoreFeatures((v) => !v)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-base text-text-secondary hover:bg-surface-subtle hover:text-text-primary transition-colors min-h-[44px]"
+                >
+                  <span className="flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                    <span>More features</span>
+                  </span>
+                  {showMoreFeatures ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+              </li>
+
+              {showMoreFeatures && (
+                <li className="px-2 py-2">
+                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/60 p-3 space-y-2">
+                    <p className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Choose features to pin</p>
+                    <div className="space-y-2">
+                      {optionalNavItems.map((item) => {
+                        const checked = enabledFeatureIds.includes(item.id);
+                        const Icon = item.icon;
+                        return (
+                          <label key={item.id} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-surface cursor-pointer">
+                            <span className="flex items-center gap-3 text-sm text-text-primary">
+                              <Icon className="w-4 h-4" aria-hidden="true" />
+                              <span>{item.label}</span>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleFeature(item.id)}
+                              className="h-4 w-4"
+                            />
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {hiddenOptionalNavItems.length > 0 && (
+                      <p className="text-xs text-text-tertiary">Hidden until pinned: {hiddenOptionalNavItems.map((item) => item.label).join(', ')}</p>
+                    )}
+                  </div>
+                </li>
+              )}
             </ul>
           </nav>
 

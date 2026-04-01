@@ -54,6 +54,11 @@ Turn registry import/purchase behavior into a more reliable production-quality s
   - public viewer purchased state
 - treat browser evidence as the source of truth for production reliability
 
+### 6. Browser-assisted capture option
+- evaluate a browser-based “Save to Dayof” flow (Chrome extension / bookmarklet / in-page helper)
+- use it as a strategic answer for hostile retailer pages where server-side extraction is inherently brittle
+- let users capture visible title / image / price / URL directly from the page they are already viewing
+
 ## Current status snapshot
 
 Already improved:
