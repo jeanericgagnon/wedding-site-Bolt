@@ -97,6 +97,11 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     }
   })();
 
+  const missingFieldSet = new Set(lastPreview?.missing_fields ?? []);
+  const missingPrice = missingFieldSet.has('price') || (!draft.price_amount.trim() && !draft.price_label.trim() && !!lastPreview);
+  const missingImage = missingFieldSet.has('image') || (!draft.image_url.trim() && !!lastPreview);
+  const missingMerchant = missingFieldSet.has('merchant') || (!draft.merchant.trim() && !!lastPreview);
+
   const imageSourceHint = (() => {
     const src = (draft.image_url || '').toLowerCase();
     if (!src && (draft.item_url || '').trim()) return { label: 'Image source: Auto (from product URL)', tone: 'text-sky-700' };
@@ -346,7 +351,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
             {fetchDone && !fetchError && fetchConfidence === 'partial' && (
               <div className="flex items-start gap-2 p-3 bg-primary-light rounded-lg text-sm text-primary border border-primary/20">
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>Please review — some details were imported but a few fields may need filling in below.</span>
+                <div>
+                  <span>Please review — some details were imported but a few fields may need filling in below.</span>
+                  {lastPreview?.missing_fields && lastPreview.missing_fields.length > 0 && (
+                    <p className="mt-1 text-xs opacity-80">Missing: {lastPreview.missing_fields.join(', ')}</p>
+                  )}
+                </div>
               </div>
             )}
             {dedupeWarning && (
@@ -408,6 +418,9 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 {!imageUrlLooksDirect && (
                   <p className="mt-1 text-xs text-warning">Use a direct image URL (.jpg/.png/etc). Product page URLs may open blank and won’t render as images.</p>
                 )}
+                {missingImage && (
+                  <p className="mt-1 text-xs text-warning">Image could not be imported cleanly. You can still save, but adding a direct image URL will make the card look better.</p>
+                )}
               </div>
             </div>}
 
@@ -441,9 +454,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   value={draft.price_amount}
                   onChange={e => set('price_amount', e.target.value)}
                   placeholder="0.00"
-                  className="w-full pl-7 pr-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`w-full pl-7 pr-3 py-2 bg-surface-subtle border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingPrice ? 'border-warning' : 'border-border'}`}
                 />
               </div>
+              {missingPrice && (
+                <p className="mt-1 text-xs text-warning">Price could not be imported reliably from this store. Please enter it manually before saving.</p>
+              )}
             </div>
 
             {/* Merchant */}
@@ -456,8 +472,11 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 value={draft.merchant}
                 onChange={e => set('merchant', e.target.value)}
                 placeholder="e.g. Amazon, Target"
-                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={`w-full px-3 py-2 bg-surface-subtle border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingMerchant ? 'border-warning' : 'border-border'}`}
               />
+              {missingMerchant && (
+                <p className="mt-1 text-xs text-warning">Store name was not imported. Add the merchant manually so guests know where the gift comes from.</p>
+              )}
             </div>
 
             {/* Desired quantity */}

@@ -68,6 +68,14 @@ export interface RegistryPreview {
   missing_fields?: string[];
 }
 
+export interface RegistryItemMetadataState {
+  preview: RegistryPreview;
+  confidence: MetadataConfidence;
+  blockedMessage: string | null;
+  missingSummary: string | null;
+  hasBadImportTitle: boolean;
+}
+
 export function computeConfidence(preview: RegistryPreview): MetadataConfidence {
   if (preview.fetch_status && preview.fetch_status !== 'success') return 'manual';
   const score = preview.confidence_score;
@@ -91,6 +99,52 @@ export function getBlockedMessage(preview: RegistryPreview): string | null {
   if (r === 'target') return 'Target blocks automated lookups. Fill in the details below — the link will still open correctly for guests.';
   if (r === 'walmart') return 'Walmart blocks automated lookups. Fill in the details below manually.';
   return 'This store blocks automated product lookups. Fill in the name, price, and store below — your product link has been saved.';
+}
+
+export function buildRegistryPreviewFromItem(item: RegistryItem): RegistryPreview {
+  return {
+    title: item.item_name ?? null,
+    price_label: item.price_label ?? null,
+    price_amount: item.price_amount ?? null,
+    image_url: item.image_url ?? null,
+    merchant: item.merchant ?? null,
+    store_name: item.store_name ?? null,
+    canonical_url: item.canonical_url ?? null,
+    description: item.description ?? null,
+    currency: null,
+    availability: item.availability ?? null,
+    brand: null,
+    retailer: item.metadata_retailer ?? null,
+    confidence_score: item.metadata_confidence_score ?? null,
+    source_method: (item.metadata_source_method as RegistryPreview['source_method']) ?? null,
+    fetch_status: (item.metadata_fetch_status as RegistryPreview['fetch_status']) ?? null,
+    error: null,
+    partial: item.metadata_fetch_status === 'success' && (item.metadata_confidence_score ?? 0) < 0.7,
+    missing_fields: [
+      !item.item_name ? 'title' : null,
+      item.price_amount == null && !item.price_label ? 'price' : null,
+      !item.image_url ? 'image' : null,
+      !(item.merchant ?? item.store_name) ? 'merchant' : null,
+    ].filter((v): v is string => Boolean(v)),
+  };
+}
+
+export function getRegistryItemMetadataState(item: RegistryItem): RegistryItemMetadataState {
+  const preview = buildRegistryPreviewFromItem(item);
+  const confidence = computeConfidence(preview);
+  const blockedMessage = getBlockedMessage(preview);
+  const missingSummary = preview.missing_fields && preview.missing_fields.length > 0
+    ? `Missing: ${preview.missing_fields.join(', ')}`
+    : null;
+  const hasBadImportTitle = /^(page not found|gift from\s.+)$/i.test((item.item_name || '').trim());
+
+  return {
+    preview,
+    confidence,
+    blockedMessage,
+    missingSummary,
+    hasBadImportTitle,
+  };
 }
 
 export interface RegistryItemDraft {

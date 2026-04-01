@@ -98,6 +98,7 @@ export const DashboardRegistry: React.FC = () => {
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [bulkUrls, setBulkUrls] = useState('');
   const [bulkImportBusy, setBulkImportBusy] = useState(false);
+  const [repairingBadImports, setRepairingBadImports] = useState(false);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
   const registryActionsRef = useRef<HTMLDivElement | null>(null);
@@ -443,6 +444,28 @@ export const DashboardRegistry: React.FC = () => {
     toast(`Refreshed ${ok}/${candidates.length} image-issue item${candidates.length === 1 ? '' : 's'}.`, ok > 0 ? 'success' : 'error');
   }
 
+  async function handleRepairBadImports() {
+    if (isDemoMode || repairingBadImports) return;
+    const candidates = items
+      .filter((i) => /^(page not found|gift from\s.+)$/i.test((i.item_name || '').trim()))
+      .filter((i) => !!(i.item_url || i.canonical_url))
+      .slice(0, 20);
+
+    if (candidates.length === 0) {
+      toast('No repairable bad imports found.');
+      return;
+    }
+
+    setRepairingBadImports(true);
+    let repaired = 0;
+    for (const item of candidates) {
+      // eslint-disable-next-line no-await-in-loop
+      const refreshed = await handleRefetchMetadata(item, true);
+      if (refreshed) repaired += 1;
+    }
+    setRepairingBadImports(false);
+    toast(`Repaired ${repaired}/${candidates.length} bad import${candidates.length === 1 ? '' : 's'}.`, repaired > 0 ? 'success' : 'error');
+  }
 
   async function handleAutoRefreshStale(silent = false, alertsOnly = false) {
     if (isDemoMode || autoRefreshing) return;
@@ -759,6 +782,7 @@ export const DashboardRegistry: React.FC = () => {
     priceChanged: items.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
     outOfStock: items.filter((i) => (i.availability || '').toLowerCase().includes('out')).length,
     imageIssues: items.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
+    badImports: items.filter((i) => /^(page not found|gift from\s.+)$/i.test((i.item_name || '').trim())).length,
   };
 
 
@@ -857,6 +881,9 @@ export const DashboardRegistry: React.FC = () => {
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
                 Bulk Import URLs
+              </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleRepairBadImports(); setRegistryActionsOpen(false); }} disabled={repairingBadImports}>
+                {repairingBadImports ? 'Repairing bad imports…' : 'Repair bad imports'}
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
                 {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
@@ -961,6 +988,18 @@ export const DashboardRegistry: React.FC = () => {
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
               Image issues: {alertCounts.imageIssues}
             </span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
+              Bad imports: {alertCounts.badImports}
+            </span>
+            {alertCounts.badImports > 0 && (
+              <button
+                onClick={() => void handleRepairBadImports()}
+                disabled={repairingBadImports}
+                className="px-2 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning text-xs font-medium disabled:opacity-60"
+              >
+                {repairingBadImports ? 'Repairing…' : 'Repair bad imports'}
+              </button>
+            )}
             <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>
               Budget used: {Math.round(budgetUtilization * 100)}%
             </span>

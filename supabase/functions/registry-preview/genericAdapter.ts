@@ -16,6 +16,31 @@ import {
 } from './adapterTypes.ts';
 import { normalizeUrl } from './urlNormalizer.ts';
 
+function extractPriceFromHtml(html: string): { amount: number; currency: string; label: string } | null {
+  const patterns = [
+    /"price"\s*:\s*"?([0-9]+(?:\.[0-9]{2})?)"?/i,
+    /"priceAmount"\s*:\s*"?([0-9]+(?:\.[0-9]{2})?)"?/i,
+    /data-testid="price"[^>]*>[^\d$€£]*([$€£]?\s*[0-9]+(?:\.[0-9]{2})?)/i,
+    /([$€£]\s*[0-9]+(?:\.[0-9]{2})?)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (!match) continue;
+    const parsed = parsePrice(match[1]);
+    if (parsed && Number.isFinite(parsed.amount) && parsed.amount >= 1 && parsed.amount <= 10000) {
+      const symbol = parsed.currency === 'USD' ? '$' : parsed.currency === 'EUR' ? '€' : parsed.currency === 'GBP' ? '£' : '';
+      return {
+        amount: parsed.amount,
+        currency: parsed.currency,
+        label: symbol ? `${symbol}${parsed.amount.toFixed(2)}` : `${parsed.amount.toFixed(2)} ${parsed.currency}`,
+      };
+    }
+  }
+
+  return null;
+}
+
 export class GenericAdapter implements RetailerAdapter {
   name = 'generic';
   hostnames = /.*/; // Matches all
@@ -149,10 +174,24 @@ export class GenericAdapter implements RetailerAdapter {
         const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '';
         priceLabel = symbol ? `${symbol}${priceAmount.toFixed(2)}` : `${priceAmount.toFixed(2)} ${currency}`;
       } else {
-        missing.push('price');
+        const fallbackPrice = extractPriceFromHtml(html);
+        if (fallbackPrice) {
+          priceAmount = fallbackPrice.amount;
+          currency = fallbackPrice.currency;
+          priceLabel = fallbackPrice.label;
+        } else {
+          missing.push('price');
+        }
       }
     } else {
-      missing.push('price');
+      const fallbackPrice = extractPriceFromHtml(html);
+      if (fallbackPrice) {
+        priceAmount = fallbackPrice.amount;
+        currency = fallbackPrice.currency;
+        priceLabel = fallbackPrice.label;
+      } else {
+        missing.push('price');
+      }
     }
 
     const storeName = this.deriveStoreName(hostname);

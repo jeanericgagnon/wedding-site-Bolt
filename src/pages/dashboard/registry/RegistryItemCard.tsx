@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Badge } from '../../../components/ui';
-import type { RegistryItem, PurchaseStatus } from './registryTypes';
+import { getRegistryItemMetadataState, type RegistryItem, type PurchaseStatus } from './registryTypes';
 
 interface Props {
   item: RegistryItem;
@@ -116,6 +116,12 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24 * 7;
   const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
   const outOfStock = (item.availability || '').toLowerCase().includes('out');
+  const metadataState = getRegistryItemMetadataState(item);
+  const extractionConfidence = metadataState.confidence;
+  const blockedMessage = metadataState.blockedMessage;
+  const missingSummary = metadataState.missingSummary;
+  const hasBadImportTitle = metadataState.hasBadImportTitle;
+
   const imageSource = (() => {
     const src = (item.image_url || '').toLowerCase();
     if (src.includes('thum.io') || src.includes('weserv.nl')) return { label: 'Image: Fallback', tone: 'neutral' as const, hint: 'Using a screenshot/proxy fallback image.' };
@@ -327,6 +333,14 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           {priceChanged && <Badge variant="success">Price changed</Badge>}
           {stale && <Badge variant="neutral">Needs refresh</Badge>}
           {failCount > 0 && <Badge variant="error">Retry {failCount}</Badge>}
+          {item.metadata_fetch_status === 'blocked' && <Badge variant="error">Blocked import</Badge>}
+          {item.metadata_fetch_status === 'error' && <Badge variant="error">Import error</Badge>}
+          {item.metadata_fetch_status === 'timeout' && <Badge variant="warning">Import timeout</Badge>}
+          {item.metadata_fetch_status === 'parse_failure' && <Badge variant="warning">Parse failed</Badge>}
+          {hasBadImportTitle && <Badge variant="error">Bad import title</Badge>}
+          {extractionConfidence === 'full' && <Badge variant="success">Full import</Badge>}
+          {extractionConfidence === 'partial' && <Badge variant="warning">Partial import</Badge>}
+          {extractionConfidence === 'manual' && <Badge variant="neutral">Manual/fallback</Badge>}
           <span title={imageSource.hint}>
             <Badge variant={imageSource.tone}>{imageSource.label}</Badge>
           </span>
@@ -337,6 +351,13 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           <p className="text-[11px] text-text-tertiary">
             Tip: paste a direct image link in Edit, or refresh metadata from the product URL.
           </p>
+        )}
+        {(missingSummary || blockedMessage || hasBadImportTitle) && (
+          <div className="space-y-1">
+            {missingSummary && <p className="text-[11px] text-text-tertiary">{missingSummary}</p>}
+            {blockedMessage && <p className="text-[11px] text-warning">{blockedMessage}</p>}
+            {hasBadImportTitle && <p className="text-[11px] text-warning">This item looks like an old bad import. Use Refresh or Edit to repair the title/details.</p>}
+          </div>
         )}
 
         {item.purchaser_name && item.purchase_status !== 'available' && (
