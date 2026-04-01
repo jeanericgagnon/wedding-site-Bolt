@@ -49,6 +49,7 @@ export const DashboardSettings: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -238,11 +239,22 @@ export const DashboardSettings: React.FC = () => {
     e.preventDefault();
     setPasswordError(null);
     setPasswordSuccess(null);
+    if (!currentPassword) { setPasswordError('Current password is required.'); return; }
     if (!newPassword) { setPasswordError('New password is required.'); return; }
     if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match.'); return; }
     if (newPassword.length < 8) { setPasswordError('Password must be at least 8 characters.'); return; }
     setPasswordSaving(true);
     try {
+      const { data: authData } = await supabase.auth.getUser();
+      const email = authData.user?.email;
+      if (!email) throw new Error('Unable to verify current user email.');
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (signInError) throw new Error('Current password is incorrect.');
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       setPasswordSuccess('Password updated successfully.');
@@ -630,6 +642,22 @@ export const DashboardSettings: React.FC = () => {
                       )}
                       <div className="relative">
                         <Input
+                          label="Current password"
+                          type={showCurrentPw ? 'text' : 'password'}
+                          value={currentPassword}
+                          onChange={e => setCurrentPassword(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPw(v => !v)}
+                          className="absolute right-3 top-8 text-text-tertiary hover:text-text-primary"
+                          aria-label={showCurrentPw ? 'Hide password' : 'Show password'}
+                        >
+                          {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Input
                           label="New password"
                           type={showNewPw ? 'text' : 'password'}
                           value={newPassword}
@@ -648,17 +676,17 @@ export const DashboardSettings: React.FC = () => {
                       <div className="relative">
                         <Input
                           label="Confirm new password"
-                          type={showCurrentPw ? 'text' : 'password'}
+                          type={showConfirmPw ? 'text' : 'password'}
                           value={confirmPassword}
                           onChange={e => setConfirmPassword(e.target.value)}
                         />
                         <button
                           type="button"
-                          onClick={() => setShowCurrentPw(v => !v)}
+                          onClick={() => setShowConfirmPw(v => !v)}
                           className="absolute right-3 top-8 text-text-tertiary hover:text-text-primary"
-                          aria-label={showCurrentPw ? 'Hide password' : 'Show password'}
+                          aria-label={showConfirmPw ? 'Hide password' : 'Show password'}
                         >
-                          {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showConfirmPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                       <div className="flex justify-end pt-2">

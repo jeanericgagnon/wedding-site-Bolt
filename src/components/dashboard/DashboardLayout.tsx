@@ -35,6 +35,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
+  const [siteId, setSiteId] = useState<string | null>(null);
+  const [siteJsonState, setSiteJsonState] = useState<Record<string, unknown> | null>(null);
   const [showMoreFeatures, setShowMoreFeatures] = useState(false);
   const [enabledFeatureIds, setEnabledFeatureIds] = useState<string[]>([]);
   const { user, isDemoMode } = useAuth();
@@ -50,12 +52,31 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
     supabase
       .from('wedding_sites')
-      .select('site_slug, site_url')
+      .select('id, site_slug, site_url, site_json')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => {
-        const resolved = resolvePublicSiteSlugFromRow((data as Record<string, unknown> | null) ?? null);
+        const row = (data as Record<string, unknown> | null) ?? null;
+        const resolved = resolvePublicSiteSlugFromRow(row);
         if (resolved) setSiteSlug(resolved);
+        if (row?.id && typeof row.id === 'string') setSiteId(row.id);
+
+        const siteJson = row?.site_json;
+        if (siteJson && typeof siteJson === 'object' && !Array.isArray(siteJson)) {
+          const parsedSiteJson = siteJson as Record<string, unknown>;
+          setSiteJsonState(parsedSiteJson);
+          const dashboard = parsedSiteJson.dashboard;
+          if (dashboard && typeof dashboard === 'object' && !Array.isArray(dashboard)) {
+            const sidebarFeatures = (dashboard as Record<string, unknown>).sidebarFeatures;
+            if (Array.isArray(sidebarFeatures)) {
+              const parsed = sidebarFeatures.filter((v): v is string => typeof v === 'string');
+              if (parsed.length > 0) {
+                setEnabledFeatureIds(parsed);
+                return;
+              }
+            }
+          }
+        }
       });
   }, [user, isDemoMode]);
 
@@ -91,14 +112,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          setEnabledFeatureIds(parsed.filter((v): v is string => typeof v === 'string'));
+          setEnabledFeatureIds((prev) => prev.length > 0 ? prev : parsed.filter((v): v is string => typeof v === 'string'));
           return;
         }
       }
     } catch {
       // ignore localStorage issues
     }
-    setEnabledFeatureIds(['registry', 'settings']);
+    setEnabledFeatureIds((prev) => prev.length > 0 ? prev : ['settings']);
   }, []);
 
   useEffect(() => {
@@ -108,6 +129,26 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       // ignore localStorage issues
     }
   }, [enabledFeatureIds]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    const timeout = window.setTimeout(() => {
+      const nextSiteJson: Record<string, unknown> = {
+        ...(siteJsonState ?? {}),
+        dashboard: {
+          ...(((siteJsonState ?? {}).dashboard as Record<string, unknown> | undefined) ?? {}),
+          sidebarFeatures: enabledFeatureIds,
+        },
+      };
+      setSiteJsonState(nextSiteJson);
+      void supabase
+        .from('wedding_sites')
+        .update({ site_json: nextSiteJson })
+        .eq('id', siteId);
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [siteId, enabledFeatureIds]);
 
   const toggleFeature = (id: string) => {
     setEnabledFeatureIds((prev) => prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]);
