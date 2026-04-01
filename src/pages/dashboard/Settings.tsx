@@ -72,6 +72,7 @@ export const DashboardSettings: React.FC = () => {
   const [rsvpQuestionsError, setRsvpQuestionsError] = useState<string | null>(null);
   const [collapsedQuestionIds, setCollapsedQuestionIds] = useState<Set<string>>(new Set());
   const [showAdvancedRsvp, setShowAdvancedRsvp] = useState(false);
+  const [showMealChoiceSettings, setShowMealChoiceSettings] = useState(false);
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
   const [showTemplateSettings, setShowTemplateSettings] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
@@ -1033,25 +1034,40 @@ export const DashboardSettings: React.FC = () => {
               <>
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
-                    <CardTitle>Meal Choice</CardTitle>
-                    <CardDescription>Toggle meal collection and customize options shown on RSVP</CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <CardTitle>Meal Choice</CardTitle>
+                        <CardDescription>Toggle meal collection and customize options shown on RSVP</CardDescription>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setShowMealChoiceSettings((v) => !v)}>
+                        {showMealChoiceSettings ? 'Hide' : 'Show'}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <label className="flex items-center gap-2 text-sm text-text-primary">
-                      <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => setRsvpMealEnabled(e.target.checked)} className="w-4 h-4 rounded border-border text-primary" />
-                      Collect meal choice on RSVP form
-                    </label>
-                    {rsvpMealEnabled && (
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-text-primary">Meal options</label>
-                        {rsvpMealOptions.map((opt, idx) => (
-                          <div key={`meal-opt-${idx}`} className="flex items-center gap-2">
-                            <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=e.target.value; return n; })} placeholder={`Meal option ${idx+1}`} />
-                            <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>
-                          </div>
-                        ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => setRsvpMealOptions((prev) => [...prev, ''])}><Plus className="w-4 h-4 mr-1" />Add meal option</Button>
+                    {!showMealChoiceSettings ? (
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                        Meal choice is hidden by default to keep RSVP setup lighter. Expand this section only if you want to collect meal preferences.
                       </div>
+                    ) : (
+                      <>
+                        <label className="flex items-center gap-2 text-sm text-text-primary">
+                          <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => setRsvpMealEnabled(e.target.checked)} className="w-4 h-4 rounded border-border text-primary" />
+                          Collect meal choice on RSVP form
+                        </label>
+                        {rsvpMealEnabled && (
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-text-primary">Meal options</label>
+                            {rsvpMealOptions.map((opt, idx) => (
+                              <div key={`meal-opt-${idx}`} className="flex items-center gap-2">
+                                <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=e.target.value; return n; })} placeholder={`Meal option ${idx+1}`} />
+                                <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>
+                              </div>
+                            ))}
+                            <Button type="button" variant="outline" size="sm" onClick={() => setRsvpMealOptions((prev) => [...prev, ''])}><Plus className="w-4 h-4 mr-1" />Add meal option</Button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </CardContent>
                 </Card>
