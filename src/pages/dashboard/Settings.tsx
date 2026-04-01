@@ -70,6 +70,10 @@ export const DashboardSettings: React.FC = () => {
   const [rsvpQuestionsSuccess, setRsvpQuestionsSuccess] = useState<string | null>(null);
   const [rsvpQuestionsError, setRsvpQuestionsError] = useState<string | null>(null);
   const [collapsedQuestionIds, setCollapsedQuestionIds] = useState<Set<string>>(new Set());
+  const [showAdvancedRsvp, setShowAdvancedRsvp] = useState(false);
+  const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+  const [showTemplateSettings, setShowTemplateSettings] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [privacyCopied, setPrivacyCopied] = useState(false);
@@ -762,10 +766,22 @@ export const DashboardSettings: React.FC = () => {
 
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
-                    <CardTitle>Privacy Settings</CardTitle>
-                    <CardDescription>Control who can view your site</CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <CardTitle>Privacy Settings</CardTitle>
+                        <CardDescription>Control who can view your site</CardDescription>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setShowPrivacySettings((v) => !v)}>
+                        {showPrivacySettings ? 'Hide' : 'Show'}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
+                    {!showPrivacySettings ? (
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                        Privacy controls are hidden by default to keep settings simpler. Expand this section to manage visibility, invite-only access, and search behavior.
+                      </div>
+                    ) : (
                     <form onSubmit={handleSavePrivacy} className="space-y-5">
                       {visibilitySuccess && (
                         <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{visibilitySuccess}</div>
@@ -910,60 +926,76 @@ export const DashboardSettings: React.FC = () => {
                         </Button>
                       </div>
                     </form>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Layout className="w-5 h-5" />
-                      Template
-                    </CardTitle>
-                    <CardDescription>Change your wedding site template while preserving your content</CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Layout className="w-5 h-5" />
+                          Template
+                        </CardTitle>
+                        <CardDescription>Change your wedding site template while preserving your content</CardDescription>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setShowTemplateSettings((v) => !v)}>
+                        {showTemplateSettings ? 'Hide' : 'Show'}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {templateSuccess && (
-                      <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary text-sm">
-                        {templateSuccess}
+                    {!showTemplateSettings ? (
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                        Template controls are hidden by default to reduce noise. Expand this section when you want to switch the overall site design.
                       </div>
+                    ) : (
+                      <>
+                        {templateSuccess && (
+                          <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary text-sm">
+                            {templateSuccess}
+                          </div>
+                        )}
+                        {templateError && (
+                          <div className="p-3 bg-error-light border border-error rounded-lg text-error text-sm">
+                            {templateError}
+                          </div>
+                        )}
+                        <div>
+                          <label className="block text-sm font-medium text-text-primary mb-3">
+                            Choose Template
+                          </label>
+                          <div className="grid md:grid-cols-3 gap-4">
+                            {getAllTemplates().map((template) => (
+                              <button
+                                key={template.id}
+                                onClick={() => handleTemplateChange(template.id)}
+                                disabled={changingTemplate || currentTemplate === template.id}
+                                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                                  currentTemplate === template.id
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-border hover:border-primary/50 hover:bg-surface-subtle'
+                                } ${changingTemplate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                <h3 className="font-semibold text-text-primary mb-1">
+                                  {template.name}
+                                  {currentTemplate === template.id && (
+                                    <Badge variant="primary" className="ml-2">Active</Badge>
+                                  )}
+                                </h3>
+                                <p className="text-sm text-text-secondary">
+                                  {template.description}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-xs text-text-secondary mt-3">
+                            Your wedding information will be preserved when switching templates.
+                          </p>
+                        </div>
+                      </>
                     )}
-                    {templateError && (
-                      <div className="p-3 bg-error-light border border-error rounded-lg text-error text-sm">
-                        {templateError}
-                      </div>
-                    )}
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-3">
-                        Choose Template
-                      </label>
-                      <div className="grid md:grid-cols-3 gap-4">
-                        {getAllTemplates().map((template) => (
-                          <button
-                            key={template.id}
-                            onClick={() => handleTemplateChange(template.id)}
-                            disabled={changingTemplate || currentTemplate === template.id}
-                            className={`p-4 rounded-lg border-2 transition-all text-left ${
-                              currentTemplate === template.id
-                                ? 'border-primary bg-primary/10'
-                                : 'border-border hover:border-primary/50 hover:bg-surface-subtle'
-                            } ${changingTemplate ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          >
-                            <h3 className="font-semibold text-text-primary mb-1">
-                              {template.name}
-                              {currentTemplate === template.id && (
-                                <Badge variant="primary" className="ml-2">Active</Badge>
-                              )}
-                            </h3>
-                            <p className="text-sm text-text-secondary">
-                              {template.description}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-text-secondary mt-3">
-                        Your wedding information will be preserved when switching templates.
-                      </p>
-                    </div>
                   </CardContent>
                 </Card>
               </>
@@ -998,10 +1030,22 @@ export const DashboardSettings: React.FC = () => {
 
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
-                    <CardTitle>RSVP Custom Questions</CardTitle>
-                    <CardDescription>Add optional questions to collect extra details from guests</CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <CardTitle>RSVP Custom Questions</CardTitle>
+                        <CardDescription>Add optional questions to collect extra details from guests</CardDescription>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setShowAdvancedRsvp((v) => !v)}>
+                        {showAdvancedRsvp ? 'Hide advanced RSVP' : 'Show advanced RSVP'}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
+                    {!showAdvancedRsvp ? (
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                        Advanced RSVP options are hidden by default to keep setup simpler. Expand this section to manage custom questions, choice logic, and playlist requests.
+                      </div>
+                    ) : (
                     <form onSubmit={handleSaveRsvpQuestions} className="space-y-4">
                       {rsvpQuestionsSuccess && (
                         <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{rsvpQuestionsSuccess}</div>
@@ -1187,6 +1231,7 @@ export const DashboardSettings: React.FC = () => {
                         </Button>
                       </div>
                     </form>
+                    )}
                   </CardContent>
                 </Card>
               </>
@@ -1195,10 +1240,22 @@ export const DashboardSettings: React.FC = () => {
             {activeTab === 'notifications' && (
               <Card variant="bordered" padding="lg">
                 <CardHeader>
-                  <CardTitle>Email Notifications</CardTitle>
-                  <CardDescription>Choose what updates you want to receive</CardDescription>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <CardTitle>Email Notifications</CardTitle>
+                      <CardDescription>Choose what updates you want to receive</CardDescription>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setShowNotificationSettings((v) => !v)}>
+                      {showNotificationSettings ? 'Hide' : 'Show'}
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
+                  {!showNotificationSettings ? (
+                    <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                      Notification preferences are hidden by default to keep this page easier to scan. Expand this section when you want to tune updates.
+                    </div>
+                  ) : (
                   <form onSubmit={handleSaveNotifications} className="space-y-4">
                     {notifSuccess && (
                       <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{notifSuccess}</div>
@@ -1265,6 +1322,7 @@ export const DashboardSettings: React.FC = () => {
                       </Button>
                     </div>
                   </form>
+                  )}
                 </CardContent>
               </Card>
             )}
