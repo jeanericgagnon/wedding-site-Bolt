@@ -181,7 +181,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <Palette size={15} className="text-gray-500" />
-            <span className="text-sm font-semibold text-gray-800">Color Palette</span>
+            <span className="text-sm font-semibold text-gray-800">Color palette</span>
           </div>
           <button
             onClick={onClose}
@@ -216,17 +216,17 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
         </div>
 
         <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/80">
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Global section animation (optional)</label>
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Section animation (optional)</label>
           <select
             value={globalAnimationPreset ?? 'none'}
             onChange={(e) => dispatch(builderActions.setGlobalAnimationPreset(e.target.value === 'none' ? null : (e.target.value as 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger')))}
             className="mt-1.5 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-xs text-gray-700 bg-white"
           >
-            <option value="none">No global animation (per-section only)</option>
-            <option value="fade-in">Fade In</option>
-            <option value="fade-up">Fade Up</option>
-            <option value="slide-up">Slide Up</option>
-            <option value="zoom-in">Zoom In</option>
+            <option value="none">No shared animation</option>
+            <option value="fade-in">Fade in</option>
+            <option value="fade-up">Fade up</option>
+            <option value="slide-up">Slide up</option>
+            <option value="zoom-in">Zoom in</option>
             <option value="stagger">Stagger by section order</option>
           </select>
         </div>
@@ -268,7 +268,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                 >
                   <div className="flex items-center gap-2">
                     <Pipette size={14} className="text-gray-400" />
-                    <span className="text-sm">Build custom palette</span>
+                    <span className="text-sm">Build a custom palette</span>
                   </div>
                   <ChevronRight size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
                 </button>

@@ -439,10 +439,10 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       }}
                       className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
                     >
-                      Add page now
+                      Add first page
                     </button>
                   )}
-                  {!item.done && item.label === 'Current page has sections' && (
+                  {!item.done && item.label === 'Current page has at least one section' && (
                     <button
                       onClick={() => {
                         const pageId = state.activePageId;
@@ -456,7 +456,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       }}
                       className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
                     >
-                      Add section now
+                      Add first section
                     </button>
                   )}
                 </li>
@@ -591,7 +591,10 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
+              <p className="text-[11px] text-gray-500 mt-1">Add pages, rename them, and choose what appears in navigation.</p>
+            </div>
             <button type="button" onClick={() => setShowPageManager(false)} className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Close</button>
           </div>
 

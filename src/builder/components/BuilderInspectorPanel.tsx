@@ -279,6 +279,23 @@ export const BuilderInspectorPanel: React.FC = () => {
               ))}
             </div>
 
+            <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white p-3">
+              <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1">Best next step</p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">{nextAction.detail}</p>
+              <button
+                onClick={() => {
+                  if (nextAction.tab !== 'content' && nextAction.tab !== 'guide') {
+                    setShowAdvanced(true);
+                    setSimpleMode(false);
+                  }
+                  setActiveTab(nextAction.tab);
+                }}
+                className="mt-3 inline-flex items-center rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-white"
+              >
+                {nextAction.cta}
+              </button>
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               {[
                 { id: 'content', label: 'Edit content' },
@@ -873,7 +890,7 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[var(--color-border-subtle)] rounded-xl p-4 text-xs text-[var(--color-text-tertiary)] hover:border-rose-300 hover:text-rose-500 hover:bg-[var(--color-surface-subtle)] transition-all"
           >
             <Plus size={14} />
-            Add your first photo
+            Add first photo
           </button>
         )}
       </div>

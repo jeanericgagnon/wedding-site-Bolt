@@ -1037,7 +1037,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
               <Check size={11} />
               Current design
             </span>
-          ) : 'See design'}
+          ) : 'Preview'}
         </button>
       </div>
       </div>
