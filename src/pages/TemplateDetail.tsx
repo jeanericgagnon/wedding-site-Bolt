@@ -57,12 +57,12 @@ export const TemplateDetail: React.FC = () => {
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-2">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase updates-wide text-neutral-500">Live populated preview</p>
+                <p className="text-xs font-semibold uppercase updates-wide text-neutral-500">Populated website preview</p>
                 <Link
                   to={`/template-scroll-capture?templateId=${tpl.id}`}
                   className="rounded border border-neutral-300 bg-white px-2 py-1 text-[11px] text-neutral-700 hover:bg-neutral-100"
                 >
-                  Open full preview
+                  Open full website preview
                 </Link>
               </div>
               <div className="rounded border border-neutral-200 bg-white overflow-hidden">
@@ -72,10 +72,10 @@ export const TemplateDetail: React.FC = () => {
                   className="h-[360px] w-full"
                 />
               </div>
-              <p className="mt-2 text-[11px] text-neutral-500">Uses populated Eric + Kara preview data (names, date, location, schedule, photos).</p>
+              <p className="mt-2 text-[11px] text-neutral-500">Uses sample wedding details so you can see how the design feels with real content in place.</p>
             </div>
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-1">
-              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Default section order</p>
+              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Default section flow</p>
               <div className="flex flex-wrap gap-1.5">
                 {tpl.defaultSectionOrder.map((section) => (
                   <span key={section} className="rounded bg-white border border-neutral-200 px-2 py-1 text-xs text-neutral-700">{section}</span>

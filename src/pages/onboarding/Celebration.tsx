@@ -81,12 +81,12 @@ export const Celebration: React.FC = () => {
 
           {!state?.weddingDate && (
             <p className="text-xl text-text-secondary mb-6">
-              You're set up — now choose how you want to build and publish your site.
+              You’re set up — now choose how you want to shape and launch your website.
             </p>
           )}
 
           <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-2">
-            Your account is all set up. Choose how you'd like to build your wedding site:
+            Your account is ready. Choose how you'd like to build your wedding website:
           </p>
         </div>
 
@@ -103,11 +103,11 @@ export const Celebration: React.FC = () => {
                   <Sparkles className="w-6 h-6 text-accent" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
-                  1-Minute Quick Start
+                  Quick start
                 </h2>
-                <p className="text-xs text-accent font-medium mb-3">Minimum viable publish</p>
+                <p className="text-xs text-accent font-medium mb-3">Fastest path to a strong first draft</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Answer 4 quick questions and get a complete site with all pages ready to share.
+                  Answer a few quick questions and get a polished starting site with your main pages ready.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">

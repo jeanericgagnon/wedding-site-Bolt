@@ -91,7 +91,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
         )}
         {!hasContent ? (
           <div className="text-center">
-            <p className="text-text-secondary">Travel and accommodation details will appear here once added.</p>
+            <p className="text-text-secondary">Travel details, hotel notes, and local guidance will appear here once they’re added.</p>
           </div>
         ) : (
           <div className="space-y-6">

@@ -967,7 +967,7 @@ export const DashboardSettings: React.FC = () => {
                           <Layout className="w-5 h-5" />
                           Template
                         </CardTitle>
-                        <CardDescription>Change your wedding site template while preserving your content</CardDescription>
+                        <CardDescription>Try a different look for your website without losing your content</CardDescription>
                       </div>
                       <Button type="button" variant="outline" size="sm" onClick={() => setShowTemplateSettings((v) => !v)}>
                         {showTemplateSettings ? 'Hide' : 'Show'}
@@ -993,7 +993,7 @@ export const DashboardSettings: React.FC = () => {
                         )}
                         <div>
                           <label className="block text-sm font-medium text-text-primary mb-3">
-                            Choose Template
+                            Choose a different design
                           </label>
                           <div className="grid md:grid-cols-3 gap-4">
                             {getAllTemplates().map((template) => (
@@ -1010,7 +1010,7 @@ export const DashboardSettings: React.FC = () => {
                                 <h3 className="font-semibold text-text-primary mb-1">
                                   {template.name}
                                   {currentTemplate === template.id && (
-                                    <Badge variant="primary" className="ml-2">Active</Badge>
+                                    <Badge variant="primary" className="ml-2">Current</Badge>
                                   )}
                                 </h3>
                                 <p className="text-sm text-text-secondary">
@@ -1020,7 +1020,7 @@ export const DashboardSettings: React.FC = () => {
                             ))}
                           </div>
                           <p className="text-xs text-text-secondary mt-3">
-                            Your wedding information will be preserved when switching templates.
+                            Your names, details, and content stay in place when you switch designs.
                           </p>
                         </div>
                       </>

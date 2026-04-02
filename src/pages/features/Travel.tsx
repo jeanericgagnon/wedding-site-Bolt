@@ -31,17 +31,17 @@ export const TravelFeature: React.FC = () => {
               Travel + Itinerary
             </h1>
             <p className="text-xl md:text-2xl text-ink/70 mb-10 leading-relaxed">
-              Hotel room blocks, multi-day timelines, venue details, and everything guests need to arrive on time.
+              Travel details, weekend schedule, and guest guidance in one place so fewer people text you the same questions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See full product tour
+                  See how Dayof works
                 </Button>
               </Link>
             </div>
@@ -53,10 +53,10 @@ export const TravelFeature: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Help guests get there
+              Help guests arrive prepared
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              Clear directions, accurate times, and all the details guests need in one place.
+              Put the timing, directions, stay details, and local guidance in one clear place.
             </p>
           </div>
 
@@ -159,7 +159,7 @@ export const TravelFeature: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-                Complete travel planning
+                Stronger travel details for guests
               </h2>
             </div>
 
@@ -170,7 +170,7 @@ export const TravelFeature: React.FC = () => {
                     <Plane className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Airport and Transportation</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Airport and transportation notes</h3>
                     <p className="text-ink/70 leading-relaxed">
                       List nearby airports with distance and travel time. Add shuttle services, rental car info, or ride-share recommendations.
                     </p>
@@ -184,7 +184,7 @@ export const TravelFeature: React.FC = () => {
                     <Clock className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Event Timing Details</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Timing details guests actually need</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Specify doors open, ceremony start, cocktail hour, dinner service. Clear timing helps guests plan their day.
                     </p>
@@ -214,10 +214,10 @@ export const TravelFeature: React.FC = () => {
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Every feature included
+              Everything you need, already together
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              Everything you need to help guests travel and arrive prepared.
+              Everything you need to make travel, timing, and guest planning feel easier.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -245,13 +245,13 @@ export const TravelFeature: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See all features
+                  Explore more features
                 </Button>
               </Link>
             </div>

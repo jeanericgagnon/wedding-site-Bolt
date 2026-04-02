@@ -31,17 +31,17 @@ export const GuestsFeature: React.FC = () => {
               Guests + Households
             </h1>
             <p className="text-xl md:text-2xl text-ink/70 mb-10 leading-relaxed">
-              Smart guest management that groups households correctly, prevents duplicates, and keeps your list organized from day one.
+              Keep your guest list clear from the start, with households, plus-ones, event access, and imports that make sense.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See full product tour
+                  See how Dayof works
                 </Button>
               </Link>
             </div>
@@ -53,10 +53,10 @@ export const GuestsFeature: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Built to handle the complexity
+              Built for real guest-list messiness
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              Guest list management is harder than it looks. We engineered around every edge case.
+              Guest lists get complicated fast. Dayof keeps the structure clean without making you fight the system.
             </p>
           </div>
 
@@ -159,7 +159,7 @@ export const GuestsFeature: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-                Powerful guest management tools
+                Extra control when you need it
               </h2>
             </div>
 
@@ -170,7 +170,7 @@ export const GuestsFeature: React.FC = () => {
                     <Search className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Advanced Search and Filtering</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Search and filtering</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Find guests instantly with powerful search. Filter by RSVP status, event access rules, meal choices, or custom tags. Sort by name, response date, or household size.
                     </p>
@@ -184,7 +184,7 @@ export const GuestsFeature: React.FC = () => {
                     <Tags className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Custom Tags and Notes</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Custom tags and notes</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Add custom tags for your own organization. VIP, wedding party, family, or any categories you need. Private notes visible only to you.
                     </p>
@@ -198,7 +198,7 @@ export const GuestsFeature: React.FC = () => {
                     <FileText className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Dietary Restrictions Tracking</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Dietary notes that stay organized</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Track dietary needs and allergies for every guest. Export directly to your caterer with meal counts and special requirements clearly organized.
                     </p>
@@ -214,10 +214,10 @@ export const GuestsFeature: React.FC = () => {
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Every feature included
+              Everything you need, already together
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              Everything you need to manage your guest list, from first draft to final headcount.
+              Everything you need to manage guests from your first draft to your final count.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -245,13 +245,13 @@ export const GuestsFeature: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Link to="/features">
                 <Button variant="outline" size="lg">
-                  See all features
+                  Explore more features
                 </Button>
               </Link>
             </div>

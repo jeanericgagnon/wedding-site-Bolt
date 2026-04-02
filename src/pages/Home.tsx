@@ -141,12 +141,12 @@ export const Home: React.FC = () => {
           <div className="max-w-4xl mx-auto text-center">
             <HeroReveal>
               <h1 className="text-[2.4rem] md:text-[4rem] font-serif font-bold text-ink mb-5 leading-[1.04] updates-tight">
-                A wedding site that doesn't break when it matters
+                A beautiful wedding website with RSVP and guest tools built in
               </h1>
             </HeroReveal>
             <HeroReveal delay={0.1}>
               <p className="text-[1.0625rem] md:text-[1.1875rem] text-ink/75 mb-8 leading-relaxed max-w-3xl mx-auto">
-                One place for your wedding site, RSVPs, guests, messaging, seating, registry, photo sharing, and timeline, built to make planning easier, not push you through a funnel.
+                Start with a polished wedding website, then manage RSVPs, guests, messaging, seating, registry, and day-of details without stitching together extra tools.
               </p>
             </HeroReveal>
             <HeroReveal delay={0.2}>
@@ -187,7 +187,7 @@ export const Home: React.FC = () => {
             </HeroReveal>
             <HeroReveal delay={0.38}>
               <div className="mt-4 inline-flex flex-wrap justify-center gap-2">
-                <span className="text-[11px] px-2.5 py-1 rounded-full border border-brand/20 bg-brand/5 text-brand">Website + RSVP + Registry + Day-of</span>
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-brand/20 bg-brand/5 text-brand">Beautiful site + RSVP + guest tools</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">No forced upsells</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Built for guests of all ages</span>
               </div>
@@ -231,8 +231,8 @@ export const Home: React.FC = () => {
             </div>
 
             <div className="bg-accent/5 rounded-2xl p-7 border border-accent/20 max-w-2xl mx-auto">
-              <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-3 leading-[1.2] updates-tight">Built for trust, not tricks</h3>
-              <p className="text-[1.0625rem] text-ink/80 mb-6 leading-relaxed">Wedding sites should not make money by stressing you out.</p>
+              <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-3 leading-[1.2] updates-tight">Built for trust, not pressure</h3>
+              <p className="text-[1.0625rem] text-ink/80 mb-6 leading-relaxed">Your wedding website should feel calm, polished, and straightforward from the start.</p>
               <ul className="space-y-3 text-[0.9375rem] text-ink/70">
                 <li className="leading-relaxed">No upsells. No paid add ons to "unlock" the basics.</li>
                 <li className="leading-relaxed">No rigged registry order. No forced affiliate links.</li>

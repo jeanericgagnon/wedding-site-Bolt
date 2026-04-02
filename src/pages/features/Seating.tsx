@@ -31,17 +31,17 @@ export const SeatingFeature: React.FC = () => {
               Seating + Check-in
             </h1>
             <p className="text-xl md:text-2xl text-ink/70 mb-10 leading-relaxed">
-              Visual seating chart builder, drag-and-drop assignments, and day-of check-in mode to track arrivals.
+              Plan tables, assign guests, and handle arrivals in one place without the usual wedding-week chaos.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See full product tour
+                  See how Dayof works
                 </Button>
               </Link>
             </div>
@@ -53,10 +53,10 @@ export const SeatingFeature: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              From seating chart to check-in
+              From table planning to guest arrivals
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              Plan your seating, print place cards, and track arrivals on wedding day.
+              Plan the room, print what you need, and stay organized when guests start arriving.
             </p>
           </div>
 
@@ -159,7 +159,7 @@ export const SeatingFeature: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-                Advanced seating tools
+                Helpful seating tools behind the scenes
               </h2>
             </div>
 
@@ -170,7 +170,7 @@ export const SeatingFeature: React.FC = () => {
                     <Utensils className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Meal Choice Integration</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Meal choices, right where you need them</h3>
                     <p className="text-ink/70 leading-relaxed">
                       See meal choices displayed with each guest on your seating chart. Export seating with meal counts organized by table for your caterer.
                     </p>
@@ -184,7 +184,7 @@ export const SeatingFeature: React.FC = () => {
                     <Users className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Smart Assignments</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Smarter assignments</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Assign entire households to tables at once. See warnings if you split a household or exceed table capacity.
                     </p>
@@ -198,7 +198,7 @@ export const SeatingFeature: React.FC = () => {
                     <QrCode className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Auto-Assign by RSVP</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Auto-fill from confirmed guests</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Let Dayof fill your tables automatically based on confirmed attendees. Adjust manually, then export — the bulk of the work is done in seconds.
                     </p>
@@ -214,10 +214,10 @@ export const SeatingFeature: React.FC = () => {
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Every feature included
+              Everything you need, already together
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              Everything you need for seating planning and day-of guest updates.
+              Everything you need for seating decisions and day-of guest flow.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -245,13 +245,13 @@ export const SeatingFeature: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See all features
+                  Explore more features
                 </Button>
               </Link>
             </div>

@@ -123,7 +123,7 @@ export const Templates: React.FC = () => {
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2">
           <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
-            Details
+See details
           </Link>
           <button
             type="button"
@@ -142,7 +142,7 @@ export const Templates: React.FC = () => {
             onClick={() => useTemplate(tpl.id)}
             className="rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700"
           >
-            Use template
+Start with this
           </button>
         </div>
       </div>
@@ -154,9 +154,9 @@ export const Templates: React.FC = () => {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900">Choose a template</h1>
-            <p className="mt-2 text-sm text-neutral-600">Filter by style, season, and colorway to find your starting point.</p>
-            <p className="mt-1 text-xs text-neutral-500">Template selection is carried into setup and builder defaults.</p>
+            <h1 className="text-3xl font-bold text-neutral-900">Choose your starting design</h1>
+            <p className="mt-2 text-sm text-neutral-600">Pick a strong starting point for your wedding website, then personalize it inside the editor.</p>
+            <p className="mt-1 text-xs text-neutral-500">Your choice carries into setup and your first site defaults.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button onClick={() => { setStyle('all'); setSeason('all'); setColorway('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">All templates</button>
               <button onClick={() => { setStyle('Modern'); setSeason('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Modern</button>
@@ -192,7 +192,7 @@ export const Templates: React.FC = () => {
           </select>
 
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'recommended' | 'name' | 'style')} className="rounded border border-neutral-300 px-3 py-2 text-sm">
-            <option value="recommended">Sort: Recommended</option>
+            <option value="recommended">Sort: Best match</option>
             <option value="name">Sort: Name</option>
             <option value="style">Sort: Style</option>
           </select>
@@ -216,15 +216,15 @@ export const Templates: React.FC = () => {
         </div>
 
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-neutral-500 gap-2">
-          <span>{filtered.length} template{filtered.length === 1 ? '' : 's'} shown</span>
+          <span>{filtered.length} starting design{filtered.length === 1 ? '' : 's'} shown</span>
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline font-medium">Tip: preview before selecting for better section fit.</span>
+            <span className="hidden sm:inline font-medium">Tip: open a design before choosing if you want a closer look.</span>
             <button
               type="button"
               onClick={() => setGroupByStyle((v) => !v)}
               className="rounded border border-neutral-300 bg-white px-2 py-1 text-[11px] font-medium text-neutral-700 transition-colors hover:bg-neutral-100"
             >
-              {groupByStyle ? 'Flat view' : 'Group by style'}
+              {groupByStyle ? 'Show all together' : 'Group by style'}
             </button>
           </div>
         </div>
@@ -245,21 +245,21 @@ export const Templates: React.FC = () => {
                     {tpl.styleTags.slice(0, 3).map((tag) => <span key={`${tpl.id}-${tag}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700">{tag}</span>)}
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    <Link to={`/template-scroll-capture?templateId=${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] font-medium text-neutral-700 hover:bg-neutral-100">View template</Link>
-                    <button type="button" onClick={() => useTemplate(tpl.id)} className="rounded bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700">Use this</button>
+                    <Link to={`/template-scroll-capture?templateId=${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] font-medium text-neutral-700 hover:bg-neutral-100">Open preview</Link>
+                    <button type="button" onClick={() => useTemplate(tpl.id)} className="rounded bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700">Start here</button>
                   </div>
                 </div>
               ))}
             </div>
             {!sectionDiff && comparedTemplates.length === 1 && (
               <div className="mt-2 rounded-lg border border-brand/20 bg-white px-2.5 py-2 text-[11px] text-brand">
-                Select one more template to unlock section-by-section comparison.
+                Select one more design to compare the section flow side by side.
               </div>
             )}
 
             {sectionDiff && (
               <div className="mt-3 rounded-lg border border-brand/20 bg-white p-2.5">
-                <p className="text-[11px] font-semibold text-brand mb-1">Section order diff</p>
+                <p className="text-[11px] font-semibold text-brand mb-1">Section flow comparison</p>
                 <div className="mb-2 flex flex-wrap gap-1.5 text-[10px]">
                   <span className="rounded bg-brand/5 border border-brand/20 px-1.5 py-0.5 text-brand">Shared</span>
                   <span className="rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-amber-700">Only in A</span>
@@ -361,7 +361,7 @@ export const Templates: React.FC = () => {
         )}
 
         {filtered.length === 0 && (
-          <p className="mt-6 text-sm text-neutral-600">No templates match your current filters.</p>
+          <p className="mt-6 text-sm text-neutral-600">No designs match those filters right now.</p>
         )}
       </div>
     </div>

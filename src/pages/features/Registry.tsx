@@ -30,17 +30,17 @@ export const RegistryFeature: React.FC = () => {
               Registry
             </h1>
             <p className="text-xl md:text-2xl text-ink/70 mb-10 leading-relaxed">
-              Link existing registries, add cash funds, or use your own affiliate links. Clean presentation without sponsored clutter.
+              Share registry links, cash funds, and gift ideas in one clean place, without ads, clutter, or forced recommendations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See full product tour
+                  See how Dayof works
                 </Button>
               </Link>
             </div>
@@ -52,10 +52,10 @@ export const RegistryFeature: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Your registry, your way
+              Registry presentation that feels complete
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              No forced recommendations. No rigged affiliate links. Just clean links to what you actually want.
+              No sponsored clutter. No games with ordering. Just a clean registry that feels like part of your site.
             </p>
           </div>
 
@@ -79,7 +79,7 @@ export const RegistryFeature: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <LinkIcon className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-ink mb-3">BYOAL Option</h3>
+              <h3 className="text-xl font-serif font-bold text-ink mb-3">Use your own affiliate links</h3>
               <p className="text-ink/70 mb-4">
                 Bring Your Own Affiliate Links. Use your own affiliate codes and keep the earnings instead of us taking a cut.
               </p>
@@ -158,7 +158,7 @@ export const RegistryFeature: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-                Complete control
+                Clean control over what guests see
               </h2>
             </div>
 
@@ -169,7 +169,7 @@ export const RegistryFeature: React.FC = () => {
                     <DollarSign className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">No Rigged Order or Hidden Costs</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">No rigged order or hidden costs</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Your registries display in the order you choose. No paid promotion, no algorithmic reordering, no hidden costs passed to your guests.
                     </p>
@@ -183,7 +183,7 @@ export const RegistryFeature: React.FC = () => {
                     <LinkIcon className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Link Maintenance</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Healthier links over time</h3>
                     <p className="text-ink/70 leading-relaxed">
                       We regularly check your registry links and notify you if any break. No surprise dead links when guests try to shop.
                     </p>
@@ -197,7 +197,7 @@ export const RegistryFeature: React.FC = () => {
                     <Gift className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Custom Messaging</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Your own note and context</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Add personal notes above your registry section. Explain your preferences, request contributions to specific funds, or simply say thank you.
                     </p>
@@ -213,10 +213,10 @@ export const RegistryFeature: React.FC = () => {
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Every feature included
+              Everything you need, already together
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              Everything you need to manage your registry without tricks or upsells.
+              Everything you need for a registry that feels polished, useful, and complete.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -244,13 +244,13 @@ export const RegistryFeature: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See all features
+                  Explore more features
                 </Button>
               </Link>
             </div>

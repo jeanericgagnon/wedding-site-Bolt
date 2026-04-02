@@ -63,7 +63,7 @@ export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistIte
     id: 'publish',
     label: 'Publish site once',
     done: stats.isPublished,
-    actionLabel: stats.isPublished ? 'Open site builder' : 'Publish now',
+    actionLabel: stats.isPublished ? 'Open site editor' : 'Go live',
     route: getPublishBuilderRoute(stats.isPublished),
   },
 ];
@@ -71,14 +71,14 @@ export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistIte
 export const buildPublishReadinessItems = (stats: OverviewChecklistStats): ChecklistItemDef[] => [
   {
     id: 'slug',
-    label: 'Site URL configured',
+    label: 'Website URL is set',
     done: Boolean(stats.siteSlug),
     actionLabel: 'Open settings',
     route: '/dashboard/settings',
   },
   {
     id: 'template',
-    label: 'Template selected',
+    label: 'Design is chosen',
     done: Boolean(stats.templateName),
     actionLabel: 'Open templates',
     route: '/templates',
@@ -92,9 +92,9 @@ export const buildPublishReadinessItems = (stats: OverviewChecklistStats): Check
   },
   {
     id: 'published',
-    label: 'Published at least once',
+    label: 'Website has gone live once',
     done: Boolean(stats.isPublished),
-    actionLabel: stats.isPublished ? 'Open builder' : 'Publish now',
+    actionLabel: stats.isPublished ? 'Open site editor' : 'Go live',
     route: getPublishBuilderRoute(stats.isPublished),
   },
 ];

@@ -11,7 +11,7 @@ const steps = [
   { key: 'location', label: 'Location' },
   { key: 'guest-estimate', label: 'Guest estimate' },
   { key: 'style', label: 'Style preferences' },
-  { key: 'review', label: 'Review & generate' },
+  { key: 'review', label: 'Review & continue' },
 ] as const;
 
 const styleOptions = [
@@ -159,7 +159,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       clearSetupDraftOnly();
       navigate('/builder');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save setup.');
+      setError(err instanceof Error ? err.message : 'Could not save your setup right now.');
     } finally {
       setSaving(false);
     }
@@ -168,8 +168,8 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="text-3xl font-bold text-neutral-900">Website Setup</h1>
-        <p className="mt-2 text-sm text-neutral-600">Builder V2 guided setup.</p>
+        <h1 className="text-3xl font-bold text-neutral-900">Set up your wedding website</h1>
+        <p className="mt-2 text-sm text-neutral-600">A quick guided setup to get your site ready faster.</p>
         <div className="mt-4">
           <div className="mb-1 flex items-center justify-between text-xs text-neutral-500">
             <span>Setup progress</span>
@@ -186,14 +186,14 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
             onClick={() => navigate(`/setup/${firstIncompleteStep}`)}
             className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100"
           >
-            Jump to next required step
+            Continue where you left off
           </button>
           <button
             type="button"
             onClick={() => navigate('/templates')}
             className="rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-100"
           >
-            Back to templates
+            Browse templates
           </button>
         </div>
 
@@ -207,7 +207,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 onClick={(e) => {
                   if (isReviewLocked) {
                     e.preventDefault();
-                    setError('Complete names, date/location, and guest estimate before review.');
+                    setError('Add names, date or timing, location, and guest estimate before review.');
                   }
                 }}
                 className={`rounded border px-3 py-2 text-sm ${activeStep === s.key ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-neutral-300 bg-white text-neutral-700'} ${isReviewLocked ? 'opacity-60' : ''}`}
@@ -233,7 +233,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex items-center gap-2">
                 <button type="button" onClick={continueFromNames} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
-                <p className="text-xs text-neutral-500">Draft saves automatically in browser.</p>
+                <p className="text-xs text-neutral-500">Your progress saves automatically in this browser.</p>
               </div>
             </div>
           )}
@@ -317,7 +317,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
               </div>
 
               <div>
-                <p className="text-xs font-medium text-neutral-700 mb-2">Recommended templates</p>
+                <p className="text-xs font-medium text-neutral-700 mb-2">Recommended starting points</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   {recommendedTemplates.map((tpl) => {
                     const active = draft.selectedTemplateId === tpl.id;
@@ -336,7 +336,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 </div>
               </div>
 
-              <p className="text-xs text-neutral-500">Optional — helps preselect templates and starter sections.</p>
+              <p className="text-xs text-neutral-500">Optional — helps Dayof pick a better starting direction for your site.</p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
                 <button type="button" onClick={continueFromStyle} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
@@ -358,10 +358,10 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
               <div className="flex flex-wrap items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
-                <button type="button" onClick={() => navigate('/templates')} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Change template</button>
+                <button type="button" onClick={() => navigate('/templates')} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Choose a different template</button>
                 <button type="button" onClick={resetSetupDraft} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Start over</button>
                 <button type="button" onClick={() => void saveAndGoBuilder()} disabled={saving} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60">
-                  {saving ? 'Saving...' : 'Save and open builder'}
+                  {saving ? 'Saving...' : 'Save and open your site editor'}
                 </button>
               </div>
             </div>

@@ -17,7 +17,7 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  { id: 'launch', title: 'Launch your site', kicker: 'Step 1', outcome: 'Go live fast and look polished from day one.', detail: 'No bloated setup flow. No plan maze first.' },
+  { id: 'launch', title: 'Launch a site you’re proud to share', kicker: 'Step 1', outcome: 'Go live fast with something polished from day one.', detail: 'Start with a strong template, clear setup, and a clean path to publish.' },
   { id: 'guests', title: 'Organize guests + households', kicker: 'Step 2', outcome: 'Know who is invited and where they belong.', detail: 'Households, plus-ones, and statuses in one place.' },
   { id: 'rsvp', title: 'Collect RSVPs cleanly', kicker: 'Step 3', outcome: 'Get responses without confusion.', detail: 'Event-level RSVP and meal tracking without hacks.' },
   { id: 'message', title: 'Message everyone', kicker: 'Step 4', outcome: 'Send the right update to the right group.', detail: 'Stop copy/pasting from spreadsheets to email tools.' },
@@ -78,8 +78,8 @@ export const Product: React.FC = () => {
     if (activeStep === 'launch') {
       return (
         <div className="space-y-4">
-          <p className="text-sm text-ink/70">Template: Modern Luxe • Site: Ready to publish</p>
-          <button className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Publish site</button>
+          <p className="text-sm text-ink/70">Template: Modern Luxe • Website: ready to go live</p>
+          <button className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Go live</button>
         </div>
       );
     }
@@ -136,7 +136,7 @@ export const Product: React.FC = () => {
 
       <section className="py-3 border-b border-border-subtle bg-brand text-paper">
         <div className="container-custom max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2 text-sm">
-          <p className="font-medium">Want to see it, not read about it?</p>
+          <p className="font-medium">Want to see the full flow in action?</p>
           <button
             onClick={handleDemoLogin}
             disabled={demoLoading}
@@ -150,8 +150,8 @@ export const Product: React.FC = () => {
       <section className="py-10 md:py-14 bg-paper text-ink">
         <div className="container-custom max-w-7xl">
           <SlideReveal from="left" className="mb-8">
-            <h2 className="text-[2rem] md:text-[2.6rem] font-serif font-bold mb-2">Click around. See how it actually works.</h2>
-            <p className="text-ink/70">This is the real flow, not a fluff deck.</p>
+            <h2 className="text-[2rem] md:text-[2.6rem] font-serif font-bold mb-2">See how the website leads everything else.</h2>
+            <p className="text-ink/70">Start with a beautiful site, then move naturally into guests, RSVPs, messaging, seating, and day-of details.</p>
           </SlideReveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr,260px] gap-4">
@@ -188,14 +188,14 @@ export const Product: React.FC = () => {
             </div>
 
             <div className="rounded-2xl border border-border-subtle bg-surface p-4 text-ink h-fit lg:sticky lg:top-24">
-              <p className="text-xs uppercase tracking-wide text-ink/65 mb-2">What changes right now</p>
+              <p className="text-xs uppercase tracking-wide text-ink/65 mb-2">What updates as you go</p>
               <ul className="space-y-3 text-sm">
                 <li>• Guests tracked: <strong>{guestCount}</strong></li>
                 <li>• RSVP yes: <strong>{rsvpYes}</strong></li>
                 <li>• Message status: <strong>{messageState === 'draft' ? 'Draft' : 'Sent'}</strong></li>
                 <li>• Seated so far: <strong>{seated}</strong></li>
               </ul>
-              <p className="text-ink/65 text-xs mt-4">Click a step and these numbers update instantly.</p>
+              <p className="text-ink/65 text-xs mt-4">Click through the flow and the planning picture updates with it.</p>
             </div>
           </div>
         </div>
@@ -204,12 +204,12 @@ export const Product: React.FC = () => {
       <section className="section-shell bg-paper">
         <div className="container-custom max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: Shield, title: 'Beautiful by default', text: 'Looks premium without endless tweaking.' },
+            { icon: Shield, title: 'Beautiful by default', text: 'Starts polished without endless tweaking.' },
             { icon: Wallet, title: 'Clear pricing', text: 'No hidden tiers. No renewal gotchas.' },
             { icon: Mail, title: 'Built-in comms', text: 'Keep guests synced without duct tape.' },
             { icon: Users, title: 'Guest logic that scales', text: 'Households and plus-ones stay sane.' },
             { icon: Calendar, title: 'Day-of readiness', text: 'Timeline and execution stay aligned.' },
-            { icon: CheckCircle2, title: 'Reliable flow', text: 'Less chaos from engagement to event day.' },
+            { icon: CheckCircle2, title: 'Clear path to live', text: 'Less friction between signup and a site you can share.' },
           ].map((item) => (
             <div key={item.title} className="card-clean p-5">
               <item.icon className="w-5 h-5 text-brand mb-3" />
@@ -224,7 +224,7 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-6xl">
           <SlideReveal from="left" className="mb-6">
             <h2 className="section-title mb-2">Everything you get</h2>
-            <p className="text-ink/70">No roadmap promises — this is all live now.</p>
+            <p className="text-ink/70">Everything here works together today.</p>
           </SlideReveal>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {FEATURE_AUDIT_GROUPS.map((group) => (
@@ -243,7 +243,7 @@ export const Product: React.FC = () => {
 
       <section className="section-shell bg-white">
         <div className="container-custom max-w-4xl text-center">
-          <h2 className="section-title mb-3">Less wedding-tech drama. More calm execution.</h2>
+          <h2 className="section-title mb-3">A beautiful website first. Calm execution underneath.</h2>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
             <button onClick={handleSignUp} className="px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all">Start your site</button>
             <button onClick={handleDemoLogin} disabled={demoLoading} className="group px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">

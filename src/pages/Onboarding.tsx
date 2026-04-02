@@ -536,15 +536,15 @@ export const Onboarding: React.FC = () => {
         </div>
 
         <h1 className="text-4xl font-bold text-text-primary mb-4">
-          Your site is ready!
+          Your website is ready to shape
         </h1>
         <p className="text-lg text-text-secondary mb-4">
-          We've created a beautiful wedding site based on your answers. You can preview, edit, and publish it now.
+          We created a polished starting point from your answers. You can review it, edit it, and go live when you're ready.
         </p>
 
         <Card variant="bordered" padding="lg" className="mb-8">
           <div className="text-center">
-            <p className="text-sm text-text-secondary mb-2">Your wedding site will be available at:</p>
+            <p className="text-sm text-text-secondary mb-2">Your website can live at:</p>
             <p className="text-xl font-semibold text-primary break-all">{subdomain}</p>
           </div>
         </Card>
@@ -554,22 +554,22 @@ export const Onboarding: React.FC = () => {
             <div className="flex items-start gap-3">
               <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
-                <p className="font-medium text-text-primary">All sections populated</p>
-                <p className="text-sm text-text-secondary">Hero, Story, Schedule, RSVP, and more</p>
+                <p className="font-medium text-text-primary">A strong first draft is in place</p>
+                <p className="text-sm text-text-secondary">Your main pages and sections are already set up</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
-                <p className="font-medium text-text-primary">Theme applied</p>
-                <p className="text-sm text-text-secondary">{formData.theme} color palette and styling</p>
+                <p className="font-medium text-text-primary">A design direction is already applied</p>
+                <p className="text-sm text-text-secondary">{formData.theme} styling is already carrying the look</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
-                <p className="font-medium text-text-primary">Ready to customize</p>
-                <p className="text-sm text-text-secondary">Edit any section or add new content</p>
+                <p className="font-medium text-text-primary">You can refine before sharing</p>
+                <p className="text-sm text-text-secondary">Edit any section, add more detail, or publish when it feels right</p>
               </div>
             </div>
           </div>
@@ -580,7 +580,7 @@ export const Onboarding: React.FC = () => {
           Go to Dashboard
         </Button>
         <Button variant="outline" size="lg" onClick={() => navigate('/dashboard/builder')}>
-          Preview Site
+          Review website
         </Button>
       </div>
     </div>

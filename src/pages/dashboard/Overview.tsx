@@ -394,7 +394,7 @@ export const DashboardOverview: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {!loading && stats?.isPublished && stats?.siteSlug && (
               <Button variant="outline" size="sm" onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}>
-                Open live site
+                Open live website
               </Button>
             )}
             {!loading && stats && !stats.isPublished && (
@@ -403,21 +403,21 @@ export const DashboardOverview: React.FC = () => {
                   variant="accent"
                   size="sm"
                   onClick={() => navigate('/dashboard/builder?publishNow=1')}
-                  title="Open builder and run publish flow"
+                  title="Open your site editor and go straight to publish"
                 >
-                  Publish now
+                  Go live
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => navigate('/dashboard/builder?photoTips=1')}
-                  title="Open builder with photo placement tips"
+                  title="Open your site editor with photo tips"
                 >
-                  Photo tips
+                  Add photos better
                 </Button>
                 {publishBlockers.length > 0 && firstPublishBlocker?.action && (
                   <Button variant="outline" size="sm" onClick={() => firstPublishBlocker.action?.()}>
-                    Fix blockers ({publishBlockers.length})
+                    Fix what’s left ({publishBlockers.length})
                   </Button>
                 )}
               </>
@@ -553,7 +553,7 @@ export const DashboardOverview: React.FC = () => {
                     <div>
                       <CardTitle>Your wedding site</CardTitle>
                       <CardDescription>
-                        {stats?.isPublished ? 'Published and live' : 'Not yet published'}
+                        {stats?.isPublished ? 'Your site is live' : 'Your site is still in draft'}
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
@@ -586,7 +586,7 @@ export const DashboardOverview: React.FC = () => {
                   )}
                   <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                     <span className="text-text-secondary">Status</span>
-                    <span className="text-text-primary">{stats?.isPublished ? 'Live' : 'Draft'}</span>
+                    <span className="text-text-primary">{stats?.isPublished ? 'Live' : 'Draft only'}</span>
                   </div>
                   <div className="flex items-center justify-between py-3">
                     <span className="text-text-secondary">Last published</span>
@@ -597,7 +597,7 @@ export const DashboardOverview: React.FC = () => {
 
                   <details className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
                     <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
-                      <span className="text-xs font-medium text-text-secondary">View details</span>
+                      <span className="text-xs font-medium text-text-secondary">Site details</span>
                       <span className="text-[11px] text-text-tertiary">{publishProgress.done}/{publishProgress.total} ready</span>
                     </summary>
                     <div className="mt-3 space-y-3">
@@ -622,7 +622,7 @@ export const DashboardOverview: React.FC = () => {
 
                       {!stats?.isPublished && (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-                          Ready to publish: {stats?.siteSlug ? 'URL set' : 'set URL'} · {stats?.templateName ? 'template set' : 'choose template'}.
+                          Before you go live: {stats?.siteSlug ? 'URL is ready' : 'choose your URL'} · {stats?.templateName ? 'template is chosen' : 'choose a template'}.
                         </div>
                       )}
 

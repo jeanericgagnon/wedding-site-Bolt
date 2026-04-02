@@ -108,7 +108,7 @@ export const DressCodeBanner: React.FC<Props> = ({ data: _data, instance }) => {
   const preset = DRESS_CODE_PRESETS[presetKey];
 
   const title = (settings.dressCodeLabel as string) || preset?.label || 'Dress Code';
-  const description = (settings.description as string) || preset?.description || 'Dress code details will appear here once added.';
+  const description = (settings.description as string) || preset?.description || 'Dress code details will appear here once they’re added.';
 
   return (
     <section className="py-14 px-4 bg-surface-subtle border-y border-border">

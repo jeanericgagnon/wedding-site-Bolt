@@ -28,20 +28,20 @@ export const RSVPFeature: React.FC = () => {
               <CheckCircle2 className="w-12 h-12 text-brand" />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-ink mb-6 leading-tight">
-              RSVP Engine
+RSVP
             </h1>
             <p className="text-xl md:text-2xl text-ink/70 mb-10 leading-relaxed">
-              Household-aware RSVP flow that prevents confusion and collects exactly what you need. Advanced automation features are being rolled out in phases.
+              A calm RSVP flow for households, events, meals, and guest details — built to make replying feel simple for guests and clear for you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See full product tour
+                  See how Dayof works
                 </Button>
               </Link>
             </div>
@@ -53,10 +53,10 @@ export const RSVPFeature: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Built for correctness
+Built to keep things clear
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              Most wedding sites get RSVPs wrong. We engineered around every edge case.
+              Most RSVP friction comes from confusing flows. Dayof keeps responses clean, clear, and easy to trust.
             </p>
           </div>
 
@@ -159,7 +159,7 @@ export const RSVPFeature: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-                Smart RSVP features
+                More ways to keep replies clean
               </h2>
             </div>
 
@@ -170,7 +170,7 @@ export const RSVPFeature: React.FC = () => {
                     <Mail className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Reminder Automation (Rollout)</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Reminder scheduling</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Automated RSVP reminder campaigns are in rollout. Core RSVP flow is live today; reminder scheduling is being enabled in phases.
                     </p>
@@ -184,7 +184,7 @@ export const RSVPFeature: React.FC = () => {
                     <Shield className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Secure Guest Access</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Simple guest access</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Guests access their RSVP with email or unique link. Can edit their response anytime before deadline. No account required.
                     </p>
@@ -198,7 +198,7 @@ export const RSVPFeature: React.FC = () => {
                     <AlertCircle className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Validation and Error Prevention</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Clear checks along the way</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Clear validation at every step prevents incomplete submissions. Required fields marked clearly. Error messages guide guests to fix issues.
                     </p>
@@ -214,10 +214,10 @@ export const RSVPFeature: React.FC = () => {
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Every feature included
+              Everything you need, already together
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              Everything you need to collect RSVPs without confusion or errors.
+              Everything you need to collect replies without extra back-and-forth.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -245,13 +245,13 @@ export const RSVPFeature: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See RSVP demo
+                  Explore more features
                 </Button>
               </Link>
             </div>

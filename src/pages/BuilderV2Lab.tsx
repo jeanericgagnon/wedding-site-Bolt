@@ -987,28 +987,28 @@ export const BuilderV2Lab: React.FC = () => {
       <div className="w-full px-0 py-0 h-full flex flex-col gap-0 [--topbar-h:46px] [--rail-head-h:50px] [--page-row-h:52px]">
         <div className="h-[var(--topbar-h)] px-2 md:px-3 border-b border-border-subtle bg-white flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase updates-[0.2em] text-primary font-semibold">Builder v2 Lab</p>
-            <h1 className="text-lg md:text-xl font-semibold mt-0.5">Functional shell (Sprint 2 in progress)</h1>
-            <p className="text-text-secondary mt-0.5 text-xs max-w-2xl">Focused editor lab: fast structure editing, keyboard flow, and live preview quality.</p>
+            <p className="text-xs uppercase updates-[0.2em] text-primary font-semibold">Site editor</p>
+            <h1 className="text-lg md:text-xl font-semibold mt-0.5">Structured editing with live preview</h1>
+            <p className="text-text-secondary mt-0.5 text-xs max-w-2xl">Shape your website quickly, keep the structure clean, and see changes as you go.</p>
           </div>
           <div className="flex items-center gap-2">
             <span className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full ${saveState === 'saved' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
               {saveState === 'saved' ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
               {saveState === 'saved' ? `All changes saved${lastSavedAt ? ` · ${lastSavedAt}` : ''}` : 'Saving...'}
             </span>
-            <Link to="/dashboard/builder" className="text-sm border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">Back to guidance <ArrowRight className="w-4 h-4" /></Link>
+            <Link to="/dashboard/builder" className="text-sm border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">Back to editor guide <ArrowRight className="w-4 h-4" /></Link>
             <Link to="/product" className="text-sm text-primary hover:text-primary-hover inline-flex items-center gap-1">Back <ArrowRight className="w-4 h-4" /></Link>
           </div>
         </div>
 
         <div className="px-2 md:px-3 py-1 border-b border-border-subtle bg-white flex items-center justify-between gap-3 text-[11px] text-text-tertiary">
-          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Edit your page by clicking directly in preview.</p>
+          <p className="inline-flex items-center gap-1.5"><Keyboard className="w-3.5 h-3.5" /> Edit your website by clicking directly in preview.</p>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
             <button onClick={() => setShowCommand(true)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
-            <button onClick={exportV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export V2</button>
-            <button onClick={importV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import V2</button>
-            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} Pages</button>
+            <button onClick={exportV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export layout</button>
+            <button onClick={importV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import layout</button>
+            <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} sections</button>
           </div>
         </div>
 
@@ -1018,7 +1018,7 @@ export const BuilderV2Lab: React.FC = () => {
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Pages</h2>
             </div>
-            <div className="mb-3 text-[11px] text-text-tertiary">Drag to reorder pages. Select a section to focus it in preview.</div>
+            <div className="mb-3 text-[11px] text-text-tertiary">Drag to reorder sections. Select one to focus it in preview.</div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2 overflow-auto pr-1 max-h-[38vh]">

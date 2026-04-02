@@ -941,8 +941,8 @@ export const GuidedSetup: React.FC = () => {
                     <span className="text-xs font-bold text-primary">3</span>
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Customize & publish</p>
-                    <p className="text-sm text-text-secondary">Make it yours and share with guests</p>
+                    <p className="font-medium text-text-primary">Refine and go live</p>
+                    <p className="text-sm text-text-secondary">Make it yours, then share when it feels ready</p>
                   </div>
                 </li>
               </ul>
@@ -961,7 +961,7 @@ export const GuidedSetup: React.FC = () => {
               onClick={handleComplete}
               disabled={loading}
             >
-              {loading ? 'Creating Your Site...' : 'Go to Dashboard'}
+              {loading ? 'Creating your website...' : 'Go to dashboard'}
             </Button>
           </div>
         );

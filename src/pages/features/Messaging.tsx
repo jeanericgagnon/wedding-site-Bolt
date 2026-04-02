@@ -31,17 +31,17 @@ export const MessagingFeature: React.FC = () => {
               Messaging
             </h1>
             <p className="text-xl md:text-2xl text-ink/70 mb-10 leading-relaxed">
-              Email included, SMS available. Segment guests, schedule sends, and communicate with confidence.
+              Keep guests in the loop with email and text that feel organized, timely, and easy to send.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See full product tour
+                  See how Dayof works
                 </Button>
               </Link>
             </div>
@@ -53,10 +53,10 @@ export const MessagingFeature: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Reach guests the right way
+              Reach guests clearly
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              Email for most updates, SMS for urgent changes. Segment by any criteria and track engagement.
+              Email works well for most updates. Text is there for urgent changes. Either way, the right guests get the right message.
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export const MessagingFeature: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-ink mb-3">Email Included</h3>
+              <h3 className="text-xl font-serif font-bold text-ink mb-3">Email included</h3>
               <p className="text-ink/70 mb-4">
                 Send unlimited emails to your guests. Save the date, RSVP reminders, venue updates, or thank you notes.
               </p>
@@ -80,7 +80,7 @@ export const MessagingFeature: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <MessageSquare className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-ink mb-3">SMS Credits</h3>
+              <h3 className="text-xl font-serif font-bold text-ink mb-3">Text credits</h3>
               <p className="text-ink/70 mb-4">
                 For urgent updates like venue changes or weather alerts, purchase SMS credits. No markup, transparent pricing.
               </p>
@@ -159,7 +159,7 @@ export const MessagingFeature: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-                Powerful messaging tools
+                More control when timing matters
               </h2>
             </div>
 
@@ -170,7 +170,7 @@ export const MessagingFeature: React.FC = () => {
                     <Send className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Message Templates</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Starting points for common messages</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Pre-built templates for common scenarios: save the dates, RSVP reminders, venue updates, thank you notes. Customize or create your own.
                     </p>
@@ -184,7 +184,7 @@ export const MessagingFeature: React.FC = () => {
                     <Filter className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Advanced Filtering</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Flexible recipient filters</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Combine multiple filters to reach exactly who you need. RSVP status AND event access rules AND custom tags. Preview recipient count before sending.
                     </p>
@@ -198,7 +198,7 @@ export const MessagingFeature: React.FC = () => {
                     <Bell className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Automated Reminders</h3>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Automatic reminders</h3>
                     <p className="text-ink/70 leading-relaxed">
                       Set up automatic RSVP reminder emails for guests who haven't responded. Customizable timing and message content.
                     </p>
@@ -214,10 +214,10 @@ export const MessagingFeature: React.FC = () => {
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Every feature included
+              Everything you need, already together
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              Everything you need to communicate clearly with your guests.
+              Everything you need to send updates without duct-taping extra tools together.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -245,13 +245,13 @@ export const MessagingFeature: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="accent" size="lg">
-                  Start free build
+                  Start your website
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See all features
+                  Explore more features
                 </Button>
               </Link>
             </div>
