@@ -20,6 +20,7 @@ import {
   Radio,
   ChevronDown,
   ChevronRight,
+  type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
@@ -87,7 +88,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     return 'U';
   };
 
-  const navItems = [
+  const navItems: Array<{
+    id: string;
+    label: string;
+    icon: LucideIcon;
+    path: string;
+    pinned?: boolean;
+  }> = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/dashboard/overview', pinned: true },
     { id: 'builder', label: 'Your Site', icon: Palette, path: '/dashboard/builder', pinned: true },
     { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests', pinned: true },
@@ -99,7 +106,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     { id: 'photos', label: 'Photo Sharing', icon: Camera, path: '/dashboard/photos' },
     { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry', pinned: true },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
-  ] as const;
+  ];
 
   const pinnedNavItems = navItems.filter((item) => item.pinned);
   const optionalNavItems = navItems.filter((item) => !item.pinned);
