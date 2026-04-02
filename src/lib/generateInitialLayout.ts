@@ -14,12 +14,19 @@ export function generateInitialLayout(
   const now = new Date().toISOString();
   const template = getTemplate(templateId);
 
+  const shouldDisableEmptySection = (type: SectionInstance['type']) => {
+    if (type === 'registry') return data.registry.links.length === 0;
+    if (type === 'faq') return data.faq.length === 0;
+    if (type === 'travel') return !data.travel?.hotelInfo && !data.travel?.flightInfo && !data.travel?.parkingInfo && !(data.schedule?.length > 1);
+    return false;
+  };
+
   const sections: SectionInstance[] = template.defaultLayout.sections.map((sectionDef) => {
     const section: SectionInstance = {
       id: generateId(),
       type: sectionDef.type as SectionInstance['type'],
       variant: resolveBuilderVariant(sectionDef.type as SectionInstance['type'], sectionDef.variant),
-      enabled: sectionDef.enabled,
+      enabled: shouldDisableEmptySection(sectionDef.type as SectionInstance['type']) ? false : sectionDef.enabled,
       bindings: { ...sectionDef.bindings },
       settings: { ...sectionDef.settings },
     };

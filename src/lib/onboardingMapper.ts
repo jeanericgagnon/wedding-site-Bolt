@@ -28,6 +28,8 @@ interface OnboardingMapperInput {
 }
 
 export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<string, unknown> {
+  const normalizedStory = input.ourStory?.trim() || `${input.coupleNames.name1} and ${input.coupleNames.name2} are excited to celebrate with the people they love most.`;
+
   const weddingData = fromOnboarding({
     partner1Name: input.coupleNames.name1,
     partner2Name: input.coupleNames.name2,
@@ -35,7 +37,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     venueName: input.venue || undefined,
     location: input.location || input.city || undefined,
     city: input.city || undefined,
-    ourStory: input.ourStory || undefined,
+    ourStory: normalizedStory,
     ceremonyTime: input.ceremonyTime || undefined,
     receptionTime: input.receptionTime || undefined,
     attire: input.attire || undefined,
