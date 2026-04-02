@@ -141,16 +141,16 @@ export const BuilderInspectorPanel: React.FC = () => {
           <h3 className="text-[24px] font-semibold text-[var(--color-text-primary)]">Edit section</h3>
         </div>
         <div className="px-3 py-2.5 space-y-2 border-b border-[var(--color-border-subtle)]">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('layout');
-              setShowVariantPicker(true);
-            }}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
-          >
-            Change layout
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('layout');
+                setShowVariantPicker(true);
+              }}
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+            >
+            Change section layout
+            </button>
         </div>
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-[var(--color-text-tertiary)]">
           <span>Mode: {simpleMode ? 'Basic' : 'Advanced'}</span>
@@ -209,7 +209,7 @@ export const BuilderInspectorPanel: React.FC = () => {
       {showVariantPicker && (
         <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-[var(--color-text-primary)]">Choose a layout variant</p>
+            <p className="text-xs font-semibold text-[var(--color-text-primary)]">Choose a layout</p>
             <button
               type="button"
               onClick={() => setShowVariantPicker(false)}
@@ -243,6 +243,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   </div>
                   <p className="text-xs font-medium text-[var(--color-text-primary)]">{v.label}</p>
                   <p className="text-[10px] text-[var(--color-text-tertiary)] line-clamp-2">{v.description || 'Layout option'}</p>
+                  <p className="text-[10px] text-[var(--color-primary)] mt-1 font-medium">Use this layout</p>
                 </button>
               );
             })}

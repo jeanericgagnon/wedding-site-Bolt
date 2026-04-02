@@ -731,7 +731,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             <span>•</span>
             <span>{filtered.length} shown</span>
             <span>•</span>
-            <span className="truncate">Active: {templates.find(t => t.id === currentTemplateId)?.displayName ?? '—'}</span>
+            <span className="truncate">Current design: {templates.find(t => t.id === currentTemplateId)?.displayName ?? '—'}</span>
           </div>
         </div>
 
@@ -873,7 +873,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 }}
                 className="mt-3 inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
               >
-                Show all filters
+                Clear filters
               </button>
             </div>
           )}

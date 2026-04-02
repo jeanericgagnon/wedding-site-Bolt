@@ -112,9 +112,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   const checklistItems = React.useMemo(() => {
     const items: Array<{ label: string; done: boolean; detail?: string }> = [];
-    items.push({ label: 'At least one page exists', done: projectPages.length > 0, detail: projectPages.length > 0 ? `${projectPages.length} page(s)` : 'Add a page from Page manager.' });
+    items.push({ label: 'At least one page exists', done: projectPages.length > 0, detail: projectPages.length > 0 ? `${projectPages.length} page${projectPages.length === 1 ? '' : 's'}` : 'Add a page from Pages.' });
     items.push({
-      label: 'Current page has sections',
+      label: 'Current page has at least one section',
       done: (activePage?.sections?.length ?? 0) > 0,
       detail: (activePage?.sections?.length ?? 0) > 0
         ? `${activePage?.sections?.length ?? 0} section(s) on ${activePage?.title ?? 'current page'}`
@@ -176,7 +176,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         className="hidden inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
       >
         <Files size={13} />
-        Pages ({projectPages.length})
+        Pages · {projectPages.length}
       </button>
 
       <div className="hidden">
@@ -231,7 +231,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           ) : (
             <Globe size={14} />
           )}
-          {state.isPublishing ? 'Publishing…' : 'Publish'}
+          {state.isPublishing ? 'Going live…' : 'Go live'}
         </button>
       </div>
 
@@ -328,7 +328,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
             <span className="text-xs text-red-500 flex items-center gap-1.5" title={publishError}>
               <XCircle size={12} />
-              Publish failed
+              Go-live failed
             </span>
             <button
               onClick={onPublish}
@@ -373,7 +373,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             </button>
             {onFixPublishBlockers && (
               <button type="button" onClick={onFixPublishBlockers} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-50">
-                Fix
+                Fix it
               </button>
             )}
           </div>
@@ -439,7 +439,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       }}
                       className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
                     >
-                      Add page
+                      Add page now
                     </button>
                   )}
                   {!item.done && item.label === 'Current page has sections' && (
@@ -456,7 +456,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       }}
                       className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
                     >
-                      Add section
+                      Add section now
                     </button>
                   )}
                 </li>
@@ -561,7 +561,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             }}
             disabled={isPublishDisabled}
             aria-label={publishValidationError ? `Go live blocked: ${publishValidationError}` : 'Go live'}
-            title={publishValidationError ? `${publishValidationError} (⌘⇧P)` : 'Go live (⌘⇧P)'}
+              title={publishValidationError ? `${publishValidationError} (⌘⇧P)` : 'Go live (⌘⇧P)'}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {state.isPublishing || state.isSaving ? (
@@ -570,7 +570,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               <Globe size={14} />
             )}
             {state.isPublishing
-              ? 'Publishing…'
+              ? 'Going live…'
               : state.isSaving
                 ? 'Waiting for save…'
                 : isPublished
@@ -581,7 +581,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             {publishValidationError
               ? publishValidationError
               : isPublished
-                ? 'Updates your live public site (⌘⇧P)'
+                ? 'Updates the live version guests can already see (⌘⇧P)'
                 : 'Going live makes your site visible to guests (⌘⇧P)'}
           </div>
         </div>
@@ -591,7 +591,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Page manager</h3>
+            <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
             <button type="button" onClick={() => setShowPageManager(false)} className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Close</button>
           </div>
 
@@ -599,7 +599,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             <input
               value={newPageTitle}
               onChange={(e) => setNewPageTitle(e.target.value)}
-              placeholder="New page name"
+              placeholder="Page name"
               className="flex-1 rounded border border-gray-200 px-3 py-2 text-sm"
             />
             <button
@@ -634,7 +634,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       onClick={() => dispatch(builderActions.setActivePage(page.id))}
                       className={`rounded px-2 py-1 text-[11px] font-medium ${state.activePageId === page.id ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     >
-                      {state.activePageId === page.id ? 'Editing' : 'Edit'}
+                      {state.activePageId === page.id ? 'Current' : 'Edit'}
                     </button>
                   </div>
                   <div className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
@@ -646,7 +646,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       placeholder="page-slug"
                     />
                     {page.meta.isHome ? <span>• Home</span> : null}
-                    {page.meta.isHidden ? <span>• Hidden</span> : null}
+                    {page.meta.isHidden ? <span>• Hidden from navigation</span> : null}
                   </div>
                 </div>
 
@@ -655,7 +655,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   onClick={() => dispatch(builderActions.updatePage(page.id, { meta: { ...page.meta, isHidden: !page.meta.isHidden } }))}
                   className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50"
                 >
-                  {page.meta.isHidden ? 'Show' : 'Hide'}
+                  {page.meta.isHidden ? 'Show in nav' : 'Hide from nav'}
                 </button>
 
                 <button
