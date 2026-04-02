@@ -696,7 +696,7 @@ export const DashboardOverview: React.FC = () => {
                       <Eye className="w-10 h-10 text-text-tertiary mb-3" />
                       <p className="text-sm text-text-secondary mb-1">No RSVPs yet</p>
                       <p className="text-xs text-text-tertiary mb-3">
-                        RSVPs will appear here as guests respond
+                        RSVP totals will appear here automatically as guests respond.
                       </p>
                       <Link to="/dashboard/guests" className="text-xs text-primary hover:text-primary-hover font-medium transition-colors">
                         Invite guests &rarr;
@@ -715,7 +715,7 @@ export const DashboardOverview: React.FC = () => {
                   {interactiveLoading ? (
                     <div className="text-sm text-text-secondary">Loading suggestions…</div>
                   ) : interactiveSuggestions.length === 0 ? (
-                    <div className="text-sm text-text-secondary">No interactive suggestions yet.</div>
+                    <div className="text-sm text-text-secondary">No suggestions yet.</div>
                   ) : (
                     <div className="space-y-2.5">
                       {interactiveSuggestions.map((item) => (

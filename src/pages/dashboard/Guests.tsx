@@ -1893,7 +1893,7 @@ Proceed with send?`)) return;
       if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
     }
     if (!resolvedSiteId && !isDemoMode) {
-      toast('Could not find your wedding site. Refresh and try again.', 'error');
+      toast('Could not find your website right now. Refresh and try again.', 'error');
       return;
     }
 
@@ -2649,7 +2649,7 @@ Proceed with send?`)) return;
                 <div className="pt-1 border-t border-border-subtle">
                   <p className="text-xs font-medium text-text-secondary mb-2">Itinerary invitations</p>
                   {itineraryFilterEvents.length === 0 && (
-                    <p className="text-[11px] text-text-tertiary mb-2">No itinerary yet — using Ceremony/Reception defaults until events are created.</p>
+                    <p className="text-[11px] text-text-tertiary mb-2">No itinerary events yet — using Ceremony/Reception defaults for now.</p>
                   )}
                   <div className="space-y-1.5 max-h-40 overflow-auto pr-1">
                     {effectiveItineraryEvents.map((event) => {
@@ -2747,7 +2747,7 @@ Proceed with send?`)) return;
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
             <p className="text-text-secondary">Manage your guest list and see responses</p>
-            <a href="/dashboard/rsvp-board" className="text-xs text-primary hover:text-primary-hover">Open RSVP Board</a>
+            <a href="/dashboard/rsvp-board" className="text-xs text-primary hover:text-primary-hover">Open RSVP view</a>
             <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
               <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
               <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
@@ -2758,13 +2758,13 @@ Proceed with send?`)) return;
             <div className="space-y-5">
               <div>
                 <h3 className="text-lg font-semibold text-text-primary">RSVP Questions & Meal Choices</h3>
-                <p className="text-sm text-text-secondary">Configure what attendees answer on the RSVP page.</p>
+                          <p className="text-sm text-text-secondary">Choose what guests answer when they reply on the RSVP page.</p>
               </div>
 
               <div className="space-y-3 p-4 border border-border rounded-xl">
                 <label className="flex items-center gap-2 text-sm text-text-primary">
                   <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => { setRsvpMealEnabled(e.target.checked); setRsvpConfigDirty(true); }} className="w-4 h-4" />
-                  Collect meal choice on RSVP form
+                  Collect meal choice on the RSVP form
                 </label>
                 {rsvpMealEnabled && (
                   <div className="space-y-2">
@@ -2774,7 +2774,7 @@ Proceed with send?`)) return;
                         <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx)); setRsvpConfigDirty(true); }}>Remove</Button>
                       </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => { setRsvpMealOptions((prev) => [...prev, '']); setRsvpConfigDirty(true); }}>Add meal option</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setRsvpMealOptions((prev) => [...prev, '']); setRsvpConfigDirty(true); }}>Add meal choice</Button>
                   </div>
                 )}
               </div>
@@ -2818,7 +2818,7 @@ Proceed with send?`)) return;
                   </div>
                 ))}
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={() => { setRsvpQuestions((prev) => [...prev, makeRsvpQuestion()]); setRsvpConfigDirty(true); }}>Add Question</Button>
+                  <Button type="button" variant="outline" onClick={() => { setRsvpQuestions((prev) => [...prev, makeRsvpQuestion()]); setRsvpConfigDirty(true); }}>Add question</Button>
                   <div className="flex items-center gap-3">
                     <Button type="button" variant="primary" onClick={handleSaveRsvpConfig} disabled={rsvpConfigSaving}>{rsvpConfigSaving ? 'Saving…' : 'Save Now'}</Button>
                     <span className="text-xs text-text-tertiary">{rsvpAutoSaveState === 'saving' ? 'Auto-saving…' : rsvpAutoSaveState === 'saved' ? 'Auto-saved' : rsvpAutoSaveState === 'error' ? 'Auto-save failed' : 'Auto-save on'}</span>
@@ -2887,7 +2887,7 @@ Proceed with send?`)) return;
           <div className="mt-4 flex flex-wrap items-end gap-2">
             <div className="inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
               <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guests</button>
-              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Settings</button>
             </div>
             <button
               onClick={() => setShowInsights(v => !v)}
@@ -3497,7 +3497,7 @@ Proceed with send?`)) return;
                   <div className="text-center py-12">
                     <Home className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
                     <p className="text-text-secondary font-medium mb-1">No households yet</p>
-                    <p className="text-sm text-text-tertiary">Select guests from the list view to merge them into a household</p>
+                    <p className="text-sm text-text-tertiary">Select guests from the list view to group them into a household.</p>
                   </div>
                 )}
 
@@ -3532,7 +3532,7 @@ Proceed with send?`)) return;
                         <span className="font-semibold text-text-primary text-sm">Ungrouped guests</span>
                         <span className="text-xs text-text-tertiary break-words">({households.ungrouped.length})</span>
                       </div>
-                      <p className="text-xs text-text-tertiary break-words">Select guests to merge into households</p>
+                      <p className="text-xs text-text-tertiary break-words">Select guests to group them into households</p>
                     </div>
                     <div className="divide-y divide-border-subtle">
                       {households.ungrouped.map(guest => {
@@ -3749,7 +3749,7 @@ Proceed with send?`)) return;
                     <Users className="w-12 h-12 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
                     <p className="text-text-secondary font-medium mb-1">No guests found</p>
                     <p className="text-sm text-text-tertiary">
-                      {searchQuery ? 'Try a different search term' : 'Add your first guest to get started'}
+                      {searchQuery ? 'Try a different search term' : 'Add your first guest to get started.'}
                     </p>
                   </div>
                 )}
@@ -3760,15 +3760,15 @@ Proceed with send?`)) return;
       </div>
 
       {showAddModal && renderGuestFormModal({
-        title: 'Add New Guest',
-        submitLabel: 'Add Guest',
+        title: 'Add guest',
+        submitLabel: 'Add guest',
         onSubmit: handleAddGuest,
         onClose: () => { setShowAddModal(false); resetForm(); },
       })}
 
       {editingGuest && renderGuestFormModal({
-        title: 'Edit Guest',
-        submitLabel: 'Update Guest',
+        title: 'Edit guest',
+        submitLabel: 'Save guest',
         onSubmit: handleEditGuest,
         onClose: () => { setEditingGuest(null); resetForm(); },
       })}
@@ -3793,7 +3793,7 @@ Proceed with send?`)) return;
                   className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  Copy contact update link
+                  Copy guest update link
                 </button>
               </div>
               <button
@@ -3825,7 +3825,7 @@ Proceed with send?`)) return;
                     )}
                     {plusOne && (
                       <div className="text-sm text-text-primary">
-                        <span className="font-medium">Plus one:</span> {plusOne}
+                        <span className="font-medium">Plus-one guest:</span> {plusOne}
                       </div>
                     )}
                     {entries.length > 0 && (
@@ -3846,7 +3846,7 @@ Proceed with send?`)) return;
               <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs uppercase updates-wide text-text-tertiary">Recent guest updates</p>
-                  <span className="text-[11px] text-text-tertiary">Last {guestAuditEntries.length} changes</span>
+                  <span className="text-[11px] text-text-tertiary">Last {guestAuditEntries.length} updates</span>
                 </div>
                 {guestAuditEntries.length === 0 ? (
                   <p className="text-xs text-text-tertiary">No recent changes yet. Updates to this guest will appear here automatically.</p>

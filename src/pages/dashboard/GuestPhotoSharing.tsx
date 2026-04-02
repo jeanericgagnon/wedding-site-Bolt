@@ -341,7 +341,7 @@ export const GuestPhotoSharing: React.FC = () => {
       .filter((v): v is string => typeof v === 'string');
 
     if (lines.length === 0) {
-      setError('No share messages available yet. Create links first.');
+      setError('No share messages are ready yet. Create links first.');
       return;
     }
 
@@ -355,7 +355,7 @@ export const GuestPhotoSharing: React.FC = () => {
       .filter((v): v is string => typeof v === 'string' && v.length > 0);
 
     if (links.length === 0) {
-      setError('No known upload links yet. Create or regenerate links first.');
+      setError('No upload links are ready yet. Create or refresh links first.');
       return;
     }
 
@@ -366,7 +366,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const regenerateAllKnownAlbumLinks = async () => {
     const targetAlbums = albums.filter((a) => albumUploadLinks[a.id]);
     if (targetAlbums.length === 0) {
-      setError('No known album links to rotate yet.');
+      setError('No album links are ready to refresh yet.');
       return;
     }
 

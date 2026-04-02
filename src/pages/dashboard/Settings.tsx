@@ -1100,7 +1100,7 @@ export const DashboardSettings: React.FC = () => {
 
                       <div className="space-y-3">
                         {rsvpQuestions.length === 0 && (
-                          <p className="text-sm text-text-secondary">No custom questions yet. Add one below.</p>
+                          <p className="text-sm text-text-secondary">No custom questions yet. Add one below if you need something beyond the standard RSVP flow.</p>
                         )}
 
                         {rsvpQuestions.map((q, idx) => {

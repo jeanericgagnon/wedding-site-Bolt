@@ -1699,9 +1699,9 @@ export const DashboardSeating: React.FC = () => {
                   <div className="text-center py-16 border-2 border-dashed border-border-subtle rounded-xl">
                     <TableProperties className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
                     <p className="text-text-secondary mb-2">No tables yet</p>
-                    <p className="text-sm text-text-tertiary mb-4">Add tables manually or use auto-create.</p>
+                    <p className="text-sm text-text-tertiary mb-4">Add tables manually or let Dayof create a starting layout from your guest count.</p>
                     <Button size="sm" onClick={() => setAddingTable(true)}>
-                      <Plus className="w-4 h-4 mr-1" /> Add Table
+                      <Plus className="w-4 h-4 mr-1" /> Add table
                     </Button>
                   </div>
                 ) : (

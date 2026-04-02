@@ -555,7 +555,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           {entries.length === 0 && !showForm && (
             <div className="text-center py-6 border border-dashed border-border rounded-xl">
               <p className="text-sm text-text-secondary mb-1">No entries yet</p>
-              <p className="text-xs text-text-tertiary">Add text, photo, video, voice note, or link for this anniversary.</p>
+              <p className="text-xs text-text-tertiary">Add a note, photo, video, voice note, or link for this anniversary.</p>
             </div>
           )}
 
@@ -1499,9 +1499,9 @@ setWeddingSiteId('demo-site-id');
               <div className="w-16 h-16 bg-surface-subtle rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Lock className="w-8 h-8 text-text-tertiary" />
               </div>
-              <h3 className="font-semibold text-text-primary mb-2">No vaults yet</h3>
+              <h3 className="font-semibold text-text-primary mb-2">No anniversary vaults yet</h3>
               <p className="text-sm text-text-secondary mb-5 max-w-sm mx-auto">
-                Create up to {MAX_VAULTS} time capsule vaults, each unlocking on a different anniversary. Share vault links with guests so they can leave messages.
+                Create up to {MAX_VAULTS} anniversary vaults, each opening at a different milestone. Share the links with guests so they can leave something meaningful.
               </p>
               <Button variant="primary" onClick={handleSeedStarterVaults} disabled={addingVault}>
                 {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
