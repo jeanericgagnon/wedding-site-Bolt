@@ -630,8 +630,8 @@ export const VaultContribute: React.FC = () => {
                 <Lock className="w-6 h-6 text-primary" />
               </div>
               {coupleName && <p className="text-sm text-stone-500 mb-1 updates-wide uppercase font-medium">{coupleName}</p>}
-              <h1 className="text-[30px] leading-tight font-bold text-text-primary">Choose an Anniversary Vault</h1>
-              <p className="text-text-secondary text-sm mt-2">Pick a vault to leave a message. Completed vaults are marked.</p>
+              <h1 className="text-[30px] leading-tight font-bold text-text-primary">Choose an anniversary vault</h1>
+              <p className="text-text-secondary text-sm mt-2">Pick a future anniversary and leave something meaningful for them to open later.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
@@ -647,8 +647,8 @@ export const VaultContribute: React.FC = () => {
                       <p className="text-sm font-semibold text-stone-800">{v.label || `${v.duration_years}-Year Anniversary Vault`}</p>
                       {done && <CheckCircle className="w-5 h-5 text-green-600" />}
                     </div>
-                    <p className="text-xs text-stone-500 mt-2">Opens on the {ordinalLabel(v.duration_years)} anniversary.</p>
-                    <p className={`text-xs mt-3 font-semibold updates-wide ${done ? 'text-emerald-700' : 'text-primary'}`}>{done ? 'Submitted ✓' : 'Add message →'}</p>
+                    <p className="text-xs text-stone-500 mt-2">Opens on their {ordinalLabel(v.duration_years)} anniversary.</p>
+                    <p className={`text-xs mt-3 font-semibold updates-wide ${done ? 'text-emerald-700' : 'text-primary'}`}>{done ? 'Added ✓' : 'Add a note →'}</p>
                   </Link>
                 );
               })}
@@ -666,9 +666,9 @@ export const VaultContribute: React.FC = () => {
           <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-green-200 shadow-sm">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h1 className="text-[26px] leading-tight font-bold text-stone-800 mb-2">Sealed in the vault ✨</h1>
+          <h1 className="text-[26px] leading-tight font-bold text-stone-800 mb-2">Saved for later ✨</h1>
           <p className="text-text-secondary mb-1">
-            Your note has been tucked away in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {ordinal} anniversary vault.
+            Your note has been saved in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {ordinal} anniversary vault.
           </p>
           {unlockYear && (
             <p className="text-stone-400 text-sm mt-2">
@@ -677,7 +677,7 @@ export const VaultContribute: React.FC = () => {
           )}
           <div className="mt-8 p-4 bg-primary/5 border border-primary/20 rounded-xl text-sm text-primary">
             <Heart className="w-4 h-4 inline-block mr-1.5 mb-0.5" />
-            Thank you for being part of this moment.
+            Thank you for adding to this part of their story.
             {hasYearParam && <p className="mt-2 text-xs text-primary">Returning to vault list…</p>}
           </div>
         </div>
@@ -736,7 +736,7 @@ export const VaultContribute: React.FC = () => {
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/20 via-primary/60 to-primary/20" />
             <form onSubmit={handleSubmit} className="space-y-5 md:space-y-5.5">
               <div className="text-xs rounded-xl px-3 py-2 border bg-stone-50 border-stone-200 text-stone-600">
-                Storage destination: <strong className="text-stone-800">{usingGoogleDrive ? 'Google Drive' : 'Secure Vault Storage'}</strong>
+                Storage destination: <strong className="text-stone-800">{usingGoogleDrive ? 'Google Drive' : 'Secure vault storage'}</strong>
                 {usingGoogleDrive && !site?.vault_google_drive_connected && (
                   <span className="text-red-600"> · Not connected yet (ask the couple to connect Google Drive in Vault settings).</span>
                 )}
@@ -754,7 +754,7 @@ export const VaultContribute: React.FC = () => {
                   type="text"
                   value={form.author_name}
                   onChange={e => setForm({ ...form, author_name: e.target.value })}
-                  placeholder="e.g. Aunt Sarah, The Johnsons, Your college roommate"
+                  placeholder="For example: Aunt Sarah, The Johnsons, Your college roommate"
                   className={`w-full px-4 py-2.5 border rounded-xl text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 transition shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ${
                     errors.author_name ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   }`}
@@ -772,7 +772,7 @@ export const VaultContribute: React.FC = () => {
                   type="text"
                   value={form.title}
                   onChange={e => setForm({ ...form, title: e.target.value })}
-                  placeholder="e.g. Advice for year one, My wish for you…"
+                  placeholder="For example: Advice for year one, A wish for you both…"
                   className="w-full px-4 py-3 border border-stone-300 rounded-xl text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]"
                 />
               </div>
@@ -785,7 +785,7 @@ export const VaultContribute: React.FC = () => {
                   value={form.content}
                   onChange={e => setForm({ ...form, content: e.target.value })}
                   rows={6}
-                  placeholder={`Write something heartfelt for ${coupleName || 'the couple'} to read on their ${ordinal} anniversary…`}
+                  placeholder={`Write something meaningful for ${coupleName || 'the couple'} to read on their ${ordinal} anniversary…`}
                   className={`w-full px-4 py-3 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 resize-none transition ${
                     errors.content ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
                   }`}
@@ -806,7 +806,7 @@ export const VaultContribute: React.FC = () => {
                     onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); if (isRecordingVoice) stopVoiceRecording(); }}
                     className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
                   >
-                    <option value="text">Text only</option>
+                    <option value="text">Note only</option>
                     <option value="photo">Photo</option>
                     <option value="video">Video</option>
                     <option value="voice">Voice note</option>
@@ -817,7 +817,7 @@ export const VaultContribute: React.FC = () => {
               {form.media_type !== 'text' && (
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                    Upload files <span className="text-red-500">*</span>
+                    Add files <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="file"
@@ -882,7 +882,7 @@ export const VaultContribute: React.FC = () => {
 
                   {form.media_type === 'voice' && (
                     <div className="mt-2 border border-stone-200 rounded-lg p-3 bg-stone-50">
-                      <p className="text-xs text-stone-600 mb-2">Or record directly:</p>
+                      <p className="text-xs text-stone-600 mb-2">Or record one here:</p>
                       {!isRecordingVoice ? (
                         <button type="button" onClick={startVoiceRecording} className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-stone-300 hover:border-amber-400">
                           <Mic className="w-3.5 h-3.5" /> Record voice note
@@ -950,7 +950,7 @@ export const VaultContribute: React.FC = () => {
                 {submitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" />Uploading and saving to {usingGoogleDrive ? 'Google Drive vault' : 'vault'}…</>
                 ) : (
-                  <><Send className="w-4 h-4" />Seal in vault</>
+                  <><Send className="w-4 h-4" />Save in vault</>
                 )}
               </button>
               {usingGoogleDrive && !site?.vault_google_drive_connected && (

@@ -58,34 +58,34 @@ const PREVIEW_FIXTURES_BY_TYPE: Partial<Record<BuilderSectionType, Record<string
   'dress-code': { showTitle: true, title: 'Dress Code', dressCodeLabel: 'Black Tie Optional' },
   accommodations: { showTitle: true, title: 'Accommodations' },
   contact: { showTitle: true, title: 'Questions?' },
-  'footer-cta': { headline: 'Join us for our wedding', buttonLabel: 'RSVP' },
-  quotes: { headline: 'Sweet words from our favorite people', eyebrow: 'Guest Notes' },
-  menu: { headline: 'Dinner & Drinks', eyebrow: 'Reception Menu' },
-  music: { headline: 'Our Playlist', eyebrow: 'On Repeat' },
-  directions: { headline: 'How to get there', eyebrow: 'Directions' },
-  video: { headline: 'Watch our story', eyebrow: 'Featured Video' },
+  'footer-cta': { headline: 'We’d love your reply', buttonLabel: 'Send RSVP' },
+  quotes: { headline: 'Kind words from the people we love', eyebrow: 'Notes from loved ones' },
+  menu: { headline: 'Dinner and drinks', eyebrow: 'Reception menu' },
+  music: { headline: 'Songs we love', eyebrow: 'On repeat' },
+  directions: { headline: 'How to get there', eyebrow: 'Travel details' },
+  video: { headline: 'A short film from us', eyebrow: 'Featured video' },
 };
 
 const PREVIEW_FIXTURES_BY_VARIANT: Record<string, Record<string, unknown>> = {
-  'hero:countdown': { title: 'Save the Date', subtitle: 'Ceremony starts in 47 days' },
-  'hero:invitation': { title: 'Together with their families', subtitle: 'request the honor of your presence' },
-  'hero:split': { title: 'Napa Weekend', subtitle: 'Vows · Dinner · Dancing' },
-  'story:timeline': { title: 'Our Story in Three Chapters' },
-  'story:milestones': { title: 'Moments That Brought Us Here' },
-  'venue:detailsFirst': { title: 'Venue Details & Logistics', showMap: false },
-  'venue:mapFirst': { title: 'Find the Estate', showMap: true },
-  'schedule:agendaCards': { title: 'Weekend Events at a Glance' },
-  'schedule:program': { title: 'Ceremony & Reception Program' },
-  'travel:mapPins': { title: 'Where to Stay Nearby' },
-  'travel:compact': { title: 'Quick Travel Notes' },
-  'registry:featured': { title: 'Featured Gifts' },
-  'registry:minimal': { title: 'Your Presence Is the Present' },
-  'rsvp:multiEvent': { title: 'RSVP for Each Event' },
-  'rsvp:formal': { title: 'Kindly Reply' },
-  'gallery:polaroid': { title: 'Wedding Weekend Snapshots' },
-  'gallery:filmStrip': { title: 'Story Frames' },
-  'countdown:simple': { title: 'Big Day Countdown', message: 'We cannot wait to celebrate with you' },
-  'dress-code:moodBoard': { title: 'Dress Inspiration', colorPalette: [{ id: 'c1', color: '#1f2937', label: 'Midnight' }, { id: 'c2', color: '#e5e7eb', label: 'Silver' }, { id: 'c3', color: '#9f1239', label: 'Rose' }] },
+  'hero:countdown': { title: 'Save the date', subtitle: 'Ceremony starts in 47 days' },
+  'hero:invitation': { title: 'Together with their families', subtitle: 'invite you to celebrate with them' },
+  'hero:split': { title: 'Napa weekend', subtitle: 'Vows · Dinner · Dancing' },
+  'story:timeline': { title: 'Our story in three chapters' },
+  'story:milestones': { title: 'Moments that brought us here' },
+  'venue:detailsFirst': { title: 'Venue details and logistics', showMap: false },
+  'venue:mapFirst': { title: 'How to find the venue', showMap: true },
+  'schedule:agendaCards': { title: 'Weekend events at a glance' },
+  'schedule:program': { title: 'Ceremony and reception plan' },
+  'travel:mapPins': { title: 'Where to stay nearby' },
+  'travel:compact': { title: 'Quick travel notes' },
+  'registry:featured': { title: 'Registry highlights' },
+  'registry:minimal': { title: 'Your presence means the most' },
+  'rsvp:multiEvent': { title: 'Reply for each event' },
+  'rsvp:formal': { title: 'Please reply' },
+  'gallery:polaroid': { title: 'Wedding weekend snapshots' },
+  'gallery:filmStrip': { title: 'Favorite frames' },
+  'countdown:simple': { title: 'Big day countdown', message: 'We can’t wait to celebrate with you' },
+  'dress-code:moodBoard': { title: 'Dress inspiration', colorPalette: [{ id: 'c1', color: '#1f2937', label: 'Midnight' }, { id: 'c2', color: '#e5e7eb', label: 'Silver' }, { id: 'c3', color: '#9f1239', label: 'Rose' }] },
   'contact:form': { title: 'Need Help?', showTitle: true },
   'footer-cta:rsvpPush': { headline: 'RSVP by May 12' },
 };
@@ -211,7 +211,7 @@ const buildPreviewWeddingData = (photoSet: PreviewPhotoSet, sectionType: string 
   data.couple.partner1Name = 'Alex';
   data.couple.partner2Name = 'Sam';
   data.couple.displayName = 'Alex & Sam';
-  data.couple.story = recipe.story ?? 'From quiet coffee-shop mornings to a candlelit first dance, this weekend is curated as an editorial love story for everyone we cherish.';
+  data.couple.story = recipe.story ?? 'From quiet coffee-shop mornings to a candlelit first dance, this weekend is a chance to gather the people we love most.';
   data.event.weddingDateISO = new Date('2027-01-17T17:00:00.000Z').toISOString();
   data.venues = [{ id: 'venue-1', name: 'Rosewood Estate', address: 'Napa Valley, CA' }];
   data.schedule = [
@@ -232,7 +232,7 @@ const buildPreviewWeddingData = (photoSet: PreviewPhotoSet, sectionType: string 
   ];
   data.faq = [
     { id: 'faq-1', q: 'Can I bring a plus one?', a: 'Please follow your invite details.' },
-    { id: 'faq-2', q: 'Will photos be shared?', a: 'Yes — preview galleries will be available the week after.' },
+    { id: 'faq-2', q: 'Will photos be shared?', a: 'Yes — we’ll share photos after the wedding weekend.' },
   ];
   data.media.heroImageUrl = recipe.hero;
   data.media.gallery = recipe.gallery.map((url, i) => ({ id: `g${i + 1}`, url, caption: recipe.moments[i] ?? `Moment ${i + 1}` }));
@@ -240,42 +240,42 @@ const buildPreviewWeddingData = (photoSet: PreviewPhotoSet, sectionType: string 
 };
 
 const SECTION_PICKER_EDITORIAL_NOTES: Partial<Record<BuilderSectionType, string>> = {
-  hero: 'Set the opening mood and emotional first impression.',
-  story: 'Shape your narrative arc with moments guests remember.',
-  venue: 'Clarify location details while keeping a polished aesthetic.',
-  schedule: 'Organize weekend flow into readable editorial beats.',
-  travel: 'Guide guests through logistics without visual clutter.',
-  registry: 'Present gifting options with warmth and intention.',
-  faq: 'Answer common questions with calm, concise structure.',
-  rsvp: 'Drive responses with elegant, high-clarity interaction.',
-  gallery: 'Showcase celebration frames with cinematic rhythm.',
-  custom: 'Compose a bespoke section from flexible blocks.',
+  hero: 'Set the first impression and make the invitation feel clear.',
+  story: 'Share your story in a way guests will actually read.',
+  venue: 'Make location details easy to understand at a glance.',
+  schedule: 'Organize the weekend into something guests can follow quickly.',
+  travel: 'Help guests with logistics without cluttering the page.',
+  registry: 'Present gifting options in a way that feels warm and complete.',
+  faq: 'Answer common questions with calm, useful structure.',
+  rsvp: 'Make replying feel simple and obvious.',
+  gallery: 'Show the feeling of the weekend through strong photos.',
+  custom: 'Build a custom section when the defaults are not enough.',
 };
 
 const SECTION_PICKER_STORY_LABEL: Partial<Record<BuilderSectionType, string>> = {
-  hero: 'Opening Frame',
-  story: 'Narrative',
-  venue: 'Setting',
+  hero: 'Opening section',
+  story: 'Story',
+  venue: 'Venue',
   schedule: 'Timeline',
-  travel: 'Guest Guide',
-  registry: 'Gifting',
-  faq: 'Guest Support',
-  rsvp: 'Response Flow',
-  gallery: 'Photo Story',
-  custom: 'Bespoke Layout',
+  travel: 'Travel guide',
+  registry: 'Registry',
+  faq: 'Questions',
+  rsvp: 'RSVP',
+  gallery: 'Gallery',
+  custom: 'Custom layout',
 };
 
 const SECTION_PICKER_COMPOSITION_CUES: Partial<Record<BuilderSectionType, string>> = {
-  hero: 'Sequence: wide scene → close portrait → detail.',
-  story: 'Sequence: chapter opener → narrative support → emotional close.',
-  gallery: 'Sequence: hero frame → supporting candids → final celebration.',
-  rsvp: 'Sequence: stationery detail → form context → submit confidence cue.',
-  venue: 'Sequence: arrival exterior → ceremony ground → reception interior.',
-  schedule: 'Sequence: welcome beat → ceremony cue → late-night energy.',
-  travel: 'Sequence: transit touchpoint → hotel proof → venue proximity.',
-  registry: 'Sequence: featured gift → lifestyle context → gratitude detail.',
-  contact: 'Sequence: planner/couple cue → contact options → reassurance copy.',
-  'footer-cta': 'Sequence: farewell portrait → action button → timeline reminder.',
+  hero: 'Start with the clearest, strongest invitation moment.',
+  story: 'Open warm, add context, and finish before it feels long.',
+  gallery: 'Lead with your strongest image, then support it with variety.',
+  rsvp: 'Keep the call to reply obvious and easy to trust.',
+  venue: 'Show where guests are going before layering in extra detail.',
+  schedule: 'Put the main events first, then the supporting moments.',
+  travel: 'Lead with what helps guests plan fastest.',
+  registry: 'Keep the most relevant gifting options easy to scan.',
+  contact: 'Offer help without making the page feel heavy.',
+  'footer-cta': 'Close with a clear action and a warm reminder.',
 };
 
 interface BuilderSidebarLibraryProps {

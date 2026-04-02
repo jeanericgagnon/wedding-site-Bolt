@@ -23,7 +23,7 @@ export const defaultHeroFullBleedData: HeroFullBleedData = {
   backgroundImage: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=1920',
   overlayOpacity: 45,
   textAlign: 'center',
-  ctaLabel: 'RSVP Now',
+  ctaLabel: 'Send RSVP',
   ctaHref: '#rsvp',
   showDivider: true,
 };

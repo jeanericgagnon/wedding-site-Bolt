@@ -16,7 +16,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ content }) => {
             Photo Gallery
           </h2>
           <p className="text-text-secondary italic">
-            Photos coming soon
+            Photos will be shared here soon
           </p>
         </div>
       </section>

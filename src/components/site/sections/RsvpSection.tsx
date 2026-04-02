@@ -61,11 +61,11 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({ content, weddingSiteId
           onClick={handleRsvpClick}
           className="inline-flex items-center justify-center gap-2 px-10 py-4 text-lg font-semibold text-white bg-accent hover:bg-accent-hover rounded-full transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
         >
-          RSVP Now
+          Send RSVP
         </button>
 
         {!weddingSiteId && (
-          <p className="mt-4 text-sm text-text-tertiary">RSVP form link coming soon</p>
+          <p className="mt-4 text-sm text-text-tertiary">Reply details will be added here soon.</p>
         )}
       </div>
     </section>

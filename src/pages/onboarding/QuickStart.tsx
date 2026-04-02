@@ -110,13 +110,13 @@ export const QuickStart: React.FC = () => {
   const renderBasicsStep = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-text-primary mb-2">The Basics</h2>
-        <p className="text-text-secondary">Just the essentials to get started</p>
+        <h2 className="text-2xl font-bold text-text-primary mb-2">Start with the basics</h2>
+        <p className="text-text-secondary">Just enough to create a strong first draft fast.</p>
       </div>
 
       <div className="p-4 bg-surface-subtle rounded-lg">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium text-text-primary">Your names:</p>
+          <p className="text-sm font-medium text-text-primary">Your names</p>
           <Sparkles className="w-4 h-4 text-accent" aria-hidden="true" />
         </div>
         <p className="text-lg font-semibold text-accent">
@@ -126,7 +126,7 @@ export const QuickStart: React.FC = () => {
 
       <div>
         <label className="block text-sm font-medium text-text-primary mb-2">
-          Wedding Date
+          Wedding date
           <span className="text-text-secondary ml-2 font-normal">(optional)</span>
         </label>
         <Input
@@ -137,13 +137,13 @@ export const QuickStart: React.FC = () => {
           placeholder="Select date or leave blank for TBD"
         />
         <p className="text-xs text-text-secondary mt-2">
-          Leave blank if you haven't set a date yet
+          Leave this blank if you haven’t chosen a date yet
         </p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-text-primary mb-2">
-          City or Venue Name
+          City or venue name
           <span className="text-text-secondary ml-2 font-normal">(optional)</span>
         </label>
         <Input
@@ -154,27 +154,27 @@ export const QuickStart: React.FC = () => {
           placeholder="e.g., San Francisco or The Grand Hotel"
         />
         <p className="text-xs text-text-secondary mt-2">
-          Just give us a general location or venue name
+          A general location or venue name is enough for now
         </p>
       </div>
 
       <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
         <h3 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
-          What we'll create for you:
+          What Dayof will set up for you:
         </h3>
         <ul className="space-y-1 text-sm text-text-secondary">
           <li className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-            Home page with your story
+            A polished homepage with your story
           </li>
           <li className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-            Wedding day information & schedule
+            Wedding day details and schedule
           </li>
           <li className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-            Travel & accommodations
+            Travel and stay details
           </li>
           <li className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
@@ -190,7 +190,7 @@ export const QuickStart: React.FC = () => {
           </li>
         </ul>
         <p className="text-xs text-primary mt-3 font-medium">
-          All sections are pre-filled with starter content — edit everything from your dashboard
+          Everything starts with helpful default content, and you can refine it later in your dashboard.
         </p>
       </div>
 
@@ -200,7 +200,7 @@ export const QuickStart: React.FC = () => {
         fullWidth
         onClick={handleNext}
       >
-        Continue to Style
+        Continue to design
         <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
       </Button>
     </div>
@@ -209,14 +209,14 @@ export const QuickStart: React.FC = () => {
   const renderStyleStep = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-text-primary mb-2">Choose Your Style</h2>
-        <p className="text-text-secondary">Pick a look for your site (you can change this later)</p>
+        <h2 className="text-2xl font-bold text-text-primary mb-2">Choose your design direction</h2>
+        <p className="text-text-secondary">Pick a look for your website. You can always change it later.</p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-text-primary mb-3">
           <Layout className="w-4 h-4 inline mr-2" aria-hidden="true" />
-          Template
+          Starting design
         </label>
         <div className="grid grid-cols-2 gap-3">
           {[
@@ -253,7 +253,7 @@ export const QuickStart: React.FC = () => {
       <div>
         <label className="block text-sm font-medium text-text-primary mb-3">
           <Palette className="w-4 h-4 inline mr-2" aria-hidden="true" />
-          Color Scheme
+          Color direction
         </label>
         <div className="grid grid-cols-2 gap-3">
           {[

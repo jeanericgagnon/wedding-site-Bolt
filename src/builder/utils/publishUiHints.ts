@@ -10,7 +10,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     return ['Open couple details.', 'Fill both partner names exactly as you want them shown.'];
   }
   if (publishValidationError.includes('wedding date')) {
-    return ['Open event settings.', 'Set the wedding date before publishing.'];
+    return ['Open event settings.', 'Add your wedding date before going live.'];
   }
   if (publishValidationError.includes('venue')) {
     return ['Add at least one venue name or address.', 'Confirm the venue appears in your details section.'];

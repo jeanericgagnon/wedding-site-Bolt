@@ -17,56 +17,56 @@ interface ModuleConfig {
 const modules: ModuleConfig[] = [
   {
     id: 'hero',
-    title: 'Hero',
-    description: 'Main banner and wedding date',
+    title: 'Welcome section',
+    description: 'Names, date, and the first impression guests see',
     sectionType: 'hero',
   },
   {
     id: 'story',
     title: 'Your Story',
-    description: 'Share your love story',
+    description: 'Share a little more about the two of you',
     sectionType: 'story',
   },
   {
     id: 'venue',
-    title: 'Venues',
-    description: 'Ceremony and reception locations',
+    title: 'Venue details',
+    description: 'Ceremony, reception, and where guests need to go',
     sectionType: 'venue',
   },
   {
     id: 'schedule',
     title: 'Schedule',
-    description: 'Timeline of events',
+    description: 'What happens when, and in what order',
     sectionType: 'schedule',
   },
   {
     id: 'travel',
     title: 'Travel',
-    description: 'Directions and accommodations',
+    description: 'Travel help, hotel notes, and useful guest info',
     sectionType: 'travel',
   },
   {
     id: 'registry',
     title: 'Registry',
-    description: 'Gift registry links',
+    description: 'Registry links, funds, and gift details',
     sectionType: 'registry',
   },
   {
     id: 'faq',
     title: 'FAQ',
-    description: 'Common questions',
+    description: 'Helpful answers for guests before they ask',
     sectionType: 'faq',
   },
   {
     id: 'rsvp',
     title: 'RSVP',
-    description: 'Guest response form',
+    description: 'How guests reply and what they need to know',
     sectionType: 'rsvp',
   },
   {
     id: 'gallery',
     title: 'Photos',
-    description: 'Photo gallery',
+    description: 'Hero photo and gallery moments',
     sectionType: 'gallery',
   },
 ];
@@ -299,7 +299,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
   return (
     <div className="grid md:grid-cols-[320px_1fr] gap-6">
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-text-secondary mb-3 px-2">MODULES</h3>
+        <h3 className="text-sm font-semibold text-text-secondary mb-3 px-2">Website sections</h3>
         {modules.map((module) => {
           const status = getModuleStatus(module.id);
           const isActive = activeModule === module.id;
@@ -377,7 +377,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                         couple: { ...weddingData.couple, partner1Name: e.target.value },
                       })
                     }
-                    placeholder="First partner's name"
+                    placeholder="First partner’s name"
                   />
                   <Input
                     label="Partner 2 Name"
@@ -388,7 +388,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                         couple: { ...weddingData.couple, partner2Name: e.target.value },
                       })
                     }
-                    placeholder="Second partner's name"
+                    placeholder="Second partner’s name"
                   />
                   <Input
                     label="Display Name (Optional)"
@@ -414,7 +414,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                   />
                   <Input
                     type="date"
-                    label="Wedding Date"
+                    label="Wedding date"
                     value={weddingData.event.weddingDateISO || ''}
                     onChange={(e) =>
                       onChange({
@@ -428,7 +428,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
 
               {activeModule === 'story' && (
                 <Textarea
-                  label="Your Love Story"
+                  label="Your story"
                   value={weddingData.couple.story || ''}
                   onChange={(e) =>
                     onChange({
@@ -437,7 +437,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                     })
                   }
                   rows={8}
-                  placeholder="Tell your guests how you met, your journey together, and what makes your love special..."
+                  placeholder="Share how you met, what matters to you, or anything guests would love to know..."
                 />
               )}
 
@@ -459,7 +459,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                           label="Name"
                           value={venue.name || ''}
                           onChange={(e) => updateVenue(venue.id, { name: e.target.value })}
-                          placeholder="e.g., Central Park"
+                          placeholder="For example: Central Park"
                         />
                         <AddressInput
                           label="Address"
@@ -474,14 +474,14 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                           value={venue.notes || ''}
                           onChange={(e) => updateVenue(venue.id, { notes: e.target.value })}
                           rows={2}
-                          placeholder="Additional details about this venue"
+                          placeholder="Anything guests should know about this location"
                         />
                       </div>
                     </div>
                   ))}
                   <Button onClick={addVenue} variant="outline" className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Venue
+                    Add venue
                   </Button>
                 </div>
               )}
@@ -501,15 +501,15 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                       </div>
                       <div className="space-y-3">
                         <Input
-                          label="Event Name"
+                          label="Event name"
                           value={item.label}
                           onChange={(e) => updateScheduleItem(item.id, { label: e.target.value })}
-                          placeholder="e.g., Ceremony, Cocktail Hour, Reception"
+                          placeholder="For example: Ceremony, Cocktail Hour, Reception"
                         />
                         <div className="grid grid-cols-2 gap-3">
                           <Input
                             type="datetime-local"
-                            label="Start Time"
+                            label="Start time"
                             value={item.startTimeISO || ''}
                             onChange={(e) =>
                               updateScheduleItem(item.id, { startTimeISO: e.target.value })
@@ -517,7 +517,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                           />
                           <Input
                             type="datetime-local"
-                            label="End Time (Optional)"
+                            label="End time (optional)"
                             value={item.endTimeISO || ''}
                             onChange={(e) =>
                               updateScheduleItem(item.id, { endTimeISO: e.target.value })
@@ -525,18 +525,18 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                           />
                         </div>
                         <Textarea
-                          label="Notes (Optional)"
+                          label="Notes (optional)"
                           value={item.notes || ''}
                           onChange={(e) => updateScheduleItem(item.id, { notes: e.target.value })}
                           rows={2}
-                          placeholder="Additional details"
+                          placeholder="Anything guests should know"
                         />
                       </div>
                     </div>
                   ))}
                   <Button onClick={addScheduleItem} variant="outline" className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Schedule Item
+                    Add schedule item
                   </Button>
                 </div>
               )}
@@ -546,7 +546,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                   {weddingData.registry.links.map((link) => (
                     <div key={link.id} className="p-4 bg-background rounded-lg border border-border">
                       <div className="flex items-start justify-between mb-3">
-                        <h4 className="font-medium text-text-primary">Registry Link</h4>
+                        <h4 className="font-medium text-text-primary">Registry link</h4>
                         <button
                           onClick={() => removeRegistryLink(link.id)}
                           className="text-error hover:text-error-dark"
@@ -556,10 +556,10 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                       </div>
                       <div className="space-y-3">
                         <Input
-                          label="Store Name"
+                          label="Store name"
                           value={link.label || ''}
                           onChange={(e) => updateRegistryLink(link.id, { label: e.target.value })}
-                          placeholder="e.g., Amazon, Target, Zola"
+                          placeholder="For example: Amazon, Target, Zola"
                         />
                         <Input
                           label="Registry URL"
@@ -572,7 +572,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                   ))}
                   <Button onClick={addRegistryLink} variant="outline" className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Registry Link
+                    Add registry link
                   </Button>
                 </div>
               )}
@@ -582,7 +582,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                   {weddingData.faq.map((item) => (
                     <div key={item.id} className="p-4 bg-background rounded-lg border border-border">
                       <div className="flex items-start justify-between mb-3">
-                        <h4 className="font-medium text-text-primary">FAQ Item</h4>
+                        <h4 className="font-medium text-text-primary">Guest question</h4>
                         <button
                           onClick={() => removeFaq(item.id)}
                           className="text-error hover:text-error-dark"
@@ -595,21 +595,21 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                           label="Question"
                           value={item.q}
                           onChange={(e) => updateFaq(item.id, { q: e.target.value })}
-                          placeholder="e.g., What is the dress code?"
+                          placeholder="For example: What is the dress code?"
                         />
                         <Textarea
                           label="Answer"
                           value={item.a}
                           onChange={(e) => updateFaq(item.id, { a: e.target.value })}
                           rows={3}
-                          placeholder="Your answer here..."
+                          placeholder="Add the answer guests should see"
                         />
                       </div>
                     </div>
                   ))}
                   <Button onClick={addFaq} variant="outline" className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add FAQ
+                    Add guest question
                   </Button>
                 </div>
               )}
@@ -617,7 +617,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'travel' && (
                 <div className="space-y-4">
                   <p className="text-sm text-text-secondary">
-                    Venue addresses are automatically shown. Add extra details below for your guests.
+                    Venue addresses already appear automatically. Add extra travel details here if guests need more help.
                   </p>
                   {weddingData.venues.length > 0 && (
                     <div className="space-y-2">
@@ -630,7 +630,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                     </div>
                   )}
                   <Textarea
-                    label="General Travel Notes"
+                    label="General travel notes"
                     value={weddingData.travel?.notes || ''}
                     onChange={(e) =>
                       onChange({
@@ -639,10 +639,10 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                       })
                     }
                     rows={3}
-                    placeholder="General travel tips or notes for your guests..."
+                    placeholder="General travel tips or planning notes for guests..."
                   />
                   <Textarea
-                    label="Getting Here (Flights / Transport)"
+                    label="Getting here (flights / transport)"
                     value={weddingData.travel?.flightInfo || ''}
                     onChange={(e) =>
                       onChange({
@@ -654,7 +654,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                     placeholder="Nearest airports, train stations, or transport options..."
                   />
                   <Textarea
-                    label="Hotel Recommendations"
+                    label="Hotel recommendations"
                     value={weddingData.travel?.hotelInfo || ''}
                     onChange={(e) =>
                       onChange({
@@ -663,10 +663,10 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                       })
                     }
                     rows={3}
-                    placeholder="Recommended hotels, room blocks, or Airbnb suggestions..."
+                    placeholder="Recommended hotels, room blocks, or stay suggestions..."
                   />
                   <Textarea
-                    label="Parking Information"
+                    label="Parking information"
                     value={weddingData.travel?.parkingInfo || ''}
                     onChange={(e) =>
                       onChange({
@@ -675,7 +675,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                       })
                     }
                     rows={2}
-                    placeholder="Parking instructions, lot locations, or valet info..."
+                    placeholder="Parking instructions, lot locations, or valet details..."
                   />
                 </div>
               )}
@@ -685,7 +685,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                   <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
                     <div>
                       <h4 className="font-medium text-text-primary">Enable RSVP</h4>
-                      <p className="text-sm text-text-secondary">Allow guests to respond to your invitation</p>
+                      <p className="text-sm text-text-secondary">Let guests reply through your website</p>
                     </div>
                     <input
                       type="checkbox"
@@ -702,7 +702,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                   {weddingData.rsvp.enabled && (
                     <Input
                       type="date"
-                      label="RSVP Deadline (Optional)"
+                      label="RSVP deadline (optional)"
                       value={weddingData.rsvp.deadlineISO || ''}
                       onChange={(e) =>
                         onChange({
@@ -718,7 +718,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'gallery' && (
                 <div className="space-y-4">
                   <Input
-                    label="Hero Image URL"
+                    label="Hero image URL"
                     value={weddingData.media.heroImageUrl || ''}
                     onChange={(e) =>
                       onChange({
@@ -729,7 +729,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                     placeholder="https://..."
                   />
                   <div className="border-t border-border pt-4">
-                    <h4 className="text-sm font-semibold text-text-primary mb-3">Gallery Images</h4>
+                    <h4 className="text-sm font-semibold text-text-primary mb-3">Gallery images</h4>
                     {weddingData.media.gallery.map((img) => (
                       <div
                         key={img.id}
@@ -752,7 +752,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                             placeholder="https://..."
                           />
                           <Input
-                            label="Caption (Optional)"
+                            label="Caption (optional)"
                             value={img.caption || ''}
                             onChange={(e) =>
                               updateGalleryImage(img.id, { caption: e.target.value })
@@ -764,7 +764,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                     ))}
                     <Button onClick={addGalleryImage} variant="outline" className="w-full">
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Gallery Image
+                      Add gallery image
                     </Button>
                   </div>
                 </div>
@@ -774,11 +774,11 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
             <div className="flex items-center gap-3 mt-6 pt-6 border-t border-border">
               <Button onClick={handleNext} variant="outline">
                 <SkipForward className="w-4 h-4 mr-2" />
-                Skip for Now
+                Skip for now
               </Button>
               <Button onClick={onSave} variant="accent" disabled={saving} className="flex-1">
                 <Save className="w-4 h-4 mr-2" />
-                {saving ? 'Saving...' : 'Save Module'}
+                {saving ? 'Saving...' : 'Save section'}
               </Button>
             </div>
           </div>

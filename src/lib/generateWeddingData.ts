@@ -95,9 +95,9 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
   }
 
   const defaultFaqs = [
-    { q: 'What should I wear?', a: formData.attire || 'Attire information coming soon' },
-    { q: 'Will there be parking?', a: formData.parking || 'Parking information coming soon' },
-    { q: 'Where should I stay?', a: formData.hotelRecommendations || 'Accommodation recommendations coming soon' },
+    { q: 'What should I wear?', a: formData.attire || 'Attire details will be shared soon' },
+    { q: 'Will there be parking?', a: formData.parking || 'Parking details will be shared soon' },
+    { q: 'Where should I stay?', a: formData.hotelRecommendations || 'Stay recommendations will be shared soon' },
   ];
 
   defaultFaqs.forEach(item => {

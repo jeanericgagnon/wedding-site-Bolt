@@ -114,7 +114,7 @@ export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
           <div className="flex items-center justify-center gap-6">
             <div className="h-px w-12 bg-white/50" />
             <p className="text-sm tracking-widest text-white/70 uppercase font-medium">
-              {(settings.title as string) || 'Join us'}
+              {(settings.title as string) || 'Celebrate with us'}
             </p>
             <div className="h-px w-12 bg-white/50" />
           </div>

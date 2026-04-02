@@ -23,9 +23,9 @@ export const FooterCtaSection: React.FC<Props> = ({ data, instance }) => {
   const displayName = data.couple.displayName || `${data.couple.partner1Name} & ${data.couple.partner2Name}`;
   const date = formatDate(data.event.weddingDateISO);
   const rsvpUrl = (settings.rsvpUrl as string) || '#rsvp';
-  const buttonLabel = (settings.buttonLabel as string) || 'RSVP Now';
+  const buttonLabel = (settings.buttonLabel as string) || 'Send RSVP';
   const headline = (settings.headline as string) || `We hope to see you there`;
-  const subtext = (settings.subtext as string) || (data.rsvp.deadlineISO ? `Please RSVP by ${formatDate(data.rsvp.deadlineISO)}` : 'Your presence means the world to us');
+  const subtext = (settings.subtext as string) || (data.rsvp.deadlineISO ? `Please reply by ${formatDate(data.rsvp.deadlineISO)}` : 'We’re so glad to celebrate with you');
 
   return (
     <section className="relative py-24 px-4 bg-primary overflow-hidden">
@@ -73,9 +73,9 @@ export const FooterCtaMinimal: React.FC<Props> = ({ data, instance }) => {
   const displayName = data.couple.displayName || `${data.couple.partner1Name} & ${data.couple.partner2Name}`;
   const date = formatDate(data.event.weddingDateISO);
   const rsvpUrl = (settings.rsvpUrl as string) || '#rsvp';
-  const buttonLabel = (settings.buttonLabel as string) || 'RSVP Now';
+  const buttonLabel = (settings.buttonLabel as string) || 'Send RSVP';
   const headline = (settings.headline as string) || `We can't wait to celebrate with you`;
-  const subtext = (settings.subtext as string) || (data.rsvp.deadlineISO ? `RSVP deadline: ${formatDate(data.rsvp.deadlineISO)}` : '');
+  const subtext = (settings.subtext as string) || (data.rsvp.deadlineISO ? `Please reply by ${formatDate(data.rsvp.deadlineISO)}` : '');
 
   return (
     <section className="py-20 px-4 bg-surface border-t border-border">

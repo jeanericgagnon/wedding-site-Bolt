@@ -86,7 +86,7 @@ export const Celebration: React.FC = () => {
           )}
 
           <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-2">
-            Your account is ready. Choose how you'd like to build your wedding website:
+            Your account is ready. Choose the fastest way to get your wedding website where you want it.
           </p>
         </div>
 
@@ -107,25 +107,25 @@ export const Celebration: React.FC = () => {
                 </h2>
                 <p className="text-xs text-accent font-medium mb-3">Fastest path to a strong first draft</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Answer a few quick questions and get a polished starting site with your main pages ready.
+                  Answer a few quick questions and get a polished starting website with your core pages ready.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>Names & date only</span>
+                    <span>Start with the basics</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>All pages created</span>
+                    <span>Main pages already set up</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>Fill details later</span>
+                    <span>Refine details later</span>
                   </li>
                 </ul>
               </div>
               <Button variant="accent" size="lg" fullWidth>
-                Quick Start
+                Start quick setup
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>
@@ -143,16 +143,16 @@ export const Celebration: React.FC = () => {
                   <Heart className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
-                  Guided Setup
+                  Guided setup
                 </h2>
                 <p className="text-xs text-primary font-medium mb-3">5-10 minutes, step-by-step</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Fill each section as you go. Skip what you don't need.
+                  Work section by section with more control, while still moving quickly.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    <span>Question by question</span>
+                    <span>Section by section</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
@@ -165,7 +165,7 @@ export const Celebration: React.FC = () => {
                 </ul>
               </div>
               <Button variant="primary" size="lg" fullWidth>
-                Start Guided Setup
+                Start guided setup
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>
@@ -183,29 +183,29 @@ export const Celebration: React.FC = () => {
                   <Calendar className="w-6 h-6 text-text-secondary" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
-                  I'll Edit Manually
+                  Edit manually
                 </h2>
-                <p className="text-xs text-text-secondary font-medium mb-3">For control freaks & planners</p>
+                <p className="text-xs text-text-secondary font-medium mb-3">Start directly in the dashboard</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Jump straight to your dashboard and build everything yourself.
+                  Jump straight into the editor and handle every detail yourself.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
-                    <span>Full control from start</span>
+                    <span>Full control from the start</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
-                    <span>No guided questions</span>
+                    <span>No guided steps</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
-                    <span>Direct to dashboard</span>
+                    <span>Go straight to the dashboard</span>
                   </li>
                 </ul>
               </div>
               <Button variant="outline" size="lg" fullWidth>
-                Go to Dashboard
+                Open dashboard
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>

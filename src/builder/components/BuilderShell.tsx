@@ -149,8 +149,8 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
     if (issue.kind === 'no-pages') {
       dispatch(builderActions.openTemplateGallery());
-      setPublishNotice('Opened Templates so you can add content before publishing.');
-      setPublishError(`${issue.message} Choose a starter template or add a page first.`);
+      setPublishNotice('Opened designs so you can add a starting point before going live.');
+      setPublishError(`${issue.message} Choose a starting design or add a page first.`);
       return;
     }
 
@@ -163,13 +163,13 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       }
-      setPublishNotice('Selected the first section. Enable it in inspector, then publish again.');
-      setPublishError(`${issue.message} Select a section and toggle it on in the inspector.`);
+      setPublishNotice('Selected the first section. Turn it on, then try again.');
+      setPublishError(`${issue.message} Select a section and turn it on in the inspector.`);
       return;
     }
 
     if (issue.kind === 'missing-couple-names') {
-      setPublishNotice('Open couple details in settings and fill both names.');
+      setPublishNotice('Open couple details in settings and add both names.');
       setPublishError(issue.message);
       return;
     }
@@ -181,13 +181,13 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     }
 
     if (issue.kind === 'missing-venue') {
-      setPublishNotice('Add at least one venue in the details panel before publishing.');
+      setPublishNotice('Add at least one venue before going live.');
       setPublishError(issue.message);
       return;
     }
 
     if (issue.kind === 'rsvp-disabled') {
-      setPublishNotice('Enable RSVP in settings or remove RSVP CTA before publishing.');
+      setPublishNotice('Turn RSVP on in settings or remove the RSVP button before going live.');
       setPublishError(issue.message);
     }
   }, []);
@@ -207,7 +207,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     if (currentState.isDirty) {
       const saved = await handleSave();
       if (!saved) {
-        setPublishError('Please resolve save errors before publishing.');
+        setPublishError('Please resolve save errors before going live.');
         return;
       }
     }
@@ -220,9 +220,9 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishMeta.publishedAt
         )
       );
-      setPublishNotice(`Published v${publishMeta.version} successfully`);
+      setPublishNotice(`Live site updated successfully (v${publishMeta.version})`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to publish';
+      const msg = err instanceof Error ? err.message : 'Failed to go live';
       setPublishError(msg);
       dispatch({ type: 'SET_PUBLISHING', payload: false });
     }

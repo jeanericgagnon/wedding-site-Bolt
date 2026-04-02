@@ -68,12 +68,12 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
               <CheckCircle2 className="w-7 h-7 text-success" />
             </div>
             <p className="font-semibold text-text-primary">Thank you!</p>
-            <p className="text-sm text-text-secondary">Marked as being purchased.</p>
+            <p className="text-sm text-text-secondary">This gift is now marked as being purchased.</p>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
-              <h3 className="font-semibold text-text-primary">Mark as Purchasing</h3>
+              <h3 className="font-semibold text-text-primary">Mark as purchasing</h3>
               <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary transition-colors">
                 <X className="w-4 h-4" />
               </button>
@@ -116,7 +116,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-text-inverse text-sm font-medium rounded-xl hover:bg-primary-hover disabled:opacity-50 transition-colors"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                {loading ? 'Saving…' : 'Confirm Purchase'}
+                {loading ? 'Saving…' : 'Confirm purchase'}
               </button>
               <button type="button" onClick={onClose} className="w-full text-sm text-text-secondary hover:text-text-primary transition-colors py-1">
                 Cancel
@@ -318,7 +318,7 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
       <div className="text-center mb-10">
         {settings.showTitle !== false && (
           <>
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Gift Registry</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
           </>
         )}
@@ -427,7 +427,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle !== false && (
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{settings.title || 'Registry'}</h2>
           )}
-          <p className="text-text-secondary">Registry links and gift details will appear here once added</p>
+          <p className="text-text-secondary">Registry links and gift details will appear here once they’re added.</p>
         </div>
       </section>
     );
@@ -497,7 +497,7 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle !== false && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Registry'}</h2>
           )}
-          <p className="text-text-secondary">Registry links and gift details will appear here once added</p>
+          <p className="text-text-secondary">Registry links and gift details will appear here once they’re added.</p>
         </div>
       </section>
     );
@@ -508,7 +508,7 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Gift registry</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
             {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
@@ -567,7 +567,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
           <div className="text-center mb-10">
             {settings.showTitle !== false && (
               <>
-                <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Gift registry</p>
+                <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
                 <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
               </>
             )}
@@ -577,7 +577,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
           <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8 text-center">
             <h3 className="text-xl font-semibold tracking-tight text-text-primary">Honeymoon & Experiences Fund</h3>
             <p className="text-sm text-text-secondary leading-relaxed mt-2 max-w-2xl mx-auto">
-              Your love and support means everything. If you prefer, you can contribute toward shared memories and future adventures.
+              Your love and support means so much. If you’d like, you can also contribute toward future plans and shared experiences.
             </p>
           </div>
 
@@ -592,7 +592,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
       <section className="py-20 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle !== false && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Registry'}</h2>}
-          <p className="text-text-secondary">Registry links and gift details will appear here once added</p>
+          <p className="text-text-secondary">Registry links and gift details will appear here once they’re added.</p>
         </div>
       </section>
     );
@@ -606,7 +606,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Gift registry</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
             {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
           </div>

@@ -558,7 +558,7 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={stats?.isPublished ? 'success' : 'secondary'}>
-                        {stats?.isPublished ? 'Live' : 'Draft'}
+                        {stats?.isPublished ? 'Live' : 'Draft only'}
                       </Badge>
                       {typeof stats?.publishedVersion === 'number' && (
                         <Badge variant="secondary">v{stats.publishedVersion}</Badge>
@@ -589,7 +589,7 @@ export const DashboardOverview: React.FC = () => {
                     <span className="text-text-primary">{stats?.isPublished ? 'Live' : 'Draft only'}</span>
                   </div>
                   <div className="flex items-center justify-between py-3">
-                    <span className="text-text-secondary">Last published</span>
+                    <span className="text-text-secondary">Last live update</span>
                     <span className="text-text-primary">
                       {stats?.lastPublishedAt ? formatRelativeTime(stats.lastPublishedAt) : '—'}
                     </span>
@@ -646,7 +646,7 @@ export const DashboardOverview: React.FC = () => {
                         onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}
                       >
                         <ExternalLink className="w-5 h-5 mr-2" aria-hidden="true" />
-                        {stats.isPublished ? 'Open Live Site' : 'Preview Site'}
+                        {stats.isPublished ? 'Open live website' : 'Preview website'}
                       </Button>
                     )}
                     <Button
@@ -656,7 +656,7 @@ export const DashboardOverview: React.FC = () => {
                       onClick={() => navigate('/dashboard/builder?photoTips=1')}
                     >
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
-                      {stats?.isPublished ? 'Update Site' : 'Edit & Publish'}
+                      {stats?.isPublished ? 'Update live website' : 'Edit and go live'}
                     </Button>
                   </div>
                 </CardContent>

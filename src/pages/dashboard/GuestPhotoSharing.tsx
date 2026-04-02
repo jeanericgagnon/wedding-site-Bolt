@@ -684,8 +684,8 @@ export const GuestPhotoSharing: React.FC = () => {
     <DashboardLayout currentPage="photos">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Photo Sharing</h1>
-          <p className="mt-2 text-neutral-600">Create event albums and share guest upload links backed by Google Drive.</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Guest photo sharing</h1>
+          <p className="mt-2 text-neutral-600">Create albums, collect guest photos by event, and keep the upload flow organized.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -746,7 +746,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2">
               <p className="text-xs text-text-secondary">
-                Missing itinerary albums: <span className="font-semibold text-text-primary">{missingItineraryEvents.length}</span>
+                Missing event albums: <span className="font-semibold text-text-primary">{missingItineraryEvents.length}</span>
               </p>
               <Button
                 size="sm"
@@ -755,7 +755,7 @@ export const GuestPhotoSharing: React.FC = () => {
                 disabled={bulkCreating || loading || missingItineraryEvents.length === 0}
                 className="w-full sm:w-auto"
               >
-                {bulkCreating ? 'Creating from itinerary...' : 'Create missing itinerary albums'}
+                {bulkCreating ? 'Creating event albums...' : 'Create missing event albums'}
               </Button>
             </div>
           </div>
@@ -765,7 +765,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
           {latestUploadUrl && (
             <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-              <p className="text-sm font-medium text-emerald-900 mb-1">Latest upload link</p>
+              <p className="text-sm font-medium text-emerald-900 mb-1">Newest upload link</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs text-emerald-800 break-all">{latestUploadUrl}</code>
                 <Button size="sm" variant="outline" onClick={() => copyText(latestUploadUrl, 'latest')}>
@@ -789,7 +789,7 @@ export const GuestPhotoSharing: React.FC = () => {
                 Export album links
               </Button>
               <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportSharePackCsv(); setActionsMenuOpen(false); }}>
-                Export share pack
+                Export sharing pack
               </Button>
               <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void copyAllKnownLinks(); setActionsMenuOpen(false); }}>
                 {copied === 'all-links' ? 'Copied all' : 'Copy all links'}
@@ -798,10 +798,10 @@ export const GuestPhotoSharing: React.FC = () => {
                 {copied === 'all-share-messages' ? 'Copied messages' : 'Copy all messages'}
               </Button>
               <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { sendAllActiveAlbumRequests(); setActionsMenuOpen(false); }}>
-                Send all active requests
+                Send all active album requests
               </Button>
               <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void regenerateAllKnownAlbumLinks(); setActionsMenuOpen(false); }} disabled={bulkRegenerating}>
-                {bulkRegenerating ? 'Rotating links...' : 'Rotate known links'}
+                {bulkRegenerating ? 'Refreshing links...' : 'Refresh saved links'}
               </Button>
               <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setShowFlaggedOnly((v) => !v)}>
                 <Flag className="w-3.5 h-3.5 mr-1" />
@@ -846,9 +846,9 @@ export const GuestPhotoSharing: React.FC = () => {
           {loading ? (
             <p className="text-sm text-neutral-500">Loading albums…</p>
           ) : albums.length === 0 ? (
-            <p className="text-sm text-neutral-600">No albums yet. Create your first album above.</p>
+            <p className="text-sm text-neutral-600">No albums yet. Create your first one above.</p>
           ) : filteredAlbums.length === 0 ? (
-            <p className="text-sm text-neutral-600">No albums match your current filters.</p>
+            <p className="text-sm text-neutral-600">No albums match those filters.</p>
           ) : (
             <div className="space-y-3">
               {filteredAlbums.map((album) => {
@@ -872,8 +872,8 @@ export const GuestPhotoSharing: React.FC = () => {
                             {album.is_active ? 'Active' : 'Paused'}
                           </span>
                           <span>{uploadCount} uploads</span>
-                          {!hasLink && <span className="text-rose-700">no saved link</span>}
-                          {!hasWindow && <span className="text-amber-700">no upload window</span>}
+                          {!hasLink && <span className="text-rose-700">no saved link yet</span>}
+                          {!hasWindow && <span className="text-amber-700">no upload window yet</span>}
                           {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
                           {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
                           <span>slug: {album.slug}</span>
@@ -893,7 +893,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           onClick={() => void regenerateLink(album.id)}
                         >
                           <LinkIcon className="w-3 h-3 mr-1" />
-                          {workingAlbumId === album.id ? 'Working...' : 'Regenerate link'}
+                          {workingAlbumId === album.id ? 'Working...' : 'Create new link'}
                         </Button>
                         <Button
                           size="sm"
@@ -926,7 +926,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           disabled={!knownUploadLink}
                           onClick={() => void copyText(makeShareMessage(album.name, knownUploadLink), `share-msg-${album.id}`)}
                         >
-                          {copied === `share-msg-${album.id}` ? 'Copied msg' : 'Copy message'}
+                          {copied === `share-msg-${album.id}` ? 'Copied message' : 'Copy message'}
                         </Button>
                         <Button
                           size="sm"
@@ -938,7 +938,7 @@ export const GuestPhotoSharing: React.FC = () => {
                             window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
                           }}
                         >
-                          <Mail className="w-3 h-3 mr-1" /> Share
+                          <Mail className="w-3 h-3 mr-1" /> Share request
                         </Button>
                       </div>
                     </div>
@@ -965,7 +965,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           />
                         </div>
                         <Button size="sm" variant="outline" disabled={workingAlbumId === album.id} onClick={() => applySuggestedWindow(album.id)}>
-                          Auto window
+                          Suggested window
                         </Button>
                         <Button size="sm" variant="outline" disabled={workingAlbumId === album.id} onClick={() => void saveWindow(album.id)}>
                           {workingAlbumId === album.id ? 'Saving...' : 'Save window'}

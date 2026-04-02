@@ -22,7 +22,7 @@ export const VenueSection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{settings.title || 'Venue'}</h2>
           )}
-          <p className="text-text-secondary">Venue details will appear here once added</p>
+          <p className="text-text-secondary">Venue details will appear here once they’re added.</p>
         </div>
       </section>
     );
@@ -67,7 +67,7 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Venue'}</h2>
           )}
-          <p className="text-text-secondary">Venue details will appear here once added</p>
+          <p className="text-text-secondary">Venue details will appear here once they’re added.</p>
         </div>
       </section>
     );
@@ -78,7 +78,7 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle && (
           <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Where to find us</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Venue details</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Venue'}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>

@@ -141,7 +141,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ vaultConfigId, durationYears, onS
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
-            placeholder="e.g. A message to remember"
+            placeholder="For example: A note to remember"
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
@@ -166,7 +166,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ vaultConfigId, durationYears, onS
           onChange={e => setContent(e.target.value)}
           required
           rows={5}
-          placeholder="Write something to your future self or your partner…"
+          placeholder="Write something meaningful to be opened in the future…"
           className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
         />
         <p className="text-xs text-text-tertiary mt-1">{content.length} characters</p>
@@ -205,7 +205,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ vaultConfigId, durationYears, onS
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={saving}>Cancel</Button>
         <Button type="submit" variant="primary" size="sm" disabled={saving || !content.trim()}>
-          {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />Saving…</> : 'Save to Vault'}
+          {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />Saving…</> : 'Save to vault'}
         </Button>
       </div>
     </form>

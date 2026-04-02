@@ -97,7 +97,7 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-2xl mx-auto">
         {settings.showTitle && (
           <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">The day ahead</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">The plan</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Schedule'}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
@@ -171,7 +171,7 @@ export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-4xl mx-auto">
         {settings.showTitle && (
           <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Weekend plan</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Weekend schedule</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Schedule'}</h2>
           </div>
         )}

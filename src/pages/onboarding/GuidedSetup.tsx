@@ -169,7 +169,7 @@ export const GuidedSetup: React.FC = () => {
         setCurrentStep(steps[nextIndex]);
       }
     } catch (err: unknown) {
-      setError((err as Error).message || 'Could not save this step. Please try again.');
+        setError((err as Error).message || 'Could not save this step right now. Please try again.');
     }
   };
 
@@ -224,7 +224,7 @@ export const GuidedSetup: React.FC = () => {
         }
       });
     } catch (err: unknown) {
-      setError((err as Error).message || 'Failed to save. Please try again.');
+        setError((err as Error).message || 'Could not finish setup right now. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -404,10 +404,10 @@ export const GuidedSetup: React.FC = () => {
                 <Heart className="w-10 h-10 text-primary" fill="currentColor" aria-hidden="true" />
               </div>
               <h2 className="text-2xl font-bold text-text-primary mb-3">
-                Let's Build Your Wedding Site
+                Let’s build your wedding website
               </h2>
               <p className="text-text-secondary max-w-md mx-auto">
-                We'll walk through each section step-by-step. Skip anything you're not ready for - you can always come back later.
+                We’ll walk through each section step by step. Skip anything you’re not ready for and come back later.
               </p>
             </div>
 
@@ -490,7 +490,7 @@ export const GuidedSetup: React.FC = () => {
             </div>
 
             <Button variant="primary" size="lg" fullWidth onClick={handleNext}>
-              Let's Get Started
+              Let’s get started
               <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
             </Button>
           </div>
@@ -540,7 +540,7 @@ export const GuidedSetup: React.FC = () => {
             />
 
             <Textarea
-              label="Your Story (Optional)"
+              label="Your story (optional)"
               name="ourStory"
               value={formData.ourStory}
               onChange={handleChange}
@@ -565,7 +565,7 @@ export const GuidedSetup: React.FC = () => {
               name="ceremonyTime"
               value={formData.ceremonyTime}
               onChange={handleChange}
-              helperText="Optional - skip if not ready"
+              helperText="Optional — skip if you’re not ready yet"
             />
 
             <Input
@@ -610,7 +610,7 @@ export const GuidedSetup: React.FC = () => {
               onChange={handleChange}
               placeholder="List recommended hotels or add booking links..."
               rows={4}
-              helperText="Optional - you can skip this for now"
+              helperText="Optional — you can skip this for now"
             />
 
             <Textarea
@@ -649,7 +649,7 @@ export const GuidedSetup: React.FC = () => {
             />
 
             <Textarea
-              label="Meal Options (Optional)"
+              label="Meal options (optional)"
               name="mealOptions"
               value={formData.mealOptions}
               onChange={handleChange}
@@ -672,7 +672,7 @@ export const GuidedSetup: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-text-primary mb-2">FAQ</h2>
-              <p className="text-text-secondary">Answer common questions</p>
+              <p className="text-text-secondary">Answer the questions guests are most likely to ask</p>
             </div>
 
             <div className="p-4 bg-surface-subtle rounded-lg">
@@ -705,11 +705,11 @@ export const GuidedSetup: React.FC = () => {
             </div>
 
             <Textarea
-              label="Add Your Own Questions (Optional)"
+              label="Add your own questions (optional)"
               name="customFaqs"
               value={formData.customFaqs}
               onChange={handleChange}
-              placeholder="Add any specific questions you want to answer..."
+              placeholder="Add any extra questions you want to answer for guests..."
               rows={4}
               helperText="You can edit all FAQs from your dashboard"
             />
@@ -775,7 +775,7 @@ export const GuidedSetup: React.FC = () => {
                   { id: 'elegant', label: 'Elegant', colors: ['#F5F5F5', '#9E9E9E', '#424242'], description: 'Classic neutrals' },
                   { id: 'sunset', label: 'Sunset', colors: ['#FFF3E0', '#FFB74D', '#F57C00'], description: 'Warm oranges' },
                   { id: 'lavender', label: 'Lavender', colors: ['#F3E5F5', '#BA68C8', '#7B1FA2'], description: 'Purple hues' },
-                  { id: 'custom', label: 'Create your own', colors: ['#FFFFFF', '#CCCCCC', '#333333'], description: 'Create your own' },
+                  { id: 'custom', label: 'Create your own', colors: ['#FFFFFF', '#CCCCCC', '#333333'], description: 'Build your own palette' },
                 ].map((scheme) => (
                   <button
                     key={scheme.id}
@@ -896,7 +896,7 @@ export const GuidedSetup: React.FC = () => {
 
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
               <p className="text-sm text-text-secondary">
-                <span className="font-medium text-primary">Skip this step</span> if you're not ready. You can add and manage guests individually from the Guests dashboard at any time.
+                <span className="font-medium text-primary">Skip this step</span> if you’re not ready. You can always add and manage guests later from the Guests dashboard.
               </p>
             </div>
           </div>

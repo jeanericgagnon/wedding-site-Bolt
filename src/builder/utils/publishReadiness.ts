@@ -11,7 +11,7 @@ export type PublishIssue =
 
 export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDataV1 | null): PublishIssue | null => {
   if (!project.pages.length) {
-    return { kind: 'no-pages', message: 'Add at least one page before publishing.' };
+    return { kind: 'no-pages', message: 'Add at least one page before going live.' };
   }
 
   const firstSection = project.pages.flatMap((p) => p.sections.map((s) => ({ pageId: p.id, sectionId: s.id })))[0];
@@ -19,7 +19,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
   if (!hasEnabledSection) {
     return {
       kind: 'no-enabled-sections',
-      message: 'Enable at least one section before publishing.',
+      message: 'Turn on at least one section before going live.',
       firstSectionId: firstSection?.sectionId,
       firstPageId: firstSection?.pageId,
     };
@@ -29,20 +29,20 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
     const hasPartner1 = !!weddingData.couple.partner1Name?.trim();
     const hasPartner2 = !!weddingData.couple.partner2Name?.trim();
     if (!hasPartner1 || !hasPartner2) {
-      return { kind: 'missing-couple-names', message: 'Add both partner names before publishing.' };
+      return { kind: 'missing-couple-names', message: 'Add both partner names before going live.' };
     }
 
     if (!weddingData.event.weddingDateISO) {
-      return { kind: 'missing-event-date', message: 'Add your wedding date before publishing.' };
+      return { kind: 'missing-event-date', message: 'Add your wedding date before going live.' };
     }
 
     const hasVenue = weddingData.venues.some((v) => !!v.name?.trim() || !!v.address?.trim());
     if (!hasVenue) {
-      return { kind: 'missing-venue', message: 'Add at least one venue before publishing.' };
+      return { kind: 'missing-venue', message: 'Add at least one venue before going live.' };
     }
 
     if (!weddingData.rsvp.enabled) {
-      return { kind: 'rsvp-disabled', message: 'Enable RSVP before publishing.' };
+      return { kind: 'rsvp-disabled', message: 'Turn RSVP on before going live.' };
     }
   }
 

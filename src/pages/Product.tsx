@@ -17,7 +17,7 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  { id: 'launch', title: 'Launch a site you’re proud to share', kicker: 'Step 1', outcome: 'Go live fast with something polished from day one.', detail: 'Start with a strong template, clear setup, and a clean path to publish.' },
+  { id: 'launch', title: 'Launch a site you’re proud to share', kicker: 'Step 1', outcome: 'Go live fast with something polished from day one.', detail: 'Start with a strong template, clear setup, and a clean path to go live.' },
   { id: 'guests', title: 'Organize guests + households', kicker: 'Step 2', outcome: 'Know who is invited and where they belong.', detail: 'Households, plus-ones, and statuses in one place.' },
   { id: 'rsvp', title: 'Collect RSVPs cleanly', kicker: 'Step 3', outcome: 'Get responses without confusion.', detail: 'Event-level RSVP and meal tracking without hacks.' },
   { id: 'message', title: 'Message everyone', kicker: 'Step 4', outcome: 'Send the right update to the right group.', detail: 'Stop copy/pasting from spreadsheets to email tools.' },
@@ -105,9 +105,9 @@ export const Product: React.FC = () => {
     if (activeStep === 'message') {
       return (
         <div className="space-y-4">
-          <p className="text-sm text-ink/70">Status: <strong>{messageState === 'draft' ? 'Draft ready' : 'Sent to 86 guests'}</strong></p>
+          <p className="text-sm text-ink/70">Status: <strong>{messageState === 'draft' ? 'Ready to send' : 'Sent to 86 guests'}</strong></p>
           <button onClick={() => setMessageState((s) => (s === 'draft' ? 'sent' : 'draft'))} className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">
-            {messageState === 'draft' ? 'Send update' : 'Reset to draft'}
+            {messageState === 'draft' ? 'Send update' : 'Reset draft state'}
           </button>
         </div>
       );

@@ -978,7 +978,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         {hovered && !isCurrent && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-lg">
-              View Template
+              See design
             </div>
           </div>
         )}
@@ -1012,7 +1012,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
             onClick={e => { e.stopPropagation(); onDetails(); }}
             className="w-full py-2 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50"
           >
-            View template
+            See design
           </button>
           <button
             onClick={e => { e.stopPropagation(); onCompare(); }}
@@ -1035,9 +1035,9 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
           {isCurrent ? (
             <span className="flex items-center justify-center gap-1.5">
               <Check size={11} />
-              Current Template
+              Current design
             </span>
-          ) : 'View Template'}
+          ) : 'See design'}
         </button>
       </div>
       </div>
@@ -1061,7 +1061,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
       <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-5xl w-full mx-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Compare templates</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Compare designs</h3>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
         </div>
 
@@ -1089,7 +1089,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
                 ))}
               </div>
               <button onClick={onApply} className="mt-3 w-full py-2 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800">
-                Apply {template.displayName}
+                Start with {template.displayName}
               </button>
             </div>
           ))}

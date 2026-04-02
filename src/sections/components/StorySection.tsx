@@ -10,7 +10,7 @@ interface Props {
 export const StorySection: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple?.story || 'Our story is still being written...';
+  const story = (settings.storyText as string) || couple?.story || 'More of our story will be shared here soon.';
   const photoUrl = (settings.photo as string) || '';
 
   return (
@@ -37,7 +37,7 @@ export const StorySection: React.FC<Props> = ({ data, instance }) => {
 export const StoryCentered: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple?.story || 'Our story is still being written...';
+  const story = (settings.storyText as string) || couple?.story || 'More of our story will be shared here soon.';
   const photoUrl = (settings.photo as string) || '';
 
   return (
@@ -71,7 +71,7 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const media = data?.media;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple?.story || 'Our story is still being written...';
+  const story = (settings.storyText as string) || couple?.story || 'More of our story will be shared here soon.';
   const photoUrl = (settings.photo as string) || media?.heroImageUrl || '';
 
   return (
@@ -82,7 +82,7 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
             <img src={photoUrl} alt="Couple" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-secondary">
-              <span className="text-sm">Photo placeholder</span>
+              <span className="text-sm">Photo coming soon</span>
             </div>
           )}
         </div>
@@ -106,7 +106,7 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
 export const StoryTimeline: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple?.story || 'Our story is still being written...';
+  const story = (settings.storyText as string) || couple?.story || 'More of our story will be shared here soon.';
   const baseLines = story
     .split(/\n+/)
     .map((line) => line.trim())

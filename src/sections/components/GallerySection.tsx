@@ -18,7 +18,7 @@ export const GallerySection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{settings.title || 'Photos'}</h2>
           )}
-          <p className="text-text-secondary">Your photo gallery will appear here once images are added</p>
+          <p className="text-text-secondary">Photos will appear here once they’re added.</p>
         </div>
       </section>
     );
@@ -57,7 +57,7 @@ export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Photos'}</h2>
           )}
-          <p className="text-text-secondary">Your photo gallery will appear here once images are added</p>
+          <p className="text-text-secondary">Photos will appear here once they’re added.</p>
         </div>
       </section>
     );

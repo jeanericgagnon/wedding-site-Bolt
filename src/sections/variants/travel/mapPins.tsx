@@ -48,7 +48,7 @@ const TravelMapPins: React.FC<SectionComponentProps<TravelMapPinsData>> = ({ dat
             <div className="rounded-xl border border-dashed border-border/60 bg-surface-subtle h-64 flex items-center justify-center text-center px-4">
               <div>
                 <MapPin className="w-5 h-5 text-primary/70 mx-auto mb-2" />
-                <p className="text-sm text-text-secondary">Map preview placeholder. Use your location links in the pinned list for now.</p>
+                <p className="text-sm text-text-secondary">Map preview coming soon. For now, guests can use the location links above.</p>
               </div>
             </div>
           </div>

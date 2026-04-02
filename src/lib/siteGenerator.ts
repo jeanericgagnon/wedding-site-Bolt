@@ -236,6 +236,6 @@ function parseCustomFaqs(text: string | null | undefined): FaqContent['items'] {
   return lines.map((line, i) => ({
     id: `custom-${i}`,
     question: line.trim(),
-    answer: 'Answer coming soon',
+    answer: 'More details coming soon',
   }));
 }

@@ -84,7 +84,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
                 onClick={() => downloadIcs(data)}
                 className="inline-flex items-center px-3.5 py-2 text-xs font-medium rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
               >
-                Add all events to calendar (.ics)
+                Add weekend plans to your calendar (.ics)
               </button>
             )}
           </div>
@@ -117,7 +117,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
                     className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
                   >
                     <ExternalLink className="w-3.5 h-3.5" / >
-                    Open in Google Maps
+                    Open directions in Google Maps
                   </a>
                 )}
                 {venue.notes && (
@@ -131,7 +131,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
                   <div className="border border-border rounded-2xl p-5 md:p-6 bg-surface shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Plane className="w-4 h-4 text-primary" />
-                      <h4 className="font-semibold tracking-tight text-text-primary">Getting Here</h4>
+                      <h4 className="font-semibold tracking-tight text-text-primary">Getting here</h4>
                     </div>
                     <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{travel.flightInfo}</p>
                   </div>
@@ -140,7 +140,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
                   <div className="border border-border rounded-2xl p-5 md:p-6 bg-surface shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Hotel className="w-4 h-4 text-primary" />
-                      <h4 className="font-semibold tracking-tight text-text-primary">Where to Stay</h4>
+                      <h4 className="font-semibold tracking-tight text-text-primary">Where to stay</h4>
                     </div>
                     <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{travel.hotelInfo}</p>
                   </div>
@@ -173,7 +173,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle && (
           <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Plan your trip</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Travel details</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Travel & Accommodations'}</h2>
             {travel?.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{travel.notes}</p>}
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
@@ -187,7 +187,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
                 onClick={() => downloadIcs(data)}
                 className="inline-flex items-center px-3.5 py-2 text-xs font-medium rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
               >
-                Add all events to calendar (.ics)
+                Add weekend plans to your calendar (.ics)
               </button>
             )}
           </div>
@@ -214,7 +214,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
                       className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors"
                     >
                       <ExternalLink className="w-3 h-3" />
-                      View on Google Maps
+                      Open in Google Maps
                     </a>
                   )}
                   {venue.notes && (
@@ -232,7 +232,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             </div>
             <h3 className="font-semibold tracking-tight text-text-primary mb-2">Getting Here</h3>
             <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
-              {travel?.flightInfo || 'Flight and transport details will appear here once added'}
+              {travel?.flightInfo || 'Flight and transport details will appear here once they’re added.'}
             </p>
           </div>
           <div className="text-center p-8 rounded-2xl border border-border bg-surface-subtle shadow-sm">
@@ -241,7 +241,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             </div>
             <h3 className="font-semibold tracking-tight text-text-primary mb-2">Where to Stay</h3>
             <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
-              {travel?.hotelInfo || 'Hotel recommendations will appear here once added'}
+              {travel?.hotelInfo || 'Hotel recommendations will appear here once they’re added.'}
             </p>
           </div>
           <div className="text-center p-8 rounded-2xl border border-border bg-surface-subtle shadow-sm">
@@ -250,7 +250,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             </div>
             <h3 className="font-semibold tracking-tight text-text-primary mb-2">Parking</h3>
             <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
-              {travel?.parkingInfo || 'Parking details will appear here once added'}
+              {travel?.parkingInfo || 'Parking details will appear here once they’re added.'}
             </p>
           </div>
         </div>
@@ -275,7 +275,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Plan your trip</p>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Travel details</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Travel & Local Guide'}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
@@ -289,7 +289,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
                 onClick={() => downloadIcs(data)}
                 className="inline-flex items-center px-3.5 py-2 text-xs font-medium rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
               >
-                Add all events to calendar (.ics)
+                Add weekend plans to your calendar (.ics)
               </button>
             )}
           </div>
@@ -299,9 +299,9 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
           <div className="rounded-2xl border border-border bg-surface p-6 md:p-7 shadow-sm">
             <h3 className="font-semibold tracking-tight text-text-primary mb-3">Getting here</h3>
             <div className="space-y-3 text-sm text-text-secondary leading-relaxed">
-              <p><span className="font-medium text-text-primary">Flights:</span> {travel?.flightInfo || 'Airport and transport details will appear here once added.'}</p>
-              <p><span className="font-medium text-text-primary">Parking:</span> {travel?.parkingInfo || 'Parking details will appear here once added.'}</p>
-              <p><span className="font-medium text-text-primary">Hotels:</span> {travel?.hotelInfo || 'Hotel recommendations will appear here once added.'}</p>
+              <p><span className="font-medium text-text-primary">Flights:</span> {travel?.flightInfo || 'Airport and transport details will appear here once they’re added.'}</p>
+              <p><span className="font-medium text-text-primary">Parking:</span> {travel?.parkingInfo || 'Parking details will appear here once they’re added.'}</p>
+              <p><span className="font-medium text-text-primary">Hotels:</span> {travel?.hotelInfo || 'Hotel recommendations will appear here once they’re added.'}</p>
             </div>
           </div>
 

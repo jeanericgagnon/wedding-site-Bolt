@@ -449,7 +449,7 @@ export const CUSTOM_SKELETONS: CustomSectionSkeleton[] = [
           [
             { id: 'sh1', type: 'subheading', content: 'Friends & Family', align: 'left', variant: 'light' },
             { id: 'p1', type: 'paragraph', content: 'We are bringing together 150 of the most important people in our lives for one unforgettable celebration.', align: 'left', variant: 'light' },
-            { id: 'btn1', type: 'button', buttonLabel: 'RSVP Now', buttonUrl: '#rsvp', align: 'left', variant: 'outline-light' },
+            { id: 'btn1', type: 'button', buttonLabel: 'Send RSVP', buttonUrl: '#rsvp', align: 'left', variant: 'outline-light' },
           ],
         ],
       },
@@ -857,7 +857,7 @@ export const CUSTOM_SKELETONS: CustomSectionSkeleton[] = [
       { id: 'h1', type: 'heading', content: 'Join Us For Our Special Day', align: 'center', size: 'xl', variant: 'light' },
       { id: 'p1', type: 'paragraph', content: 'We would love for you to be there as we begin this new chapter together.', align: 'center', variant: 'light' },
       { id: 'sp1', type: 'spacer', size: 'sm' },
-      { id: 'btn1', type: 'button', buttonLabel: 'RSVP Now', buttonUrl: '#rsvp', align: 'center', variant: 'outline-light' },
+      { id: 'btn1', type: 'button', buttonLabel: 'Send RSVP', buttonUrl: '#rsvp', align: 'center', variant: 'outline-light' },
     ],
   },
   {
@@ -873,7 +873,7 @@ export const CUSTOM_SKELETONS: CustomSectionSkeleton[] = [
       { id: 'h1', type: 'heading', content: 'You Are Invited', align: 'center', size: 'xl' },
       { id: 'p1', type: 'paragraph', content: 'We are so excited to celebrate with you. Please let us know if you can make it.', align: 'center' },
       { id: 'sp1', type: 'spacer', size: 'sm' },
-      { id: 'btn1', type: 'button', buttonLabel: 'RSVP Now', buttonUrl: '#rsvp', align: 'center' },
+      { id: 'btn1', type: 'button', buttonLabel: 'Send RSVP', buttonUrl: '#rsvp', align: 'center' },
     ],
   },
   {
@@ -909,7 +909,7 @@ export const CUSTOM_SKELETONS: CustomSectionSkeleton[] = [
             { id: 'p1', type: 'paragraph', content: 'Let us know if you will be joining us by May 1st.', align: 'left', variant: 'light' },
           ],
           [
-            { id: 'btn1', type: 'button', buttonLabel: 'RSVP Now', buttonUrl: '#rsvp', align: 'center', variant: 'outline-light' },
+            { id: 'btn1', type: 'button', buttonLabel: 'Send RSVP', buttonUrl: '#rsvp', align: 'center', variant: 'outline-light' },
           ],
         ],
       },
@@ -1018,7 +1018,7 @@ export const CUSTOM_SKELETONS: CustomSectionSkeleton[] = [
       { id: 'p3', type: 'paragraph', content: '✓  Arrange transport — the venue is 20 min from downtown', align: 'left' },
       { id: 'p4', type: 'paragraph', content: '✓  Dress code: cocktail attire (no white please!)', align: 'left' },
       { id: 'sp1', type: 'spacer', size: 'sm' },
-      { id: 'btn1', type: 'button', buttonLabel: 'RSVP Now', buttonUrl: '#rsvp', align: 'left' },
+      { id: 'btn1', type: 'button', buttonLabel: 'Send RSVP', buttonUrl: '#rsvp', align: 'left' },
     ],
   },
   {

@@ -120,8 +120,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         ? `${activePage?.sections?.length ?? 0} section(s) on ${activePage?.title ?? 'current page'}`
         : `No sections on ${activePage?.title ?? 'current page'} — add one from the right panel.`,
     });
-    items.push({ label: 'No active publish blockers', done: !publishValidationError, detail: publishValidationError ?? 'Ready to publish.' });
-    items.push({ label: 'Latest edits are saved', done: !isDirty, detail: isDirty ? 'Save changes before publishing.' : 'All changes saved.' });
+    items.push({ label: 'No active publish blockers', done: !publishValidationError, detail: publishValidationError ?? 'Ready to go live.' });
+    items.push({ label: 'Latest edits are saved', done: !isDirty, detail: isDirty ? 'Save your changes before going live.' : 'All changes saved.' });
     return items;
   }, [projectPages.length, activePage?.sections?.length, activePage?.title, publishValidationError, isDirty]);
   const checklistDoneCount = checklistItems.filter((i) => i.done).length;
@@ -237,7 +237,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="hidden">
         <div className="flex items-center gap-2">
-          <label htmlFor="mobile-section-nav" className="text-xs text-gray-500 whitespace-nowrap">Section</label>
+          <label htmlFor="mobile-section-nav" className="text-xs text-gray-500 whitespace-nowrap">Jump to section</label>
           <select
             id="mobile-section-nav"
             value={state.selectedSectionId ?? ''}
@@ -299,7 +299,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         {!state.isSaving && saveError && (
           <span className="text-xs text-red-600 flex items-center gap-1.5 bg-red-50 border border-red-200 px-2 py-1 rounded-md" title={saveError}>
             <XCircle size={12} />
-            Save failed — retry
+            Save failed — try again
           </span>
         )}
         {!state.isSaving && !saveError && state.lastSavedAt && !isDirty && (
@@ -344,7 +344,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <div className="items-center gap-1.5 hidden sm:flex">
             <span className="text-xs text-amber-700 items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md inline-flex" title={publishValidationError}>
               <AlertCircle size={12} />
-              Not ready to publish
+              Not ready to go live
             </span>
             <button
               type="button"
@@ -359,7 +359,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                 onClick={onFixPublishBlockers}
                 className="text-[11px] rounded border border-amber-300 bg-amber-50 px-2 py-1 font-medium text-amber-800 hover:bg-amber-100"
               >
-                Fix blockers
+                Fix what’s blocking it
               </button>
             )}
           </div>
@@ -400,12 +400,12 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           }`}
         >
           <CheckCircle2 size={12} />
-          Publish checklist {checklistDoneCount}/{checklistItems.length}
+          Go-live checklist {checklistDoneCount}/{checklistItems.length}
         </button>
 
         {showPublishChecklist && (
           <div className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm space-y-1 max-h-64 overflow-y-auto">
-            <p className="font-semibold text-gray-800 mb-1">Publish readiness</p>
+            <p className="font-semibold text-gray-800 mb-1">Go-live readiness</p>
             <ul className="space-y-1">
               {checklistItems.map((item) => (
                 <li key={item.label} className="flex items-start gap-1.5 justify-between">
@@ -417,16 +417,16 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                     </span>
                   </span>
                   {!item.done && item.label === 'Latest edits are saved' && (
-                    <button onClick={() => { onSave(); setShowPublishChecklist(false); }} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100">Save</button>
+                    <button onClick={() => { onSave(); setShowPublishChecklist(false); }} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100">Save now</button>
                   )}
                   {!item.done && item.label === 'No active publish blockers' && onFixPublishBlockers && (
-                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 transition-colors hover:bg-amber-100">Fix</button>
+                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 transition-colors hover:bg-amber-100">Fix this</button>
                   )}
                   {!item.done && item.label === 'No active publish blockers' && publishIssueKind === 'no-enabled-sections' && onFixPublishBlockers && (
-                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Go to section</button>
+                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open section</button>
                   )}
                   {!item.done && item.label === 'No active publish blockers' && publishIssueKind === 'no-pages' && onFixPublishBlockers && (
-                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open templates</button>
+                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Choose a design</button>
                   )}
                   {!item.done && item.label === 'No active publish blockers' && ['missing-couple-names', 'missing-event-date', 'missing-venue', 'rsvp-disabled'].includes(publishIssueKind ?? '') && onFixPublishBlockers && (
                     <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open guidance</button>
@@ -474,7 +474,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           }`}
         >
           {isPreview ? <EyeOff size={14} /> : <Eye size={14} />}
-          {isPreview ? 'Exit Preview' : 'Preview'}
+          {isPreview ? 'Exit preview' : 'Preview'}
         </button>
 
         {isPreview && (
@@ -560,8 +560,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               onPublish();
             }}
             disabled={isPublishDisabled}
-            aria-label={publishValidationError ? `Publish blocked: ${publishValidationError}` : 'Publish site'}
-            title={publishValidationError ? `${publishValidationError} (⌘⇧P)` : 'Publish site (⌘⇧P)'}
+            aria-label={publishValidationError ? `Go live blocked: ${publishValidationError}` : 'Go live'}
+            title={publishValidationError ? `${publishValidationError} (⌘⇧P)` : 'Go live (⌘⇧P)'}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {state.isPublishing || state.isSaving ? (
@@ -574,15 +574,15 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               : state.isSaving
                 ? 'Waiting for save…'
                 : isPublished
-                  ? `Re-publish${typeof publishedVersion === 'number' ? ` v${publishedVersion}` : ''}`
-                  : 'Publish'}
+                  ? `Update live site${typeof publishedVersion === 'number' ? ` v${publishedVersion}` : ''}`
+                  : 'Go live'}
           </button>
           <div className="absolute top-full right-0 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[260px] text-center">
             {publishValidationError
               ? publishValidationError
               : isPublished
                 ? 'Updates your live public site (⌘⇧P)'
-                : 'First publish makes your site visible to guests (⌘⇧P)'}
+                : 'Going live makes your site visible to guests (⌘⇧P)'}
           </div>
         </div>
       </div>
@@ -710,7 +710,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
         <div className="w-full max-w-sm rounded-xl bg-white shadow-xl border border-gray-200 p-4">
           <h3 className="text-sm font-semibold text-gray-900">Leave builder?</h3>
-          <p className="mt-1 text-sm text-gray-600">You have unsaved changes. If you leave now, recent edits may be lost.</p>
+          <p className="mt-1 text-sm text-gray-600">You have unsaved changes. If you leave now, your latest edits may be lost.</p>
           <div className="mt-4 flex items-center justify-end gap-2">
             <button
               type="button"

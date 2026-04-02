@@ -81,7 +81,7 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
   return (
     <form onSubmit={handleSubmit} className="space-y-4 text-left">
       <div>
-        <label className={labelBase}>Full Name</label>
+        <label className={labelBase}>Your name</label>
         <input
           type="text"
           required
@@ -92,19 +92,19 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         />
       </div>
       <div>
-        <label className={labelBase}>Will you be attending?</label>
+        <label className={labelBase}>Will you be joining us?</label>
         <select
           value={form.attending}
           onChange={e => setForm(f => ({ ...f, attending: e.target.value as 'attending' | 'declined' }))}
           className={inputBase}
         >
-          <option value="attending">Yes, I will be there!</option>
-          <option value="declined">Sorry, I can't make it</option>
+          <option value="attending">Yes, I’ll be there</option>
+          <option value="declined">Sorry, I can’t make it</option>
         </select>
       </div>
       {form.attending === 'attending' && (
         <div>
-          <label className={labelBase}>Number of Guests</label>
+          <label className={labelBase}>Number of guests</label>
           <input
             type="number"
             min={1}
@@ -116,11 +116,11 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         </div>
       )}
       <div>
-        <label className={labelBase}>Dietary Notes <span className={dark ? 'text-white/40' : 'text-text-secondary'}>(optional)</span></label>
+        <label className={labelBase}>Dietary notes <span className={dark ? 'text-white/40' : 'text-text-secondary'}>(optional)</span></label>
         <textarea
           value={form.dietaryNotes}
           onChange={e => setForm(f => ({ ...f, dietaryNotes: e.target.value }))}
-          placeholder="Any dietary restrictions or allergies?"
+          placeholder="Any dietary restrictions or allergies we should know about?"
           rows={3}
           className={inputBase}
         />
@@ -140,7 +140,7 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
             <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
             Sending…
           </span>
-        ) : 'Submit RSVP'}
+          ) : 'Send RSVP'}
       </button>
     </form>
   );
@@ -182,9 +182,9 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
               </svg>
             </div>
             <p className="text-xl font-semibold text-text-primary mb-2">
-              {attending ? "We'll see you there!" : "Sorry you can't make it"}
+              {attending ? "We can’t wait to celebrate with you" : "Thank you for letting us know"}
             </p>
-            <p className="text-text-secondary text-sm">Your RSVP has been recorded. Thank you!</p>
+            <p className="text-text-secondary text-sm">Your reply has been saved.</p>
           </div>
         ) : (
           <div className="rounded-2xl border border-border bg-surface p-8 shadow-sm">
@@ -214,9 +214,9 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-2xl mx-auto text-center">
         {settings.showTitle && (
           <>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-4 font-medium">You are invited</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-4 font-medium">You’re invited</p>
             <h2 className="text-4xl md:text-5xl font-light text-white mb-3">{settings.title || 'RSVP'}</h2>
-            <p className="text-white/80 mb-8">Join {displayName} to celebrate their special day</p>
+            <p className="text-white/80 mb-8">Join {displayName} in celebrating their wedding</p>
           </>
         )}
         {deadline && (

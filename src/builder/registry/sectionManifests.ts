@@ -617,8 +617,8 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     capabilities: { ...defaultCapabilities },
     settingsSchema: {
       fields: [
-        { key: 'eyebrow', label: 'Eyebrow Text', type: 'text', defaultValue: 'Getting Here' },
-        { key: 'headline', label: 'Section Title', type: 'text', defaultValue: 'Directions & Parking' },
+        { key: 'eyebrow', label: 'Eyebrow Text', type: 'text', defaultValue: 'Travel details' },
+        { key: 'headline', label: 'Section Title', type: 'text', defaultValue: 'Directions and parking' },
         { key: 'venueName', label: 'Venue Name', type: 'text' },
         { key: 'address', label: 'Street Address', type: 'text' },
         { key: 'city', label: 'City, State, ZIP', type: 'text' },
@@ -627,7 +627,7 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
         { key: 'shuttleNote', label: 'Shuttle Info', type: 'textarea' },
         { key: 'publicTransitNote', label: 'Public Transit', type: 'textarea' },
         { key: 'drivingTime', label: 'Driving Time (e.g. 25 min)', type: 'text' },
-        { key: 'drivingTimeFrom', label: 'Driving From', type: 'text', defaultValue: 'city center' },
+        { key: 'drivingTimeFrom', label: 'Driving From', type: 'text', defaultValue: 'downtown' },
       ],
     },
     bindingsSchema: { slots: [] },
@@ -651,7 +651,7 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     settingsSchema: {
       fields: [
         { key: 'eyebrow', label: 'Eyebrow Text', type: 'text' },
-        { key: 'headline', label: 'Section Title', type: 'text', defaultValue: 'Our Save the Date' },
+        { key: 'headline', label: 'Section Title', type: 'text', defaultValue: 'A short film from us' },
         { key: 'subtitle', label: 'Subtitle', type: 'text' },
         { key: 'videoUrl', label: 'Video URL (YouTube or Vimeo)', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
         { key: 'thumbnailUrl', label: 'Thumbnail Image URL', type: 'text' },

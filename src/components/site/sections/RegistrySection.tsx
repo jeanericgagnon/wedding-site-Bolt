@@ -38,7 +38,7 @@ export const RegistrySection: React.FC<RegistrySectionProps> = ({ content }) => 
           </div>
         ) : (
           <p className="text-text-secondary italic">
-            Registry details coming soon
+            Registry details will be shared here soon
           </p>
         )}
       </div>
