@@ -808,7 +808,7 @@ export const DashboardSettings: React.FC = () => {
                   <CardContent>
                     {!showPrivacySettings ? (
                       <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                        Privacy controls are hidden by default to keep settings simpler. Expand this section to manage visibility, invite-only access, and search behavior.
+                        Hidden by default to keep things simple. Open it when you want to choose who can see your site.
                       </div>
                     ) : (
                     <form onSubmit={handleSavePrivacy} className="space-y-5">
@@ -977,7 +977,7 @@ export const DashboardSettings: React.FC = () => {
                   <CardContent className="space-y-4">
                     {!showTemplateSettings ? (
                       <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                        Template controls are hidden by default to reduce noise. Expand this section when you want to switch the overall site design.
+                        Hidden by default to keep things calm. Open it when you want to change how your site looks.
                       </div>
                     ) : (
                       <>
@@ -1047,7 +1047,7 @@ export const DashboardSettings: React.FC = () => {
                   <CardContent className="space-y-3">
                     {!showMealChoiceSettings ? (
                       <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                        Meal choice is hidden by default to keep RSVP setup lighter. Expand this section only if you want to collect meal preferences.
+                        Hidden by default to keep RSVP setup lighter. Open this section only if you want guests to choose a meal.
                       </div>
                     ) : (
                       <>
@@ -1087,7 +1087,7 @@ export const DashboardSettings: React.FC = () => {
                   <CardContent>
                     {!showAdvancedRsvp ? (
                       <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                        Advanced RSVP options are hidden by default to keep setup simpler. Expand this section to manage custom questions, choice logic, and playlist requests.
+                        Hidden by default to keep RSVP setup simple. Open this section if you want to ask extra questions or let guests share song requests.
                       </div>
                     ) : (
                     <form onSubmit={handleSaveRsvpQuestions} className="space-y-4">
@@ -1297,7 +1297,7 @@ export const DashboardSettings: React.FC = () => {
                 <CardContent>
                   {!showNotificationSettings ? (
                     <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                      Notification preferences are hidden by default to keep this page easier to scan. Expand this section when you want to tune updates.
+                      Hidden by default to keep this page easy to scan. Open it when you want to choose which updates you get.
                     </div>
                   ) : (
                   <form onSubmit={handleSaveNotifications} className="space-y-4">

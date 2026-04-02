@@ -2886,7 +2886,7 @@ Proceed with send?`)) return;
           <a href="/dashboard/rsvp-board" className="text-xs text-primary hover:text-primary-hover">Open RSVP Board</a>
           <div className="mt-4 flex flex-wrap items-end gap-2">
             <div className="inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
-              <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
+              <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guests</button>
               <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
             </div>
             <button
@@ -2895,32 +2895,12 @@ Proceed with send?`)) return;
             >
               {showInsights ? 'Hide insights' : 'Show insights'}
             </button>
-            <div>
-              <label className="block text-[11px] text-text-tertiary mb-1">Role View</label>
-              <select
-                value={guestsRole}
-                onChange={(e) => setGuestsRole(e.target.value as 'owner' | 'coordinator' | 'viewer')}
-                className="px-3 py-1.5 text-xs rounded-md border border-border bg-white text-text-secondary"
-              >
-                <option value="owner">Owner</option>
-                <option value="coordinator">Coordinator</option>
-                <option value="viewer">Viewer (read-only)</option>
-              </select>
-            </div>
           </div>
         </div>
 
-        {guestsRole === 'viewer' && (
-          <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
-            Viewer mode active — guest editing and operations are disabled.
-          </div>
-        )}
-
-        {guestsRole !== 'viewer' && (
-          <div className="rounded-lg border border-border/30 bg-white px-3 py-2 text-xs text-text-tertiary">
-            Tip: Use <span className="font-medium text-text-secondary">Actions</span> for exports, reminder runs, and checklist workflows.
-          </div>
-        )}
+        <div className="rounded-lg border border-border/30 bg-white px-3 py-2 text-xs text-text-tertiary">
+          Tip: Use <span className="font-medium text-text-secondary">Actions</span> for exports, reminders, and cleanup tasks.
+        </div>
 
         {!cleanGuestsView && (
         <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
