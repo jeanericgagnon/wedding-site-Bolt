@@ -70,12 +70,12 @@ export const MediaLibraryPanel: React.FC = () => {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              {isPickerMode ? 'Select Image' : 'Media Library'}
+              {isPickerMode ? 'Choose an image' : 'Media library'}
             </h2>
             <p className="text-sm text-gray-500">
               {isPickerMode
-                ? 'Upload a new photo or click an existing one to use it'
-                : 'Upload and manage your wedding photos and assets'}
+                ? 'Upload a photo or choose one you already added.'
+                : 'Upload and organize the photos and image assets used across your website.'}
             </p>
           </div>
           <button
@@ -113,7 +113,7 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
 
   const handleFiles = useCallback(async (files: FileList) => {
     if (!weddingId) {
-      setUploadErrors(['Upload unavailable: wedding project not loaded yet.']);
+      setUploadErrors(['Upload is not ready yet because the wedding project is still loading.']);
       return;
     }
 
@@ -199,7 +199,7 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
         }`}
       >
         <Upload size={24} className={`mx-auto mb-3 ${isDragOver ? 'text-rose-500' : 'text-gray-400'}`} />
-        <p className="text-sm font-medium text-gray-700">Drop photos here or click to upload</p>
+        <p className="text-sm font-medium text-gray-700">Drop photos here or click to add them</p>
         <p className="text-xs text-gray-400 mt-1">
           JPEG, PNG, WebP up to {BUILDER_MAX_FILE_SIZE_MB}MB
         </p>
@@ -239,7 +239,7 @@ export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPic
     <div className="flex-1 px-6 pb-6 pt-4">
       {uploadQueue.length > 0 && (
         <div className="mb-4 space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Uploading</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Uploads in progress</p>
           {uploadQueue.map(item => (
             <div key={item.assetId} className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2">
               {item.status === 'error' ? (
@@ -268,13 +268,13 @@ export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPic
       {assets.length === 0 && uploadQueue.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <FolderOpen size={32} className="text-gray-300 mb-3" />
-          <p className="text-sm font-medium text-gray-500">No media yet</p>
-          <p className="text-xs text-gray-400 mt-1">Upload your wedding photos to get started</p>
+          <p className="text-sm font-medium text-gray-500">No photos yet</p>
+          <p className="text-xs text-gray-400 mt-1">Add your first photos to start using them across the site.</p>
         </div>
       ) : (
         <>
           {isPickerMode && (
-            <p className="text-xs text-gray-500 mb-3">Click an image to select it</p>
+            <p className="text-xs text-gray-500 mb-3">Click an image to use it here.</p>
           )}
           <div className="grid grid-cols-3 gap-3">
             {assets.map(asset => (
@@ -321,7 +321,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
       failed ? (
         <div className="w-full h-full flex flex-col items-center justify-center text-center px-2">
           <Image size={20} className="text-gray-400 mb-1" />
-          <p className="text-[10px] text-gray-500 leading-tight">Preview unavailable</p>
+          <p className="text-[10px] text-gray-500 leading-tight">Preview not available</p>
         </div>
       ) : (
       <img
@@ -355,7 +355,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
         <button
           onClick={e => { e.stopPropagation(); onDelete(); }}
           className="p-1.5 bg-white rounded-lg text-red-500 hover:text-red-700 shadow-sm transition-colors"
-          aria-label="Delete image"
+          aria-label="Remove image"
         >
           <Trash2 size={12} />
         </button>

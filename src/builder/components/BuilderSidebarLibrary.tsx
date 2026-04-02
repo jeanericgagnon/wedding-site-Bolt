@@ -159,7 +159,7 @@ function makeRecipe(start: number, story?: string): PreviewPhotoRecipe {
 
 const PREVIEW_FAMILY_PHOTO_LIBRARY: Record<PreviewPhotoSet, Partial<Record<PreviewSectionFamily, PreviewPhotoRecipe>>> = {
   romantic: {
-    hero: makeRecipe(0, 'From first look to final dance, this experience is rooted in your real engagement story and personality.'),
+    hero: makeRecipe(0, 'From first look to final dance, this weekend should feel personal, clear, and easy for guests to follow.'),
     story: makeRecipe(1),
     gallery: makeRecipe(2),
     rsvp: makeRecipe(3),
@@ -172,7 +172,7 @@ const PREVIEW_FAMILY_PHOTO_LIBRARY: Record<PreviewPhotoSet, Partial<Record<Previ
     'footer-cta': makeRecipe(10),
   },
   editorial: {
-    hero: makeRecipe(2, 'A clean editorial flow using your engagement photos gives every template an instantly personal, premium feel.'),
+    hero: makeRecipe(2, 'A strong visual direction with your own photos makes the site feel personal from the start.'),
     story: makeRecipe(3),
     gallery: makeRecipe(4),
     rsvp: makeRecipe(5),
@@ -185,7 +185,7 @@ const PREVIEW_FAMILY_PHOTO_LIBRARY: Record<PreviewPhotoSet, Partial<Record<Previ
     'footer-cta': makeRecipe(0),
   },
   coastal: {
-    hero: makeRecipe(4, 'Your own engagement session now powers every section preview so templates feel like your actual wedding site from day one.'),
+    hero: makeRecipe(4, 'Your own engagement photos help every preview feel closer to a real wedding website from day one.'),
     story: makeRecipe(5),
     gallery: makeRecipe(6),
     rsvp: makeRecipe(7),
@@ -539,12 +539,12 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 <ArrowLeft size={13} />
               </button>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Add Section
+                Add section
               </p>
               <span className="ml-auto text-[10px] text-gray-300">{manifests.length} types</span>
             </div>
             <div className="mb-2.5 flex items-center gap-1.5 px-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Photo mood</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Preview mood</span>
               <div className="ml-auto flex items-center gap-1">
                 {PREVIEW_PHOTO_SET_OPTIONS.map((opt) => (
                   <button
@@ -595,16 +595,16 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                         <div className="min-w-0">
                           <p className={`text-[11px] font-semibold truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
                           <p className="text-[9px] text-gray-400 truncate">
-                            {isCustom ? '8 skeletons' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'style' : 'styles'}`}
+                            {isCustom ? '8 starter layouts' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'layout' : 'layouts'}`}
                           </p>
                         </div>
                         <ChevronRight size={12} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
                       </div>
                       <p className="mt-1 text-[9px] leading-relaxed text-gray-500 line-clamp-2">
-                        {SECTION_PICKER_EDITORIAL_NOTES[manifest.type] ?? 'Curated section foundation with premium spacing and hierarchy.'}
+                        {SECTION_PICKER_EDITORIAL_NOTES[manifest.type] ?? 'A strong starting section with clear structure and balanced spacing.'}
                       </p>
                       <p className="mt-1 text-[8px] leading-relaxed text-gray-400 line-clamp-2">
-                        {SECTION_PICKER_COMPOSITION_CUES[manifest.type] ?? 'Sequence: establish context → reveal detail → reinforce CTA.'}
+                        {SECTION_PICKER_COMPOSITION_CUES[manifest.type] ?? 'Start with what guests need first, then add the supporting details.'}
                       </p>
                     </div>
                   </button>
@@ -715,15 +715,15 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
       <div className="px-3.5 pt-3 pb-3 border-b border-neutral-200 bg-white">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-[0.14em]">Choose a style</p>
-            <p className="mt-1 text-[11px] leading-relaxed text-gray-500">Each style has a different layout feel. Pick one to add this section.</p>
+            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-[0.14em]">Choose a layout</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-gray-500">Each layout gives this section a different feel. Pick the one that fits best.</p>
           </div>
           <div className="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-semibold text-neutral-700">
             {manifest.variantMeta.length} variants
           </div>
         </div>
         <div className="mt-2.5 flex items-center gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Photo mood</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Preview mood</span>
           <div className="ml-auto flex items-center gap-1">
             {PREVIEW_PHOTO_SET_OPTIONS.map((opt) => (
               <button
@@ -745,11 +745,11 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
 
       <div className="flex-1 overflow-y-auto px-3.5 pb-3.5">
         <div className="mb-2 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-2.5 py-1.5">
-          <span className="text-[10px] uppercase tracking-wide text-gray-500">Browser</span>
+          <span className="text-[10px] uppercase tracking-wide text-gray-500">Variant browser</span>
           <span className="text-[10px] font-medium text-gray-700">{activeVariantIndex + 1} / {manifest.variantMeta.length}</span>
         </div>
         <div className="mb-2 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-[10px] text-gray-600">
-          Use ↑ ↓ to navigate • Enter to apply
+          Use ↑ ↓ to move • Enter to add this section
         </div>
         <div className="grid grid-cols-1 gap-3">
           {manifest.variantMeta.map((variant: VariantMeta, idx) => (
@@ -1221,7 +1221,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
           <div className="text-[7px] text-white/50 uppercase tracking-widest font-medium">We are getting married</div>
           <div className="text-[13px] font-bold text-white">Sarah & James</div>
           <div className="text-[7px] text-white/60">June 14, 2025 · New York</div>
-          <div className="mt-0.5 px-2.5 py-0.5 border border-white/40 rounded text-[7px] text-white/80 font-semibold">RSVP Now</div>
+          <div className="mt-0.5 px-2.5 py-0.5 border border-white/40 rounded text-[7px] text-white/80 font-semibold">Send RSVP</div>
         </div>
       </div>
     ),
@@ -1268,7 +1268,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     travel: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Travel & Hotels</div>
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Travel details</div>
         {[0,1].map(i => (
           <div key={i} className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" />
@@ -1339,7 +1339,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     countdown: (
       <div className="w-full h-16 flex flex-col items-center justify-center gap-1 bg-gray-50">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Counting down to</div>
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Counting down</div>
         <div className="flex items-end gap-1.5">
           {[{n:'47',l:'Days'},{n:'12',l:'Hrs'},{n:'38',l:'Min'}].map(({n,l}) => (
             <div key={l} className="flex flex-col items-center">
@@ -1393,7 +1393,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     contact: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Questions?</div>
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Need help?</div>
         <div className="flex gap-2">
           {[0,1].map(i => (
             <div key={i} className="flex-1 h-8 rounded-lg p-1.5 flex flex-col gap-0.5 bg-gray-50 border border-gray-100">
@@ -1406,9 +1406,9 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     'footer-cta': (
       <div className="w-full h-16 flex flex-col items-center justify-center gap-1 bg-gray-800">
-        <div className="text-[7px] text-white/50">We hope to see you there</div>
+        <div className="text-[7px] text-white/50">We hope to celebrate with you</div>
         <div className="text-[10px] font-bold text-white">Sarah & James</div>
-        <div className="px-3 py-0.5 border border-white/30 rounded-full text-[7px] text-white/70 font-semibold">RSVP Now</div>
+        <div className="px-3 py-0.5 border border-white/30 rounded-full text-[7px] text-white/70 font-semibold">Send RSVP</div>
       </div>
     ),
     custom: (
@@ -1438,7 +1438,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     quotes: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-50">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Quotes & Wishes</div>
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Notes from loved ones</div>
         <div className="flex flex-col gap-0.5">
           <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
           <div className="h-0.5 rounded-sm bg-gray-200 w-4/5" />
@@ -1452,7 +1452,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     menu: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Dining & Menu</div>
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Dinner and drinks</div>
         <div className="flex gap-1">
           {['Starter','Main','Dessert'].map(c => (
             <div key={c} className="flex-1 h-3 rounded text-[5px] flex items-center justify-center bg-gray-100 text-gray-500 border border-gray-200 font-medium">{c}</div>
@@ -1466,7 +1466,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     music: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-900">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Music & Playlist</div>
+        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Music</div>
         {[0,1,2].map(i => (
           <div key={i} className="flex items-center gap-1">
             <div className="text-[6px] text-gray-500 w-3 text-right">{i+1}</div>
@@ -1482,7 +1482,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
           <div className="text-[7px] text-gray-400 uppercase tracking-widest">Directions</div>
           <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
           <div className="h-0.5 rounded-sm bg-gray-200 w-4/5" />
-          <div className="w-8 h-2.5 rounded text-[5px] flex items-center justify-center bg-gray-700 text-white font-semibold mt-0.5">Maps</div>
+          <div className="w-8 h-2.5 rounded text-[5px] flex items-center justify-center bg-gray-700 text-white font-semibold mt-0.5">View map</div>
         </div>
         <div className="w-2/5 relative bg-slate-200">
           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px), repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 5px)' }} />
@@ -1522,7 +1522,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
         <div className="relative flex flex-col items-center gap-1.5 w-full px-4">
           <div className="w-28 h-2.5 bg-white/90 rounded-sm" />
           <div className="w-20 h-1.5 bg-white/60 rounded-sm" />
-          <div className="w-12 h-5 mt-1 bg-white/20 border border-white/40 rounded text-[8px] text-white/80 flex items-center justify-center font-medium">RSVP</div>
+          <div className="w-14 h-5 mt-1 bg-white/20 border border-white/40 rounded text-[8px] text-white/80 flex items-center justify-center font-medium">Reply</div>
         </div>
       </div>
     ),
@@ -1707,7 +1707,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
             <div className="p-1.5 flex flex-col gap-0.5">
               <div className={`h-1.5 rounded-sm ${cd}`} />
               <div className="flex items-center gap-0.5 mt-0.5">
-                <div className={`w-7 h-3.5 rounded text-[6px] flex items-center justify-center font-bold ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>BOOK</div>
+            <div className={`w-7 h-3.5 rounded text-[6px] flex items-center justify-center font-bold ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>Stay</div>
               </div>
             </div>
           </div>
@@ -1723,7 +1723,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
           <div key={i} className={`h-6 rounded-lg flex items-center px-2 gap-2 ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
             <div className={`w-3 h-3 rounded-sm flex-shrink-0 ${c}`} />
             <div className={`flex-1 h-1 rounded-sm ${c}`} />
-            <div className={`w-10 h-3 rounded text-[7px] flex items-center justify-center font-semibold ${h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white'}`}>View</div>
+            <div className={`w-10 h-3 rounded text-[7px] flex items-center justify-center font-semibold ${h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white'}`}>Open</div>
           </div>
         ))}
       </div>
@@ -1799,7 +1799,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
             <div className={`h-4 rounded-md border w-full ${h ? 'border-rose-100' : 'border-gray-100'}`} />
           </div>
           <div className={`w-14 h-7 rounded-lg flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
-            <div className="text-[7px] text-white font-bold">RSVP</div>
+            <div className="text-[7px] text-white font-bold">Reply</div>
           </div>
         </div>
       </div>
@@ -1858,7 +1858,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     /* ── COUNTDOWN ── */
     countdown_default: (
       <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
-        <div className={`text-[8px] font-medium ${h ? 'text-rose-400' : 'text-gray-400'} tracking-widest uppercase`}>Counting down to</div>
+        <div className={`text-[8px] font-medium ${h ? 'text-rose-400' : 'text-gray-400'} tracking-widest uppercase`}>Counting down</div>
         <div className="flex items-end gap-1.5">
           {[{n:'047',l:'Days'},{n:'12',l:'Hrs'},{n:'38',l:'Min'}].map(({n,l}) => (
             <div key={l} className="flex flex-col items-center">
@@ -1932,7 +1932,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     'dress-code_banner': (
       <div className={`w-full h-20 flex items-center justify-between px-4 transition-colors ${h ? 'bg-rose-900' : 'bg-gray-900'}`}>
         <div className="flex flex-col gap-1">
-          <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-300' : 'text-gray-400'}`}>Dress Code</div>
+          <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-300' : 'text-gray-400'}`}>Dress code</div>
           <div className="text-[11px] font-bold text-white">Black Tie</div>
         </div>
         <div className={`w-px h-8 ${h ? 'bg-rose-700' : 'bg-gray-700'}`} />
@@ -1951,7 +1951,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
               <div className={`h-1.5 rounded-sm ${cd}`} />
               <div className={`h-1 rounded-sm w-3/4 ${cl}`} />
             </div>
-            <div className={`w-10 h-4 rounded text-[7px] flex items-center justify-center font-semibold flex-shrink-0 ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>Book</div>
+          <div className={`w-10 h-4 rounded text-[7px] flex items-center justify-center font-semibold flex-shrink-0 ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>Stay</div>
           </div>
         ))}
       </div>
@@ -1964,7 +1964,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
             <div className="p-1.5 flex flex-col gap-0.5">
               <div className={`h-1.5 rounded-sm ${cd}`} />
               <div className={`h-1 rounded-sm w-2/3 ${cl}`} />
-              <div className={`mt-0.5 h-3 rounded text-[6px] flex items-center justify-center font-bold w-full ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>BOOK NOW</div>
+              <div className={`mt-0.5 h-3 rounded text-[6px] flex items-center justify-center font-bold w-full ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>VIEW STAY</div>
             </div>
           </div>
         ))}
@@ -2004,16 +2004,16 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     /* ── FOOTER CTA ── */
     'footer-cta_default': (
       <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-600' : 'bg-gray-800'}`}>
-        <div className="text-[8px] text-white/60 font-medium">We hope to see you there</div>
+        <div className="text-[8px] text-white/60 font-medium">We hope to celebrate with you</div>
         <div className="text-[11px] text-white font-bold">Sarah & James</div>
-        <div className={`mt-0.5 px-4 py-1 rounded-full border border-white/40 text-[8px] text-white font-semibold`}>RSVP Now</div>
+        <div className={`mt-0.5 px-4 py-1 rounded-full border border-white/40 text-[8px] text-white font-semibold`}>Send RSVP</div>
       </div>
     ),
     'footer-cta_minimal': (
       <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors bg-white`}>
         <div className={`h-px w-12 ${h ? 'bg-rose-200' : 'bg-gray-200'} mb-1`} />
         <div className={`text-[9px] font-semibold ${h ? 'text-rose-600' : 'text-gray-700'}`}>Join us on our big day</div>
-        <div className={`px-4 py-1 rounded-full text-[8px] font-semibold ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>RSVP Now</div>
+        <div className={`px-4 py-1 rounded-full text-[8px] font-semibold ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>Reply</div>
         <div className={`h-px w-12 ${h ? 'bg-rose-200' : 'bg-gray-200'} mt-1`} />
       </div>
     ),
@@ -2040,7 +2040,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
           <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>We're Getting Married</div>
           <div className={`w-20 h-2.5 rounded-sm ${cd}`} />
           <div className={`w-14 h-1.5 rounded-sm ${c}`} />
-          <div className={`mt-1 w-12 h-4 rounded border ${h ? 'border-rose-400 text-rose-500' : 'border-gray-400 text-gray-500'} text-[7px] flex items-center justify-center font-semibold`}>RSVP</div>
+          <div className={`mt-1 w-12 h-4 rounded border ${h ? 'border-rose-400 text-rose-500' : 'border-gray-400 text-gray-500'} text-[7px] flex items-center justify-center font-semibold`}>Reply</div>
         </div>
       </div>
     ),
@@ -2670,7 +2670,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     ),
     'dress-code_scale': (
       <div className={`w-full h-20 flex flex-col items-center justify-center gap-2 transition-colors bg-white`}>
-        <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>Dress Code</div>
+        <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>Dress code</div>
         <div className="w-full px-4">
           <div className="flex justify-between text-[5px] text-gray-400 mb-0.5">
             <span>Casual</span><span>Black Tie</span>
@@ -2842,7 +2842,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
             </div>
           ))}
         </div>
-        <div className={`px-4 py-1 rounded-full text-[7px] font-bold text-white border border-white/40 mt-0.5`}>RSVP Now</div>
+        <div className={`px-4 py-1 rounded-full text-[7px] font-bold text-white border border-white/40 mt-0.5`}>Send RSVP</div>
       </div>
     ),
 

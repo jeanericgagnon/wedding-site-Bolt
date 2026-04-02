@@ -101,7 +101,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           dispatch(builderActions.setMediaAssets([]));
           return;
         }
-        dispatch(builderActions.setError('Could not load media library. Your uploads may not appear.'));
+        dispatch(builderActions.setError('Could not load the media library. Your images may not appear right away.'));
       });
   }, [initialProject.weddingId, isDemoMode]);
 

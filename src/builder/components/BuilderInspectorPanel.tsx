@@ -752,7 +752,7 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[var(--color-border-subtle)] rounded-xl p-3 text-xs text-[var(--color-text-tertiary)] hover:border-rose-300 hover:text-rose-500 hover:bg-[var(--color-surface-subtle)] transition-all"
           >
             <ImageIcon size={14} />
-            {value ? 'Change image' : 'Choose from media library'}
+            {value ? 'Change image' : 'Choose from library'}
           </button>
         </div>
       );
@@ -871,7 +871,7 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
                 type="text"
                 value={img.alt}
                 onChange={e => handleUpdateImage(i, { alt: e.target.value })}
-                placeholder="Alt text"
+                placeholder="Describe the image"
                 className="w-full border border-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
               />
               <input
@@ -970,7 +970,7 @@ const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[
                   path.columnBlockId
                 ));
               }}
-              placeholder="Alt text (optional)"
+              placeholder="Describe the image (optional)"
               className="w-full border border-[var(--color-border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
             />
           </div>
