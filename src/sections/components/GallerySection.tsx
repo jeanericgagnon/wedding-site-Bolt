@@ -52,10 +52,10 @@ export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
 
   if (media.gallery.length === 0) {
     return (
-      <section className="py-20 px-4 bg-background">
+      <section className="py-16 md:py-20 px-4 bg-background">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle && (
-            <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Photos'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{settings.title || 'Photos'}</h2>
           )}
           <p className="text-text-secondary">Photos will appear here once they’re added.</p>
         </div>
@@ -67,12 +67,12 @@ export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
   media.gallery.forEach((photo, i) => cols[i % 3].push(photo));
 
   return (
-    <section className="py-20 px-4 bg-background">
+    <section className="py-16 md:py-20 px-4 bg-background">
       <div className="max-w-6xl mx-auto">
         {settings.showTitle && (
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Memories</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Photos'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'Photos'}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}

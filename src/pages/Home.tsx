@@ -150,9 +150,9 @@ export const Home: React.FC = () => {
               </p>
             </HeroReveal>
             <HeroReveal delay={0.2}>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6 w-full max-w-xl mx-auto">
                 <button
-                className="px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
                 onClick={handleSignUp}
                 aria-label="Sign up for your wedding site"
               >
@@ -160,7 +160,7 @@ export const Home: React.FC = () => {
               </button>
               <Link
                 to="/templates"
-                className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
               >
                 Browse templates
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -168,7 +168,7 @@ export const Home: React.FC = () => {
               <button
                 onClick={handleDemoLogin}
                 disabled={demoLoading}
-                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
               >
                 {demoLoading && (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -303,7 +303,7 @@ export const Home: React.FC = () => {
                     ref={(el) => {
                       featureRefs.current[feature.id] = el;
                     }}
-                    className={`shrink-0 w-[88vw] md:w-[62vw] lg:w-[48vw] rounded-2xl border p-6 md:p-7 transition-all ${selectedFeature === feature.id
+                    className={`shrink-0 w-[90vw] sm:w-[82vw] md:w-[62vw] lg:w-[48vw] rounded-2xl border p-5 md:p-7 transition-all ${selectedFeature === feature.id
                       ? 'bg-white border-brand/35 shadow-lg'
                       : 'bg-white/80 border-border-subtle shadow-sm'}`}
                   >

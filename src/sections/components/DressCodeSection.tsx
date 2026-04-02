@@ -53,14 +53,14 @@ export const DressCodeSection: React.FC<Props> = ({ data: _data, instance }) => 
   const additionalNote = settings.additionalNote as string;
 
   return (
-    <section className="py-20 px-4 bg-surface">
+    <section className="py-16 md:py-20 px-4 bg-surface">
       <div className="max-w-3xl mx-auto text-center">
         {settings.showTitle !== false && (
           <div className="mb-10">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
               {settings.eyebrow as string || 'What to wear'}
             </p>
-            <h2 className="text-4xl font-light text-text-primary">{title}</h2>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{title}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-5" />
           </div>
         )}
@@ -94,7 +94,7 @@ export const DressCodeSection: React.FC<Props> = ({ data: _data, instance }) => 
         {!description && suggestions.length === 0 && !colorNote && (
           <div className="flex flex-col items-center gap-3 py-8 text-text-tertiary">
             <Shirt className="w-8 h-8" />
-            <p className="text-sm">Set your dress code details in section settings</p>
+            <p className="text-sm">Dress code details will appear here once they’re added.</p>
           </div>
         )}
       </div>

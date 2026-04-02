@@ -126,7 +126,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
               </div>
             ))}
             {(travel?.flightInfo || travel?.hotelInfo || travel?.parkingInfo) && (
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {travel?.flightInfo && (
                   <div className="border border-border rounded-2xl p-5 md:p-6 bg-surface shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
@@ -172,7 +172,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
     <section className="py-20 px-4 bg-surface">
       <div className="max-w-5xl mx-auto">
         {settings.showTitle && (
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Travel details</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Travel & Accommodations'}</h2>
             {travel?.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{travel.notes}</p>}
@@ -225,12 +225,12 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             ))}
           </div>
         )}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
           <div className="text-center p-8 rounded-2xl border border-border bg-surface-subtle shadow-sm">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Plane className="w-6 h-6 text-primary" />
             </div>
-            <h3 className="font-semibold tracking-tight text-text-primary mb-2">Getting Here</h3>
+            <h3 className="font-semibold tracking-tight text-text-primary mb-2">Getting here</h3>
             <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
               {travel?.flightInfo || 'Flight and transport details will appear here once they’re added.'}
             </p>
@@ -239,7 +239,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Hotel className="w-6 h-6 text-primary" />
             </div>
-            <h3 className="font-semibold tracking-tight text-text-primary mb-2">Where to Stay</h3>
+            <h3 className="font-semibold tracking-tight text-text-primary mb-2">Where to stay</h3>
             <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
               {travel?.hotelInfo || 'Hotel recommendations will appear here once they’re added.'}
             </p>
@@ -271,12 +271,12 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
     .slice(0, 4);
 
   return (
-    <section className="py-20 px-4 bg-surface-subtle">
+    <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-5xl mx-auto">
         {settings.showTitle && (
-          <div className="text-center mb-12">
+          <div className="text-center mb-10 md:mb-12">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Travel details</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Travel & Local Guide'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'Travel & Local Guide'}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
@@ -295,7 +295,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
           <div className="rounded-2xl border border-border bg-surface p-6 md:p-7 shadow-sm">
             <h3 className="font-semibold tracking-tight text-text-primary mb-3">Getting here</h3>
             <div className="space-y-3 text-sm text-text-secondary leading-relaxed">
@@ -323,7 +323,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
         </div>
 
         {venues.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-border bg-surface p-6">
+          <div className="mt-6 rounded-2xl border border-border bg-surface p-5 md:p-6">
             <h3 className="font-semibold tracking-tight text-text-primary mb-4">Key locations</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {venues.slice(0, 4).map((venue) => (

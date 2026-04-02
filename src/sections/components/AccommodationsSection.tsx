@@ -33,14 +33,14 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
   const generalNote = (settings.generalNote as string) || data.travel?.hotelInfo || '';
 
   return (
-    <section className="py-20 px-4 bg-surface-subtle">
+    <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
-          <div className="text-center mb-12">
+          <div className="text-center mb-10 md:mb-12">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
               {settings.eyebrow as string || 'Where to stay'}
             </p>
-            <h2 className="text-4xl font-light text-text-primary">
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
               {settings.title as string || 'Accommodations'}
             </h2>
             {generalNote && (
@@ -53,7 +53,7 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
         {hotels.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-text-tertiary">
             <Hotel className="w-8 h-8" />
-            <p className="text-sm">Add hotel blocks in section settings</p>
+            <p className="text-sm">Hotel suggestions and booking details will appear here once they’re added.</p>
             {generalNote && !settings.showTitle && (
               <p className="text-text-secondary text-sm max-w-md text-center mt-2">{generalNote}</p>
             )}
@@ -131,14 +131,14 @@ export const AccommodationsCards: React.FC<Props> = ({ data, instance }) => {
   const generalNote = (settings.generalNote as string) || data.travel?.hotelInfo || '';
 
   return (
-    <section className="py-20 px-4 bg-surface">
+    <section className="py-16 md:py-20 px-4 bg-surface">
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
               {settings.eyebrow as string || 'Where to stay'}
             </p>
-            <h2 className="text-4xl font-light text-text-primary">
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
               {settings.title as string || 'Accommodations'}
             </h2>
             {generalNote && (
@@ -151,10 +151,10 @@ export const AccommodationsCards: React.FC<Props> = ({ data, instance }) => {
         {hotels.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-text-tertiary">
             <Hotel className="w-8 h-8" />
-            <p className="text-sm">Add hotel blocks in section settings</p>
+            <p className="text-sm">Hotel suggestions and booking details will appear here once they’re added.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {hotels.map((hotel, i) => (
               <div key={i} className="rounded-2xl border border-border bg-surface-subtle p-7 flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3">

@@ -246,17 +246,17 @@ const SECTION_PICKER_EDITORIAL_NOTES: Partial<Record<BuilderSectionType, string>
   schedule: 'Organize the weekend into something guests can follow quickly.',
   travel: 'Help guests with logistics without cluttering the page.',
   registry: 'Present gifting options in a way that feels warm and complete.',
-  faq: 'Answer common questions with calm, useful structure.',
+  faq: 'Answer the questions guests ask most before they have to text you.',
   rsvp: 'Make replying feel simple and obvious.',
   gallery: 'Show the feeling of the weekend through strong photos.',
-  custom: 'Build a custom section when the defaults are not enough.',
+  custom: 'Build something custom when the standard sections are not enough.',
 };
 
 const SECTION_PICKER_STORY_LABEL: Partial<Record<BuilderSectionType, string>> = {
   hero: 'Opening section',
   story: 'Story',
   venue: 'Venue',
-  schedule: 'Timeline',
+  schedule: 'Schedule',
   travel: 'Travel guide',
   registry: 'Registry',
   faq: 'Questions',

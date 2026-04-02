@@ -43,7 +43,7 @@ function preserveContentAcrossTemplate(
 }
 
 const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
-  { id: 'all', label: 'All' },
+  { id: 'all', label: 'All styles' },
   { id: 'modern', label: 'Modern' },
   { id: 'romantic', label: 'Romantic' },
   { id: 'classic', label: 'Classic' },
@@ -58,7 +58,7 @@ const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
 const RECOMMENDED_TEMPLATE_IDS = ['modern-luxe', 'editorial-romance', 'timeless-classic', 'destination-minimal'];
 const TEMPLATE_USAGE_KEY = 'dayof_template_usage_v1';
 
-const COLOR_FILTERS = ['all', 'light', 'dark', 'neutral', 'warm', 'cool'] as const;
+const COLOR_FILTERS = ['all', 'light', 'dark', 'neutral'] as const;
 type ColorFilter = (typeof COLOR_FILTERS)[number];
 
 const SEASON_FILTERS = ['all', 'spring', 'summer', 'fall', 'winter'] as const;
@@ -717,7 +717,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Template Gallery</h2>
-              <p className="text-sm text-neutral-600 mt-0.5">Choose a visual identity for your wedding site</p>
+              <p className="text-sm text-neutral-600 mt-0.5">Choose the design direction that feels closest to your wedding.</p>
             </div>
             <button
               onClick={handleCloseGallery}
@@ -741,7 +741,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search templates by name, vibe, or description"
+              placeholder="Search designs by name, style, or description"
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200"
             />
             <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-semibold text-gray-700">
@@ -766,7 +766,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-gray-500">Color</span>
+            <span className="text-gray-500">Color feel</span>
             {COLOR_FILTERS.map((f) => (
               <button
                 key={`color-${f}`}
@@ -777,7 +777,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
@@ -794,7 +794,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'all' ? 'Any season' : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
@@ -802,7 +802,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
         <div className="flex-1 overflow-y-auto p-7">
           <div className="mb-5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Recommended templates</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Recommended starting designs</div>
             <div className="flex flex-wrap gap-2">
               {recommendedTemplates.map((template) => (
                 <button
@@ -822,8 +822,8 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
           <div className="mb-4 rounded-xl border border-neutral-200 bg-white px-3 py-2 flex items-center justify-between gap-3">
             <div className="text-xs text-sky-900">
-              {compareTemplates.length === 0 && 'Select up to 2 templates to compare side-by-side.'}
-              {compareTemplates.length === 1 && `Selected for compare: ${compareTemplates[0].displayName}. Pick one more.`}
+              {compareTemplates.length === 0 && 'Select up to 2 designs to compare side by side.'}
+              {compareTemplates.length === 1 && `Selected for compare: ${compareTemplates[0].displayName}. Choose one more.`}
               {compareTemplates.length === 2 && `Ready to compare: ${compareTemplates[0].displayName} vs ${compareTemplates[1].displayName}.`}
             </div>
             <div className="flex items-center gap-2">
@@ -862,7 +862,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </div>
           {filtered.length === 0 && (
             <div className="text-center py-20 text-gray-400 text-sm">
-              <p>No templates match your current filters.</p>
+              <p>No designs match those filters.</p>
               <button
                 type="button"
                 onClick={() => {
@@ -873,7 +873,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 }}
                 className="mt-3 inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
               >
-                Reset filters
+                Show all filters
               </button>
             </div>
           )}
@@ -1061,7 +1061,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
       <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-5xl w-full mx-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Compare designs</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Compare designs</h3>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
         </div>
 
@@ -1089,7 +1089,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
                 ))}
               </div>
               <button onClick={onApply} className="mt-3 w-full py-2 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800">
-                Start with {template.displayName}
+                Start with this design
               </button>
             </div>
           ))}
@@ -1162,7 +1162,7 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onApply} className="px-4 py-2 rounded-xl text-sm bg-gray-900 text-white hover:bg-gray-800">Use this template</button>
+            <button onClick={onApply} className="px-4 py-2 rounded-xl text-sm bg-gray-900 text-white hover:bg-gray-800">Start with this design</button>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
           </div>
         </div>
@@ -1238,8 +1238,8 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
           </div>
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Apply "{template.displayName}"?</h3>
-          <p className="text-xs text-gray-400 mt-0.5">This will update your site layout and theme.</p>
+          <h3 className="text-sm font-semibold text-gray-900">Start with "{template.displayName}"?</h3>
+          <p className="text-xs text-gray-400 mt-0.5">This will update your site layout and styling.</p>
         </div>
       </div>
       <div className="space-y-2">
@@ -1252,10 +1252,10 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
         <div className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-xl">
           <RefreshCw className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
           <div className="text-xs text-amber-700">
-            <span className="font-semibold">Updated:</span> Section layout and color theme will switch to "{template.displayName}".
+            <span className="font-semibold">Updated:</span> Section layouts and color styling will switch to "{template.displayName}".
           </div>
         </div>
-        <p className="text-xs text-gray-400 pl-1">You can undo this immediately with ⌘Z.</p>
+        <p className="text-xs text-gray-400 pl-1">You can undo this right away with ⌘Z.</p>
       </div>
       <div className="flex gap-3 mt-5">
         <button
@@ -1272,9 +1272,9 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
           {isApplying ? (
             <span className="flex items-center justify-center gap-1.5">
               <Loader2 size={13} className="animate-spin" />
-              Applying…
+              Starting…
             </span>
-          ) : 'Use Template'}
+          ) : 'Start with this design'}
         </button>
       </div>
     </div>

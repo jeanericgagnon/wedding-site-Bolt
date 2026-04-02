@@ -159,12 +159,12 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
   }
 
   return (
-    <section className="py-20 px-4 bg-surface-subtle">
+    <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-lg mx-auto text-center">
         {settings.showTitle && (
           <>
             <p className="text-xs uppercase tracking-[0.3em] text-primary/80 mb-3 font-medium">Kindly reply</p>
-            <h2 className="text-4xl md:text-5xl font-light text-text-primary mb-4">{settings.title || 'RSVP'}</h2>
+            <h2 className="text-3xl md:text-5xl font-light text-text-primary mb-4 leading-tight">{settings.title || 'RSVP'}</h2>
           </>
         )}
         {deadline && (
@@ -175,7 +175,7 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
         )}
         {!deadline && <div className="mb-8" />}
         {submitted ? (
-          <div className="rounded-2xl border border-border bg-surface p-8">
+          <div className="rounded-2xl border border-border bg-surface p-6 md:p-8">
             <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -187,7 +187,7 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
             <p className="text-text-secondary text-sm">Your reply has been saved.</p>
           </div>
         ) : (
-          <div className="rounded-2xl border border-border bg-surface p-8 shadow-sm">
+          <div className="rounded-2xl border border-border bg-surface p-6 md:p-8 shadow-sm">
             <RsvpForm onSuccess={handleSuccess} />
           </div>
         )}
@@ -210,12 +210,12 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
   }
 
   return (
-    <section className="py-20 px-4 bg-primary">
+    <section className="py-16 md:py-20 px-4 bg-primary">
       <div className="max-w-2xl mx-auto text-center">
         {settings.showTitle && (
           <>
             <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-4 font-medium">You’re invited</p>
-            <h2 className="text-4xl md:text-5xl font-light text-white mb-3">{settings.title || 'RSVP'}</h2>
+            <h2 className="text-3xl md:text-5xl font-light text-white mb-3 leading-tight">{settings.title || 'RSVP'}</h2>
             <p className="text-white/80 mb-8">Join {displayName} in celebrating their wedding</p>
           </>
         )}
@@ -226,14 +226,14 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
           </div>
         )}
         {submitted ? (
-          <div className="bg-white/10 rounded-2xl p-8 text-center">
+          <div className="bg-white/10 rounded-2xl p-6 md:p-8 text-center">
             <p className="text-white text-xl font-semibold mb-2">
               {attending ? "We'll see you there!" : "Sorry you can't make it"}
             </p>
             <p className="text-white/60 text-sm">Your RSVP has been recorded. Thank you!</p>
           </div>
         ) : (
-          <div className="bg-white/10 rounded-2xl p-8">
+          <div className="bg-white/10 rounded-2xl p-6 md:p-8">
             <RsvpForm onSuccess={handleSuccess} dark />
           </div>
         )}

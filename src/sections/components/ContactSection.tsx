@@ -29,14 +29,14 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
   const emailSubject = encodeURIComponent((settings.emailSubject as string) || 'Wedding Question');
 
   return (
-    <section className="py-20 px-4 bg-surface-subtle">
+    <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-3xl mx-auto text-center">
         {settings.showTitle !== false && (
-          <div className="mb-10">
+          <div className="mb-8 md:mb-10">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
               {settings.eyebrow as string || 'Need help?'}
             </p>
-            <h2 className="text-4xl font-light text-text-primary">
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
               {settings.title as string || 'Questions?'}
             </h2>
             {settings.subtitle && (
@@ -47,18 +47,18 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
         )}
 
         {introText && (
-          <p className="text-text-secondary mb-10 max-w-lg mx-auto">{introText}</p>
+          <p className="text-text-secondary mb-8 md:mb-10 max-w-lg mx-auto leading-relaxed">{introText}</p>
         )}
 
         {contacts.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-8 text-text-tertiary">
             <MessageCircle className="w-8 h-8" />
-            <p className="text-sm">Add contact details in section settings</p>
+            <p className="text-sm">Contact details will appear here once they’re added.</p>
           </div>
         ) : (
           <div className={`grid gap-6 ${contacts.length === 1 ? 'max-w-sm mx-auto' : 'sm:grid-cols-2'}`}>
             {contacts.map((contact, i) => (
-              <div key={i} className="bg-surface border border-border rounded-2xl p-7 text-left">
+              <div key={i} className="bg-surface border border-border rounded-2xl p-6 md:p-7 text-left">
                 <div className="mb-4">
                   <p className="font-semibold text-text-primary">{contact.name}</p>
                   {contact.role && (
@@ -108,7 +108,7 @@ export const ContactMinimal: React.FC<Props> = ({ data: _data, instance }) => {
   const emailSubject = encodeURIComponent((settings.emailSubject as string) || 'Wedding Question');
 
   return (
-    <section className="py-16 px-4 bg-surface border-y border-border">
+    <section className="py-14 md:py-16 px-4 bg-surface border-y border-border">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
@@ -140,7 +140,7 @@ export const ContactMinimal: React.FC<Props> = ({ data: _data, instance }) => {
               </div>
             ))}
             {contacts.length === 0 && (
-              <p className="text-sm text-text-tertiary">Add contacts in section settings</p>
+              <p className="text-sm text-text-tertiary">Contact details will appear here once they’re added.</p>
             )}
           </div>
         </div>

@@ -175,7 +175,7 @@ Start with this
           )}
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           <select value={style} onChange={(e) => setStyle(e.target.value)} className="rounded border border-neutral-300 px-3 py-2 text-sm">
             <option value="all">All styles</option>
             {templateStyleFacets.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -198,7 +198,7 @@ Start with this
           </select>
         </div>
 
-        <div className="mt-2 flex justify-end">
+        <div className="mt-2 flex justify-start sm:justify-end">
           <button
             type="button"
             onClick={() => {
@@ -348,14 +348,14 @@ Start with this
             {groupedTemplates.map(([styleGroup, templates]) => (
               <div key={styleGroup}>
                 <h3 className="text-sm font-semibold text-neutral-800 mb-2">{styleGroup}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {templates.map((tpl) => renderTemplateCard(tpl))}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((tpl) => renderTemplateCard(tpl))}
           </div>
         )}

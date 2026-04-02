@@ -56,12 +56,12 @@ export const Celebration: React.FC = () => {
             <Heart className="w-12 h-12 text-accent" fill="currentColor" aria-hidden="true" />
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4 animate-fade-in">
+          <h1 className="text-3xl md:text-5xl font-bold text-text-primary mb-4 animate-fade-in leading-tight">
             Congratulations!
           </h1>
 
           {daysUntilWedding !== null && daysUntilWedding > 0 && (
-            <div className="inline-flex items-center gap-3 px-8 py-4 bg-accent/10 rounded-full mb-6 animate-slide-up">
+            <div className="inline-flex items-center gap-3 px-5 md:px-8 py-3 md:py-4 bg-accent/10 rounded-full mb-6 animate-slide-up max-w-full">
               <Calendar className="w-8 h-8 text-accent" aria-hidden="true" />
               <div className="text-left">
                 <div className="text-4xl font-bold text-accent">{daysUntilWedding}</div>
@@ -71,7 +71,7 @@ export const Celebration: React.FC = () => {
           )}
 
           {daysUntilWedding !== null && daysUntilWedding <= 0 && (
-            <div className="inline-flex items-center gap-3 px-8 py-4 bg-accent/10 rounded-full mb-6 animate-slide-up">
+            <div className="inline-flex items-center gap-3 px-5 md:px-8 py-3 md:py-4 bg-accent/10 rounded-full mb-6 animate-slide-up max-w-full">
               <Sparkles className="w-8 h-8 text-accent" aria-hidden="true" />
               <div className="text-2xl font-semibold text-accent">
                 Your big day is here!
@@ -90,7 +90,7 @@ export const Celebration: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-10 md:mt-12">
           <Card
             variant="default"
             padding="lg"

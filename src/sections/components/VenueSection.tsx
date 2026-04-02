@@ -62,10 +62,10 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
 
   if (venuesToShow.length === 0) {
     return (
-      <section className="py-20 px-4 bg-background">
+      <section className="py-16 md:py-20 px-4 bg-background">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle && (
-            <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Venue'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{settings.title || 'Venue'}</h2>
           )}
           <p className="text-text-secondary">Venue details will appear here once they’re added.</p>
         </div>
@@ -74,16 +74,16 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
   }
 
   return (
-    <section className="py-20 px-4 bg-background">
+    <section className="py-16 md:py-20 px-4 bg-background">
       <div className="max-w-5xl mx-auto">
         {settings.showTitle && (
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Venue details</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Venue'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'Venue'}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
           {venuesToShow.map(venue => (
             <div
               key={venue.id}

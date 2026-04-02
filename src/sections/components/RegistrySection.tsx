@@ -551,7 +551,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
 
   if (loading) {
     return (
-      <section className="py-20 px-4 bg-surface">
+      <section className="py-16 md:py-20 px-4 bg-surface">
         <div className="max-w-6xl mx-auto flex items-center justify-center gap-3 text-text-secondary">
           <Loader2 className="w-5 h-5 animate-spin" />
           Loading registry…
@@ -564,11 +564,11 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-20 px-4 bg-surface">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8 md:mb-10">
             {settings.showTitle !== false && (
               <>
                 <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
-                <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
+                <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'Registry'}</h2>
               </>
             )}
             {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
@@ -589,9 +589,9 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
 
   if (linksToShow.length === 0) {
     return (
-      <section className="py-20 px-4 bg-surface">
+      <section className="py-16 md:py-20 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
-          {settings.showTitle !== false && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'Registry'}</h2>}
+          {settings.showTitle !== false && <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{settings.title || 'Registry'}</h2>}
           <p className="text-text-secondary">Registry links and gift details will appear here once they’re added.</p>
         </div>
       </section>
@@ -602,12 +602,12 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
   const remaining = linksToShow.slice(1);
 
   return (
-    <section className="py-20 px-4 bg-surface">
+    <section className="py-16 md:py-20 px-4 bg-surface">
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
-          <div className="text-center mb-10">
+          <div className="text-center mb-8 md:mb-10">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Registry'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'Registry'}</h2>
             {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
           </div>
         )}
@@ -620,7 +620,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
         >
           <p className="text-xs uppercase tracking-[0.24em] text-primary font-medium mb-2">Featured fund</p>
           <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary">{featured.label || featured.url}</h3>
-          <p className="text-text-secondary mt-3 max-w-2xl leading-relaxed">Contribute to our honeymoon and first-year adventures.</p>
+          <p className="text-text-secondary mt-3 max-w-2xl leading-relaxed">Contribute toward our honeymoon and the first chapter of married life.</p>
           <span className="inline-flex items-center gap-2 mt-5 text-primary font-medium">
             Contribute to this fund
             <ExternalLink className="w-4 h-4" />

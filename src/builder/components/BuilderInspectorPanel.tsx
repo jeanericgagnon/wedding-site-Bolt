@@ -51,7 +51,7 @@ export const BuilderInspectorPanel: React.FC = () => {
     return (
       <aside className="w-full lg:w-[520px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
-          <p className="text-sm text-[var(--color-text-tertiary)]">No page selected.</p>
+          <p className="text-sm text-[var(--color-text-tertiary)]">Choose a page to keep editing.</p>
         </div>
       </aside>
     );
@@ -88,20 +88,20 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   const guideSteps = [
     { id: 'content', label: 'Add section content', done: hasMeaningfulContent },
-    { id: 'style', label: 'Tune visual style', done: hasStyleOverrides },
-    { id: 'layout', label: 'Choose layout/spacing', done: hasLayoutCustomization },
-    { id: 'data', label: 'Verify data bindings', done: dataConfigured && hasBindings, optional: !hasBindings },
+    { id: 'style', label: 'Match the visual style', done: hasStyleOverrides },
+    { id: 'layout', label: 'Choose layout and spacing', done: hasLayoutCustomization },
+    { id: 'data', label: 'Check connected data', done: dataConfigured && hasBindings, optional: !hasBindings },
     { id: 'visibility', label: 'Keep section visible', done: selectedSection.enabled },
   ];
   const requiredGuideSteps = guideSteps.filter((s) => !s.optional);
   const guideProgress = Math.round((requiredGuideSteps.filter((s) => s.done).length / Math.max(requiredGuideSteps.length, 1)) * 100);
 
   const nextAction = (() => {
-    if (!hasMeaningfulContent) return { key: 'content', cta: 'Open content', label: 'Add your content', tab: 'content' as InspectorTab, detail: 'Write headline/body so this section is meaningful.' };
-    if (!hasLayoutCustomization) return { key: 'layout', cta: 'Open layout', label: 'Pick layout & spacing', tab: 'layout' as InspectorTab, detail: 'Choose a variant and tighten section spacing.' };
-    if (!hasStyleOverrides) return { key: 'style', cta: 'Open style', label: 'Tune visual style', tab: 'style' as InspectorTab, detail: 'Match colors to your wedding palette.' };
-    if (!selectedSection.enabled) return { key: 'visibility', cta: 'Open layout', label: 'Enable this section', tab: 'layout' as InspectorTab, detail: 'This section is currently hidden from your site.' };
-    return { key: 'preview-mobile', cta: 'Preview mobile', label: 'Preview on mobile', tab: 'layout' as InspectorTab, detail: 'Run a quick mobile pass before publish.' };
+    if (!hasMeaningfulContent) return { key: 'content', cta: 'Open content', label: 'Add your content', tab: 'content' as InspectorTab, detail: 'Add the headline, text, or details guests should actually see.' };
+    if (!hasLayoutCustomization) return { key: 'layout', cta: 'Open layout', label: 'Pick layout and spacing', tab: 'layout' as InspectorTab, detail: 'Choose the version that fits best and tighten the spacing.' };
+    if (!hasStyleOverrides) return { key: 'style', cta: 'Open style', label: 'Match the visual style', tab: 'style' as InspectorTab, detail: 'Bring this section closer to the rest of your website.' };
+    if (!selectedSection.enabled) return { key: 'visibility', cta: 'Open layout', label: 'Turn this section on', tab: 'layout' as InspectorTab, detail: 'This section is currently hidden from your website.' };
+    return { key: 'preview-mobile', cta: 'Preview mobile', label: 'Preview on mobile', tab: 'layout' as InspectorTab, detail: 'Check the mobile view before going live.' };
   })();
 
   const handleUpdateSetting = (key: string, value: string | boolean | number) => {
@@ -138,7 +138,7 @@ export const BuilderInspectorPanel: React.FC = () => {
     <aside className="w-full lg:w-[520px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
       <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
         <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
-          <h3 className="text-[24px] font-semibold text-[var(--color-text-primary)]">{manifest.label} Section</h3>
+          <h3 className="text-[24px] font-semibold text-[var(--color-text-primary)]">Edit section</h3>
         </div>
         <div className="px-3 py-2.5 space-y-2 border-b border-[var(--color-border-subtle)]">
           <button
@@ -168,7 +168,7 @@ export const BuilderInspectorPanel: React.FC = () => {
             }}
             className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
           >
-            {simpleMode ? 'Switch to advanced' : 'Switch to basic'}
+            {simpleMode ? 'Show more controls' : 'Show fewer controls'}
           </button>
         </div>
         <button
@@ -176,13 +176,13 @@ export const BuilderInspectorPanel: React.FC = () => {
           onClick={() => dispatch(builderActions.selectSection(null))}
           className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--color-primary)] hover:bg-[var(--color-surface-subtle)]"
         >
-          ← Back to Sections
+          ← Back to sections
         </button>
       </div>
 
       <div className="px-4 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
         <h3 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{manifest.label}</h3>
-        <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Edit content and styling for this section</p>
+        <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Edit the content, layout, and style for this section.</p>
       </div>
 
       {!simpleMode && (
@@ -254,8 +254,8 @@ export const BuilderInspectorPanel: React.FC = () => {
         {activeTab === 'guide' && (
           <div className="p-4 space-y-4">
             <div className="rounded-xl border border-sky-100 bg-sky-50 p-3">
-              <p className="text-xs font-semibold text-sky-900 mb-1">Change views guide</p>
-              <p className="text-[11px] text-sky-800">Use these focused views to make edits quickly without hunting through controls.</p>
+              <p className="text-xs font-semibold text-sky-900 mb-1">Quick guide</p>
+              <p className="text-[11px] text-sky-800">Use these focused views to make edits faster without digging through every control.</p>
               <div className="mt-2">
                 <div className="h-1.5 rounded-full bg-sky-100 overflow-hidden">
                   <div className="h-full bg-sky-500" style={{ width: `${guideProgress}%` }} />
@@ -273,22 +273,25 @@ export const BuilderInspectorPanel: React.FC = () => {
                   className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${step.done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-[var(--color-border-subtle)] bg-white text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]'} ${step.optional ? 'opacity-60 cursor-default' : ''}`}
                 >
                   <span className="font-medium">{step.label}</span>
-                  <span className="ml-2 text-[10px]">{step.optional ? 'optional' : step.done ? 'done' : 'needs work'}</span>
+                  <span className="ml-2 text-[10px]">{step.optional ? 'optional' : step.done ? 'done' : 'next'}</span>
                 </button>
               ))}
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               {[
-                { id: 'content', label: 'Edit copy' },
-                { id: 'style', label: 'Tune styles' },
+                { id: 'content', label: 'Edit content' },
+                { id: 'style', label: 'Adjust style' },
                 { id: 'layout', label: 'Change layout' },
-                { id: 'data', label: 'Bindings' },
+                { id: 'data', label: 'Connected data' },
               ].filter((view) => view.id !== 'data' || hasBindings).map((view) => (
                 <button
                   key={view.id}
                   onClick={() => {
-                    if (view.id !== 'content' && view.id !== 'guide') setShowAdvanced(true);
+                    if (view.id !== 'content' && view.id !== 'guide') {
+                      setShowAdvanced(true);
+                      setSimpleMode(false);
+                    }
                     setActiveTab(view.id as InspectorTab);
                   }}
                   className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-3 py-2 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] transition-colors"
@@ -298,26 +301,26 @@ export const BuilderInspectorPanel: React.FC = () => {
               ))}
             </div>
             <div className="rounded-xl border border-gray-100 bg-[var(--color-surface-subtle)] p-3 text-[11px] text-[var(--color-text-secondary)] space-y-2">
-              <p><span className="font-semibold">Tip:</span> layout changes preserve your content and bindings.</p>
-              <p><span className="font-semibold">Tip:</span> run a quick viewport pass before publish.</p>
+              <p><span className="font-semibold">Tip:</span> layout changes preserve your content and connected data.</p>
+              <p><span className="font-semibold">Tip:</span> check desktop, tablet, and mobile before going live.</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('desktop'))}
                   className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
-                  Desktop check
+                  Check desktop
                 </button>
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('tablet'))}
                   className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
-                  Tablet check
+                  Check tablet
                 </button>
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('mobile'))}
                   className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
-                  Mobile check
+                  Check mobile
                 </button>
               </div>
             </div>
@@ -349,7 +352,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               />
             )}
             {manifest.settingsSchema.fields.length === 0 && selectedSection.type !== 'custom' && !manifest.capabilities.mediaAware && (
-              <p className="text-xs text-[var(--color-text-tertiary)] text-center py-6">No editable content fields for this section.</p>
+              <p className="text-xs text-[var(--color-text-tertiary)] text-center py-6">This section does not have direct text fields here.</p>
             )}
           </div>
         )}
@@ -358,6 +361,7 @@ export const BuilderInspectorPanel: React.FC = () => {
           <div className="p-4 space-y-5">
             <div>
               <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Colors</p>
+              <p className="text-[11px] text-[var(--color-text-tertiary)] mb-3">Only change these if this section needs to feel different from the rest of your site.</p>
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-medium text-[var(--color-text-secondary)] block mb-1.5">Background</label>
@@ -565,7 +569,7 @@ export const BuilderInspectorPanel: React.FC = () => {
         {activeTab === 'layout' && (
           <div className="p-4 space-y-5">
             <div>
-              <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Layout Variant</p>
+              <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Layout</p>
               <div className="relative">
                 <select
                   value={selectedSection.variant}
@@ -578,11 +582,12 @@ export const BuilderInspectorPanel: React.FC = () => {
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] pointer-events-none" />
               </div>
-              <p className="mt-1.5 text-[11px] text-[var(--color-text-tertiary)]">Changing layout keeps your content and bindings intact.</p>
+              <p className="mt-1.5 text-[11px] text-[var(--color-text-tertiary)]">Changing layout keeps your content and connected data intact.</p>
             </div>
 
             <div className="border-t border-gray-100 pt-4">
               <p className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest mb-3">Spacing</p>
+              <p className="text-[11px] text-[var(--color-text-tertiary)] mb-3">Use spacing sparingly. Most sections already start with balanced defaults.</p>
               <SpacingControl
                 label="Padding Top"
                 value={selectedSection.styleOverrides?.paddingTop ?? ''}
@@ -604,12 +609,12 @@ export const BuilderInspectorPanel: React.FC = () => {
         {activeTab === 'data' && hasBindings && (
           <div className="p-4 space-y-3">
             <p className="text-xs text-[var(--color-text-tertiary)] leading-relaxed">
-              This section automatically pulls data from your wedding information. Manage the source data from the dashboard.
+              This section automatically pulls from your wedding details. Update the source information from the dashboard.
             </p>
             {manifest.bindingsSchema.slots.map(slot => (
               <div key={slot.key} className="p-3 bg-[var(--color-surface-subtle)] rounded-xl border border-gray-100">
                 <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-0.5">{slot.label}</p>
-                <p className="text-xs text-[var(--color-text-tertiary)]">Auto-bound from <span className="font-medium text-[var(--color-text-tertiary)]">{slot.dataSource}</span> data</p>
+                <p className="text-xs text-[var(--color-text-tertiary)]">Connected to <span className="font-medium text-[var(--color-text-tertiary)]">{slot.dataSource}</span></p>
               </div>
             ))}
           </div>

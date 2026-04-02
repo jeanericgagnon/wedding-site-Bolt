@@ -22,7 +22,7 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
           {settings.showTitle && (
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{settings.title || 'FAQ'}</h2>
           )}
-          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
+          <p className="text-text-secondary">Helpful guest questions and answers will appear here once they’re added.</p>
         </div>
       </section>
     );
@@ -76,24 +76,24 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
 
   if (faqsToShow.length === 0) {
     return (
-      <section className="py-20 px-4 bg-surface-subtle">
+      <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-3xl mx-auto text-center">
           {settings.showTitle && (
-            <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'FAQ'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{settings.title || 'FAQ'}</h2>
           )}
-          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
+          <p className="text-text-secondary">Helpful guest questions and answers will appear here once they’re added.</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-20 px-4 bg-surface-subtle">
+    <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-3xl mx-auto">
         {settings.showTitle && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Good to know</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'FAQ'}</h2>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Guest questions</p>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'FAQ'}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
@@ -102,7 +102,7 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search questions"
+            placeholder="Search guest questions"
             className="w-full sm:max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary"
           />
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -127,7 +127,7 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
         <div className="space-y-2.5">
           {filteredFaqs.length === 0 && (
             <div className="rounded-xl border border-border bg-surface px-4 py-6 text-sm text-text-secondary text-center">
-              No FAQ results for that search/filter yet.
+              No questions match that search yet.
             </div>
           )}
           {filteredFaqs.map(item => (
@@ -167,22 +167,22 @@ export const FaqIconGrid: React.FC<Props> = ({ data, instance }) => {
 
   if (faqsToShow.length === 0) {
     return (
-      <section className="py-20 px-4 bg-surface-subtle">
+      <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-3xl mx-auto text-center">
-          {settings.showTitle && <h2 className="text-4xl font-light text-text-primary mb-8">{settings.title || 'FAQ'}</h2>}
-          <p className="text-text-secondary">FAQs will appear here once you add common guest questions</p>
+          {settings.showTitle && <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{settings.title || 'FAQ'}</h2>}
+          <p className="text-text-secondary">Helpful guest questions and answers will appear here once they’re added.</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-20 px-4 bg-surface-subtle">
+    <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-5xl mx-auto">
         {settings.showTitle && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Good to know</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'FAQ'}</h2>
+            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Guest questions</p>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'FAQ'}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}

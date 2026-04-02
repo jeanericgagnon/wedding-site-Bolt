@@ -42,7 +42,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
   return (
     <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
-        <h3 className="text-[20px] font-semibold text-[var(--color-text-primary)]">Website settings</h3>
+        <h3 className="text-[20px] font-semibold text-[var(--color-text-primary)]">Website sections</h3>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-1.5">
@@ -81,7 +81,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                     }
                   }}
                   className="inline-flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
-                  title="Move section"
+                  title="Move section down"
                 >
                   <GripVertical size={14} />
                 </span>
@@ -100,7 +100,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
             onClick={onSwitchTemplate}
             className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
           >
-            Browse templates
+            Browse designs
           </button>
         )}
         <button
@@ -121,10 +121,10 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
             <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-                  {!addTypeManifest ? 'Add section' : `${addTypeManifest.label} variants`}
+                  {!addTypeManifest ? 'Add section' : `${addTypeManifest.label} layouts`}
                 </h3>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                  {!addTypeManifest ? 'Pick a section type, then choose a layout variant.' : 'Choose the layout you want to add.'}
+                  {!addTypeManifest ? 'Pick the kind of section you want, then choose the layout that fits best.' : 'Choose the layout you want to add.'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -160,7 +160,9 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                       className="w-full text-left rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-3 hover:border-[var(--color-border)]"
                     >
                       <p className="text-sm font-medium text-[var(--color-text-primary)]">{m.label}</p>
-                      <p className="text-xs text-[var(--color-text-tertiary)] mt-1">{m.variantMeta.length} variants</p>
+                      <p className="text-xs text-[var(--color-text-tertiary)] mt-1">{m.variantMeta.length} layout options</p>
+                      <p className="text-[11px] text-[var(--color-text-tertiary)] mt-2 line-clamp-2">{m.description}</p>
+                      <p className="text-[11px] text-[var(--color-primary)] mt-2 font-medium">Choose section</p>
                     </button>
                   ))}
                 </div>
@@ -192,6 +194,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                       </div>
                       <p className="text-sm font-medium text-[var(--color-text-primary)]">{v.label}</p>
                       <p className="text-xs text-[var(--color-text-tertiary)] mt-1 line-clamp-2">{v.description || 'Clean layout option'}</p>
+                      <p className="text-[11px] text-[var(--color-primary)] mt-2 font-medium">Add this layout</p>
                     </button>
                   ))}
                 </div>
