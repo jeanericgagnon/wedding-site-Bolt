@@ -361,8 +361,8 @@ export const DashboardPlanning: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Planning</h1>
-            <p className="text-sm text-text-secondary">Tasks, budget, and vendor management</p>
-            <a href="/dashboard/coordinator" className="text-xs text-primary hover:text-primary-hover">Open Coordinator Mode</a>
+            <p className="text-sm text-text-secondary">Keep tasks, budget, and vendors in one clear place.</p>
+            <a href="/dashboard/coordinator" className="text-xs text-primary hover:text-primary-hover">Open coordinator view</a>
           </div>
         </div>
 
@@ -380,15 +380,15 @@ export const DashboardPlanning: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="text-sm font-semibold text-text-primary">Role View</label>
+            <label className="text-sm font-semibold text-text-primary">Access view</label>
             <select
               value={planningRole}
               onChange={(e) => setPlanningRole(e.target.value as PlanningRole)}
               className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="owner">Owner (full access)</option>
-              <option value="coordinator">Coordinator (edit-lite)</option>
-              <option value="viewer">Viewer (read-only)</option>
+              <option value="coordinator">Coordinator (limited edits)</option>
+              <option value="viewer">Viewer (read only)</option>
             </select>
           </div>
         </div>
@@ -451,9 +451,9 @@ export const DashboardPlanning: React.FC = () => {
         {pendingVendorForBudget && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-md rounded-2xl bg-surface border border-border shadow-xl p-5">
-              <h3 className="text-lg font-semibold text-text-primary mb-2">Add vendor to budget?</h3>
+              <h3 className="text-lg font-semibold text-text-primary mb-2">Add this vendor to your budget?</h3>
               <p className="text-sm text-text-secondary mb-4">
-                "{pendingVendorForBudget.name}" was added successfully. Would you like to create a linked budget line item too?
+                "{pendingVendorForBudget.name}" was added. Would you like to create a matching budget line too?
               </p>
               <div className="flex justify-end gap-2">
                 <button
@@ -474,7 +474,7 @@ export const DashboardPlanning: React.FC = () => {
                     }
                   }}
                 >
-                  Yes, add it
+                  Yes, add it to budget
                 </button>
               </div>
             </div>

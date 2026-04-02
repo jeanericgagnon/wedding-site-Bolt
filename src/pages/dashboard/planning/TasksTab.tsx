@@ -271,24 +271,24 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
           {selectedIds.size > 0 && (
             <Button variant="outline" size="sm" onClick={handleBulkDone}>
               <CheckSquare className="w-4 h-4 mr-1" />
-              Mark {selectedIds.size} Done
+              Mark {selectedIds.size} complete
             </Button>
           )}
           {weddingDate && tasks.length === 0 && (
             <Button variant="outline" size="sm" onClick={() => setConfirmCreate(true)} disabled={generatingMilestones || !canEdit}>
               <Sparkles className="w-4 h-4 mr-1" />
-              Create Checklist
+              Build checklist
             </Button>
           )}
           {weddingDate && tasks.length > 0 && (
             <Button variant="ghost" size="sm" onClick={() => setConfirmCreate(true)} disabled={generatingMilestones || !canEdit}>
               <Sparkles className="w-4 h-4 mr-1" />
-              Checklist
+              Wedding checklist
             </Button>
           )}
           <Button size="sm" onClick={() => setShowAddForm(true)} disabled={!canEdit}>
             <Plus className="w-4 h-4 mr-1" />
-            Add Task
+            Add task
           </Button>
         </div>
       </div>
@@ -296,12 +296,12 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
       {confirmCreate && (
         <div className="p-4 bg-primary-light border border-primary/20 rounded-xl flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-text-primary">Create milestone checklist?</p>
-            <p className="text-xs text-text-secondary mt-0.5">This will add ~28 standard wedding tasks based on your wedding date. Existing tasks will be kept.</p>
+            <p className="text-sm font-medium text-text-primary">Build a wedding checklist?</p>
+            <p className="text-xs text-text-secondary mt-0.5">This adds a suggested planning checklist based on your wedding date. Anything you already added stays in place.</p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <Button size="sm" onClick={handleCreateMilestones} disabled={generatingMilestones}>
-              {generatingMilestones ? 'Creating...' : 'Create'}
+              {generatingMilestones ? 'Building...' : 'Build checklist'}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setConfirmCreate(false)}>Cancel</Button>
           </div>
@@ -325,11 +325,11 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
 
       {tasks.length === 0 && !showAddForm ? (
         <Card padding="lg" className="text-center">
-          <p className="text-text-secondary mb-2">No tasks yet.</p>
+          <p className="text-text-secondary mb-2">No planning items yet.</p>
           {weddingDate ? (
-            <p className="text-sm text-text-tertiary">Add tasks manually or generate a milestone checklist from your wedding date.</p>
+            <p className="text-sm text-text-tertiary">Add your own items or let Dayof build a starting checklist from your wedding date.</p>
           ) : (
-            <p className="text-sm text-text-tertiary">Add your first task to get started.</p>
+            <p className="text-sm text-text-tertiary">Add your first planning item to get started.</p>
           )}
         </Card>
       ) : view === 'list' ? (
@@ -361,7 +361,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
             </div>
           ))}
           {sortedFiltered.length === 0 && (
-            <p className="text-sm text-text-tertiary text-center py-4">No tasks match the current filters.</p>
+            <p className="text-sm text-text-tertiary text-center py-4">Nothing matches those filters.</p>
           )}
         </div>
       ) : (
@@ -385,7 +385,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
                   />
                 ))}
                 {colTasks.length === 0 && (
-                  <p className="text-xs text-text-tertiary text-center py-6">No tasks</p>
+                  <p className="text-xs text-text-tertiary text-center py-6">Nothing here yet</p>
                 )}
               </div>
             );

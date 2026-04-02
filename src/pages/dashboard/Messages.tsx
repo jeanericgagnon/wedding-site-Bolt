@@ -1067,10 +1067,10 @@ export const DashboardMessages: React.FC = () => {
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-text-primary">Messages</h1>
             </div>
-            <p className="text-text-secondary">Compose and send guest campaigns by email, plus SMS credit setup</p>
+            <p className="text-text-secondary">Write and send guest messages by email or text, with credits ready when you need them.</p>
           </div>
           <div>
-            <label className="block text-xs text-text-tertiary mb-1">Role View</label>
+            <label className="block text-xs text-text-tertiary mb-1">Access view</label>
             <select
               value={messagesRole}
               onChange={(e) => setMessagesRole(e.target.value as MessagesRole)}
@@ -1078,14 +1078,14 @@ export const DashboardMessages: React.FC = () => {
             >
               <option value="owner">Owner</option>
               <option value="coordinator">Coordinator</option>
-              <option value="viewer">Viewer (read-only)</option>
+              <option value="viewer">Viewer (read only)</option>
             </select>
           </div>
         </div>
 
         {messagesRole === 'viewer' && (
           <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
-            Viewer mode active — compose and send actions are disabled.
+            Viewer mode is on — writing and sending are turned off here.
           </div>
         )}
 
@@ -1093,7 +1093,7 @@ export const DashboardMessages: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               ['Scheduled', deliveryStats.scheduled],
-              ['Targeted', deliveryStats.targeted],
+              ['Recipients', deliveryStats.targeted],
               ['Delivered', deliveryStats.delivered],
               ['Failed', deliveryStats.failed],
               ['Delivery Rate', `${deliveryStats.rate}%`],
@@ -1112,9 +1112,9 @@ export const DashboardMessages: React.FC = () => {
                   <AtSign className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-text-secondary">Your Wedding Email</p>
+                  <p className="text-sm text-text-secondary">Your wedding email</p>
                   <p className="text-lg font-semibold text-text-primary">{weddingSite.couple_email}</p>
-                  <p className="text-xs text-text-tertiary mt-1">Messages will appear to come from this address</p>
+                  <p className="text-xs text-text-tertiary mt-1">Guest emails will appear to come from this address</p>
                 </div>
               </div>
             </Card>
@@ -1124,9 +1124,9 @@ export const DashboardMessages: React.FC = () => {
             <Card variant="bordered" padding="lg">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm text-text-secondary">SMS Credits</p>
+                  <p className="text-sm text-text-secondary">Text message credits</p>
                   <p className="text-2xl font-semibold text-text-primary">{smsCredits}</p>
-                  <p className="text-xs text-text-tertiary mt-1">Approx 1 credit per recipient per SMS</p>
+                  <p className="text-xs text-text-tertiary mt-1">About 1 credit per guest for each text</p>
                   <p className="text-xs text-text-tertiary">Credits expire 12 months after purchase{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}</p>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -1138,11 +1138,11 @@ export const DashboardMessages: React.FC = () => {
 
             <Card variant="bordered" padding="lg">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-text-primary">SMS Credit Activity</h3>
+                <h3 className="text-sm font-semibold text-text-primary">Recent credit activity</h3>
                 <span className="text-xs text-text-tertiary">Recent {smsTransactions.length}</span>
               </div>
               {smsTransactions.length === 0 ? (
-                <p className="text-xs text-text-tertiary">No SMS credit activity yet. Buy a credit pack to get started.</p>
+                <p className="text-xs text-text-tertiary">No credit activity yet. Buy credits when you’re ready to send texts.</p>
               ) : (
                 <div className="space-y-2 max-h-56 overflow-auto pr-1">
                   {smsTransactions.map((tx) => (
@@ -1167,8 +1167,8 @@ export const DashboardMessages: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Card variant="bordered" padding="lg">
-              <h2 className="text-xl font-semibold text-text-primary mb-6">Compose Message</h2>
-              {!canCompose && <p className="text-xs text-text-tertiary mb-3">Viewer mode: composing/sending is disabled.</p>}
+              <h2 className="text-xl font-semibold text-text-primary mb-6">Write a message</h2>
+              {!canCompose && <p className="text-xs text-text-tertiary mb-3">Viewer mode is on, so writing and sending are turned off.</p>}
               <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
                 <fieldset disabled={!canCompose} className="space-y-6">
                 <div>
@@ -1178,14 +1178,14 @@ export const DashboardMessages: React.FC = () => {
                     <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>SMS</button>
                   </div>
                   {formData.channel === 'sms' && (
-                    <p className="text-xs text-text-tertiary mt-1">SMS uses credit balance and sends via Twilio when provider credentials are configured.</p>
+                    <p className="text-xs text-text-tertiary mt-1">Texts use your credit balance and send when text setup is ready.</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">Select Audience</label>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Who should get this?</label>
                   {audienceOptions.some((a) => a.value.startsWith('event:')) && (
-                    <p className="text-xs text-text-tertiary mb-1">Includes itinerary segments (look for “Itinerary • ...” in the dropdown).</p>
+                    <p className="text-xs text-text-tertiary mb-1">You can also send to itinerary groups from the dropdown.</p>
                   )}
                   <select
                     key={`aud-${audienceOptions.length}`}
@@ -1211,11 +1211,11 @@ export const DashboardMessages: React.FC = () => {
                   )}
                   <div className="mt-2 flex flex-wrap gap-2">
                     <span className="inline-flex items-center px-2 py-1 text-xs rounded-full border border-border bg-surface-subtle text-text-secondary">
-                      Will reach {activeRecipients} guest{activeRecipients !== 1 ? 's' : ''}
+                      Reaches {activeRecipients} guest{activeRecipients !== 1 ? 's' : ''}
                     </span>
                     {formData.channel === 'sms' && (
                       <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full border ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
-                        {smsCreditsSufficient ? 'Credits available' : `Need ${smsCreditsNeeded - smsCredits} more credits`}
+                        {smsCreditsSufficient ? 'Enough credits' : `Need ${smsCreditsNeeded - smsCredits} more credits`}
                       </span>
                     )}
                   </div>
@@ -1229,7 +1229,7 @@ export const DashboardMessages: React.FC = () => {
                     <Input
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      placeholder="e.g., Wedding Day Reminder"
+                      placeholder="For example: Wedding day reminder"
                       required
                     />
                   </div>
@@ -1242,17 +1242,17 @@ export const DashboardMessages: React.FC = () => {
                   <Textarea
                     value={formData.body}
                     onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-                    placeholder="Write your message here..."
+                    placeholder="Write your message here"
                     rows={8}
                     required
                   />
                   <p className="text-sm text-text-tertiary mt-1">
-                    Tip: Include important details like date, time, location, or dress code
+                    Include the details guests need most, like time, place, or dress code.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">When to Send</label>
+                  <label className="block text-sm font-medium text-text-primary mb-2">When should it send?</label>
                   <div className="flex gap-4 mb-4">
                     <button
                       type="button"
@@ -1263,7 +1263,7 @@ export const DashboardMessages: React.FC = () => {
                           : 'bg-surface-subtle text-text-secondary hover:bg-surface border border-border'
                       }`}
                     >
-                      Send Now
+                      Send now
                     </button>
                     <button
                       type="button"
@@ -1310,8 +1310,8 @@ export const DashboardMessages: React.FC = () => {
                         <div className="flex items-start gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
                           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                           <div>
-                            <span className="font-medium">Scheduled time is in the past.</span>
-                            {' '}This message will be sent immediately when you click Schedule Message.
+                            <span className="font-medium">That time has already passed.</span>
+                            {' '}This message will send right away when you click Schedule message.
                           </div>
                         </div>
                       )}
@@ -1334,7 +1334,7 @@ export const DashboardMessages: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <Eye className="w-4 h-4 text-text-secondary" />
                       <span className="font-medium text-text-primary">
-                        Preview recipients ({activeRecipients} with {formData.channel === 'sms' ? 'phone' : 'email'})
+                        Preview recipients ({activeRecipients} with {formData.channel === 'sms' ? 'phone numbers' : 'email addresses'})
                       </span>
                     </div>
                     {showRecipientPreview ? <ChevronUp className="w-4 h-4 text-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-text-tertiary" />}
@@ -1342,7 +1342,7 @@ export const DashboardMessages: React.FC = () => {
                   {showRecipientPreview && (
                     <div className="border-t border-border max-h-48 overflow-y-auto">
                       {getRecipients(formData.audience).filter(g => g.email).length === 0 ? (
-                        <div className="p-4 text-sm text-text-secondary text-center">No guests with email addresses in this audience.</div>
+                        <div className="p-4 text-sm text-text-secondary text-center">No guests in this group have email addresses yet.</div>
                       ) : (
                         <ul className="divide-y divide-border">
                           {getRecipients(formData.audience).filter(g => g.email).map(g => (
@@ -1365,9 +1365,9 @@ export const DashboardMessages: React.FC = () => {
                       <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
                           ? isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`)
-                            ? `Will send immediately (scheduled time has passed) — ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}`
+                            ? `Will send right away because that time has already passed — ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}`
                             : `Scheduled for ${formatScheduledDate(`${formData.scheduleDate}T${formData.scheduleTime}:00`)} — ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}`
-                          : `${formData.channel === 'sms' ? 'SMS' : 'Email'} will be sent immediately to ${activeRecipients} guest${activeRecipients !== 1 ? 's' : ''}`}
+                          : `${formData.channel === 'sms' ? 'Text' : 'Email'} will send right away to ${activeRecipients} guest${activeRecipients !== 1 ? 's' : ''}`}
                       </p>
                     </div>
                   </div>
@@ -1376,8 +1376,8 @@ export const DashboardMessages: React.FC = () => {
                 {activeRecipients > 0 && (
                   <div className="text-xs text-text-tertiary bg-surface-subtle border border-border rounded-lg px-3 py-2">
                     {formData.scheduleType === 'now'
-                      ? `When you click Send, this ${formData.channel.toUpperCase()} campaign will queue immediately for ${activeRecipients} recipients.`
-                      : `Scheduled campaigns will send at your selected time to the latest matching audience.`}
+                      ? `When you click Send, this ${formData.channel === 'sms' ? 'text' : 'email'} will go out right away to ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}.`
+                      : `Scheduled messages will send at your chosen time to everyone who still matches this group.`}
                   </div>
                 )}
 
@@ -1385,14 +1385,14 @@ export const DashboardMessages: React.FC = () => {
                   <div className="flex items-center gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     {formData.channel === 'sms'
-                      ? 'No guests in this audience have phone numbers. Add phone numbers before sending SMS.'
-                      : 'No guests in this audience have email addresses. Add emails to guests before sending.'}
+                      ? 'No guests in this group have phone numbers yet. Add phone numbers before sending a text.'
+                      : 'No guests in this group have email addresses yet. Add email addresses before sending.'}
                   </div>
                 )}
 
                 {formData.channel === 'sms' && activeRecipients > 0 && !smsCreditsSufficient && (
                   <div className="flex items-center justify-between gap-3 p-3 bg-error-light border border-error/20 rounded-lg text-sm text-error">
-                    <span>Not enough SMS credits: need {smsCreditsNeeded}, have {smsCredits}.</span>
+                    <span>Not enough text credits yet: need {smsCreditsNeeded}, have {smsCredits}.</span>
                     <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>Buy credits</Button>
                   </div>
                 )}
@@ -1406,9 +1406,9 @@ export const DashboardMessages: React.FC = () => {
                   >
                     {sending ? 'Processing...' : (
                       formData.scheduleType === 'later' ? (
-                        <><Calendar className="w-4 h-4 mr-2" />Schedule Message</>
+                        <><Calendar className="w-4 h-4 mr-2" />Schedule message</>
                       ) : (
-                        <><Send className="w-4 h-4 mr-2" />Send Now</>
+                        <><Send className="w-4 h-4 mr-2" />Send now</>
                       )
                     )}
                   </Button>
@@ -1509,7 +1509,7 @@ export const DashboardMessages: React.FC = () => {
             </Card>
 
             <Card variant="bordered" padding="lg" className="mt-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">Message Templates</h2>
+              <h2 className="text-lg font-semibold text-text-primary mb-4">Starting points</h2>
               <div className="space-y-2">
                 {[
                   { label: 'Save the Date', subject: 'Save the Date!', body: 'We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.' },
@@ -1538,8 +1538,8 @@ export const DashboardMessages: React.FC = () => {
         <Card variant="bordered" padding="lg">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
             <div>
-              <h2 className="text-xl font-semibold text-text-primary">Message History</h2>
-              <p className="text-xs text-text-tertiary mt-0.5">Filter by status, channel, and audience to triage delivery quickly.</p>
+              <h2 className="text-xl font-semibold text-text-primary">Message history</h2>
+              <p className="text-xs text-text-tertiary mt-0.5">Filter by status, channel, or group to quickly find what you need.</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value as typeof historyStatusFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
@@ -1565,8 +1565,8 @@ export const DashboardMessages: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap gap-1.5 mb-3">
-            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus failed</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus scheduled</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Show failed</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
@@ -1592,7 +1592,7 @@ export const DashboardMessages: React.FC = () => {
               {audienceBreakdown.map(([label, count]) => (
                 <div key={label} className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2">
                   <p className="text-[11px] text-text-tertiary truncate">{label}</p>
-                  <p className="text-sm font-semibold text-text-primary">{count} targeted</p>
+                  <p className="text-sm font-semibold text-text-primary">{count} recipients</p>
                 </div>
               ))}
             </div>
@@ -1603,7 +1603,7 @@ export const DashboardMessages: React.FC = () => {
               <div key={channel} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-3 py-2.5">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-xs uppercase tracking-wide text-text-tertiary">{channel.toUpperCase()}</p>
-                  <p className="text-xs text-text-secondary">{channelBreakdown[channel].targeted} targeted</p>
+                  <p className="text-xs text-text-secondary">{channelBreakdown[channel].targeted} recipients</p>
                 </div>
                 <p className="text-xs text-text-secondary">
                   Sent {channelBreakdown[channel].sent} · Scheduled {channelBreakdown[channel].scheduled} · Partial {channelBreakdown[channel].partial} · Failed {channelBreakdown[channel].failed}
@@ -1622,11 +1622,11 @@ export const DashboardMessages: React.FC = () => {
               <p className="text-sm font-semibold text-text-primary">{deliveryHealth.failRate}%</p>
             </div>
             <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
-              <p className="text-[11px] text-text-tertiary">Overdue scheduled</p>
+              <p className="text-[11px] text-text-tertiary">Past-due scheduled</p>
               <p className="text-sm font-semibold text-text-primary">{deliveryHealth.overdueScheduled}</p>
             </div>
             <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
-              <p className="text-[11px] text-text-tertiary">Retry backlog</p>
+              <p className="text-[11px] text-text-tertiary">Still needs retry</p>
               <p className="text-sm font-semibold text-text-primary">{deliveryHealth.retryBacklog}</p>
             </div>
           </div>
@@ -1634,19 +1634,19 @@ export const DashboardMessages: React.FC = () => {
           <div className="rounded-xl border border-border/35 bg-white p-3 mb-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
               <div className="rounded-lg border border-border/30 bg-surface-subtle/40 px-2 py-1.5">
-                <p className="text-[10px] text-text-tertiary">Provider attempted</p>
+                <p className="text-[10px] text-text-tertiary">Provider attempts</p>
                 <p className="text-xs font-semibold text-text-primary">{providerTelemetry.attempted}</p>
               </div>
               <div className="rounded-lg border border-border/30 bg-surface-subtle/40 px-2 py-1.5">
-                <p className="text-[10px] text-text-tertiary">Provider sent rate</p>
+                <p className="text-[10px] text-text-tertiary">Provider send rate</p>
                 <p className="text-xs font-semibold text-text-primary">{providerTelemetry.sentRate}%</p>
               </div>
               <div className="rounded-lg border border-border/30 bg-surface-subtle/40 px-2 py-1.5">
-                <p className="text-[10px] text-text-tertiary">Provider IDs logged</p>
+                <p className="text-[10px] text-text-tertiary">Provider IDs saved</p>
                 <p className="text-xs font-semibold text-text-primary">{providerTelemetry.withProviderId}</p>
               </div>
               <div className="rounded-lg border border-border/30 bg-surface-subtle/40 px-2 py-1.5">
-                <p className="text-[10px] text-text-tertiary">Provider failed</p>
+                <p className="text-[10px] text-text-tertiary">Provider failures</p>
                 <p className="text-xs font-semibold text-text-primary">{providerTelemetry.failed}</p>
               </div>
             </div>
@@ -1662,7 +1662,7 @@ export const DashboardMessages: React.FC = () => {
           {retryCandidates.length > 0 && (
             <div className="rounded-xl border border-border/35 bg-white p-3 mb-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-text-primary">Needs retry</p>
+                <p className="text-sm font-medium text-text-primary">Needs another try</p>
                 <button onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View failed</button>
               </div>
               <div className="space-y-2">
@@ -1687,12 +1687,12 @@ export const DashboardMessages: React.FC = () => {
 
           {segmentPerformance.length > 0 && (
             <div className="rounded-xl border border-border/35 bg-white p-3 mb-4">
-              <p className="text-sm font-medium text-text-primary mb-2">Event segment performance</p>
+              <p className="text-sm font-medium text-text-primary mb-2">Itinerary group performance</p>
               <div className="space-y-2">
                 {segmentPerformance.map(([label, data]) => (
                   <div key={label} className="rounded-lg border border-border/35 px-2.5 py-2 bg-surface-subtle/40">
                     <p className="text-sm text-text-primary truncate">{label}</p>
-                    <p className="text-[11px] text-text-tertiary">Targeted {data.targeted} · Sent {data.sent} · Failed {data.failed}</p>
+                    <p className="text-[11px] text-text-tertiary">Recipients {data.targeted} · Sent {data.sent} · Failed {data.failed}</p>
                   </div>
                 ))}
               </div>
@@ -1702,8 +1702,8 @@ export const DashboardMessages: React.FC = () => {
           {filteredHistory.length === 0 ? (
             <div className="text-center py-12">
               <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
-              <p className="text-text-secondary">No messages for current filters</p>
-              <p className="text-sm text-text-tertiary mt-1">Try a different status/channel filter.</p>
+              <p className="text-text-secondary">No messages match these filters</p>
+              <p className="text-sm text-text-tertiary mt-1">Try a different status, channel, or group.</p>
             </div>
           ) : (
             <div className="space-y-3">

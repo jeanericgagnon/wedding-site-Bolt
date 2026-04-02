@@ -880,10 +880,10 @@ export const DashboardRegistry: React.FC = () => {
                 {imageRefreshBusy ? 'Refreshing image issues…' : 'Refresh image issues'}
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
-                Bulk Import URLs
+Import a list of links
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleRepairBadImports(); setRegistryActionsOpen(false); }} disabled={repairingBadImports}>
-                {repairingBadImports ? 'Repairing bad imports…' : 'Repair bad imports'}
+                {repairingBadImports ? 'Cleaning up imported gifts…' : 'Clean up imported gifts'}
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
                 {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
@@ -989,7 +989,7 @@ export const DashboardRegistry: React.FC = () => {
               Image issues: {alertCounts.imageIssues}
             </span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
-              Bad imports: {alertCounts.badImports}
+              Imported gifts to fix: {alertCounts.badImports}
             </span>
             {alertCounts.badImports > 0 && (
               <button
@@ -997,7 +997,7 @@ export const DashboardRegistry: React.FC = () => {
                 disabled={repairingBadImports}
                 className="px-2 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning text-xs font-medium disabled:opacity-60"
               >
-                {repairingBadImports ? 'Repairing…' : 'Repair bad imports'}
+                {repairingBadImports ? 'Cleaning up…' : 'Clean up imported gifts'}
               </button>
             )}
             <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>

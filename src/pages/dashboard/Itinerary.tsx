@@ -586,27 +586,27 @@ export const DashboardItinerary: React.FC = () => {
       <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Event Itinerary</h1>
+          <h1 className="text-3xl font-bold text-neutral-900">Itinerary</h1>
           <p className="mt-2 text-neutral-600">
-            Create and manage wedding weekend events with separate guest lists and RSVPs
+            Keep your weekend plans clear, organized, and easy for guests to follow.
           </p>
         </div>
         <Button onClick={() => openEventForm()}>
           <Plus className="w-5 h-5 mr-2" />
-          Add Event
+Add to itinerary
         </Button>
       </div>
 
       {showEventForm && (
         <Card className="p-6">
           <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-            {editingEvent ? 'Edit Event' : 'Create New Event'}
+            {editingEvent ? 'Edit itinerary event' : 'Add itinerary event'}
           </h2>
           <form noValidate onSubmit={handleSaveEvent} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Event Name *
+                  Event name *
                 </label>
                 <Input
                   value={formData.event_name}
@@ -650,12 +650,12 @@ export const DashboardItinerary: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Location Name
+                  Location name
                 </label>
                 <Input
                   value={formData.location_name}
                   onChange={(e) => setFormData({ ...formData, location_name: e.target.value })}
-                  placeholder="Venue name"
+                  placeholder="Venue or place name"
                 />
               </div>
 
@@ -696,12 +696,12 @@ export const DashboardItinerary: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Additional Notes
+                Notes for guests
               </label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Any special instructions for guests"
+                placeholder="Anything guests should know before they arrive"
                 rows={2}
               />
             </div>
@@ -715,7 +715,7 @@ export const DashboardItinerary: React.FC = () => {
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
               />
               <label htmlFor="is_visible" className="ml-2 block text-sm text-neutral-700">
-                Show on public wedding website
+                Show this on your public site
               </label>
             </div>
 
@@ -729,7 +729,7 @@ export const DashboardItinerary: React.FC = () => {
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
                 />
                 <label htmlFor="auto_create_album" className="ml-2 block text-sm text-neutral-700">
-                  Auto-create a photo album for this event
+                  Create a photo album for this event
                 </label>
               </div>
             )}
@@ -748,7 +748,7 @@ export const DashboardItinerary: React.FC = () => {
 
             <div className="flex gap-3 pt-4">
               <Button type="submit" disabled={isSavingEvent}>
-                {isSavingEvent ? 'Saving…' : (editingEvent ? 'Save Changes' : 'Create Event')}
+                {isSavingEvent ? 'Saving…' : (editingEvent ? 'Save changes' : 'Add event')}
               </Button>
               <Button
                 type="button"

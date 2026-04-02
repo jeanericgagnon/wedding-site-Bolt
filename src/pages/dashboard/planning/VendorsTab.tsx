@@ -225,7 +225,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
       {(totalBalance > 0 || followUpDueCount > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-shadow">
-            <span className="text-sm text-text-secondary">Total vendor balance due</span>
+            <span className="text-sm text-text-secondary">Still to pay vendors</span>
             <span className="font-bold text-text-primary">{fmt(totalBalance)}</span>
           </div>
           <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
@@ -240,18 +240,18 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search vendors"
+            placeholder="Search your vendors"
             className="px-3 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary"
           />
           <div className="inline-flex rounded-lg border border-border overflow-hidden">
             <button onClick={() => setViewMode('list')} className={`px-2.5 py-1 text-xs ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`}>List</button>
-            <button onClick={() => setViewMode('pipeline')} className={`px-2.5 py-1 text-xs border-l border-border ${viewMode === 'pipeline' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`}>Pipeline</button>
+            <button onClick={() => setViewMode('pipeline')} className={`px-2.5 py-1 text-xs border-l border-border ${viewMode === 'pipeline' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`}>Stages</button>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {!canEdit && <p className="text-xs text-text-tertiary">Viewer mode: editing is disabled.</p>}
+          {!canEdit && <p className="text-xs text-text-tertiary">Viewer mode: editing is turned off here.</p>}
           <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
-            <Plus className="w-4 h-4 mr-1" /> Add Vendor
+            <Plus className="w-4 h-4 mr-1" /> Add vendor
           </Button>
         </div>
       </div>
@@ -265,14 +265,14 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
 
       {filteredVendors.length === 0 && !showAdd ? (
         <Card padding="lg" className="text-center">
-          <p className="text-text-secondary mb-1">No vendors found.</p>
-          <p className="text-sm text-text-tertiary">Try a different search or add a new vendor.</p>
+          <p className="text-text-secondary mb-1">No vendors yet.</p>
+          <p className="text-sm text-text-tertiary">Try a different search or add your first vendor.</p>
         </Card>
       ) : viewMode === 'pipeline' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {([
-            ['due-soon', 'Due Soon'],
-            ['open-balance', 'Open Balance'],
+            ['due-soon', 'Due soon'],
+            ['open-balance', 'Open balance'],
             ['paid', 'Paid'],
           ] as const).map(([key, label]) => (
             <div key={key} className="rounded-xl border border-border/35 bg-white p-3">
@@ -287,7 +287,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                     <p className="text-[11px] text-text-tertiary">{vendor.vendor_type} · {fmt(vendor.balance_due || 0)} due</p>
                   </div>
                 ))}
-                {pipelineGroups[key].length === 0 && <p className="text-xs text-text-tertiary">No vendors</p>}
+                {pipelineGroups[key].length === 0 && <p className="text-xs text-text-tertiary">Nothing here yet</p>}
               </div>
             </div>
           ))}
@@ -314,7 +314,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-semibold text-text-primary">{vendor.name}</p>
                           <Badge variant="neutral">{vendor.vendor_type}</Badge>
-                          {isDueSoon && <Badge variant="warning">Payment coming up</Badge>}
+                          {isDueSoon && <Badge variant="warning">Payment due soon</Badge>}
                         </div>
                         {vendor.contact_name && (
                           <p className="text-xs text-text-tertiary mt-0.5">{vendor.contact_name}</p>
@@ -324,7 +324,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                             <div className="flex items-center justify-between text-xs text-text-tertiary mb-1">
                               <span>Paid {fmt(vendor.amount_paid)} of {fmt(vendor.contract_total)}</span>
                               <span className={vendor.balance_due > 0 ? 'text-warning font-medium' : 'text-success'}>
-                                {vendor.balance_due > 0 ? `${fmt(vendor.balance_due)} remaining` : 'Paid in full'}
+                                {vendor.balance_due > 0 ? `${fmt(vendor.balance_due)} left` : 'Paid in full'}
                               </span>
                             </div>
                             <div className="h-1.5 bg-surface-subtle rounded-full overflow-hidden">
@@ -370,15 +370,15 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                         </div>
                         {vendor.next_payment_due && (
                           <p className="text-xs text-text-secondary">
-                            Next payment date: <span className={`font-medium ${isDueSoon ? 'text-warning' : 'text-text-primary'}`}>
+                            Next payment: <span className={`font-medium ${isDueSoon ? 'text-warning' : 'text-text-primary'}`}>
                               {new Date(vendor.next_payment_due).toLocaleDateString()}
                             </span>
                           </p>
                         )}
                         <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-1.5">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Vendor follow-up</p>
+                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Follow-up</p>
                           <p className="text-xs text-text-secondary">
-                            Last contacted: {vendorMeta[vendor.id]?.lastContacted ? new Date(vendorMeta[vendor.id]!.lastContacted as string).toLocaleDateString() : 'Not set'}
+                            Last contacted: {vendorMeta[vendor.id]?.lastContacted ? new Date(vendorMeta[vendor.id]!.lastContacted as string).toLocaleDateString() : 'Not added yet'}
                           </p>
                           <div className="flex items-center gap-2">
                             <button
@@ -386,7 +386,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                               disabled={!canEdit}
                               className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
                             >
-                              Mark contacted
+                              Mark as contacted
                             </button>
                             <input
                               type="date"

@@ -204,7 +204,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
     <div className="space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Budget', value: totalBudget || 0, color: 'text-text-primary', format: 'currency' },
+          { label: 'Budget goal', value: totalBudget || 0, color: 'text-text-primary', format: 'currency' },
           { label: 'Estimated', value: totalEstimated, color: 'text-text-primary', format: 'currency' },
           { label: 'Actual', value: totalActual, color: totalBudget > 0 && totalActual > totalBudget ? 'text-error' : 'text-text-primary', format: 'currency' },
           { label: 'Remaining', value: remaining, color: remaining < 0 ? 'text-error' : 'text-success', format: 'currency' },
@@ -218,7 +218,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
 
       <Card padding="sm" className="space-y-2">
         <div className="flex items-center justify-between text-xs text-text-secondary">
-          <span>Budget used</span>
+          <span>Spent so far</span>
           <span>{usedPct.toFixed(0)}%</span>
         </div>
         <div className="h-2 rounded-full bg-surface-subtle overflow-hidden">
@@ -233,7 +233,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
         <div className="flex items-start gap-2 p-3 bg-white border border-error/25 rounded-xl shadow-[0_4px_14px_rgba(15,23,42,0.04)] text-sm">
           <AlertTriangle className="w-4 h-4 text-error flex-shrink-0 mt-0.5" />
           <span className="text-text-primary">
-            Worth reviewing: <span className="font-medium text-error">{overBudgetCategories.join(', ')}</span>
+            Worth a second look: <span className="font-medium text-error">{overBudgetCategories.join(', ')}</span>
           </span>
         </div>
       )}
@@ -241,7 +241,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div className="flex items-end gap-2">
           <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1">Total Budget</label>
+            <label className="block text-xs font-medium text-text-secondary mb-1">Budget goal</label>
             <input
               type="number"
               min="0"
@@ -256,7 +256,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
                 ? 'Saving…'
                 : budgetSavedAt
                 ? `Saved ${new Date(budgetSavedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-                : 'Auto-saves'}
+                : 'Saves automatically'}
             </p>
           </div>
         </div>
@@ -272,10 +272,10 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
             onClick={() => setViewMode('sheet')}
             className={`px-3 py-1.5 rounded-lg text-xs border ${viewMode === 'sheet' ? 'bg-surface border-border text-text-primary' : 'bg-surface-subtle border-border-subtle text-text-secondary'}`}
           >
-            Spreadsheet
+            Table
           </button>
           <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
-            <Plus className="w-4 h-4 mr-1" /> Add Item
+            <Plus className="w-4 h-4 mr-1" /> Add expense
           </Button>
         </div>
       </div>
@@ -291,7 +291,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
       {items.length === 0 && !showAdd ? (
         <Card padding="lg" className="text-center">
           <p className="text-text-secondary mb-1">No budget items yet.</p>
-          <p className="text-sm text-text-tertiary">Track all your wedding expenses here.</p>
+          <p className="text-sm text-text-tertiary">Keep all your wedding costs in one place.</p>
         </Card>
       ) : viewMode === 'sheet' ? (
         <Card variant="bordered" padding="none" className="overflow-auto">
@@ -303,7 +303,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
                 <th className="text-right px-3 py-2">Estimated</th>
                 <th className="text-right px-3 py-2">Actual</th>
                 <th className="text-right px-3 py-2">Paid</th>
-                <th className="text-right px-3 py-2">Actions</th>
+                <th className="text-right px-3 py-2">Edit</th>
               </tr>
             </thead>
             <tbody>

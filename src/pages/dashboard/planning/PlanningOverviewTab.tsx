@@ -63,7 +63,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{overdueTasks.length}</p>
-                <p className="text-sm text-text-secondary">Tasks to revisit</p>
+                <p className="text-sm text-text-secondary">Needs attention</p>
               </div>
             </div>
           </Card>
@@ -77,7 +77,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{upcomingTasks.length}</p>
-                <p className="text-sm text-text-secondary">Due in 7 days</p>
+                <p className="text-sm text-text-secondary">Coming up this week</p>
               </div>
             </div>
           </Card>
@@ -91,7 +91,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{fmt(totalActual)}</p>
-                <p className="text-sm text-text-secondary">Actual vs {fmt(totalEstimated)} planned</p>
+                <p className="text-sm text-text-secondary">Spent so far vs {fmt(totalEstimated)} planned</p>
               </div>
             </div>
           </Card>
@@ -105,7 +105,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               </div>
               <div>
                 <p className="text-2xl font-bold text-text-primary">{fmt(unpaidVendorBalance)}</p>
-                <p className="text-sm text-text-secondary">Vendor balance due</p>
+                <p className="text-sm text-text-secondary">Still to pay vendors</p>
               </div>
             </div>
           </Card>
@@ -116,7 +116,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
         <Card padding="md">
           <div className="flex items-center gap-2 mb-4">
             <Users className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-text-primary">Seating Readiness</h3>
+            <h3 className="font-semibold text-text-primary">Seating progress</h3>
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -128,7 +128,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               <span className="font-semibold text-success">{seatingReadiness.seated}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-text-secondary">Unassigned attending</span>
+              <span className="text-sm text-text-secondary">Attending guests not seated yet</span>
               <span className={`font-semibold ${seatingReadiness.unassigned > 0 ? 'text-warning' : 'text-text-tertiary'}`}>
                 {seatingReadiness.unassigned}
               </span>
@@ -153,10 +153,10 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
         <Card padding="md">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-text-primary">Task Progress</h3>
+            <h3 className="font-semibold text-text-primary">Planning progress</h3>
           </div>
           {tasks.length === 0 ? (
-            <p className="text-sm text-text-tertiary">No tasks yet. Add tasks in the Tasks tab.</p>
+            <p className="text-sm text-text-tertiary">No planning items yet. Add them in the Tasks section.</p>
           ) : (
             <div className="space-y-3">
               {(['todo', 'in_progress', 'done'] as const).map(status => {
@@ -176,7 +176,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               })}
               <div className="mt-2">
                 <div className="flex items-center justify-between text-xs text-text-tertiary mb-1">
-                  <span>Completion</span>
+                  <span>Completed</span>
                   <span>{Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100)}%</span>
                 </div>
                 <div className="h-2 bg-surface-subtle rounded-full overflow-hidden">
@@ -195,7 +195,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
         <Card padding="md" className="border-warning/40 bg-warning/5">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5 text-warning" />
-            <h3 className="font-semibold text-text-primary">Upcoming Vendor Payments</h3>
+            <h3 className="font-semibold text-text-primary">Vendor payments coming up</h3>
           </div>
           <div className="space-y-2">
             {dueSoonVendors.map(v => (

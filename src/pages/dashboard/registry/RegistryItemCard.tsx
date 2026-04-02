@@ -331,16 +331,16 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         <div className="flex items-center gap-1.5 flex-wrap">
           {outOfStock && <Badge variant="warning">Out of stock</Badge>}
           {priceChanged && <Badge variant="success">Price changed</Badge>}
-          {stale && <Badge variant="neutral">Needs refresh</Badge>}
+          {stale && <Badge variant="neutral">Check details</Badge>}
           {failCount > 0 && <Badge variant="error">Retry {failCount}</Badge>}
-          {item.metadata_fetch_status === 'blocked' && <Badge variant="error">Blocked import</Badge>}
-          {item.metadata_fetch_status === 'error' && <Badge variant="error">Import error</Badge>}
+          {item.metadata_fetch_status === 'blocked' && <Badge variant="error">Couldn’t pull everything</Badge>}
+          {item.metadata_fetch_status === 'error' && <Badge variant="error">Import problem</Badge>}
           {item.metadata_fetch_status === 'timeout' && <Badge variant="warning">Import timeout</Badge>}
-          {item.metadata_fetch_status === 'parse_failure' && <Badge variant="warning">Parse failed</Badge>}
+          {item.metadata_fetch_status === 'parse_failure' && <Badge variant="warning">Couldn’t read details</Badge>}
           {hasBadImportTitle && <Badge variant="error">Bad import title</Badge>}
-          {extractionConfidence === 'full' && <Badge variant="success">Full import</Badge>}
-          {extractionConfidence === 'partial' && <Badge variant="warning">Partial import</Badge>}
-          {extractionConfidence === 'manual' && <Badge variant="neutral">Manual/fallback</Badge>}
+          {extractionConfidence === 'full' && <Badge variant="success">Imported well</Badge>}
+          {extractionConfidence === 'partial' && <Badge variant="warning">Needs a quick check</Badge>}
+          {extractionConfidence === 'manual' && <Badge variant="neutral">Added manually</Badge>}
           <span title={imageSource.hint}>
             <Badge variant={imageSource.tone}>{imageSource.label}</Badge>
           </span>
