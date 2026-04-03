@@ -317,11 +317,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-5">
         <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-text-primary">Coordinator Mode</h1>
-            <p className="text-sm text-text-secondary mt-1">Event-day command center for check-in + status tracking.</p>
+            <h1 className="text-2xl font-semibold text-text-primary">Coordinator view</h1>
+            <p className="text-sm text-text-secondary mt-1">A live operations view for check-in, timeline updates, guest questions, and day-of messages.</p>
           </div>
           <div>
-            <label className="block text-xs text-text-tertiary mb-1">Role View</label>
+            <label className="block text-xs text-text-tertiary mb-1">Access view</label>
             <select
               value={coordinatorRole}
               onChange={(e) => setCoordinatorRole(e.target.value as CoordinatorRole)}
@@ -329,7 +329,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
             >
               <option value="owner">Owner</option>
               <option value="coordinator">Coordinator</option>
-              <option value="viewer">Viewer (read-only)</option>
+              <option value="viewer">Viewer (read only)</option>
             </select>
           </div>
         </div>
@@ -350,13 +350,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
         {coordinatorRole === 'viewer' && (
           <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
-            Viewer mode active — timeline, check-in, alerts, and Q&A edits are disabled.
+            Viewer mode is on — timeline, check-in, alerts, and Q&A edits are turned off here.
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] overflow-hidden">
-            <div className="px-4 py-3 border-b border-border/60 text-sm font-medium text-text-primary">Check-in Queue</div>
+            <div className="px-4 py-3 border-b border-border/60 text-sm font-medium text-text-primary">Check-in queue</div>
             <div className="max-h-[60vh] overflow-auto divide-y divide-border-subtle/70">
               {sortedGuests.map((g) => (
                 <div key={g.id} className="flex items-center justify-between px-4 py-2.5">
@@ -378,10 +378,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4 space-y-4">
             <div>
-              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show Timeline</p>
+              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline</p>
               <div className="space-y-2">
                 {events.length === 0 ? (
-                  <p className="text-xs text-text-tertiary">No events yet.</p>
+                  <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
                 ) : (
                   events.map((e) => {
                     const state = timelineState[e.id] || 'up-next';
@@ -409,8 +409,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
             </div>
 
             <div className="border-t border-border/60 pt-3">
-              <p className="text-sm font-medium text-text-primary mb-1">Day-of Alert</p>
-              <p className="text-[11px] text-text-tertiary mb-2">Use quick actions + filters to route updates faster during live operations.</p>
+              <p className="text-sm font-medium text-text-primary mb-1">Day-of message</p>
+              <p className="text-[11px] text-text-tertiary mb-2">Use quick actions and filters to send updates to the right guests fast.</p>
 
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
                 {[
@@ -433,7 +433,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     onClick={() => setAlertForm((prev) => ({ ...prev, audience: liveEventAudience }))}
                     className="text-[11px] px-2 py-1 rounded-full border border-primary/25 bg-primary/5 text-primary hover:bg-primary/10"
                   >
-                    Target live event
+                    Message live event
                   </button>
                 )}
                 <button
@@ -441,14 +441,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' }))}
                   className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
                 >
-                  Quick SMS now
+                  Text now
                 </button>
                 <button
                   type="button"
                   onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'email', scheduleType: 'later' }))}
                   className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
                 >
-                  Queue email
+                  Schedule email
                 </button>
                 {alertStats.byAudience.map(([audience, count]) => (
                   <button
@@ -466,13 +466,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <Input
                   value={alertForm.subject}
                   onChange={(e) => setAlertForm((prev) => ({ ...prev, subject: e.target.value }))}
-                  placeholder="Alert subject"
+                  placeholder="Message subject"
                 />
                 <Textarea
                   value={alertForm.body}
                   onChange={(e) => setAlertForm((prev) => ({ ...prev, body: e.target.value }))}
                   rows={3}
-                  placeholder="Write an alert to guests"
+                  placeholder="Write the update you want guests to receive"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <select
@@ -522,13 +522,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     </div>
                   ) : <div />}
                 </div>
-                <p className="text-[11px] text-text-tertiary">Will queue to {alertAudienceCount} recipient{alertAudienceCount === 1 ? '' : 's'}{alertForm.scheduleType === 'later' ? ' at scheduled time' : ''}.</p>
+                <p className="text-[11px] text-text-tertiary">This will go to {alertAudienceCount} recipient{alertAudienceCount === 1 ? '' : 's'}{alertForm.scheduleType === 'later' ? ' at the scheduled time' : ''}.</p>
                 <button
                   onClick={() => void sendDayOfAlert()}
                   disabled={alertBusy || !alertForm.subject.trim() || !alertForm.body.trim() || alertAudienceCount === 0}
                   className="w-full px-3 py-2 text-sm rounded-md border border-primary/30 bg-primary/10 text-primary disabled:opacity-50"
                 >
-                  {alertBusy ? 'Queueing...' : 'Queue day-of alert'}
+                  {alertBusy ? 'Saving...' : alertForm.scheduleType === 'later' ? 'Schedule message' : 'Send message'}
                 </button>
                 {alertLog.length > 0 && (
                   <div className="pt-1 space-y-1.5">
@@ -551,7 +551,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
             </div>
 
             <div className="border-t border-border/60 pt-3">
-              <p className="text-sm font-medium text-text-primary mb-2">Q&A Board (Ops)</p>
+              <p className="text-sm font-medium text-text-primary mb-2">Guest questions</p>
               <fieldset disabled={!canEdit}>
               <div className="flex gap-2 mb-2">
                 <Input
@@ -559,11 +559,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   onChange={(e) => setQnaInput(e.target.value)}
                   placeholder="Add a guest question"
                 />
-                <button onClick={addQnaItem} className="px-3 py-2 text-xs rounded-md border border-border bg-white text-text-secondary disabled:opacity-40">Add</button>
+                <button onClick={addQnaItem} className="px-3 py-2 text-xs rounded-md border border-border bg-white text-text-secondary disabled:opacity-40">Add question</button>
               </div>
               <div className="space-y-1.5 max-h-40 overflow-auto">
                 {qnaItems.length === 0 ? (
-                  <p className="text-xs text-text-tertiary">No questions yet.</p>
+                  <p className="text-xs text-text-tertiary">No guest questions yet.</p>
                 ) : (
                   qnaItems.slice(0, 8).map((item) => (
                     <div key={item.id} className="text-xs border border-border/50 rounded-md px-2 py-1.5 flex items-center justify-between gap-2">

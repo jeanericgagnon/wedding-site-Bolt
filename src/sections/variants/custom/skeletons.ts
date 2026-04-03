@@ -1014,7 +1014,7 @@ export const CUSTOM_SKELETONS: CustomSectionSkeleton[] = [
     blocks: [
       { id: 'h1', type: 'heading', content: 'Before You Arrive', align: 'left', size: 'lg' },
       { id: 'p1', type: 'paragraph', content: '✓  RSVP by May 1st with your meal preference', align: 'left' },
-      { id: 'p2', type: 'paragraph', content: '✓  Book your hotel room — our block expires April 15th', align: 'left' },
+      { id: 'p2', type: 'paragraph', content: '✓  Reserve your stay — our room block expires April 15th', align: 'left' },
       { id: 'p3', type: 'paragraph', content: '✓  Arrange transport — the venue is 20 min from downtown', align: 'left' },
       { id: 'p4', type: 'paragraph', content: '✓  Dress code: cocktail attire (no white please!)', align: 'left' },
       { id: 'sp1', type: 'spacer', size: 'sm' },
@@ -1030,7 +1030,7 @@ export const CUSTOM_SKELETONS: CustomSectionSkeleton[] = [
     backgroundColor: '#f9fafb',
     paddingSize: 'lg',
     blocks: [
-      { id: 'h1', type: 'heading', content: 'Frequently Asked Questions', align: 'center', size: 'lg' },
+      { id: 'h1', type: 'heading', content: 'Frequently asked questions', align: 'center', size: 'lg' },
       { id: 'sp1', type: 'spacer', size: 'sm' },
       {
         id: 'cols1', type: 'columns',
@@ -1092,8 +1092,8 @@ export const CUSTOM_SKELETONS: CustomSectionSkeleton[] = [
     backgroundColor: '#fdf8f6',
     paddingSize: 'lg',
     blocks: [
-      { id: 'h1', type: 'heading', content: 'Questions?', align: 'center', size: 'lg' },
-      { id: 'p0', type: 'paragraph', content: 'We are happy to help. Reach out to our wedding coordinator for any logistics questions.', align: 'center' },
+      { id: 'h1', type: 'heading', content: 'Need help?', align: 'center', size: 'lg' },
+      { id: 'p0', type: 'paragraph', content: 'We are happy to help. Reach out to our wedding coordinator with any logistics questions.', align: 'center' },
       { id: 'sp1', type: 'spacer', size: 'sm' },
       {
         id: 'cols1', type: 'columns',

@@ -131,7 +131,7 @@ const GalleryCarousel: React.FC<SectionComponentProps<GalleryCarouselData>> = ({
           </div>
         ) : (
           <div className="rounded-2xl border border-stone-200 py-16 text-center text-stone-400 text-sm">
-            No photos added yet
+            No photos yet
           </div>
         )}
       </div>

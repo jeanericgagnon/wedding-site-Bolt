@@ -57,7 +57,7 @@ const TravelMapPins: React.FC<SectionComponentProps<TravelMapPinsData>> = ({ dat
             <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-3">Pinned locations</p>
             <div className="space-y-2.5">
               {data.pins.length === 0 ? (
-                <p className="text-xs text-text-tertiary">No pinned locations added yet.</p>
+                <p className="text-xs text-text-tertiary">No pinned locations yet.</p>
               ) : data.pins.map((pin) => (
                 <div key={pin.id} className="rounded-xl border border-border/35 bg-surface px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">

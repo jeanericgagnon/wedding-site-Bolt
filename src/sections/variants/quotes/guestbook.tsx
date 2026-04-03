@@ -103,7 +103,7 @@ const QuotesGuestbook: React.FC<SectionComponentProps<QuotesGuestbookData>> = ({
 
         <div className="space-y-3">
           {allEntries.length === 0 ? (
-            <p className="text-sm text-text-tertiary text-center py-10">No wishes yet.</p>
+            <p className="text-sm text-text-tertiary text-center py-10">No notes yet.</p>
           ) : (
             allEntries.map((entry) => (
               <article key={entry.id} className="rounded-xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">

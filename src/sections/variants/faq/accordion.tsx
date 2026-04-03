@@ -11,7 +11,7 @@ const FaqItemSchema = z.object({
 
 export const faqAccordionSchema = z.object({
   eyebrow: z.string().default('Questions'),
-  headline: z.string().default('Frequently Asked Questions'),
+  headline: z.string().default('Frequently asked questions'),
   subheadline: z.string().default(''),
   items: z.array(FaqItemSchema).default([]),
   expandFirstByDefault: z.boolean().default(false),
@@ -21,7 +21,7 @@ export type FaqAccordionData = z.infer<typeof faqAccordionSchema>;
 
 export const defaultFaqAccordionData: FaqAccordionData = {
   eyebrow: 'Questions',
-  headline: 'Frequently Asked Questions',
+  headline: 'Frequently asked questions',
   subheadline: 'Have a question not answered here? Reach out and we\'ll be happy to help.',
   expandFirstByDefault: false,
   items: [

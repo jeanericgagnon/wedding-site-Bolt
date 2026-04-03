@@ -76,7 +76,7 @@ const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => 
         {data.videos.length === 0 && (
           <div className="text-center py-16 text-stone-400">
             <Film size={32} className="mx-auto mb-3 opacity-40" />
-            <p className="text-sm">No videos added yet.</p>
+            <p className="text-sm">No videos yet.</p>
           </div>
         )}
 
@@ -115,7 +115,7 @@ const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => 
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                       <Film size={24} className="text-stone-600" />
-                      <p className="text-stone-500 text-xs">No video yet</p>
+                      <p className="text-stone-500 text-xs">Video coming soon</p>
                     </div>
                   )}
                 </div>

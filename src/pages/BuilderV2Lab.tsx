@@ -1452,7 +1452,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                       {(sectionBlocks[selected.id] ?? []).length === 0 && (
                         <div className="border border-dashed border-border rounded-md p-3 bg-white text-[11px] text-text-tertiary">
-                          No blocks yet. Use <span className="font-medium">+ Add to your page</span> to insert your first block.
+                          No blocks yet. Use <span className="font-medium">+ Add to your page</span> to add your first block.
                         </div>
                       )}
 

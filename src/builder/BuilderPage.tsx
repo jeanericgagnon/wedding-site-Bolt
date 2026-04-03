@@ -239,7 +239,7 @@ export const BuilderPage: React.FC = () => {
       <div className="h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 size={32} className="animate-spin text-rose-500 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Loading builder...</p>
+          <p className="text-sm text-gray-500">Loading your site editor…</p>
         </div>
       </div>
     );
@@ -252,22 +252,22 @@ export const BuilderPage: React.FC = () => {
           <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">💍</span>
           </div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">No wedding site yet</h2>
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">No website yet</h2>
           <p className="text-sm text-gray-500 mb-6">
-            Complete your wedding setup first to start building your site.
+            Finish setup first and Dayof will create the first version of your website for you.
           </p>
           <button
             onClick={() => navigate('/setup/names')}
             className="inline-flex items-center px-5 py-2.5 bg-rose-600 text-white text-sm font-medium rounded-xl hover:bg-rose-700 transition-colors"
           >
-            Start Setup
+            Start setup
           </button>
           <button
             onClick={() => navigate('/dashboard')}
             className="mt-3 flex items-center gap-1.5 mx-auto text-sm text-gray-400 hover:text-gray-600 transition-colors"
           >
             <ArrowLeft size={14} />
-            Back to Dashboard
+            Back to dashboard
           </button>
         </div>
       </div>
@@ -281,22 +281,22 @@ export const BuilderPage: React.FC = () => {
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle size={24} className="text-red-500" />
           </div>
-          <h2 className="text-base font-semibold text-gray-800 mb-2">Builder unavailable</h2>
-          <p className="text-sm text-gray-500 mb-5">{error ?? 'Unable to load project.'}</p>
+          <h2 className="text-base font-semibold text-gray-800 mb-2">Site editor unavailable</h2>
+          <p className="text-sm text-gray-500 mb-5">{error ?? 'Unable to load your project right now.'}</p>
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={() => user && loadBuilderProject(user.id)}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
             >
               <RefreshCw size={14} />
-              Try Again
+              Try again
             </button>
             <button
               onClick={() => navigate('/dashboard')}
               className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
             >
               <ArrowLeft size={14} />
-              Back to Dashboard
+              Back to dashboard
             </button>
           </div>
         </div>

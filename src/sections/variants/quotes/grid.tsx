@@ -112,7 +112,7 @@ const QuotesGrid: React.FC<SectionComponentProps<QuotesGridData>> = ({ data }) =
             {data.quotes.map((q, i) => <QuoteCard key={q.id} q={q} idx={i} />)}
           </div>
         ) : (
-          <p className={`text-center ${tm.empty} text-sm py-12`}>No quotes added yet.</p>
+          <p className={`text-center ${tm.empty} text-sm py-12`}>No notes added yet.</p>
         )}
       </div>
     </section>

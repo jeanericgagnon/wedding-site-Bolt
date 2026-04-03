@@ -158,7 +158,7 @@ const GalleryPolaroid: React.FC<SectionComponentProps<GalleryPolaroidData>> = ({
           </div>
         ) : (
           <div className="text-center py-20 text-stone-400">
-            <p className="text-sm">No photos added yet</p>
+            <p className="text-sm">No photos yet</p>
           </div>
         )}
       </div>

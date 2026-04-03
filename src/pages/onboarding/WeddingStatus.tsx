@@ -47,7 +47,7 @@ export const WeddingStatus: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStatus) {
-      setError('Please select your current wedding planning status');
+      setError('Please choose your current wedding planning status.');
       return;
     }
 

@@ -14,23 +14,23 @@ const ContactPersonSchema = z.object({
 
 export const contactFormSchema = z.object({
   eyebrow: z.string().default('Need help?'),
-  headline: z.string().default('Questions?'),
+  headline: z.string().default('Need help?'),
   subheadline: z.string().default('We\'d love to hear from you.'),
   introText: z.string().default(''),
   contacts: z.array(ContactPersonSchema).default([]),
   closingNote: z.string().default(''),
-  emailSubject: z.string().default('Wedding Question'),
+  emailSubject: z.string().default('Wedding question'),
 });
 
 export type ContactFormData = z.infer<typeof contactFormSchema>;
 
 export const defaultContactFormData: ContactFormData = {
   eyebrow: 'Need help?',
-  headline: 'Questions?',
+  headline: 'Need help?',
   subheadline: 'We\'d love to hear from you.',
-  introText: 'Have a question about the wedding? Don\'t hesitate to reach out — we\'re happy to help.',
-  emailSubject: 'Wedding Question',
-  closingNote: 'We\'ll get back to you within 24 hours.',
+  introText: 'Have a question about the wedding weekend? Reach out — we\'re happy to help.',
+  emailSubject: 'Wedding question',
+  closingNote: 'We\'ll get back to you as soon as we can.',
   contacts: [
     {
       id: '1',

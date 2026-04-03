@@ -42,7 +42,7 @@ const TierColumn: React.FC<{ title: string; hotels: z.infer<typeof TierHotelSche
     <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary mb-3">{title}</p>
     <div className="space-y-2.5">
       {hotels.length === 0 ? (
-        <p className="text-xs text-text-tertiary">No hotels added yet.</p>
+        <p className="text-xs text-text-tertiary">No hotels yet.</p>
       ) : (
         hotels.map((h) => (
           <div key={h.id} className="rounded-xl border border-border/35 bg-white px-3 py-2.5">

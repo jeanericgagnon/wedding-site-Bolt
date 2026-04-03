@@ -22,7 +22,7 @@ const HotelSchema = z.object({
 
 export const travelHotelBlockSchema = z.object({
   eyebrow: z.string().default('Where to stay'),
-  headline: z.string().default('Hotel Room Blocks'),
+  headline: z.string().default('Hotel room blocks'),
   subheadline: z.string().default(''),
   deadlineNote: z.string().default(''),
   generalNote: z.string().default(''),
@@ -35,9 +35,9 @@ export type TravelHotelBlockData = z.infer<typeof travelHotelBlockSchema>;
 
 export const defaultTravelHotelBlockData: TravelHotelBlockData = {
   eyebrow: 'Where to stay',
-  headline: 'Hotel Room Blocks',
+  headline: 'Hotel room blocks',
   subheadline: 'We\'ve secured discounted room blocks at the following hotels.',
-  deadlineNote: 'Room blocks expire May 1, 2025. Book early to secure your rate.',
+  deadlineNote: 'Room blocks expire May 1, 2025. Book early if you want the group rate.',
   generalNote: 'Mention our wedding when booking to receive the group rate.',
   showAmenities: true,
   showShuttle: true,
@@ -233,7 +233,7 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
                       className="flex items-center justify-center gap-1.5 w-full py-2 border border-stone-200 rounded-xl text-xs font-medium text-stone-600 hover:bg-stone-50 hover:border-stone-300 transition-all"
                     >
                       <ExternalLink size={12} />
-                      Book Now
+                      View stay
                     </a>
                   </div>
                 )}

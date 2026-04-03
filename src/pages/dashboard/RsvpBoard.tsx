@@ -88,10 +88,10 @@ export const DashboardRsvpBoard: React.FC = () => {
     <DashboardLayout currentPage="guests">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="rounded-2xl border border-border/40 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5">
-          <h1 className="text-2xl font-semibold text-text-primary">Live RSVP Status Board</h1>
-          <p className="text-sm text-text-secondary mt-1">Auto-refreshes every 15 seconds for event-day monitoring.</p>
+          <h1 className="text-2xl font-semibold text-text-primary">Live RSVP view</h1>
+          <p className="text-sm text-text-secondary mt-1">Auto-refreshes every 15 seconds so you can keep an eye on guest replies in real time.</p>
           {lastUpdated && (
-            <p className="text-xs text-text-tertiary mt-2">Last updated: {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</p>
+            <p className="text-xs text-text-tertiary mt-2">Last refreshed: {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</p>
           )}
         </div>
 
@@ -101,7 +101,7 @@ export const DashboardRsvpBoard: React.FC = () => {
             { label: 'Confirmed', value: stats.confirmed },
             { label: 'Pending', value: stats.pending },
             { label: 'Declined', value: stats.declined },
-            { label: 'Checked In', value: stats.checkedIn },
+            { label: 'Checked in', value: stats.checkedIn },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
               <p className="text-xs text-text-tertiary uppercase tracking-wide">{item.label}</p>
