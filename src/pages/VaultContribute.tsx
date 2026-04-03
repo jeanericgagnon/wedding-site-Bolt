@@ -948,7 +948,7 @@ export const VaultContribute: React.FC = () => {
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl text-sm transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-[1px] disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />Uploading and saving to {usingGoogleDrive ? 'Google Drive vault' : 'vault'}…</>
+                  <><Loader2 className="w-4 h-4 animate-spin" />Saving your contribution…</>
                 ) : (
                   <><Send className="w-4 h-4" />Save in vault</>
                 )}

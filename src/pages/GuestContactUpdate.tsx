@@ -208,7 +208,7 @@ export const GuestContactUpdate: React.FC = () => {
           </label>
 
           <button type="submit" disabled={!canSubmit || loading} className="w-full px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
-            {loading ? 'Saving…' : 'Submit update'}
+            {loading ? 'Saving…' : 'Save update'}
           </button>
         </form>
 
