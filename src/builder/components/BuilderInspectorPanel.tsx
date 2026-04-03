@@ -321,6 +321,7 @@ export const BuilderInspectorPanel: React.FC = () => {
             <div className="rounded-xl border border-gray-100 bg-[var(--color-surface-subtle)] p-3 text-[11px] text-[var(--color-text-secondary)] space-y-2">
               <p><span className="font-semibold">Tip:</span> layout changes preserve your content and connected data.</p>
               <p><span className="font-semibold">Tip:</span> check desktop, tablet, and mobile before going live.</p>
+              <p><span className="font-semibold">Tip:</span> keep moving in this order: content first, then layout, then style.</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('desktop'))}

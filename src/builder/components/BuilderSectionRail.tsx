@@ -125,6 +125,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                 </h3>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                   {!addTypeManifest ? 'Pick the kind of section you want, then choose the layout that fits best.' : `Choose the ${addTypeManifest.label.toLowerCase()} layout you want to add.`}
+                  {!addTypeManifest && <p className="mt-2 text-[11px] text-[var(--color-text-tertiary)]">Start with the essentials guests need most: welcome, venue, schedule, RSVP, and travel.</p>}
                 </p>
               </div>
               <div className="flex items-center gap-2">

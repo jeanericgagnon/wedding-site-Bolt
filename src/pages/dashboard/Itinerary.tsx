@@ -406,7 +406,7 @@ export const DashboardItinerary: React.FC = () => {
         .single();
 
       if (!site) {
-        setSaveError('Could not find your wedding site. Please refresh and try again.');
+        setSaveError('Could not find your website right now. Please refresh and try again.');
         return;
       }
 
@@ -628,7 +628,7 @@ Add to itinerary
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Start Time
+                  Start time
                 </label>
                 <Input
                   type="time"

@@ -308,7 +308,7 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
       const updated = await publicIncrementPurchase(purchasingItem.id, purchaserName || undefined);
       updateItem(updated);
     } catch (err: unknown) {
-      setPurchaseError(err instanceof Error ? err.message : 'Could not save purchase. Try again.');
+      setPurchaseError(err instanceof Error ? err.message : 'Could not save that purchase right now. Try again.');
       throw err;
     }
   }

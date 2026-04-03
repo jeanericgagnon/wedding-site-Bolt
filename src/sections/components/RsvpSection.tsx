@@ -55,7 +55,7 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
     try {
       const siteId = await getSiteId();
       if (!siteId) {
-        setError('Unable to find wedding site. Please try again.');
+        setError('Unable to find this wedding website right now. Please try again.');
         setSubmitting(false);
         return;
       }

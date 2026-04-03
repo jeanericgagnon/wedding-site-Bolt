@@ -29,6 +29,14 @@ interface OnboardingMapperInput {
 
 export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<string, unknown> {
   const normalizedStory = input.ourStory?.trim() || `${input.coupleNames.name1} and ${input.coupleNames.name2} are excited to celebrate with the people they love most.`;
+  const normalizedAttire = input.attire?.trim() || 'Dress code details will be shared here.';
+  const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || 'Recommended places to stay will be shared here.';
+  const normalizedParking = input.parking?.trim() || 'Parking details will be shared here closer to the wedding.';
+  const normalizedFaqs = input.customFaqs?.trim() || [
+    'What should I wear?::Dress code details will be shared here.',
+    'Where should I stay?::Recommended places to stay will be shared here.',
+    'Will there be parking?::Parking details will be shared here closer to the wedding.',
+  ].join('\n');
 
   const weddingData = fromOnboarding({
     partner1Name: input.coupleNames.name1,
@@ -40,12 +48,12 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     ourStory: normalizedStory,
     ceremonyTime: input.ceremonyTime || undefined,
     receptionTime: input.receptionTime || undefined,
-    attire: input.attire || undefined,
-    hotelRecommendations: input.hotelRecommendations || undefined,
-    parking: input.parking || undefined,
+    attire: normalizedAttire,
+    hotelRecommendations: normalizedHotelRecommendations,
+    parking: normalizedParking,
     rsvpDeadline: input.rsvpDeadline || undefined,
     registryLinks: input.registryLinks || undefined,
-    customFaqs: input.customFaqs || undefined,
+    customFaqs: normalizedFaqs,
     template: input.template,
     colorScheme: input.colorScheme || 'romantic',
   });

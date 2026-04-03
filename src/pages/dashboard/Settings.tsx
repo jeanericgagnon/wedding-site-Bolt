@@ -291,7 +291,7 @@ export const DashboardSettings: React.FC = () => {
         if (targetSiteId) setWeddingSiteId(targetSiteId);
       }
       if (!targetSiteId) {
-        setSlugError('Could not find your site. Refresh and try again.');
+        setSlugError('Could not find your website right now. Refresh and try again.');
         setSlugSaving(false);
         return;
       }
@@ -459,7 +459,7 @@ export const DashboardSettings: React.FC = () => {
           return;
         }
 
-        setRsvpQuestionsError('Could not find your wedding site record. Refresh and try again.');
+        setRsvpQuestionsError('Could not find your website record right now. Refresh and try again.');
         return;
       }
 
@@ -511,7 +511,7 @@ export const DashboardSettings: React.FC = () => {
       );
       window.location.href = url;
     } catch (err) {
-      setSubscribeError(err instanceof Error ? err.message : 'Could not start subscription checkout.');
+      setSubscribeError(err instanceof Error ? err.message : 'Could not start checkout right now.');
       setSubscribeLoading(false);
     }
   };

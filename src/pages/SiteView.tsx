@@ -375,7 +375,7 @@ export const SiteView: React.FC = () => {
         setPasswordGateError('Incorrect password. Please try again.');
       }
     } catch {
-      setPasswordGateError('Could not verify password. Please try again.');
+      setPasswordGateError('Could not verify that password right now. Please try again.');
     } finally {
       setPasswordGateChecking(false);
     }

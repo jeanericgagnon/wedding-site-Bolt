@@ -50,7 +50,7 @@ const ensureMinimalWeddingSite = async (userId: string, email?: string | null): 
     if (!collision) throw error;
   }
 
-  throw new Error('Could not create your site record. Please refresh and try again.');
+  throw new Error('Could not create your website record right now. Please refresh and try again.');
 };
 
 export const PaymentRequired: React.FC = () => {
@@ -67,7 +67,7 @@ export const PaymentRequired: React.FC = () => {
     ensureMinimalWeddingSite(user.id, user.email)
       .then(id => setWeddingSiteId(id))
       .catch((err: unknown) => {
-        setError((err as Error).message || 'Could not initialize your account.');
+        setError((err as Error).message || 'Could not finish setting up your account right now.');
       });
   }, [user]);
 
@@ -88,7 +88,7 @@ export const PaymentRequired: React.FC = () => {
         navigate('/login?reason=session_expired', { replace: true });
         return;
       }
-      setError(err instanceof Error ? err.message : 'Could not start checkout. Please try again.');
+      setError(err instanceof Error ? err.message : 'Could not start checkout right now. Please try again.');
       setLoading(false);
     }
   };
@@ -109,7 +109,7 @@ export const PaymentRequired: React.FC = () => {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not check payment status.');
+      setError(err instanceof Error ? err.message : 'Could not check payment status right now.');
     } finally {
       setCheckingStatus(false);
     }

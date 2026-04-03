@@ -14,10 +14,18 @@ export function generateInitialLayout(
   const now = new Date().toISOString();
   const template = getTemplate(templateId);
 
+  const hasRealFaqContent = data.faq.some((item) => Boolean(item.q?.trim() && item.a?.trim()));
+  const hasRealTravelContent = Boolean(
+    data.travel?.hotelInfo?.trim() ||
+    data.travel?.flightInfo?.trim() ||
+    data.travel?.parkingInfo?.trim()
+  );
+  const hasRealRegistryContent = data.registry.links.length > 0;
+
   const shouldDisableEmptySection = (type: SectionInstance['type']) => {
-    if (type === 'registry') return data.registry.links.length === 0;
-    if (type === 'faq') return data.faq.length === 0;
-    if (type === 'travel') return !data.travel?.hotelInfo && !data.travel?.flightInfo && !data.travel?.parkingInfo && !(data.schedule?.length > 1);
+    if (type === 'registry') return !hasRealRegistryContent;
+    if (type === 'faq') return !hasRealFaqContent;
+    if (type === 'travel') return !hasRealTravelContent && !(data.schedule?.length > 1);
     return false;
   };
 
@@ -43,7 +51,7 @@ export function generateInitialLayout(
       section.bindings.linkIds = data.registry.links.map(l => l.id);
     }
 
-    if (sectionDef.type === 'faq' && data.faq.length > 0) {
+    if (sectionDef.type === 'faq' && hasRealFaqContent) {
       section.bindings.faqIds = data.faq.map(f => f.id);
     }
 

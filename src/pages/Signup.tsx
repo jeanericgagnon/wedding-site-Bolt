@@ -40,7 +40,7 @@ async function ensureMinimalWeddingSite(userId: string, email: string): Promise<
     if (!collision) throw error;
   }
 
-  throw new Error('Could not reserve a site URL. Please try again.');
+  throw new Error('Could not reserve a website URL right now. Please try again.');
 }
 
 export const Signup: React.FC = () => {

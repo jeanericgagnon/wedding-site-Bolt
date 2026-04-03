@@ -120,8 +120,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         ? `${activePage?.sections?.length ?? 0} section(s) on ${activePage?.title ?? 'current page'}`
         : `No sections on ${activePage?.title ?? 'current page'} — add one from the right panel.`,
     });
-    items.push({ label: 'No active publish blockers', done: !publishValidationError, detail: publishValidationError ?? 'Ready to go live.' });
-    items.push({ label: 'Latest edits are saved', done: !isDirty, detail: isDirty ? 'Save your changes before going live.' : 'All changes saved.' });
+    items.push({ label: 'No active go-live blockers', done: !publishValidationError, detail: publishValidationError ?? 'Ready to go live.' });
+    items.push({ label: 'Latest edits are saved', done: !isDirty, detail: isDirty ? 'Save your latest changes before going live.' : 'All changes saved.' });
     return items;
   }, [projectPages.length, activePage?.sections?.length, activePage?.title, publishValidationError, isDirty]);
   const checklistDoneCount = checklistItems.filter((i) => i.done).length;
@@ -405,7 +405,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
         {showPublishChecklist && (
           <div className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm space-y-1 max-h-64 overflow-y-auto">
-            <p className="font-semibold text-gray-800 mb-1">Go-live readiness</p>
+            <p className="font-semibold text-gray-800 mb-1">Before you go live</p>
+            <p className="text-[11px] text-gray-500 mb-2">Draft means only you can see it. Going live makes it visible at your public URL.</p>
             <ul className="space-y-1">
               {checklistItems.map((item) => (
                 <li key={item.label} className="flex items-start gap-1.5 justify-between">
@@ -419,16 +420,16 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   {!item.done && item.label === 'Latest edits are saved' && (
                     <button onClick={() => { onSave(); setShowPublishChecklist(false); }} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100">Save now</button>
                   )}
-                  {!item.done && item.label === 'No active publish blockers' && onFixPublishBlockers && (
+                  {!item.done && item.label === 'No active go-live blockers' && onFixPublishBlockers && (
                     <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 transition-colors hover:bg-amber-100">Fix this</button>
                   )}
-                  {!item.done && item.label === 'No active publish blockers' && publishIssueKind === 'no-enabled-sections' && onFixPublishBlockers && (
+                  {!item.done && item.label === 'No active go-live blockers' && publishIssueKind === 'no-enabled-sections' && onFixPublishBlockers && (
                     <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open section</button>
                   )}
-                  {!item.done && item.label === 'No active publish blockers' && publishIssueKind === 'no-pages' && onFixPublishBlockers && (
+                  {!item.done && item.label === 'No active go-live blockers' && publishIssueKind === 'no-pages' && onFixPublishBlockers && (
                     <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Choose a design</button>
                   )}
-                  {!item.done && item.label === 'No active publish blockers' && ['missing-couple-names', 'missing-event-date', 'missing-venue', 'rsvp-disabled'].includes(publishIssueKind ?? '') && onFixPublishBlockers && (
+                  {!item.done && item.label === 'No active go-live blockers' && ['missing-couple-names', 'missing-event-date', 'missing-venue', 'rsvp-disabled'].includes(publishIssueKind ?? '') && onFixPublishBlockers && (
                     <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open guidance</button>
                   )}
                   {!item.done && item.label === 'At least one page exists' && (

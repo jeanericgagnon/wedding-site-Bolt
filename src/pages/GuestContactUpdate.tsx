@@ -117,7 +117,7 @@ export const GuestContactUpdate: React.FC = () => {
       }
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {
-      setResult({ ok: false, message: err instanceof Error ? err.message : 'Unable to submit update.' });
+      setResult({ ok: false, message: err instanceof Error ? err.message : 'Could not send your update right now.' });
     } finally {
       setLoading(false);
     }

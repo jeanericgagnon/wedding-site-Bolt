@@ -371,7 +371,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
       if (url) setResolvedEntryLinks((prev) => ({ ...prev, [entry.id]: url }));
       return url;
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Could not resolve attachment link.');
+      window.alert(err instanceof Error ? err.message : 'Could not open that attachment right now.');
       return null;
     } finally {
       setResolvingEntryId(null);
@@ -716,7 +716,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
       await onSave(config.id, label, durationYears);
       onClose();
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Could not save vault changes.');
+      setLocalError(err instanceof Error ? err.message : 'Could not save your vault changes right now.');
     } finally {
       setSaving(false);
     }

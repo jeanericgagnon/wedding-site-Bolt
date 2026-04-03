@@ -718,6 +718,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             <div>
               <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Template Gallery</h2>
               <p className="text-sm text-neutral-600 mt-0.5">Choose the design direction that feels closest to your wedding.</p>
+              <p className="text-[11px] text-neutral-500 mt-2">Start with the best fit first. You can still swap layouts, photos, and colors after.</p>
             </div>
             <button
               onClick={handleCloseGallery}

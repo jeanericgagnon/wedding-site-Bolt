@@ -280,7 +280,7 @@ export const DashboardOverview: React.FC = () => {
         recentRsvps,
       });
     } catch {
-      setError('Could not load overview data.');
+      setError('Could not load your overview right now.');
     } finally {
       setLoading(false);
     }
@@ -553,7 +553,7 @@ export const DashboardOverview: React.FC = () => {
                     <div>
                       <CardTitle>Your wedding site</CardTitle>
                       <CardDescription>
-                        {stats?.isPublished ? 'Your site is live' : 'Your site is still in draft'}
+                        {stats?.isPublished ? 'Guests can see your live website' : 'Only you can see this draft right now'}
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">

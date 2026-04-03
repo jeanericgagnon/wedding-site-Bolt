@@ -193,7 +193,7 @@ export const VaultContribute: React.FC = () => {
       setRecordSeconds(0);
       setIsRecordingVoice(true);
     } catch {
-      setSubmitError('Could not start microphone recording. Please allow mic access or upload audio file.');
+      setSubmitError('Could not start microphone recording. Please allow microphone access or upload an audio file instead.');
     }
   }
 
@@ -338,7 +338,7 @@ export const VaultContribute: React.FC = () => {
 
     await new Promise<void>((resolve, reject) => {
       video.onloadedmetadata = () => resolve();
-      video.onerror = () => reject(new Error('Could not read video metadata'));
+      video.onerror = () => reject(new Error('Could not read that video file'));
     });
 
     const maxW = 1280;
@@ -562,7 +562,7 @@ export const VaultContribute: React.FC = () => {
     setUploadProgress(null);
     setCompressionStatus(null);
     if (error) {
-      setSubmitError(`Could not save your message: ${error.message}`);
+      setSubmitError(`Could not save your message right now: ${error.message}`);
     } else {
       markSubmitted(vaultConfig.duration_years);
       setStep('success');

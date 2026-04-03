@@ -227,7 +227,7 @@ export const Login: React.FC = () => {
             <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back</h1>
-          <p className="text-text-secondary">Sign in to manage your wedding site</p>
+          <p className="text-text-secondary">Sign in to manage your wedding website</p>
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
