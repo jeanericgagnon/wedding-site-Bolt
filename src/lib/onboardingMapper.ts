@@ -29,13 +29,13 @@ interface OnboardingMapperInput {
 
 export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<string, unknown> {
   const normalizedStory = input.ourStory?.trim() || `${input.coupleNames.name1} and ${input.coupleNames.name2} are excited to celebrate with the people they love most.`;
-  const normalizedAttire = input.attire?.trim() || 'Dress code details will be shared here.';
-  const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || 'Recommended places to stay will be shared here.';
-  const normalizedParking = input.parking?.trim() || 'Parking details will be shared here closer to the wedding.';
+  const normalizedAttire = input.attire?.trim() || 'Dress code details will be shared here closer to the wedding.';
+  const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || (input.locationName?.trim() ? `Recommended places to stay near ${input.locationName.trim()} will be shared here.` : 'Recommended places to stay will be shared here.');
+  const normalizedParking = input.parking?.trim() || 'Parking details and arrival notes will be shared here closer to the wedding.';
   const normalizedFaqs = input.customFaqs?.trim() || [
-    'What should I wear?::Dress code details will be shared here.',
-    'Where should I stay?::Recommended places to stay will be shared here.',
-    'Will there be parking?::Parking details will be shared here closer to the wedding.',
+    'What should I wear?::Dress code details will be shared here closer to the wedding.',
+    `Where should I stay?::${input.locationName?.trim() ? `Recommended places to stay near ${input.locationName.trim()} will be shared here.` : 'Recommended places to stay will be shared here.'}`,
+    'Will there be parking?::Parking details and arrival notes will be shared here closer to the wedding.',
   ].join('\n');
 
   const weddingData = fromOnboarding({
