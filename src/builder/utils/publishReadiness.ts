@@ -9,6 +9,13 @@ export type PublishIssue =
   | { kind: 'missing-venue'; message: string }
   | { kind: 'rsvp-disabled'; message: string };
 
+export interface PublishReadinessItem {
+  id: string;
+  label: string;
+  done: boolean;
+  detail: string;
+}
+
 export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDataV1 | null): PublishIssue | null => {
   if (!project.pages.length) {
     return { kind: 'no-pages', message: 'Add at least one page before going live.' };
@@ -51,3 +58,73 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
 
 export const getPublishValidationError = (project: BuilderProject, weddingData?: WeddingDataV1 | null): string | null =>
   getPublishIssue(project, weddingData)?.message ?? null;
+
+export const buildPublishReadiness = (
+  project: BuilderProject,
+  weddingData?: WeddingDataV1 | null,
+  options?: { isDirty?: boolean }
+): PublishReadinessItem[] => {
+  const activePage = project.pages[0];
+  const enabledSectionCount = project.pages.reduce(
+    (count, page) => count + page.sections.filter((section) => section.enabled).length,
+    0
+  );
+  const hasVenue = Boolean(weddingData?.venues.some((v) => !!v.name?.trim() || !!v.address?.trim()));
+  const hasNames = Boolean(weddingData?.couple.partner1Name?.trim() && weddingData?.couple.partner2Name?.trim());
+  const hasWeddingDate = Boolean(weddingData?.event.weddingDateISO);
+  const hasRsvpEnabled = weddingData ? weddingData.rsvp.enabled : true;
+  const hasUnsavedChanges = Boolean(options?.isDirty);
+
+  return [
+    {
+      id: 'page',
+      label: 'A page exists',
+      done: project.pages.length > 0,
+      detail: project.pages.length > 0 ? `${project.pages.length} page ready` : 'Add a page or apply a starting design.',
+    },
+    {
+      id: 'sections',
+      label: 'At least one section is turned on',
+      done: enabledSectionCount > 0,
+      detail: enabledSectionCount > 0 ? `${enabledSectionCount} section${enabledSectionCount === 1 ? '' : 's'} visible` : 'Turn on a section before going live.',
+    },
+    {
+      id: 'names',
+      label: 'Couple names are filled in',
+      done: hasNames,
+      detail: hasNames ? 'Names are ready for guests.' : 'Add both names exactly how you want them shown.',
+    },
+    {
+      id: 'date',
+      label: 'Wedding date is set',
+      done: hasWeddingDate,
+      detail: hasWeddingDate ? 'Date is ready.' : 'Add your wedding date.',
+    },
+    {
+      id: 'venue',
+      label: 'Venue details are set',
+      done: hasVenue,
+      detail: hasVenue ? 'Venue details are ready.' : 'Add at least one venue name or address.',
+    },
+    {
+      id: 'rsvp',
+      label: 'RSVP is turned on',
+      done: hasRsvpEnabled,
+      detail: hasRsvpEnabled ? 'Guests can reply.' : 'Turn RSVP on or remove RSVP calls to action.',
+    },
+    {
+      id: 'saved',
+      label: 'Latest edits are saved',
+      done: !hasUnsavedChanges,
+      detail: hasUnsavedChanges ? 'Save your latest draft changes before going live.' : 'Everything is saved.',
+    },
+    {
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: Boolean(activePage?.sections.some((section) => section.enabled)),
+      detail: activePage?.sections.some((section) => section.enabled)
+        ? `${activePage?.title ?? 'Current page'} has visible sections.`
+        : `Turn on content for ${activePage?.title ?? 'the current page'}.`,
+    },
+  ];
+};

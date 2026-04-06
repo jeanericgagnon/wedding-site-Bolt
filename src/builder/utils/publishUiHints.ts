@@ -1,24 +1,58 @@
 export const getPublishBlockedHints = (publishValidationError?: string | null): string[] => {
   if (!publishValidationError) return [];
   if (publishValidationError.includes('page')) {
-    return ['Open Templates and apply a starter layout.', 'Or add a page/section from the Add panel.'];
+    return [
+      'Open Designs and apply a starting layout.',
+      'Or add a page and turn on at least one section.',
+    ];
   }
-  if (publishValidationError.includes('Enable at least one section')) {
-    return ['Select any section on canvas.', 'Enable it in the inspector panel.'];
+  if (publishValidationError.includes('Turn on at least one section')) {
+    return [
+      'Select a section on the canvas.',
+      'Turn it on in the right panel, then save and go live again.',
+    ];
   }
   if (publishValidationError.includes('partner names')) {
-    return ['Open couple details.', 'Fill both partner names exactly as you want them shown.'];
+    return [
+      'Open your couple details.',
+      'Add both names exactly how you want guests to see them.',
+    ];
   }
   if (publishValidationError.includes('wedding date')) {
-    return ['Open event settings.', 'Add your wedding date before going live.'];
+    return [
+      'Open event details.',
+      'Add your wedding date before going live.',
+    ];
   }
   if (publishValidationError.includes('venue')) {
-    return ['Add at least one venue name or address.', 'Confirm the venue appears in your details section.'];
+    return [
+      'Add at least one venue name or address.',
+      'Make sure guests can tell where they are meant to go.',
+    ];
   }
-  if (publishValidationError.includes('Enable RSVP')) {
-    return ['Turn RSVP back on in settings.', 'Or remove RSVP CTAs if you are not collecting responses yet.'];
+  if (publishValidationError.includes('RSVP')) {
+    return [
+      'Turn RSVP back on before going live.',
+      'If you are not collecting replies yet, remove RSVP calls to action first.',
+    ];
   }
-  return ['Use Fix blockers to jump to the right place.'];
+  return ['Use Fix blockers to jump to the next thing to finish.'];
+};
+
+export const getPublishCtaLabel = (isPublished: boolean): string =>
+  isPublished ? 'Update live site' : 'Go live';
+
+export const getPublishStatusLabel = (isPublished: boolean, hasUnsavedChanges: boolean): string => {
+  if (!isPublished && hasUnsavedChanges) return 'Draft has unsaved changes';
+  if (!isPublished) return 'Draft only';
+  if (hasUnsavedChanges) return 'Live site unchanged — you have new draft edits';
+  return 'Live site is up to date';
+};
+
+export const getPublishProgressLabel = (done: number, total: number): string => {
+  if (total <= 0) return 'No checks yet';
+  if (done >= total) return 'Ready to go live';
+  return `${total - done} thing${total - done === 1 ? '' : 's'} left before go live`;
 };
 
 export const shouldAutoPublishFromSearch = (search: string): boolean => {

@@ -27,7 +27,7 @@ export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistIte
   {
     id: 'names',
     label: 'Add couple names',
-    done: Boolean(stats.coupleName1 || stats.coupleName2),
+    done: Boolean(stats.coupleName1 && stats.coupleName2),
     actionLabel: 'Edit settings',
     route: '/dashboard/settings',
   },
@@ -61,7 +61,7 @@ export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistIte
   },
   {
     id: 'publish',
-    label: 'Publish site once',
+    label: 'Go live once',
     done: stats.isPublished,
     actionLabel: stats.isPublished ? 'Open site editor' : 'Go live',
     route: getPublishBuilderRoute(stats.isPublished),
@@ -69,6 +69,27 @@ export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistIte
 ];
 
 export const buildPublishReadinessItems = (stats: OverviewChecklistStats): ChecklistItemDef[] => [
+  {
+    id: 'names',
+    label: 'Couple names are filled in',
+    done: Boolean(stats.coupleName1 && stats.coupleName2),
+    actionLabel: 'Open settings',
+    route: '/dashboard/settings',
+  },
+  {
+    id: 'date',
+    label: 'Wedding date is set',
+    done: Boolean(stats.weddingDate),
+    actionLabel: 'Set date',
+    route: '/dashboard/settings',
+  },
+  {
+    id: 'venue',
+    label: 'Venue details are ready',
+    done: Boolean(stats.venueName || stats.venueLocation),
+    actionLabel: 'Add venue',
+    route: '/dashboard/settings',
+  },
   {
     id: 'slug',
     label: 'Website URL is set',
@@ -82,13 +103,6 @@ export const buildPublishReadinessItems = (stats: OverviewChecklistStats): Check
     done: Boolean(stats.templateName),
     actionLabel: 'Open templates',
     route: '/templates',
-  },
-  {
-    id: 'date',
-    label: 'Wedding date set',
-    done: Boolean(stats.weddingDate),
-    actionLabel: 'Set date',
-    route: '/dashboard/settings',
   },
   {
     id: 'published',

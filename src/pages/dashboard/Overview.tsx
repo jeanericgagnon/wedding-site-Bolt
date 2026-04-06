@@ -12,7 +12,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
-import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, AlertCircle, Clock, EyeOff } from 'lucide-react';
+import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
@@ -141,7 +141,9 @@ export const DashboardOverview: React.FC = () => {
     };
 
     void loadSuggestions();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [stats?.siteSlug, isDemoMode]);
 
   async function loadStats() {
@@ -151,9 +153,9 @@ export const DashboardOverview: React.FC = () => {
 
     try {
       if (isDemoMode) {
-        const confirmed = demoGuests.filter(g => g.rsvp_status === 'confirmed');
-        const declined = demoGuests.filter(g => g.rsvp_status === 'declined');
-        const pending = demoGuests.filter(g => g.rsvp_status === 'pending');
+        const confirmed = demoGuests.filter((g) => g.rsvp_status === 'confirmed');
+        const declined = demoGuests.filter((g) => g.rsvp_status === 'declined');
+        const pending = demoGuests.filter((g) => g.rsvp_status === 'pending');
 
         const recentRsvps: RecentRsvp[] = [...confirmed, ...declined]
           .slice(0, 5)
@@ -253,8 +255,8 @@ export const DashboardOverview: React.FC = () => {
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
       const isPublished = Boolean(
         site?.is_published === true ||
-        siteJson?.publishStatus === 'published' ||
-        (typeof siteJson?.publishedVersion === 'number' && (siteJson.publishedVersion as number) > 0)
+          siteJson?.publishStatus === 'published' ||
+          (typeof siteJson?.publishedVersion === 'number' && (siteJson.publishedVersion as number) > 0)
       );
 
       setStats({
@@ -383,10 +385,10 @@ export const DashboardOverview: React.FC = () => {
             {!loading && stats && !stats.isPublished && (
               <div className="mt-2 space-y-1.5">
                 <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                  Publish needed
+                  Draft only
                 </div>
                 {firstPublishBlocker && (
-                  <p className="text-xs text-amber-700">Next blocker: {firstPublishBlocker.label}</p>
+                  <p className="text-xs text-amber-700">Next thing before go live: {firstPublishBlocker.label}</p>
                 )}
               </div>
             )}
@@ -403,9 +405,9 @@ export const DashboardOverview: React.FC = () => {
                   variant="accent"
                   size="sm"
                   onClick={() => navigate('/dashboard/builder?publishNow=1')}
-                  title="Open your site editor and go straight to publish"
+                  title="Open your site editor and go straight to the go-live checklist"
                 >
-                  Go live
+                  Open go-live checklist
                 </Button>
                 <Button
                   variant="outline"
@@ -425,9 +427,7 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {error && (
-          <DashboardStateBlock title="Couldn’t load overview right now" description={error} tone="error" />
-        )}
+        {error && <DashboardStateBlock title="Couldn’t load overview right now" description={error} tone="error" />}
 
         {loading ? (
           <div className="space-y-6 animate-pulse" aria-hidden="true">
@@ -449,16 +449,10 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-text-primary mb-1">
-                    {stats ? `${stats.confirmedGuests} / ${stats.totalGuests}` : '—'}
-                  </p>
+                  <p className="text-2xl font-bold text-text-primary mb-1">{stats ? `${stats.confirmedGuests} / ${stats.totalGuests}` : '—'}</p>
                   <p className="text-sm text-text-secondary">RSVPs received</p>
-                  {responseRate !== null && (
-                    <p className="text-xs text-text-tertiary mt-2">{responseRate}% replied so far</p>
-                  )}
-                  {stats?.totalGuests === 0 && (
-                    <p className="text-xs text-text-tertiary mt-2">Add guests to get started</p>
-                  )}
+                  {responseRate !== null && <p className="text-xs text-text-tertiary mt-2">{responseRate}% replied so far</p>}
+                  {stats?.totalGuests === 0 && <p className="text-xs text-text-tertiary mt-2">Add guests to get started</p>}
                 </div>
               </Card>
 
@@ -469,16 +463,10 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-text-primary mb-1">
-                    {stats ? stats.confirmedGuests : '—'}
-                  </p>
+                  <p className="text-2xl font-bold text-text-primary mb-1">{stats ? stats.confirmedGuests : '—'}</p>
                   <p className="text-sm text-text-secondary">Confirmed guests</p>
-                  {stats && stats.declinedGuests > 0 && (
-                    <p className="text-xs text-text-tertiary mt-2">{stats.declinedGuests} declined</p>
-                  )}
-                  {stats && stats.pendingGuests > 0 && stats.declinedGuests === 0 && (
-                    <p className="text-xs text-text-tertiary mt-2">{stats.pendingGuests} pending</p>
-                  )}
+                  {stats && stats.declinedGuests > 0 && <p className="text-xs text-text-tertiary mt-2">{stats.declinedGuests} declined</p>}
+                  {stats && stats.pendingGuests > 0 && stats.declinedGuests === 0 && <p className="text-xs text-text-tertiary mt-2">{stats.pendingGuests} pending</p>}
                 </div>
               </Card>
 
@@ -489,15 +477,9 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-text-primary mb-1">
-                    {stats?.pendingGuests ?? '—'}
-                  </p>
+                  <p className="text-2xl font-bold text-text-primary mb-1">{stats?.pendingGuests ?? '—'}</p>
                   <p className="text-sm text-text-secondary">Awaiting response</p>
-                  {stats && stats.totalGuests > 0 && (
-                    <p className="text-xs text-text-tertiary mt-2">
-                      of {stats.totalGuests} invited
-                    </p>
-                  )}
+                  {stats && stats.totalGuests > 0 && <p className="text-xs text-text-tertiary mt-2">of {stats.totalGuests} invited</p>}
                 </div>
               </Card>
 
@@ -511,33 +493,18 @@ export const DashboardOverview: React.FC = () => {
                   {stats?.daysUntilWedding !== null && stats?.daysUntilWedding !== undefined ? (
                     <>
                       <p className="text-2xl font-bold text-text-primary mb-1">
-                        {stats.daysUntilWedding > 0
-                          ? stats.daysUntilWedding
-                          : stats.daysUntilWedding === 0
-                          ? 'Today'
-                          : `+${Math.abs(stats.daysUntilWedding)}`}
+                        {stats.daysUntilWedding > 0 ? stats.daysUntilWedding : stats.daysUntilWedding === 0 ? 'Today' : `+${Math.abs(stats.daysUntilWedding)}`}
                       </p>
                       <p className="text-sm text-text-secondary">
-                        {stats.daysUntilWedding > 0
-                          ? 'Days until wedding'
-                          : stats.daysUntilWedding === 0
-                          ? 'Wedding day!'
-                          : 'Days since wedding'}
+                        {stats.daysUntilWedding > 0 ? 'Days until wedding' : stats.daysUntilWedding === 0 ? 'Wedding day!' : 'Days since wedding'}
                       </p>
-                      {stats.weddingDate && (
-                        <p className="text-xs text-text-tertiary mt-2">
-                          {formatWeddingDate(stats.weddingDate)}
-                        </p>
-                      )}
+                      {stats.weddingDate && <p className="text-xs text-text-tertiary mt-2">{formatWeddingDate(stats.weddingDate)}</p>}
                     </>
                   ) : (
                     <>
                       <p className="text-2xl font-bold text-text-primary mb-1">—</p>
                       <p className="text-sm text-text-secondary">Days until wedding</p>
-                      <Link
-                        to="/dashboard/settings"
-                        className="text-xs text-primary hover:text-primary-hover mt-2 block"
-                      >
+                      <Link to="/dashboard/settings" className="text-xs text-primary hover:text-primary-hover mt-2 block">
                         Set your date
                       </Link>
                     </>
@@ -553,16 +520,12 @@ export const DashboardOverview: React.FC = () => {
                     <div>
                       <CardTitle>Your wedding site</CardTitle>
                       <CardDescription>
-                        {stats?.isPublished ? 'Guests can see your live website' : 'Only you can see this draft right now'}
+                        {stats?.isPublished ? 'Guests can see your live website' : 'Only you can see this draft right now — guests cannot yet'}
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={stats?.isPublished ? 'success' : 'secondary'}>
-                        {stats?.isPublished ? 'Live' : 'Draft only'}
-                      </Badge>
-                      {typeof stats?.publishedVersion === 'number' && (
-                        <Badge variant="secondary">v{stats.publishedVersion}</Badge>
-                      )}
+                      <Badge variant={stats?.isPublished ? 'success' : 'secondary'}>{stats?.isPublished ? 'Live' : 'Draft only'}</Badge>
+                      {typeof stats?.publishedVersion === 'number' && <Badge variant="secondary">v{stats.publishedVersion}</Badge>}
                     </div>
                   </div>
                 </CardHeader>
@@ -570,10 +533,7 @@ export const DashboardOverview: React.FC = () => {
                   {stats?.siteSlug ? (
                     <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                       <span className="text-text-secondary">Site URL</span>
-                      <a
-                        href={`/site/${stats.siteSlug}`}
-                        className="text-primary hover:text-primary-hover flex items-center gap-2 text-sm font-medium"
-                      >
+                      <a href={`/site/${stats.siteSlug}`} className="text-primary hover:text-primary-hover flex items-center gap-2 text-sm font-medium">
                         {stats.siteSlug}.dayof.love
                         <ExternalLink className="w-4 h-4" aria-hidden="true" />
                       </a>
@@ -586,13 +546,11 @@ export const DashboardOverview: React.FC = () => {
                   )}
                   <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                     <span className="text-text-secondary">Status</span>
-                    <span className="text-text-primary">{stats?.isPublished ? 'Live' : 'Draft only'}</span>
+                    <span className="text-text-primary">{stats?.isPublished ? 'Live and visible to guests' : 'Draft only — visible only to you'}</span>
                   </div>
                   <div className="flex items-center justify-between py-3">
                     <span className="text-text-secondary">Last live update</span>
-                    <span className="text-text-primary">
-                      {stats?.lastPublishedAt ? formatRelativeTime(stats.lastPublishedAt) : '—'}
-                    </span>
+                    <span className="text-text-primary">{stats?.lastPublishedAt ? formatRelativeTime(stats.lastPublishedAt) : '—'}</span>
                   </div>
 
                   <details className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
@@ -603,26 +561,20 @@ export const DashboardOverview: React.FC = () => {
                     <div className="mt-3 space-y-3">
                       <div className="flex items-center justify-between py-2 border-b border-border-subtle">
                         <span className="text-text-secondary text-sm">Template</span>
-                        <span className="text-text-primary font-medium capitalize text-sm">
-                          {stats?.templateName?.replace(/-/g, ' ') ?? 'Default'}
-                        </span>
+                        <span className="text-text-primary font-medium capitalize text-sm">{stats?.templateName?.replace(/-/g, ' ') ?? 'Default'}</span>
                       </div>
                       <div className="flex items-center justify-between py-2 border-b border-border-subtle">
                         <span className="text-text-secondary text-sm">Published version</span>
-                        <span className="text-text-primary font-medium text-sm">
-                          {typeof stats?.publishedVersion === 'number' ? `v${stats.publishedVersion}` : '—'}
-                        </span>
+                        <span className="text-text-primary font-medium text-sm">{typeof stats?.publishedVersion === 'number' ? `v${stats.publishedVersion}` : '—'}</span>
                       </div>
                       <div className="flex items-center justify-between py-2">
                         <span className="text-text-secondary text-sm">Last updated</span>
-                        <span className="text-text-primary text-sm">
-                          {stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}
-                        </span>
+                        <span className="text-text-primary text-sm">{stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}</span>
                       </div>
 
                       {!stats?.isPublished && (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-                          Before you go live: {stats?.siteSlug ? 'URL is ready' : 'choose your URL'} · {stats?.templateName ? 'template is chosen' : 'choose a template'}.
+                          Going live makes this site visible at your public URL. Until then, it stays draft-only.
                         </div>
                       )}
 
@@ -639,24 +591,14 @@ export const DashboardOverview: React.FC = () => {
                   </details>
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     {stats?.siteSlug && (
-                      <Button
-                        variant="accent"
-                        size="md"
-                        fullWidth
-                        onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}
-                      >
+                      <Button variant="accent" size="md" fullWidth onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}>
                         <ExternalLink className="w-5 h-5 mr-2" aria-hidden="true" />
-                        {stats.isPublished ? 'Open live website' : 'Preview website'}
+                        {stats.isPublished ? 'Open live website' : 'Preview draft website'}
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      size="md"
-                      fullWidth
-                      onClick={() => navigate('/dashboard/builder?photoTips=1')}
-                    >
+                    <Button variant="outline" size="md" fullWidth onClick={() => navigate('/dashboard/builder?photoTips=1')}>
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
-                      {stats?.isPublished ? 'Update live website' : 'Edit and go live'}
+                      {stats?.isPublished ? 'Edit live website' : 'Edit draft and go live'}
                     </Button>
                   </div>
                 </CardContent>
@@ -672,21 +614,11 @@ export const DashboardOverview: React.FC = () => {
                     <div className="space-y-4">
                       {stats.recentRsvps.map((rsvp) => (
                         <div key={rsvp.id} className="flex gap-4">
-                          <div
-                            className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                              rsvp.status === 'confirmed' ? 'bg-success' : 'bg-error'
-                            }`}
-                          />
+                          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${rsvp.status === 'confirmed' ? 'bg-success' : 'bg-error'}`} />
                           <div className="flex-1">
-                            <p className="text-sm text-text-primary font-medium">
-                              {rsvp.guestName}
-                            </p>
-                            <p className="text-xs text-text-secondary">
-                              {rsvp.status === 'confirmed' ? 'Confirmed attendance' : 'Declined'}
-                            </p>
-                            <p className="text-xs text-text-tertiary mt-1">
-                              {formatRelativeTime(rsvp.receivedAt)}
-                            </p>
+                            <p className="text-sm text-text-primary font-medium">{rsvp.guestName}</p>
+                            <p className="text-xs text-text-secondary">{rsvp.status === 'confirmed' ? 'Confirmed attendance' : 'Declined'}</p>
+                            <p className="text-xs text-text-tertiary mt-1">{formatRelativeTime(rsvp.receivedAt)}</p>
                           </div>
                         </div>
                       ))}
@@ -695,11 +627,9 @@ export const DashboardOverview: React.FC = () => {
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <Eye className="w-10 h-10 text-text-tertiary mb-3" />
                       <p className="text-sm text-text-secondary mb-1">No RSVPs yet</p>
-                      <p className="text-xs text-text-tertiary mb-3">
-                        RSVP totals will appear here automatically as guests respond.
-                      </p>
+                      <p className="text-xs text-text-tertiary mb-3">RSVP totals will appear here automatically as guests respond.</p>
                       <Link to="/dashboard/guests" className="text-xs text-primary hover:text-primary-hover font-medium transition-colors">
-                        Invite guests &rarr;
+                        Invite guests →
                       </Link>
                     </div>
                   )}
@@ -739,8 +669,6 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
-
-
           </>
         )}
       </div>
