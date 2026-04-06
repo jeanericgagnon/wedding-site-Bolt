@@ -32,7 +32,51 @@ export interface OnboardingData {
   color_scheme?: string;
 }
 
-export function generateSiteConfig(data: OnboardingData): SiteConfig {
+const PLACEHOLDER_COPY = [
+  'formal attire',
+  'parking information to be announced',
+  'transportation details will be shared closer to the date',
+  'more details coming soon',
+  'rsvp deadline to be announced',
+];
+
+function hasSubstance(value?: string | null): boolean {
+  if (!value?.trim()) return false;
+  return !PLACEHOLDER_COPY.includes(value.trim().toLowerCase());
+}
+
+function normalizeQuestion(input: string): string {
+  const trimmed = input.trim().replace(/:+$/, '').trim();
+  if (!trimmed) return '';
+  return trimmed.endsWith('?') ? trimmed : `${trimmed}?`;
+}
+
+function buildDefaultTravelNotes(data: OnboardingData): string {
+  if (data.wedding_location?.trim()) {
+    return `Travel notes for ${data.wedding_location.trim()} will be shared here as plans come together.`;
+  }
+  return 'Travel notes will be shared here as plans come together.';
+}
+
+function buildRegistryIntro(hasLinks: boolean): string {
+  if (hasLinks) {
+    return 'If you would like to celebrate with a gift, you can find our registry details below.';
+  }
+  return 'Registry details can be added here if you decide to share them later.';
+}
+
+function buildFaqEntry(id: string, question: string, answer: string) {
+  const normalizedQuestion = normalizeQuestion(question);
+  const normalizedAnswer = answer.trim();
+  if (!normalizedQuestion || !normalizedAnswer) return null;
+  return {
+    id,
+    question: normalizedQuestion,
+    answer: normalizedAnswer,
+  };
+}
+
+function generateSiteConfig(data: OnboardingData): SiteConfig {
   const template = TEMPLATE_REGISTRY[data.template || 'base'] || TEMPLATE_REGISTRY.base;
   const now = new Date().toISOString();
 
@@ -43,89 +87,77 @@ export function generateSiteConfig(data: OnboardingData): SiteConfig {
   const hero: HeroContent = {
     headline: displayName,
     subheadline: data.wedding_date
-      ? `We're getting married on ${formatDate(data.wedding_date)}!`
-      : "We're getting married!",
+      ? `We're getting married on ${formatDate(data.wedding_date)}.`
+      : "We're getting married.",
   };
 
   const details: DetailsContent = {
-    venue_name: data.venue || data.wedding_location || 'TBD',
-    venue_address: data.wedding_location || 'Location to be announced',
-    ceremony_time: data.ceremony_time || 'TBD',
-    reception_time: data.reception_time || 'TBD',
-    attire: data.attire || 'Formal attire',
+    venue_name: data.venue || data.wedding_location || 'Venue details coming soon',
+    venue_address: data.wedding_location || 'Location details will be shared here.',
+    ceremony_time: data.ceremony_time || 'Time to be shared',
+    reception_time: data.reception_time || 'To follow',
+    attire: data.attire || 'Dress code details will be shared here closer to the wedding.',
     notes: data.our_story || undefined,
   };
 
+  const scheduleItems: ScheduleContent['items'] = [];
+  if (data.ceremony_time || data.venue || data.wedding_location) {
+    scheduleItems.push({
+      id: 'ceremony',
+      time: data.ceremony_time || 'Time to be shared',
+      title: 'Ceremony',
+      description: 'We’ll gather and celebrate together.',
+      location: data.venue || data.wedding_location || 'Location details coming soon',
+    });
+  }
+  if (data.reception_time || data.venue || data.wedding_location) {
+    scheduleItems.push({
+      id: 'reception',
+      time: data.reception_time || 'To follow',
+      title: 'Reception',
+      description: 'Dinner, dancing, and time together after the ceremony.',
+      location: data.venue || data.wedding_location || 'Location details coming soon',
+    });
+  }
+
   const schedule: ScheduleContent = {
-    items: [
-      {
-        id: 'ceremony',
-        time: data.ceremony_time || 'TBD',
-        title: 'Ceremony',
-        description: 'Join us as we exchange our vows',
-        location: data.venue || data.wedding_location || 'TBD',
-      },
-      {
-        id: 'cocktail',
-        time: 'Following ceremony',
-        title: 'Cocktail Hour',
-        description: 'Enjoy drinks and appetizers',
-      },
-      {
-        id: 'reception',
-        time: data.reception_time || 'TBD',
-        title: 'Reception',
-        description: 'Dinner, dancing, and celebration',
-        location: data.venue || data.wedding_location || 'TBD',
-      },
-    ],
+    items: scheduleItems,
   };
 
+  const parsedHotels = data.hotel_recommendations
+    ? parseHotelRecommendations(data.hotel_recommendations)
+    : [];
   const travel: TravelContent = {
-    hotels: data.hotel_recommendations
-      ? parseHotelRecommendations(data.hotel_recommendations)
-      : [],
-    parking: data.parking || 'Parking information to be announced',
-    transportation: 'Transportation details will be shared closer to the date',
+    hotels: parsedHotels,
+    parking: data.parking || 'Parking details and arrival notes will be shared here closer to the wedding.',
+    transportation: hasSubstance(data.hotel_recommendations) || hasSubstance(data.parking)
+      ? buildDefaultTravelNotes(data)
+      : 'Travel details will be shared here if guests need them.',
   };
 
+  const registryLinks = data.registry_links ? parseRegistryLinks(data.registry_links) : [];
   const registry: RegistryContent = {
-    message: 'Your presence at our wedding is the greatest gift of all. However, if you wish to honor us with a gift, we have registered at the following locations:',
-    links: data.registry_links ? parseRegistryLinks(data.registry_links) : [],
+    message: buildRegistryIntro(registryLinks.length > 0),
+    links: registryLinks,
   };
 
+  const defaultFaqs = [
+    buildFaqEntry('attire', 'What should I wear?', data.attire || 'Dress code details will be shared here closer to the wedding.'),
+    buildFaqEntry('parking', 'Will there be parking?', data.parking || 'Parking details and arrival notes will be shared here closer to the wedding.'),
+    buildFaqEntry('stay', 'Where should I stay?', data.hotel_recommendations || (data.wedding_location?.trim() ? `Recommended places to stay near ${data.wedding_location.trim()} will be shared here.` : 'Recommended places to stay will be shared here.')),
+  ].filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+  const customFaqs = parseCustomFaqs(data.custom_faqs);
   const faq: FaqContent = {
-    items: [
-      {
-        id: 'attire',
-        question: 'What should I wear?',
-        answer: data.attire || 'Formal attire',
-      },
-      {
-        id: 'plus-one',
-        question: 'Can I bring a plus one?',
-        answer: 'Please check your invitation for plus one details, or contact us if you have questions.',
-      },
-      {
-        id: 'parking',
-        question: 'Is there parking available?',
-        answer: data.parking || 'Parking details will be shared closer to the date.',
-      },
-      {
-        id: 'kids',
-        question: 'Are children welcome?',
-        answer: 'Please reach out to us if you have questions about bringing children.',
-      },
-      ...parseCustomFaqs(data.custom_faqs),
-    ],
+    items: dedupeFaqItems([...customFaqs, ...defaultFaqs]),
   };
 
   const rsvp: RsvpContent = {
     deadline_text: data.rsvp_deadline
-      ? `Please RSVP by ${formatDate(data.rsvp_deadline)}`
-      : 'RSVP deadline to be announced',
+      ? `Please reply by ${formatDate(data.rsvp_deadline)}`
+      : 'RSVP timing will be shared here once it is set.',
     meal_options: data.meal_options ? parseMealOptions(data.meal_options) : undefined,
-    message: 'We look forward to celebrating with you!',
+    message: 'We look forward to celebrating with you.',
   };
 
   const gallery: GalleryContent = {
@@ -185,6 +217,8 @@ export function generateSiteConfig(data: OnboardingData): SiteConfig {
   return config;
 }
 
+export { generateSiteConfig };
+
 function formatDate(isoDate: string): string {
   try {
     const date = new Date(isoDate);
@@ -201,41 +235,85 @@ function formatDate(isoDate: string): string {
 
 function parseHotelRecommendations(text: string): TravelContent['hotels'] {
   if (!text) return [];
-  const lines = text.split('\n').filter(l => l.trim());
-  return lines.map((line) => ({
-    name: line.trim(),
-  }));
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => ({ name: line }));
 }
 
 function parseRegistryLinks(text: string): RegistryContent['links'] {
   if (!text) return [];
-  const lines = text.split('\n').filter(l => l.trim());
-  return lines.map((line, i) => {
-    if (line.includes('http')) {
-      const parts = line.split(/https?:\/\//);
-      return {
-        name: parts[0]?.trim() || `Registry ${i + 1}`,
-        url: 'http://' + (parts[1]?.trim() || line.trim()),
-      };
-    }
-    return {
-      name: line.trim(),
-      url: '#',
-    };
-  });
+
+  const uniqueLines = Array.from(new Set(
+    text
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+  ));
+
+  return uniqueLines
+    .map((line, index) => {
+      if (line.includes('::')) {
+        const [name, ...rest] = line.split('::');
+        const url = rest.join('::').trim();
+        if (!url) return null;
+        return {
+          name: name.trim() || `Registry ${index + 1}`,
+          url,
+        };
+      }
+
+      if (/^https?:\/\//i.test(line)) {
+        return {
+          name: `Registry ${index + 1}`,
+          url: line,
+        };
+      }
+
+      return null;
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
 }
 
 function parseMealOptions(text: string): string[] {
   if (!text) return [];
-  return text.split(/[,\n]/).map(o => o.trim()).filter(Boolean);
+  return text.split(/[\n,]/).map((option) => option.trim()).filter(Boolean);
 }
 
 function parseCustomFaqs(text: string | null | undefined): FaqContent['items'] {
   if (!text) return [];
-  const lines = text.split('\n').filter(l => l.trim());
-  return lines.map((line, i) => ({
-    id: `custom-${i}`,
-    question: line.trim(),
-    answer: 'More details coming soon',
-  }));
+
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      if (line.includes('::')) {
+        const [question, ...rest] = line.split('::');
+        return buildFaqEntry(`custom-${index}`, question, rest.join('::'));
+      }
+
+      if (line.includes('?')) {
+        const questionIndex = line.indexOf('?');
+        return buildFaqEntry(
+          `custom-${index}`,
+          line.slice(0, questionIndex + 1),
+          line.slice(questionIndex + 1)
+        );
+      }
+
+      return null;
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+}
+
+function dedupeFaqItems(items: FaqContent['items']): FaqContent['items'] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = item.question.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
