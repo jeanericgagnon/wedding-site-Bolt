@@ -35,6 +35,8 @@ export interface BuilderTemplateDefinition {
     body: string;
   };
   spacingProfile: 'compact' | 'balanced' | 'spacious';
+  structureFocus?: string;
+  bestFor?: string[];
   isNew?: boolean;
   isPremium?: boolean;
 }
