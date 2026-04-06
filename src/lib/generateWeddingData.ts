@@ -27,13 +27,79 @@ export interface OnboardingFormData {
   colorScheme?: string;
 }
 
+const PLACEHOLDER_ANSWERS = [
+  'attire details will be shared soon',
+  'parking details will be shared soon',
+  'stay recommendations will be shared soon',
+  'dress code details will be shared here closer to the wedding.',
+  'parking details and arrival notes will be shared here closer to the wedding.',
+  'recommended places to stay will be shared here.',
+];
+
+function normalizeFaqQuestion(question: string): string {
+  const trimmed = question.trim().replace(/:+$/, '').trim();
+  if (!trimmed) return '';
+  return trimmed.endsWith('?') ? trimmed : `${trimmed}?`;
+}
+
+function normalizeFaqAnswer(answer: string): string {
+  return answer.trim().replace(/^:+/, '').trim();
+}
+
+function buildFaqEntry(question: string, answer: string) {
+  const q = normalizeFaqQuestion(question);
+  const a = normalizeFaqAnswer(answer);
+  if (!q || !a) return null;
+  return { id: generateId(), q, a };
+}
+
+function parseCustomFaqs(customFaqs?: string): WeddingDataV1['faq'] {
+  if (!customFaqs?.trim()) return [];
+
+  return customFaqs
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      if (line.includes('::')) {
+        const [question, ...rest] = line.split('::');
+        return buildFaqEntry(question, rest.join('::'));
+      }
+
+      if (line.includes('?')) {
+        const questionIndex = line.indexOf('?');
+        const question = line.slice(0, questionIndex + 1);
+        const answer = line.slice(questionIndex + 1);
+        return buildFaqEntry(question, answer);
+      }
+
+      return null;
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+}
+
+function dedupeFaqs(faqs: WeddingDataV1['faq']): WeddingDataV1['faq'] {
+  const seen = new Set<string>();
+  return faqs.filter((item) => {
+    const key = item.q.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function hasSubstantiveAnswer(answer?: string): boolean {
+  if (!answer?.trim()) return false;
+  return !PLACEHOLDER_ANSWERS.includes(answer.trim().toLowerCase());
+}
+
 export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
   const now = new Date().toISOString();
 
   const venues: WeddingDataV1['venues'] = [];
   const schedule: WeddingDataV1['schedule'] = [];
   const registry: WeddingDataV1['registry'] = { links: [] };
-  const faq: WeddingDataV1['faq'] = [];
+  const parsedFaqs = parseCustomFaqs(formData.customFaqs);
 
   if (formData.venue || formData.venueName || formData.location || formData.city) {
     const venueName = formData.venueName || formData.venue || formData.location || formData.city;
@@ -66,46 +132,33 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
   }
 
   if (formData.registryLinks) {
-    const links = formData.registryLinks.split('\n').filter(l => l.trim());
-    links.forEach(url => {
+    const links = Array.from(new Set(
+      formData.registryLinks
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+    ));
+
+    links.forEach((url) => {
       registry.links.push({
         id: generateId(),
-        url: url.trim(),
+        url,
       });
     });
-  } else if (formData.registryLink) {
+  } else if (formData.registryLink?.trim()) {
     registry.links.push({
       id: generateId(),
       url: formData.registryLink.trim(),
     });
   }
 
-  if (formData.customFaqs) {
-    const faqLines = formData.customFaqs.split('\n').filter(l => l.trim());
-    faqLines.forEach(line => {
-      const parts = line.split('?');
-      if (parts.length >= 2) {
-        faq.push({
-          id: generateId(),
-          q: parts[0].trim() + '?',
-          a: parts.slice(1).join('?').trim(),
-        });
-      }
-    });
-  }
-
   const defaultFaqs = [
-    { q: 'What should I wear?', a: formData.attire || 'Attire details will be shared soon' },
-    { q: 'Will there be parking?', a: formData.parking || 'Parking details will be shared soon' },
-    { q: 'Where should I stay?', a: formData.hotelRecommendations || 'Stay recommendations will be shared soon' },
-  ];
+    hasSubstantiveAnswer(formData.attire) ? buildFaqEntry('What should I wear?', formData.attire!) : null,
+    hasSubstantiveAnswer(formData.parking) ? buildFaqEntry('Will there be parking?', formData.parking!) : null,
+    hasSubstantiveAnswer(formData.hotelRecommendations) ? buildFaqEntry('Where should I stay?', formData.hotelRecommendations!) : null,
+  ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 
-  defaultFaqs.forEach(item => {
-    faq.push({
-      id: generateId(),
-      ...item,
-    });
-  });
+  const faq = dedupeFaqs([...parsedFaqs, ...defaultFaqs]);
 
   return {
     version: '1',

@@ -30,13 +30,18 @@ interface OnboardingMapperInput {
 export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<string, unknown> {
   const normalizedStory = input.ourStory?.trim() || `${input.coupleNames.name1} and ${input.coupleNames.name2} are excited to celebrate with the people they love most.`;
   const normalizedAttire = input.attire?.trim() || 'Dress code details will be shared here closer to the wedding.';
-  const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || (input.locationName?.trim() ? `Recommended places to stay near ${input.locationName.trim()} will be shared here.` : 'Recommended places to stay will be shared here.');
+  const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || (input.location?.trim() ? `Recommended places to stay near ${input.location.trim()} will be shared here.` : 'Recommended places to stay will be shared here.');
   const normalizedParking = input.parking?.trim() || 'Parking details and arrival notes will be shared here closer to the wedding.';
   const normalizedFaqs = input.customFaqs?.trim() || [
-    'What should I wear?::Dress code details will be shared here closer to the wedding.',
-    `Where should I stay?::${input.locationName?.trim() ? `Recommended places to stay near ${input.locationName.trim()} will be shared here.` : 'Recommended places to stay will be shared here.'}`,
-    'Will there be parking?::Parking details and arrival notes will be shared here closer to the wedding.',
+    `What should I wear?::${normalizedAttire}`,
+    `Where should I stay?::${normalizedHotelRecommendations}`,
+    `Will there be parking?::${normalizedParking}`,
   ].join('\n');
+  const normalizedRegistryLinks = input.registryLinks
+    ?.split('\n')
+    .map((link) => link.trim())
+    .filter(Boolean)
+    .join('\n');
 
   const weddingData = fromOnboarding({
     partner1Name: input.coupleNames.name1,
@@ -52,7 +57,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     hotelRecommendations: normalizedHotelRecommendations,
     parking: normalizedParking,
     rsvpDeadline: input.rsvpDeadline || undefined,
-    registryLinks: input.registryLinks || undefined,
+    registryLinks: normalizedRegistryLinks || undefined,
     customFaqs: normalizedFaqs,
     template: input.template,
     colorScheme: input.colorScheme || 'romantic',

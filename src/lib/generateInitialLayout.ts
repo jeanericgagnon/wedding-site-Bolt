@@ -7,6 +7,15 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
+function isPlaceholderCopy(value?: string): boolean {
+  if (!value?.trim()) return true;
+  const normalized = value.trim().toLowerCase();
+  return normalized.includes('will be shared here')
+    || normalized.includes('closer to the wedding')
+    || normalized.includes('will be shared soon')
+    || normalized.includes('recommendations will be shared soon');
+}
+
 export function generateInitialLayout(
   templateId: string,
   data: WeddingDataV1
@@ -15,17 +24,24 @@ export function generateInitialLayout(
   const template = getTemplate(templateId);
 
   const hasRealFaqContent = data.faq.some((item) => Boolean(item.q?.trim() && item.a?.trim()));
+  const hasSubstantiveFaqContent = data.faq.some((item) => Boolean(item.q?.trim() && item.a?.trim() && !isPlaceholderCopy(item.a)));
   const hasRealTravelContent = Boolean(
-    data.travel?.hotelInfo?.trim() ||
-    data.travel?.flightInfo?.trim() ||
-    data.travel?.parkingInfo?.trim()
+    (data.travel?.hotelInfo?.trim() && !isPlaceholderCopy(data.travel.hotelInfo)) ||
+    (data.travel?.flightInfo?.trim() && !isPlaceholderCopy(data.travel.flightInfo)) ||
+    (data.travel?.parkingInfo?.trim() && !isPlaceholderCopy(data.travel.parkingInfo)) ||
+    (data.travel?.notes?.trim() && !isPlaceholderCopy(data.travel.notes))
   );
-  const hasRealRegistryContent = data.registry.links.length > 0;
+  const hasRealRegistryContent = data.registry.links.some((link) => Boolean(link.url?.trim()));
+  const hasRealStoryContent = Boolean(data.couple.story?.trim()) && !isPlaceholderCopy(data.couple.story);
+  const hasRealGalleryContent = data.media.gallery.some((item) => Boolean(item.url?.trim()));
+  const hasMultipleScheduleItems = (data.schedule?.length ?? 0) > 1;
 
   const shouldDisableEmptySection = (type: SectionInstance['type']) => {
     if (type === 'registry') return !hasRealRegistryContent;
-    if (type === 'faq') return !hasRealFaqContent;
-    if (type === 'travel') return !hasRealTravelContent && !(data.schedule?.length > 1);
+    if (type === 'faq') return !hasSubstantiveFaqContent;
+    if (type === 'travel') return !hasRealTravelContent && !hasMultipleScheduleItems;
+    if (type === 'story') return !hasRealStoryContent;
+    if (type === 'gallery') return !hasRealGalleryContent;
     return false;
   };
 
@@ -47,12 +63,15 @@ export function generateInitialLayout(
       section.bindings.scheduleItemIds = data.schedule.map(s => s.id);
     }
 
-    if (sectionDef.type === 'registry' && data.registry.links.length > 0) {
-      section.bindings.linkIds = data.registry.links.map(l => l.id);
+    if (sectionDef.type === 'registry' && hasRealRegistryContent) {
+      section.bindings.linkIds = data.registry.links.filter((link) => link.url?.trim()).map(l => l.id);
     }
 
     if (sectionDef.type === 'faq' && hasRealFaqContent) {
       section.bindings.faqIds = data.faq.map(f => f.id);
+      if (!hasSubstantiveFaqContent) {
+        section.enabled = false;
+      }
     }
 
     return section;
