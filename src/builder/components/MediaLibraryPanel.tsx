@@ -135,6 +135,8 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
     setUploadErrors(errors);
     if (valid.length === 0) return;
 
+    let uploadedCount = 0;
+
     await Promise.all(valid.map(async file => {
       const tempId = generateBuilderId();
       dispatch({
@@ -156,6 +158,7 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
         );
         dispatch(builderActions.addMediaAsset(asset));
         dispatch({ type: 'REMOVE_FROM_UPLOAD_QUEUE', payload: tempId });
+        uploadedCount += 1;
       } catch (err) {
         const message =
           err instanceof Error ? err.message
@@ -171,7 +174,14 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
     try {
       const freshAssets = await mediaService.listAssets(weddingId);
       dispatch(builderActions.setMediaAssets(freshAssets));
-    } catch {
+      if (uploadedCount > 0 && freshAssets.length === 0) {
+        dispatch(builderActions.setError('Your photo upload finished, but the media library did not reload correctly. Refresh the page and check again.'));
+      }
+    } catch (err) {
+      if (uploadedCount > 0) {
+        const message = err instanceof Error ? err.message : 'Unknown refresh error';
+        dispatch(builderActions.setError(`Your photo upload likely succeeded, but the media library failed to refresh: ${message}`));
+      }
       // Keep optimistic local assets if refresh fails.
     }
   }, [weddingId, dispatch]);

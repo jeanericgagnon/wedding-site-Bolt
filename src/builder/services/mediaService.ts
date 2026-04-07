@@ -14,29 +14,40 @@ export const mediaService = {
       ? 'image'
       : 'document';
 
-    const { url, path } = await mediaRepository.upload(weddingId, file, onProgress);
+    let uploaded: { url: string; path: string };
+    try {
+      uploaded = await mediaRepository.upload(weddingId, file, onProgress);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown storage error';
+      throw new Error(`Upload to storage failed: ${message}`);
+    }
 
-    const asset = await mediaRepository.save({
-      weddingId,
-      filename: path.split('/').pop() ?? file.name,
-      originalFilename: file.name,
-      mimeType: file.type,
-      assetType,
-      status: 'ready',
-      url,
-      thumbnailUrl: assetType === 'image' ? url : undefined,
-      sizeBytes: file.size,
-      altText: options.altText,
-      caption: options.caption,
-      tags: options.tags ?? [],
-      attachedSectionIds: options.attachToSectionId ? [options.attachToSectionId] : [],
-      meta: {
-        uploadedAtISO: new Date().toISOString(),
-        updatedAtISO: new Date().toISOString(),
-      },
-    });
+    try {
+      const asset = await mediaRepository.save({
+        weddingId,
+        filename: uploaded.path.split('/').pop() ?? file.name,
+        originalFilename: file.name,
+        mimeType: file.type,
+        assetType,
+        status: 'ready',
+        url: uploaded.url,
+        thumbnailUrl: assetType === 'image' ? uploaded.url : undefined,
+        sizeBytes: file.size,
+        altText: options.altText,
+        caption: options.caption,
+        tags: options.tags ?? [],
+        attachedSectionIds: options.attachToSectionId ? [options.attachToSectionId] : [],
+        meta: {
+          uploadedAtISO: new Date().toISOString(),
+          updatedAtISO: new Date().toISOString(),
+        },
+      });
 
-    return asset;
+      return asset;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown database error';
+      throw new Error(`Photo uploaded, but saving it to your media library failed: ${message}`);
+    }
   },
 
   async listAssets(weddingId: string): Promise<BuilderMediaAsset[]> {
