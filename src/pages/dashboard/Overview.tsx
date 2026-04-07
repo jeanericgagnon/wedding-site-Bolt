@@ -344,7 +344,7 @@ export const DashboardOverview: React.FC = () => {
     <DashboardLayout currentPage="overview">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="card-clean px-5 py-4 md:px-6 md:py-5">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs uppercase updates-wide text-text-tertiary">Setup progress</p>
               <p className="text-sm text-text-secondary mt-1">Keep momentum — complete your core setup items.</p>
@@ -378,7 +378,7 @@ export const DashboardOverview: React.FC = () => {
           </Card>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
             <p className="text-text-secondary">Your wedding at a glance</p>
@@ -393,7 +393,7 @@ export const DashboardOverview: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto sm:flex-wrap sm:justify-end">
             {!loading && stats?.isPublished && stats?.siteSlug && (
               <Button variant="outline" size="sm" onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}>
                 Open live website
@@ -404,6 +404,7 @@ export const DashboardOverview: React.FC = () => {
                 <Button
                   variant="accent"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => navigate('/dashboard/builder?publishNow=1')}
                   title="Open your site editor and go straight to the go-live checklist"
                 >
@@ -412,13 +413,14 @@ export const DashboardOverview: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => navigate('/dashboard/builder?photoTips=1')}
                   title="Open your site editor with photo tips"
                 >
                   Add photos better
                 </Button>
                 {publishBlockers.length > 0 && firstPublishBlocker?.action && (
-                  <Button variant="outline" size="sm" onClick={() => firstPublishBlocker.action?.()}>
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => firstPublishBlocker.action?.()}>
                     Fix what’s left ({publishBlockers.length})
                   </Button>
                 )}

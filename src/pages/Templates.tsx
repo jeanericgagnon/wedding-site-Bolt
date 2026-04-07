@@ -152,7 +152,7 @@ Start with this
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-neutral-900">Choose your starting design</h1>
             <p className="mt-2 text-sm text-neutral-600">Pick a strong starting point for your wedding website, then personalize it inside the editor.</p>
@@ -215,7 +215,7 @@ Start with this
           </button>
         </div>
 
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-neutral-500 gap-2">
+        <div className="mt-4 flex flex-col gap-2 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
           <span>{filtered.length} starting design{filtered.length === 1 ? '' : 's'} shown</span>
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline font-medium">Tip: open a design before choosing if you want a closer look.</span>

@@ -153,7 +153,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
   return (
     <>
-    <header className="h-[42px] bg-[var(--color-surface)] border-b border-[var(--color-border-subtle)] flex items-center flex-wrap md:flex-nowrap px-2 md:px-2.5 py-0 gap-1 z-50 sticky top-0">
+    <header className="min-h-[42px] bg-[var(--color-surface)] border-b border-[var(--color-border-subtle)] flex items-center flex-wrap md:flex-nowrap px-2 md:px-2.5 py-1 gap-1 z-50 sticky top-0">
       <button
         onClick={() => {
           if (isDirty) {
@@ -202,7 +202,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-2">
+      <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">
         {onToggleInspector && (
           <button
             type="button"
@@ -236,7 +236,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       </div>
 
       <div className="hidden">
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">
           <label htmlFor="mobile-section-nav" className="text-xs text-gray-500 whitespace-nowrap">Jump to section</label>
           <select
             id="mobile-section-nav"
@@ -623,7 +623,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             {projectPages.map((page, idx) => (
               <div key={page.id} className="px-3 py-2.5 flex items-center gap-2">
                 <div className={`flex-1 min-w-0 rounded border px-2 py-1.5 ${state.activePageId === page.id ? 'border-rose-200 bg-rose-50' : 'border-gray-200 bg-white'}`}>
-                  <div className="flex items-center gap-2">
+                  <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">
                     <input
                       value={page.title}
                       onChange={(e) => {

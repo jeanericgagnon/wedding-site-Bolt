@@ -96,7 +96,7 @@ export const BuilderCanvas: React.FC = () => {
 
   return (
     <div
-      className={`flex-1 min-h-0 overflow-y-auto overscroll-contain ${isPreview ? 'bg-white' : 'bg-transparent px-1 pt-0 pb-0'} ${isPreview && previewViewport === 'mobile' ? 'px-2 py-3 md:px-3 md:py-4' : ''}`}
+      className={`flex-1 min-h-0 overflow-y-auto overscroll-contain ${isPreview ? 'bg-white' : 'bg-transparent px-1 pt-0 pb-0'} ${isPreview && previewViewport === 'mobile' ? 'px-2 py-2 md:px-3 md:py-4' : ''}`}
       onClick={() => dispatch(builderActions.selectSection(null))}
     >
       <DndContext
@@ -109,9 +109,9 @@ export const BuilderCanvas: React.FC = () => {
           className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1320px] mx-auto shadow-sm rounded-lg overflow-hidden border border-[var(--color-border-subtle)]'} bg-[var(--color-surface)] min-h-full`}
           style={isPreview
             ? previewViewport === 'mobile'
-              ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)' }
+              ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)', borderRadius: 18, overflow: 'hidden' }
               : previewViewport === 'tablet'
-                ? { maxWidth: 820, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)' }
+                ? { maxWidth: 820, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)', borderRadius: 18, overflow: 'hidden' }
                 : undefined
             : undefined}
         >

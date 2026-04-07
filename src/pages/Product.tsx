@@ -154,21 +154,23 @@ export const Product: React.FC = () => {
             <p className="text-ink/70">Start with a beautiful site, then move naturally into guests, RSVPs, messaging, seating, and day-of details.</p>
           </SlideReveal>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr,260px] gap-4">
-            <div className="rounded-2xl border border-border-subtle bg-surface p-3 h-fit lg:sticky lg:top-24">
+          <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr,260px] gap-4 lg:gap-5">
+            <div className="rounded-2xl border border-border-subtle bg-surface p-3 h-fit overflow-x-auto lg:sticky lg:top-24">
+              <div className="flex gap-2 lg:block min-w-max lg:min-w-0">
               {STEPS.map((step) => (
                 <button
                   key={step.id}
                   onClick={() => setActiveStep(step.id)}
-                  className={`w-full text-left rounded-xl p-3 mb-2 border transition-all ${activeStep === step.id ? 'bg-brand text-paper border-brand' : 'bg-white text-ink border-border-subtle hover:border-brand/45'}`}
+                  className={`w-[220px] lg:w-full text-left rounded-xl p-3 mb-0 lg:mb-2 border transition-all shrink-0 ${activeStep === step.id ? 'bg-brand text-paper border-brand' : 'bg-white text-ink border-border-subtle hover:border-brand/45'}`}
                 >
                   <p className={`text-[11px] font-semibold ${activeStep === step.id ? 'text-paper/80' : 'text-brand'}`}>{step.kicker}</p>
                   <p className="font-semibold text-sm">{step.title}</p>
                 </button>
               ))}
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-border-subtle bg-white p-6 md:p-7 text-ink">
+            <div className="rounded-2xl border border-border-subtle bg-white p-5 md:p-7 text-ink">
               <p className="text-xs font-semibold text-brand mb-2">{current.kicker}</p>
               <h3 className="text-[1.45rem] font-serif font-bold mb-2">{current.title}</h3>
               <p className="text-ink/80 mb-1">{current.outcome}</p>
