@@ -37,9 +37,10 @@ export const RegistrySection: React.FC<RegistrySectionProps> = ({ content }) => 
             ))}
           </div>
         ) : (
-          <p className="text-text-secondary italic">
-            Registry details will be shared here soon
-          </p>
+          <div className="max-w-xl mx-auto rounded-2xl border border-border-subtle bg-surface-secondary/40 px-6 py-5">
+            <p className="text-text-primary font-medium">No registry linked right now</p>
+            <p className="mt-2 text-sm text-text-secondary">Your presence is more than enough. If a registry is added later, it will appear here.</p>
+          </div>
         )}
       </div>
     </section>

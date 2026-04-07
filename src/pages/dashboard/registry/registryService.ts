@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase';
-import { RegistryItem, RegistryPreview } from './registryTypes';
+import { RegistryItem, RegistryPreview, normalizeRegistryComparisonUrl } from './registryTypes';
 
 export async function fetchRegistryItems(weddingSiteId: string): Promise<RegistryItem[]> {
   const { data, error } = await supabase
@@ -182,21 +182,21 @@ export function findDuplicateItem(
   existingItems: RegistryItem[],
   excludeId?: string
 ): RegistryItem | null {
-  const normalizedUrl = url.toLowerCase().trim();
+  const normalizedUrl = normalizeRegistryComparisonUrl(url);
   const normalizedTitle = title?.toLowerCase().trim();
 
   for (const item of existingItems) {
     if (excludeId && item.id === excludeId) continue;
 
-    const itemCanonical = item.canonical_url?.toLowerCase().trim();
-    const itemUrl = item.item_url?.toLowerCase().trim();
+    const itemCanonical = normalizeRegistryComparisonUrl(item.canonical_url);
+    const itemUrl = normalizeRegistryComparisonUrl(item.item_url);
     const itemTitle = item.item_name.toLowerCase().trim();
 
-    if (itemCanonical && itemCanonical === normalizedUrl) {
+    if (normalizedUrl && itemCanonical && itemCanonical === normalizedUrl) {
       return item;
     }
 
-    if (itemUrl && itemUrl === normalizedUrl) {
+    if (normalizedUrl && itemUrl && itemUrl === normalizedUrl) {
       return item;
     }
 

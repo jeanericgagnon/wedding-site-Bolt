@@ -188,3 +188,31 @@ export const EMPTY_DRAFT: RegistryItemDraft = {
 };
 
 export type RegistryFilter = 'all' | 'available' | 'partial' | 'purchased';
+
+export function normalizeRegistryComparisonUrl(url: string | null | undefined): string | null {
+  const value = (url || '').trim();
+  if (!value) return null;
+  try {
+    const parsed = new URL(value.startsWith('http') ? value : `https://${value}`);
+    parsed.hash = '';
+    const trackingParams = [
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+      'ref', 'ref_', 'tag', 'ascsubtag', 'asc_source', 'campaign', 'mc_cid', 'mc_eid'
+    ];
+    trackingParams.forEach((key) => parsed.searchParams.delete(key));
+    const normalizedPath = parsed.pathname.replace(/\/$/, '');
+    return `${parsed.hostname.toLowerCase()}${normalizedPath}${parsed.search ? `?${parsed.searchParams.toString()}` : ''}`;
+  } catch {
+    return value.toLowerCase();
+  }
+}
+
+export function itemNeedsAttention(item: RegistryItem): boolean {
+  const metadataState = getRegistryItemMetadataState(item);
+  return Boolean(
+    metadataState.blockedMessage ||
+    metadataState.hasBadImportTitle ||
+    metadataState.missingSummary ||
+    (item.item_type !== 'cash_fund' && !item.image_url)
+  );
+}

@@ -16,6 +16,7 @@ import {
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
 import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry/registryTypes';
+import { itemNeedsAttention } from './registry/registryTypes';
 import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
 
 interface Toast {
