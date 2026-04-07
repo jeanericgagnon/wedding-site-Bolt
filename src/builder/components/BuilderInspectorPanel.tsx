@@ -180,9 +180,27 @@ export const BuilderInspectorPanel: React.FC = () => {
         </button>
       </div>
 
-      <div className="px-4 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
-        <h3 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{manifest.label}</h3>
-        <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Edit the content, layout, and style for this section.</p>
+      <div className="px-4 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] space-y-3">
+        <div>
+          <h3 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{manifest.label}</h3>
+          <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Edit the content, layout, and style for this section.</p>
+        </div>
+        <div className="rounded-xl border border-sky-100 bg-sky-50 px-3 py-2.5">
+          <p className="text-[11px] font-semibold text-sky-900">Best next step</p>
+          <p className="mt-1 text-[11px] text-sky-800">{nextAction.detail}</p>
+          <button
+            onClick={() => {
+              if (nextAction.tab !== 'content' && nextAction.tab !== 'guide') {
+                setShowAdvanced(true);
+                setSimpleMode(false);
+              }
+              setActiveTab(nextAction.tab);
+            }}
+            className="mt-2 inline-flex items-center rounded-lg border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-900 hover:bg-sky-100"
+          >
+            {nextAction.cta}
+          </button>
+        </div>
       </div>
 
       {!simpleMode && (

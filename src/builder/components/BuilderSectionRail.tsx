@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, GripVertical } from 'lucide-react';
+import { ChevronRight, GripVertical, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
 import { getAllSectionManifests, getSectionManifest } from '../registry/sectionManifests';
 
 interface RailSection {
@@ -30,6 +30,8 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
   const [addSectionType, setAddSectionType] = React.useState<string | null>(null);
   const sectionManifests = React.useMemo(() => getAllSectionManifests(), []);
   const addTypeManifest = addSectionType ? sectionManifests.find((m) => m.type === addSectionType) ?? null : null;
+  const essentialSectionTypes = ['hero', 'venue', 'schedule', 'travel', 'rsvp', 'faq', 'registry'];
+  const essentialManifests = sectionManifests.filter((m) => essentialSectionTypes.includes(m.type));
 
   const moveSection = (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= activeSections.length || fromIndex === toIndex) return;
@@ -46,6 +48,24 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-1.5">
+        {activeSections.length === 0 && (
+          <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-3 py-4 text-sm text-[var(--color-text-secondary)] space-y-2">
+            <p className="font-medium text-[var(--color-text-primary)]">This page is empty.</p>
+            <p>Add a section to get something real on the page before you start styling.</p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {essentialManifests.slice(0, 4).map((m) => (
+                <button
+                  key={m.type}
+                  type="button"
+                  onClick={() => onAddSection(m.type, m.defaultVariant)}
+                  className="rounded-full border border-[var(--color-border-subtle)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]"
+                >
+                  Add {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {activeSections.map((section, idx) => {
           const isActive = selectedSectionId === section.id;
           return (
@@ -66,27 +86,29 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
               }`}
             >
               <div className="flex items-center gap-2.5 text-[var(--color-text-primary)]">
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    moveSection(idx, idx + 1 >= activeSections.length ? 0 : idx + 1);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      moveSection(idx, idx + 1 >= activeSections.length ? 0 : idx + 1);
-                    }
-                  }}
-                  className="inline-flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
-                  title="Move section down"
-                >
+                <span className="inline-flex items-center justify-center text-[var(--color-text-tertiary)]" title="Reorder section">
                   <GripVertical size={14} />
                 </span>
                 <span className="text-[13px] font-medium">{getSectionManifest(section.type as any).label}</span>
-                <ChevronRight size={15} className="ml-auto text-[var(--color-text-tertiary)]" />
+                <div className="ml-auto flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); moveSection(idx, idx - 1); }}
+                    className="inline-flex items-center justify-center rounded-md p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]"
+                    title="Move up"
+                  >
+                    <ArrowUp size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); moveSection(idx, idx + 1); }}
+                    className="inline-flex items-center justify-center rounded-md p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]"
+                    title="Move down"
+                  >
+                    <ArrowDown size={13} />
+                  </button>
+                  <ChevronRight size={15} className="text-[var(--color-text-tertiary)]" />
+                </div>
               </div>
             </button>
           );
@@ -153,7 +175,27 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
 
             <div className="flex-1 min-h-0 overflow-y-auto p-4">
               {!addTypeManifest ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+                    <div className="flex items-center gap-2 text-sky-900">
+                      <Sparkles size={14} />
+                      <p className="text-sm font-semibold">Start with the essentials</p>
+                    </div>
+                    <p className="mt-1 text-xs text-sky-800">For most pages, start with the sections guests need first: welcome, venue, schedule, travel, RSVP, and FAQ.</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {essentialManifests.map((m) => (
+                        <button
+                          key={m.type}
+                          type="button"
+                          onClick={() => setAddSectionType(m.type)}
+                          className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-900 hover:bg-sky-100"
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {sectionManifests.map((m) => (
                     <button
                       key={m.type}
@@ -166,6 +208,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                       <p className="text-[11px] text-[var(--color-primary)] mt-2 font-medium">Choose section</p>
                     </button>
                   ))}
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">

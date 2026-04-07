@@ -378,11 +378,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           <div className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-[1px] flex items-center justify-center p-4">
             <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200 p-5">
               <h3 className="text-lg font-semibold text-gray-900">Quick builder walkthrough</h3>
-              <p className="mt-1 text-sm text-gray-600">Three fast checks to edit confidently like a pro.</p>
+              <p className="mt-1 text-sm text-gray-600">Three fast checks so the builder feels straightforward right away.</p>
               <ol className="mt-4 space-y-2 text-sm text-gray-700 list-decimal list-inside">
-                <li><span className="font-medium">Canvas first:</span> click any section to start editing instantly.</li>
-                <li><span className="font-medium">Right panel:</span> switch between Content / Style / Layout with simple controls.</li>
-                <li><span className="font-medium">Top bar:</span> run desktop/tablet/mobile preview before publish.</li>
+                <li><span className="font-medium">Canvas first:</span> click any section to start editing without hunting for controls.</li>
+                <li><span className="font-medium">Right panel:</span> use the right panel for the next useful action first, then open more controls only if needed.</li>
+                <li><span className="font-medium">Top bar:</span> check desktop, tablet, and mobile before you go live.</li>
               </ol>
               <div className="mt-5 flex items-center justify-end gap-2">
                 <button
