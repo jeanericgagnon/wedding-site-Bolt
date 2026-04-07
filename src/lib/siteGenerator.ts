@@ -135,7 +135,9 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
       : 'Travel details will be shared here if guests need them.',
   };
 
-  const registryLinks = data.registry_links ? parseRegistryLinks(data.registry_links) : [];
+  const registryLinks = (data.registry_links
+    ? parseRegistryLinks(data.registry_links)
+    : []) as NonNullable<RegistryContent['links']>;
   const registry: RegistryContent = {
     message: buildRegistryIntro(registryLinks.length > 0),
     links: registryLinks,

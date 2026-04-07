@@ -204,7 +204,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                     >
                       <p className="text-sm font-medium text-[var(--color-text-primary)]">{m.label}</p>
                       <p className="text-xs text-[var(--color-text-tertiary)] mt-1">{m.variantMeta.length} layout options</p>
-                      <p className="text-[11px] text-[var(--color-text-tertiary)] mt-2 line-clamp-2">{m.description}</p>
+                      <p className="text-[11px] text-[var(--color-text-tertiary)] mt-2 line-clamp-2">{m.variantMeta[0]?.description || 'Start with this section and choose a layout next.'}</p>
                       <p className="text-[11px] text-[var(--color-primary)] mt-2 font-medium">Choose section</p>
                     </button>
                   ))}

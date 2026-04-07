@@ -121,9 +121,9 @@ const classifyColor = (hex: string): ColorFilter => {
   const chroma = max - min;
   if (chroma < 0.12) return 'neutral';
 
-  if (r >= g && r >= b) return 'warm';
-  if (b >= r && b >= g) return 'cool';
-  return g >= b ? 'warm' : 'cool';
+  if (r >= g && r >= b) return 'light';
+  if (b >= r && b >= g) return 'dark';
+  return 'neutral';
 };
 
 const inferSeason = (template: BuilderTemplateDefinition): SeasonFilter => {
