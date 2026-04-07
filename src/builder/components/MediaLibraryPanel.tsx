@@ -52,7 +52,7 @@ export const MediaLibraryPanel: React.FC = () => {
         settings: { ...restSettings, images },
       }));
     } else {
-      const imageKey = resolveImageSettingKey(section.type);
+      const imageKey = state.mediaPickerTargetSettingKey || resolveImageSettingKey(section.type);
       dispatch(builderActions.updateSection(pageId, sectionId, {
         settings: { ...section.settings, [imageKey]: asset.url },
       }));

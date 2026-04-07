@@ -69,9 +69,9 @@ export const builderActions = {
   openTemplateGallery: (): BuilderAction => ({ type: 'OPEN_TEMPLATE_GALLERY' }),
   closeTemplateGallery: (): BuilderAction => ({ type: 'CLOSE_TEMPLATE_GALLERY' }),
 
-  openMediaLibrary: (targetSectionId?: string): BuilderAction => ({
+  openMediaLibrary: (targetSectionId?: string, targetSettingKey?: string): BuilderAction => ({
     type: 'OPEN_MEDIA_LIBRARY',
-    payload: targetSectionId ? { sectionId: targetSectionId, targetField: 'settings' } : undefined,
+    payload: targetSectionId ? { sectionId: targetSectionId, targetField: 'settings', targetSettingKey: targetSettingKey ?? null } : undefined,
   }),
   openSideImagePicker: (sectionId: string): BuilderAction => ({
     type: 'OPEN_MEDIA_LIBRARY',

@@ -767,7 +767,7 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
             </div>
           ) : null}
           <button
-            onClick={() => dispatch(builderActions.openMediaLibrary(sectionId))}
+            onClick={() => dispatch(builderActions.openMediaLibrary(sectionId, field.key))}
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[var(--color-border-subtle)] rounded-xl p-3 text-xs text-[var(--color-text-tertiary)] hover:border-rose-300 hover:text-rose-500 hover:bg-[var(--color-surface-subtle)] transition-all"
           >
             <ImageIcon size={14} />
