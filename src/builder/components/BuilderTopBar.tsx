@@ -406,7 +406,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         {showPublishChecklist && (
           <div className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm space-y-1 max-h-64 overflow-y-auto">
             <p className="font-semibold text-gray-800 mb-1">What is left before go live</p>
-            <p className="text-[11px] text-gray-500 mb-2">Draft means only you can see it. Going live makes it visible to guests at your guest-facing DayOf URL.</p>
+            <p className="text-[11px] text-gray-500 mb-2">${SITE_VISIBILITY_COPY.draftExplainer} ${SITE_VISIBILITY_COPY.publishedExplainer}</p>
             <ul className="space-y-1">
               {checklistItems.map((item) => (
                 <li key={item.label} className="flex items-start gap-1.5 justify-between">
