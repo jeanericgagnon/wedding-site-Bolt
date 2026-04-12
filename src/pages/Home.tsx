@@ -458,8 +458,8 @@ export const Home: React.FC = () => {
                   a: 'Email is included. For urgent updates (venue changes, weather), you can purchase SMS credits. We charge $0.02/message with no markup.',
                 },
                 {
-                  q: 'Can I use my own domain?',
-                  a: 'Yes! Connect any domain you own (like smithwedding.com) or use our free subdomain.',
+                  q: 'Do I get a custom wedding URL?',
+                  a: 'Yes. Every site includes a personalized DayOf URL, so your guests get a polished wedding link without paying an extra domain upsell.',
                 },
                 {
                   q: 'What if I need a refund?',

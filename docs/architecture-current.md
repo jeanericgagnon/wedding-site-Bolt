@@ -99,9 +99,9 @@ layout_config   → legacy V1 format (pre-builder sites)
 
 ### Not-Published Behavior
 
-A site is publicly accessible if it has either `published_json` OR `site_json`. The `is_published` flag is only checked by registry item RLS (must be published for public purchases). The site view itself does NOT gate on `is_published` — any site with a `site_slug` and JSON data is visible.
+A site can currently be reachable if it has a `site_slug` plus usable site JSON, even before a formal publish step. The `is_published` flag is still used for other public behaviors like registry purchase gating, but public site rendering today still behaves more like a preview/share model than a strict published-only gate.
 
-This is intentional: draft preview works for couples sharing links before formal publish.
+This is an implementation truth, not ideal final product language. Product-facing wording should distinguish clearly between draft, private preview, and published/live states.
 
 ---
 

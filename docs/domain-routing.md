@@ -16,7 +16,7 @@ How dayof.love domains and wedding site slugs work.
 | `dayof.love/builder` | Protected | Site builder |
 | `dayof.love/site/<slug>` | Public | Public wedding website |
 
-Wedding sites are accessed via the `/site/<slug>` path on the same origin as the app. No special DNS configuration is required for this to work.
+Wedding sites are currently accessed via the `/site/<slug>` path on the same origin as the app. No special DNS configuration is required for this to work today.
 
 ---
 
@@ -63,9 +63,11 @@ Error page (no data at all)
 
 ---
 
-## Subdomain Routing (Future)
+## Personalized DayOf URLs (Future)
 
 For `alexandjordan.dayof.love` style URLs:
+
+These are personalized DayOf URLs, not external custom domains.
 
 **DNS requirement:**
 - Wildcard record: `*.dayof.love → app CDN/host`
