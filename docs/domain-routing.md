@@ -118,7 +118,7 @@ Subdomain match (wedding_sites.site_slug = subdomain)
 Path-based match (/site/<slug>)
 ```
 
-**SSL:** Vercel and Netlify handle automatic SSL for custom domains via Let's Encrypt.
+**SSL:** Personalized `*.dayof.love` URLs can use platform-managed SSL. External custom-domain SSL would be part of future custom-domain support.
 
 ---
 
@@ -129,4 +129,4 @@ Path-based match (/site/<slug>)
 | No slug redirect on change | Old URL 404s immediately | Future: store `previous_slugs[]` and issue 301 |
 | No subdomain routing | Sites accessible at path only | Future: edge rewrite rules |
 | No external custom domain support | Couples cannot yet connect a personal domain they own | Future: `custom_domain` column + DNS verification |
-| `is_published` is app-layer only | Draft content readable via direct API if slug is known | Accepted design tradeoff for draft sharing |
+| `is_published` is not the whole visibility story | Draft/share behavior still exists when a slug is known | Product wording must distinguish draft, private preview, and published/live states |

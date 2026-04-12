@@ -57,7 +57,7 @@ See `docs/smoke-test-checklist.md` for the manual QA matrix.
 | Area | Fix |
 |------|-----|
 | `Guests.tsx` | Removed unused `AlertCircle` import (typecheck error) |
-| `SiteView.tsx` | `is_published` confirmed as sole gate — no draft fallback |
+| `SiteView.tsx` | Published state is preferred, but draft/preview behavior still needs clearer truth-model wording |
 | `publishProject` | Confirmed atomic `site_json → published_json` snapshot |
 | `Vault.tsx` | Replaced fake interactive controls with clean "Coming Soon" page |
 | `Messages.tsx` | Honest "Queued" delivery language, background processing note |
@@ -77,4 +77,4 @@ The application is functionally ready for launch:
 - Registry purchases are safe and rate-limited
 - All "coming soon" features are clearly labeled with no fake controls
 
-**Known caveat:** Messages in the `messages` table are inserted with `status='sent'` but no background email delivery worker is running. Guests will not receive actual emails at this time. The UI is honest about this ("queued for delivery"), but the delivery infrastructure is not yet wired. This is an accepted pre-launch state — the feature is usable for scheduling and drafting; live delivery requires connecting an email service (Resend, SendGrid, etc.).
+**Known caveat:** Message drafting and queueing exist, but delivery truth should always reflect the real configured send path, retry behavior, and current provider state.

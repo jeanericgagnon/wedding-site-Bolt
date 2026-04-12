@@ -20,7 +20,7 @@ All 16 public tables have RLS enabled. Policies are PERMISSIVE unless stated oth
 
 | Operation | Role | Condition | Assessment |
 |-----------|------|-----------|------------|
-| SELECT | anon | `site_slug IS NOT NULL` | ⚠️ Any site with a slug is publicly readable. Intentional — enables draft sharing before publish. |
+| SELECT | anon | `site_slug IS NOT NULL` | ⚠️ Any site with a slug may be publicly readable. Current implementation supports draft-sharing style behavior before a strict published-only model. |
 | SELECT | authenticated | `auth.uid() = user_id` | ✅ |
 | INSERT | authenticated | `auth.uid() = user_id` | ✅ |
 | UPDATE | authenticated | `auth.uid() = user_id` | ✅ |
