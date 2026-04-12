@@ -67,7 +67,7 @@ Error page (no data at all)
 
 For `alexandjordan.dayof.love` style URLs:
 
-These are personalized DayOf URLs, which feel custom to guests but are not the same as connecting an external custom domain you already own.
+These are personalized DayOf URLs. They feel custom to guests, but they are not the same thing as connecting an external domain you already own.
 
 **DNS requirement:**
 - Wildcard record: `*.dayof.love → app CDN/host`
