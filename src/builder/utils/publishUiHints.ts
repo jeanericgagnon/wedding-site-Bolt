@@ -52,7 +52,7 @@ export const getPublishStatusLabel = (isPublished: boolean, hasUnsavedChanges: b
 export const getPublishProgressLabel = (done: number, total: number): string => {
   if (total <= 0) return 'No checks yet';
   if (done >= total) return 'Ready to go live';
-  return `${total - done} thing${total - done === 1 ? '' : 's'} left before go live`;
+  return `${total - done} thing${total - done === 1 ? '' : 's'} left before guest-facing launch`;
 };
 
 export const shouldAutoPublishFromSearch = (search: string): boolean => {

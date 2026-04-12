@@ -99,7 +99,7 @@ layout_config   → legacy V1 format (pre-builder sites)
 
 ### Not-Published Behavior
 
-A site can still use draft JSON for intentional private preview flows, but unpublished sites now default to a Coming Soon page unless a private preview mode is enabled. The `is_published` flag remains important, but the runtime now more closely separates unpublished preview behavior from published/live behavior.
+A site can still use draft JSON for intentional private preview flows, but unpublished sites now default to a Coming Soon page unless a private preview mode is enabled. That means guest-facing launch and private preview are now more clearly separated in the runtime. The `is_published` flag remains important, but the runtime now more closely separates unpublished preview behavior from published/live behavior.
 
 This is an implementation truth, not the ideal final product model. Product-facing wording should distinguish clearly between draft, private preview, and published/live states, and future runtime refactors should keep tightening those boundaries.
 

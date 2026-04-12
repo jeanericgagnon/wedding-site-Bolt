@@ -389,7 +389,7 @@ export const DashboardOverview: React.FC = () => {
                   {SITE_VISIBILITY_COPY.draftBadge}
                 </div>
                 {firstPublishBlocker && (
-                  <p className="text-xs text-amber-700">Next thing before go live: {firstPublishBlocker.label}</p>
+                  <p className="text-xs text-amber-700">Next thing before guest-facing launch: {firstPublishBlocker.label}</p>
                 )}
               </div>
             )}
@@ -409,7 +409,7 @@ export const DashboardOverview: React.FC = () => {
                   onClick={() => navigate('/dashboard/builder?publishNow=1')}
                   title="Open your site editor and go straight to the go-live checklist"
                 >
-                  Open go-live checklist
+                  Open launch checklist
                 </Button>
                 <Button
                   variant="outline"
