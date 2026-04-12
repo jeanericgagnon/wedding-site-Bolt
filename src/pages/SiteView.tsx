@@ -418,13 +418,15 @@ export const SiteView: React.FC = () => {
           (typeof siteJsonMeta?.lastPublishedAt === 'string' && (siteJsonMeta.lastPublishedAt as string).length > 0)
         );
 
-        if (!isPublished) {
+        const privacyMode = (data.privacy_mode as string) ?? 'public';
+        const allowPrivatePreview = privacyMode === 'password_protected' || privacyMode === 'invite_only';
+
+        if (!isPublished && !allowPrivatePreview) {
           setIsComingSoon(true);
           setLoading(false);
           return;
         }
 
-        const privacyMode = (data.privacy_mode as string) ?? 'public';
         const pwHash = (data.site_password_hash as string | null) ?? null;
         const hideSearch = !!(data.hide_from_search);
         const guestToken = (data.guest_access_token as string | null) ?? null;
@@ -455,7 +457,7 @@ export const SiteView: React.FC = () => {
         setPrivacyGate('open');
 
         const rawSiteJson = safeJsonParse<BuilderProject | null>(
-          data.published_json ?? data.site_json,
+          isPublished ? (data.published_json ?? data.site_json) : data.site_json,
           null
         );
         const siteJson = rawSiteJson ? rewriteSignedMediaUrlsToPublicDeep(rawSiteJson) : null;
