@@ -910,7 +910,7 @@ export const DashboardSettings: React.FC = () => {
                       {privacyMode === 'invite_only' && (
                         <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-3">
                           <p className="text-sm font-medium text-text-primary">Private site link</p>
-                          <p className="text-xs text-text-secondary">Share this link with guests. It keeps your site private for invited visitors.</p>
+                          <p className="text-xs text-text-secondary">Share this link with guests you want to preview the site. It is a private preview link, not a search-visible public listing.</p>
                           {guestAccessToken && siteSlug ? (
                             <div className="flex items-center gap-2">
                               <code className="flex-1 text-xs bg-background border border-border rounded-lg px-3 py-2 text-text-secondary truncate">
@@ -944,7 +944,7 @@ export const DashboardSettings: React.FC = () => {
                         />
                         <div>
                           <p className="text-sm font-medium text-text-primary">Hide from search engines</p>
-                          <p className="text-xs text-text-secondary">Adds a noindex tag so your site won't appear in Google results.</p>
+                          <p className="text-xs text-text-secondary">Adds a noindex tag so search engines should not list your site. This is separate from draft, preview, or published access.</p>
                         </div>
                       </label>
 

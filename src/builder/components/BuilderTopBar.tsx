@@ -344,14 +344,14 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <div className="items-center gap-1.5 hidden sm:flex">
             <span className="text-xs text-amber-700 items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md inline-flex" title={publishValidationError}>
               <AlertCircle size={12} />
-              Not ready to go live
+              Draft still needs a few things
             </span>
             <button
               type="button"
               onClick={() => setShowBlockedDetails((v) => !v)}
               className="text-[11px] rounded border border-amber-300 bg-white px-2 py-1 font-medium text-amber-800 hover:bg-amber-50"
             >
-              Why blocked?
+              What is left?
             </button>
             {onFixPublishBlockers && (
               <button
@@ -359,7 +359,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                 onClick={onFixPublishBlockers}
                 className="text-[11px] rounded border border-amber-300 bg-amber-50 px-2 py-1 font-medium text-amber-800 hover:bg-amber-100"
               >
-                Fix what’s blocking it
+                Fix next
               </button>
             )}
           </div>
@@ -369,11 +369,11 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <div className="sm:hidden w-full flex items-center justify-between rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
             <span className="truncate pr-2">{publishValidationError}</span>
             <button type="button" onClick={() => setShowBlockedDetails((v) => !v)} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 font-medium">
-              Why?
+              Left?
             </button>
             {onFixPublishBlockers && (
               <button type="button" onClick={onFixPublishBlockers} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-50">
-                Fix it
+                Fix next
               </button>
             )}
           </div>
@@ -405,8 +405,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
         {showPublishChecklist && (
           <div className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm space-y-1 max-h-64 overflow-y-auto">
-            <p className="font-semibold text-gray-800 mb-1">Before you go live</p>
-            <p className="text-[11px] text-gray-500 mb-2">Draft means only you can see it. Going live makes it visible at your public URL.</p>
+            <p className="font-semibold text-gray-800 mb-1">What is left before go live</p>
+            <p className="text-[11px] text-gray-500 mb-2">Draft means only you can see it. Going live makes it visible to guests at your public URL.</p>
             <ul className="space-y-1">
               {checklistItems.map((item) => (
                 <li key={item.label} className="flex items-start gap-1.5 justify-between">
