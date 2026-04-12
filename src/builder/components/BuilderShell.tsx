@@ -222,7 +222,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       );
       setPublishNotice(`Live site updated successfully (v${publishMeta.version})`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to go live';
+      const msg = err instanceof Error ? err.message : 'Failed to make the site live';
       setPublishError(msg);
       dispatch({ type: 'SET_PUBLISHING', payload: false });
     }
