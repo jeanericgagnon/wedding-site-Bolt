@@ -99,9 +99,9 @@ No database schema changes are needed — the existing `site_slug` column handle
 
 ---
 
-## Custom Domains (Future)
+## External Custom Domains (Future)
 
-For couples who want `alexandjordan.com` to show their wedding site:
+For couples who want an external domain like `alexandjordan.com` to show their wedding site:
 
 **Required additions:**
 1. Add `custom_domain` column to `wedding_sites` (nullable text, unique)
@@ -128,5 +128,5 @@ Path-based match (/site/<slug>)
 |------------|--------|------------|
 | No slug redirect on change | Old URL 404s immediately | Future: store `previous_slugs[]` and issue 301 |
 | No subdomain routing | Sites accessible at path only | Future: edge rewrite rules |
-| No custom domain support | Couples cannot use personal domains | Future: `custom_domain` column + DNS verification |
+| No external custom domain support | Couples cannot yet connect a personal domain they own | Future: `custom_domain` column + DNS verification |
 | `is_published` is app-layer only | Draft content readable via direct API if slug is known | Accepted design tradeoff for draft sharing |

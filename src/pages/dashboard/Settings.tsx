@@ -909,7 +909,7 @@ export const DashboardSettings: React.FC = () => {
 
                       {privacyMode === 'invite_only' && (
                         <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-3">
-                          <p className="text-sm font-medium text-text-primary">Private site link</p>
+                          <p className="text-sm font-medium text-text-primary">Private preview link</p>
                           <p className="text-xs text-text-secondary">Share this link with guests you want to preview the site. It is a private preview link, not a search-visible public listing.</p>
                           {guestAccessToken && siteSlug ? (
                             <div className="flex items-center gap-2">
@@ -929,7 +929,7 @@ export const DashboardSettings: React.FC = () => {
                               onClick={handleRegenerateToken}
                               className="text-xs text-text-tertiary hover:text-text-secondary hover:underline"
                             >
-                              Regenerate link (old link stops working)
+                              Regenerate preview link (old link stops working)
                             </button>
                           )}
                         </div>

@@ -575,7 +575,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               : state.isSaving
                 ? 'Waiting for save…'
                 : isPublished
-                  ? `Update live site${typeof publishedVersion === 'number' ? ` v${publishedVersion}` : ''}`
+                  ? `Update guest-facing site${typeof publishedVersion === 'number' ? ` v${publishedVersion}` : ''}`
                   : 'Go live'}
           </button>
           <div className="absolute top-full right-0 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[260px] text-center">
@@ -583,7 +583,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               ? publishValidationError
               : isPublished
                 ? 'Updates the live version guests can already see (⌘⇧P)'
-                : 'Going live makes your site visible to guests (⌘⇧P)'}
+                : 'Going live makes your site visible at your guest-facing DayOf URL (⌘⇧P)'}
           </div>
         </div>
       </div>

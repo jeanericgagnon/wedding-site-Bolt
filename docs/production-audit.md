@@ -211,7 +211,7 @@ Applied 27 migrations through 20260218171854. Key milestones:
 | Phase 4 (Site) | Coming Soon page for unpublished sites. |
 | Phase 5 (Messages/Vault) | Messages full rewrite with real backend. Vault preview badges. |
 | Phase 6 (RLS) | Fixed event_rsvps UPDATE + rsvps SELECT policies. Created `docs/rls-matrix.md`, `docs/db-verification.md`. |
-| Phase 7 (Domain) | Updated `docs/domain-routing.md` with subdomain/custom domain implementation guide. |
+| Phase 7 (Domain) | Updated `docs/domain-routing.md` with personalized DayOf URL and future external custom-domain implementation guide. |
 | Phase 8 (QA) | Quality gate run, feature QA matrix, this summary. |
 
 **Go / No-Go: GO**
