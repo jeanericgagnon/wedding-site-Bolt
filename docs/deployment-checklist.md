@@ -73,7 +73,7 @@ See `docs/smoke-test-checklist.md` for the manual QA matrix.
 The application is functionally ready for launch:
 - All automated gates pass cleanly
 - No broken routes or dead-end controls
-- Product truth still needs a clearer Draft / Private Preview / Published model
+- Product truth now uses clearer Draft / Private Preview / Published language, but the underlying visibility model still deserves a stricter future refactor
 - Registry purchases are safe and rate-limited
 - All "coming soon" features are clearly labeled with no fake controls
 

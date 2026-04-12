@@ -101,7 +101,7 @@ layout_config   → legacy V1 format (pre-builder sites)
 
 A site can currently be reachable if it has a `site_slug` plus usable site JSON, even before a formal publish step. The `is_published` flag is still used for other public behaviors like registry purchase gating, but public site rendering today still behaves more like a preview/share model than a strict published-only gate.
 
-This is an implementation truth, not ideal final product language. Product-facing wording should distinguish clearly between draft, private preview, and published/live states.
+This is an implementation truth, not the ideal final product model. Product-facing wording should distinguish clearly between draft, private preview, and published/live states, and a future refactor should tighten those runtime boundaries.
 
 ---
 
