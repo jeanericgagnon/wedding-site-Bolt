@@ -26,6 +26,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
 import { supabase } from '../../lib/supabase';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityCopy';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -38,6 +39,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [siteJsonState, setSiteJsonState] = useState<Record<string, unknown> | null>(null);
+  const [siteIsPublished, setSiteIsPublished] = useState(false);
+  const [sitePrivacyMode, setSitePrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
   const [showMoreFeatures, setShowMoreFeatures] = useState(false);
   const [enabledFeatureIds, setEnabledFeatureIds] = useState<string[]>([]);
   const { user, isDemoMode } = useAuth();
@@ -53,7 +56,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
     supabase
       .from('wedding_sites')
-      .select('id, site_slug, site_url, site_json')
+.select('id, site_slug, site_url, site_json, is_published, privacy_mode')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -61,6 +64,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         const resolved = resolvePublicSiteSlugFromRow(row);
         if (resolved) setSiteSlug(resolved);
         if (row?.id && typeof row.id === 'string') setSiteId(row.id);
+        setSiteIsPublished(row?.is_published === true);
+        if (row?.privacy_mode === 'password_protected' || row?.privacy_mode === 'invite_only' || row?.privacy_mode === 'public') {
+          setSitePrivacyMode(row.privacy_mode);
+        }
 
         const siteJson = row?.site_json;
         if (siteJson && typeof siteJson === 'object' && !Array.isArray(siteJson)) {
@@ -161,6 +168,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     setEnabledFeatureIds((prev) => prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]);
   };
 
+  const siteVisibilityLabel = useMemo(() => {
+    if (siteIsPublished) return SITE_VISIBILITY_COPY.publishedStatus;
+    if (sitePrivacyMode === 'password_protected' || sitePrivacyMode === 'invite_only') return SITE_VISIBILITY_COPY.privatePreview;
+    return SITE_VISIBILITY_COPY.draftStatus;
+  }, [siteIsPublished, sitePrivacyMode]);
+
   return (
     <div className="min-h-screen bg-background flex">
       <aside
@@ -187,6 +200,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
           </div>
 
           <nav className="flex-1 p-4 overflow-y-auto" aria-label="Dashboard navigation">
+            <div className="mb-4 rounded-xl border border-border-subtle bg-surface-subtle/40 px-4 py-3">
+              <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Site visibility</p>
+              <p className="mt-1 text-sm font-medium text-text-primary">{siteVisibilityLabel}</p>
+              {siteSlug && <p className="mt-1 text-xs text-text-secondary">{siteSlug}.dayof.love</p>}
+            </div>
             <ul className="space-y-1">
               {pinnedNavItems.map((item) => {
                 const Icon = item.icon;
