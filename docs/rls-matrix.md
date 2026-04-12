@@ -26,7 +26,7 @@ All 16 public tables have RLS enabled. Policies are PERMISSIVE unless stated oth
 | UPDATE | authenticated | `auth.uid() = user_id` | ✅ |
 | DELETE | authenticated | `auth.uid() = user_id` | ✅ |
 
-**Note:** The anon SELECT policy exposes the full `wedding_sites` row (including `wedding_data`, `site_json`, `published_json`) to any anonymous client who knows the slug. This is intentional for public site rendering, but means draft content is visible if the slug is known. The `is_published` flag is an application-layer gate (in `SiteView.tsx`), not an RLS gate.
+**Note:** The anon SELECT policy exposes the full `wedding_sites` row (including `wedding_data`, `site_json`, `published_json`) to any anonymous client who knows the slug. This supports public rendering and some draft-sharing style behavior, but it also means product-facing language must clearly distinguish search visibility, private preview, and published/live states. The `is_published` flag alone is not the full customer-facing truth model.
 
 ---
 
@@ -191,7 +191,7 @@ All 16 public tables have RLS enabled. Policies are PERMISSIVE unless stated oth
 
 | Risk | Severity | Status |
 |------|----------|--------|
-| `wedding_sites` anon SELECT exposes draft content | Low | Accepted — intentional for draft sharing |
+| `wedding_sites` anon SELECT exposes draft content | Medium | Current implementation supports draft-sharing style behavior, but customer-facing wording still needs clearer framing |
 | `guests` token-based SELECT is broad | Low | Acceptable — requires knowing guest UUID |
 | `rsvps` anon INSERT `WITH CHECK(true)` | Low | Accepted — enables public RSVP form |
 | `event_invitations` anon SELECT `USING(true)` | Low | Open risk — enumerable with UUID guessing |

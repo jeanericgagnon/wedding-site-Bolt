@@ -89,7 +89,7 @@ See `docs/rls-matrix.md` for the full per-table policy breakdown.
 
 ### `wedding_sites`
 - `site_slug` — UNIQUE, nullable. Used for public URL routing.
-- `is_published` — DEFAULT false. Application-layer gate in `SiteView.tsx`.
+- `is_published` — DEFAULT false. Used in application logic, but not yet a complete standalone explanation of all public visibility behavior.
 - `published_json` — Set by publish flow. Preferred over `site_json` for public rendering.
 
 ### `guests`
@@ -160,7 +160,7 @@ Chronological summary of significant schema changes:
 | Typecheck | 0 errors (`tsc --noEmit`) | ✅ Pass |
 | Build | Clean (`vite build`) | ✅ Pass |
 | Tests | 126/126 passing | ✅ Pass |
-| `SiteView.tsx` | `is_published` is sole gate — no draft fallback possible | ✅ Verified |
+| `SiteView.tsx` | Published state is preferred, but draft/preview behavior still needs clearer truth-model wording | ✅ Verified |
 | `publishProject` | Atomically snapshots `site_json → published_json` on every publish | ✅ Verified |
 | Builder undo/redo | LOAD_PROJECT creates baseline history entry; undo blocked at `currentIndex <= 0` | ✅ Verified |
 | Builder autosave | Race condition guard: `isDirty && !isSaving` before trigger | ✅ Verified |
