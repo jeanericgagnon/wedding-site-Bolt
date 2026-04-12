@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
+import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityCopy';
 import {
   buildPublishReadinessItems,
   buildSetupChecklist,
@@ -385,7 +386,7 @@ export const DashboardOverview: React.FC = () => {
             {!loading && stats && !stats.isPublished && (
               <div className="mt-2 space-y-1.5">
                 <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                  Draft only
+                  {SITE_VISIBILITY_COPY.draftBadge}
                 </div>
                 {firstPublishBlocker && (
                   <p className="text-xs text-amber-700">Next thing before go live: {firstPublishBlocker.label}</p>
@@ -548,7 +549,7 @@ export const DashboardOverview: React.FC = () => {
                   )}
                   <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                     <span className="text-text-secondary">Status</span>
-                    <span className="text-text-primary">{stats?.isPublished ? 'Live and visible to guests' : 'Draft only — visible only to you'}</span>
+                    <span className="text-text-primary">{stats?.isPublished ? SITE_VISIBILITY_COPY.publishedStatus : SITE_VISIBILITY_COPY.draftStatus}</span>
                   </div>
                   <div className="flex items-center justify-between py-3">
                     <span className="text-text-secondary">Last live update</span>
@@ -576,7 +577,7 @@ export const DashboardOverview: React.FC = () => {
 
                       {!stats?.isPublished && (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-                          Going live makes this site visible at your public URL. Until then, it stays draft-only.
+                          Going live makes this site visible to guests at your guest-facing DayOf URL. Until then, it stays draft-only.
                         </div>
                       )}
 
