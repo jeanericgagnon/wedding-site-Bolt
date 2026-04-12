@@ -849,12 +849,21 @@ export const DashboardSettings: React.FC = () => {
                         </div>
                       </div>
 
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
+                        <p className="text-sm font-medium text-text-primary">Visibility states</p>
+                        <ul className="space-y-1 text-xs text-text-secondary">
+                          <li>• <span className="font-medium text-text-primary">Draft</span> means only you can see the site while editing.</li>
+                          <li>• <span className="font-medium text-text-primary">Private preview</span> is for intentional sharing before a broader launch.</li>
+                          <li>• <span className="font-medium text-text-primary">Guest-facing launch</span> makes the site live at your DayOf URL.</li>
+                        </ul>
+                      </div>
+
                       <div className="space-y-3">
                         {(
                           [
-                            { value: 'public', label: 'Public', desc: 'Anyone with the link can view your site' },
-                            { value: 'password_protected', label: 'Password protected', desc: 'Visitors must enter a password to view' },
-                            { value: 'invite_only', label: 'Invite-only', desc: 'Only guests with your private link can view' },
+                            { value: 'public', label: 'Guest-facing launch', desc: 'Anyone with the link can view your site once it is live' },
+                            { value: 'password_protected', label: 'Private preview with password', desc: 'Visitors must enter a password before viewing the preview' },
+                            { value: 'invite_only', label: 'Private preview by link', desc: 'Only guests with your preview link can view' },
                           ] as const
                         ).map(opt => (
                           <label
