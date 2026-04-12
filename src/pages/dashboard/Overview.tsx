@@ -577,7 +577,7 @@ export const DashboardOverview: React.FC = () => {
 
                       {!stats?.isPublished && (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-                          Going live makes this site visible to guests at your guest-facing DayOf URL. Until then, it stays draft-only.
+                          Going live makes this site visible to guests at your guest-facing DayOf URL. Until then, it stays in draft or private-preview mode only.
                         </div>
                       )}
 
