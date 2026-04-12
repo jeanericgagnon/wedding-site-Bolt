@@ -99,7 +99,7 @@ layout_config   → legacy V1 format (pre-builder sites)
 
 ### Not-Published Behavior
 
-A site can currently be reachable if it has a `site_slug` plus usable site JSON, even before a formal publish step. The `is_published` flag is still used for other public behaviors like registry purchase gating, but public site rendering today still behaves more like a preview/share model than a strict published-only gate.
+A site can still use draft JSON for intentional private preview flows, but unpublished sites now default to a Coming Soon page unless a private preview mode is enabled. The `is_published` flag remains important, but the runtime now more closely separates unpublished preview behavior from published/live behavior.
 
 This is an implementation truth, not the ideal final product model. Product-facing wording should distinguish clearly between draft, private preview, and published/live states, and a future refactor should tighten those runtime boundaries.
 

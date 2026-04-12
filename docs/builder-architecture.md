@@ -56,7 +56,7 @@ Writes atomically to `wedding_sites`:
 2. Write `published_json = site_json` (snapshot at publish time)
 3. Set `is_published = true`, `published_at = now()`
 
-Public site (`/site/:slug`) reads `published_json` first, then may fall back to `site_json`, which is why product wording must distinguish draft, private preview, and published/live states.
+Public site (`/site/:slug`) reads `published_json` first for live sites. For unpublished sites, draft `site_json` should only be used through intentional private preview flows, not casual public access.
 
 ---
 

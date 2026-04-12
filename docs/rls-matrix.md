@@ -26,7 +26,7 @@ All 16 public tables have RLS enabled. Policies are PERMISSIVE unless stated oth
 | UPDATE | authenticated | `auth.uid() = user_id` | ✅ |
 | DELETE | authenticated | `auth.uid() = user_id` | ✅ |
 
-**Note:** The anon SELECT policy exposes the full `wedding_sites` row (including `wedding_data`, `site_json`, `published_json`) to any anonymous client who knows the slug. This supports public rendering and some draft-sharing style behavior, but it also means product-facing language must clearly distinguish search visibility, private preview, and published/live states. The `is_published` flag alone is not the full customer-facing truth model.
+**Note:** The anon SELECT policy exposes the full `wedding_sites` row (including `wedding_data`, `site_json`, `published_json`) to any anonymous client who knows the slug. This supports public rendering and controlled private-preview behavior, but product-facing language must still clearly distinguish search visibility, private preview, and published/live states. The `is_published` flag alone is not the full customer-facing truth model.
 
 ---
 

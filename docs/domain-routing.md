@@ -54,12 +54,12 @@ site_json       → draft (builder working copy)
     ↓ fallback
 layout_config   → legacy V1 format (pre-builder sites)
     ↓ fallback
-"Coming Soon" page (no published_json AND is_published = false)
+"Coming Soon" page for unpublished sites unless a private preview mode is intentionally enabled
     ↓ fallback
 Error page (no data at all)
 ```
 
-**Coming Soon behavior:** If a site has a slug but `is_published = false` AND no `published_json`, visitors see a "Coming Soon" page instead of a blank site or error.
+**Coming Soon behavior:** If a site is unpublished, visitors now see a "Coming Soon" page unless the couple is intentionally using a private preview mode such as invite-only or password-protected preview.
 
 ---
 
@@ -129,4 +129,4 @@ Path-based match (/site/<slug>)
 | No slug redirect on change | Old URL 404s immediately | Future: store `previous_slugs[]` and issue 301 |
 | No subdomain routing | Sites accessible at path only | Future: edge rewrite rules |
 | No external custom domain support | Couples cannot yet connect a personal domain they own | Future: `custom_domain` column + DNS verification |
-| `is_published` is not the whole visibility story | Draft/share behavior still exists when a slug is known | Product wording must distinguish draft, private preview, and published/live states |
+| `is_published` is not the whole visibility story | Unpublished sites now default to Coming Soon unless an intentional private preview mode is enabled | Product wording must distinguish draft, private preview, and published/live states |
