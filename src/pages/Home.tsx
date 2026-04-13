@@ -50,6 +50,13 @@ export const Home: React.FC = () => {
       bullets: ['Email blasts included', 'Guest segmentation', 'Schedule sends', 'Delivery status updates', 'Draft + scheduled send flow', 'Ready-to-send templates'],
     },
     {
+      id: 'planner',
+      title: 'Planner Collaboration',
+      icon: Calendar,
+      href: '/product',
+      bullets: ['Invite your planner from the couple side', 'Planner command view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Tasteful collaboration without admin clutter', 'Built for real event-day help'],
+    },
+    {
       id: 'travel',
       title: 'Travel + Itinerary',
       icon: Hotel,

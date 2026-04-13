@@ -22,7 +22,7 @@ const STEPS: Step[] = [
   { id: 'rsvp', title: 'Collect RSVPs cleanly', kicker: 'Step 3', outcome: 'Get responses without confusion.', detail: 'Event-level RSVP and meal tracking without hacks.' },
   { id: 'message', title: 'Message everyone', kicker: 'Step 4', outcome: 'Send the right update to the right group.', detail: 'Stop copy/pasting from spreadsheets to email tools.' },
   { id: 'seating', title: 'Run seating + timeline', kicker: 'Step 5', outcome: 'Plan execution without doc chaos.', detail: 'Keep tables and event flow aligned in one view.' },
-  { id: 'dayof', title: 'Execute day-of', kicker: 'Step 6', outcome: 'Fewer surprises on event day.', detail: 'Use one command center instead of six tabs.' },
+  { id: 'dayof', title: 'Execute day-of', kicker: 'Step 6', outcome: 'Fewer surprises on event day.', detail: 'Use one planner command center instead of six tabs.' },
 ];
 
 const FEATURE_AUDIT_GROUPS = [
@@ -36,11 +36,11 @@ const FEATURE_AUDIT_GROUPS = [
   },
   {
     title: 'Operations',
-    items: ['Guest messaging', 'Coordinator mode', 'Dashboard overview', 'Planning workspace', 'Settings + preferences'],
+    items: ['Guest messaging', 'Planner command view', 'Dashboard overview', 'Planning workspace', 'Settings + preferences'],
   },
   {
     title: 'What couples actually use',
-    items: ['Drag-and-drop seating chart', 'Seat finder lookup for guests and staff', 'Day-of coordinator mode', 'RSVP board with live status', 'Planning hub for tasks + decisions', 'Guest photo sharing space'],
+    items: ['Drag-and-drop seating chart', 'Seat finder lookup for guests and staff', 'Planner-ready command view', 'RSVP board with live status', 'Planning hub for tasks + decisions', 'Guest photo sharing space'],
   },
 ] as const;
 
@@ -124,8 +124,8 @@ export const Product: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        <p className="text-sm text-ink/70">Day-of mode: checklist live, timeline synced, messaging armed.</p>
-        <button className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">Open coordinator mode</button>
+        <p className="text-sm text-ink/70">Planner command view: checklist live, timeline synced, messaging armed.</p>
+        <button className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">Invite planner</button>
       </div>
     );
   };
@@ -216,6 +216,16 @@ export const Product: React.FC = () => {
                 <div key={item} className="rounded-xl border border-border bg-white p-4 text-sm text-ink/75">• {item}</div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-shell bg-white">
+        <div className="container-custom max-w-6xl mb-6">
+          <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
+            <p className="text-xs uppercase tracking-wide text-brand font-semibold">Couple-led collaboration</p>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Invite your planner gracefully, without turning your wedding into a back office.</h2>
+            <p className="mt-3 max-w-3xl text-ink/75">DayOf should let the couple bring in a planner or coordinator from a calm, tasteful settings flow, share the right operational surfaces, and keep ownership where it belongs.</p>
           </div>
         </div>
       </section>
