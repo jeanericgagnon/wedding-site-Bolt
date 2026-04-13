@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
+import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
@@ -540,7 +541,7 @@ export const Onboarding: React.FC = () => {
           Your website is ready to shape
         </h1>
         <p className="text-lg text-text-secondary mb-4">
-          We created a polished starting point from your answers. You can review it privately, keep editing, and launch it for guests when you're ready.
+          We created a polished starting point from your answers. ${SITE_TRUST_COPY.privateEditing}
         </p>
 
         <Card variant="bordered" padding="lg" className="mb-8">

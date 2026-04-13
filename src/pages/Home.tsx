@@ -459,7 +459,7 @@ export const Home: React.FC = () => {
                 },
                 {
                   q: 'Do I get a custom wedding URL?',
-                  a: 'Yes. Every site includes a personalized DayOf URL, so your guests get a polished wedding link without a separate domain upsell.',
+                  a: '${SITE_TRUST_COPY.customWeddingUrlExplainer}',
                 },
                 {
                   q: 'What if I need a refund?',
