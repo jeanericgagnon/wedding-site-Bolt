@@ -20,8 +20,10 @@ import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getPublishStateDescriptor } from '../../lib/publishState';
+import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
 
 interface OverviewStats {
+  siteId: string | null;
   publishedVersion: number | null;
   lastPublishedAt: string | null;
   totalGuests: number;
@@ -109,6 +111,7 @@ export const DashboardOverview: React.FC = () => {
   const [setupDraftProgressPercent, setSetupDraftProgressPercent] = useState<number>(0);
   const [interactiveSuggestions, setInteractiveSuggestions] = useState<InteractiveSuggestion[]>([]);
   const [interactiveLoading, setInteractiveLoading] = useState(false);
+  const [recentSiteActivity, setRecentSiteActivity] = useState<BuilderRevision[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -174,6 +177,7 @@ export const DashboardOverview: React.FC = () => {
         const weddingDate = demoWeddingSite.wedding_date ?? null;
 
         setStats({
+          siteId: demoWeddingSite.id,
           publishedVersion: 1,
           lastPublishedAt: new Date().toISOString(),
           totalGuests: demoGuests.length,
@@ -269,6 +273,7 @@ export const DashboardOverview: React.FC = () => {
       );
 
       setStats({
+        siteId: site?.id ?? null,
         publishedVersion: typeof siteJson?.publishedVersion === 'number' ? (siteJson.publishedVersion as number) : null,
         lastPublishedAt: typeof siteJson?.lastPublishedAt === 'string' ? (siteJson.lastPublishedAt as string) : null,
         totalGuests: allGuests.length,
@@ -695,6 +700,37 @@ export const DashboardOverview: React.FC = () => {
               </CardContent>
             </Card>
 
+
+              <Card variant="bordered" padding="lg" className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Recent site activity</CardTitle>
+                  <CardDescription>Latest local save, publish, and rollback events from this browser session history.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {recentSiteActivity.length === 0 ? (
+                    <div className="text-sm text-text-secondary">No local site activity recorded here yet.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {recentSiteActivity.map((activity) => (
+                        <div key={activity.id} className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-medium text-text-primary capitalize">{activity.action === 'publish' ? 'Published live site' : activity.action === 'rollback' ? 'Restored older version' : 'Saved draft'}</p>
+                              <p className="mt-0.5 text-[11px] text-text-tertiary">{formatRelativeTime(activity.createdAtISO)} • {activity.actor}</p>
+                            </div>
+                            <Badge variant={activity.action === 'publish' ? 'success' : activity.action === 'rollback' ? 'warning' : 'secondary'}>
+                              {activity.action}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-3 rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2 text-xs text-text-secondary">
+                    This is a lightweight audit trail for support and confidence. Durable cross-device logging is still next.
+                  </div>
+                </CardContent>
+              </Card>
 
               <Card variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>

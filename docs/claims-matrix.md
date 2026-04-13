@@ -14,6 +14,7 @@ Internal source of truth for customer-facing claims. See also `docs/feature-trut
 | Message delivery | Be explicit about what is sent, queued, processing, retried, or failed. | Delivery exists and status surfaces should reflect actual message state instead of vague success language. Failed states should show real recipient/error evidence when available. | Partial | Safe only when UI is explicit and backed by delivery logs. |
 | Publish state | Be explicit about draft, publishing now, live and up to date, live but stale, or publish needs attention. | Publish status can be derived from runtime state and should not collapse failures or stale edits into a vague live badge. | Partial | Safe only when status UI uses shared publish-state logic. |
 | Analytics baseline | Show measured product signals first, not invented funnel numbers. | Current baseline should prefer actual RSVP, registry, photo, and guest-input counts over guessed traffic/conversion metrics. | Partial | Safe only when derived metrics are clearly labeled. |
+| Support audit trail | Recent publish and delivery activity should be inspectable. | Current builder revision history is local/browser-scoped, so it helps support but is not yet a durable server audit system. | Partial | Safe only when UI says this history is local and limited. |
 
 ## Wording guidance
 

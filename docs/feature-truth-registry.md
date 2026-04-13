@@ -39,3 +39,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: show measured product signals first
 - Actual truth: do not present guessed conversion or traffic metrics as real analytics
 - Writing rule: label derived numbers as derived, and prefer measured counts whenever possible
+
+
+### Support audit truth
+- Public-safe claim: recent publish and delivery activity should be inspectable
+- Actual truth: current builder revision history is local/browser-scoped, not yet a durable server audit trail
+- Writing rule: do not overclaim cross-device or permanent audit history until it exists
