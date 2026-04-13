@@ -85,7 +85,7 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInviteRole, setPlannerInviteRole] = useState<'planner' | 'coordinator' | 'viewer'>('planner');
   const [plannerInviteError, setPlannerInviteError] = useState<string | null>(null);
   const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
-  const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string }>>([]);
+  const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; invite_token?: string }>>([]);
   const [creatingCollaboratorInvite, setCreatingCollaboratorInvite] = useState(false);
   const [revokingCollaboratorInviteId, setRevokingCollaboratorInviteId] = useState<string | null>(null);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
@@ -220,10 +220,10 @@ export const DashboardSettings: React.FC = () => {
         if ((data.id as string | undefined)) {
           const { data: inviteRows } = await supabase
             .from('wedding_site_collaborator_invites')
-            .select('id, invite_email, invite_name, role, status, invited_at')
+            .select('id, invite_email, invite_name, role, status, invited_at, invite_token')
             .eq('wedding_site_id', data.id as string)
             .order('invited_at', { ascending: false });
-          setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string }> | null) ?? []);
+          setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; invite_token?: string }> | null) ?? []);
         }
 
       } else {
@@ -364,12 +364,12 @@ export const DashboardSettings: React.FC = () => {
           invite_token: inviteToken,
           invited_by: user.id,
         })
-        .select('id, invite_email, invite_name, role, status, invited_at')
+        .select('id, invite_email, invite_name, role, status, invited_at, invite_token')
         .single();
 
       if (error) throw error;
 
-      setCollaboratorInvites((prev) => [data as { id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string }, ...prev]);
+      setCollaboratorInvites((prev) => [data as { id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; invite_token?: string }, ...prev]);
       setPlannerInviteSuccess('Collaborator invite created in the database.');
     } catch (err) {
       setPlannerInviteError(err instanceof Error ? err.message : 'Failed to create collaborator invite.');
@@ -397,6 +397,17 @@ export const DashboardSettings: React.FC = () => {
     } finally {
       setRevokingCollaboratorInviteId(null);
     }
+  };
+
+  const handleCopyCollaboratorInviteLink = async (inviteToken: string | undefined) => {
+    if (!inviteToken) {
+      setPlannerInviteError('Missing invite token.');
+      return;
+    }
+
+    const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${inviteToken}`;
+    await navigator.clipboard.writeText(inviteUrl);
+    setPlannerInviteSuccess('Invite link copied.');
   };
 
   const handleRemovePlannerInvite = () => {
@@ -964,6 +975,11 @@ export const DashboardSettings: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
+                                  {invite.status === 'pending' && (
+                                    <Button type="button" variant="outline" size="sm" onClick={() => handleCopyCollaboratorInviteLink(invite.invite_token)}>
+                                      Copy link
+                                    </Button>
+                                  )}
                                   {invite.status === 'pending' && (
                                     <Button type="button" variant="outline" size="sm" onClick={() => handleRevokeCollaboratorInvite(invite.id)} disabled={revokingCollaboratorInviteId === invite.id}>
                                       {revokingCollaboratorInviteId === invite.id ? 'Revoking…' : 'Revoke'}
