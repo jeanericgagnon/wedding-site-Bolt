@@ -2587,6 +2587,21 @@ Proceed with send?`)) return;
     manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
   })]));
 
+
+  const householdStateByGuest = new Map(filteredGuests.map((guest) => {
+    const householdMembers = guest.household_id ? filteredGuests.filter((member) => member.household_id === guest.household_id) : [];
+    const mixedResponses = householdMembers.length > 1 && new Set(householdMembers.map((member) => member.rsvp_status)).size > 1;
+    const unnamedPlusOne = Boolean(guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name);
+    const state = mixedResponses
+      ? 'Mixed household responses'
+      : unnamedPlusOne
+        ? 'Plus-one unresolved'
+        : householdMembers.length > 1
+          ? 'Grouped household'
+          : 'Standalone guest';
+    return [guest.id, state] as const;
+  }));
+
   const rsvpOps = {
     missingMeal: guests.filter(g => g.rsvp?.attending && !g.rsvp?.meal_choice).length,
     plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
@@ -4143,6 +4158,7 @@ Proceed with send?`)) return;
                       {householdMembers.length > 1 ? (
                         <>
                           <p className="text-sm text-text-secondary">This guest is grouped with {householdMembers.length - 1} other household member{householdMembers.length === 2 ? '' : 's'}.</p>
+                          <p className={`text-xs ${new Set(householdMembers.map((member) => member.rsvp_status)).size > 1 ? 'text-amber-700' : 'text-text-tertiary'}`}>{new Set(householdMembers.map((member) => member.rsvp_status)).size > 1 ? 'Household responses are mixed right now.' : 'Household responses are aligned right now.'}</p>
                           <div className="space-y-1">
                             {householdMembers.map((member) => (
                               <p key={member.id} className="text-sm text-text-primary">• {member.first_name && member.last_name ? `${member.first_name} ${member.last_name}` : member.name}</p>
