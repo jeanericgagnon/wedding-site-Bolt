@@ -127,10 +127,11 @@ export const Templates: React.FC = () => {
         {manifest && (
           <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">Preview {manifest.previewStatus === 'verified' ? 'verified' : 'fallback'}</span>
+              <span className={`rounded-full px-2 py-0.5 font-medium ${manifest.previewStatus === 'verified' ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-amber-200 bg-amber-50 text-amber-700'}`}>{manifest.previewLabel}</span>
               <span className="text-neutral-600">{manifest.sectionsIncluded} starter sections</span>
               <span className="text-neutral-600">{manifest.modulesIncluded} modules</span>
             </div>
+            <p className="mt-1 text-[11px] text-neutral-600">{manifest.previewDetail}</p>
             {manifest.highlightedSections.length > 0 && (
               <p className="mt-1 text-[11px] text-neutral-600">Starts with {manifest.highlightedSections.join(' · ')}</p>
             )}

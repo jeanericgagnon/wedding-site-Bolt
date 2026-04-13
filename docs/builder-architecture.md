@@ -178,3 +178,5 @@ Template discovery surfaces now have a lightweight support manifest layer.
 This records whether a catalog template has a real builder pack behind it, whether its preview asset is verified or fallback-only, how many starter sections it loads, and the first highlighted sections couples should expect.
 
 Goal: template pages should show proof and support truth, not just mood-board marketing.
+
+- `previewStatus = fallback` means discovery is still using directional preview coverage rather than a stronger template-mapped asset.

@@ -6,6 +6,8 @@ export interface TemplateSupportManifest {
   templateName: string;
   templateExistsInBuilder: boolean;
   previewStatus: 'verified' | 'fallback';
+  previewLabel: string;
+  previewDetail: string;
   sectionsIncluded: number;
   modulesIncluded: number;
   highlightedSections: string[];
@@ -22,6 +24,8 @@ export function getTemplateSupportManifest(templateId: string): TemplateSupportM
     .slice(0, 5)
     .map((section) => section.type);
 
+  const previewStatus = pack?.previewThumbnailPath ? 'verified' : 'fallback';
+
   const supportNotes = [
     'Populated preview is available before you choose it.',
     'You can switch templates later without losing core wedding details.',
@@ -34,7 +38,11 @@ export function getTemplateSupportManifest(templateId: string): TemplateSupportM
     templateId,
     templateName: template.name,
     templateExistsInBuilder: Boolean(pack),
-    previewStatus: pack?.previewThumbnailPath ? 'verified' : 'fallback',
+    previewStatus,
+    previewLabel: previewStatus === 'verified' ? 'Preview verified' : 'Fallback preview',
+    previewDetail: previewStatus === 'verified'
+      ? 'This template has a mapped preview asset tied to the builder pack.'
+      : 'This template is currently falling back to generic preview coverage, so treat the screenshot as directional.',
     sectionsIncluded: pack?.sectionComposition.filter((section) => section.enabled).length ?? template.defaultSectionOrder.length,
     modulesIncluded: template.includedModules.length,
     highlightedSections,

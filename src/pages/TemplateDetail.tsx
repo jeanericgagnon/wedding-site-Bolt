@@ -112,7 +112,7 @@ export const TemplateDetail: React.FC = () => {
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-xs font-semibold uppercase updates-wide text-neutral-500">Support manifest</p>
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">Preview {supportManifest.previewStatus === 'verified' ? 'verified' : 'fallback'}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${supportManifest.previewStatus === 'verified' ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-amber-200 bg-amber-50 text-amber-700'}`}>{supportManifest.previewLabel}</span>
                   <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.sectionsIncluded} starter sections</span>
                   <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.modulesIncluded} modules</span>
                 </div>
