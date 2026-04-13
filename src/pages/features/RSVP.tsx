@@ -195,6 +195,20 @@ Built to keep things clear
               <div className="bg-white rounded-2xl p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
                   <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                    <Users className="w-6 h-6 text-brand" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-ink mb-3">Fallback-friendly when guests need help</h3>
+                    <p className="text-ink/70 leading-relaxed">
+                      Some guests will answer by phone, text, or through a parent. DayOf should still let you keep one clean RSVP record without making those guests fight the software.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+                <div className="flex items-start gap-6">
+                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
                     <AlertCircle className="w-6 h-6 text-brand" />
                   </div>
                   <div>

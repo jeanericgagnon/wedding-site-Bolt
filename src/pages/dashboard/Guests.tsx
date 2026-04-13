@@ -2902,6 +2902,33 @@ Proceed with send?`)) return;
           Tip: Use <span className="font-medium text-text-secondary">Actions</span> for exports, reminders, and cleanup tasks.
         </div>
 
+        <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-sm font-medium text-text-primary">Guest fallback tools</p>
+              <p className="mt-1 text-sm text-text-secondary">Not every guest is going to reply digitally. Keep moving even when someone replies by phone, text, or through a family member.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a href="/dashboard/messages" className="rounded border border-border bg-white px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open messages</a>
+              <a href="/dashboard/rsvp-board" className="rounded border border-border bg-white px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open RSVP board</a>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Manual fallback</p>
+              <p className="mt-1 text-sm text-text-secondary">Enter the RSVP yourself when a guest answers by phone or asks you to handle it for them.</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Missing email is not a blocker</p>
+              <p className="mt-1 text-sm text-text-secondary">Use filters for guests with no email so you can follow up another way instead of losing track of them.</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Invite support path</p>
+              <p className="mt-1 text-sm text-text-secondary">Start with digital invites, then backstop older or less-technical guests with manual follow-up and direct entry.</p>
+            </div>
+          </div>
+        </div>
+
         {!cleanGuestsView && (
         <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
