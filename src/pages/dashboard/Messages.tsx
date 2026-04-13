@@ -12,6 +12,7 @@ import { canComposeDashboardMessages, canEditPlannerSurface, readPlannerAccessRo
 import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
+import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -971,6 +972,24 @@ export const DashboardMessages: React.FC = () => {
       body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
     }));
     toast('Save-the-date preset loaded (scheduled for tomorrow at 10:00).', 'success');
+  };
+
+  const applyEventReminderDraft = () => {
+    const draft = buildEventReminderDraft({
+      audienceLabel: selectedAudience?.label ?? null,
+      eventLabel: selectedAudience?.value === 'ceremony_only' ? 'ceremony' : selectedAudience?.value === 'reception_only' ? 'reception' : selectedAudience?.value === 'all' ? 'the celebration' : 'this event',
+      venue: weddingSite?.venue_name ?? null,
+    });
+    setFormData((prev) => ({
+      ...prev,
+      subject: applyTemplateVariables(draft.subject),
+      body: applyTemplateVariables(draft.body),
+      channel: 'email',
+      scheduleType: 'now',
+      scheduleDate: '',
+      scheduleTime: '',
+    }));
+    toast('Event reminder draft loaded.', 'info');
   };
 
   const applyDayOfDraft = () => {
