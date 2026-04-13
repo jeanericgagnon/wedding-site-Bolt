@@ -129,3 +129,9 @@ Operational source of truth for trust-critical claims.
 - Current grounded rule: purchased-state tracking is definitely real inside the dashboard
 - Current uncertain area: guest-facing purchased visibility is not yet proven to mirror dashboard nuance across every presentation path
 - Safe wording rule: say purchased items can be tracked and may be hidden when configured, but avoid promising fully nuanced guest-facing purchased-state behavior until runtime alignment is verified
+
+
+### Registry public purchased-state truth
+- Current grounded truth: internal dashboard purchase tracking is stronger than current public registry presentation
+- Safe public claim: DayOf supports internal purchased tracking and configurable hiding, but guest-facing purchased visibility nuance is still being tightened
+- Writing rule: avoid claiming full dashboard/public purchased-state parity until runtime behavior is intentionally aligned

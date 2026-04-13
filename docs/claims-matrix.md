@@ -62,3 +62,5 @@ This matrix should stay aligned with `docs/feature-truth-registry.md`.
 | Registry cleanup | Say DayOf helps couples review duplicates, weak imports, image issues, and repair candidates in one cleanup workflow. | Current product now has bulk review states and richer cleanup actions, but still relies on human review and does not auto-merge items. | Partial | Safe when framed as guided cleanup support rather than autonomous cleanup. |
 
 | Registry purchased visibility | Say DayOf tracks purchased items internally and supports hide-when-purchased behavior. | Dashboard purchased-state logic is real. Public/guest-facing nuance still needs stricter verification before stronger claims. | Partial | Safe when framed around internal tracking plus configurable hiding, not fully proven public nuance. |
+
+| Registry public purchased state | Say DayOf supports internal purchased tracking and configurable hide-when-purchased behavior. | Dashboard logic is stronger than current public presentation. Full guest-facing parity is not yet proven. | Partial | Safe when framed around internal truth plus configurable hiding, not full public-state parity. |
