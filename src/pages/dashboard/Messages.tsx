@@ -10,6 +10,7 @@ import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
 import { canComposeDashboardMessages, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
+import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
