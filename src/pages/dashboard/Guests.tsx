@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
+import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
@@ -3423,6 +3424,7 @@ Proceed with send?`)) return;
                         <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
                         <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
                         <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
+                        <option value="manual-handled">Handled manually ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-handled').length})</option>
                       </select>
                     </div>
 
@@ -3454,6 +3456,7 @@ Proceed with send?`)) return;
                       <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
                       <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
                       <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
+                      <button onClick={() => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus manual-handled</button>
                       <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
                       <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
                     </div>
@@ -3711,6 +3714,19 @@ Proceed with send?`)) return;
                                   {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>
                               )}
+                              {(() => {
+                                const lifecycle = getInviteLifecycleState({
+                                  invitationSentAt: (guest as GuestWithRSVP & { invitation_sent_at?: string | null }).invitation_sent_at ?? null,
+                                  reminderLastSentAt: (guest as GuestWithRSVP & { reminder_last_sent_at?: string | null }).reminder_last_sent_at ?? null,
+                                  rsvpStatus: guest.rsvp_status,
+                                  manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
+                                });
+                                return (
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full border bg-surface-subtle text-text-tertiary border-border">
+                                    {lifecycle.label}
+                                  </span>
+                                );
+                              })()}
                               {(() => {
                                 const issues = issueCountForGuest(guest);
                                 if (issues <= 0) return null;
