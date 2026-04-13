@@ -5,6 +5,7 @@ import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getPlusOneState } from '../../lib/plusOneState';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
+import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -4111,6 +4112,7 @@ Proceed with send?`)) return;
                 const status = itineraryDrawerGuest.rsvp_status;
                 const meal = itineraryDrawerGuest.rsvp?.meal_choice;
                 const plusOne = itineraryDrawerGuest.rsvp?.plus_one_name;
+                const dietaryNote = extractDietaryNote(itineraryDrawerGuest.rsvp?.custom_answers as Record<string, unknown> | null | undefined, itineraryDrawerGuest.notes);
                 const householdMembers = itineraryDrawerGuest.household_id
                   ? guests.filter((guest) => guest.household_id === itineraryDrawerGuest.household_id)
                   : [];
@@ -4131,6 +4133,11 @@ Proceed with send?`)) return;
                       {plusOne && (
                         <div className="text-sm text-text-primary">
                           <span className="font-medium">Plus-one guest:</span> {plusOne}
+                        </div>
+                      )}
+                      {dietaryNote && (
+                        <div className="text-sm text-text-primary">
+                          <span className="font-medium">Dietary note:</span> {dietaryNote}
                         </div>
                       )}
                       {entries.length > 0 && (
