@@ -182,3 +182,14 @@ Goal: template pages should show proof and support truth, not just mood-board ma
 - `previewStatus = fallback` means discovery is still using directional preview coverage rather than a stronger template-mapped asset.
 
 - `templateExistsInBuilder = false` means the discovery card is still relying on catalog metadata and needs stronger builder-pack support before we should treat it as fully validated.
+
+
+## Use-case packs
+
+The first focused use-case packs are destination, bilingual, and interfaith.
+Current truth: destination is the deepest behaviorally; bilingual and interfaith currently lean more on setup/discovery/default-copy shaping than equally deep structural behavior.
+
+## Grounded drafting helpers
+
+Current drafting helpers are local grounded-draft features, not autonomous AI.
+They use known wedding/setup context to produce starter text for FAQs, welcome notes, RSVP reminders, and day-of updates, then require explicit human insertion/editing/sending.

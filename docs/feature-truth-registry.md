@@ -46,3 +46,14 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: recent publish and delivery activity should be inspectable
 - Actual truth: current builder revision history is local/browser-scoped, not yet a durable server audit trail
 - Writing rule: do not overclaim cross-device or permanent audit history until it exists
+
+
+### Use-case pack truth
+- Public-safe claim: destination, bilingual, and interfaith are the first focused packs being deepened
+- Actual truth: destination currently has the strongest structural proof; bilingual and interfaith are still partial
+- Writing rule: do not describe the three packs as equally mature until behavior catches up
+
+### Draft-assist truth
+- Public-safe claim: grounded draft help for FAQs, welcome notes, reminders, and day-of updates
+- Actual truth: these helpers use known wedding data and require explicit user insertion/editing/sending
+- Writing rule: do not imply autonomous AI generation or sending
