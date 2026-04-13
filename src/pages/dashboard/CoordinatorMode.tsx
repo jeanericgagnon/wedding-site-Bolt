@@ -397,6 +397,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
           <p className="font-medium">{handoffCopy.title}</p>
           <p className="mt-1 text-primary/80">{handoffCopy.detail}</p>
+          <p className="mt-2 text-primary/70">Final couple decisions still sit above this workspace when something needs approval.</p>
         </div>
 
         {coordinatorRole === 'planner' && (

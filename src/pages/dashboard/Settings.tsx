@@ -825,9 +825,10 @@ export const DashboardSettings: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4">
+                    <div className="rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4 space-y-2">
                       <p className="text-sm font-medium text-text-primary">Permissions preview</p>
                       <p className="mt-1 text-sm text-text-secondary">{plannerInviteRole === 'planner' ? 'Planner access includes guests, planning, seating, messages, and event-day coordination.' : plannerInviteRole === 'coordinator' ? 'Coordinator access stays focused on live operations, check-in, messages, and day-of support.' : 'Read-only access is best for someone who needs visibility without editing anything.'}</p>
+                      <p className="text-xs text-text-tertiary">The couple keeps final ownership. This invite is for support, not a handoff of the whole wedding.</p>
                     </div>
 
                     {plannerInvite && (
