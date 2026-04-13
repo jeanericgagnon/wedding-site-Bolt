@@ -802,6 +802,27 @@ export const DashboardRegistry: React.FC = () => {
     totalValue: items.reduce((s, i) => s + (i.price_amount ?? 0), 0),
   };
 
+  const fundStats = items.reduce((acc, item) => {
+    if (item.item_type !== 'cash_fund') return acc;
+    acc.count += 1;
+    acc.goal += item.fund_goal_amount ?? 0;
+    acc.received += item.fund_received_amount ?? 0;
+    return acc;
+  }, { count: 0, goal: 0, received: 0 });
+
+  const fulfillmentRate = counts.total > 0 ? Math.round((counts.purchased / counts.total) * 100) : 0;
+  const recentActivity = [...items]
+    .filter((item) => item.updated_at || item.created_at)
+    .sort((a, b) => new Date(b.updated_at ?? b.created_at ?? 0).getTime() - new Date(a.updated_at ?? a.created_at ?? 0).getTime())
+    .slice(0, 6);
+  const topRegistryItems = [...items]
+    .sort((a, b) => {
+      const aProgress = (a.quantity_purchased ?? 0) / Math.max(a.quantity_needed ?? 1, 1);
+      const bProgress = (b.quantity_purchased ?? 0) / Math.max(b.quantity_needed ?? 1, 1);
+      return bProgress - aProgress;
+    })
+    .slice(0, 5);
+
   const alertCounts = {
     stale: items.filter((i) => !i.metadata_last_checked_at || (Date.now() - new Date(i.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24).length,
     priceChanged: items.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
@@ -943,6 +964,85 @@ Import a list of links
               </div>
             </Card>
           ))}
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card variant="bordered" padding="md">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Fulfillment rate</p>
+            <p className="mt-1 text-2xl font-bold text-text-primary">{fulfillmentRate}%</p>
+            <p className="mt-1 text-xs text-text-secondary">Purchased items out of total registry items</p>
+          </Card>
+          <Card variant="bordered" padding="md">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Cash funds</p>
+            <p className="mt-1 text-2xl font-bold text-text-primary">{fundStats.count}</p>
+            <p className="mt-1 text-xs text-text-secondary">Fund-based registry entries live</p>
+          </Card>
+          <Card variant="bordered" padding="md">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Fund progress</p>
+            <p className="mt-1 text-2xl font-bold text-text-primary">${fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+            <p className="mt-1 text-xs text-text-secondary">Received toward ${fundStats.goal.toLocaleString('en-US', { maximumFractionDigits: 0 })} goal</p>
+          </Card>
+          <Card variant="bordered" padding="md">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Alert load</p>
+            <p className="mt-1 text-2xl font-bold text-text-primary">{alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}</p>
+            <p className="mt-1 text-xs text-text-secondary">Items needing freshness or availability review</p>
+          </Card>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card variant="bordered" padding="lg">
+            <p className="text-sm font-semibold text-text-primary">Top registry progress</p>
+            <div className="mt-3 space-y-2.5">
+              {topRegistryItems.length === 0 ? (
+                <p className="text-sm text-text-secondary">No registry items yet.</p>
+              ) : topRegistryItems.map((item) => {
+                const progress = Math.min(100, Math.round(((item.quantity_purchased ?? 0) / Math.max(item.quantity_needed ?? 1, 1)) * 100));
+                return (
+                  <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
+                      <span className="text-xs text-text-tertiary">{item.quantity_purchased ?? 0}/{item.quantity_needed ?? 1}</span>
+                    </div>
+                    <div className="mt-2 h-2 rounded-full bg-surface-subtle overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card variant="bordered" padding="lg">
+            <p className="text-sm font-semibold text-text-primary">Recent registry activity</p>
+            <div className="mt-3 space-y-2.5">
+              {recentActivity.length === 0 ? (
+                <p className="text-sm text-text-secondary">No registry activity yet.</p>
+              ) : recentActivity.map((item) => (
+                <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
+                    <span className="text-xs text-text-tertiary">{item.purchase_status}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-text-secondary">Updated {new Date(item.updated_at ?? item.created_at ?? Date.now()).toLocaleDateString()}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card variant="bordered" padding="lg">
+            <p className="text-sm font-semibold text-text-primary">Registry analytics notes</p>
+            <div className="mt-3 space-y-2.5 text-sm text-text-secondary">
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                Purchased: <span className="font-semibold text-text-primary">{counts.purchased}</span> · Remaining: <span className="font-semibold text-text-primary">{counts.available + counts.partial}</span>
+              </div>
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                Cash funds received: <span className="font-semibold text-text-primary">${fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                Image issues: <span className="font-semibold text-text-primary">{alertCounts.imageIssues}</span> · Duplicate groups: <span className="font-semibold text-text-primary">{duplicateGroups.length}</span>
+              </div>
+            </div>
+          </Card>
         </div>
 
         <Card variant="bordered" padding="lg">
