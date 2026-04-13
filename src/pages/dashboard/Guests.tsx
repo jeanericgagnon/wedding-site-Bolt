@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
@@ -257,7 +258,7 @@ export const DashboardGuests: React.FC = () => {
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'checked-in' | 'thank-you-due' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'no-contact'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'checked-in' | 'thank-you-due' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'manual-follow-up' | 'manual-handled' | 'no-contact'>('all');
   const [extraFilters, setExtraFilters] = useState<string[]>([]);
   const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
   const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
@@ -2444,6 +2445,13 @@ Proceed with send?`)) return;
       : 0,
   };
 
+  const fallbackByGuest = new Map(filteredGuests.map((guest) => [guest.id, getRsvpFallbackState({
+    rsvpStatus: guest.rsvp_status,
+    hasEmail: Boolean(guest.email),
+    hasPhone: Boolean(guest.phone),
+    manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
+  })]));
+
   const rsvpOps = {
     missingMeal: guests.filter(g => g.rsvp?.attending && !g.rsvp?.meal_choice).length,
     plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
@@ -2547,6 +2555,8 @@ Proceed with send?`)) return;
     'missing-meal': 'Missing Meal',
     'plusone-missing': 'Plus-one Missing Name',
     'pending-no-email': 'Pending, No Email',
+    'manual-follow-up': 'Manual Follow-up',
+    'manual-handled': 'Handled Manually',
     'no-contact': 'No Contact Info',
   };
 
@@ -3325,7 +3335,7 @@ Proceed with send?`)) return;
                   </div>
 
                   <div className="p-4 space-y-3">
-                    <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Missing meal ({rsvpOps.missingMeal})</span> · <span className="font-medium text-text-primary">Plus-one name ({rsvpOps.plusOneMissingName})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
+                    <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Manual follow-up ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-follow-up').length})</span> · <span className="font-medium text-text-primary">Handled manually ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-handled').length})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
                     {daysToWedding !== null && (
                       <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
                         Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
