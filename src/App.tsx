@@ -34,6 +34,7 @@ const DashboardPhotos = lazy(() => import('./pages/dashboard/GuestPhotoSharing')
 const DashboardRsvpBoard = lazy(() => import('./pages/dashboard/RsvpBoard').then(m => ({ default: m.DashboardRsvpBoard })));
 const DashboardCoordinatorMode = lazy(() => import('./pages/dashboard/CoordinatorMode').then(m => ({ default: m.DashboardCoordinatorMode })));
 const DashboardErrorLogs = lazy(() => import('./pages/dashboard/ErrorLogs').then(m => ({ default: m.DashboardErrorLogs })));
+const DashboardAuditLogs = lazy(() => import('./pages/dashboard/AuditLogs').then(m => ({ default: m.DashboardAuditLogs })));
 const SiteBuilder = lazy(() => import('./builder/BuilderPage').then(m => ({ default: m.BuilderPage })));
 const GuestsFeature = lazy(() => import('./pages/features/Guests').then(m => ({ default: m.GuestsFeature })));
 const RSVPFeature = lazy(() => import('./pages/features/RSVP').then(m => ({ default: m.RSVPFeature })));
@@ -283,6 +284,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <DashboardCoordinatorMode />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/audit-logs"
+          element={
+            <ProtectedRoute>
+              <DashboardAuditLogs />
             </ProtectedRoute>
           }
         />
