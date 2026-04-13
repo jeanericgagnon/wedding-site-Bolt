@@ -788,7 +788,7 @@ export default function RSVP() {
               </div>
             )}
 
-            <div className="mb-5 p-3 bg-surface-subtle/40 border border-border-subtle rounded-xl">
+            <div className="mb-5 p-4 bg-surface-subtle/40 border border-border-subtle rounded-2xl">
               <div className="flex items-center gap-2 text-xs">
                 {[1, 2, 3].map((n) => (
                   <div key={n} className={`flex items-center gap-2 ${n < 3 ? 'flex-1' : ''}`}>
@@ -797,14 +797,14 @@ export default function RSVP() {
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Final review & submit'} · {Math.round((formStep / 3) * 100)}% complete</p>
+              <p className="mt-3 text-sm text-gray-600">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Final review & submit'} · {Math.round((formStep / 3) * 100)}% complete</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {formStep === 1 && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium mb-1.5">Will you be attending?</label>
+                    <label className="block text-base font-semibold mb-2">Will you be attending?</label>
                     <Select
                       value={formData.attending ? 'yes' : 'no'}
                       onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
@@ -818,15 +818,15 @@ export default function RSVP() {
                   </div>
 
                   {invitedEvents.length > 0 && (
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                      <p className="font-medium mb-1">Your event access details:</p>
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm">
+                      <p className="font-semibold mb-1.5 text-base text-gray-900">Your event access details</p>
                       <ul className="list-disc list-inside space-y-1 text-gray-700">
                         {invitedEvents.map((ev) => <li key={ev}>{ev}</li>)}
                       </ul>
                     </div>
                   )}
                   {householdGuests.length > 0 && (
-                    <div className="text-sm p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+                    <div className="text-sm p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
                       <label className="flex items-start gap-2">
                         <input type="checkbox" checked={applyToHousehold} onChange={(e) => setApplyToHousehold(e.target.checked)} className="w-4 h-4 mt-0.5" />
                         <span className="font-medium">Inherit this RSVP to selected household guests</span>
@@ -839,7 +839,7 @@ export default function RSVP() {
                             <span className="text-[10px] text-amber-700">{selectedHouseholdGuestIds.length}/{householdGuests.length} selected</span>
                           </summary>
                           <div className="mt-2 space-y-2">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <button
                                 type="button"
                                 onClick={() => setSelectedHouseholdGuestIds(householdGuests.map((h) => h.id))}
@@ -861,10 +861,10 @@ export default function RSVP() {
                                 const checked = selectedHouseholdGuestIds.includes(h.id);
                                 const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
                                 return (
-                                  <label key={h.id} className="flex items-center justify-between gap-2 bg-white border border-amber-200 rounded-md px-2 py-1.5">
-                                    <span className="text-xs text-gray-700">{label}</span>
+                                  <label key={h.id} className="flex items-center justify-between gap-3 bg-white border border-amber-200 rounded-lg px-3 py-2.5">
+                                    <span className="text-sm text-gray-800 font-medium">{label}</span>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-[10px] text-gray-500">{access}</span>
+                                      <span className="text-xs text-gray-600">{access}</span>
                                       <input
                                         type="checkbox"
                                         checked={checked}
@@ -921,7 +921,7 @@ export default function RSVP() {
 
                       {mealConfig.enabled && (
                         <div>
-                          <label className="block text-sm font-medium mb-1.5">Meal Choice</label>
+                          <label className="block text-base font-semibold mb-2">Meal choice</label>
                           <Select
                             value={formData.meal_choice}
                             onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
@@ -936,8 +936,8 @@ export default function RSVP() {
 
                       {guest.plus_one_allowed && (
                         <div>
-                          <label className="block text-sm font-medium mb-1.5">
-                            Plus One Name (Optional)
+                          <label className="block text-base font-semibold mb-2">
+                            Plus-one name (optional)
                           </label>
                           <Input
                             type="text"
@@ -946,7 +946,7 @@ export default function RSVP() {
                             placeholder="Guest's full name"
                             className="h-11"
                           />
-                          <p className="text-xs text-gray-500 mt-1">You're welcome to bring a guest</p>
+                          <p className="text-sm text-gray-600 mt-2">You're welcome to bring a guest.</p>
                         </div>
                       )}
                     </>
@@ -954,9 +954,9 @@ export default function RSVP() {
 
 
                   {musicPlaylistUrl && (
-                    <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg">
-                      <p className="text-sm font-medium text-violet-900">Song requests</p>
-                      <p className="text-xs text-violet-800 mt-1">Add your song picks directly to our collaborative Spotify playlist.</p>
+                    <div className="p-4 bg-violet-50 border border-violet-200 rounded-xl">
+                      <p className="text-base font-semibold text-violet-900">Song requests</p>
+                      <p className="text-sm text-violet-800 mt-1.5">Add your song picks directly to our collaborative Spotify playlist.</p>
                       <a
                         href={musicPlaylistUrl}
                         target="_blank"
@@ -969,13 +969,13 @@ export default function RSVP() {
                   )}
 
                   {rsvpQuestions.length > 0 && (
-                    <div className="space-y-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-sm font-medium text-gray-800">A few quick questions from the couple</p>
+                    <div className="space-y-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-base font-semibold text-gray-900">A few quick questions from the couple</p>
                       {rsvpQuestions
                         .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
                         .map((q) => (
-                          <div key={q.id} className="space-y-1">
-                            <label className="block text-sm font-medium">{q.label}{q.required ? ' *' : ''}</label>
+                          <div key={q.id} className="space-y-2">
+                            <label className="block text-base font-medium text-gray-900">{q.label}{q.required ? ' *' : ''}</label>
                             {q.type === 'long_text' ? (
                               <Textarea
                                 value={customAnswers[q.id] ?? ''}
@@ -1036,8 +1036,8 @@ export default function RSVP() {
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Additional Notes (Optional)
+                    <label className="block text-base font-semibold mb-2">
+                      Additional notes (optional)
                     </label>
                     <Textarea
                       value={formData.notes}
@@ -1050,9 +1050,9 @@ export default function RSVP() {
               )}
 
               {formStep === 3 && (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2.5">
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-3.5">
                   {formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception && (
-                    <div className="text-xs text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2">
+                    <div className="text-sm text-warning bg-warning/10 border border-warning/30 rounded-xl px-3 py-2.5">
                       Please review: attending is on, but no events are selected.
                     </div>
                   )}
