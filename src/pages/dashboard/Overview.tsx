@@ -8,7 +8,7 @@ import {
   getFirstIncompleteChecklistItem,
   getIncompleteChecklistItems,
 } from './overviewUtils';
-import { buildFunnelSnapshot } from './analyticsAggregate';
+import { buildAnalyticsBaseline } from './analyticsBaseline';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
@@ -304,14 +304,14 @@ export const DashboardOverview: React.FC = () => {
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
 
-  const analyticsSnapshot = buildFunnelSnapshot({
-    pageViews: Math.max((stats?.totalGuests ?? 0) * 3, 1),
-    heroCtaClicks: Math.max((stats?.confirmedGuests ?? 0) + Math.floor((stats?.pendingGuests ?? 0) / 2), 0),
-    rsvpStarts: Math.max((stats?.confirmedGuests ?? 0) + (stats?.declinedGuests ?? 0) + Math.floor((stats?.pendingGuests ?? 0) / 2), 0),
-    rsvpSuccesses: Math.max((stats?.confirmedGuests ?? 0) + (stats?.declinedGuests ?? 0), 0),
-    rsvpFailures: Math.max(Math.floor((stats?.pendingGuests ?? 0) / 3), 0),
-    registryClicks: Math.max((stats?.registryItemCount ?? 0) * 4, 0),
-    faqExpands: Math.max((stats?.totalGuests ?? 0) * 2, 0),
+  const analyticsBaseline = buildAnalyticsBaseline({
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
   });
 
   const hideSuggestion = async (id: string) => {
@@ -666,6 +666,35 @@ export const DashboardOverview: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
+
+
+
+            <Card variant="bordered" padding="lg" className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Proof baseline</CardTitle>
+                <CardDescription>Only measured product signals shown here. No guessed conversion metrics.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 text-xs text-text-secondary">
+                  This is the clean baseline before fuller analytics lands: response counts, registry readiness, photo setup, and guest prompts.
+                </div>
+                <div className="space-y-2.5">
+                  {analyticsBaseline.map((metric) => (
+                    <div key={metric.label} className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-text-primary">{metric.label}</p>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={metric.source === 'measured' ? 'success' : 'warning'}>{metric.source === 'measured' ? 'Measured' : 'Derived'}</Badge>
+                          <span className="text-sm font-semibold text-text-primary">{metric.value}</span>
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs text-text-secondary">{metric.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
 
               <Card variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>
