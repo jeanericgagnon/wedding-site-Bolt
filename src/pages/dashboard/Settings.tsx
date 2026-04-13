@@ -85,7 +85,7 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInviteRole, setPlannerInviteRole] = useState<'planner' | 'coordinator' | 'viewer'>('planner');
   const [plannerInviteError, setPlannerInviteError] = useState<string | null>(null);
   const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
-  const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; invite_token?: string }>>([]);
+  const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string }>>([]);
   const [creatingCollaboratorInvite, setCreatingCollaboratorInvite] = useState(false);
   const [revokingCollaboratorInviteId, setRevokingCollaboratorInviteId] = useState<string | null>(null);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
@@ -220,10 +220,10 @@ export const DashboardSettings: React.FC = () => {
         if ((data.id as string | undefined)) {
           const { data: inviteRows } = await supabase
             .from('wedding_site_collaborator_invites')
-            .select('id, invite_email, invite_name, role, status, invited_at, invite_token')
+            .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token')
             .eq('wedding_site_id', data.id as string)
             .order('invited_at', { ascending: false });
-          setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; invite_token?: string }> | null) ?? []);
+          setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string }> | null) ?? []);
         }
 
       } else {
@@ -353,6 +353,8 @@ export const DashboardSettings: React.FC = () => {
     setCreatingCollaboratorInvite(true);
     try {
       const inviteToken = crypto.randomUUID();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 14);
       const { data, error } = await supabase
         .from('wedding_site_collaborator_invites')
         .insert({
@@ -362,14 +364,15 @@ export const DashboardSettings: React.FC = () => {
           role: plannerInviteRole,
           status: 'pending',
           invite_token: inviteToken,
+          expires_at: expiresAt.toISOString(),
           invited_by: user.id,
         })
-        .select('id, invite_email, invite_name, role, status, invited_at, invite_token')
+        .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token')
         .single();
 
       if (error) throw error;
 
-      setCollaboratorInvites((prev) => [data as { id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; invite_token?: string }, ...prev]);
+      setCollaboratorInvites((prev) => [data as { id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string }, ...prev]);
       setPlannerInviteSuccess('Collaborator invite created in the database.');
     } catch (err) {
       setPlannerInviteError(err instanceof Error ? err.message : 'Failed to create collaborator invite.');
@@ -976,7 +979,7 @@ export const DashboardSettings: React.FC = () => {
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
-                                  <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {new Date(invite.invited_at).toLocaleDateString()}</p>
+                                  <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {new Date(invite.invited_at).toLocaleDateString()}{invite.expires_at ? ` · expires ${new Date(invite.expires_at).toLocaleDateString()}` : ''}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>

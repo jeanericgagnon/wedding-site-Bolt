@@ -12,7 +12,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const [inviteState, setInviteState] = useState<'loading' | 'valid' | 'invalid'>('loading');
   const [claiming, setClaiming] = useState(false);
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
-  const [inviteInfo, setInviteInfo] = useState<{ id?: string; wedding_site_id?: string; invite_email: string; invite_name: string | null; role: string; status: string } | null>(null);
+  const [inviteInfo, setInviteInfo] = useState<{ id?: string; wedding_site_id?: string; invite_email: string; invite_name: string | null; role: string; status: string; expires_at?: string | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,18 +25,19 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
       const { data, error } = await supabase
         .from('wedding_site_collaborator_invites')
-        .select('id, wedding_site_id, invite_email, invite_name, role, status')
+        .select('id, wedding_site_id, invite_email, invite_name, role, status, expires_at')
         .eq('invite_token', token)
         .maybeSingle();
 
       if (cancelled) return;
 
-      if (error || !data || data.status !== 'pending') {
+      const expiresAt = data?.expires_at ? new Date(data.expires_at) : null;
+      if (error || !data || data.status !== 'pending' || (expiresAt && expiresAt.getTime() < Date.now())) {
         setInviteState('invalid');
         return;
       }
 
-      setInviteInfo(data as { id?: string; wedding_site_id?: string; invite_email: string; invite_name: string | null; role: string; status: string });
+      setInviteInfo(data as { id?: string; wedding_site_id?: string; invite_email: string; invite_name: string | null; role: string; status: string; expires_at?: string | null });
       setInviteState('valid');
     };
 
