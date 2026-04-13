@@ -718,6 +718,47 @@ export const DashboardSettings: React.FC = () => {
 
             {activeTab === 'site' && (
               <>
+
+                <Card variant="bordered" padding="lg">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Users className="w-5 h-5" />
+                          Planner access
+                        </CardTitle>
+                        <CardDescription>Invite your planner or coordinator from the couple side, with calm boundaries around what they can help manage.</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
+                      <p className="text-sm font-medium text-text-primary">Invite your planner, not a generic staff account</p>
+                      <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of DayOf that help someone run the event well.</p>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="rounded-xl border border-border-subtle bg-white p-4">
+                        <p className="text-sm font-medium text-text-primary">Planner</p>
+                        <p className="mt-1 text-xs text-text-secondary">Can help with guests, seating, timeline, and event-day coordination.</p>
+                      </div>
+                      <div className="rounded-xl border border-border-subtle bg-white p-4">
+                        <p className="text-sm font-medium text-text-primary">Coordinator</p>
+                        <p className="mt-1 text-xs text-text-secondary">Focused on live event operations, check-in, and day-of updates.</p>
+                      </div>
+                      <div className="rounded-xl border border-border-subtle bg-white p-4">
+                        <p className="text-sm font-medium text-text-primary">Read only</p>
+                        <p className="mt-1 text-xs text-text-secondary">Good for family, venue, or anyone who just needs visibility.</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4">
+                      <p className="text-sm font-medium text-text-primary">Next step</p>
+                      <p className="mt-1 text-sm text-text-secondary">A full planner invite flow should start here in Settings, sent by the couple, with simple role presets and clear scope.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
                     <CardTitle>Site URL</CardTitle>

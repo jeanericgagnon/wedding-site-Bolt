@@ -333,18 +333,18 @@ export const DashboardCoordinatorMode: React.FC = () => {
         <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-text-primary">Coordinator mode</h1>
-            <p className="text-sm text-text-secondary mt-1">A live command view for check-in, timeline updates, guest questions, and day-of messages.</p>
+            <p className="text-sm text-text-secondary mt-1">A live command view for the couple and the planner they invite to help run check-in, timeline updates, guest questions, and day-of messages.</p>
           </div>
           <div>
-            <label className="block text-xs text-text-tertiary mb-1">Access view</label>
+            <label className="block text-xs text-text-tertiary mb-1">Planner access view</label>
             <select
               value={coordinatorRole}
               onChange={(e) => setCoordinatorRole(e.target.value as CoordinatorRole)}
               className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
             >
-              <option value="owner">Owner</option>
-              <option value="coordinator">Coordinator</option>
-              <option value="viewer">Viewer (read only)</option>
+              <option value="owner">Couple owner</option>
+              <option value="coordinator">Planner / coordinator</option>
+              <option value="viewer">Read only</option>
             </select>
           </div>
         </div>
