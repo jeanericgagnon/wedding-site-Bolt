@@ -111,3 +111,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf gives couples a public wedding site that feels calmer and more useful than a simple brochure page, with stronger RSVP and logistics guidance
 - Actual truth: the public site is materially better at orientation, return visits, and planning support than before, but it is still not deeply personalized for every guest scenario
 - Writing rule: describe this as more useful guest guidance and logistics clarity, not fully individualized guest intelligence
+
+
+### Registry repair truth
+- Public-safe claim: DayOf supports registry repair workflows for weak imports, including refresh, re-import, manual cleanup, and merchant-aware repair guidance
+- Actual truth: repair support is now meaningfully better, but still not a guaranteed one-click fix for every merchant or every broken card
+- Writing rule: describe this as a practical repair workflow with fallback paths, not perfect automated recovery
