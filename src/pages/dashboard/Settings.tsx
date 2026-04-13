@@ -863,7 +863,7 @@ export const DashboardSettings: React.FC = () => {
                           [
                             { value: 'public', label: 'Public live site', desc: 'Anyone with the link can view your site once it is live' },
                             { value: 'password_protected', label: 'Password-protected live site', desc: 'Visitors must enter a password before viewing the live site' },
-                            { value: 'invite_only', label: 'Invite-only live site', desc: 'Only guests with your live site link can view' },
+                            { value: 'invite_only', label: 'Invite-only live site', desc: 'Only guests with your guest link can view' },
                           ] as const
                         ).map(opt => (
                           <label
