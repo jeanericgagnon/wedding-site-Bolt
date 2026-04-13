@@ -135,3 +135,9 @@ Operational source of truth for trust-critical claims.
 - Current grounded truth: internal dashboard purchase tracking is stronger than current public registry presentation
 - Safe public claim: DayOf supports internal purchased tracking and configurable hiding, but guest-facing purchased visibility nuance is still being tightened
 - Writing rule: avoid claiming full dashboard/public purchased-state parity until runtime behavior is intentionally aligned
+
+
+### Registry live E2E proof truth
+- Current grounded truth: a live-ish smoke now proves login, registry entry, add-item modal open, and URL import autofill at a basic level
+- It does not yet prove full multi-merchant reliability, save correctness across merchants, or public purchased-state alignment
+- Writing rule: say there is live smoke proof for the import path, not complete registry hardening proof

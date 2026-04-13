@@ -64,3 +64,5 @@ This matrix should stay aligned with `docs/feature-truth-registry.md`.
 | Registry purchased visibility | Say DayOf tracks purchased items internally and supports hide-when-purchased behavior. | Dashboard purchased-state logic is real. Public/guest-facing nuance still needs stricter verification before stronger claims. | Partial | Safe when framed around internal tracking plus configurable hiding, not fully proven public nuance. |
 
 | Registry public purchased state | Say DayOf supports internal purchased tracking and configurable hide-when-purchased behavior. | Dashboard logic is stronger than current public presentation. Full guest-facing parity is not yet proven. | Partial | Safe when framed around internal truth plus configurable hiding, not full public-state parity. |
+
+| Registry live E2E | Say DayOf now has live-ish smoke proof for the core registry import entry path. | Current smoke proves login, registry route, add-item form, and URL autofill basics. It does not prove full cross-merchant hardening. | Partial | Safe when framed as import-path smoke proof, not complete registry reliability proof. |
