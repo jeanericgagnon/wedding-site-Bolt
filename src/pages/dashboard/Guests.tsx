@@ -5,6 +5,7 @@ import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getPlusOneState } from '../../lib/plusOneState';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
+import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
@@ -2626,6 +2627,20 @@ Proceed with send?`)) return;
     withDietaryNote: filteredGuests.filter((guest) => Boolean(extractDietaryNote(guest.rsvp?.custom_answers as Record<string, unknown> | null | undefined, guest.notes))).length,
   };
 
+
+  const exceptionStateByGuest = new Map(filteredGuests.map((guest) => {
+    const householdStatuses = guest.household_id ? filteredGuests.filter((member) => member.household_id === guest.household_id).map((member) => member.rsvp_status) : [];
+    const states = getRsvpExceptionStates({
+      householdStatuses,
+      plusOneAllowed: guest.plus_one_allowed,
+      plusOneName: guest.rsvp?.plus_one_name,
+      attending: guest.rsvp?.attending,
+      mealChoice: guest.rsvp?.meal_choice,
+      manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
+    });
+    return [guest.id, states] as const;
+  }));
+
   const rsvpOps = {
     missingMeal: guests.filter(g => g.rsvp?.attending && !g.rsvp?.meal_choice).length,
     plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
@@ -4200,6 +4215,23 @@ Proceed with send?`)) return;
                         <p className="text-sm text-text-primary">{plusOneState.label}</p>
                         <p className="text-sm text-text-secondary">{plusOneState.detail}</p>
                       </>); })()}
+                    </div>
+
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
+                      <p className="text-xs uppercase updates-wide text-text-tertiary">RSVP exceptions</p>
+                      {(() => {
+                        const states = getRsvpExceptionStates({
+                          householdStatuses: householdMembers.map((member) => member.rsvp_status),
+                          plusOneAllowed: itineraryDrawerGuest.plus_one_allowed,
+                          plusOneName: itineraryDrawerGuest.rsvp?.plus_one_name,
+                          attending: itineraryDrawerGuest.rsvp?.attending,
+                          mealChoice: itineraryDrawerGuest.rsvp?.meal_choice,
+                          manualHandled: typeof itineraryDrawerGuest.notes === 'string' && itineraryDrawerGuest.notes.toLowerCase().includes('[manual rsvp]'),
+                        });
+                        return states.length > 0
+                          ? states.map((state) => <p key={state} className="text-sm text-text-primary">• {state}</p>)
+                          : <p className="text-sm text-text-secondary">No active exception states for this guest.</p>;
+                      })()}
                     </div>
 
                     <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
