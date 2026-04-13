@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { getStoredActiveSiteId } from './activeSiteStorage';
 
 export type ActiveSiteSummary = {
   id: string;
@@ -6,6 +7,40 @@ export type ActiveSiteSummary = {
 };
 
 export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSiteSummary | null> {
+  const preferredSiteId = getStoredActiveSiteId();
+
+  if (preferredSiteId) {
+    const { data: preferredOwnedSite, error: preferredOwnedError } = await supabase
+      .from('wedding_sites')
+      .select('id')
+      .eq('id', preferredSiteId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (preferredOwnedError) throw preferredOwnedError;
+    if (preferredOwnedSite?.id) {
+      return {
+        id: preferredOwnedSite.id,
+        role: 'owner',
+      };
+    }
+
+    const { data: preferredCollaboratorSite, error: preferredCollaboratorError } = await supabase
+      .from('wedding_site_collaborators')
+      .select('wedding_site_id, role')
+      .eq('wedding_site_id', preferredSiteId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (preferredCollaboratorError) throw preferredCollaboratorError;
+    if (preferredCollaboratorSite?.wedding_site_id) {
+      return {
+        id: preferredCollaboratorSite.wedding_site_id,
+        role: (preferredCollaboratorSite.role as ActiveSiteSummary['role']) || 'viewer',
+      };
+    }
+  }
+
   const { data: ownedSite, error: ownedError } = await supabase
     .from('wedding_sites')
     .select('id')

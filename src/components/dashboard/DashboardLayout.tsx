@@ -29,6 +29,7 @@ import { supabase } from '../../lib/supabase';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -41,8 +42,6 @@ type SiteMembershipOption = {
   slug: string | null;
   role: string;
 };
-
-const ACTIVE_SITE_STORAGE_KEY = 'dayof_active_site_id_v1';
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -67,7 +66,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     }
 
     const loadSiteContext = async () => {
-      const persistedSiteId = typeof window !== 'undefined' ? window.localStorage.getItem(ACTIVE_SITE_STORAGE_KEY) : null;
+      const persistedSiteId = getStoredActiveSiteId();
       const resolvedActiveSite = await resolveActiveSiteForUser(user.id);
       const preferredSiteId = persistedSiteId || resolvedActiveSite?.id || null;
 
@@ -107,8 +106,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         ? preferredSiteId
         : mergedMemberships[0]?.id || null;
 
-      if (targetSiteId && typeof window !== 'undefined') {
-        window.localStorage.setItem(ACTIVE_SITE_STORAGE_KEY, targetSiteId);
+      if (targetSiteId) {
+        setStoredActiveSiteId(targetSiteId);
       }
 
       if (!targetSiteId) return;
@@ -232,10 +231,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   };
 
   const handleSiteSwitch = (nextSiteId: string) => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(ACTIVE_SITE_STORAGE_KEY, nextSiteId);
-      window.location.reload();
-    }
+    setStoredActiveSiteId(nextSiteId);
+    window.location.reload();
   };
 
   const siteVisibility = useMemo(() => getSiteVisibilityState({ isPublished: siteIsPublished, privacyMode: sitePrivacyMode, hideFromSearch: siteJsonState?.hide_from_search === true }), [siteIsPublished, sitePrivacyMode, siteJsonState]);
