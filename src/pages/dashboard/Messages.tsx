@@ -257,6 +257,13 @@ function getRecipientCount(message: Message): number {
   return message.recipient_count ?? (message.recipient_filter?.recipient_count as number) ?? 0;
 }
 
+function getCampaignTypeLabel(message: Message): string | null {
+  const raw = message.recipient_filter?.campaignType as string | undefined;
+  if (!raw) return null;
+  if (raw === 'save-the-date') return 'Save-the-date';
+  return raw;
+}
+
 interface MessageDetailModalProps {
   message: Message;
   deliveries: DeliveryRow[];
@@ -1915,6 +1922,11 @@ export const DashboardMessages: React.FC = () => {
                           {message.channel}
                         </span>
                         <span className="text-text-tertiary">{getAudienceLabel(message)}</span>
+                        {getCampaignTypeLabel(message) && (
+                          <span className="px-2 py-0.5 bg-accent-light text-accent rounded border border-accent/20">
+                            {getCampaignTypeLabel(message)}
+                          </span>
+                        )}
                         <span>{getStatusBadge(message)}</span>
                         <span className="flex items-center gap-1 text-text-tertiary">
                           <Clock className="w-3 h-3" />
