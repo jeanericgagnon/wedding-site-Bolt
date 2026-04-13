@@ -672,6 +672,34 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                {archiveMode.isArchiveLike && (
+                  <div className="rounded-2xl border border-stone-300 bg-white px-4 py-4 space-y-4">
+                    <div>
+                      <p className="text-sm font-semibold text-stone-900">Private archive home</p>
+                      <p className="mt-1 text-sm text-stone-700">Post-wedding, this should become the center of gravity: memories first, operations second.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-stone-500">Memory layer</p>
+                        <p className="mt-1 text-sm text-stone-800">Open anniversary vaults, add one note, and keep future milestones alive.</p>
+                      </div>
+                      <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-stone-500">Photo memory</p>
+                        <p className="mt-1 text-sm text-stone-800">Review guest uploads and turn the best moments into a slideshow keepsake.</p>
+                      </div>
+                      <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-stone-500">Keepsake site</p>
+                        <p className="mt-1 text-sm text-stone-800">Revisit the public story without throwing planning urgency back in your face.</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/vault')}>Go to archive vaults</Button>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>Open photo memories</Button>
+                      <Button variant="outline" size="sm" onClick={() => stats?.siteSlug && window.open(`/site/${stats.siteSlug}`, '_blank')}>Open keepsake site</Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
