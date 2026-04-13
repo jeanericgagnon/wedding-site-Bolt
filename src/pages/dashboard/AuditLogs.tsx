@@ -17,6 +17,8 @@ export const DashboardAuditLogs: React.FC = () => {
   const [rows, setRows] = useState<GuestAuditRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [logsLoading, setLogsLoading] = useState(true);
+  const [actionFilter, setActionFilter] = useState<'all' | 'insert' | 'update' | 'delete'>('all');
+  const [searchGuestId, setSearchGuestId] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -59,6 +61,12 @@ export const DashboardAuditLogs: React.FC = () => {
     };
   }, [user?.id]);
 
+  const filteredRows = rows.filter((row) => {
+    const actionOk = actionFilter === 'all' ? true : row.action === actionFilter;
+    const guestOk = searchGuestId.trim().length === 0 ? true : row.guest_id.toLowerCase().includes(searchGuestId.trim().toLowerCase());
+    return actionOk && guestOk;
+  });
+
   return (
     <DashboardLayout currentPage="settings">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -67,16 +75,34 @@ export const DashboardAuditLogs: React.FC = () => {
           <p className="mt-2 text-sm text-text-secondary">Guest audit trail v1. This is the first real product audit-log screen, separate from error logs.</p>
         </div>
 
+        <Card padding="lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-text-tertiary mb-1">Action</label>
+              <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value as 'all' | 'insert' | 'update' | 'delete')} className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text-primary">
+                <option value="all">All actions</option>
+                <option value="insert">Insert</option>
+                <option value="update">Update</option>
+                <option value="delete">Delete</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-text-tertiary mb-1">Guest id search</label>
+              <input value={searchGuestId} onChange={(e) => setSearchGuestId(e.target.value)} placeholder="Filter by guest id" className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text-primary" />
+            </div>
+          </div>
+        </Card>
+
         {loading || logsLoading ? (
           <Card padding="lg"><p className="text-sm text-text-secondary">Loading audit logs…</p></Card>
         ) : error ? (
           <Card padding="lg"><p className="text-sm text-error">{error}</p></Card>
-        ) : rows.length === 0 ? (
+        ) : filteredRows.length === 0 ? (
           <Card padding="lg"><p className="text-sm text-text-secondary">No guest audit activity yet.</p></Card>
         ) : (
           <Card padding="lg">
             <div className="space-y-3">
-              {rows.map((row) => (
+              {filteredRows.map((row) => (
                 <div key={row.id} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
