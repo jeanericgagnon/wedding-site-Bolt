@@ -2,6 +2,7 @@ import { fromOnboarding } from './generateWeddingData';
 import { generateInitialLayout } from './generateInitialLayout';
 import { generateWeddingSlug } from './slugify';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
+import { serializeImportedFaqLines, shapeImportedFaqLines } from './faqMigration';
 
 interface CoupleNames {
   name1: string;
@@ -49,7 +50,8 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     useCasePacks.includes('bilingual') ? 'Will information be shared in more than one language?::Yes. We are planning this with bilingual guests in mind, so the key details will be shared clearly for both sides of the family.' : null,
     useCasePacks.includes('interfaith') ? 'What should guests know about the ceremony?::We will share a short ceremony note here so guests understand the traditions being honored and what to expect.' : null,
   ].filter(Boolean);
-  const normalizedFaqs = input.customFaqs?.trim() || [
+  const importedFaqs = serializeImportedFaqLines(shapeImportedFaqLines(input.customFaqs));
+  const normalizedFaqs = importedFaqs || [
     `What should I wear?::${normalizedAttire}`,
     `Where should I stay?::${normalizedHotelRecommendations}`,
     `Will there be parking?::${normalizedParking}`,

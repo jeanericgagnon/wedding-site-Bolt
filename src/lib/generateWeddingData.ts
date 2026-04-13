@@ -1,5 +1,6 @@
 import { WeddingDataV1 } from '../types/weddingData';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
+import { shapeImportedFaqLines } from './faqMigration';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -61,28 +62,7 @@ function buildFaqEntry(question: string, answer: string) {
 }
 
 function parseCustomFaqs(customFaqs?: string): WeddingDataV1['faq'] {
-  if (!customFaqs?.trim()) return [];
-
-  return customFaqs
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      if (line.includes('::')) {
-        const [question, ...rest] = line.split('::');
-        return buildFaqEntry(question, rest.join('::'));
-      }
-
-      if (line.includes('?')) {
-        const questionIndex = line.indexOf('?');
-        const question = line.slice(0, questionIndex + 1);
-        const answer = line.slice(questionIndex + 1);
-        return buildFaqEntry(question, answer);
-      }
-
-      return null;
-    })
-    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  return shapeImportedFaqLines(customFaqs).map((line) => buildFaqEntry(line.question, line.answer)).filter((item): item is NonNullable<typeof item> => Boolean(item));
 }
 
 function dedupeFaqs(faqs: WeddingDataV1['faq']): WeddingDataV1['faq'] {
