@@ -13,7 +13,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
-import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff } from 'lucide-react';
+import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
@@ -546,6 +546,49 @@ export const DashboardOverview: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle>Day-of command center</CardTitle>
+                    <CardDescription>DayOf is not just your website. It is the live layer for guests, RSVPs, seating, messages, and event-day coordination.</CardDescription>
+                  </div>
+                  <Badge variant="warning">Phase 3 focus</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">Coordinator Mode</p>
+                    <p className="mt-1 text-xs text-text-secondary">Run timeline updates, guest questions, check-in, and day-of alerts from one place.</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">RSVP + guest ops</p>
+                    <p className="mt-1 text-xs text-text-secondary">Move from invite status into live follow-up and arrival decisions without switching tools.</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">Seating + live access</p>
+                    <p className="mt-1 text-xs text-text-secondary">Keep table assignments and guest lookup ready for the people actually running the event.</p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button variant="accent" size="md" onClick={() => navigate('/dashboard/coordinator')}>
+                    <Radio className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Open coordinator mode
+                  </Button>
+                  <Button variant="outline" size="md" onClick={() => navigate('/dashboard/rsvp-board')}>
+                    <Users className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Open RSVP board
+                  </Button>
+                  <Button variant="outline" size="md" onClick={() => navigate('/dashboard/seating-lookup')}>
+                    <Eye className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Open seating lookup
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
               <Card variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>
                   <div className="flex items-center justify-between">
