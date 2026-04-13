@@ -57,6 +57,13 @@ export const Home: React.FC = () => {
       bullets: ['Invite your planner from the couple side', 'Named planner invite with role preset', 'Planner command view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Built for real event-day help'],
     },
     {
+      id: 'memory',
+      title: 'Archive & Anniversary',
+      icon: Wallet,
+      href: '/product',
+      bullets: ['Archive mode after the wedding', 'Guest photo return path', 'Anniversary vaults', 'Keepsake-first post-wedding positioning', 'Reasons to revisit later', 'More than a disposable wedding microsite'],
+    },
+    {
       id: 'travel',
       title: 'Travel + Itinerary',
       icon: Hotel,

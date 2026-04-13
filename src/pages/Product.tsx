@@ -28,7 +28,7 @@ const STEPS: Step[] = [
 const FEATURE_AUDIT_GROUPS = [
   {
     title: 'Public experience',
-    items: ['Wedding site templates', 'Public RSVP page', 'Event-specific RSVP', 'Photo upload page', 'Anniversary vault contribution'],
+    items: ['Wedding site templates', 'Public RSVP page', 'Event-specific RSVP', 'Photo upload page', 'Anniversary vault contribution', 'Archive + memory layer'],
   },
   {
     title: 'Planning core',
@@ -215,6 +215,31 @@ export const Product: React.FC = () => {
               {['Move your guest list and core details', 'Keep the wedding website polished', 'Upgrade into RSVP, seating, messaging, and day-of ops'].map((item) => (
                 <div key={item} className="rounded-xl border border-border bg-white p-4 text-sm text-ink/75">• {item}</div>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section className="section-shell bg-white border-t border-border-subtle">
+        <div className="container-custom max-w-6xl">
+          <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
+            <p className="text-xs uppercase tracking-wide text-brand font-semibold">Archive + anniversary layer</p>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">The wedding site should not become disposable the moment the event is over.</h2>
+            <p className="mt-3 max-w-3xl text-ink/75">DayOf should be able to shift from planning and live coordination into archive mode: public story still worth revisiting, guest photos still gathered cleanly, and anniversary vaults turning the site into something that lasts.</p>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
+                <p className="text-sm font-medium text-ink">Archive mode</p>
+                <p className="mt-1 text-sm text-ink/70">Quiet the urgent planning layer once the wedding has passed.</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
+                <p className="text-sm font-medium text-ink">Photo return path</p>
+                <p className="mt-1 text-sm text-ink/70">Keep the best guest photos and make the site worth revisiting.</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
+                <p className="text-sm font-medium text-ink">Anniversary vaults</p>
+                <p className="mt-1 text-sm text-ink/70">Let future anniversaries unlock memories naturally instead of forcing couples to rebuild context later.</p>
+              </div>
             </div>
           </div>
         </div>
