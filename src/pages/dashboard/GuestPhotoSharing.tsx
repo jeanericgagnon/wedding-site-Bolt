@@ -116,6 +116,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
   const [slideshowAlbumFilter, setSlideshowAlbumFilter] = useState<string>('all');
   const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
+  const [slideshowPreviewOpen, setSlideshowPreviewOpen] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
   const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
 
@@ -331,6 +332,26 @@ export const GuestPhotoSharing: React.FC = () => {
       setTimeout(() => setCopied(''), 1400);
     } catch {
       // ignore
+    }
+  };
+
+  const exportSlideshowPlan = async () => {
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      theme: slideshowTheme,
+      order: slideshowOrder,
+      albumFilter: slideshowAlbumFilter,
+      frameCount: slideshowFrames.length,
+      frames: slideshowFrames,
+    };
+
+    const text = JSON.stringify(payload, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied('slideshow-plan');
+      setTimeout(() => setCopied(''), 1400);
+    } catch {
+      window.prompt('Copy slideshow plan JSON:', text);
     }
   };
 
@@ -837,6 +858,12 @@ export const GuestPhotoSharing: React.FC = () => {
                 <option value="editorial">Editorial</option>
                 <option value="party">Party</option>
               </select>
+              <Button variant="outline" onClick={() => setSlideshowPreviewOpen(true)} disabled={slideshowFrames.length === 0}>
+                Preview
+              </Button>
+              <Button variant="outline" onClick={() => void exportSlideshowPlan()} disabled={slideshowFrames.length === 0}>
+                {copied === 'slideshow-plan' ? 'Copied plan' : 'Export plan'}
+              </Button>
             </div>
           </div>
 
@@ -870,6 +897,30 @@ export const GuestPhotoSharing: React.FC = () => {
             </div>
           )}
         </Card>
+
+        {slideshowPreviewOpen && slideshowFrames.length > 0 && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-4xl bg-white rounded-2xl border border-border shadow-xl p-5 space-y-4 max-h-[90vh] overflow-auto">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-neutral-900">Slideshow preview</h3>
+                  <p className="text-sm text-neutral-600">{slideshowThemeMeta[slideshowTheme].label} · {slideshowFrames.length} frames · {slideshowOrder}</p>
+                </div>
+                <Button variant="outline" onClick={() => setSlideshowPreviewOpen(false)}>Close</Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {slideshowFrames.map((frame, index) => (
+                  <div key={frame.uploadId} className={`rounded-xl border px-4 py-4 ${slideshowThemeMeta[slideshowTheme].cardClass}`}>
+                    <p className="text-xs uppercase tracking-wide text-neutral-500">Slide {index + 1}</p>
+                    <p className="mt-2 text-base font-semibold text-neutral-900 truncate">{frame.title}</p>
+                    <p className="mt-1 text-sm text-neutral-700">{frame.albumName}</p>
+                    <p className="mt-2 text-xs text-neutral-500">{frame.caption}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
