@@ -410,6 +410,11 @@ export const DashboardSettings: React.FC = () => {
     setPlannerInviteSuccess('Invite link copied.');
   };
 
+  const handleResendCollaboratorInvite = async (inviteToken: string | undefined) => {
+    await handleCopyCollaboratorInviteLink(inviteToken);
+    setPlannerInviteSuccess('Invite link copied again for resend.');
+  };
+
   const handleRemovePlannerInvite = () => {
     writePlannerInvite(siteSlug || user?.id || null, null);
     setPlannerInvite(null);
@@ -978,6 +983,11 @@ export const DashboardSettings: React.FC = () => {
                                   {invite.status === 'pending' && (
                                     <Button type="button" variant="outline" size="sm" onClick={() => handleCopyCollaboratorInviteLink(invite.invite_token)}>
                                       Copy link
+                                    </Button>
+                                  )}
+                                  {invite.status === 'pending' && (
+                                    <Button type="button" variant="outline" size="sm" onClick={() => { void handleResendCollaboratorInvite(invite.invite_token); }}>
+                                      Resend
                                     </Button>
                                   )}
                                   {invite.status === 'pending' && (
