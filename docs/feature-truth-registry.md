@@ -87,3 +87,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf can help couples spot RSVP exception cases such as split household responses, unnamed plus-ones, partial replies, and manual handling needs
 - Actual truth: the current product surfaces and organizes these cases in guest ops, but it does not fully automate resolution logic or policy decisions
 - Writing rule: present this as clearer exception handling and follow-up support, not fully automated edge-case reconciliation
+
+
+### Check-in realism truth
+- Public-safe claim: DayOf supports day-of guest lookup, seating answers, check-in tracking, and basic live exception awareness
+- Actual truth: the current product can surface some live exception states and route staff toward coordinator or seating flows, but it is not yet a full event-day operations system
+- Writing rule: describe this as practical day-of support with some live exception handling, not complete arrival control software
