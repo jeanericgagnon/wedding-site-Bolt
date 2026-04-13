@@ -2,12 +2,16 @@ import React from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export const AcceptCollaboratorInvite: React.FC = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  const { user } = useAuth();
   const [inviteState, setInviteState] = useState<'loading' | 'valid' | 'invalid'>('loading');
-  const [inviteInfo, setInviteInfo] = useState<{ invite_email: string; invite_name: string | null; role: string; status: string } | null>(null);
+  const [claiming, setClaiming] = useState(false);
+  const [claimMessage, setClaimMessage] = useState<string | null>(null);
+  const [inviteInfo, setInviteInfo] = useState<{ id?: string; wedding_site_id?: string; invite_email: string; invite_name: string | null; role: string; status: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,7 +24,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
       const { data, error } = await supabase
         .from('wedding_site_collaborator_invites')
-        .select('invite_email, invite_name, role, status')
+        .select('id, wedding_site_id, invite_email, invite_name, role, status')
         .eq('invite_token', token)
         .maybeSingle();
 
@@ -31,7 +35,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         return;
       }
 
-      setInviteInfo(data as { invite_email: string; invite_name: string | null; role: string; status: string });
+      setInviteInfo(data as { id?: string; wedding_site_id?: string; invite_email: string; invite_name: string | null; role: string; status: string });
       setInviteState('valid');
     };
 
@@ -40,6 +44,45 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       cancelled = true;
     };
   }, [token]);
+
+  const handleClaimInvite = async () => {
+    if (!user) {
+      setClaimMessage('Sign in first to claim this invite.');
+      return;
+    }
+    if (!inviteInfo?.id || !inviteInfo?.wedding_site_id) {
+      setClaimMessage('Invite metadata is incomplete.');
+      return;
+    }
+
+    setClaiming(true);
+    setClaimMessage(null);
+    try {
+      const { error: collaboratorError } = await supabase
+        .from('wedding_site_collaborators')
+        .upsert({
+          wedding_site_id: inviteInfo.wedding_site_id,
+          user_id: user.id,
+          role: inviteInfo.role,
+        }, { onConflict: 'wedding_site_id,user_id' });
+
+      if (collaboratorError) throw collaboratorError;
+
+      const { error: inviteError } = await supabase
+        .from('wedding_site_collaborator_invites')
+        .update({ status: 'accepted', accepted_user_id: user.id, accepted_at: new Date().toISOString() })
+        .eq('id', inviteInfo.id);
+
+      if (inviteError) throw inviteError;
+
+      setInviteState('invalid');
+      setClaimMessage('Invite accepted. Collaborator access is now active.');
+    } catch (err) {
+      setClaimMessage(err instanceof Error ? err.message : 'Could not claim invite.');
+    } finally {
+      setClaiming(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background px-6 py-16">
@@ -78,6 +121,11 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
+          {inviteState === 'valid' && (
+            <button onClick={handleClaimInvite} disabled={claiming} className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-60">
+              {claiming ? 'Claiming…' : 'Claim invite'}
+            </button>
+          )}
           <Link to="/login" className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">
             Sign in to continue
           </Link>
@@ -85,6 +133,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             Back to home
           </Link>
         </div>
+        {claimMessage && <p className="mt-4 text-sm text-text-secondary">{claimMessage}</p>}
       </div>
     </div>
   );
