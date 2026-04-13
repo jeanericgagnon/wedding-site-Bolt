@@ -20,7 +20,7 @@ All 16 public tables have RLS enabled. Policies are PERMISSIVE unless stated oth
 
 | Operation | Role | Condition | Assessment |
 |-----------|------|-----------|------------|
-| SELECT | anon | `site_slug IS NOT NULL` | ⚠️ Any site with a slug may be publicly readable. Current implementation supports draft-sharing style behavior before a strict published-only model. |
+| SELECT | anon | `site_slug IS NOT NULL` | ⚠️ Public slug lookups are still possible for published or intentional private-preview behavior, but the app-side fetch path now limits returned columns to the minimum set needed for site rendering. |
 | SELECT | authenticated | `auth.uid() = user_id` | ✅ |
 | INSERT | authenticated | `auth.uid() = user_id` | ✅ |
 | UPDATE | authenticated | `auth.uid() = user_id` | ✅ |
