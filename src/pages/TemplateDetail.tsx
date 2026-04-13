@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { templateCatalog } from '../builder/constants/templateCatalog';
+import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 
 export const TemplateDetail: React.FC = () => {
   const { templateId } = useParams();
@@ -19,6 +20,8 @@ export const TemplateDetail: React.FC = () => {
       </div>
     );
   }
+
+  const supportManifest = tpl ? getTemplateSupportManifest(tpl.id) : null;
 
   const relatedTemplates = templateCatalog
     .filter((t) => t.id !== tpl.id)
@@ -104,6 +107,33 @@ export const TemplateDetail: React.FC = () => {
                 <li>Publish when ready</li>
               </ol>
             </div>
+
+            {supportManifest && (
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold uppercase updates-wide text-neutral-500">Support manifest</p>
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">Preview {supportManifest.previewStatus === 'verified' ? 'verified' : 'fallback'}</span>
+                  <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.sectionsIncluded} starter sections</span>
+                  <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.modulesIncluded} modules</span>
+                </div>
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">Starts with</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {supportManifest.highlightedSections.map((section) => (
+                        <span key={section} className="rounded bg-white border border-neutral-200 px-2 py-1 text-xs text-neutral-700">{section}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">What is verified</p>
+                    <ul className="space-y-1 text-xs text-neutral-700">
+                      {supportManifest.supportNotes.map((note) => <li key={note}>• {note}</li>)}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-3">

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { templateCatalog, templateColorwayFacets, templateSeasonFacets, templateStyleFacets } from '../builder/constants/templateCatalog';
+import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { readSetupDraft, SELECTED_TEMPLATE_KEY } from '../lib/setupDraft';
 
 type Facet = 'all' | string;
@@ -88,7 +89,9 @@ export const Templates: React.FC = () => {
     navigate('/setup/names');
   };
 
-  const renderTemplateCard = (tpl: typeof templateCatalog[number]) => (
+  const renderTemplateCard = (tpl: typeof templateCatalog[number]) => {
+    const manifest = getTemplateSupportManifest(tpl.id);
+    return (
     <div key={tpl.id} className={`rounded-xl border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-rose-300 ring-1 ring-rose-100' : 'border-neutral-200'}`}>
       <img
         src={tpl.previewImage}
@@ -121,6 +124,18 @@ export const Templates: React.FC = () => {
           {tpl.seasonTags.map((tag) => <span key={tag} className="rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs text-amber-700">{tag}</span>)}
           <span className="rounded bg-brand/5 border border-brand/20 px-2 py-0.5 text-xs text-brand">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
         </div>
+        {manifest && (
+          <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">Preview {manifest.previewStatus === 'verified' ? 'verified' : 'fallback'}</span>
+              <span className="text-neutral-600">{manifest.sectionsIncluded} starter sections</span>
+              <span className="text-neutral-600">{manifest.modulesIncluded} modules</span>
+            </div>
+            {manifest.highlightedSections.length > 0 && (
+              <p className="mt-1 text-[11px] text-neutral-600">Starts with {manifest.highlightedSections.join(' · ')}</p>
+            )}
+          </div>
+        )}
         <div className="mt-4 grid grid-cols-3 gap-2">
           <Link to={`/templates/${tpl.id}`} className="rounded border border-neutral-300 px-3 py-2 text-center text-sm text-neutral-700 hover:bg-neutral-100">
 See details
@@ -147,7 +162,8 @@ Start with this
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50">

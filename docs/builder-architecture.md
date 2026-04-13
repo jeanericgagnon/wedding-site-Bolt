@@ -56,7 +56,7 @@ Writes atomically to `wedding_sites`:
 2. Write `published_json = site_json` (snapshot at publish time)
 3. Set `is_published = true`, `published_at = now()`
 
-Public site (`/site/:slug`) reads `published_json` first for live sites. For unpublished sites, draft `site_json` should only be used through intentional private preview flows, not casual public access.
+Public site (`/site/:slug`) reads `published_json` first for live sites. For unpublished sites, draft `site_json` should not be casually exposed through public access paths.
 
 ---
 
@@ -170,3 +170,11 @@ src/builder/
 ---
 
 *Last updated: 2026-02-18*
+
+
+## Template support manifest
+
+Template discovery surfaces now have a lightweight support manifest layer.
+This records whether a catalog template has a real builder pack behind it, whether its preview asset is verified or fallback-only, how many starter sections it loads, and the first highlighted sections couples should expect.
+
+Goal: template pages should show proof and support truth, not just mood-board marketing.
