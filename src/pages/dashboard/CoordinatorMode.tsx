@@ -366,6 +366,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
             <p className="text-sm font-medium text-text-primary mb-2">Live priorities</p>
+            <p className="text-[11px] text-text-tertiary mb-2">This is the planner's at-a-glance board for what needs attention right now.</p>
             <div className="space-y-2">
               {liveIssues.map((item) => (
                 <div key={item.title} className={`rounded-lg border px-3 py-2 ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-border/50 bg-surface-subtle/40'}`}>

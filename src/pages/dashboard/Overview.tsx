@@ -551,17 +551,17 @@ export const DashboardOverview: React.FC = () => {
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <CardTitle>Day-of command center</CardTitle>
-                    <CardDescription>DayOf is not just your website. It is the live layer for guests, RSVPs, seating, messages, and event-day coordination.</CardDescription>
+                    <CardTitle>Planner command center</CardTitle>
+                    <CardDescription>DayOf is not just your website. It is the shared operating layer for the couple, the planner they invite, guests, RSVPs, seating, messages, and event-day coordination.</CardDescription>
                   </div>
-                  <Badge variant="warning">Phase 3 focus</Badge>
+                  <Badge variant="warning">Planner-ready</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
-                    <p className="text-sm font-medium text-text-primary">Coordinator Mode</p>
-                    <p className="mt-1 text-xs text-text-secondary">Run timeline updates, guest questions, check-in, and day-of alerts from one place.</p>
+                    <p className="text-sm font-medium text-text-primary">Planner view</p>
+                    <p className="mt-1 text-xs text-text-secondary">Run timeline updates, guest questions, check-in, and day-of alerts from one place the couple can share gracefully.</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
                     <p className="text-sm font-medium text-text-primary">RSVP + guest ops</p>
@@ -575,7 +575,11 @@ export const DashboardOverview: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button variant="accent" size="md" onClick={() => navigate('/dashboard/coordinator')}>
                     <Radio className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Open coordinator mode
+                    Open planner command view
+                  </Button>
+                  <Button variant="outline" size="md" onClick={() => navigate('/dashboard/planning')}>
+                    <Radio className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Open planning workspace
                   </Button>
                   <Button variant="outline" size="md" onClick={() => navigate('/dashboard/rsvp-board')}>
                     <Users className="w-4 h-4 mr-2" aria-hidden="true" />

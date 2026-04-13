@@ -361,8 +361,11 @@ export const DashboardPlanning: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Planning</h1>
-            <p className="text-sm text-text-secondary">Keep tasks, budget, and vendors in one clear place.</p>
-            <a href="/dashboard/coordinator" className="text-xs text-primary hover:text-primary-hover">Open coordinator view</a>
+            <p className="text-sm text-text-secondary">Keep tasks, budget, and vendors in one clear place for the couple and the planner they invite.</p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              <a href="/dashboard/coordinator" className="text-xs text-primary hover:text-primary-hover">Open planner command view</a>
+              <a href="/dashboard/guests" className="text-xs text-primary hover:text-primary-hover">Open guest ops</a>
+            </div>
           </div>
         </div>
 
@@ -380,15 +383,15 @@ export const DashboardPlanning: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="text-sm font-semibold text-text-primary">Access view</label>
+            <label className="text-sm font-semibold text-text-primary">Planner access view</label>
             <select
               value={planningRole}
               onChange={(e) => setPlanningRole(e.target.value as PlanningRole)}
               className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="owner">Owner (full access)</option>
-              <option value="coordinator">Coordinator (limited edits)</option>
-              <option value="viewer">Viewer (read only)</option>
+              <option value="owner">Couple owner</option>
+              <option value="coordinator">Planner / coordinator</option>
+              <option value="viewer">Read only</option>
             </select>
           </div>
         </div>
