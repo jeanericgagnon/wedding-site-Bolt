@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { templateCatalog } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
+import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
 
 export const TemplateDetail: React.FC = () => {
   const { templateId } = useParams();
@@ -139,6 +140,21 @@ export const TemplateDetail: React.FC = () => {
 
           <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
             <p className="text-xs text-neutral-700">You can switch templates later in setup — your core wedding details stay intact.</p>
+          </div>
+
+          <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+            <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">First use-case packs to deepen next</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {TEMPLATE_USE_CASE_PACKS.map((pack) => (
+                <div key={pack.id} className="rounded-lg border border-neutral-200 bg-white p-3">
+                  <p className="text-sm font-medium text-neutral-900">{pack.label}</p>
+                  <p className="mt-1 text-xs text-neutral-600">{pack.description}</p>
+                  <ul className="mt-2 space-y-1 text-[11px] text-neutral-600">
+                    {pack.defaultChanges.map((change) => <li key={change}>• {change}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="mt-6 flex items-center gap-2">

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { templateCatalog, templateColorwayFacets, templateSeasonFacets, templateStyleFacets } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
+import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
 import { readSetupDraft, SELECTED_TEMPLATE_KEY } from '../lib/setupDraft';
 
 type Facet = 'all' | string;
@@ -138,6 +139,9 @@ export const Templates: React.FC = () => {
             {manifest.highlightedSections.length > 0 && (
               <p className="mt-1 text-[11px] text-neutral-600">Starts with {manifest.highlightedSections.join(' · ')}</p>
             )}
+            {tpl.styleTags.some((tag) => ['Destination'].includes(tag)) && (
+              <p className="mt-2 text-[11px] text-brand">First use-case pack: {TEMPLATE_USE_CASE_PACKS.find((pack) => pack.id === 'destination')?.label}</p>
+            )}
           </div>
         )}
         <div className="mt-4 grid grid-cols-3 gap-2">
@@ -177,6 +181,21 @@ Start with this
             <h1 className="text-3xl font-bold text-neutral-900">Choose your starting design</h1>
             <p className="mt-2 text-sm text-neutral-600">Pick a strong starting point for your wedding website, then personalize it inside the editor.</p>
             <p className="mt-1 text-xs text-neutral-500">Your choice carries into setup and your first site defaults.</p>
+            <div className="mt-4 rounded-xl border border-neutral-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase updates-wide text-neutral-500">First use-case packs in depth</p>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                {TEMPLATE_USE_CASE_PACKS.map((pack) => (
+                  <div key={pack.id} className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-sm font-medium text-neutral-900">{pack.label}</p>
+                    <p className="mt-1 text-xs text-neutral-600">{pack.description}</p>
+                    <ul className="mt-2 space-y-1 text-[11px] text-neutral-600">
+                      {pack.defaultChanges.map((change) => <li key={change}>• {change}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-3 flex flex-wrap gap-2">
               <button onClick={() => { setStyle('all'); setSeason('all'); setColorway('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">All templates</button>
               <button onClick={() => { setStyle('Modern'); setSeason('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Modern</button>
