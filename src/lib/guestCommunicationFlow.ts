@@ -1,5 +1,5 @@
 export interface CommunicationStage {
-  id: 'save-the-date' | 'invite' | 'reminder' | 'day-of';
+  id: 'save-the-date' | 'invite' | 'reminder' | 'week-of' | 'day-of' | 'thank-you';
   label: string;
   detail: string;
 }
@@ -21,8 +21,18 @@ export const GUEST_COMMUNICATION_FLOW: CommunicationStage[] = [
     detail: 'A calm follow-up for guests who still have not replied or still need details.',
   },
   {
+    id: 'week-of',
+    label: 'Week-of note',
+    detail: 'A final practical note for guests who need timing, arrival, parking, or last-minute clarity before the celebration starts.',
+  },
+  {
     id: 'day-of',
     label: 'Day-of update',
     detail: 'Short, practical updates for timing, parking, venue changes, or last-mile help.',
+  },
+  {
+    id: 'thank-you',
+    label: 'Thank-you',
+    detail: 'A post-wedding note for gratitude, memory sharing, or a gentle close to the guest communication loop.',
   },
 ];
