@@ -2679,6 +2679,25 @@ Proceed with send?`)) return;
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
+  const songRequestEntries = guests
+    .flatMap((guest) => {
+      const answers = guest.rsvp?.custom_answers || {};
+      return Object.entries(answers)
+        .filter(([question]) => /song|playlist|dance/i.test(question))
+        .flatMap(([question, value]) => {
+          const values = Array.isArray(value) ? value : [value];
+          return values
+            .map((entry) => String(entry ?? '').trim())
+            .filter(Boolean)
+            .map((entry) => ({
+              guestName: guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name,
+              question,
+              answer: entry,
+            }));
+        });
+    })
+    .slice(0, 12);
+
 
   const contactStats = {
     withEmail: guests.filter(g => !!g.email).length,
@@ -3357,6 +3376,23 @@ Proceed with send?`)) return;
                           <span className="text-sm text-text-primary">{entry.answer}</span>
                           <span className="text-sm font-semibold text-text-primary">{entry.count}</span>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card variant="bordered" padding="md">
+                  <p className="text-sm font-semibold text-text-primary">Song requests</p>
+                  <div className="mt-3 space-y-2.5">
+                    {songRequestEntries.length === 0 ? (
+                      <p className="text-sm text-text-secondary">No song requests captured yet.</p>
+                    ) : songRequestEntries.map((entry, index) => (
+                      <div key={`${entry.guestName}-${entry.answer}-${index}`} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-medium text-text-primary">{entry.answer}</p>
+                          <span className="text-xs text-text-tertiary">{entry.guestName}</span>
+                        </div>
+                        <p className="mt-1 text-xs uppercase tracking-wide text-text-tertiary">{entry.question}</p>
                       </div>
                     ))}
                   </div>
