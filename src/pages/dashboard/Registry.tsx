@@ -18,6 +18,7 @@ import { RegistryItemForm } from './registry/RegistryItemForm';
 import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry/registryTypes';
 import { itemNeedsAttention } from './registry/registryTypes';
 import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
+import { getRegistryRepairStates } from './registry/repairState';
 
 interface Toast {
   id: number;
@@ -991,6 +992,9 @@ Import a list of links
             </span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
               Imported gifts to fix: {alertCounts.badImports}
+            </span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
+              Repair states: {items.filter((item) => getRegistryRepairStates(item).length > 0).length}
             </span>
             {alertCounts.badImports > 0 && (
               <button

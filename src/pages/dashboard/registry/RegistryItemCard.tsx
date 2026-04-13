@@ -333,6 +333,10 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           {priceChanged && <Badge variant="success">Price changed</Badge>}
           {stale && <Badge variant="neutral">Check details</Badge>}
           {failCount > 0 && <Badge variant="error">Retry {failCount}</Badge>}
+          {repairStates.includes('broken-import') && <Badge variant="error">Broken import</Badge>}
+          {repairStates.includes('partial-import') && <Badge variant="warning">Partial import</Badge>}
+          {repairStates.includes('stale-details') && <Badge variant="neutral">Stale details</Badge>}
+          {repairStates.includes('manual-review') && <Badge variant="warning">Manual review</Badge>}
           {item.metadata_fetch_status === 'blocked' && <Badge variant="error">Couldn’t pull everything</Badge>}
           {item.metadata_fetch_status === 'error' && <Badge variant="error">Import problem</Badge>}
           {item.metadata_fetch_status === 'timeout' && <Badge variant="warning">Import timeout</Badge>}
