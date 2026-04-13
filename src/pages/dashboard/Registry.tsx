@@ -19,6 +19,7 @@ import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry
 import { itemNeedsAttention } from './registry/registryTypes';
 import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
 import { getRegistryRepairStates } from './registry/repairState';
+import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
 
 interface Toast {
   id: number;
@@ -103,6 +104,7 @@ export const DashboardRegistry: React.FC = () => {
   const [repairingBadImports, setRepairingBadImports] = useState(false);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
+  const duplicateGroups = findDuplicateRegistryGroups(items);
   const registryActionsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -996,6 +998,9 @@ Import a list of links
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
               Repair states: {items.filter((item) => getRegistryRepairStates(item).length > 0).length}
             </span>
+            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
+              Duplicate groups: {duplicateGroups.length}
+            </span>
             {alertCounts.badImports > 0 && (
               <button
                 onClick={() => void handleRepairBadImports()}
@@ -1009,6 +1014,18 @@ Import a list of links
               Budget used: {Math.round(budgetUtilization * 100)}%
             </span>
           </div>
+
+          {duplicateGroups.length > 0 && (
+            <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning space-y-2">
+              <p className="font-medium">Possible duplicate gifts found</p>
+              <div className="space-y-1 text-xs">
+                {duplicateGroups.slice(0, 4).map((group, index) => (
+                  <p key={index}>• {group.map((item) => item.item_name).join(' / ')}</p>
+                ))}
+              </div>
+              <p className="text-xs">Review these before guests see repeated items.</p>
+            </div>
+          )}
 
           {loading ? (
             <DashboardStateBlock title="Loading registry…" description="Pulling your latest items and settings." />
