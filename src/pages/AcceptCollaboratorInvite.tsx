@@ -1,11 +1,12 @@
 import React from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export const AcceptCollaboratorInvite: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const token = searchParams.get('token');
   const { user } = useAuth();
   const [inviteState, setInviteState] = useState<'loading' | 'valid' | 'invalid'>('loading');
@@ -75,8 +76,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
       if (inviteError) throw inviteError;
 
-      setInviteState('invalid');
       setClaimMessage('Invite accepted. Collaborator access is now active.');
+      setTimeout(() => navigate('/dashboard/overview'), 900);
     } catch (err) {
       setClaimMessage(err instanceof Error ? err.message : 'Could not claim invite.');
     } finally {
