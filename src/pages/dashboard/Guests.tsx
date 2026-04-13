@@ -3,6 +3,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
+import { getPlusOneState } from '../../lib/plusOneState';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -3864,7 +3865,7 @@ Proceed with send?`)) return;
                             </div>
                           </td>
                           <td className="px-4 py-2.5 text-text-secondary hidden md:table-cell">
-                            {guest.plus_one_allowed ? (guest.rsvp?.plus_one_name || 'Allowed') : 'No'}
+                            {(() => { const plusOneState = getPlusOneState({ plusOneAllowed: guest.plus_one_allowed, plusOneName: guest.rsvp?.plus_one_name, attending: guest.rsvp?.attending }); return plusOneState.label; })()}
                           </td>
                           <td className="px-4 py-2.5 text-text-secondary hidden lg:table-cell">
                             {guest.rsvp?.meal_choice || '—'}
@@ -4127,6 +4128,14 @@ Proceed with send?`)) return;
                           ))}
                         </div>
                       )}
+                    </div>
+
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
+                      <p className="text-xs uppercase updates-wide text-text-tertiary">Plus-one truth</p>
+                      {(() => { const plusOneState = getPlusOneState({ plusOneAllowed: itineraryDrawerGuest.plus_one_allowed, plusOneName: itineraryDrawerGuest.rsvp?.plus_one_name, attending: itineraryDrawerGuest.rsvp?.attending }); return (<>
+                        <p className="text-sm text-text-primary">{plusOneState.label}</p>
+                        <p className="text-sm text-text-secondary">{plusOneState.detail}</p>
+                      </>); })()}
                     </div>
 
                     <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
