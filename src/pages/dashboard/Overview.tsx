@@ -572,6 +572,9 @@ export const DashboardOverview: React.FC = () => {
                     <p className="mt-1 text-xs text-text-secondary">Keep table assignments and guest lookup ready for the people actually running the event.</p>
                   </div>
                 </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5 text-xs text-text-secondary">
+                  Proof so far: planner access starts in Settings, planner workspace modes now exist across operations screens, and role boundaries are tighter than a generic shared login.
+                </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button variant="accent" size="md" onClick={() => navigate('/dashboard/coordinator')}>
                     <Radio className="w-4 h-4 mr-2" aria-hidden="true" />

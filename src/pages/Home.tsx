@@ -54,7 +54,7 @@ export const Home: React.FC = () => {
       title: 'Planner Collaboration',
       icon: Calendar,
       href: '/product',
-      bullets: ['Invite your planner from the couple side', 'Planner command view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Tasteful collaboration without admin clutter', 'Built for real event-day help'],
+      bullets: ['Invite your planner from the couple side', 'Named planner invite with role preset', 'Planner command view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Built for real event-day help'],
     },
     {
       id: 'travel',

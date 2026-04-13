@@ -221,11 +221,25 @@ export const Product: React.FC = () => {
       </section>
 
       <section className="section-shell bg-white">
-        <div className="container-custom max-w-6xl mb-6">
+        <div className="container-custom max-w-6xl mb-6 space-y-4">
           <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
             <p className="text-xs uppercase tracking-wide text-brand font-semibold">Couple-led collaboration</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Invite your planner gracefully, without turning your wedding into a back office.</h2>
             <p className="mt-3 max-w-3xl text-ink/75">DayOf should let the couple bring in a planner or coordinator from a calm, tasteful settings flow, share the right operational surfaces, and keep ownership where it belongs.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-border-subtle bg-white p-4">
+              <p className="text-sm font-medium text-ink">Starts from the couple</p>
+              <p className="mt-1 text-sm text-ink/70">Planner access begins in Settings with a named invite, role preset, and a clean permissions preview.</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-white p-4">
+              <p className="text-sm font-medium text-ink">Planner workspace is real</p>
+              <p className="mt-1 text-sm text-ink/70">Guests, planning, messages, and coordinator mode now carry planner-specific framing instead of pretending every user is the couple.</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-white p-4">
+              <p className="text-sm font-medium text-ink">Permissions actually differ</p>
+              <p className="mt-1 text-sm text-ink/70">Budget/vendor editing stays tighter than live coordination work, so collaboration is useful without getting sloppy.</p>
+            </div>
           </div>
         </div>
       </section>
