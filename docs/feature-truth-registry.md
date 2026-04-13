@@ -32,6 +32,7 @@ Operational source of truth for trust-critical claims.
 ### Message delivery truth
 - Public-safe claim: messages should report whether they are draft, queued, sent, or failed
 - Actual truth: delivery UI must not collapse queued/processing/failed into vague success language
+- Actual truth: provider telemetry is only as complete as the delivery logs captured
 - Writing rule: if a send path is incomplete or provider-dependent, say so plainly
 
 
