@@ -86,6 +86,7 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInviteError, setPlannerInviteError] = useState<string | null>(null);
   const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
   const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string }>>([]);
+  const [creatingCollaboratorInvite, setCreatingCollaboratorInvite] = useState(false);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
@@ -323,6 +324,57 @@ export const DashboardSettings: React.FC = () => {
     writePlannerInvite(siteSlug || user?.id || null, invite);
     setPlannerInvite(invite);
     setPlannerInviteSuccess(plannerInvite ? 'Planner access updated.' : 'Planner invite saved.');
+  };
+
+  const handleCreateCollaboratorInvite = async () => {
+    setPlannerInviteError(null);
+    setPlannerInviteSuccess(null);
+    const name = plannerInviteName.trim();
+    const email = plannerInviteEmail.trim().toLowerCase();
+
+    if (!weddingSiteId) {
+      setPlannerInviteError('Missing wedding site context.');
+      return;
+    }
+    if (!user?.id) {
+      setPlannerInviteError('Missing owner context.');
+      return;
+    }
+    if (!name) {
+      setPlannerInviteError("Add your planner's name.");
+      return;
+    }
+    if (!email || !email.includes('@')) {
+      setPlannerInviteError('Add a valid planner email.');
+      return;
+    }
+
+    setCreatingCollaboratorInvite(true);
+    try {
+      const inviteToken = crypto.randomUUID();
+      const { data, error } = await supabase
+        .from('wedding_site_collaborator_invites')
+        .insert({
+          wedding_site_id: weddingSiteId,
+          invite_email: email,
+          invite_name: name,
+          role: plannerInviteRole,
+          status: 'pending',
+          invite_token: inviteToken,
+          invited_by: user.id,
+        })
+        .select('id, invite_email, invite_name, role, status, invited_at')
+        .single();
+
+      if (error) throw error;
+
+      setCollaboratorInvites((prev) => [data as { id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string }, ...prev]);
+      setPlannerInviteSuccess('Collaborator invite created in the database.');
+    } catch (err) {
+      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to create collaborator invite.');
+    } finally {
+      setCreatingCollaboratorInvite(false);
+    }
   };
 
   const handleRemovePlannerInvite = () => {
@@ -900,6 +952,9 @@ export const DashboardSettings: React.FC = () => {
                       {plannerInvite && (
                         <Button type="button" variant="outline" size="sm" onClick={handleRemovePlannerInvite}>Remove invite</Button>
                       )}
+                      <Button type="button" variant="outline" size="sm" onClick={handleCreateCollaboratorInvite} disabled={creatingCollaboratorInvite}>
+                        {creatingCollaboratorInvite ? 'Creating DB invite…' : 'Create DB invite'}
+                      </Button>
                       <Button type="button" variant="primary" size="md" onClick={handleSavePlannerInvite}>
                         {plannerInvite ? 'Update planner access' : 'Save planner invite'}
                       </Button>
