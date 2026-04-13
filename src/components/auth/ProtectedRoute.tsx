@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchBillingInfo, isSiteExpired, type BillingInfo } from '../../lib/stripeService';
+import { resolveActiveSiteRoleForUser } from '../../lib/activeSite';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
   const { user, loading, isDemoMode } = useAuth();
   const location = useLocation();
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null | 'loading'>('loading');
+  const [activeSiteRole, setActiveSiteRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -24,6 +26,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
       return;
     }
 
+    resolveActiveSiteRoleForUser(user.id).then(setActiveSiteRole).catch(() => setActiveSiteRole(null));
     fetchBillingInfo(user.id)
       .then(info => setBillingInfo(info))
       .catch(() => setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' }));
@@ -44,7 +47,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
     return <Navigate to="/login" replace />;
   }
 
-  if (!skipPaymentGate && !isDemoMode) {
+  if (!skipPaymentGate && !isDemoMode && activeSiteRole !== 'planner' && activeSiteRole !== 'coordinator' && activeSiteRole !== 'viewer') {
     const isPaymentRoute = location.pathname.startsWith('/payment');
 
     if (billingInfo?.payment_status === 'payment_required' && !isPaymentRoute) {

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { resolveActiveSiteForUser } from './activeSite';
 
 async function getFunctionErrorMessage(error: any, fallback: string): Promise<string> {
   const base = error?.message || '';
@@ -163,10 +164,13 @@ export type BillingInfo = {
 };
 
 export async function fetchBillingInfo(userId: string): Promise<BillingInfo | null> {
+  const activeSite = await resolveActiveSiteForUser(userId);
+  if (!activeSite?.id) return null;
+
   const { data, error } = await supabase
     .from('wedding_sites')
     .select('id, payment_status, billing_type, site_expires_at, paid_at, stripe_subscription_id')
-    .eq('user_id', userId)
+    .eq('id', activeSite.id)
     .maybeSingle();
 
   if (error) throw new Error(error.message);

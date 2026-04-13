@@ -28,7 +28,7 @@ import { BillingModal } from '../billing/BillingModal';
 import { supabase } from '../../lib/supabase';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
 
 interface DashboardLayoutProps {
@@ -54,6 +54,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [showMoreFeatures, setShowMoreFeatures] = useState(false);
   const [enabledFeatureIds, setEnabledFeatureIds] = useState<string[]>([]);
   const [siteMemberships, setSiteMemberships] = useState<SiteMembershipOption[]>([]);
+  const [activeSiteRole, setActiveSiteRole] = useState<string | null>(null);
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
@@ -68,6 +69,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     const loadSiteContext = async () => {
       const persistedSiteId = getStoredActiveSiteId();
       const resolvedActiveSite = await resolveActiveSiteForUser(user.id);
+      const resolvedRole = await resolveActiveSiteRoleForUser(user.id);
+      setActiveSiteRole(resolvedRole);
       const preferredSiteId = persistedSiteId || resolvedActiveSite?.id || null;
 
       const { data: ownedSites } = await supabase
@@ -427,14 +430,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                   View site
                 </a>
               )}
-              <button
-                type="button"
-                onClick={() => setShowUpgradeModal(true)}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-              >
-                <Sparkles className="w-4 h-4" />
-                Upgrade
-              </button>
+              {activeSiteRole === 'owner' && (
+                <button
+                  type="button"
+                  onClick={() => setShowUpgradeModal(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Upgrade
+                </button>
+              )}
             </div>
           </div>
         </header>

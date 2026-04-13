@@ -71,3 +71,8 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
     role: (collaboratorSite.role as ActiveSiteSummary['role']) || 'viewer',
   };
 }
+
+export async function resolveActiveSiteRoleForUser(userId: string): Promise<ActiveSiteSummary['role'] | null> {
+  const activeSite = await resolveActiveSiteForUser(userId);
+  return activeSite?.role || null;
+}
