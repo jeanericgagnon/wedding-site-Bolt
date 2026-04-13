@@ -47,6 +47,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const [claiming, setClaiming] = useState(false);
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [inviteLookupDebug, setInviteLookupDebug] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -74,6 +75,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       setInviteState('loading');
       setClaimError(null);
       setClaimMessage(null);
+      setInviteLookupDebug(null);
 
       const { data, error } = await supabase
         .from('wedding_site_collaborator_invites')
@@ -82,8 +84,16 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         .maybeSingle();
 
       if (cancelled) return;
-      if (error || !data) {
+      if (error) {
         setInviteInfo(null);
+        setInviteLookupDebug(error.message || 'Unknown invite lookup error');
+        setInviteState('invalid');
+        return;
+      }
+
+      if (!data) {
+        setInviteInfo(null);
+        setInviteLookupDebug('No invite row matched this token.');
         setInviteState('invalid');
         return;
       }
@@ -91,6 +101,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       const resolvedState = resolveInviteValidationState(data);
       if (resolvedState !== 'valid') {
         setInviteInfo(null);
+        setInviteLookupDebug(`Invite status: ${data.status}${data.expires_at ? ` | expires ${data.expires_at}` : ''}`);
         setInviteState(resolvedState);
         return;
       }
@@ -348,16 +359,28 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                 <p className="text-sm text-error">This invite link is incomplete. Ask the owner to send the full invite URL again.</p>
               )}
               {inviteState === 'invalid' && (
-                <p className="text-sm text-error">This invite could not be found. Double-check the link or ask for a fresh invite.</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-error">This invite could not be found. Double-check the link or ask for a fresh invite.</p>
+                  {inviteLookupDebug && <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>}
+                </div>
               )}
               {inviteState === 'expired' && (
-                <p className="text-sm text-error">This invite has expired. Ask the owner for a fresh invite link.</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-error">This invite has expired. Ask the owner for a fresh invite link.</p>
+                  {inviteLookupDebug && <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>}
+                </div>
               )}
               {inviteState === 'revoked' && (
-                <p className="text-sm text-error">This invite is no longer active.</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-error">This invite is no longer active.</p>
+                  {inviteLookupDebug && <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>}
+                </div>
               )}
               {inviteState === 'accepted' && (
-                <p className="text-sm text-text-primary">This invite has already been claimed. If you already joined, head to your dashboard.</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-text-primary">This invite has already been claimed. If you already joined, head to your dashboard.</p>
+                  {inviteLookupDebug && <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>}
+                </div>
               )}
 
               {inviteInfo && inviteIsClaimable && (
