@@ -166,7 +166,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       await claimInvite(authUser);
       setInviteState('accepted');
       setClaimMessage('Invite accepted. Redirecting to your dashboard…');
-      navigate(getCollaboratorRedirectPath(), { replace: true });
+      navigate(getCollaboratorRedirectPath(inviteInfo?.role), { replace: true });
     } catch (err) {
       setClaimError(err instanceof Error ? err.message : 'Could not claim invite.');
       setClaimMessage(null);
@@ -405,7 +405,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
             <div className="mt-6 flex flex-wrap gap-3">
               {inviteState === 'accepted' && (
-                <Button type="button" variant="accent" onClick={() => navigate(getCollaboratorRedirectPath())}>
+                <Button type="button" variant="accent" onClick={() => navigate(getCollaboratorRedirectPath(inviteInfo?.role))}>
                   Go to dashboard
                 </Button>
               )}

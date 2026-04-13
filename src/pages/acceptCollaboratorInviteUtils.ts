@@ -21,6 +21,9 @@ export function isInviteEmailMatch(userEmail: string | null | undefined, inviteE
   return (userEmail || '').trim().toLowerCase() === (inviteEmail || '').trim().toLowerCase();
 }
 
-export function getCollaboratorRedirectPath(): string {
+export function getCollaboratorRedirectPath(role?: string | null): string {
+  if (role === 'viewer') return '/dashboard/overview';
+  if (role === 'coordinator') return '/dashboard/overview';
+  if (role === 'planner') return '/dashboard/overview';
   return '/dashboard/overview';
 }
