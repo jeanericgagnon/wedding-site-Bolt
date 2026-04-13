@@ -75,3 +75,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf can distinguish between ceremony/reception/default-event paths and more custom event-specific invites
 - Actual truth: the product now surfaces per-event invite structure and event-aware reminder drafting, but it is still not a full event-by-event rules engine everywhere
 - Writing rule: describe this as clearer multi-event RSVP visibility and follow-up, not perfect per-event automation
+
+
+### Meal and dietary truth
+- Public-safe claim: DayOf can surface meal choices, missing meal follow-up, and dietary notes in guest ops
+- Actual truth: meal and dietary support is now clearer and more visible, but still not a fully comprehensive catering workflow
+- Writing rule: describe this as stronger meal/dietary handling, not a complete catering operations system
