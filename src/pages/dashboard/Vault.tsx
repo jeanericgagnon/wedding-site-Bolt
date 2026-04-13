@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
@@ -1409,6 +1410,7 @@ setWeddingSiteId('demo-site-id');
 
   const totalEntries = entries.length;
   const orderedVaultConfigs = [...vaultConfigs].sort((a, b) => a.duration_years - b.duration_years);
+  const archiveMode = getArchiveModeDescriptor({ weddingDate: weddingDate ? weddingDate.toISOString() : null });
   const driveConnectedHealthy = googleDriveConnected && !driveNeedsReconnect;
   const showReconnectButton = !googleDriveConnected || driveNeedsReconnect;
 

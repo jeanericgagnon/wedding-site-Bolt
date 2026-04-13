@@ -19,6 +19,7 @@ import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
 import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
+import { getArchiveModeDescriptor } from '../lib/archiveMode';
 
 interface PublicItineraryRow {
   id?: string;
@@ -336,6 +337,7 @@ export const SiteView: React.FC = () => {
   const [isComingSoon, setIsComingSoon] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const archiveMode = getArchiveModeDescriptor({ weddingDate: weddingData?.event?.weddingDateISO ?? null });
 
   const [privacyGate, setPrivacyGate] = useState<PrivacyGateState>('loading');
   const [hideFromSearch, setHideFromSearch] = useState(false);

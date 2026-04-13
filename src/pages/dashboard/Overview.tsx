@@ -21,6 +21,7 @@ import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getPublishStateDescriptor } from '../../lib/publishState';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
+import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 
 interface OverviewStats {
   siteId: string | null;
@@ -353,6 +354,7 @@ export const DashboardOverview: React.FC = () => {
     templateName: stats?.templateName ?? '',
   }).map((item) => ({ ...item, action: () => navigate(item.route) }));
   const siteVisibility = getSiteVisibilityState({ isPublished: stats?.isPublished, privacyMode: stats?.privacyMode, hideFromSearch: stats?.hideFromSearch });
+  const archiveMode = getArchiveModeDescriptor({ weddingDate: stats?.weddingDate ?? null });
   const publishState = getPublishStateDescriptor({
     isPublished: stats?.isPublished,
     hasUnsavedChanges: stats?.isPublished && stats?.siteUpdatedAt && stats?.lastPublishedAt
@@ -546,6 +548,34 @@ export const DashboardOverview: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle>{archiveMode.label}</CardTitle>
+                    <CardDescription>{archiveMode.detail}</CardDescription>
+                  </div>
+                  <Badge variant={archiveMode.isArchiveLike ? 'warning' : 'secondary'}>{archiveMode.state}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">Planning stays primary</p>
+                    <p className="mt-1 text-xs text-text-secondary">Before the wedding, planning, guests, RSVP, seating, and live coordination stay in the foreground.</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">Archive transition should be intentional</p>
+                    <p className="mt-1 text-xs text-text-secondary">After the event, the product should gradually quiet the urgent ops layer instead of pretending nothing changed.</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">Vault becomes more important later</p>
+                    <p className="mt-1 text-xs text-text-secondary">The anniversary vault and memory surfaces should start carrying more weight once the event is over.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
 
             <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
               <CardHeader>
