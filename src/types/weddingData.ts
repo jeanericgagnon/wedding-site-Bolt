@@ -66,6 +66,7 @@ export interface WeddingDataV1 {
   meta: {
     createdAtISO: string;
     updatedAtISO: string;
+    useCasePacks?: string[];
   };
 }
 

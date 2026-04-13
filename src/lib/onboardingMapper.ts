@@ -11,6 +11,7 @@ interface OnboardingMapperInput {
   coupleNames: CoupleNames;
   planningStatus: 'guided_setup_in_progress' | 'guided_setup_complete' | 'quick_start_complete';
   template: string;
+  useCasePacks?: string[];
   colorScheme?: string;
   weddingDate?: string;
   venue?: string;
@@ -32,11 +33,23 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
   const normalizedAttire = input.attire?.trim() || 'Dress code details will be shared here closer to the wedding.';
   const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || (input.location?.trim() ? `Recommended places to stay near ${input.location.trim()} will be shared here.` : 'Recommended places to stay will be shared here.');
   const normalizedParking = input.parking?.trim() || 'Parking details and arrival notes will be shared here closer to the wedding.';
+  const useCaseFaqs = [
+    useCasePacks.includes('destination') ? 'When should guests arrive?::If you are traveling in, we recommend arriving at least one day early so the weekend feels easy and unrushed.' : null,
+    useCasePacks.includes('bilingual') ? 'Will information be shared in more than one language?::Yes. We are planning this with bilingual guests in mind, so the key details will be shared clearly for both sides of the family.' : null,
+    useCasePacks.includes('interfaith') ? 'What should guests know about the ceremony?::We will share a short ceremony note here so guests understand the traditions being honored and what to expect.' : null,
+  ].filter(Boolean);
   const normalizedFaqs = input.customFaqs?.trim() || [
     `What should I wear?::${normalizedAttire}`,
     `Where should I stay?::${normalizedHotelRecommendations}`,
     `Will there be parking?::${normalizedParking}`,
+    ...useCaseFaqs,
   ].join('\n');
+  const useCasePacks = Array.from(new Set([
+    ...((input.useCasePacks ?? []).filter(Boolean)),
+    /destination|travel|coastal/.test((input.template ?? '').toLowerCase()) ? 'destination' : null,
+    /bilingual/.test((input.template ?? '').toLowerCase()) ? 'bilingual' : null,
+    /interfaith/.test((input.template ?? '').toLowerCase()) ? 'interfaith' : null,
+  ].filter(Boolean) as string[]));
   const normalizedRegistryLinks = input.registryLinks
     ?.split('\n')
     .map((link) => link.trim())
@@ -46,6 +59,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
   const weddingData = fromOnboarding({
     partner1Name: input.coupleNames.name1,
     partner2Name: input.coupleNames.name2,
+    useCasePacks: input.useCasePacks || undefined,
     weddingDate: input.weddingDate || undefined,
     venueName: input.venue || undefined,
     location: input.location || input.city || undefined,

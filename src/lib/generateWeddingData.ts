@@ -7,6 +7,7 @@ function generateId(): string {
 export interface OnboardingFormData {
   partner1Name: string;
   partner2Name: string;
+  useCasePacks?: string[];
   weddingDate?: string;
   venue?: string;
   venueName?: string;
@@ -35,6 +36,11 @@ const PLACEHOLDER_ANSWERS = [
   'parking details and arrival notes will be shared here closer to the wedding.',
   'recommended places to stay will be shared here.',
 ];
+
+
+function uniqueStrings(values: Array<string | undefined | null>): string[] {
+  return Array.from(new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]));
+}
 
 function normalizeFaqQuestion(question: string): string {
   const trimmed = question.trim().replace(/:+$/, '').trim();
@@ -100,6 +106,16 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
   const schedule: WeddingDataV1['schedule'] = [];
   const registry: WeddingDataV1['registry'] = { links: [] };
   const parsedFaqs = parseCustomFaqs(formData.customFaqs);
+  const inferredUseCasePacks = uniqueStrings([
+    ...(formData.useCasePacks ?? []),
+    /destination|travel|coastal/.test((formData.template ?? '').toLowerCase()) ? 'destination' : null,
+    /bilingual/.test((formData.template ?? '').toLowerCase()) ? 'bilingual' : null,
+    /interfaith/.test((formData.template ?? '').toLowerCase()) ? 'interfaith' : null,
+  ]);
+  const useCasePacks = inferredUseCasePacks;
+  const isDestination = useCasePacks.includes('destination');
+  const isBilingual = useCasePacks.includes('bilingual');
+  const isInterfaith = useCasePacks.includes('interfaith');
 
   if (formData.venue || formData.venueName || formData.location || formData.city) {
     const venueName = formData.venueName || formData.venue || formData.location || formData.city;
@@ -126,6 +142,24 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
         id: generateId(),
         label: 'Reception',
         startTimeISO: formData.receptionTime,
+        venueId,
+      });
+    }
+
+    if (isDestination && schedule.length > 0) {
+      schedule.unshift({
+        id: generateId(),
+        label: 'Welcome gathering',
+        notes: 'A soft arrival moment for traveling guests before the main celebration.',
+        venueId,
+      });
+    }
+
+    if (isInterfaith) {
+      schedule.unshift({
+        id: generateId(),
+        label: 'Ceremony note',
+        notes: 'A short guide to the traditions and flow being honored during the ceremony.',
         venueId,
       });
     }
@@ -156,6 +190,9 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
     hasSubstantiveAnswer(formData.attire) ? buildFaqEntry('What should I wear?', formData.attire!) : null,
     hasSubstantiveAnswer(formData.parking) ? buildFaqEntry('Will there be parking?', formData.parking!) : null,
     hasSubstantiveAnswer(formData.hotelRecommendations) ? buildFaqEntry('Where should I stay?', formData.hotelRecommendations!) : null,
+    isDestination ? buildFaqEntry('When should guests arrive?', 'If you are traveling in, we recommend arriving at least one day early so the weekend feels easy and unrushed.') : null,
+    isBilingual ? buildFaqEntry('Will information be shared in more than one language?', 'Yes. We are planning this with bilingual guests in mind, so the key details will be shared clearly for both sides of the family.') : null,
+    isInterfaith ? buildFaqEntry('What should guests know about the ceremony?', 'We will share a short ceremony note here so guests understand the traditions being honored and what to expect.') : null,
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 
   const faq = dedupeFaqs([...parsedFaqs, ...defaultFaqs]);
@@ -179,6 +216,8 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
     travel: {
       parkingInfo: formData.parking,
       hotelInfo: formData.hotelRecommendations,
+      notes: isDestination ? 'Travel details, airport timing, and weekend logistics matter early for this celebration.' : undefined,
+      flightInfo: isDestination ? 'Flight timing and airport guidance will be shared here for traveling guests.' : undefined,
     },
     registry,
     faq,
@@ -191,6 +230,7 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
     meta: {
       createdAtISO: now,
       updatedAtISO: now,
+      useCasePacks,
     },
   };
 }

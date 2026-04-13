@@ -35,11 +35,15 @@ export function generateInitialLayout(
   const hasRealStoryContent = Boolean(data.couple.story?.trim()) && !isPlaceholderCopy(data.couple.story);
   const hasRealGalleryContent = data.media.gallery.some((item) => Boolean(item.url?.trim()));
   const hasMultipleScheduleItems = (data.schedule?.length ?? 0) > 1;
+  const useCasePacks = data.meta?.useCasePacks ?? [];
+  const hasDestinationPack = useCasePacks.includes('destination');
+  const hasBilingualPack = useCasePacks.includes('bilingual');
+  const hasInterfaithPack = useCasePacks.includes('interfaith');
 
   const shouldDisableEmptySection = (type: SectionInstance['type']) => {
     if (type === 'registry') return !hasRealRegistryContent;
-    if (type === 'faq') return !hasSubstantiveFaqContent;
-    if (type === 'travel') return !hasRealTravelContent && !hasMultipleScheduleItems;
+    if (type === 'faq') return !hasSubstantiveFaqContent && !hasBilingualPack && !hasInterfaithPack;
+    if (type === 'travel') return !hasRealTravelContent && !hasMultipleScheduleItems && !hasDestinationPack;
     if (type === 'story') return !hasRealStoryContent;
     if (type === 'gallery') return !hasRealGalleryContent;
     return false;
