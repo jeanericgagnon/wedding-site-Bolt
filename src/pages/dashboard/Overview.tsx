@@ -313,6 +313,14 @@ export const DashboardOverview: React.FC = () => {
     stats && stats.totalGuests > 0
       ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
       : null;
+  const attendanceRate =
+    stats && stats.totalGuests > 0
+      ? Math.round((stats.confirmedGuests / stats.totalGuests) * 100)
+      : null;
+  const contactCoverage =
+    stats && stats.totalGuests > 0
+      ? Math.round((stats.contactableGuestCount / stats.totalGuests) * 100)
+      : null;
 
   const analyticsBaseline = buildAnalyticsBaseline({
     totalGuests: stats?.totalGuests ?? 0,
@@ -552,6 +560,64 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </Card>
             </div>
+
+            <Card variant="bordered" padding="lg" className="shadow-sm">
+              <CardHeader>
+                <CardTitle>Engagement dashboard</CardTitle>
+                <CardDescription>One place for RSVP momentum, guest reachability, registry readiness, and photo prompt signals.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+                    <p className="text-xs uppercase tracking-wide text-text-tertiary">Response rate</p>
+                    <p className="mt-1 text-2xl font-bold text-text-primary">{responseRate ?? 0}%</p>
+                    <p className="mt-1 text-xs text-text-secondary">Guests who already replied</p>
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+                    <p className="text-xs uppercase tracking-wide text-text-tertiary">Attendance rate</p>
+                    <p className="mt-1 text-2xl font-bold text-text-primary">{attendanceRate ?? 0}%</p>
+                    <p className="mt-1 text-xs text-text-secondary">Invited guests currently marked attending</p>
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+                    <p className="text-xs uppercase tracking-wide text-text-tertiary">Contact coverage</p>
+                    <p className="mt-1 text-2xl font-bold text-text-primary">{contactCoverage ?? 0}%</p>
+                    <p className="mt-1 text-xs text-text-secondary">Guests with email or phone on file</p>
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+                    <p className="text-xs uppercase tracking-wide text-text-tertiary">Registry readiness</p>
+                    <p className="mt-1 text-2xl font-bold text-text-primary">{stats?.registryItemCount ?? 0}</p>
+                    <p className="mt-1 text-xs text-text-secondary">Live registry items ready for guests</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 lg:grid-cols-3">
+                  <div className="rounded-xl border border-border-subtle bg-white px-4 py-4">
+                    <p className="text-sm font-semibold text-text-primary">RSVP funnel</p>
+                    <div className="mt-3 space-y-2 text-sm text-text-secondary">
+                      <div className="flex items-center justify-between gap-3"><span>Confirmed</span><span className="font-semibold text-text-primary">{stats?.confirmedGuests ?? 0}</span></div>
+                      <div className="flex items-center justify-between gap-3"><span>Declined</span><span className="font-semibold text-text-primary">{stats?.declinedGuests ?? 0}</span></div>
+                      <div className="flex items-center justify-between gap-3"><span>Pending</span><span className="font-semibold text-text-primary">{stats?.pendingGuests ?? 0}</span></div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-white px-4 py-4">
+                    <p className="text-sm font-semibold text-text-primary">Registry + photos</p>
+                    <div className="mt-3 space-y-2 text-sm text-text-secondary">
+                      <div className="flex items-center justify-between gap-3"><span>Registry items</span><span className="font-semibold text-text-primary">{stats?.registryItemCount ?? 0}</span></div>
+                      <div className="flex items-center justify-between gap-3"><span>Photo albums</span><span className="font-semibold text-text-primary">{stats?.activePhotoAlbumCount ?? 0}/{stats?.photoAlbumCount ?? 0}</span></div>
+                      <div className="flex items-center justify-between gap-3"><span>Guest prompts</span><span className="font-semibold text-text-primary">{interactiveSuggestions.length}</span></div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-white px-4 py-4">
+                    <p className="text-sm font-semibold text-text-primary">Where to push next</p>
+                    <div className="mt-3 space-y-2 text-sm text-text-secondary">
+                      <p>{(stats?.pendingGuests ?? 0) > 0 ? `${stats?.pendingGuests ?? 0} guests still need an RSVP reply.` : 'RSVP backlog is clear right now.'}</p>
+                      <p>{(stats?.contactableGuestCount ?? 0) < (stats?.totalGuests ?? 0) ? `${(stats?.totalGuests ?? 0) - (stats?.contactableGuestCount ?? 0)} guests still need contact coverage.` : 'Guest contact coverage looks complete.'}</p>
+                      <p>{(stats?.registryItemCount ?? 0) === 0 ? 'Registry still needs live items.' : 'Registry has enough live items to be guest-facing.'}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
