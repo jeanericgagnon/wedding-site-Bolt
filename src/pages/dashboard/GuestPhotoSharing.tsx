@@ -39,6 +39,16 @@ type PhotoUploadRow = {
   uploaded_at: string;
 };
 
+type SlideshowOrderMode = 'newest' | 'oldest' | 'shuffled';
+
+type SlideshowFrame = {
+  uploadId: string;
+  albumId: string;
+  albumName: string;
+  title: string;
+  caption: string;
+};
+
 const toDatetimeLocal = (iso: string | null): string => {
   if (!iso) return '';
   const d = new Date(iso);
@@ -102,6 +112,8 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
   const [bulkModerating, setBulkModerating] = useState(false);
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
+  const [slideshowAlbumFilter, setSlideshowAlbumFilter] = useState<string>('all');
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
   const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
 
@@ -254,6 +266,40 @@ export const GuestPhotoSharing: React.FC = () => {
     () => albums.filter((album) => (countsByAlbum.get(album.id) ?? 0) >= 3).length,
     [albums, countsByAlbum]
   );
+
+  const slideshowFrames = useMemo<SlideshowFrame[]>(() => {
+    const sourceAlbums = albums.filter((album) => {
+      if (!album.is_active) return false;
+      if ((countsByAlbum.get(album.id) ?? 0) < 3) return false;
+      if (slideshowAlbumFilter === 'all') return true;
+      return album.id === slideshowAlbumFilter;
+    });
+
+    const sourceAlbumIds = new Set(sourceAlbums.map((album) => album.id));
+    let selectedUploads = uploads
+      .filter((upload) => !upload.is_hidden && !upload.is_flagged && sourceAlbumIds.has(upload.photo_album_id))
+      .map((upload) => {
+        const album = albums.find((entry) => entry.id === upload.photo_album_id);
+        return {
+          uploadId: upload.id,
+          albumId: upload.photo_album_id,
+          albumName: album?.name || 'Album',
+          title: upload.original_filename,
+          caption: `${upload.guest_name || 'Guest'} · ${new Date(upload.uploaded_at).toLocaleDateString()}`,
+          uploadedAt: upload.uploaded_at,
+        };
+      });
+
+    if (slideshowOrder === 'newest') {
+      selectedUploads = selectedUploads.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+    } else if (slideshowOrder === 'oldest') {
+      selectedUploads = selectedUploads.sort((a, b) => new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime());
+    } else {
+      selectedUploads = [...selectedUploads].sort((a, b) => a.uploadId.localeCompare(b.uploadId));
+    }
+
+    return selectedUploads.slice(0, 24).map(({ uploadedAt: _uploadedAt, ...frame }) => frame);
+  }, [albums, uploads, countsByAlbum, slideshowAlbumFilter, slideshowOrder]);
 
   const copyText = async (value: string, key: string) => {
     try {
@@ -723,16 +769,68 @@ export const GuestPhotoSharing: React.FC = () => {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => window.alert('Slideshow builder UI is the next step. For now, use this as the launch point.')}
-                className="border-violet-300 text-violet-900 hover:bg-violet-100"
-              >
+              <Button variant="outline" className="border-violet-300 text-violet-900 hover:bg-violet-100">
                 <Clapperboard className="w-4 h-4 mr-2" />
-                Open slideshow builder
+                Slideshow v1 ready below
               </Button>
             </div>
           </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-neutral-900">Slideshow builder v1</h2>
+              <p className="mt-1 text-sm text-neutral-600">Assemble a simple slideshow sequence from your uploaded guest photos.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                value={slideshowAlbumFilter}
+                onChange={(e) => setSlideshowAlbumFilter(e.target.value)}
+                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              >
+                <option value="all">All slideshow-ready albums</option>
+                {albums
+                  .filter((album) => album.is_active && (countsByAlbum.get(album.id) ?? 0) >= 3)
+                  .map((album) => (
+                    <option key={album.id} value={album.id}>{album.name}</option>
+                  ))}
+              </select>
+              <select
+                value={slideshowOrder}
+                onChange={(e) => setSlideshowOrder(e.target.value as SlideshowOrderMode)}
+                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="shuffled">Stable shuffled</option>
+              </select>
+            </div>
+          </div>
+
+          {slideshowFrames.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-neutral-300 bg-surface-subtle/20 px-4 py-6 text-sm text-neutral-600">
+              Need at least one active album with 3+ visible uploads before a slideshow can be assembled.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
+                Built <span className="font-semibold text-neutral-900">{slideshowFrames.length}</span> frames from <span className="font-semibold text-neutral-900">{slideshowAlbumFilter === 'all' ? slideshowReadyAlbumCount : 1}</span> album source{slideshowAlbumFilter === 'all' ? 's' : ''}.
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {slideshowFrames.map((frame, index) => (
+                  <div key={frame.uploadId} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-neutral-900">Frame {index + 1}</p>
+                      <span className="text-xs text-neutral-500">{frame.albumName}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-neutral-800 truncate">{frame.title}</p>
+                    <p className="mt-1 text-xs text-neutral-500">{frame.caption}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
 
         <Card className="p-6">
