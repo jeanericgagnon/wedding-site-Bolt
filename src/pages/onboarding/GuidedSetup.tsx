@@ -5,6 +5,7 @@ import { Button, Card, Input, Textarea } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { buildOnboardingUpdateData } from '../../lib/onboardingMapper';
 import { buildSuggestedFaqDrafts } from '../../lib/faqDraftHelper';
+import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
 import * as XLSX from 'xlsx';
 
 type Step =
@@ -74,6 +75,21 @@ export const GuidedSetup: React.FC = () => {
 
   const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
 
+
+  const activeUseCasePacks = [
+    formData.template === 'destination' ? 'destination' : null,
+    formData.template === 'bilingual' ? 'bilingual' : null,
+    formData.template === 'interfaith' ? 'interfaith' : null,
+  ].filter(Boolean) as string[];
+
+  const welcomeNoteDraft = buildWelcomeNoteDraft({
+    partner1Name: coupleNames.name1,
+    partner2Name: coupleNames.name2,
+    city: formData.city,
+    venue: formData.venue,
+    useCasePacks: activeUseCasePacks,
+  });
+
   const suggestedFaqDrafts = buildSuggestedFaqDrafts({
     weddingCity: formData.city,
     venue: formData.venue,
@@ -81,11 +97,7 @@ export const GuidedSetup: React.FC = () => {
     parking: formData.parking,
     hotelRecommendations: formData.hotelRecommendations,
     rsvpDeadline: formData.rsvpDeadline,
-    useCasePacks: [
-      formData.template === 'destination' ? 'destination' : null,
-      formData.template === 'bilingual' ? 'bilingual' : null,
-      formData.template === 'interfaith' ? 'interfaith' : null,
-    ].filter(Boolean) as string[],
+    useCasePacks: activeUseCasePacks,
   });
   const currentStepIndex = steps.indexOf(currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
@@ -553,6 +565,16 @@ export const GuidedSetup: React.FC = () => {
               placeholder="e.g., The Grand Hotel"
               helperText="Optional"
             />
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, ourStory: welcomeNoteDraft }))}
+                className="rounded border border-border px-3 py-2 text-sm text-text-secondary hover:border-primary/40 hover:text-primary"
+              >
+                Insert welcome note draft
+              </button>
+            </div>
 
             <Textarea
               label="Your story (optional)"
