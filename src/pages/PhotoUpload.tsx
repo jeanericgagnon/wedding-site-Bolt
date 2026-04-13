@@ -105,78 +105,78 @@ export const PhotoUpload: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-rose-50/40 px-4 py-10">
-      <div className="mx-auto max-w-xl rounded-2xl bg-white p-6 shadow-sm border border-rose-100">
-        <h1 className="text-2xl font-semibold text-gray-900">Share your photos</h1>
-        <p className="mt-2 text-sm text-gray-600">Upload photos and videos directly to the couple&apos;s shared album.</p>
+    <div className="min-h-screen bg-rose-50/40 px-4 py-8 sm:py-10">
+      <div className="mx-auto max-w-xl rounded-3xl bg-white p-5 sm:p-6 shadow-sm border border-rose-100">
+        <h1 className="text-3xl font-semibold text-gray-900">Share your photos</h1>
+        <p className="mt-2 text-base text-gray-700">Upload photos and videos directly to the couple&apos;s shared album.</p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Upload token</label>
+            <label className="mb-2 block text-base font-medium text-gray-800">Upload token</label>
             <input
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base"
               placeholder="Paste upload token"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Your name (optional)</label>
+            <label className="mb-2 block text-base font-medium text-gray-800">Your name (optional)</label>
             <input
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base"
               placeholder="Jane Doe"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email (optional)</label>
+            <label className="mb-2 block text-base font-medium text-gray-800">Email (optional)</label>
             <input
               type="email"
               value={guestEmail}
               onChange={(e) => setGuestEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Note (optional)</label>
+            <label className="mb-2 block text-base font-medium text-gray-800">Note (optional)</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base"
               rows={3}
               placeholder="A few words for the couple"
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Files</label>
+          <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+            <label className="mb-2 block text-base font-medium text-gray-800">Files</label>
             <input
               type="file"
               multiple
               accept="image/*,video/*"
               onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base"
             />
-            {files.length > 0 && <p className="mt-1 text-xs text-gray-500">{files.length} file(s) selected</p>}
-            <p className="mt-1 text-xs text-gray-500">Up to 10 files per upload, 30MB per file, 120MB total.</p>
+            {files.length > 0 && <p className="mt-2 text-sm text-gray-700 font-medium">{files.length} file(s) selected</p>}
+            <p className="mt-2 text-sm text-gray-600">Up to 10 files per upload, 30MB per file, 120MB total.</p>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {message && <p className="text-sm text-green-700">{message}</p>}
+          {error && <p className="text-base text-red-700">{error}</p>}
+          {message && <p className="text-base text-green-700">{message}</p>}
           {uploadedNames.length > 0 && (
-            <ul className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900 space-y-1">
+            <ul className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 space-y-1.5">
               {uploadedNames.slice(0, 8).map((name) => <li key={name}>{name}</li>)}
               {uploadedNames.length > 8 && <li>+{uploadedNames.length - 8} more</li>}
             </ul>
           )}
           {failedNames.length > 0 && (
-            <ul className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 space-y-1">
+            <ul className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 space-y-1.5">
               {failedNames.slice(0, 8).map((name) => <li key={name}>{name}</li>)}
               {failedNames.length > 8 && <li>+{failedNames.length - 8} more</li>}
             </ul>
@@ -185,7 +185,7 @@ export const PhotoUpload: React.FC = () => {
           <button
             type="submit"
             disabled={isUploading}
-            className="w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60"
+            className="w-full min-h-[52px] rounded-xl bg-rose-600 px-4 py-3 text-base font-medium text-white hover:bg-rose-700 disabled:opacity-60"
           >
             {isUploading ? 'Uploading…' : 'Upload files'}
           </button>
