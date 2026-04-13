@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Armchair,
   Radio,
+  ScrollText,
   ChevronDown,
   ChevronRight,
   type LucideIcon,
@@ -114,6 +115,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     { id: 'photos', label: 'Photo Sharing', icon: Camera, path: '/dashboard/photos' },
     { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry', pinned: true },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
+    { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: '/dashboard/audit-logs' },
   ];
 
   const pinnedNavItems = navItems.filter((item) => item.pinned);
