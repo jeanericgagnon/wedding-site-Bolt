@@ -101,7 +101,7 @@ layout_config   → legacy V1 format (pre-builder sites)
 
 Unpublished sites now default to a Coming Soon page, and guest-facing access controls apply once the site is live. The public fetch path is being narrowed to only the fields SiteView actually needs. The `is_published` flag remains important, but the runtime now more closely separates unpublished preview behavior from published/live behavior.
 
-This is an implementation truth, not the ideal final product model. Product-facing wording should distinguish clearly between draft, private preview, and published/live states, and future runtime refactors should keep tightening those boundaries until draft and published/live are cleanly separated both in wording and access behavior.
+This is an implementation truth, not the ideal final product model. Public wording should follow the feature truth registry, not developer shorthand. Product-facing wording should distinguish clearly between draft, private preview, and published/live states, and future runtime refactors should keep tightening those boundaries until draft and published/live are cleanly separated both in wording and access behavior.
 
 ---
 

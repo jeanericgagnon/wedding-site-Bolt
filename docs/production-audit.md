@@ -212,7 +212,7 @@ Applied 27 migrations through 20260218171854. Key milestones:
 | Phase 5 (Messages/Vault) | Messages full rewrite with real backend. Vault preview badges. |
 | Phase 6 (RLS) | Fixed event_rsvps UPDATE + rsvps SELECT policies. Created `docs/rls-matrix.md`, `docs/db-verification.md`. |
 | Phase 7 (Domain) | Updated `docs/domain-routing.md` with personalized DayOf URL and future external custom-domain implementation guide. |
-| Phase 1 trust wording | Customer-facing copy now distinguishes personalized DayOf URLs, guest access controls, search visibility, and published/live more clearly. |
+| Phase 1 trust wording | Customer-facing copy now distinguishes personalized DayOf URLs, guest access controls, search visibility, and published/live more clearly. The feature truth registry should remain the backstop for future trust-copy changes. |
 | Phase 8 (QA) | Quality gate run, feature QA matrix, this summary. |
 
 **Go / No-Go: GO**

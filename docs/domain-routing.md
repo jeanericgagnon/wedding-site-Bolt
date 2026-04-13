@@ -101,6 +101,8 @@ No database schema changes are needed — the existing `site_slug` column handle
 
 ## External Custom Domains (Future)
 
+Status: not a public-safe feature claim yet.
+
 For couples who want an external domain like `alexandjordan.com` to show their wedding site:
 
 **Required additions:**

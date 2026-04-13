@@ -160,7 +160,7 @@ Chronological summary of significant schema changes:
 | Typecheck | 0 errors (`tsc --noEmit`) | ✅ Pass |
 | Build | Clean (`vite build`) | ✅ Pass |
 | Tests | 126/126 passing | ✅ Pass |
-| `SiteView.tsx` | Published state is preferred; product-facing wording now reflects draft/preview/live more honestly, though the underlying model still deserves a future refactor | ✅ Verified |
+| `SiteView.tsx` | Published state is preferred; product-facing wording now reflects draft/live more honestly, and trust copy should follow the feature truth registry | ✅ Verified |
 | `publishProject` | Atomically snapshots `site_json → published_json` on every publish | ✅ Verified |
 | Builder undo/redo | LOAD_PROJECT creates baseline history entry; undo blocked at `currentIndex <= 0` | ✅ Verified |
 | Builder autosave | Race condition guard: `isDirty && !isSaving` before trigger | ✅ Verified |

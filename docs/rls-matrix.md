@@ -20,7 +20,7 @@ All 16 public tables have RLS enabled. Policies are PERMISSIVE unless stated oth
 
 | Operation | Role | Condition | Assessment |
 |-----------|------|-----------|------------|
-| SELECT | anon | `site_slug IS NOT NULL` | ⚠️ Public slug lookups are intended for published sites, and the app-side fetch path now limits returned columns to the minimum set needed for site rendering. |
+| SELECT | anon | `site_slug IS NOT NULL` | ⚠️ Public slug lookups are intended for published sites, and the app-side fetch path now limits returned columns to the minimum set needed for site rendering. Trust copy should avoid promising behavior beyond that. |
 | SELECT | authenticated | `auth.uid() = user_id` | ✅ |
 | INSERT | authenticated | `auth.uid() = user_id` | ✅ |
 | UPDATE | authenticated | `auth.uid() = user_id` | ✅ |

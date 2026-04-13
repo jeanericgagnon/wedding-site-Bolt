@@ -70,3 +70,12 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
     isPrivatePreview: false,
   };
 }
+
+
+export function getVisibilityModeOptions() {
+  return [
+    { value: 'public' as const, label: 'Public live site', description: 'Anyone with the link can view your site once it is live.' },
+    { value: 'password_protected' as const, label: 'Password-protected live site', description: 'Guests must enter a password before viewing the live site.' },
+    { value: 'invite_only' as const, label: 'Invite-only live site', description: 'Only guests with the link can open the live site.' },
+  ];
+}

@@ -201,6 +201,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               <p className="mt-1 text-sm font-medium text-text-primary">{siteVisibility.label}</p>
               {siteSlug && <p className="mt-1 text-xs text-text-secondary">{siteSlug}.dayof.love</p>}
               <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.searchLabel}</p>
+              <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.explainer}</p>
             </div>
             <ul className="space-y-1">
               {pinnedNavItems.map((item) => {
