@@ -190,8 +190,35 @@ export const Home: React.FC = () => {
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-brand/20 bg-brand/5 text-brand">Beautiful site + RSVP + guest tools</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">No forced upsells</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Built for guests of all ages</span>
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Easy if you're moving off Zola, Joy, or The Knot</span>
               </div>
             </HeroReveal>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-shell bg-white border-y border-border-subtle">
+        <div className="container-custom max-w-5xl">
+          <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
+            <div className="max-w-3xl">
+              <p className="text-xs uppercase tracking-wide text-brand font-semibold">Switching is part of the plan</p>
+              <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Already started on Zola, Joy, or The Knot?</h2>
+              <p className="mt-3 text-ink/75 leading-relaxed">You should not have to restart from scratch just because another wedding site got messy, expensive, or too limited. DayOf is being shaped to make switching feel calm: keep your guest list, bring over the essentials, and move into a cleaner operating flow.</p>
+            </div>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-xl border border-border bg-white p-4">
+                <p className="font-semibold text-ink">Bring the important parts</p>
+                <p className="mt-1 text-sm text-ink/70">Guest lists, core wedding details, and site direction matter more than rebuilding everything manually.</p>
+              </div>
+              <div className="rounded-xl border border-border bg-white p-4">
+                <p className="font-semibold text-ink">Keep the site beautiful</p>
+                <p className="mt-1 text-sm text-ink/70">Switching should not mean downgrading the guest-facing experience.</p>
+              </div>
+              <div className="rounded-xl border border-border bg-white p-4">
+                <p className="font-semibold text-ink">Land in a better ops flow</p>
+                <p className="mt-1 text-sm text-ink/70">Move straight into RSVPs, messages, seating, and day-of coordination without duct tape.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

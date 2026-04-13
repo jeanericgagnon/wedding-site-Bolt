@@ -203,8 +203,24 @@ export const Product: React.FC = () => {
         </div>
       </section>
 
-      <section className="section-shell bg-paper">
-        <div className="container-custom max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="section-shell bg-white border-t border-border-subtle">
+        <div className="container-custom max-w-6xl">
+          <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
+            <div className="max-w-3xl">
+              <p className="text-xs uppercase tracking-wide text-brand font-semibold">Switching story</p>
+              <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">If another wedding platform already has your attention, DayOf should still be an easy move.</h2>
+              <p className="mt-3 text-ink/75">The goal is not to trap couples in a setup they already regret. The goal is to help them move the important stuff over and end up with a better website, better guest operations, and a calmer event-day setup.</p>
+            </div>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+              {['Move your guest list and core details', 'Keep the wedding website polished', 'Upgrade into RSVP, seating, messaging, and day-of ops'].map((item) => (
+                <div key={item} className="rounded-xl border border-border bg-white p-4 text-sm text-ink/75">• {item}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-shell bg-paper">        <div className="container-custom max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { icon: Shield, title: 'Beautiful by default', text: 'Starts polished without endless tweaking.' },
             { icon: Wallet, title: 'Clear pricing', text: 'No hidden tiers. No renewal gotchas.' },

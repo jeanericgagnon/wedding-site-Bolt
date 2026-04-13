@@ -170,6 +170,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="text-3xl font-bold text-neutral-900">Set up your wedding website</h1>
         <p className="mt-2 text-sm text-neutral-600">A quick guided setup to get your site ready faster.</p>
+        <p className="mt-1 text-xs text-neutral-500">Useful whether you're starting fresh or moving over from Zola, Joy, or The Knot.</p>
         <div className="mt-4">
           <div className="mb-1 flex items-center justify-between text-xs text-neutral-500">
             <span>Setup progress</span>
@@ -195,6 +196,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           >
             Browse templates
           </button>
+          <span className="text-xs text-neutral-500">Bring over the basics now. Refine everything else after setup.</span>
         </div>
 
         <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-2">

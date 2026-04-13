@@ -52,7 +52,7 @@ export const Onboarding: React.FC = () => {
     },
     {
       id: 'registry',
-      label: 'Add registry link',
+      label: 'Add registry link or keep moving',
       done: Boolean(formData.registryLink.trim()),
       actionLabel: 'Go',
       action: () => setStep('quick-3' as OnboardingStep),
@@ -219,6 +219,7 @@ export const Onboarding: React.FC = () => {
         <h3 className="text-base font-semibold text-text-primary">Setup checklist</h3>
         <span className="text-sm font-medium text-text-secondary">{completedSetupCount}/{setupChecklist.length} complete</span>
       </div>
+      <p className="mb-3 text-xs text-text-secondary">If you're moving over from another wedding platform, start with the essentials first. You can keep filling things in once the site is yours.</p>
       <div className="space-y-2">
         {setupChecklist.map((item) => (
           <div key={item.id} className="flex items-center justify-between gap-3 text-sm text-text-primary">
