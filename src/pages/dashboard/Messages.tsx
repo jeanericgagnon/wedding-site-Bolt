@@ -255,11 +255,12 @@ function getRecipientCount(message: Message): number {
 
 interface MessageDetailModalProps {
   message: Message;
+  deliveries: DeliveryRow[];
   onClose: () => void;
   onRetry: (message: Message) => Promise<void>;
 }
 
-const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClose, onRetry }) => {
+const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, onClose, onRetry }) => {
   const [retrying, setRetrying] = React.useState(false);
   const recipientCount = getRecipientCount(message);
   const audienceLabel = getAudienceLabel(message);
@@ -270,6 +271,15 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
   const scheduledDate = message.scheduled_for
     ? new Date(message.scheduled_for).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })
     : null;
+  const messageDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id);
+  const failedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'failed');
+  const topFailureReasons = Array.from(
+    failedDeliveries.reduce((map, delivery) => {
+      const key = (delivery.error_message || 'Unknown provider error').trim();
+      map.set(key, (map.get(key) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>()).entries(),
+  ).sort((a, b) => b[1] - a[1]).slice(0, 3);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -323,7 +333,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div className="prose prose-sm max-w-none">
             <div className="bg-surface-subtle rounded-xl border border-border p-5">
               <p className="text-xs font-medium text-text-tertiary uppercase updates-wide mb-3">Message body</p>
@@ -332,6 +342,49 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, onClos
               </div>
             </div>
           </div>
+
+          {failedDeliveries.length > 0 && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-rose-900">Delivery needs attention</p>
+                  <p className="mt-1 text-xs text-rose-700">These are real failed recipients from the current delivery log, not a generic warning.</p>
+                </div>
+                <span className="rounded-full border border-rose-200 bg-white px-2 py-0.5 text-[11px] font-medium text-rose-700">{failedDeliveries.length} failed</span>
+              </div>
+
+              {topFailureReasons.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {topFailureReasons.map(([reason, count]) => (
+                    <div key={reason} className="flex items-start justify-between gap-3 rounded-lg border border-rose-100 bg-white/80 px-3 py-2 text-xs">
+                      <span className="text-rose-800">{reason}</span>
+                      <span className="shrink-0 text-rose-600">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-3 rounded-lg border border-rose-100 bg-white/80">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-rose-100">
+                  <p className="text-xs font-medium text-rose-900">Failed recipients</p>
+                  <p className="text-[11px] text-rose-600">Most recent first</p>
+                </div>
+                <div className="max-h-48 overflow-y-auto divide-y divide-rose-100">
+                  {failedDeliveries.slice(0, 8).map((delivery) => (
+                    <div key={delivery.id} className="px-3 py-2.5 text-xs">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-rose-900">{delivery.recipient_email || 'Unknown recipient'}</p>
+                          <p className="mt-0.5 text-rose-700">{delivery.error_message || 'Delivery failed before the provider returned a clear reason.'}</p>
+                        </div>
+                        <span className="shrink-0 text-[11px] text-rose-600">{delivery.attempted_at ? new Date(delivery.attempted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Attempted'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {(message.delivered_count != null || message.failed_count != null) && (
@@ -1769,6 +1822,7 @@ export const DashboardMessages: React.FC = () => {
       {viewingMessage && (
         <MessageDetailModal
           message={viewingMessage}
+          deliveries={deliveries}
           onClose={() => setViewingMessage(null)}
           onRetry={handleRetry}
         />

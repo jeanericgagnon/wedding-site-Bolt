@@ -11,7 +11,7 @@ Internal source of truth for customer-facing claims. See also `docs/feature-trut
 | Search indexing | **Hide from search engines unless you enable it** | `noindex` controls exist. | Yes | Safe if described as search visibility, not full secrecy. |
 | Draft / preview / published | **Draft for you, published for guests** | Current implementation still allows draft-preview style access by slug under certain conditions. | Partial | Needs tighter language and eventual product refactor. |
 | Custom domains | Avoid claiming support publicly for now. | External custom domains are future work. | No | Current public claim must be removed or rewritten. |
-| Message delivery | Be explicit about what is sent, queued, processing, retried, or failed. | Delivery exists and status surfaces should reflect actual message state instead of vague success language. | Partial | Safe only when UI is explicit. |
+| Message delivery | Be explicit about what is sent, queued, processing, retried, or failed. | Delivery exists and status surfaces should reflect actual message state instead of vague success language. Failed states should show real recipient/error evidence when available. | Partial | Safe only when UI is explicit and backed by delivery logs. |
 | Publish state | Be explicit about draft, publishing now, live and up to date, live but stale, or publish needs attention. | Publish status can be derived from runtime state and should not collapse failures or stale edits into a vague live badge. | Partial | Safe only when status UI uses shared publish-state logic. |
 
 ## Wording guidance
