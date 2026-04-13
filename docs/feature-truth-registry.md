@@ -99,3 +99,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf supports the main guest communication stages from invite through reminder, week-of, day-of, and thank-you follow-up
 - Actual truth: lifecycle stages and several drafting / operational surfaces now exist, but messaging maturity is still closer to a practical wedding workflow layer than a full communications CRM
 - Writing rule: describe this as calm lifecycle support for wedding messaging, not an all-purpose guest comms platform
+
+
+### Planner handoff truth
+- Public-safe claim: DayOf supports couple-led planner collaboration with clearer handoff cues, role framing, and boundary reassurance
+- Actual truth: planner collaboration is meaningfully productized, but handoff maturity is still closer to structured support than a full delegation and approval system
+- Writing rule: describe this as graceful planner collaboration with clear boundaries, not enterprise-grade workflow governance
