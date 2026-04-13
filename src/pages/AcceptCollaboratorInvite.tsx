@@ -9,7 +9,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const navigate = useNavigate();
   const token = searchParams.get('token');
   const { user } = useAuth();
-  const [inviteState, setInviteState] = useState<'loading' | 'valid' | 'invalid'>('loading');
+  const [inviteState, setInviteState] = useState<'loading' | 'valid' | 'invalid' | 'expired' | 'accepted' | 'revoked' | 'missing'>('loading');
   const [claiming, setClaiming] = useState(false);
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
   const [inviteInfo, setInviteInfo] = useState<{ id?: string; wedding_site_id?: string; invite_email: string; invite_name: string | null; role: string; status: string; expires_at?: string | null } | null>(null);
@@ -19,7 +19,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
     const run = async () => {
       if (!token) {
-        if (!cancelled) setInviteState('invalid');
+        if (!cancelled) setInviteState('missing');
         return;
       }
 
@@ -32,7 +32,23 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       if (cancelled) return;
 
       const expiresAt = data?.expires_at ? new Date(data.expires_at) : null;
-      if (error || !data || data.status !== 'pending' || (expiresAt && expiresAt.getTime() < Date.now())) {
+      if (error || !data) {
+        setInviteState('invalid');
+        return;
+      }
+      if (data.status === 'revoked') {
+        setInviteState('revoked');
+        return;
+      }
+      if (data.status === 'accepted') {
+        setInviteState('accepted');
+        return;
+      }
+      if (expiresAt && expiresAt.getTime() < Date.now()) {
+        setInviteState('expired');
+        return;
+      }
+      if (data.status !== 'pending') {
         setInviteState('invalid');
         return;
       }
@@ -107,7 +123,11 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         <div className="mt-4 rounded-xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
           <p className="text-sm font-medium text-text-primary">Invite status</p>
           {inviteState === 'loading' && <p className="mt-2 text-sm text-text-secondary">Checking invite…</p>}
-          {inviteState === 'invalid' && <p className="mt-2 text-sm text-error">This invite is missing, invalid, already used, or no longer pending.</p>}
+          {inviteState === 'missing' && <p className="mt-2 text-sm text-error">This invite link is incomplete or malformed.</p>}
+          {inviteState === 'invalid' && <p className="mt-2 text-sm text-error">This invite could not be found.</p>}
+          {inviteState === 'expired' && <p className="mt-2 text-sm text-error">This invite has expired. Ask the owner for a fresh invite link.</p>}
+          {inviteState === 'revoked' && <p className="mt-2 text-sm text-error">This invite is no longer active.</p>}
+          {inviteState === 'accepted' && <p className="mt-2 text-sm text-error">This invite has already been claimed.</p>}
           {inviteState === 'valid' && inviteInfo && (
             <div className="mt-2 text-sm text-text-secondary space-y-1">
               <p><span className="font-medium text-text-primary">Invitee:</span> {inviteInfo.invite_name || inviteInfo.invite_email}</p>
