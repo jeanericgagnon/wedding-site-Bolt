@@ -55,6 +55,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       setClaimMessage('Invite metadata is incomplete.');
       return;
     }
+    if (!user.email || user.email.toLowerCase() !== inviteInfo.invite_email.toLowerCase()) {
+      setClaimMessage(`This invite was sent to ${inviteInfo.invite_email}. Sign in with that email to claim access.`);
+      return;
+    }
 
     setClaiming(true);
     setClaimMessage(null);
