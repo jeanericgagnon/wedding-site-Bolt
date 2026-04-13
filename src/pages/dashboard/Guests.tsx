@@ -2619,6 +2619,13 @@ Proceed with send?`)) return;
     return [guest.id, state] as const;
   }));
 
+
+  const mealSummary = {
+    withMealChoice: filteredGuests.filter((guest) => Boolean(guest.rsvp?.meal_choice)).length,
+    missingMealChoice: filteredGuests.filter((guest) => guest.rsvp_status === 'confirmed' && !guest.rsvp?.meal_choice).length,
+    withDietaryNote: filteredGuests.filter((guest) => Boolean(extractDietaryNote(guest.rsvp?.custom_answers as Record<string, unknown> | null | undefined, guest.notes))).length,
+  };
+
   const rsvpOps = {
     missingMeal: guests.filter(g => g.rsvp?.attending && !g.rsvp?.meal_choice).length,
     plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
