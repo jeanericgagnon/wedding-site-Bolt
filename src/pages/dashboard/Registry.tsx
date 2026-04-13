@@ -453,6 +453,22 @@ export const DashboardRegistry: React.FC = () => {
     toast(`Refreshed ${ok}/${candidates.length} image-issue item${candidates.length === 1 ? '' : 's'}.`, ok > 0 ? 'success' : 'error');
   }
 
+
+  async function handleCopyDuplicateReviewList() {
+    const lines = duplicateGroups.flatMap((group, index) => [`Group ${index + 1}: ${group.map((item) => item.item_name).join(' / ')}`]);
+    if (lines.length === 0) {
+      toast('No duplicate groups to review.', 'error');
+      return;
+    }
+    const payload = lines.join('\n');
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast('Copied duplicate review list');
+    } catch {
+      window.prompt('Copy duplicate review list:', payload);
+    }
+  }
+
   async function handleRepairBadImports() {
     if (isDemoMode || repairingBadImports) return;
     const candidates = items
@@ -1033,6 +1049,12 @@ Import a list of links
               <p className="text-xs uppercase tracking-wide text-text-tertiary">Bulk review · image issues</p>
               <p className="mt-1 text-lg font-semibold text-text-primary">{bulkReviewCounts.imageIssues}</p>
             </div>
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            {bulkReviewCounts.repair > 0 && <button onClick={() => void handleRepairBadImports()} disabled={repairingBadImports} className="px-3 py-1.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs font-medium disabled:opacity-60">{repairingBadImports ? 'Cleaning up…' : 'Run repair cleanup'}</button>}
+            {bulkReviewCounts.imageIssues > 0 && <button onClick={() => void handleRefreshImageIssues()} disabled={imageRefreshBusy} className="px-3 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-700 text-xs font-medium disabled:opacity-60">{imageRefreshBusy ? 'Refreshing…' : 'Refresh image issues'}</button>}
+            {duplicateGroups.length > 0 && <button onClick={() => void handleCopyDuplicateReviewList()} className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-medium">Copy duplicate review list</button>}
           </div>
 
           {duplicateGroups.length > 0 && (
