@@ -87,6 +87,7 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
   const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string }>>([]);
   const [creatingCollaboratorInvite, setCreatingCollaboratorInvite] = useState(false);
+  const [revokingCollaboratorInviteId, setRevokingCollaboratorInviteId] = useState<string | null>(null);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
@@ -374,6 +375,27 @@ export const DashboardSettings: React.FC = () => {
       setPlannerInviteError(err instanceof Error ? err.message : 'Failed to create collaborator invite.');
     } finally {
       setCreatingCollaboratorInvite(false);
+    }
+  };
+
+  const handleRevokeCollaboratorInvite = async (inviteId: string) => {
+    setPlannerInviteError(null);
+    setPlannerInviteSuccess(null);
+    setRevokingCollaboratorInviteId(inviteId);
+    try {
+      const { error } = await supabase
+        .from('wedding_site_collaborator_invites')
+        .update({ status: 'revoked', revoked_at: new Date().toISOString() })
+        .eq('id', inviteId);
+
+      if (error) throw error;
+
+      setCollaboratorInvites((prev) => prev.map((invite) => invite.id === inviteId ? { ...invite, status: 'revoked' } : invite));
+      setPlannerInviteSuccess('Collaborator invite revoked.');
+    } catch (err) {
+      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to revoke collaborator invite.');
+    } finally {
+      setRevokingCollaboratorInviteId(null);
     }
   };
 
@@ -940,7 +962,14 @@ export const DashboardSettings: React.FC = () => {
                                   <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
                                   <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {new Date(invite.invited_at).toLocaleDateString()}</p>
                                 </div>
-                                <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
+                                  {invite.status === 'pending' && (
+                                    <Button type="button" variant="outline" size="sm" onClick={() => handleRevokeCollaboratorInvite(invite.id)} disabled={revokingCollaboratorInviteId === invite.id}>
+                                      {revokingCollaboratorInviteId === invite.id ? 'Revoking…' : 'Revoke'}
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           ))}
