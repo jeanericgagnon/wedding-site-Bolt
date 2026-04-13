@@ -1223,6 +1223,21 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+  const handleCopyNoContactChecklist = async () => {
+    const noContactGuests = filteredGuests.filter((guest) => !guest.email && !guest.phone);
+    if (noContactGuests.length === 0) {
+      toast('No no-contact guests in this segment.', 'error');
+      return;
+    }
+    const payload = noContactGuests.map((guest) => `- ${guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}: get phone or email, then resend invite`).join('\n');
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast(`Copied no-contact checklist for ${noContactGuests.length} guest${noContactGuests.length === 1 ? '' : 's'}`, 'success');
+    } catch {
+      window.prompt('Copy no-contact checklist:', payload);
+    }
+  };
+
   const handleCopyFilteredEmails = async () => {
     const emails = reminderCandidates.map(g => g.email).filter(Boolean) as string[];
     if (emails.length === 0) {
@@ -3311,6 +3326,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCheckedInCSV(); setShowOpsMenu(false); }}>Export checked-in guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportThankYouDueCSV(); setShowOpsMenu(false); }}>Export thank-you due</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyNoContactChecklist(); setShowOpsMenu(false); }}>Copy no-contact checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy SMS RSVP links</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
@@ -3482,8 +3498,12 @@ Proceed with send?`)) return;
             </div>
 
             {filterStatus === 'no-contact' && (
-              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs">
-                These guests have no email or phone. Add contact info before reminder campaigns.
+              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs space-y-2">
+                <p>These guests have no email or phone. Add contact info before reminder campaigns.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => handleCopyNoContactChecklist()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy follow-up checklist</button>
+                  <button onClick={() => copyContactRequestLink()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy guest update link</button>
+                </div>
               </div>
             )}
 
@@ -3955,13 +3975,32 @@ Proceed with send?`)) return;
                     : itineraryDrawerGuest.name}
                 </h2>
                 <p className="text-xs text-text-secondary mt-0.5">Guest updates and itinerary invitations</p>
-                <button
-                  onClick={() => copyContactRequestLink()}
-                  className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  Copy guest update link
-                </button>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    onClick={() => copyContactRequestLink()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    Copy guest update link
+                  </button>
+                  {itineraryDrawerGuest.invite_token && (
+                    <button
+                      onClick={async () => {
+                        const inviteLink = `${window.location.origin}/rsvp/${itineraryDrawerGuest.invite_token}`;
+                        try {
+                          await navigator.clipboard.writeText(inviteLink);
+                          toast('Copied RSVP link', 'success');
+                        } catch {
+                          window.prompt('Copy RSVP link:', inviteLink);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      Copy RSVP link
+                    </button>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => { setItineraryDrawerGuest(null); setGuestAuditEntries([]); }}
