@@ -117,3 +117,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf supports registry repair workflows for weak imports, including refresh, re-import, manual cleanup, and merchant-aware repair guidance
 - Actual truth: repair support is now meaningfully better, but still not a guaranteed one-click fix for every merchant or every broken card
 - Writing rule: describe this as a practical repair workflow with fallback paths, not perfect automated recovery
+
+
+### Registry cleanup truth
+- Public-safe claim: DayOf helps couples review duplicate gifts, weak imports, image issues, and repair candidates in one cleanup workflow
+- Actual truth: cleanup support is now more visible and actionable, but still depends on human review rather than automatic merging or auto-resolution
+- Writing rule: describe this as guided cleanup support, not autonomous registry cleanup
