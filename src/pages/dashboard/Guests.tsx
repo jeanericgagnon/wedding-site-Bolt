@@ -1239,6 +1239,26 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+  const handleCopyExceptionChecklist = async () => {
+    const lines = filteredGuests.flatMap((guest) => {
+      const states = exceptionStateByGuest.get(guest.id) || [];
+      if (!states.length) return [];
+      const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
+      return [`- ${name}: resolve ${states.join(', ')}`];
+    });
+    if (lines.length === 0) {
+      toast('No RSVP exceptions in this segment.', 'error');
+      return;
+    }
+    const payload = lines.join('\n');
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast(`Copied RSVP exception checklist for ${lines.length} guest${lines.length === 1 ? '' : 's'}`, 'success');
+    } catch {
+      window.prompt('Copy RSVP exception checklist:', payload);
+    }
+  };
+
   const handleCopyMissingMealChecklist = async () => {
     const guestsNeedingMeals = filteredGuests.filter((guest) => guest.rsvp_status === 'confirmed' && !guest.rsvp?.meal_choice);
     if (guestsNeedingMeals.length === 0) {
@@ -3631,6 +3651,15 @@ Proceed with send?`)) return;
               </div>
             </div>
 
+            {filteredGuests.some((guest) => (exceptionStateByGuest.get(guest.id) || []).length > 0) && filterStatus === 'all' && (
+              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs space-y-2">
+                <p>Some guests have RSVP exception states that need a manual decision.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => handleCopyExceptionChecklist()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy exception checklist</button>
+                </div>
+              </div>
+            )}
+
             {filterStatus === 'missing-meal' && (
               <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs space-y-2">
                 <p>These guests are attending but still need a meal choice.</p>
@@ -4229,7 +4258,13 @@ Proceed with send?`)) return;
                           manualHandled: typeof itineraryDrawerGuest.notes === 'string' && itineraryDrawerGuest.notes.toLowerCase().includes('[manual rsvp]'),
                         });
                         return states.length > 0
-                          ? states.map((state) => <p key={state} className="text-sm text-text-primary">• {state}</p>)
+                          ? <div className="space-y-2">
+                              {states.map((state) => <p key={state} className="text-sm text-text-primary">• {state}</p>)}
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                <button onClick={() => addFollowUpTask(`Resolve RSVP exception for ${(itineraryDrawerGuest.first_name || itineraryDrawerGuest.last_name) ? `${itineraryDrawerGuest.first_name ?? ''} ${itineraryDrawerGuest.last_name ?? ''}`.trim() : itineraryDrawerGuest.name}`)} className="px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Save follow-up task</button>
+                                <button onClick={() => setSearchQuery((itineraryDrawerGuest.first_name || itineraryDrawerGuest.last_name) ? `${itineraryDrawerGuest.first_name ?? ''} ${itineraryDrawerGuest.last_name ?? ''}`.trim() : itineraryDrawerGuest.name)} className="px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus this guest</button>
+                              </div>
+                            </div>
                           : <p className="text-sm text-text-secondary">No active exception states for this guest.</p>;
                       })()}
                     </div>
