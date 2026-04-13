@@ -211,6 +211,31 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
+
+      <section className="section-shell bg-white border-y border-border-subtle">
+        <div className="container-custom max-w-6xl">
+          <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
+            <p className="text-xs uppercase tracking-wide text-brand font-semibold">Migration proof</p>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Switching is no longer just a promise.</h2>
+            <p className="mt-3 max-w-3xl text-ink/75">DayOf now has a guided migration path with source intake, setup guidance, guest import review, story/event/FAQ recovery helpers, registry-link carryover, and pre-publish review cues.</p>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
+                <p className="text-sm font-medium text-ink">Import with review truth</p>
+                <p className="mt-1 text-sm text-ink/70">Imports now show weaker mappings, duplicate names, and risky household merges instead of pretending everything is perfect.</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
+                <p className="text-sm font-medium text-ink">Recover the essentials first</p>
+                <p className="mt-1 text-sm text-ink/70">Story, event details, FAQs, and registry links have a calmer recovery path instead of forcing a total rebuild.</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
+                <p className="text-sm font-medium text-ink">Guided, not fake-automated</p>
+                <p className="mt-1 text-sm text-ink/70">The current migration path is intentionally guided and review-heavy, not a dishonest one-click import claim.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="section-shell bg-white border-y border-border-subtle">
         <div className="container-custom max-w-5xl">
           <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
