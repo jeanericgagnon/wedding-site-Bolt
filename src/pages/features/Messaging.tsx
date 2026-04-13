@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { Header, Footer } from '../../components/layout';
 import { Button } from '../../components/ui';
 import {
@@ -49,8 +50,25 @@ export const MessagingFeature: React.FC = () => {
         </div>
       </section>
 
-      <section className="py-20 bg-white">
-        <div className="container-custom">
+
+      <section className="py-16 bg-white border-y border-border-subtle">
+        <div className="container-custom max-w-6xl">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-4">One communication flow, not four disconnected tools</h2>
+            <p className="text-lg text-ink/70 max-w-3xl mx-auto">DayOf should help couples move guests through the whole communication arc clearly: early notice, invitation, reminder, and day-of help.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {GUEST_COMMUNICATION_FLOW.map((stage) => (
+              <div key={stage.id} className="rounded-2xl border border-border-subtle bg-paper p-5">
+                <p className="text-xs uppercase tracking-wide text-brand font-semibold">{stage.label}</p>
+                <p className="mt-2 text-sm text-ink/70 leading-relaxed">{stage.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-white">        <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
               Reach guests clearly

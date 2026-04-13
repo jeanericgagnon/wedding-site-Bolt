@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
 import { canComposeDashboardMessages, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -1143,6 +1144,23 @@ export const DashboardMessages: React.FC = () => {
             Planner view is on — this workspace stays focused on guest communications, reminders, and day-of updates.
           </div>
         )}
+
+        <div className="rounded-xl border border-border/35 bg-surface-subtle/30 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-text-primary">Guest communication flow</p>
+              <p className="mt-1 text-xs text-text-secondary">Treat this as a communication lifecycle, not a pile of unrelated sends.</p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+            {GUEST_COMMUNICATION_FLOW.map((stage) => (
+              <div key={stage.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">{stage.label}</p>
+                <p className="mt-1 text-xs text-text-secondary">{stage.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
         {messagesRole === 'viewer' && (
           <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
             Viewer mode is on — writing and sending are turned off here.
