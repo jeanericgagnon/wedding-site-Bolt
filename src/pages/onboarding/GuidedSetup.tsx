@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { buildOnboardingUpdateData } from '../../lib/onboardingMapper';
 import { buildSuggestedFaqDrafts } from '../../lib/faqDraftHelper';
 import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
+import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import * as XLSX from 'xlsx';
 
 type Step =
@@ -309,22 +310,16 @@ export const GuidedSetup: React.FC = () => {
         .maybeSingle();
       if (!site) throw new Error('Wedding site not found');
 
-      const cols = (rows[0] || []).map((h) => String(h ?? '').toLowerCase().trim());
+      const cols = (rows[0] || []).map((h) => normalizeCsvHeader(String(h ?? '')));
 
-      const findIdx = (...candidates: string[]) => {
-        for (const c of candidates) {
-          const i = cols.indexOf(c);
-          if (i >= 0) return i;
-        }
-        return -1;
-      };
+      const findIdx = (...candidates: string[]) => findCsvHeaderIndex(cols, ...candidates);
 
       const firstNameIdx = findIdx('first_name', 'firstname', 'first name', 'given_name', 'given name');
       const lastNameIdx = findIdx('last_name', 'lastname', 'last name', 'surname', 'family_name', 'family name');
       const fullNameIdx = findIdx('name', 'full_name', 'full name', 'guest_name', 'guest name', 'last, first', 'last first');
-      const emailIdx = findIdx('email', 'email_address', 'email address');
-      const phoneIdx = findIdx('phone', 'phone_number', 'phone number', 'mobile', 'cell');
-      const groupIdx = findIdx('group_name', 'group', 'household', 'party', 'family');
+      const emailIdx = findIdx('email', 'email_address', 'email address', 'primary email', 'guest email');
+      const phoneIdx = findIdx('phone', 'phone_number', 'phone number', 'mobile', 'mobile number', 'cell', 'guest phone');
+      const groupIdx = findIdx('group_name', 'group', 'group name', 'household', 'household name', 'party', 'party name', 'family', 'family name');
       const plusOneIdx = findIdx('plus_one_allowed', 'plus_one', 'plus one', 'plusone');
       const ceremonyIdx = findIdx('invited_to_ceremony', 'ceremony', 'invite_ceremony');
       const receptionIdx = findIdx('invited_to_reception', 'reception', 'invite_reception');

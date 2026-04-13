@@ -3,6 +3,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
+import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
@@ -2172,15 +2173,15 @@ Proceed with send?`)) return;
         first_name: findIdx('first name', 'first_name', 'firstname', 'given name', 'given_name', 'first'),
         last_name: findIdx('last name', 'last_name', 'lastname', 'surname', 'family_name', 'family name', 'last'),
         full_name: findIdx('name', 'full name', 'full_name', 'guest_name', 'guest name'),
-        email: findIdx('email', 'email address', 'email_address', 'e-mail', 'mail'),
-        phone: findIdx('phone', 'phone number', 'phone_number', 'mobile', 'cell', 'telephone'),
+        email: findIdx('email', 'email address', 'email_address', 'e mail', 'primary email', 'guest email', 'mail'),
+        phone: findIdx('phone', 'phone number', 'phone_number', 'mobile', 'mobile number', 'cell', 'telephone', 'guest phone'),
         plus_one: findIdx('plus one', 'plus_one', 'plus_one_allowed', 'plus one allowed'),
         status: findIdx('status', 'rsvp_status', 'rsvp status', 'rsvp'),
         meal_choice: findIdx('meal choice', 'meal_choice', 'meal', 'meal option', 'meal selection'),
         rsvp_date: findIdx('rsvp date', 'rsvp_date', 'responded_at', 'response date', 'responded', 'submitted at'),
         invite_token: findIdx('invite token', 'invite_token', 'token', 'invite code'),
-        household_id: findIdx('household_id', 'household id', 'household', 'family_id', 'party_id'),
-        household_name: findIdx('household_name', 'household name', 'family', 'group_name', 'group', 'household group'),
+        household_id: findIdx('household_id', 'household id', 'household key', 'family_id', 'party_id', 'group id'),
+        household_name: findIdx('household_name', 'household name', 'household', 'family', 'family name', 'group_name', 'group', 'group name', 'household group', 'party name'),
         invited_events: (() => {
           const i = findIdx('invited_events', 'invited events', 'events', 'event_invites', 'event invites list');
           return i >= 0 ? [i] : [];
