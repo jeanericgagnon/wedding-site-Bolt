@@ -17,6 +17,12 @@ export interface SiteVisibilityDescriptor {
   isPrivatePreview: boolean;
 }
 
+export const SITE_VISIBILITY_COPY = {
+  draftBadge: 'Draft mode',
+  draftExplainer: 'Draft mode keeps the site private while you finish setup.',
+  publishedExplainer: 'Once published, your chosen visibility settings control how guests can access it.',
+} as const;
+
 export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibilityDescriptor {
   const isPublished = input.isPublished === true;
   const privacyMode = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only'

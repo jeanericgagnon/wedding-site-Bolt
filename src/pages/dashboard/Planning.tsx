@@ -69,8 +69,8 @@ export const DashboardPlanning: React.FC = () => {
       if (!id) return;
       setSiteId(id);
       try {
-        const rawRole = localStorage.getItem(`dayof.planning.role.${id}`) as PlanningRole | null;
-        if (rawRole === 'owner' || rawRole === 'coordinator' || rawRole === 'viewer') setPlanningRole(rawRole);
+        const rawRole = localStorage.getItem(`dayof.planning.role.${id}`) as PlannerAccessRole | null;
+        if (rawRole === 'owner' || rawRole === 'planner' || rawRole === 'coordinator' || rawRole === 'viewer') setPlanningRole(rawRole);
       } catch {}
       const wDate = await getWeddingDate();
       setWeddingDate(wDate);
@@ -386,7 +386,7 @@ export const DashboardPlanning: React.FC = () => {
             <label className="text-sm font-semibold text-text-primary">Planner access view</label>
             <select
               value={planningRole}
-              onChange={(e) => setPlanningRole(e.target.value as PlanningRole)}
+              onChange={(e) => setPlanningRole(e.target.value as PlannerAccessRole)}
               className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {PLANNER_ROLE_OPTIONS.map((option) => (

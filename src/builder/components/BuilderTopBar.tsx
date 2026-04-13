@@ -32,6 +32,7 @@ import { builderActions } from '../state/builderActions';
 import { getPublishBlockedHints, shouldOpenPhotoTipsFromSearch } from '../utils/publishUiHints';
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
 import { getPublishStateDescriptor } from '../../lib/publishState';
+import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityState';
 
 interface BuilderTopBarProps {
   onSave: () => void;

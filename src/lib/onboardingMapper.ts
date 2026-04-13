@@ -46,6 +46,12 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
   const normalizedAttire = input.attire?.trim() || 'Dress code details will be shared here closer to the wedding.';
   const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || (input.location?.trim() ? `Recommended places to stay near ${input.location.trim()} will be shared here.` : 'Recommended places to stay will be shared here.');
   const normalizedParking = input.parking?.trim() || 'Parking details and arrival notes will be shared here closer to the wedding.';
+  const useCasePacks = Array.from(new Set([
+    ...((input.useCasePacks ?? []).filter(Boolean)),
+    /destination|travel|coastal/.test((input.template ?? '').toLowerCase()) ? 'destination' : null,
+    /bilingual/.test((input.template ?? '').toLowerCase()) ? 'bilingual' : null,
+    /interfaith/.test((input.template ?? '').toLowerCase()) ? 'interfaith' : null,
+  ].filter(Boolean) as string[]));
   const useCaseFaqs = [
     useCasePacks.includes('destination') ? 'When should guests arrive?::If you are traveling in, we recommend arriving at least one day early so the weekend feels easy and unrushed.' : null,
     useCasePacks.includes('bilingual') ? 'Will information be shared in more than one language?::Yes. We are planning this with bilingual guests in mind, so the key details will be shared clearly for both sides of the family.' : null,
@@ -58,12 +64,6 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     `Will there be parking?::${normalizedParking}`,
     ...useCaseFaqs,
   ].join('\n');
-  const useCasePacks = Array.from(new Set([
-    ...((input.useCasePacks ?? []).filter(Boolean)),
-    /destination|travel|coastal/.test((input.template ?? '').toLowerCase()) ? 'destination' : null,
-    /bilingual/.test((input.template ?? '').toLowerCase()) ? 'bilingual' : null,
-    /interfaith/.test((input.template ?? '').toLowerCase()) ? 'interfaith' : null,
-  ].filter(Boolean) as string[]));
   const normalizedRegistryLinks = carryOverRegistryLinks(input.registryLinks).map((link) => link.url).join('\n');
 
   const weddingData = fromOnboarding({

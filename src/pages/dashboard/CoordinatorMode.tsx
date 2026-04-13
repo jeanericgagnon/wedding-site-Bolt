@@ -147,8 +147,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
           { id: 'q2', question: 'Is parking available at the venue?', status: 'answered' },
         ]);
       }
-      const rawRole = localStorage.getItem(`dayof.coordinator.role.${siteId}`) as CoordinatorRole | null;
-      if (rawRole === 'owner' || rawRole === 'coordinator' || rawRole === 'viewer') setCoordinatorRole(rawRole);
+      const rawRole = localStorage.getItem(`dayof.coordinator.role.${siteId}`) as PlannerAccessRole | null;
+      if (rawRole === 'owner' || rawRole === 'planner' || rawRole === 'coordinator' || rawRole === 'viewer') setCoordinatorRole(rawRole);
     } catch {}
   }, [siteId]);
 
@@ -219,7 +219,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
   })();
 
   const canEdit = canEditPlannerSurface(coordinatorRole);
-  const handoffCopy = getPlannerHandoffCopy(coordinatorRole);
+  const handoffCopy = {
+    title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
+    detail: coordinatorRole === 'viewer'
+      ? 'Use this board for visibility only and escalate changes to the active operator.'
+      : coordinatorRole === 'coordinator'
+        ? 'Keep live updates moving and flag anything sensitive back to the couple.'
+        : 'Run the room, keep communications aligned, and escalate only the decisions that need the couple.'
+  };
 
   const liveEventAudience = useMemo(() => {
     const live = events.find((e) => (timelineState[e.id] || 'up-next') === 'live');
@@ -340,7 +347,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <label className="block text-xs text-text-tertiary mb-1">Planner access view</label>
             <select
               value={coordinatorRole}
-              onChange={(e) => setCoordinatorRole(e.target.value as CoordinatorRole)}
+              onChange={(e) => setCoordinatorRole(e.target.value as PlannerAccessRole)}
               className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
             >
               {PLANNER_ROLE_OPTIONS.map((option) => (

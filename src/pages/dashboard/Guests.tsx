@@ -54,6 +54,8 @@ interface RSVP {
 
 interface GuestWithRSVP extends Guest {
   rsvp?: RSVP;
+  notes?: string | null;
+  invited_event_ids?: string[] | null;
 }
 
 interface GuestAuditEntry {
@@ -921,7 +923,7 @@ export const DashboardGuests: React.FC = () => {
       }
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setShowAddModal(false);
       resetForm();
       toast(`${formData.first_name} ${formData.last_name} added`, 'success');
@@ -996,7 +998,7 @@ export const DashboardGuests: React.FC = () => {
       }
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setEditingGuest(null);
       resetForm();
       toast('Guest updated', 'success');
@@ -1036,7 +1038,7 @@ export const DashboardGuests: React.FC = () => {
       if (error) throw error;
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast('Guest removed', 'success');
     } catch {
       toast('Failed to remove guest. Please try again.', 'error');
@@ -1055,7 +1057,7 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
       setLastCheckIn(null);
     } catch {
@@ -1075,7 +1077,7 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
     } catch {
       toast('Failed to update thank-you status', 'error');
@@ -1098,7 +1100,7 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast(`Marked ${ids.length} thank-you sent`, 'success');
     } catch {
       toast('Failed to mark thank-you statuses', 'error');
@@ -1121,7 +1123,7 @@ export const DashboardGuests: React.FC = () => {
         .not('checked_in_at', 'is', null);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setLastCheckIn(null);
       toast('Cleared all check-ins', 'success');
     } catch {
@@ -1150,7 +1152,7 @@ export const DashboardGuests: React.FC = () => {
     try {
       await updateCheckin();
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       if (nextValue) {
         const guestName = (guest.first_name || guest.last_name)
           ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
@@ -1166,7 +1168,7 @@ export const DashboardGuests: React.FC = () => {
           await supabase.auth.refreshSession();
           await updateCheckin();
           await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
           toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
           return;
         } catch {
@@ -1513,7 +1515,7 @@ Proceed with send?`)) return;
         setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(`Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}`, 'success');
         await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       } else {
         toast('No due reminders were sent. Please try again.', 'error');
       }
@@ -1535,7 +1537,7 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setSelectedGuestIds(new Set());
       toast(`${ids.length} guests merged into one household`, 'success');
     } catch {
@@ -1556,7 +1558,7 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast('Guest removed from household', 'success');
     } catch {
       toast('Failed to remove from household', 'error');
@@ -1575,7 +1577,7 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast('Guest reassigned', 'success');
     } catch {
       toast('Failed to reassign guest', 'error');
@@ -1745,7 +1747,7 @@ Proceed with send?`)) return;
       }
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setAssistedRsvpGuest(null);
       toast('RSVP recorded for guest', 'success');
     } catch (error) {
@@ -2002,7 +2004,7 @@ Proceed with send?`)) return;
       if (error) throw error;
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setSelectedGuestIds(new Set());
       setShowNuclearDeleteModal(false);
       setNuclearConfirmInput('');
@@ -2342,7 +2344,7 @@ Proceed with send?`)) return;
         } as GuestWithRSVP));
 
         setGuests(prev => [...importedGuests, ...prev]);
-        setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: 0, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
+        setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: 0, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
         const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
         toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
         setCsvPreview(null);
@@ -2351,7 +2353,7 @@ Proceed with send?`)) return;
         setCsvDuplicateNames([]);
         setCsvHouseholdWarnings([]);
         setCsvSelectedFilename(null);
-        setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] });
+        setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
         return;
       }
 
@@ -2447,7 +2449,7 @@ Proceed with send?`)) return;
       }
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
       const householdsMsg = keyToGuestIds.size > 0 ? `, ${keyToGuestIds.size} household key${keyToGuestIds.size === 1 ? '' : 's'}` : '';
       const guardedMsg = guardedHouseholds > 0 ? `, ${guardedHouseholds} risky household merge${guardedHouseholds === 1 ? '' : 's'} skipped` : '';
@@ -2460,7 +2462,7 @@ Proceed with send?`)) return;
       setCsvDuplicateNames([]);
       setCsvHouseholdWarnings([]);
       setCsvSelectedFilename(null);
-      setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] });
+      setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
     } catch (err) {
       const errObj = err as { message?: string; details?: string; hint?: string; code?: string } | null;
       const msg = errObj?.message || errObj?.details || errObj?.hint || (err instanceof Error ? err.message : 'Unknown error');
@@ -2615,6 +2617,11 @@ Proceed with send?`)) return;
     declined: guests.filter(g => g.rsvp_status === 'declined').length,
     pending: guests.filter(g => g.rsvp_status === 'pending').length,
     rsvpRate: guests.length > 0 ? Math.round(((guests.filter(g => g.rsvp_status !== 'pending').length) / guests.length) * 100) : 0,
+  };
+
+  const plannerHandoff = {
+    title: 'Planner handoff guidance',
+    detail: 'Work the queue, keep guest updates moving, and escalate sensitive calls back to the couple.',
   };
 
   const eventReport = effectiveItineraryEvents.map((event) => {

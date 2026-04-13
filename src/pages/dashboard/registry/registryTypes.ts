@@ -74,6 +74,7 @@ export interface RegistryItemMetadataState {
   blockedMessage: string | null;
   missingSummary: string | null;
   hasBadImportTitle: boolean;
+  repairStates?: string[];
 }
 
 export function computeConfidence(preview: RegistryPreview): MetadataConfidence {
@@ -144,6 +145,12 @@ export function getRegistryItemMetadataState(item: RegistryItem): RegistryItemMe
     blockedMessage,
     missingSummary,
     hasBadImportTitle,
+    repairStates: [
+      hasBadImportTitle ? 'broken-import' : null,
+      preview.partial ? 'partial-import' : null,
+      missingSummary ? 'stale-details' : null,
+      blockedMessage ? 'manual-review' : null,
+    ].filter((value): value is string => Boolean(value)),
   };
 }
 
