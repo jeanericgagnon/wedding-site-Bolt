@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
 import { Chrome, Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
@@ -45,6 +45,7 @@ async function ensureMinimalWeddingSite(userId: string, email: string): Promise<
 
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -52,6 +53,23 @@ export const Signup: React.FC = () => {
     password: '',
     confirmPassword: '',
   });
+
+  const inviteToken = searchParams.get('inviteToken');
+  const inviteEmail = searchParams.get('inviteEmail');
+  const inviteRole = searchParams.get('inviteRole');
+  const inviteSite = searchParams.get('inviteSite');
+  const hasInviteContext = Boolean(inviteToken && inviteEmail);
+
+  const inviteReturnSearch = useMemo(() => {
+    if (!inviteToken) return '';
+    return `?${createSearchParams({ token: inviteToken }).toString()}`;
+  }, [inviteToken]);
+
+  useEffect(() => {
+    if (inviteEmail) {
+      setFormData((prev) => ({ ...prev, email: inviteEmail }));
+    }
+  }, [inviteEmail]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -62,10 +80,14 @@ export const Signup: React.FC = () => {
     setLoading(true);
     setError('');
     try {
+      const redirectPath = hasInviteContext
+        ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
+        : '/payment-required?oauth=google';
+
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/payment-required?oauth=google`,
+          redirectTo: `${window.location.origin}${redirectPath}`,
         },
       });
       if (oauthError) throw oauthError;
@@ -123,6 +145,11 @@ export const Signup: React.FC = () => {
         throw new Error('Account created! Please sign in to continue.');
       }
 
+      if (hasInviteContext) {
+        navigate(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });
+        return;
+      }
+
       await ensureMinimalWeddingSite(userId, formData.email);
       navigate('/payment-required?signup=1');
     } catch (err: unknown) {
@@ -141,10 +168,24 @@ export const Signup: React.FC = () => {
             <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Create your account</h1>
-          <p className="text-text-secondary">Step 1: account setup. Step 2: site details after payment.</p>
+          <p className="text-text-secondary">
+            {hasInviteContext ? 'Create a collaborator account, then jump straight back into this invite.' : 'Step 1: account setup. Step 2: site details after payment.'}
+          </p>
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
+          {hasInviteContext && (
+            <div className="mb-5 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-left">
+              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Collaborator invite</p>
+              <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding dashboard access'}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
+                {inviteRole && <span className="rounded-full bg-white px-3 py-1">{inviteRole.replace(/_/g, ' ')}</span>}
+                {inviteEmail && <span className="rounded-full bg-white px-3 py-1">{inviteEmail}</span>}
+              </div>
+              <p className="mt-3 text-xs text-text-tertiary">This path skips owner checkout. We’ll send you back to the invite after account creation.</p>
+            </div>
+          )}
+
           <Button
             variant="outline"
             size="lg"
@@ -215,7 +256,7 @@ export const Signup: React.FC = () => {
               fullWidth
               disabled={loading}
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? 'Creating Account...' : hasInviteContext ? 'Create account and continue invite' : 'Create Account'}
             </Button>
           </form>
 
@@ -223,7 +264,7 @@ export const Signup: React.FC = () => {
             <p className="text-sm text-text-secondary">
               Already have an account?{' '}
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate(hasInviteContext ? `/login?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}` : '/login')}
                 className="text-primary hover:text-primary-hover font-medium transition-colors"
               >
                 Sign in

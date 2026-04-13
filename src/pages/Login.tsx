@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
 import { Heart, Chrome, ArrowLeft, Mail, AlertCircle } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
@@ -24,9 +24,30 @@ export const Login: React.FC = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [formData, setFormData] = useState({ email: '', password: '' });
 
+  const inviteToken = searchParams.get('inviteToken');
+  const inviteEmail = searchParams.get('inviteEmail');
+  const inviteRole = searchParams.get('inviteRole');
+  const inviteSite = searchParams.get('inviteSite');
+  const hasInviteContext = Boolean(inviteToken && inviteEmail);
+
+  const inviteReturnSearch = useMemo(() => {
+    if (!inviteToken || !inviteEmail) return '';
+
+    const params = createSearchParams({
+      token: inviteToken,
+    });
+
+    return `?${params.toString()}`;
+  }, [inviteToken, inviteEmail]);
+
   useEffect(() => {
     if (searchParams.get('reason') === 'session_expired') {
       setNotice('Your session expired. Please sign in again.');
+    }
+
+    if (inviteEmail) {
+      setFormData((prev) => ({ ...prev, email: inviteEmail }));
+      setResetEmail(inviteEmail);
     }
 
     let mounted = true;
@@ -59,7 +80,7 @@ export const Login: React.FC = () => {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, inviteEmail]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -76,6 +97,10 @@ export const Login: React.FC = () => {
         password: formData.password,
       });
       if (signInError) throw signInError;
+      if (hasInviteContext) {
+        navigate(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });
+        return;
+      }
       navigate(getPostLoginRoute(signInData.user?.email));
     } catch (err: unknown) {
       setError((err as Error).message || 'Couldn’t sign you in right now. Please try again.');
@@ -101,10 +126,14 @@ export const Login: React.FC = () => {
     setLoading(true);
     setError('');
     try {
+      const redirectPath = hasInviteContext
+        ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
+        : '/login?oauth=google';
+
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/login?oauth=google`,
+          redirectTo: `${window.location.origin}${redirectPath}`,
         },
       });
       if (oauthError) throw oauthError;
@@ -227,10 +256,24 @@ export const Login: React.FC = () => {
             <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back</h1>
-          <p className="text-text-secondary">Sign in to manage your wedding website</p>
+          <p className="text-text-secondary">
+            {hasInviteContext ? 'Sign in with the invited email to finish joining this wedding team.' : 'Sign in to manage your wedding website'}
+          </p>
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
+          {hasInviteContext && (
+            <div className="mb-5 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-left">
+              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Collaborator invite</p>
+              <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding dashboard access'}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
+                {inviteRole && <span className="rounded-full bg-white px-3 py-1">{inviteRole.replace(/_/g, ' ')}</span>}
+                {inviteEmail && <span className="rounded-full bg-white px-3 py-1">{inviteEmail}</span>}
+              </div>
+              <p className="mt-3 text-xs text-text-tertiary">After sign-in, we’ll send you straight back to the invite so you can finish joining.</p>
+            </div>
+          )}
+
           {notice && (
             <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20 mb-5">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
@@ -305,7 +348,7 @@ export const Login: React.FC = () => {
               fullWidth
               disabled={loading || demoLoading }
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Signing in...' : hasInviteContext ? 'Sign In and continue invite' : 'Sign In'}
             </Button>
           </form>
 
@@ -323,7 +366,7 @@ export const Login: React.FC = () => {
             size="lg"
             fullWidth
             onClick={handleDemoLogin}
-            disabled={loading || demoLoading }
+            disabled={loading || demoLoading || hasInviteContext }
           >
             {demoLoading ? 'Loading demo...' : 'Try Demo — no account needed'}
           </Button>
@@ -331,8 +374,8 @@ export const Login: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-text-secondary">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary hover:text-primary-hover font-medium transition-colors">
-                Get started — $49
+              <Link to={hasInviteContext ? `/signup?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}` : '/signup'} className="text-primary hover:text-primary-hover font-medium transition-colors">
+                {hasInviteContext ? 'Create collaborator account' : 'Get started — $49'}
               </Link>
             </p>
           </div>

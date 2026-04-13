@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, Heart, Loader2, LogOut } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
@@ -57,10 +57,21 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const siteLabel = useMemo(() => {
     if (!inviteInfo) return 'this wedding site';
     const names = [inviteInfo.couple_name_1, inviteInfo.couple_name_2].filter(Boolean).join(' & ');
-    if (names) return `${names}'s wedding site`;
+    if (names) return `${names}' wedding site`;
     if (inviteInfo.site_slug) return `${inviteInfo.site_slug}.dayof.love`;
     return 'this wedding site';
   }, [inviteInfo]);
+
+  const authHandoffSearch = useMemo(() => {
+    if (!inviteInfo || !token) return '';
+
+    return `?${createSearchParams({
+      inviteToken: token,
+      inviteEmail: inviteInfo.invite_email,
+      inviteRole: inviteInfo.role,
+      inviteSite: siteLabel,
+    }).toString()}`;
+  }, [inviteInfo, token, siteLabel]);
 
   useEffect(() => {
     let cancelled = false;
@@ -442,13 +453,26 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                 </button>
               </div>
 
-              <div className="mb-5">
-                <h2 className="text-2xl font-bold text-text-primary">{authMode === 'signin' ? 'Sign in to accept' : 'Create your collaborator account'}</h2>
-                <p className="mt-2 text-text-secondary">
-                  {authMode === 'signin'
-                    ? 'Use the invited email and we’ll attach this invite immediately.'
-                    : 'Create a lightweight collaborator account. No owner billing step on this path.'}
-                </p>
+              <div className="mb-5 space-y-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-text-primary">{authMode === 'signin' ? 'Sign in to accept' : 'Create your collaborator account'}</h2>
+                  <p className="mt-2 text-text-secondary">
+                    {authMode === 'signin'
+                      ? 'Use the invited email and we’ll attach this invite immediately.'
+                      : 'Create a lightweight collaborator account. No owner billing step on this path.'}
+                  </p>
+                </div>
+
+                {inviteIsClaimable && inviteInfo && (
+                  <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">You’re joining</p>
+                    <p className="mt-2 text-base font-semibold text-text-primary">{siteLabel}</p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
+                      <span className="rounded-full bg-white px-3 py-1">{formatRole(inviteInfo.role)}</span>
+                      <span className="rounded-full bg-white px-3 py-1">{inviteInfo.invite_email}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {authError && (
@@ -533,11 +557,18 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                 </form>
               )}
 
-              <div className="mt-6 text-center text-sm text-text-secondary">
-                Need the regular auth pages instead?{' '}
-                <Link to="/login" className="font-medium text-primary hover:text-primary-hover transition-colors">
-                  Open sign in
-                </Link>
+              <div className="mt-6 space-y-3 text-center text-sm text-text-secondary">
+                <p>Need the regular auth pages instead?</p>
+                <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                  <Link to={`/login${authHandoffSearch}`} className="font-medium text-primary hover:text-primary-hover transition-colors">
+                    Open sign in
+                  </Link>
+                  <span className="hidden text-text-tertiary sm:inline">•</span>
+                  <Link to={`/signup${authHandoffSearch}`} className="font-medium text-primary hover:text-primary-hover transition-colors">
+                    Open create account
+                  </Link>
+                </div>
+                <p className="text-xs text-text-tertiary">We’ll carry your invite details with you so you can come right back and finish.</p>
               </div>
             </>
           )}
