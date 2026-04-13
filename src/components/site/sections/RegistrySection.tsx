@@ -22,6 +22,9 @@ export const RegistrySection: React.FC<RegistrySectionProps> = ({ content }) => 
         )}
 
         {content.links && content.links.length > 0 ? (
+          <div className="mb-4 max-w-2xl mx-auto rounded-2xl border border-border-subtle bg-surface-secondary/30 px-5 py-4 text-sm text-text-secondary">
+            Registry availability may be updated over time as gifts are purchased or links are adjusted. If something looks unavailable, please check another option or come back later.
+          </div>
           <div className="flex flex-col items-center gap-4">
             {content.links.map((link, index) => (
               <a
