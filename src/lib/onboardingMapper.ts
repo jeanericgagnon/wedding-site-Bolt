@@ -3,6 +3,7 @@ import { generateInitialLayout } from './generateInitialLayout';
 import { generateWeddingSlug } from './slugify';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 import { serializeImportedFaqLines, shapeImportedFaqLines } from './faqMigration';
+import { carryOverRegistryLinks } from './registryLinkCarryover';
 
 interface CoupleNames {
   name1: string;
@@ -63,11 +64,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     /bilingual/.test((input.template ?? '').toLowerCase()) ? 'bilingual' : null,
     /interfaith/.test((input.template ?? '').toLowerCase()) ? 'interfaith' : null,
   ].filter(Boolean) as string[]));
-  const normalizedRegistryLinks = input.registryLinks
-    ?.split('\n')
-    .map((link) => link.trim())
-    .filter(Boolean)
-    .join('\n');
+  const normalizedRegistryLinks = carryOverRegistryLinks(input.registryLinks).map((link) => link.url).join('\n');
 
   const weddingData = fromOnboarding({
     partner1Name: input.coupleNames.name1,

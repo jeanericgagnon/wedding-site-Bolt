@@ -1,6 +1,7 @@
 import { WeddingDataV1 } from '../types/weddingData';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 import { shapeImportedFaqLines } from './faqMigration';
+import { carryOverRegistryLinks } from './registryLinkCarryover';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -156,26 +157,14 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
     }
   }
 
-  if (formData.registryLinks) {
-    const links = Array.from(new Set(
-      formData.registryLinks
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-    ));
-
-    links.forEach((url) => {
-      registry.links.push({
-        id: generateId(),
-        url,
-      });
-    });
-  } else if (formData.registryLink?.trim()) {
+  const migratedRegistryLinks = carryOverRegistryLinks(formData.registryLinks || formData.registryLink);
+  migratedRegistryLinks.forEach((link) => {
     registry.links.push({
       id: generateId(),
-      url: formData.registryLink.trim(),
+      url: link.url,
+      label: link.sourceLabel,
     });
-  }
+  });
 
   const defaultFaqs = [
     hasSubstantiveAnswer(formData.attire) ? buildFaqEntry('What should I wear?', formData.attire!) : null,
