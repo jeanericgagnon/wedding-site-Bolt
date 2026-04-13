@@ -1842,6 +1842,14 @@ Proceed with send?`)) return;
     exportCSV(guests.filter((g) => g.rsvp?.attending && !g.rsvp?.meal_choice), 'guests-missing-meal');
   };
 
+  const exportAttendingGuestsCSV = () => {
+    exportCSV(guests.filter((g) => g.rsvp_status === 'confirmed'), 'guests-attending');
+  };
+
+  const exportDeclinedGuestsCSV = () => {
+    exportCSV(guests.filter((g) => g.rsvp_status === 'declined'), 'guests-declined');
+  };
+
   const exportThankYouDueCSV = () => {
     const due = guests.filter((g) => dueThankYouGuestIds.has(g.id));
     const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'RSVP Status', 'Thank You Sent At'];
@@ -2609,6 +2617,68 @@ Proceed with send?`)) return;
     rsvpRate: guests.length > 0 ? Math.round(((guests.filter(g => g.rsvp_status !== 'pending').length) / guests.length) * 100) : 0,
   };
 
+  const eventReport = effectiveItineraryEvents.map((event) => {
+    const invitedGuests = guests.filter((guest) => {
+      if (event.id === 'legacy-ceremony') return guest.invited_to_ceremony;
+      if (event.id === 'legacy-reception') return guest.invited_to_reception;
+      return eventInviteGuestMap.get(event.id)?.has(guest.id) ?? false;
+    });
+
+    const attendingCount = invitedGuests.filter((guest) => {
+      const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+      if (event.id === 'legacy-ceremony') return eventSelections?.ceremony === true;
+      if (event.id === 'legacy-reception') return eventSelections?.reception === true;
+      return false;
+    }).length;
+
+    const declinedCount = invitedGuests.filter((guest) => {
+      const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+      if (event.id === 'legacy-ceremony') return eventSelections?.ceremony === false;
+      if (event.id === 'legacy-reception') return eventSelections?.reception === false;
+      return false;
+    }).length;
+
+    return {
+      id: event.id,
+      name: event.event_name,
+      invited: invitedGuests.length,
+      attending: attendingCount,
+      declined: declinedCount,
+      pending: Math.max(invitedGuests.length - attendingCount - declinedCount, 0),
+    };
+  });
+
+  const mealChoiceRollup = Array.from(
+    guests.reduce((map, guest) => {
+      const key = (guest.rsvp?.meal_choice || 'No meal selected').trim();
+      map.set(key, (map.get(key) || 0) + 1);
+      return map;
+    }, new Map<string, number>())
+  ).sort((a, b) => b[1] - a[1]);
+
+  const customAnswerRollup = Array.from(
+    guests.reduce((map, guest) => {
+      const answers = guest.rsvp?.custom_answers || {};
+      Object.entries(answers).forEach(([question, value]) => {
+        const values = Array.isArray(value) ? value : [value];
+        values
+          .map((entry) => String(entry ?? '').trim())
+          .filter(Boolean)
+          .forEach((entry) => {
+            const key = `${question}::${entry}`;
+            map.set(key, (map.get(key) || 0) + 1);
+          });
+      });
+      return map;
+    }, new Map<string, number>())
+  )
+    .map(([key, count]) => {
+      const [question, answer] = key.split('::');
+      return { question, answer, count };
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+
 
   const contactStats = {
     withEmail: guests.filter(g => !!g.email).length,
@@ -3219,6 +3289,81 @@ Proceed with send?`)) return;
               </Card>
             </div>
 
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <Card variant="bordered" padding="md">
+                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Response rate</p>
+                <p className="mt-1 text-xl font-bold text-text-primary">{stats.rsvpRate}%</p>
+                <p className="mt-1 text-xs text-text-secondary">Guests who already replied</p>
+              </Card>
+              <Card variant="bordered" padding="md">
+                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Meal coverage</p>
+                <p className="mt-1 text-xl font-bold text-text-primary">{mealSummary.withMealChoice}</p>
+                <p className="mt-1 text-xs text-text-secondary">Guests with a meal choice saved</p>
+              </Card>
+              <Card variant="bordered" padding="md">
+                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Dietary notes</p>
+                <p className="mt-1 text-xl font-bold text-text-primary">{mealSummary.withDietaryNote}</p>
+                <p className="mt-1 text-xs text-text-secondary">Guests with dietary detail captured</p>
+              </Card>
+              <Card variant="bordered" padding="md">
+                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Contact coverage</p>
+                <p className="mt-1 text-xl font-bold text-text-primary">{contactStats.contactCoverage}%</p>
+                <p className="mt-1 text-xs text-text-secondary">Guests with email or phone on file</p>
+              </Card>
+            </div>
+
+            {(eventReport.length > 0 || mealChoiceRollup.length > 0 || customAnswerRollup.length > 0) && (
+              <div className="grid gap-3 lg:grid-cols-3">
+                <Card variant="bordered" padding="md">
+                  <p className="text-sm font-semibold text-text-primary">Event breakdown</p>
+                  <div className="mt-3 space-y-2.5">
+                    {eventReport.length === 0 ? (
+                      <p className="text-sm text-text-secondary">No event-level reporting yet.</p>
+                    ) : eventReport.map((event) => (
+                      <div key={event.id} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-medium text-text-primary">{event.name}</p>
+                          <span className="text-xs text-text-tertiary">Invited {event.invited}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-text-secondary">Yes {event.attending} · No {event.declined} · Pending {event.pending}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card variant="bordered" padding="md">
+                  <p className="text-sm font-semibold text-text-primary">Meal rollup</p>
+                  <div className="mt-3 space-y-2.5">
+                    {mealChoiceRollup.length === 0 ? (
+                      <p className="text-sm text-text-secondary">No meal data yet.</p>
+                    ) : mealChoiceRollup.slice(0, 6).map(([meal, count]) => (
+                      <div key={meal} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                        <span className="text-sm text-text-primary">{meal}</span>
+                        <span className="text-sm font-semibold text-text-primary">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card variant="bordered" padding="md">
+                  <p className="text-sm font-semibold text-text-primary">Top custom answers</p>
+                  <div className="mt-3 space-y-2.5">
+                    {customAnswerRollup.length === 0 ? (
+                      <p className="text-sm text-text-secondary">No custom answers captured yet.</p>
+                    ) : customAnswerRollup.map((entry, index) => (
+                      <div key={`${entry.question}-${entry.answer}-${index}`} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                        <p className="text-xs uppercase tracking-wide text-text-tertiary">{entry.question}</p>
+                        <div className="mt-1 flex items-center justify-between gap-3">
+                          <span className="text-sm text-text-primary">{entry.answer}</span>
+                          <span className="text-sm font-semibold text-text-primary">{entry.count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
               <button onClick={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
                 <p className="text-xs text-text-tertiary">Missing meal</p>
@@ -3480,6 +3625,8 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowOpsMenu(false); }}>Export all guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowOpsMenu(false); }}>Export filtered guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowOpsMenu(false); }}>Export RSVP responders</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAttendingGuestsCSV(); setShowOpsMenu(false); }}>Export attending guests</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportDeclinedGuestsCSV(); setShowOpsMenu(false); }}>Export declined guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowOpsMenu(false); }}>Export pending RSVP</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowOpsMenu(false); }}>Export missing meal choices</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAddressCollectionCSV(); setShowOpsMenu(false); }}>Export addresses (mailing)</button>
