@@ -40,6 +40,7 @@ type PhotoUploadRow = {
 };
 
 type SlideshowOrderMode = 'newest' | 'oldest' | 'shuffled';
+type SlideshowTheme = 'classic' | 'editorial' | 'party';
 
 type SlideshowFrame = {
   uploadId: string;
@@ -114,6 +115,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
   const [slideshowAlbumFilter, setSlideshowAlbumFilter] = useState<string>('all');
+  const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
   const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
 
@@ -300,6 +302,27 @@ export const GuestPhotoSharing: React.FC = () => {
 
     return selectedUploads.slice(0, 24).map(({ uploadedAt: _uploadedAt, ...frame }) => frame);
   }, [albums, uploads, countsByAlbum, slideshowAlbumFilter, slideshowOrder]);
+
+  const slideshowThemeMeta: Record<SlideshowTheme, { label: string; cardClass: string; chipClass: string; helper: string }> = {
+    classic: {
+      label: 'Classic',
+      cardClass: 'bg-white border-border-subtle',
+      chipClass: 'bg-neutral-100 text-neutral-700',
+      helper: 'Clean, neutral presentation focused on the photos.',
+    },
+    editorial: {
+      label: 'Editorial',
+      cardClass: 'bg-stone-50 border-stone-200',
+      chipClass: 'bg-stone-200 text-stone-800',
+      helper: 'Softer gallery feel with a more polished keepsake vibe.',
+    },
+    party: {
+      label: 'Party',
+      cardClass: 'bg-violet-50 border-violet-200',
+      chipClass: 'bg-violet-100 text-violet-800',
+      helper: 'More energetic framing for reception and dance-floor moments.',
+    },
+  };
 
   const copyText = async (value: string, key: string) => {
     try {
@@ -805,6 +828,15 @@ export const GuestPhotoSharing: React.FC = () => {
                 <option value="oldest">Oldest first</option>
                 <option value="shuffled">Stable shuffled</option>
               </select>
+              <select
+                value={slideshowTheme}
+                onChange={(e) => setSlideshowTheme(e.target.value as SlideshowTheme)}
+                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              >
+                <option value="classic">Classic</option>
+                <option value="editorial">Editorial</option>
+                <option value="party">Party</option>
+              </select>
             </div>
           </div>
 
@@ -817,12 +849,18 @@ export const GuestPhotoSharing: React.FC = () => {
               <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
                 Built <span className="font-semibold text-neutral-900">{slideshowFrames.length}</span> frames from <span className="font-semibold text-neutral-900">{slideshowAlbumFilter === 'all' ? slideshowReadyAlbumCount : 1}</span> album source{slideshowAlbumFilter === 'all' ? 's' : ''}.
               </div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${slideshowThemeMeta[slideshowTheme].chipClass}`}>
+                  {slideshowThemeMeta[slideshowTheme].label}
+                </span>
+                <span className="ml-2">{slideshowThemeMeta[slideshowTheme].helper}</span>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {slideshowFrames.map((frame, index) => (
-                  <div key={frame.uploadId} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                  <div key={frame.uploadId} className={`rounded-xl border px-4 py-3 ${slideshowThemeMeta[slideshowTheme].cardClass}`}>
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-neutral-900">Frame {index + 1}</p>
-                      <span className="text-xs text-neutral-500">{frame.albumName}</span>
+                      <span className={`text-xs rounded-full px-2 py-0.5 ${slideshowThemeMeta[slideshowTheme].chipClass}`}>{frame.albumName}</span>
                     </div>
                     <p className="mt-2 text-sm text-neutral-800 truncate">{frame.title}</p>
                     <p className="mt-1 text-xs text-neutral-500">{frame.caption}</p>
