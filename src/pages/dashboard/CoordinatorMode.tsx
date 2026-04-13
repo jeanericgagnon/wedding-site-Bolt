@@ -384,6 +384,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 </div>
               )}
             </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a href="/dashboard/rsvp-board" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open RSVP board</a>
+              <a href="/dashboard/seating-lookup" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open seating lookup</a>
+            </div>
           </div>
         </div>
 

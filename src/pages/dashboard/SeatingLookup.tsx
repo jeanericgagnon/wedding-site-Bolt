@@ -86,6 +86,13 @@ export const DashboardSeatingLookup: React.FC = () => {
     return () => { mounted = false; };
   }, [user, isDemoMode]);
 
+  const stats = useMemo(() => {
+    const assigned = rows.filter((row) => row.table_name !== 'Unassigned').length;
+    const arrived = rows.filter((row) => !!row.checked_in_at).length;
+    const missingSeat = rows.filter((row) => row.table_name !== 'Unassigned' && row.seat_index == null).length;
+    return { total: rows.length, assigned, arrived, missingSeat };
+  }, [rows]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return rows;
@@ -106,6 +113,29 @@ export const DashboardSeatingLookup: React.FC = () => {
             <Link to="/dashboard/seating" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open seating chart</Link>
             <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open coordinator mode</Link>
           </div>
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2">
+              <p className="text-[11px] text-text-tertiary">Guests loaded</p>
+              <p className="text-sm font-semibold text-text-primary">{loading ? '—' : stats.total}</p>
+            </div>
+            <div className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2">
+              <p className="text-[11px] text-text-tertiary">Assigned tables</p>
+              <p className="text-sm font-semibold text-text-primary">{loading ? '—' : stats.assigned}</p>
+            </div>
+            <div className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2">
+              <p className="text-[11px] text-text-tertiary">Already arrived</p>
+              <p className="text-sm font-semibold text-text-primary">{loading ? '—' : stats.arrived}</p>
+            </div>
+            <div className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2">
+              <p className="text-[11px] text-text-tertiary">Seats missing</p>
+              <p className="text-sm font-semibold text-text-primary">{loading ? '—' : stats.missingSeat}</p>
+            </div>
+          </div>
+
+          <div className="mt-3 rounded-lg border border-border/35 bg-surface-subtle/20 px-3 py-2 text-[11px] text-text-secondary">
+            This is the fast staff-facing lookup path: search a guest, answer table/seat questions, then jump back into seating or coordinator mode if something needs to change live.
+          </div>
+
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -136,8 +166,13 @@ export const DashboardSeatingLookup: React.FC = () => {
                       <p className="text-sm font-medium text-text-primary">{r.full_name}</p>
                       <p className="text-xs text-text-tertiary">{r.email || '—'}</p>
                     </td>
-                    <td className="px-4 py-2.5">{r.table_name}</td>
-                    <td className="px-4 py-2.5">{r.seat_index ?? '—'}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex flex-col">
+                        <span className="text-text-primary">{r.table_name}</span>
+                        {r.table_name === 'Unassigned' && <span className="text-[11px] text-amber-700">Needs placement</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5">{r.seat_index != null ? `Seat ${r.seat_index}` : '—'}</td>
                     <td className="px-4 py-2.5">{r.checked_in_at ? 'Yes' : 'No'}</td>
                   </tr>
                 ))

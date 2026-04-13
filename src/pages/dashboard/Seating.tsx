@@ -1419,7 +1419,10 @@ export const DashboardSeating: React.FC = () => {
             <div>
               <h1 className="text-2xl font-bold text-text-primary">Seating</h1>
               <p className="text-sm text-text-secondary">{layoutMode === 'visual' ? 'Drag guests onto specific seats' : 'Drag guests between tables quickly'}</p>
-              <a href="/dashboard/seating-lookup" className="text-xs text-primary hover:text-primary-hover">Open Seating Lookup</a>
+              <div className="flex flex-wrap gap-2 mt-1">
+                <a href="/dashboard/seating-lookup" className="text-xs text-primary hover:text-primary-hover">Open Seating Lookup</a>
+                <a href="/dashboard/coordinator" className="text-xs text-primary hover:text-primary-hover">Open Coordinator Mode</a>
+              </div>
             </div>
           </div>
 
