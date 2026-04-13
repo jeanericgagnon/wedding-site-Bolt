@@ -5,10 +5,14 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
+import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 
 type GuestRow = {
   id: string;
   rsvp_status: 'pending' | 'confirmed' | 'declined' | string;
+  invited_to_ceremony?: boolean;
+  invited_to_reception?: boolean;
+  invited_event_ids?: string[] | null;
   checked_in_at?: string | null;
   email?: string | null;
   phone?: string | null;
@@ -30,7 +34,7 @@ export const DashboardRsvpBoard: React.FC = () => {
 
     const { data, error } = await supabase
       .from('guests')
-      .select('id, rsvp_status, checked_in_at, email, phone, notes, invitation_sent_at, reminder_last_sent_at')
+      .select('id, rsvp_status, invited_to_ceremony, invited_to_reception, invited_event_ids, checked_in_at, email, phone, notes, invitation_sent_at, reminder_last_sent_at')
       .eq('wedding_site_id', useSiteId);
 
     if (error) throw error;
@@ -47,10 +51,10 @@ export const DashboardRsvpBoard: React.FC = () => {
         if (isDemoMode) {
           if (!mounted) return;
           setRows([
-            { id: '1', rsvp_status: 'confirmed', checked_in_at: new Date().toISOString(), email: 'alex@example.com', phone: '555-111-1111', invitation_sent_at: new Date().toISOString() },
-            { id: '2', rsvp_status: 'confirmed', checked_in_at: null, email: 'sam@example.com', phone: null, invitation_sent_at: new Date().toISOString(), reminder_last_sent_at: new Date().toISOString() },
-            { id: '3', rsvp_status: 'pending', checked_in_at: null, email: null, phone: '555-222-2222', invitation_sent_at: new Date().toISOString() },
-            { id: '4', rsvp_status: 'pending', checked_in_at: null, email: null, phone: null, notes: '[Manual RSVP] waiting on parent callback' },
+            { id: '1', rsvp_status: 'confirmed', invited_to_ceremony: true, invited_to_reception: true, checked_in_at: new Date().toISOString(), email: 'alex@example.com', phone: '555-111-1111', invitation_sent_at: new Date().toISOString() },
+            { id: '2', rsvp_status: 'confirmed', invited_to_ceremony: true, invited_to_reception: false, checked_in_at: null, email: 'sam@example.com', phone: null, invitation_sent_at: new Date().toISOString(), reminder_last_sent_at: new Date().toISOString() },
+            { id: '3', rsvp_status: 'pending', invited_to_ceremony: false, invited_to_reception: true, checked_in_at: null, email: null, phone: '555-222-2222', invitation_sent_at: new Date().toISOString() },
+            { id: '4', rsvp_status: 'pending', invited_event_ids: ['welcome', 'brunch'], checked_in_at: null, email: null, phone: null, notes: '[Manual RSVP] waiting on parent callback' },
           ]);
           setLastUpdated(new Date());
           return;
@@ -118,6 +122,17 @@ export const DashboardRsvpBoard: React.FC = () => {
 
         <div className="rounded-xl border border-border/35 bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
           Fallback states are now tracked separately so pending guests who need offline help do not get mixed together with clean digital replies. Invite lifecycle is also tracked separately so sent, reminded, and manual-handled guests are easier to triage.
+        </div>
+
+        <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-4">
+          <p className="text-sm font-semibold text-text-primary">Per-event response structure</p>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+            {['Ceremony + reception', 'Ceremony only', 'Reception only'].map((label) => {
+              const count = rows.filter((row) => getPerEventRsvpState({ invitedToCeremony: row.invited_to_ceremony, invitedToReception: row.invited_to_reception, invitedEventIds: row.invited_event_ids }).summary === label).length;
+              return <div key={label} className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
+            })}
+            <div className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">Event-specific invites</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : rows.filter((row) => (row.invited_event_ids?.length ?? 0) > 0).length}</p></div>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">

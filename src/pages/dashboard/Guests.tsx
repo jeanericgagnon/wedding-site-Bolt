@@ -4,6 +4,7 @@ import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, wri
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getPlusOneState } from '../../lib/plusOneState';
+import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -4143,6 +4144,14 @@ Proceed with send?`)) return;
                           ))}
                         </div>
                       )}
+                    </div>
+
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
+                      <p className="text-xs uppercase updates-wide text-text-tertiary">Per-event RSVP structure</p>
+                      {(() => { const eventState = getPerEventRsvpState({ invitedToCeremony: itineraryDrawerGuest.invited_to_ceremony, invitedToReception: itineraryDrawerGuest.invited_to_reception, invitedEventIds: itineraryDrawerGuest.invited_event_ids as string[] | null | undefined }); return (<>
+                        <p className="text-sm text-text-primary">{eventState.summary}</p>
+                        <p className="text-sm text-text-secondary">{eventState.detail}</p>
+                      </>); })()}
                     </div>
 
                     <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
