@@ -7,6 +7,7 @@ import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCase
 import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 
 const steps = [
+  { key: 'migration', label: 'Migration' },
   { key: 'names', label: 'Couple names' },
   { key: 'date', label: 'Wedding date' },
   { key: 'location', label: 'Location' },
@@ -60,6 +61,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   };
 
   const firstIncompleteStep = useMemo(() => {
+    if (draft.migrationSource === '') return 'migration';
     if (!draft.partnerOneFirstName.trim() || !draft.partnerTwoFirstName.trim()) return 'names';
     if (draft.dateKnown && !draft.weddingDate) return 'date';
     if (!draft.weddingCity.trim()) return 'location';
@@ -73,6 +75,14 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
   const goPrev = () => {
     if (prevStep) navigate(`/setup/${prevStep}`);
+  };
+
+  const continueFromMigration = () => {
+    if (!draft.migrationSource) {
+      setError('Please choose whether you are starting fresh or moving over from another platform.');
+      return;
+    }
+    goNext();
   };
 
   const continueFromNames = () => {
@@ -236,7 +246,37 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           <p className="text-sm text-neutral-500">Current step</p>
           <h2 className="text-xl font-semibold text-neutral-900 mt-1">{steps.find((s) => s.key === activeStep)?.label ?? 'Setup'}</h2>
 
-          {activeStep === 'names' && (
+          {activeStep === 'migration' && (
+          <div className="mt-4 space-y-4">
+            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
+              Starting fresh is fine. Moving over from Zola, Joy, The Knot, or somewhere else is fine too. We just want to shape the next steps the right way.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+              {[
+                ['other', 'Starting fresh'],
+                ['zola', 'From Zola'],
+                ['joy', 'From Joy'],
+                ['the-knot', 'From The Knot'],
+                ['other', 'From somewhere else'],
+              ].map(([value, label], idx) => (
+                <button
+                  key={`${value}-${idx}`}
+                  type="button"
+                  onClick={() => updateDraft({ migrationSource: value as SetupDraft['migrationSource'] })}
+                  className={`rounded-xl border px-4 py-3 text-sm text-left ${draft.migrationSource === value && !(label === 'Starting fresh' && draft.migrationSource === 'other') ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs text-neutral-500">We will use this to shape migration-specific guidance next.</div>
+              <button onClick={continueFromMigration} className="rounded-xl bg-neutral-900 text-white px-4 py-2 text-sm hover:bg-neutral-800">Continue</button>
+            </div>
+          </div>
+        )}
+
+        {activeStep === 'names' && (
             <div className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Partner 1 first name" value={draft.partnerOneFirstName} onChange={(e) => updateDraft({ partnerOneFirstName: e.target.value })} />

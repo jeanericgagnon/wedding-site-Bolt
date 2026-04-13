@@ -1,4 +1,5 @@
 export type SetupDraft = {
+  migrationSource: '' | 'zola' | 'joy' | 'the-knot' | 'other';
   partnerOneFirstName: string;
   partnerOneLastName: string;
   partnerTwoFirstName: string;
@@ -16,6 +17,7 @@ export const SETUP_DRAFT_KEY = 'dayof.builderV2.setupDraft';
 export const SELECTED_TEMPLATE_KEY = 'dayof.builderV2.selectedTemplate';
 
 export const emptySetupDraft: SetupDraft = {
+  migrationSource: '',
   partnerOneFirstName: '',
   partnerOneLastName: '',
   partnerTwoFirstName: '',
@@ -38,6 +40,7 @@ export const readSetupDraft = (): SetupDraft => {
     return {
       ...emptySetupDraft,
       ...parsed,
+      migrationSource: (parsed.migrationSource as SetupDraft['migrationSource']) ?? '',
       dateKnown: parsed.dateKnown ?? true,
       weddingDate: parsed.weddingDate ?? '',
       weddingCity: parsed.weddingCity ?? '',
