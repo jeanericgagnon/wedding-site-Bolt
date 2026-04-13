@@ -3,6 +3,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
+import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
 import { getPlusOneState } from '../../lib/plusOneState';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
