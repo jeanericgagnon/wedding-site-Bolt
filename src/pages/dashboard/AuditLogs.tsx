@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../hooks/useAuth';
@@ -38,7 +39,7 @@ export const DashboardAuditLogs: React.FC = () => {
         const { data: site } = await supabase
           .from('wedding_sites')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
           .maybeSingle();
 
         const siteId = (site as { id?: string } | null)?.id;

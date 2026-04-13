@@ -8,6 +8,7 @@ import {
   ToggleRight, GripVertical, X, Sparkles
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { sendAnniversaryReminder } from '../../lib/emailService';
@@ -1055,7 +1056,7 @@ setWeddingSiteId('demo-site-id');
       const { data: site } = await supabase
         .from('wedding_sites')
         .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected, couple_name_1, couple_name_2')
-        .eq('user_id', user.id)
+        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .maybeSingle();
 
       if (!site) return;

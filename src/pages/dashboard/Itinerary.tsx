@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui/Button';
@@ -222,7 +223,7 @@ export const DashboardItinerary: React.FC = () => {
       const { data: sites } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .maybeSingle();
 
       if (!sites) return;
@@ -402,7 +403,7 @@ export const DashboardItinerary: React.FC = () => {
       const { data: site } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .single();
 
       if (!site) {
@@ -954,7 +955,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       const { data: site } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .single();
 
       if (!site) return;

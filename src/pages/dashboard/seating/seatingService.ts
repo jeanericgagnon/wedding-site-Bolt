@@ -1,4 +1,5 @@
 import { supabase } from '../../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 
 export interface ItineraryEvent {
   id: string;
@@ -75,7 +76,7 @@ export async function getWeddingSiteId(): Promise<string | null> {
   const { data } = await supabase
     .from('wedding_sites')
     .select('id')
-    .eq('user_id', user.id)
+    .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
     .maybeSingle();
   return data?.id ?? null;
 }

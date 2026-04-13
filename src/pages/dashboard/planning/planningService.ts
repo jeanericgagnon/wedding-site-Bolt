@@ -1,4 +1,5 @@
 import { supabase } from '../../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 
 async function insertWithDriftFallback<T extends Record<string, unknown>>(
   table: string,
@@ -98,7 +99,7 @@ export async function getWeddingSiteId(): Promise<string | null> {
   const { data } = await supabase
     .from('wedding_sites')
     .select('id')
-    .eq('user_id', user.id)
+    .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
     .maybeSingle();
   return data?.id ?? null;
 }
@@ -109,7 +110,7 @@ export async function getWeddingDate(): Promise<string | null> {
   const { data } = await supabase
     .from('wedding_sites')
     .select('wedding_date')
-    .eq('user_id', user.id)
+    .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
     .maybeSingle();
   return data?.wedding_date ?? null;
 }

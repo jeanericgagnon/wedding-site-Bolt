@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Link } from 'react-router-dom';
@@ -51,7 +52,7 @@ export const DashboardErrorLogs: React.FC = () => {
       const { data, error } = await supabase
         .from('admin_users')
         .select('user_id')
-        .eq('user_id', user.id)
+        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .maybeSingle();
 
       if (!mounted) return;

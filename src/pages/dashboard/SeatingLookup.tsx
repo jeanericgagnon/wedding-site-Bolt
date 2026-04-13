@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { getCheckInExceptionStates } from '../../lib/checkInExceptionState';
 
 type LookupRow = {
@@ -39,7 +40,7 @@ export const DashboardSeatingLookup: React.FC = () => {
         const { data: site } = await supabase
           .from('wedding_sites')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
           .maybeSingle();
         const siteId = site?.id as string | undefined;
         if (!siteId) return;
