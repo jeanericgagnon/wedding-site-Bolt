@@ -193,6 +193,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
         <h1 className="text-3xl font-bold text-neutral-900">Set up your wedding website</h1>
         <p className="mt-2 text-sm text-neutral-600">A quick guided setup to get your site ready faster.</p>
         <p className="mt-1 text-xs text-neutral-500">Useful whether you're starting fresh or moving over from Zola, Joy, or The Knot.</p>
+        {draft.migrationSource && <p className="mt-1 text-xs text-rose-700">Current path: {draft.migrationSource === 'other' ? 'migration from another source' : `migration from ${draft.migrationSource}`}</p>}
         <div className="mt-4">
           <div className="mb-1 flex items-center justify-between text-xs text-neutral-500">
             <span>Setup progress</span>
@@ -251,6 +252,16 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
               Starting fresh is fine. Moving over from Zola, Joy, The Knot, or somewhere else is fine too. We just want to shape the next steps the right way.
             </div>
+            {draft.migrationSource && draft.migrationSource !== 'other' && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+                Migration-first guidance: start by securing your names, date, city, and guest structure here. You can clean up story, FAQs, registry links, and design once the core move is done.
+              </div>
+            )}
+            {draft.migrationSource === 'other' && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+                Migration-first guidance: move the essentials first — names, date, location, guest list, and RSVP setup — then fill in the rest after the switch is stable.
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
               {[
                 ['other', 'Starting fresh'],
@@ -314,6 +325,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
                 If this is a destination or multi-day weekend, start with the city first. You can fill in hotels, parking, airport notes, and the rest of the weekend flow right after setup.
               </div>
+              {draft.migrationSource && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-xs text-neutral-600">If you're migrating, this is the point where the switch starts feeling real. Get the core location right now; details can follow.</div>}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Wedding city" value={draft.weddingCity} onChange={(e) => updateDraft({ weddingCity: e.target.value })} />
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="State / Region (optional)" value={draft.weddingRegion} onChange={(e) => updateDraft({ weddingRegion: e.target.value })} />
