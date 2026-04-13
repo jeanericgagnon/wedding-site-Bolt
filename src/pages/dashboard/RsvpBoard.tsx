@@ -117,6 +117,10 @@ export const DashboardRsvpBoard: React.FC = () => {
           <div className="mt-3 flex flex-wrap gap-2">
             <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open coordinator mode</Link>
             <Link to="/dashboard/guests" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open guest ops</Link>
+            <button onClick={() => setFilter('pending')} className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
+          </div>
+          <div className="mt-3 rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
+            Use this to spot guests who are not following the default ceremony + reception path, especially when welcome events, brunch, or reception-only invitations need their own follow-up.
           </div>
         </div>
 
