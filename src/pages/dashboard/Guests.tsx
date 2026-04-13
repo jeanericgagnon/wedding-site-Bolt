@@ -3044,9 +3044,19 @@ Proceed with send?`)) return;
         </div>
 
         {csvImportSummary && (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3 text-sm">
+          <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3 text-sm space-y-2">
             <p className="font-medium text-text-primary">Last import summary</p>
-            <p className="mt-1 text-text-secondary">Imported {csvImportSummary.imported} guest{csvImportSummary.imported === 1 ? '' : 's'} · skipped {csvImportSummary.skipped} · household keys {csvImportSummary.householdKeys} · risky merges skipped {csvImportSummary.guardedHouseholds} · unknown events {csvImportSummary.unknownEvents} · duplicate names flagged {csvImportSummary.duplicateNames}</p>
+            <p className="text-text-secondary">Imported {csvImportSummary.imported} guest{csvImportSummary.imported === 1 ? '' : 's'} · skipped {csvImportSummary.skipped} · household keys {csvImportSummary.householdKeys} · risky merges skipped {csvImportSummary.guardedHouseholds} · unknown events {csvImportSummary.unknownEvents} · duplicate names flagged {csvImportSummary.duplicateNames}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800">
+                <p className="font-medium">What came through</p>
+                <p className="mt-1">Guest rows imported, event links mapped where possible, and safer household grouping applied when the keys looked trustworthy.</p>
+              </div>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+                <p className="font-medium">Still review</p>
+                <p className="mt-1">Check skipped rows, duplicate names, risky household merges, unknown events, and any guests still missing direct contact info.</p>
+              </div>
+            </div>
           </div>
         )}
 
