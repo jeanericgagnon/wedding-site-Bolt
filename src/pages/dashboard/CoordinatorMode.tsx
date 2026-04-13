@@ -219,6 +219,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   })();
 
   const canEdit = canEditPlannerSurface(coordinatorRole);
+  const handoffCopy = getPlannerHandoffCopy(coordinatorRole);
 
   const liveEventAudience = useMemo(() => {
     const live = events.find((e) => (timelineState[e.id] || 'up-next') === 'live');
@@ -391,6 +392,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <a href="/dashboard/planning" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open planning workspace</a>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+          <p className="font-medium">{handoffCopy.title}</p>
+          <p className="mt-1 text-primary/80">{handoffCopy.detail}</p>
         </div>
 
         {coordinatorRole === 'planner' && (

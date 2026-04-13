@@ -3431,6 +3431,11 @@ Proceed with send?`)) return;
                 </div>
               </div>
             )}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
+              <p className="font-medium text-primary">{plannerHandoff.title}</p>
+              <p className="mt-1 text-primary/80">{plannerHandoff.detail}</p>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <Input
