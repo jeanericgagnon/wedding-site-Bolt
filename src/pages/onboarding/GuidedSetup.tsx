@@ -4,6 +4,7 @@ import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Downloa
 import { Button, Card, Input, Textarea } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { buildOnboardingUpdateData } from '../../lib/onboardingMapper';
+import { buildSuggestedFaqDrafts } from '../../lib/faqDraftHelper';
 import * as XLSX from 'xlsx';
 
 type Step =
@@ -72,6 +73,20 @@ export const GuidedSetup: React.FC = () => {
   const [csvError, setCsvError] = useState('');
 
   const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
+
+  const suggestedFaqDrafts = buildSuggestedFaqDrafts({
+    weddingCity: formData.city,
+    venue: formData.venue,
+    attire: formData.attire,
+    parking: formData.parking,
+    hotelRecommendations: formData.hotelRecommendations,
+    rsvpDeadline: formData.rsvpDeadline,
+    useCasePacks: [
+      formData.template === 'destination' ? 'destination' : null,
+      formData.template === 'bilingual' ? 'bilingual' : null,
+      formData.template === 'interfaith' ? 'interfaith' : null,
+    ].filter(Boolean) as string[],
+  });
   const currentStepIndex = steps.indexOf(currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
@@ -681,27 +696,23 @@ export const GuidedSetup: React.FC = () => {
                 Suggested FAQs we'll add:
               </h3>
               <ul className="space-y-2 text-sm text-text-secondary">
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
-                  <span>What should I wear?</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
-                  <span>Can I bring a plus one?</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
-                  <span>Will there be parking?</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
-                  <span>Is the wedding indoors or outdoors?</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
-                  <span>Will the ceremony and reception be at the same location?</span>
-                </li>
+                {suggestedFaqDrafts.map((item) => (
+                  <li key={item.question} className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
+                    <span>{item.question}</span>
+                  </li>
+                ))}
               </ul>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, customFaqs: suggestedFaqDrafts.map((item) => `${item.question}::${item.answer}`).join('\n') }))}
+                className="rounded border border-border px-3 py-2 text-sm text-text-secondary hover:border-primary/40 hover:text-primary"
+              >
+                Insert suggested FAQs
+              </button>
             </div>
 
             <Textarea
