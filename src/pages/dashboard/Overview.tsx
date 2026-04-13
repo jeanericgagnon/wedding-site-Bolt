@@ -574,12 +574,29 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                 </div>
                 {archiveMode.isArchiveLike && (
-                  <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-4">
-                    <p className="text-sm font-medium text-stone-900">Archive experience should take the lead now</p>
-                    <p className="mt-1 text-sm text-stone-700">This is where DayOf should start feeling less like a control panel and more like a keepsake: fewer urgent prompts, more story, photos, and anniversary memory surfaces.</p>
+                  <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-4 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-stone-900">Archive experience should take the lead now</p>
+                      <p className="mt-1 text-sm text-stone-700">This is where DayOf should start feeling less like a control panel and more like a keepsake: fewer urgent prompts, more story, photos, and anniversary memory surfaces.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <div className="rounded-lg border border-stone-200 bg-white px-3 py-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Come back next</p>
+                        <p className="mt-1 text-xs text-stone-700">Add one anniversary note while the wedding is still fresh.</p>
+                      </div>
+                      <div className="rounded-lg border border-stone-200 bg-white px-3 py-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Keep alive</p>
+                        <p className="mt-1 text-xs text-stone-700">Collect the best guest photos and keep the public story worth revisiting.</p>
+                      </div>
+                      <div className="rounded-lg border border-stone-200 bg-white px-3 py-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Return later</p>
+                        <p className="mt-1 text-xs text-stone-700">Let anniversaries unlock memories without rebuilding the whole context each year.</p>
+                      </div>
+                    </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/vault')}>Open anniversary vaults</Button>
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>Open photo sharing</Button>
+                      <Button variant="outline" size="sm" onClick={() => stats?.siteSlug && window.open(`/site/${stats.siteSlug}`, '_blank')}>Revisit public site</Button>
                     </div>
                   </div>
                 )}

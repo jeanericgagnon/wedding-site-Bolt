@@ -8,6 +8,7 @@ import { ActionsMenu } from '../../components/ui/ActionsMenu';
 import { Input } from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
+import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 
 type ItineraryEvent = {
   id: string;
@@ -102,6 +103,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bulkModerating, setBulkModerating] = useState(false);
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
+  const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
 
   useEffect(() => {
     void load();
