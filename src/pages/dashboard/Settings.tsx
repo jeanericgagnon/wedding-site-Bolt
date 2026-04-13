@@ -843,6 +843,32 @@ export const DashboardSettings: React.FC = () => {
                       </div>
                     )}
 
+                    <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Collaborator list</p>
+                        <p className="mt-1 text-xs text-text-secondary">This is the current lightweight view of who has access configured. Real multi-user collaborator persistence is still the next layer.</p>
+                      </div>
+
+                      {plannerInvite ? (
+                        <div className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-medium text-text-primary">{plannerInvite.name}</p>
+                              <p className="mt-1 text-xs text-text-secondary">{plannerInvite.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">{plannerRoleOptions.find((option) => option.value === plannerInvite.role)?.label || plannerInvite.role}</Badge>
+                              <Badge variant={plannerInvite.status === 'active' ? 'success' : 'secondary'}>{plannerInvite.status === 'active' ? 'Active' : 'Pending'}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-border-subtle bg-white px-4 py-3 text-sm text-text-secondary">
+                          No collaborator access setups saved yet.
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex flex-wrap justify-end gap-2">
                       {plannerInvite && (
                         <Button type="button" variant="outline" size="sm" onClick={handleRemovePlannerInvite}>Remove invite</Button>
