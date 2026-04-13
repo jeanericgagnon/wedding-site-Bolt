@@ -368,7 +368,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                   );
                 })}
               </div>
-              <p className="text-xs text-neutral-500">Optional — helps Dayof pick a better starting direction for your site.</p>
+              <p className="text-xs text-neutral-500">Optional — helps Dayof pick a better starting direction for your site. Destination is currently the deepest of these packs; bilingual and interfaith are still earlier.</p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
                 <button type="button" onClick={continueFromStyle} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
