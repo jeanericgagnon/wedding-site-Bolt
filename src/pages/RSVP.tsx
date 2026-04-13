@@ -891,31 +891,34 @@ export default function RSVP() {
                   {formData.attending && (
                     <>
                       {(guest.invited_to_ceremony || guest.invited_to_reception) && (
-                        <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg space-y-3">
-                          <p className="text-sm font-medium text-gray-800">Which events will you attend?</p>
+                        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-4">
+                          <div className="space-y-1.5">
+                            <p className="text-base font-semibold text-gray-900">Which events will you attend?</p>
+                            <p className="text-sm text-gray-600">Choose the parts of the celebration you're joining.</p>
+                          </div>
                           {guest.invited_to_ceremony && (
-                            <label className="flex items-center justify-between text-sm">
-                              <span>Wedding Ceremony</span>
+                            <label className="flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm">
+                              <span className="text-base font-medium text-gray-900">Wedding Ceremony</span>
                               <input
                                 type="checkbox"
                                 checked={formData.attendCeremony}
                                 onChange={(e) => setFormData({ ...formData, attendCeremony: e.target.checked })}
-                                className="w-4 h-4"
+                                className="w-5 h-5"
                               />
                             </label>
                           )}
                           {guest.invited_to_reception && (
-                            <label className="flex items-center justify-between text-sm">
-                              <span>Reception</span>
+                            <label className="flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm">
+                              <span className="text-base font-medium text-gray-900">Reception</span>
                               <input
                                 type="checkbox"
                                 checked={formData.attendReception}
                                 onChange={(e) => setFormData({ ...formData, attendReception: e.target.checked })}
-                                className="w-4 h-4"
+                                className="w-5 h-5"
                               />
                             </label>
                           )}
-                          <p className="text-xs text-gray-500">Event choices are saved with your RSVP details.</p>
+                          <p className="text-sm text-gray-600">Your event choices will be saved with your RSVP.</p>
                         </div>
                       )}
 
@@ -991,7 +994,7 @@ export default function RSVP() {
                                     ? (Array.isArray(current) ? current.includes(opt) : false)
                                     : (current ?? '') === opt;
                                   return (
-                                    <label key={`${q.id}-${opt}`} className="flex items-center gap-2 text-sm text-gray-800">
+                                  <label key={`${q.id}-${opt}`} className="flex items-center gap-3 rounded-xl border border-amber-200 bg-white px-3 py-3 text-sm text-gray-800">
                                       <input
                                         type="checkbox"
                                         checked={checked}
@@ -1015,9 +1018,9 @@ export default function RSVP() {
                                             }
                                           }
                                         }}
-                                        className="w-4 h-4"
+                                        className="w-5 h-5"
                                       />
-                                      <span>{opt}</span>
+                                      <span className="text-base text-gray-900">{opt}</span>
                                     </label>
                                   );
                                 })}
@@ -1050,34 +1053,34 @@ export default function RSVP() {
               )}
 
               {formStep === 3 && (
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-3.5">
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-4">
                   {formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception && (
                     <div className="text-sm text-warning bg-warning/10 border border-warning/30 rounded-xl px-3 py-2.5">
                       Please review: attending is on, but no events are selected.
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 font-medium">Attendance</span>
+                  <div className="flex items-center justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                    <span className="text-gray-700 font-semibold">Attendance</span>
                     <span className={`font-semibold px-2.5 py-1 rounded-full text-xs ${formData.attending ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {formData.attending ? 'Attending' : 'Not attending'}
                     </span>
                   </div>
                   {formData.attending && (guest.invited_to_ceremony || guest.invited_to_reception) && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 font-medium">Events</span>
-                      <span className="text-gray-900">{[guest.invited_to_ceremony ? (formData.attendCeremony ? 'Ceremony' : null) : null, guest.invited_to_reception ? (formData.attendReception ? 'Reception' : null) : null].filter(Boolean).join(' + ') || 'None selected'}</span>
+                    <div className="flex items-center justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                      <span className="text-gray-700 font-semibold">Events</span>
+                      <span className="text-gray-900 text-right">{[guest.invited_to_ceremony ? (formData.attendCeremony ? 'Ceremony' : null) : null, guest.invited_to_reception ? (formData.attendReception ? 'Reception' : null) : null].filter(Boolean).join(' + ') || 'None selected'}</span>
                     </div>
                   )}
                   {formData.attending && formData.meal_choice && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 font-medium">Meal</span>
-                      <span className="text-gray-900 capitalize">{formData.meal_choice}</span>
+                    <div className="flex items-center justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                      <span className="text-gray-700 font-semibold">Meal</span>
+                      <span className="text-gray-900 capitalize text-right">{formData.meal_choice}</span>
                     </div>
                   )}
                   {formData.attending && formData.plus_one_name && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 font-medium">Plus one</span>
-                      <span className="text-gray-900">{formData.plus_one_name}</span>
+                    <div className="flex items-center justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                      <span className="text-gray-700 font-semibold">Plus one</span>
+                      <span className="text-gray-900 text-right">{formData.plus_one_name}</span>
                     </div>
                   )}
 
@@ -1101,16 +1104,16 @@ export default function RSVP() {
                     <div className="space-y-2">
                       <p className="text-xs uppercase updates-wide text-gray-500">Custom answers</p>
                       {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
-                        <div key={q.id} className="flex items-start justify-between text-sm gap-4">
-                          <span className="text-gray-600 font-medium flex-shrink-0">{q.label}</span>
+                        <div key={q.id} className="flex items-start justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                          <span className="text-gray-700 font-semibold flex-shrink-0">{q.label}</span>
                           <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
                         </div>
                       ))}
                     </div>
                   )}
                   {formData.notes && (
-                    <div className="flex items-start justify-between text-sm gap-4">
-                      <span className="text-gray-600 font-medium flex-shrink-0">Notes</span>
+                    <div className="flex items-start justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                      <span className="text-gray-700 font-semibold flex-shrink-0">Notes</span>
                       <span className="text-gray-900 text-right">{formData.notes}</span>
                     </div>
                   )}
