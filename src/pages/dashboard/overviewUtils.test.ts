@@ -45,17 +45,20 @@ describe('overviewUtils', () => {
 
   it('builds publish readiness blockers in expected priority', () => {
     const blockers = buildPublishReadinessItems(base).filter((i) => !i.done);
-    expect(blockers.map((b) => b.id)).toEqual(['slug', 'template', 'date', 'published']);
+    expect(blockers.map((b) => b.id)).toEqual(['names', 'date', 'venue', 'slug', 'template', 'published']);
     expect(blockers[0].route).toBe('/dashboard/settings');
   });
 
   it('picks first incomplete checklist item for fix-next shortcut', () => {
     const items = buildPublishReadinessItems(base);
     const first = getFirstIncompleteChecklistItem(items);
-    expect(first?.id).toBe('slug');
+    expect(first?.id).toBe('names');
 
     const allDone = buildPublishReadinessItems({
       ...base,
+      coupleName1: 'Ricky',
+      coupleName2: 'Peter',
+      venueName: 'The Venue',
       siteSlug: 'my-site',
       templateName: 'modern-luxe',
       weddingDate: '2026-09-12',
@@ -70,7 +73,7 @@ describe('overviewUtils', () => {
       siteSlug: 'my-site',
       templateName: 'modern-luxe',
     });
-    expect(getChecklistProgress(items)).toEqual({ done: 2, total: 4 });
+    expect(getChecklistProgress(items)).toEqual({ done: 2, total: 6 });
   });
 
   it('returns incomplete items in order', () => {
@@ -80,7 +83,7 @@ describe('overviewUtils', () => {
       templateName: 'modern-luxe',
     });
     const incomplete = getIncompleteChecklistItems(items);
-    expect(incomplete.map((i) => i.id)).toEqual(['date', 'published']);
+    expect(incomplete.map((i) => i.id)).toEqual(['names', 'date', 'venue', 'published']);
   });
 
   it('switches published readiness route/action once published toggles true', () => {

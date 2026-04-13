@@ -4,12 +4,12 @@ import { getPublishBlockedHints, shouldAutoPublishFromSearch, shouldOpenPhotoTip
 describe('publishUiHints', () => {
   it('returns page guidance for no-page message', () => {
     const hints = getPublishBlockedHints('Add at least one page before publishing.');
-    expect(hints[0]).toContain('Templates');
+    expect(hints[0]).toContain('Designs');
   });
 
   it('returns section guidance for no-enabled-sections message', () => {
-    const hints = getPublishBlockedHints('Enable at least one section before publishing.');
-    expect(hints[0]).toContain('Select any section');
+    const hints = getPublishBlockedHints('Turn on at least one section before publishing.');
+    expect(hints[0]).toContain('Select a section on the canvas');
   });
 
   it('returns partner-name guidance', () => {
@@ -19,7 +19,7 @@ describe('publishUiHints', () => {
 
   it('returns wedding-date guidance', () => {
     const hints = getPublishBlockedHints('Add your wedding date before publishing.');
-    expect(hints[0]).toContain('event settings');
+    expect(hints[0]).toContain('event details');
   });
 
   it('returns venue guidance', () => {
@@ -34,7 +34,7 @@ describe('publishUiHints', () => {
 
   it('returns fallback guidance for unknown message', () => {
     const hints = getPublishBlockedHints('Something else');
-    expect(hints).toEqual(['Use Fix blockers to jump to the right place.']);
+    expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
   });
 
   it('detects publishNow from querystring', () => {

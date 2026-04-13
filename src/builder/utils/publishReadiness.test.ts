@@ -28,7 +28,7 @@ describe('publishReadiness', () => {
 
     const issue = getPublishIssue(project);
     expect(issue?.kind).toBe('no-pages');
-    expect(getPublishValidationError(project)).toBe('Add at least one page before publishing.');
+    expect(getPublishValidationError(project)).toBe('Add at least one page before going live.');
   });
 
   it('returns no-enabled-sections issue when sections are all disabled', () => {
@@ -43,7 +43,7 @@ describe('publishReadiness', () => {
       expect(issue.firstPageId).toBe(pageId);
       expect(issue.firstSectionId).toBe('sec1');
     }
-    expect(getPublishValidationError(project)).toBe('Enable at least one section before publishing.');
+    expect(getPublishValidationError(project)).toBe('Turn on at least one section before going live.');
   });
 
   it('returns null when publish requirements are met', () => {
@@ -61,7 +61,7 @@ describe('publishReadiness', () => {
 
     const issue = getPublishIssue(project, data);
     expect(issue?.kind).toBe('missing-couple-names');
-    expect(getPublishValidationError(project, data)).toBe('Add both partner names before publishing.');
+    expect(getPublishValidationError(project, data)).toBe('Add both partner names before going live.');
   });
 
   it('passes data preflight when names/date/venue/rsvp are configured', () => {
