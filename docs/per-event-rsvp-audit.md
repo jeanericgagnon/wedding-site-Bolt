@@ -26,3 +26,9 @@ Next work should focus on:
 1. clarifying the response structure for ceremony / reception / extra events
 2. making RSVP Board reflect that structure more explicitly
 3. shaping reminders/follow-up around per-event truth instead of just top-level RSVP status
+
+
+## Follow-on proof
+- per-event RSVP structure is now visible in guest ops and RSVP board
+- event-specific reminder drafting now exists in Messages
+- remaining weakness: deeper event-by-event operational logic is still incomplete

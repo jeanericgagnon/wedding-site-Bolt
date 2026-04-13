@@ -69,3 +69,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf understands household grouping and plus-one status well enough to support guest ops
 - Actual truth: household and plus-one support is now visible and more explicit, but still not a fully comprehensive rules engine for every edge case
 - Writing rule: describe this as clearer household/plus-one handling, not perfect household automation
+
+
+### Multi-event RSVP truth
+- Public-safe claim: DayOf can distinguish between ceremony/reception/default-event paths and more custom event-specific invites
+- Actual truth: the product now surfaces per-event invite structure and event-aware reminder drafting, but it is still not a full event-by-event rules engine everywhere
+- Writing rule: describe this as clearer multi-event RSVP visibility and follow-up, not perfect per-event automation
