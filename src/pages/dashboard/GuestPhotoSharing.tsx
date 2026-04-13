@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail, EyeOff, Eye, Flag } from 'lucide-react';
+import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail, EyeOff, Eye, Flag, Clapperboard } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
@@ -249,6 +249,11 @@ export const GuestPhotoSharing: React.FC = () => {
       });
     return m;
   }, [uploads, showHidden, showFlaggedOnly]);
+
+  const slideshowReadyAlbumCount = useMemo(
+    () => albums.filter((album) => (countsByAlbum.get(album.id) ?? 0) >= 3).length,
+    [albums, countsByAlbum]
+  );
 
   const copyText = async (value: string, key: string) => {
     try {
@@ -701,8 +706,34 @@ export const GuestPhotoSharing: React.FC = () => {
             <p className="text-2xl font-semibold text-neutral-900">{totalUploads}</p>
             <p className="text-xs text-neutral-500">Across all albums</p>
           </Card>
-
         </div>
+
+        <Card className="p-6 border border-violet-200 bg-violet-50/40">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Clapperboard className="w-5 h-5 text-violet-700" />
+                <h2 className="text-xl font-semibold text-violet-950">Slideshow generator</h2>
+              </div>
+              <p className="text-sm text-violet-900/80">
+                Turn uploaded guest photos into a simple album-driven slideshow. Start with your strongest event albums, preview the sequence, then polish later.
+              </p>
+              <p className="mt-2 text-xs text-violet-900/70">
+                Ready now: <span className="font-semibold text-violet-950">{slideshowReadyAlbumCount}</span> album{slideshowReadyAlbumCount === 1 ? '' : 's'} with 3+ uploads.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => window.alert('Slideshow builder UI is the next step. For now, use this as the launch point.')}
+                className="border-violet-300 text-violet-900 hover:bg-violet-100"
+              >
+                <Clapperboard className="w-4 h-4 mr-2" />
+                Open slideshow builder
+              </Button>
+            </div>
+          </div>
+        </Card>
 
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
