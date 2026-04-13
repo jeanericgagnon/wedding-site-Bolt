@@ -127,6 +127,7 @@ export const TemplateDetail: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">What is verified</p>
+                    <p className="mb-2 text-xs text-neutral-600">{supportManifest.previewDetail}</p>
                     <ul className="space-y-1 text-xs text-neutral-700">
                       {supportManifest.supportNotes.map((note) => <li key={note}>• {note}</li>)}
                     </ul>

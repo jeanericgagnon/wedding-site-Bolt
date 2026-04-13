@@ -180,3 +180,5 @@ This records whether a catalog template has a real builder pack behind it, wheth
 Goal: template pages should show proof and support truth, not just mood-board marketing.
 
 - `previewStatus = fallback` means discovery is still using directional preview coverage rather than a stronger template-mapped asset.
+
+- `templateExistsInBuilder = false` means the discovery card is still relying on catalog metadata and needs stronger builder-pack support before we should treat it as fully validated.

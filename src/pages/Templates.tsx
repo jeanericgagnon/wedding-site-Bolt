@@ -132,6 +132,9 @@ export const Templates: React.FC = () => {
               <span className="text-neutral-600">{manifest.modulesIncluded} modules</span>
             </div>
             <p className="mt-1 text-[11px] text-neutral-600">{manifest.previewDetail}</p>
+            {!manifest.templateExistsInBuilder && (
+              <p className="mt-1 text-[11px] text-amber-700">Builder pack mapping still needs stronger support coverage.</p>
+            )}
             {manifest.highlightedSections.length > 0 && (
               <p className="mt-1 text-[11px] text-neutral-600">Starts with {manifest.highlightedSections.join(' · ')}</p>
             )}
