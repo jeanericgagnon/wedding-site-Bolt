@@ -405,6 +405,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvColumnSamples, setCsvColumnSamples] = useState<string[]>([]);
   const [csvFieldMap, setCsvFieldMap] = useState<CsvFieldMap | null>(null);
   const [csvShowMapper, setCsvShowMapper] = useState(false);
+  const [csvImportSummary, setCsvImportSummary] = useState<{ imported: number; skipped: number; unknownEvents: number; duplicateNames: number; guardedHouseholds: number; householdKeys: number } | null>(null);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
   const [showInsights, setShowInsights] = useState(false);
   const cleanGuestsView = !showInsights;
@@ -915,6 +916,7 @@ export const DashboardGuests: React.FC = () => {
       }
 
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       setShowAddModal(false);
       resetForm();
       toast(`${formData.first_name} ${formData.last_name} added`, 'success');
@@ -989,6 +991,7 @@ export const DashboardGuests: React.FC = () => {
       }
 
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       setEditingGuest(null);
       resetForm();
       toast('Guest updated', 'success');
@@ -1028,6 +1031,7 @@ export const DashboardGuests: React.FC = () => {
       if (error) throw error;
 
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       toast('Guest removed', 'success');
     } catch {
       toast('Failed to remove guest. Please try again.', 'error');
@@ -1046,6 +1050,7 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
       setLastCheckIn(null);
     } catch {
@@ -1065,6 +1070,7 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
     } catch {
       toast('Failed to update thank-you status', 'error');
@@ -1087,6 +1093,7 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       toast(`Marked ${ids.length} thank-you sent`, 'success');
     } catch {
       toast('Failed to mark thank-you statuses', 'error');
@@ -1109,6 +1116,7 @@ export const DashboardGuests: React.FC = () => {
         .not('checked_in_at', 'is', null);
       if (error) throw error;
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       setLastCheckIn(null);
       toast('Cleared all check-ins', 'success');
     } catch {
@@ -1137,6 +1145,7 @@ export const DashboardGuests: React.FC = () => {
     try {
       await updateCheckin();
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       if (nextValue) {
         const guestName = (guest.first_name || guest.last_name)
           ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
@@ -1152,6 +1161,7 @@ export const DashboardGuests: React.FC = () => {
           await supabase.auth.refreshSession();
           await updateCheckin();
           await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
           toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
           return;
         } catch {
@@ -1463,6 +1473,7 @@ Proceed with send?`)) return;
         setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(`Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}`, 'success');
         await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       } else {
         toast('No due reminders were sent. Please try again.', 'error');
       }
@@ -1484,6 +1495,7 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       setSelectedGuestIds(new Set());
       toast(`${ids.length} guests merged into one household`, 'success');
     } catch {
@@ -1504,6 +1516,7 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       toast('Guest removed from household', 'success');
     } catch {
       toast('Failed to remove from household', 'error');
@@ -1522,6 +1535,7 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       toast('Guest reassigned', 'success');
     } catch {
       toast('Failed to reassign guest', 'error');
@@ -1691,6 +1705,7 @@ Proceed with send?`)) return;
       }
 
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       setAssistedRsvpGuest(null);
       toast('RSVP recorded for guest', 'success');
     } catch (error) {
@@ -1939,6 +1954,7 @@ Proceed with send?`)) return;
       if (error) throw error;
 
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       setSelectedGuestIds(new Set());
       setShowNuclearDeleteModal(false);
       setNuclearConfirmInput('');
@@ -2278,6 +2294,7 @@ Proceed with send?`)) return;
         } as GuestWithRSVP));
 
         setGuests(prev => [...importedGuests, ...prev]);
+        setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: 0, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
         const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
         toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
         setCsvPreview(null);
@@ -2382,6 +2399,7 @@ Proceed with send?`)) return;
       }
 
       await fetchGuests();
+      setCsvImportSummary({ imported: csvPreview.length, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
       const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
       const householdsMsg = keyToGuestIds.size > 0 ? `, ${keyToGuestIds.size} household key${keyToGuestIds.size === 1 ? '' : 's'}` : '';
       const guardedMsg = guardedHouseholds > 0 ? `, ${guardedHouseholds} risky household merge${guardedHouseholds === 1 ? '' : 's'} skipped` : '';
@@ -3024,6 +3042,13 @@ Proceed with send?`)) return;
             </button>
           </div>
         </div>
+
+        {csvImportSummary && (
+          <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3 text-sm">
+            <p className="font-medium text-text-primary">Last import summary</p>
+            <p className="mt-1 text-text-secondary">Imported {csvImportSummary.imported} guest{csvImportSummary.imported === 1 ? '' : 's'} · skipped {csvImportSummary.skipped} · household keys {csvImportSummary.householdKeys} · risky merges skipped {csvImportSummary.guardedHouseholds} · unknown events {csvImportSummary.unknownEvents} · duplicate names flagged {csvImportSummary.duplicateNames}</p>
+          </div>
+        )}
 
         {guestsRole === 'planner' && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
