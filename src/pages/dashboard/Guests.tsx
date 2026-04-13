@@ -1238,6 +1238,21 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
+  const handleCopyMissingMealChecklist = async () => {
+    const guestsNeedingMeals = filteredGuests.filter((guest) => guest.rsvp_status === 'confirmed' && !guest.rsvp?.meal_choice);
+    if (guestsNeedingMeals.length === 0) {
+      toast('No missing meal choices in this segment.', 'error');
+      return;
+    }
+    const payload = guestsNeedingMeals.map((guest) => `- ${guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}: confirm meal choice`).join('\n');
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast(`Copied meal follow-up checklist for ${guestsNeedingMeals.length} guest${guestsNeedingMeals.length === 1 ? '' : 's'}`, 'success');
+    } catch {
+      window.prompt('Copy meal follow-up checklist:', payload);
+    }
+  };
+
   const handleCopyNoContactChecklist = async () => {
     const noContactGuests = filteredGuests.filter((guest) => !guest.email && !guest.phone);
     if (noContactGuests.length === 0) {
@@ -3569,6 +3584,7 @@ Proceed with send?`)) return;
                       <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
                       <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
                       <button onClick={() => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus manual-handled</button>
+                      <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
                       <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
                       <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
                     </div>
@@ -3592,6 +3608,16 @@ Proceed with send?`)) return;
                 </button>
               </div>
             </div>
+
+            {filterStatus === 'missing-meal' && (
+              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs space-y-2">
+                <p>These guests are attending but still need a meal choice.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => handleCopyMissingMealChecklist()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy meal follow-up checklist</button>
+                  <button onClick={() => setShowCampaignModal(true)} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Send follow-up</button>
+                </div>
+              </div>
+            )}
 
             {filterStatus === 'no-contact' && (
               <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs space-y-2">
