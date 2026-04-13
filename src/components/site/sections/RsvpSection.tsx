@@ -60,6 +60,7 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({ content, weddingSiteId
         <div className="mb-6 rounded-xl border border-border bg-surface-subtle/30 px-4 py-3 text-left text-sm text-text-secondary">
           <p className="font-medium text-text-primary">What happens next</p>
           <p className="mt-1">Once you reply, the couple can use your RSVP details for planning, seating, and day-of updates. You can come back later if they need anything else from you.</p>
+          <p className="mt-2 text-text-tertiary">Travel details, schedule updates, and day-of notes may be refined closer to the celebration, so this page is worth checking again.</p>
         </div>
 
         <button

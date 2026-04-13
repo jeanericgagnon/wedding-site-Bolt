@@ -759,10 +759,16 @@ export default function RSVP() {
             )}
 
             {existingRsvp && (
-              <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-sm space-y-1">
-                <p className="font-medium">We have your current RSVP on file.</p>
-                <p>You can review or update your details here. If plans change later, use this same link again.</p>
-              </div>
+              <>
+                <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-sm space-y-1">
+                  <p className="font-medium">We have your current RSVP on file.</p>
+                  <p>You can review or update your details here. If plans change later, use this same link again.</p>
+                </div>
+                <div className="mb-6 p-4 bg-surface-subtle/40 border border-border-subtle rounded-lg text-text-secondary text-sm space-y-1">
+                  <p className="font-medium text-text-primary">Check back here for updates</p>
+                  <p>The couple may refine timing, travel notes, or day-of details later. This same RSVP link will still bring you back to the right place.</p>
+                </div>
+              </>
             )}
 
             {deadlinePassed && existingRsvp && (
