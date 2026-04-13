@@ -566,6 +566,10 @@ export const GuidedSetup: React.FC = () => {
               helperText="Optional"
             />
 
+            <div className="rounded-lg border border-border bg-surface-subtle/30 p-3 text-xs text-text-secondary">
+              Grounded draft help: this uses the details you already entered and gives you a starting point. It does not overwrite anything unless you insert it.
+            </div>
+
             <div className="flex justify-end">
               <button
                 type="button"
@@ -710,6 +714,10 @@ export const GuidedSetup: React.FC = () => {
             <div>
               <h2 className="text-2xl font-bold text-text-primary mb-2">FAQ</h2>
               <p className="text-text-secondary">Answer the questions guests are most likely to ask</p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-surface-subtle/30 p-3 text-xs text-text-secondary">
+              Grounded draft help: these suggestions come from your venue, travel, RSVP, and use-case setup details. Insert them, then edit freely.
             </div>
 
             <div className="p-4 bg-surface-subtle rounded-lg">

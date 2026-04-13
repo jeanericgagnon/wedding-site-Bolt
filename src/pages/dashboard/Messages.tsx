@@ -1162,6 +1162,9 @@ export const DashboardMessages: React.FC = () => {
               <p className="mt-1 text-xs text-text-secondary">Treat this as a communication lifecycle, not a pile of unrelated sends.</p>
             </div>
           </div>
+          <div className="mt-3 rounded-lg border border-border bg-white px-3 py-2 text-xs text-text-secondary">
+            Grounded draft help lives here too: presets use your real wedding details and audience context, then hand control back to you for edits before anything sends.
+          </div>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
             {GUEST_COMMUNICATION_FLOW.map((stage) => (
               <div key={stage.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
@@ -1568,7 +1571,7 @@ export const DashboardMessages: React.FC = () => {
                     onClick={applySaveTheDatePreset}
                     disabled={!canCompose}
                   >
-                    Save-the-date preset
+                    Save-the-date draft
                   </Button>
                   <Button
                     size="sm"
@@ -1576,7 +1579,7 @@ export const DashboardMessages: React.FC = () => {
                     onClick={applyDayOfAlertPreset}
                     disabled={!canCompose}
                   >
-                    Day-of alert preset
+                    Day-of update draft
                   </Button>
                   <Button
                     size="sm"
