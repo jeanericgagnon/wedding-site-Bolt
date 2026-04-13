@@ -397,6 +397,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvUnknownEvents, setCsvUnknownEvents] = useState<string[]>([]);
   const [csvDuplicateNames, setCsvDuplicateNames] = useState<string[]>([]);
+  const [csvHouseholdWarnings, setCsvHouseholdWarnings] = useState<string[]>([]);
   const [csvSelectedFilename, setCsvSelectedFilename] = useState<string | null>(null);
   const [csvMappingSummary, setCsvMappingSummary] = useState<{ core: string[]; rsvp: string[]; household: string[]; eventCols: string[]; weak: string[] }>({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -2037,7 +2038,7 @@ Proceed with send?`)) return;
       const inviteTokenRaw = fieldMap.invite_token >= 0 ? (values[fieldMap.invite_token] || '').trim() : '';
       const householdIdRaw = fieldMap.household_id >= 0 ? (values[fieldMap.household_id] || '').trim() : '';
       const householdNameRaw = fieldMap.household_name >= 0 ? (values[fieldMap.household_name] || '').trim() : '';
-      const householdKey = householdIdRaw || householdNameRaw;
+      const householdKey = householdIdRaw ? `id:${householdIdRaw.toLowerCase()}` : householdNameRaw ? `name:${householdNameRaw.toLowerCase()}` : '';
 
       const invitedEventIds = new Set<string>();
       if (fieldMap.invited_events.length > 0) {
@@ -2093,6 +2094,23 @@ Proceed with send?`)) return;
       });
     });
 
+    const householdWarnings = new Set<string>();
+    const householdGroups = new Map<string, Array<{ lastName: string; label: string }>>();
+    parsed.forEach((row) => {
+      const key = String((row.__household_key as string | null | undefined) || '');
+      if (!key) return;
+      const lastName = String(row.last_name || '').trim().toLowerCase();
+      const label = String(row.group_name || key.replace(/^name:/, ''));
+      const existing = householdGroups.get(key) ?? [];
+      existing.push({ lastName, label });
+      householdGroups.set(key, existing);
+    });
+    householdGroups.forEach((members, key) => {
+      if (!key.startsWith('name:')) return;
+      const lastNames = Array.from(new Set(members.map((m) => m.lastName).filter(Boolean)));
+      if (members.length > 1 && lastNames.length > 1) householdWarnings.add(`${members[0]?.label || key}: mixed last names under name-only household key`);
+    });
+
     const duplicateNameCounts = new Map<string, number>();
     parsed.forEach((row) => {
       const key = `${String(row.first_name || '').trim().toLowerCase()}|${String(row.last_name || '').trim().toLowerCase()}`;
@@ -2118,10 +2136,12 @@ Proceed with send?`)) return;
     setCsvUnknownEvents(Array.from(unknownEvents));
     setCsvDuplicateNames(duplicateNames);
     setCsvShowMapper(false);
+    setCsvHouseholdWarnings(Array.from(householdWarnings));
     const skippedMsg = skipped.length > 0 ? ` (${skipped.length} skipped)` : '';
     const unknownMsg = unknownEvents.size > 0 ? `, ${unknownEvents.size} unknown event name${unknownEvents.size === 1 ? '' : 's'}` : '';
     const dupMsg = duplicateNames.length > 0 ? `, ${duplicateNames.length} duplicate name${duplicateNames.length === 1 ? '' : 's'} flagged` : '';
-    toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}${dupMsg}.`, 'success');
+    const householdMsg = householdWarnings.size > 0 ? `, ${householdWarnings.size} household merge warning${householdWarnings.size === 1 ? '' : 's'}` : '';
+    toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}${dupMsg}${householdMsg}.`, 'success');
   }, [isDemoMode, itineraryEvents, supabase, user?.id, weddingSiteId, toast]);
 
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2264,6 +2284,7 @@ Proceed with send?`)) return;
         setCsvSkipped([]);
         setCsvUnknownEvents([]);
         setCsvDuplicateNames([]);
+        setCsvHouseholdWarnings([]);
         setCsvSelectedFilename(null);
         setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] });
         return;
@@ -2296,6 +2317,7 @@ Proceed with send?`)) return;
 
       const inserted = insertedGuests ?? [];
       const keyToGuestIds = new Map<string, string[]>();
+      const householdLastNames = new Map<string, Set<string>>();
       guestsWithTokens.forEach((row, idx) => {
         const key = row.__household_key as string | null | undefined;
         if (!key) return;
@@ -2304,10 +2326,20 @@ Proceed with send?`)) return;
         const existing = keyToGuestIds.get(key) ?? [];
         existing.push(guestId);
         keyToGuestIds.set(key, existing);
+        const lastNames = householdLastNames.get(key) ?? new Set();
+        const lastName = String(row.last_name || '').trim().toLowerCase();
+        if (lastName) lastNames.add(lastName);
+        householdLastNames.set(key, lastNames);
       });
 
-      for (const [, ids] of keyToGuestIds) {
+      let guardedHouseholds = 0;
+      for (const [key, ids] of keyToGuestIds) {
         if (ids.length < 2) continue;
+        const lastNames = householdLastNames.get(key) ?? new Set();
+        if (key.startsWith('name:') && lastNames.size > 1) {
+          guardedHouseholds += 1;
+          continue;
+        }
         const householdId = ids[0];
         await supabase.from('guests').update({ household_id: householdId }).in('id', ids);
       }
@@ -2352,13 +2384,15 @@ Proceed with send?`)) return;
       await fetchGuests();
       const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
       const householdsMsg = keyToGuestIds.size > 0 ? `, ${keyToGuestIds.size} household key${keyToGuestIds.size === 1 ? '' : 's'}` : '';
+      const guardedMsg = guardedHouseholds > 0 ? `, ${guardedHouseholds} risky household merge${guardedHouseholds === 1 ? '' : 's'} skipped` : '';
       const eventsMsg = eventInviteRows.length > 0 ? `, ${eventInviteRows.length} event invite${eventInviteRows.length === 1 ? '' : 's'}` : '';
       const unknownEventsMsg = csvUnknownEvents.length > 0 ? `, ${csvUnknownEvents.length} unknown event name${csvUnknownEvents.length === 1 ? '' : 's'}` : '';
-      toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
+      toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${guardedMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
       setCsvPreview(null);
       setCsvSkipped([]);
       setCsvUnknownEvents([]);
       setCsvDuplicateNames([]);
+      setCsvHouseholdWarnings([]);
       setCsvSelectedFilename(null);
       setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] });
     } catch (err) {
@@ -4343,6 +4377,16 @@ Proceed with send?`)) return;
                     <p className="text-xs text-text-secondary mb-1">These names were not found in your itinerary and will be ignored for event invites.</p>
                     <ul className="space-y-0.5">
                       {csvUnknownEvents.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-text-secondary">• {name}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                {csvHouseholdWarnings.length > 0 && (
+                  <div className="mb-4 p-3 bg-warning-light border border-warning/20 rounded-lg">
+                    <p className="text-xs font-medium text-warning mb-1">Household merge warnings ({csvHouseholdWarnings.length})</p>
+                    <p className="text-xs text-warning/80 mb-1">These name-only household groups mix last names, so auto-merge will be skipped unless you clean the import.</p>
+                    <ul className="space-y-0.5">
+                      {csvHouseholdWarnings.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-warning/80">• {name}</li>)}
                     </ul>
                   </div>
                 )}
