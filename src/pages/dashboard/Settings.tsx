@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut } from 'lucide-react';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
@@ -12,6 +12,7 @@ import { regenerateLayout } from '../../lib/generateInitialLayout';
 import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
 import { PLANNER_ROLE_OPTIONS, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord } from '../../lib/plannerAccess';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 
 
 interface RSVPQuestionSetting {
@@ -170,7 +171,7 @@ export const DashboardSettings: React.FC = () => {
       const { data: queryData } = await supabase
         .from('wedding_sites')
         .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
-        .eq('user_id', user.id)
+        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .maybeSingle();
 
       const data = (queryData as Record<string, unknown> | null) ?? null;
@@ -444,7 +445,7 @@ export const DashboardSettings: React.FC = () => {
         const { data: fallbackSite } = await supabase
           .from('wedding_sites')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
           .maybeSingle();
         targetSiteId = (fallbackSite?.id as string | null) ?? null;
         if (targetSiteId) setWeddingSiteId(targetSiteId);
@@ -1181,7 +1182,7 @@ export const DashboardSettings: React.FC = () => {
                             />
                             <div>
                               <p className="font-medium text-text-primary text-sm">{opt.label}</p>
-                              <p className="text-xs text-text-secondary mt-0.5">{opt.desc}</p>
+                              <p className="text-xs text-text-secondary mt-0.5">{opt.description}</p>
                             </div>
                           </label>
                         ))}

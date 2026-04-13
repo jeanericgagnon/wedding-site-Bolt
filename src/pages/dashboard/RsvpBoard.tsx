@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
@@ -26,6 +27,7 @@ export const DashboardRsvpBoard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [rows, setRows] = useState<GuestRow[]>([]);
+  const [, setFilter] = useState<'all' | 'pending'>('all');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchBoard = async (resolvedSiteId?: string | null) => {
@@ -60,13 +62,8 @@ export const DashboardRsvpBoard: React.FC = () => {
           return;
         }
 
-        const { data: site } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        const id = (site?.id as string | null) ?? null;
+        const activeSite = await resolveActiveSiteForUser(user.id);
+        const id = activeSite?.id ?? null;
         if (!mounted) return;
         setSiteId(id);
         if (id) await fetchBoard(id);

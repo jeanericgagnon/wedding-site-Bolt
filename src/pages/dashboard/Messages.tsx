@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
 import { canComposeDashboardMessages, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
@@ -150,6 +151,8 @@ interface WeddingSite {
   couple_first_name: string | null;
   couple_second_name: string | null;
   couple_email: string | null;
+  venue_name?: string | null;
+  wedding_date?: string | null;
   sms_credits_balance?: number;
 }
 
@@ -549,7 +552,7 @@ export const DashboardMessages: React.FC = () => {
     const { data } = await supabase
       .from('wedding_sites')
       .select('id, couple_first_name, couple_second_name, couple_email, sms_credits_balance')
-      .eq('user_id', user.id)
+      .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
       .maybeSingle();
     if (data) setWeddingSite(data);
   }, [user, isDemoMode]);
@@ -1012,6 +1015,7 @@ export const DashboardMessages: React.FC = () => {
           channel: 'email',
           subject: payload.subject,
           body: payload.body,
+          sent_at: null,
           audience_filter: 'all',
           recipient_filter: payload.recipient_filter,
           scheduled_for: payload.scheduled_for,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
@@ -474,11 +475,13 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
 
-    const { data } = await supabase
+    const activeSite = await resolveActiveSiteForUser(user.id);
+    const activeSiteId = activeSite?.id ?? null;
+    const { data } = activeSiteId ? await supabase
       .from('wedding_sites')
       .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, rsvp_custom_questions, rsvp_meal_config')
-      .eq('user_id', user.id)
-      .maybeSingle();
+      .eq('id', activeSiteId)
+      .maybeSingle() : { data: null };
 
     if (data) {
       setWeddingSiteId(data.id);

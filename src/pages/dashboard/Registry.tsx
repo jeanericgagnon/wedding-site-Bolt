@@ -4,6 +4,7 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, Button, ActionsMenu } from '../../components/ui';
 import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import {
   fetchRegistryItems,
@@ -200,7 +201,7 @@ export const DashboardRegistry: React.FC = () => {
         const { data: site } = await supabase
           .from('wedding_sites')
           .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by')
-          .eq('user_id', user.id)
+          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
           .maybeSingle();
         if (site?.id) {
           setWeddingSiteId(site.id);

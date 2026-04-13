@@ -4,6 +4,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 
 type GuestLite = {
   id: string;
@@ -83,8 +84,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
           return;
         }
 
-        const { data: site } = await supabase.from('wedding_sites').select('id').eq('user_id', user.id).maybeSingle();
-        const resolvedSiteId = (site?.id as string | null) ?? null;
+        const activeSite = await resolveActiveSiteForUser(user.id);
+        const resolvedSiteId = activeSite?.id ?? null;
         if (!resolvedSiteId) return;
         if (!mounted) return;
         setSiteId(resolvedSiteId);
