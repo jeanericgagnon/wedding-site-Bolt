@@ -10,7 +10,14 @@ interface GuestAuditRow {
   changed_at: string;
   changed_by: string | null;
   guest_id: string;
+  guest_name?: string;
 }
+
+const actionLabelMap: Record<GuestAuditRow['action'], string> = {
+  insert: 'Guest record created',
+  update: 'Guest record updated',
+  delete: 'Guest record removed',
+};
 
 export const DashboardAuditLogs: React.FC = () => {
   const { user, loading } = useAuth();
@@ -42,13 +49,23 @@ export const DashboardAuditLogs: React.FC = () => {
 
         const { data, error } = await supabase
           .from('guest_audit_logs')
-          .select('id, action, changed_at, changed_by, guest_id')
+          .select('id, action, changed_at, changed_by, guest_id, guest:guest_id(name, first_name, last_name)')
           .eq('wedding_site_id', siteId)
           .order('changed_at', { ascending: false })
           .limit(50);
 
         if (error) throw error;
-        if (mounted) setRows((data ?? []) as GuestAuditRow[]);
+        if (mounted) {
+          const normalized = (data ?? []).map((row: any) => ({
+            id: row.id,
+            action: row.action,
+            changed_at: row.changed_at,
+            changed_by: row.changed_by,
+            guest_id: row.guest_id,
+            guest_name: row.guest?.name || [row.guest?.first_name, row.guest?.last_name].filter(Boolean).join(' ') || undefined,
+          })) as GuestAuditRow[];
+          setRows(normalized);
+        }
       } catch (err) {
         if (mounted) setError(err instanceof Error ? err.message : 'Could not load audit logs.');
       } finally {
@@ -106,7 +123,8 @@ export const DashboardAuditLogs: React.FC = () => {
                 <div key={row.id} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-medium text-text-primary">{row.action.toUpperCase()} · guest {row.guest_id}</p>
+                      <p className="text-sm font-medium text-text-primary">{actionLabelMap[row.action]}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{row.guest_name || `Guest ${row.guest_id}`}</p>
                       <p className="mt-1 text-xs text-text-secondary">{new Date(row.changed_at).toLocaleString()} · actor {row.changed_by || 'unknown'}</p>
                     </div>
                   </div>
