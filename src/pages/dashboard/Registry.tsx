@@ -105,6 +105,11 @@ export const DashboardRegistry: React.FC = () => {
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
   const duplicateGroups = findDuplicateRegistryGroups(items);
+  const bulkReviewCounts = {
+    repair: items.filter((item) => getRegistryRepairStates(item).length > 0).length,
+    duplicates: duplicateGroups.reduce((sum, group) => sum + group.length, 0),
+    imageIssues: items.filter((item) => !item.image_url).length,
+  };
   const registryActionsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -1013,6 +1018,21 @@ Import a list of links
             <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>
               Budget used: {Math.round(budgetUtilization * 100)}%
             </span>
+          </div>
+
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Bulk review · repair</p>
+              <p className="mt-1 text-lg font-semibold text-text-primary">{bulkReviewCounts.repair}</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Bulk review · duplicates</p>
+              <p className="mt-1 text-lg font-semibold text-text-primary">{bulkReviewCounts.duplicates}</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Bulk review · image issues</p>
+              <p className="mt-1 text-lg font-semibold text-text-primary">{bulkReviewCounts.imageIssues}</p>
+            </div>
           </div>
 
           {duplicateGroups.length > 0 && (
