@@ -1,4 +1,5 @@
 import { WeddingDataV1 } from '../types/weddingData';
+import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -101,6 +102,16 @@ function hasSubstantiveAnswer(answer?: string): boolean {
 
 export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
   const now = new Date().toISOString();
+  const recovered = buildMigrationRecoveryDefaults({
+    coupleName1: formData.partner1Name,
+    coupleName2: formData.partner2Name,
+    venue: formData.venueName || formData.venue,
+    location: formData.location,
+    city: formData.city,
+    story: formData.ourStory,
+    ceremonyTime: formData.ceremonyTime,
+    receptionTime: formData.receptionTime,
+  });
 
   const venues: WeddingDataV1['venues'] = [];
   const schedule: WeddingDataV1['schedule'] = [];
@@ -117,9 +128,9 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
   const isBilingual = useCasePacks.includes('bilingual');
   const isInterfaith = useCasePacks.includes('interfaith');
 
-  if (formData.venue || formData.venueName || formData.location || formData.city) {
-    const venueName = formData.venueName || formData.venue || formData.location || formData.city;
-    const venueAddress = formData.location || formData.city;
+  if (recovered.venue || recovered.location || formData.city) {
+    const venueName = recovered.venue || recovered.location || formData.city;
+    const venueAddress = recovered.location || formData.city;
 
     const venueId = generateId();
     venues.push({
@@ -128,20 +139,20 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
       address: venueAddress !== venueName ? venueAddress : undefined,
     });
 
-    if (formData.ceremonyTime) {
+    if (recovered.ceremonyTime) {
       schedule.push({
         id: generateId(),
         label: 'Ceremony',
-        startTimeISO: formData.ceremonyTime,
+        startTimeISO: recovered.ceremonyTime,
         venueId,
       });
     }
 
-    if (formData.receptionTime) {
+    if (recovered.receptionTime) {
       schedule.push({
         id: generateId(),
         label: 'Reception',
-        startTimeISO: formData.receptionTime,
+        startTimeISO: recovered.receptionTime,
         venueId,
       });
     }
@@ -202,7 +213,7 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
     couple: {
       partner1Name: formData.partner1Name || '',
       partner2Name: formData.partner2Name || '',
-      story: formData.ourStory,
+      story: recovered.story,
     },
     event: {
       weddingDateISO: formData.weddingDate,

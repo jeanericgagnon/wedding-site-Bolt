@@ -1,6 +1,7 @@
 import { fromOnboarding } from './generateWeddingData';
 import { generateInitialLayout } from './generateInitialLayout';
 import { generateWeddingSlug } from './slugify';
+import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 
 interface CoupleNames {
   name1: string;
@@ -29,7 +30,17 @@ interface OnboardingMapperInput {
 }
 
 export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<string, unknown> {
-  const normalizedStory = input.ourStory?.trim() || `${input.coupleNames.name1} and ${input.coupleNames.name2} are excited to celebrate with the people they love most.`;
+  const recovered = buildMigrationRecoveryDefaults({
+    coupleName1: input.coupleNames.name1,
+    coupleName2: input.coupleNames.name2,
+    venue: input.venue,
+    location: input.location,
+    city: input.city,
+    story: input.ourStory,
+    ceremonyTime: input.ceremonyTime,
+    receptionTime: input.receptionTime,
+  });
+  const normalizedStory = recovered.story;
   const normalizedAttire = input.attire?.trim() || 'Dress code details will be shared here closer to the wedding.';
   const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || (input.location?.trim() ? `Recommended places to stay near ${input.location.trim()} will be shared here.` : 'Recommended places to stay will be shared here.');
   const normalizedParking = input.parking?.trim() || 'Parking details and arrival notes will be shared here closer to the wedding.';
@@ -61,12 +72,12 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     partner2Name: input.coupleNames.name2,
     useCasePacks: input.useCasePacks || undefined,
     weddingDate: input.weddingDate || undefined,
-    venueName: input.venue || undefined,
-    location: input.location || input.city || undefined,
-    city: input.city || undefined,
+    venueName: recovered.venue || undefined,
+    location: recovered.location || undefined,
+    city: input.city || recovered.location || undefined,
     ourStory: normalizedStory,
-    ceremonyTime: input.ceremonyTime || undefined,
-    receptionTime: input.receptionTime || undefined,
+    ceremonyTime: recovered.ceremonyTime || undefined,
+    receptionTime: recovered.receptionTime || undefined,
     attire: normalizedAttire,
     hotelRecommendations: normalizedHotelRecommendations,
     parking: normalizedParking,
