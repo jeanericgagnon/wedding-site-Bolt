@@ -18,6 +18,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 
 interface OverviewStats {
   publishedVersion: number | null;
@@ -337,6 +338,7 @@ export const DashboardOverview: React.FC = () => {
     siteSlug: stats?.siteSlug ?? '',
     templateName: stats?.templateName ?? '',
   }).map((item) => ({ ...item, action: () => navigate(item.route) }));
+  const siteVisibility = getSiteVisibilityState({ isPublished: stats?.isPublished, privacyMode: null, hideFromSearch: null });
   const publishProgress = getChecklistProgress(publishReadinessItems);
   const publishBlockers = getIncompleteChecklistItems(publishReadinessItems);
   const firstPublishBlocker = getFirstIncompleteChecklistItem(publishReadinessItems);
@@ -549,7 +551,7 @@ export const DashboardOverview: React.FC = () => {
                   )}
                   <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                     <span className="text-text-secondary">Status</span>
-                    <span className="text-text-primary">{stats?.isPublished ? SITE_VISIBILITY_COPY.publishedStatus : SITE_VISIBILITY_COPY.draftStatus}</span>
+                    <span className="text-text-primary">{siteVisibility.label}</span>
                   </div>
                   <div className="flex items-center justify-between py-3">
                     <span className="text-text-secondary">Last live update</span>

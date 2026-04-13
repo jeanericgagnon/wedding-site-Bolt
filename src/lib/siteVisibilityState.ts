@@ -1,0 +1,72 @@
+export type SitePrivacyMode = 'public' | 'password_protected' | 'invite_only';
+export type SiteVisibilityState = 'draft' | 'private_preview_password' | 'private_preview_link' | 'live';
+
+export interface SiteVisibilityInput {
+  isPublished?: boolean | null;
+  privacyMode?: string | null;
+  hideFromSearch?: boolean | null;
+}
+
+export interface SiteVisibilityDescriptor {
+  state: SiteVisibilityState;
+  label: string;
+  shortLabel: string;
+  explainer: string;
+  searchLabel: string;
+  isLive: boolean;
+  isPrivatePreview: boolean;
+}
+
+export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibilityDescriptor {
+  const isPublished = input.isPublished === true;
+  const privacyMode = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only'
+    ? input.privacyMode
+    : 'public';
+  const hideFromSearch = input.hideFromSearch === true;
+
+  if (!isPublished) {
+    return {
+      state: 'draft',
+      label: 'Draft only — visible only to you',
+      shortLabel: 'Draft only',
+      explainer: 'Draft means only you can see the site while editing.',
+      searchLabel: hideFromSearch ? 'Hidden from search' : 'Not live yet',
+      isLive: false,
+      isPrivatePreview: false,
+    };
+  }
+
+  if (privacyMode === 'password_protected') {
+    return {
+      state: 'private_preview_password',
+      label: 'Live with password protection',
+      shortLabel: 'Protected live site',
+      explainer: 'The site is live, but guests need the password to open it.',
+      searchLabel: hideFromSearch ? 'Hidden from search' : 'Search visibility on',
+      isLive: true,
+      isPrivatePreview: true,
+    };
+  }
+
+  if (privacyMode === 'invite_only') {
+    return {
+      state: 'private_preview_link',
+      label: 'Live with invite-only access',
+      shortLabel: 'Invite-only live site',
+      explainer: 'The site is live, but only guests with the link can open it.',
+      searchLabel: hideFromSearch ? 'Hidden from search' : 'Search visibility on',
+      isLive: true,
+      isPrivatePreview: true,
+    };
+  }
+
+  return {
+    state: 'live',
+    label: 'Live and visible to guests',
+    shortLabel: 'Live',
+    explainer: 'The site is live for guests at your DayOf URL.',
+    searchLabel: hideFromSearch ? 'Hidden from search' : 'Search visibility on',
+    isLive: true,
+    isPrivatePreview: false,
+  };
+}

@@ -419,7 +419,8 @@ export const SiteView: React.FC = () => {
         );
 
         const privacyMode = (data.privacy_mode as string) ?? 'public';
-        const allowPrivatePreview = privacyMode === 'password_protected' || privacyMode === 'invite_only';
+        const visibility = getSiteVisibilityState({ isPublished, privacyMode, hideFromSearch: data.hide_from_search === true });
+        const allowPrivatePreview = visibility.isPrivatePreview;
 
         if (!isPublished && !allowPrivatePreview) {
           setIsComingSoon(true);

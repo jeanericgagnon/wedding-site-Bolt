@@ -26,7 +26,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
 import { supabase } from '../../lib/supabase';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
-import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityCopy';
+import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -168,12 +168,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     setEnabledFeatureIds((prev) => prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]);
   };
 
-  const siteVisibilityLabel = useMemo(() => {
-    if (siteIsPublished) return SITE_VISIBILITY_COPY.publishedStatus;
-    if (sitePrivacyMode === 'password_protected') return 'Private preview (password)';
-    if (sitePrivacyMode === 'invite_only') return 'Private preview (link only)';
-    return SITE_VISIBILITY_COPY.draftStatus;
-  }, [siteIsPublished, sitePrivacyMode]);
+  const siteVisibility = useMemo(() => getSiteVisibilityState({ isPublished: siteIsPublished, privacyMode: sitePrivacyMode, hideFromSearch: siteJsonState?.hide_from_search === true }), [siteIsPublished, sitePrivacyMode, siteJsonState]);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -203,8 +198,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
           <nav className="flex-1 p-4 overflow-y-auto" aria-label="Dashboard navigation">
             <div className="mb-4 rounded-xl border border-border-subtle bg-surface-subtle/40 px-4 py-3">
               <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Site visibility</p>
-              <p className="mt-1 text-sm font-medium text-text-primary">{siteVisibilityLabel}</p>
+              <p className="mt-1 text-sm font-medium text-text-primary">{siteVisibility.label}</p>
               {siteSlug && <p className="mt-1 text-xs text-text-secondary">{siteSlug}.dayof.love</p>}
+              <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.searchLabel}</p>
             </div>
             <ul className="space-y-1">
               {pinnedNavItems.map((item) => {

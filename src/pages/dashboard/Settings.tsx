@@ -4,6 +4,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
 import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { LayoutConfigV1 } from '../../types/layoutConfig';
@@ -625,6 +626,8 @@ export const DashboardSettings: React.FC = () => {
                         </Button>
                       </div>
                     </form>
+                      </div>
+                    ); })()}
                   </CardContent>
                 </Card>
 
