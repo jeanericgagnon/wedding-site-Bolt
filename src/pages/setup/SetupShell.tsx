@@ -438,6 +438,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Date:</strong> {draft.dateKnown ? (draft.weddingDate || 'Not set') : 'Still deciding'}</p>
                 <p><strong>Location:</strong> {[draft.weddingCity, draft.weddingRegion].filter(Boolean).join(', ') || 'Not set'}</p>
                 <p><strong>Guest estimate:</strong> {draft.guestEstimateBand || 'Not set'}</p>
+                <p><strong>Migration source:</strong> {draft.migrationSource ? (draft.migrationSource === 'the-knot' ? 'The Knot' : draft.migrationSource === 'joy' ? 'Joy' : draft.migrationSource === 'zola' ? 'Zola' : 'Other / starting fresh') : 'Not selected'}</p>
                 <p><strong>Styles:</strong> {draft.stylePreferences.join(', ') || 'None selected'}</p>
                 <p><strong>Setup direction:</strong> {setupMode.destination ? 'Destination wedding' : setupMode.weekend ? 'Multi-day / weekend wedding' : 'Single-day wedding'}</p>
                 <p><strong>Use-case packs:</strong> {[setupMode.destination && 'Destination', setupMode.bilingual && 'Bilingual', setupMode.interfaith && 'Interfaith'].filter(Boolean).join(', ') || 'None selected yet'}</p>
