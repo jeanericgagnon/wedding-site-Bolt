@@ -123,3 +123,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf helps couples review duplicate gifts, weak imports, image issues, and repair candidates in one cleanup workflow
 - Actual truth: cleanup support is now more visible and actionable, but still depends on human review rather than automatic merging or auto-resolution
 - Writing rule: describe this as guided cleanup support, not autonomous registry cleanup
+
+
+### Registry purchased visibility rules
+- Current grounded rule: purchased-state tracking is definitely real inside the dashboard
+- Current uncertain area: guest-facing purchased visibility is not yet proven to mirror dashboard nuance across every presentation path
+- Safe wording rule: say purchased items can be tracked and may be hidden when configured, but avoid promising fully nuanced guest-facing purchased-state behavior until runtime alignment is verified

@@ -60,3 +60,5 @@ This matrix should stay aligned with `docs/feature-truth-registry.md`.
 | Registry repair | Say DayOf supports registry repair with refresh, re-import, manual cleanup, and merchant-aware guidance. | Current product now has clearer repair states and better recovery paths, but still not guaranteed one-click recovery across all merchants. | Partial | Safe when framed as practical repair support, not flawless automated recovery. |
 
 | Registry cleanup | Say DayOf helps couples review duplicates, weak imports, image issues, and repair candidates in one cleanup workflow. | Current product now has bulk review states and richer cleanup actions, but still relies on human review and does not auto-merge items. | Partial | Safe when framed as guided cleanup support rather than autonomous cleanup. |
+
+| Registry purchased visibility | Say DayOf tracks purchased items internally and supports hide-when-purchased behavior. | Dashboard purchased-state logic is real. Public/guest-facing nuance still needs stricter verification before stronger claims. | Partial | Safe when framed around internal tracking plus configurable hiding, not fully proven public nuance. |
