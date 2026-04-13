@@ -11,6 +11,7 @@ import { createSmsCreditsSession } from '../../lib/stripeService';
 import { canComposeDashboardMessages, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
+import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -972,18 +973,26 @@ export const DashboardMessages: React.FC = () => {
     toast('Save-the-date preset loaded (scheduled for tomorrow at 10:00).', 'success');
   };
 
-  const applyDayOfAlertPreset = () => {
+  const applyDayOfDraft = () => {
+    const draft = buildDayOfUpdateDraft({
+      venue: weddingSite?.venue_name ?? null,
+      weddingDate: weddingSite?.wedding_date ?? null,
+      audienceLabel: selectedAudience?.label ?? null,
+    });
     setFormData((prev) => ({
       ...prev,
       channel: 'sms',
-      audience: 'all',
       scheduleType: 'now',
       scheduleDate: '',
       scheduleTime: '',
-      subject: applyTemplateVariables('Day-of Update'),
-      body: applyTemplateVariables('Quick day-of update: [ADD UPDATE]\n\nPlease arrive 15 minutes early. Reply if you need help finding [VENUE].'),
+      subject: applyTemplateVariables(draft.subject),
+      body: applyTemplateVariables(draft.body),
     }));
-    toast('Day-of alert preset loaded.', 'info');
+    toast('Day-of update draft loaded.', 'info');
+  };
+
+  const applyDayOfAlertPreset = () => {
+    applyDayOfDraft();
   };
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => g.email).length;
   const recipientsWithPhone = getRecipients(formData.audience).filter(g => g.phone).length;
