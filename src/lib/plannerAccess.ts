@@ -63,3 +63,41 @@ export function canEditPlannerSurface(role: PlannerAccessRole): boolean {
 export function canManagePlanning(role: PlannerAccessRole): boolean {
   return role === 'owner' || role === 'planner' || role === 'coordinator';
 }
+
+export interface PlannerInviteRecord {
+  name: string;
+  email: string;
+  role: Exclude<PlannerAccessRole, 'owner'>;
+  status: 'draft' | 'pending' | 'active';
+  invitedAtISO: string;
+}
+
+export function getPlannerInviteStorageKey(siteId: string | null | undefined): string | null {
+  if (!siteId) return null;
+  return `dayof.plannerInvite.${siteId}`;
+}
+
+export function readPlannerInvite(siteId: string | null | undefined): PlannerInviteRecord | null {
+  const key = getPlannerInviteStorageKey(siteId);
+  if (!key) return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PlannerInviteRecord;
+    if (!parsed?.name || !parsed?.email || !parsed?.role) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function writePlannerInvite(siteId: string | null | undefined, invite: PlannerInviteRecord | null): void {
+  const key = getPlannerInviteStorageKey(siteId);
+  if (!key) return;
+  try {
+    if (invite) localStorage.setItem(key, JSON.stringify(invite));
+    else localStorage.removeItem(key);
+  } catch {
+    // ignore local storage failures
+  }
+}

@@ -11,6 +11,7 @@ import { LayoutConfigV1 } from '../../types/layoutConfig';
 import { regenerateLayout } from '../../lib/generateInitialLayout';
 import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
+import { PLANNER_ROLE_OPTIONS, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord } from '../../lib/plannerAccess';
 
 
 interface RSVPQuestionSetting {
@@ -78,6 +79,12 @@ export const DashboardSettings: React.FC = () => {
   const [showTemplateSettings, setShowTemplateSettings] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
+  const [plannerInvite, setPlannerInvite] = useState<PlannerInviteRecord | null>(null);
+  const [plannerInviteName, setPlannerInviteName] = useState('');
+  const [plannerInviteEmail, setPlannerInviteEmail] = useState('');
+  const [plannerInviteRole, setPlannerInviteRole] = useState<'planner' | 'coordinator' | 'viewer'>('planner');
+  const [plannerInviteError, setPlannerInviteError] = useState<string | null>(null);
+  const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
@@ -270,6 +277,54 @@ export const DashboardSettings: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const invite = readPlannerInvite(siteSlug || user?.id || null);
+    if (!invite) return;
+    setPlannerInvite(invite);
+    setPlannerInviteName(invite.name);
+    setPlannerInviteEmail(invite.email);
+    setPlannerInviteRole(invite.role);
+  }, [siteSlug, user?.id]);
+
+  const handleSavePlannerInvite = () => {
+    setPlannerInviteError(null);
+    setPlannerInviteSuccess(null);
+    const name = plannerInviteName.trim();
+    const email = plannerInviteEmail.trim().toLowerCase();
+
+    if (!name) {
+      setPlannerInviteError("Add your planner's name.");
+      return;
+    }
+
+    if (!email || !email.includes('@')) {
+      setPlannerInviteError('Add a valid planner email.');
+      return;
+    }
+
+    const invite: PlannerInviteRecord = {
+      name,
+      email,
+      role: plannerInviteRole,
+      status: plannerInvite?.status === 'active' ? 'active' : 'pending',
+      invitedAtISO: plannerInvite?.invitedAtISO ?? new Date().toISOString(),
+    };
+
+    writePlannerInvite(siteSlug || user?.id || null, invite);
+    setPlannerInvite(invite);
+    setPlannerInviteSuccess(plannerInvite ? 'Planner access updated.' : 'Planner invite saved.');
+  };
+
+  const handleRemovePlannerInvite = () => {
+    writePlannerInvite(siteSlug || user?.id || null, null);
+    setPlannerInvite(null);
+    setPlannerInviteName('');
+    setPlannerInviteEmail('');
+    setPlannerInviteRole('planner');
+    setPlannerInviteError(null);
+    setPlannerInviteSuccess('Planner invite removed.');
+  };
+
   const handleUpdateSlug = async (e: React.FormEvent) => {
     e.preventDefault();
     setSlugSaving(true);
@@ -383,6 +438,7 @@ export const DashboardSettings: React.FC = () => {
   };
 
   const publicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
+  const plannerRoleOptions = PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner');
   const publicSiteQrUrl = publicSiteUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(publicSiteUrl)}`
     : '';
@@ -737,24 +793,62 @@ export const DashboardSettings: React.FC = () => {
                       <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of DayOf that help someone run the event well.</p>
                     </div>
 
+                    {plannerInviteSuccess && (
+                      <div className="rounded-xl border border-success/20 bg-success-light p-3 text-sm text-success">{plannerInviteSuccess}</div>
+                    )}
+                    {plannerInviteError && (
+                      <div className="rounded-xl border border-error/20 bg-error-light p-3 text-sm text-error">{plannerInviteError}</div>
+                    )}
+
                     <div className="grid gap-3 md:grid-cols-3">
-                      <div className="rounded-xl border border-border-subtle bg-white p-4">
-                        <p className="text-sm font-medium text-text-primary">Planner</p>
-                        <p className="mt-1 text-xs text-text-secondary">Can help with guests, seating, timeline, and event-day coordination.</p>
+                      {plannerRoleOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setPlannerInviteRole(option.value as 'planner' | 'coordinator' | 'viewer')}
+                          className={`rounded-xl border p-4 text-left transition-colors ${plannerInviteRole === option.value ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/35'}`}
+                        >
+                          <p className="text-sm font-medium text-text-primary">{option.label}</p>
+                          <p className="mt-1 text-xs text-text-secondary">{option.description}</p>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="block text-sm font-medium text-text-primary mb-2">Planner name</label>
+                        <Input value={plannerInviteName} onChange={(e) => setPlannerInviteName(e.target.value)} placeholder="Your planner or coordinator" />
                       </div>
-                      <div className="rounded-xl border border-border-subtle bg-white p-4">
-                        <p className="text-sm font-medium text-text-primary">Coordinator</p>
-                        <p className="mt-1 text-xs text-text-secondary">Focused on live event operations, check-in, and day-of updates.</p>
-                      </div>
-                      <div className="rounded-xl border border-border-subtle bg-white p-4">
-                        <p className="text-sm font-medium text-text-primary">Read only</p>
-                        <p className="mt-1 text-xs text-text-secondary">Good for family, venue, or anyone who just needs visibility.</p>
+                      <div>
+                        <label className="block text-sm font-medium text-text-primary mb-2">Planner email</label>
+                        <Input value={plannerInviteEmail} onChange={(e) => setPlannerInviteEmail(e.target.value)} placeholder="planner@example.com" />
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4">
-                      <p className="text-sm font-medium text-text-primary">Next step</p>
-                      <p className="mt-1 text-sm text-text-secondary">A full planner invite flow should start here in Settings, sent by the couple, with simple role presets and clear scope.</p>
+                      <p className="text-sm font-medium text-text-primary">Permissions preview</p>
+                      <p className="mt-1 text-sm text-text-secondary">{plannerInviteRole === 'planner' ? 'Planner access includes guests, planning, seating, messages, and event-day coordination.' : plannerInviteRole === 'coordinator' ? 'Coordinator access stays focused on live operations, check-in, messages, and day-of support.' : 'Read-only access is best for someone who needs visibility without editing anything.'}</p>
+                    </div>
+
+                    {plannerInvite && (
+                      <div className="rounded-xl border border-border-subtle bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">Invite saved for {plannerInvite.name}</p>
+                            <p className="mt-1 text-xs text-text-secondary">{plannerInvite.email} · {plannerRoleOptions.find((option) => option.value === plannerInvite.role)?.label} · {plannerInvite.status === 'active' ? 'Active' : 'Pending'}</p>
+                          </div>
+                          <Badge variant={plannerInvite.status === 'active' ? 'success' : 'secondary'}>{plannerInvite.status === 'active' ? 'Active' : 'Pending'}</Badge>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {plannerInvite && (
+                        <Button type="button" variant="outline" size="sm" onClick={handleRemovePlannerInvite}>Remove invite</Button>
+                      )}
+                      <Button type="button" variant="primary" size="md" onClick={handleSavePlannerInvite}>
+                        {plannerInvite ? 'Update planner access' : 'Save planner invite'}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
