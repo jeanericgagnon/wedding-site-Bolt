@@ -23,6 +23,7 @@ const styleOptions = [
   'Rustic',
   'Bold',
   'Destination',
+  'Weekend',
 ] as const;
 
 export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
@@ -126,6 +127,14 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const selectedTemplateName = useMemo(() => {
     return templateCatalog.find((t) => t.id === draft.selectedTemplateId)?.name ?? draft.selectedTemplateId;
   }, [draft.selectedTemplateId]);
+
+
+  const setupMode = useMemo(() => {
+    const prefs = new Set(draft.stylePreferences);
+    const destination = prefs.has('Destination');
+    const weekend = prefs.has('Weekend') || destination || draft.guestEstimateBand === '200plus';
+    return { destination, weekend };
+  }, [draft.stylePreferences, draft.guestEstimateBand]);
 
   const recommendedTemplates = useMemo(() => {
     const prefs = new Set(draft.stylePreferences);
@@ -259,6 +268,9 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
           {activeStep === 'location' && (
             <div className="mt-4 space-y-4">
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
+                If this is a destination or multi-day weekend, start with the city first. You can fill in hotels, parking, airport notes, and the rest of the weekend flow right after setup.
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Wedding city" value={draft.weddingCity} onChange={(e) => updateDraft({ weddingCity: e.target.value })} />
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="State / Region (optional)" value={draft.weddingRegion} onChange={(e) => updateDraft({ weddingRegion: e.target.value })} />
@@ -338,6 +350,10 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 </div>
               </div>
 
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
+                <p className="font-medium text-neutral-800">Setup direction</p>
+                <p className="mt-1">{setupMode.destination ? 'Destination wedding mode is on — DayOf should lean harder into travel, hotel, and arrival guidance.' : setupMode.weekend ? 'Weekend-style setup is on — DayOf should expect more than one event and more guest coordination.' : 'Classic single-day setup is fine here. You can still add extra events later.'}</p>
+              </div>
               <p className="text-xs text-neutral-500">Optional — helps Dayof pick a better starting direction for your site.</p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
@@ -354,8 +370,13 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Location:</strong> {[draft.weddingCity, draft.weddingRegion].filter(Boolean).join(', ') || 'Not set'}</p>
                 <p><strong>Guest estimate:</strong> {draft.guestEstimateBand || 'Not set'}</p>
                 <p><strong>Styles:</strong> {draft.stylePreferences.join(', ') || 'None selected'}</p>
+                <p><strong>Setup direction:</strong> {setupMode.destination ? 'Destination wedding' : setupMode.weekend ? 'Multi-day / weekend wedding' : 'Single-day wedding'}</p>
                 <p><strong>Template:</strong> {selectedTemplateName}</p>
                 <p><strong>Template ID:</strong> {draft.selectedTemplateId}</p>
+              </div>
+
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
+                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before publishing.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list.'}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
