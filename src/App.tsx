@@ -43,7 +43,8 @@ const RegistryFeature = lazy(() => import('./pages/features/Registry').then(m =>
 const SeatingFeature = lazy(() => import('./pages/features/Seating').then(m => ({ default: m.SeatingFeature })));
 const PaymentRequired = lazy(() => import('./pages/PaymentRequired').then(m => ({ default: m.PaymentRequired })));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess').then(m => ({ default: m.PaymentSuccess })));
-const VaultContribute = lazy(() => import('./pages/VaultContribute').then(m => ({ default: m.VaultContribute })));
+const VaultContribute = lazy(() => import('./pages/VaultContribute').then(m => ({ default: m.VaultContribute }))); 
+const AcceptCollaboratorInvite = lazy(() => import('./pages/AcceptCollaboratorInvite').then(m => ({ default: m.AcceptCollaboratorInvite }))); 
 const BuilderV2Lab = lazy(() => import('./pages/BuilderV2Lab').then(m => ({ default: m.BuilderV2Lab })));
 const VariantPreviewCapture = lazy(() => import('./pages/VariantPreviewCapture'));
 const TemplateScrollCapture = lazy(() => import('./pages/TemplateScrollCapture'));
@@ -80,6 +81,7 @@ const AppContent = () => {
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />
         <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
+        <Route path="/accept-collaborator-invite" element={<AcceptCollaboratorInvite />} />
         <Route path="/photos/upload" element={<PhotoUpload />} />
         <Route path="/rsvp" element={<RSVP />} />
         <Route path="/events" element={<EventRSVP />} />
