@@ -57,6 +57,11 @@ export const RsvpSection: React.FC<RsvpSectionProps> = ({ content, weddingSiteId
           </div>
         )}
 
+        <div className="mb-6 rounded-xl border border-border bg-surface-subtle/30 px-4 py-3 text-left text-sm text-text-secondary">
+          <p className="font-medium text-text-primary">What happens next</p>
+          <p className="mt-1">Once you reply, the couple can use your RSVP details for planning, seating, and day-of updates. You can come back later if they need anything else from you.</p>
+        </div>
+
         <button
           onClick={handleRsvpClick}
           className="inline-flex items-center justify-center gap-2 px-10 py-4 text-lg font-semibold text-white bg-accent hover:bg-accent-hover rounded-full transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"

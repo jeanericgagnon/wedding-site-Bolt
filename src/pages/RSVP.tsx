@@ -758,6 +758,13 @@ export default function RSVP() {
               </div>
             )}
 
+            {existingRsvp && (
+              <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-sm space-y-1">
+                <p className="font-medium">We have your current RSVP on file.</p>
+                <p>You can review or update your details here. If plans change later, use this same link again.</p>
+              </div>
+            )}
+
             {deadlinePassed && existingRsvp && (
               <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
