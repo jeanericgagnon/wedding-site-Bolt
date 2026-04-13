@@ -4094,36 +4094,57 @@ Proceed with send?`)) return;
                 const status = itineraryDrawerGuest.rsvp_status;
                 const meal = itineraryDrawerGuest.rsvp?.meal_choice;
                 const plusOne = itineraryDrawerGuest.rsvp?.plus_one_name;
+                const householdMembers = itineraryDrawerGuest.household_id
+                  ? guests.filter((guest) => guest.household_id === itineraryDrawerGuest.household_id)
+                  : [];
 
                 return (
-                  <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
-                    <p className="text-xs uppercase updates-wide text-text-tertiary">RSVP details</p>
-                    <div className="text-sm text-text-primary">
-                      <span className="font-medium">Status:</span>{' '}
-                      <span className="capitalize">{status}</span>
+                  <>
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
+                      <p className="text-xs uppercase updates-wide text-text-tertiary">RSVP details</p>
+                      <div className="text-sm text-text-primary">
+                        <span className="font-medium">Status:</span>{' '}
+                        <span className="capitalize">{status}</span>
+                      </div>
+                      {meal && (
+                        <div className="text-sm text-text-primary">
+                          <span className="font-medium">Meal:</span> <span className="capitalize">{meal}</span>
+                        </div>
+                      )}
+                      {plusOne && (
+                        <div className="text-sm text-text-primary">
+                          <span className="font-medium">Plus-one guest:</span> {plusOne}
+                        </div>
+                      )}
+                      {entries.length > 0 && (
+                        <div className="pt-1 space-y-1.5">
+                          <p className="text-xs uppercase updates-wide text-text-tertiary">Custom answers</p>
+                          {entries.map((entry) => (
+                            <div key={entry.key} className="text-sm text-text-primary flex items-start justify-between gap-3">
+                              <span className="text-text-secondary truncate">{entry.key}</span>
+                              <span className="text-right">{entry.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {meal && (
-                      <div className="text-sm text-text-primary">
-                        <span className="font-medium">Meal:</span> <span className="capitalize">{meal}</span>
-                      </div>
-                    )}
-                    {plusOne && (
-                      <div className="text-sm text-text-primary">
-                        <span className="font-medium">Plus-one guest:</span> {plusOne}
-                      </div>
-                    )}
-                    {entries.length > 0 && (
-                      <div className="pt-1 space-y-1.5">
-                        <p className="text-xs uppercase updates-wide text-text-tertiary">Custom answers</p>
-                        {entries.map((entry) => (
-                          <div key={entry.key} className="text-sm text-text-primary flex items-start justify-between gap-3">
-                            <span className="text-text-secondary truncate">{entry.key}</span>
-                            <span className="text-right">{entry.value}</span>
+
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
+                      <p className="text-xs uppercase updates-wide text-text-tertiary">Household context</p>
+                      {householdMembers.length > 1 ? (
+                        <>
+                          <p className="text-sm text-text-secondary">This guest is grouped with {householdMembers.length - 1} other household member{householdMembers.length === 2 ? '' : 's'}.</p>
+                          <div className="space-y-1">
+                            {householdMembers.map((member) => (
+                              <p key={member.id} className="text-sm text-text-primary">• {member.first_name && member.last_name ? `${member.first_name} ${member.last_name}` : member.name}</p>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-text-secondary">This guest is not currently grouped into a larger household.</p>
+                      )}
+                    </div>
+                  </>
                 );
               })()}
 
