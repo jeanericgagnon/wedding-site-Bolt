@@ -8,7 +8,7 @@ interface Props {
   onEdit: (item: RegistryItem) => void;
   onDelete: (id: string) => void;
   onMarkPurchased?: (item: RegistryItem, qty: number) => Promise<void>;
-  onRefetchMetadata?: (item: RegistryItem) => Promise<unknown>;
+  onRefetchMetadata?: (item: RegistryItem, silent?: boolean, replaceExisting?: boolean) => Promise<unknown>;
 }
 
 function statusBadge(status: PurchaseStatus, qty: number, needed: number) {
@@ -398,6 +398,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             Edit
           </button>
           {onRefetchMetadata && item.item_url && (
+            <>
             <button
               onClick={handleRefetch}
               disabled={refetching}
@@ -411,6 +412,16 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
               )}
               Refresh
             </button>
+            <button
+              onClick={() => { if (!refetching) { setRefetching(true); Promise.resolve(onRefetchMetadata?.(item, false, true)).finally(() => setRefetching(false)); } }}
+              disabled={refetching}
+              title="Re-import this item from the source link and replace weak details"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Re-import
+            </button>
+            </>
           )}
           <button
             onClick={handleDeleteClick}

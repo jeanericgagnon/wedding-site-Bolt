@@ -379,11 +379,11 @@ export const DashboardRegistry: React.FC = () => {
     }
   }
 
-  async function handleRefetchMetadata(item: RegistryItem, silent = false) {
+  async function handleRefetchMetadata(item: RegistryItem, silent = false, replaceExisting = false) {
     const url = item.item_url ?? item.canonical_url;
     if (!url) return false;
     if (isDemoMode) {
-      if (!silent) toast('Demo: sample product details are already populated', 'success');
+      if (!silent) toast(replaceExisting ? 'Demo: sample product details are already fully re-imported' : 'Demo: sample product details are already populated', 'success');
       return true;
     }
     try {
@@ -397,8 +397,8 @@ export const DashboardRegistry: React.FC = () => {
         metadata_retailer: preview.retailer ?? null,
         availability: preview.availability ?? null,
       };
-      if (preview.title && !item.item_name) fields.item_name = preview.title;
-      if (preview.price_label) fields.price_label = preview.price_label;
+      if (preview.title && (replaceExisting || !item.item_name)) fields.item_name = preview.title;
+      if (preview.price_label && (replaceExisting || !item.price_label)) fields.price_label = preview.price_label;
       if (preview.price_amount != null) {
         if (item.price_amount != null && item.price_amount !== preview.price_amount) {
           fields.previous_price_amount = item.price_amount;
@@ -406,19 +406,19 @@ export const DashboardRegistry: React.FC = () => {
         }
         fields.price_amount = preview.price_amount;
       }
-      if (preview.image_url) fields.image_url = preview.image_url;
-      if (preview.merchant ?? preview.brand) fields.merchant = (preview.merchant ?? preview.brand)!;
+      if (preview.image_url && (replaceExisting || !item.image_url)) fields.image_url = preview.image_url;
+      if ((preview.merchant ?? preview.brand) && (replaceExisting || !item.merchant)) fields.merchant = (preview.merchant ?? preview.brand)!;
       if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
       if (Object.keys(fields).length > 0) {
         const updated = await updateRegistryItem(item.id, fields);
         setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
-        if (!silent) toast('Product details refreshed');
+        if (!silent) toast(replaceExisting ? 'Item re-imported from source link' : 'Product details refreshed');
       } else if (!silent) {
         toast('No new details found — details are up to date');
       }
       return true;
     } catch {
-      if (!silent) toast('Couldn’t refresh product details right now. Please try again.', 'error');
+      if (!silent) toast(replaceExisting ? 'Couldn’t re-import this item right now. Try Edit if the source page is weak.' : 'Couldn’t refresh product details right now. Please try again.', 'error');
       return false;
     }
   }
