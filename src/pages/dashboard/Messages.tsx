@@ -180,7 +180,6 @@ interface DeliveryRow {
   recipient_email: string;
 }
 
-type MessagesRole = 'owner' | 'coordinator' | 'viewer';
 
 function isPastScheduledTime(scheduledFor: string | null): boolean {
   if (!scheduledFor) return false;
@@ -455,7 +454,7 @@ export const DashboardMessages: React.FC = () => {
   const [smsTransactions, setSmsTransactions] = useState<SmsCreditTransaction[]>([]);
   const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
-  const [messagesRole, setMessagesRole] = useState<MessagesRole>('owner');
+  const [messagesRole, setMessagesRole] = useState<PlannerAccessRole>('owner');
   const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
@@ -486,14 +485,14 @@ export const DashboardMessages: React.FC = () => {
   useEffect(() => {
     if (!weddingSite?.id) return;
     try {
-      const raw = localStorage.getItem(`dayof.messages.role.${weddingSite.id}`) as MessagesRole | null;
-      if (raw === 'owner' || raw === 'coordinator' || raw === 'viewer') setMessagesRole(raw);
+      const raw = readPlannerAccessRole('messages', weddingSite.id);
+      if (raw) setMessagesRole(raw);
     } catch {}
   }, [weddingSite?.id]);
 
   useEffect(() => {
     if (!weddingSite?.id) return;
-    try { localStorage.setItem(`dayof.messages.role.${weddingSite.id}`, messagesRole); } catch {}
+    writePlannerAccessRole('messages', weddingSite?.id ?? null, messagesRole);
   }, [weddingSite?.id, messagesRole]);
 
   function toast(message: string, type: Toast['type'] = 'success') {
@@ -999,7 +998,7 @@ export const DashboardMessages: React.FC = () => {
     return { delivered, failed, targeted, rate, scheduled: messages.filter((m) => m.status === 'scheduled').length };
   }, [messages]);
 
-  const canCompose = messagesRole !== 'viewer';
+  const canCompose = canEditPlannerSurface(messagesRole);
 
   const filteredHistory = useMemo(() => messages.filter((m) => {
     if (historyStatusFilter !== 'all' && m.status !== historyStatusFilter) return false;

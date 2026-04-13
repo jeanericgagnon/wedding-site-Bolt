@@ -5,6 +5,7 @@ import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors } from '../../lib/demoData';
+import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import {
   PlanningTask, PlanningBudgetItem, PlanningVendor,
   getWeddingSiteId, getWeddingDate,
@@ -19,7 +20,6 @@ import { BudgetTab } from './planning/BudgetTab';
 import { VendorsTab } from './planning/VendorsTab';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'vendors';
-type PlanningRole = 'owner' | 'coordinator' | 'viewer';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -40,7 +40,7 @@ export const DashboardPlanning: React.FC = () => {
   const [totalBudget, setTotalBudget] = useState(0);
   const [seatingReadiness, setSeatingReadiness] = useState({ attending: 0, seated: 0, unassigned: 0 });
   const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
-  const [planningRole, setPlanningRole] = useState<PlanningRole>('owner');
+  const [planningRole, setPlanningRole] = useState<PlannerAccessRole>('owner');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export const DashboardPlanning: React.FC = () => {
 
   useEffect(() => {
     if (!siteId) return;
-    try { localStorage.setItem(`dayof.planning.role.${siteId}`, planningRole); } catch {}
+    writePlannerAccessRole('planning', siteId, planningRole);
   }, [siteId, planningRole]);
 
   async function loadAll() {
@@ -389,9 +389,9 @@ export const DashboardPlanning: React.FC = () => {
               onChange={(e) => setPlanningRole(e.target.value as PlanningRole)}
               className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="owner">Couple owner</option>
-              <option value="coordinator">Planner / coordinator</option>
-              <option value="viewer">Read only</option>
+              {PLANNER_ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
         </div>

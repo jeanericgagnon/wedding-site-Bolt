@@ -3,6 +3,7 @@ import { Input, Textarea } from '../../components/ui';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
+import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 
 type GuestLite = {
   id: string;
@@ -39,7 +40,6 @@ type QnaItem = {
   answer?: string | null;
 };
 
-type CoordinatorRole = 'owner' | 'coordinator' | 'viewer';
 
 export const DashboardCoordinatorMode: React.FC = () => {
   const { user, isDemoMode } = useAuth();
@@ -52,7 +52,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertLog, setAlertLog] = useState<AlertLog[]>([]);
   const [alertBusy, setAlertBusy] = useState(false);
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
-  const [coordinatorRole, setCoordinatorRole] = useState<CoordinatorRole>('owner');
+  const [coordinatorRole, setCoordinatorRole] = useState<PlannerAccessRole>('owner');
   const [alertChannelFilter, setAlertChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
   const [qnaInput, setQnaInput] = useState('');
@@ -169,7 +169,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   useEffect(() => {
     if (!siteId) return;
-    try { localStorage.setItem(`dayof.coordinator.role.${siteId}`, coordinatorRole); } catch {}
+    writePlannerAccessRole('coordinator', siteId, coordinatorRole);
   }, [siteId, coordinatorRole]);
 
   const stats = useMemo(() => {
@@ -218,7 +218,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     return guests.length;
   })();
 
-  const canEdit = coordinatorRole !== 'viewer';
+  const canEdit = canEditPlannerSurface(coordinatorRole);
 
   const liveEventAudience = useMemo(() => {
     const live = events.find((e) => (timelineState[e.id] || 'up-next') === 'live');
@@ -342,9 +342,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
               onChange={(e) => setCoordinatorRole(e.target.value as CoordinatorRole)}
               className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
             >
-              <option value="owner">Couple owner</option>
-              <option value="coordinator">Planner / coordinator</option>
-              <option value="viewer">Read only</option>
+              {PLANNER_ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
         </div>

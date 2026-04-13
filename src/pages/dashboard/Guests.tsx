@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
@@ -280,7 +281,7 @@ export const DashboardGuests: React.FC = () => {
   const [sortByPriority, setSortByPriority] = useState(false);
   const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
   const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
-  const [guestsRole, setGuestsRole] = useState<'owner' | 'coordinator' | 'viewer'>('owner');
+  const [guestsRole, setGuestsRole] = useState<PlannerAccessRole>('owner');
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
   const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
@@ -290,7 +291,7 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
   const [rsvpConflictHistory, setRsvpConflictHistory] = useState<RsvpConflict[]>([]);
   const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
-  const isGuestsReadOnly = guestsRole === 'viewer';
+  const isGuestsReadOnly = !canEditPlannerSurface(guestsRole);
   const [showConflictDetails, setShowConflictDetails] = useState(false);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const rsvpConfigLoadedRef = useRef(false);
@@ -325,8 +326,8 @@ export const DashboardGuests: React.FC = () => {
     }
 
     try {
-      const rawRole = localStorage.getItem('dayof.guests.role') as 'owner' | 'coordinator' | 'viewer' | null;
-      if (rawRole === 'owner' || rawRole === 'coordinator' || rawRole === 'viewer') setGuestsRole(rawRole);
+      const rawRole = readPlannerAccessRole('guests', 'global');
+      if (rawRole) setGuestsRole(rawRole);
     } catch {
       // noop
     }
@@ -358,7 +359,7 @@ export const DashboardGuests: React.FC = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('dayof.guests.role', guestsRole);
+      writePlannerAccessRole('guests', 'global', guestsRole);
     } catch {
       // noop
     }
