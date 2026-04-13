@@ -57,3 +57,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: grounded draft help for FAQs, welcome notes, reminders, and day-of updates
 - Actual truth: these helpers use known wedding data and require explicit user insertion/editing/sending
 - Writing rule: do not imply autonomous AI generation or sending
+
+
+### Migration truth
+- Public-safe claim: DayOf supports a calmer switching path from Zola, Joy, The Knot, and similar wedding platforms
+- Actual truth: current migration work is guided and partial, with intake, recovery helpers, import review, and checklists — not a fully automated migration engine
+- Writing rule: say guided migration or switching support, not full automated import

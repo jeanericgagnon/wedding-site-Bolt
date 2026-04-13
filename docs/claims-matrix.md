@@ -38,3 +38,5 @@ This matrix should stay aligned with `docs/feature-truth-registry.md`.
 
 | Use-case packs | Talk about destination, bilingual, and interfaith packs as first focused packs, not fully equal mature systems. | Destination currently has stronger behavioral proof than bilingual/interfaith, which are still partial. | Partial | Safe only when wording keeps maturity unevenness honest. |
 | Draft assists | Describe these as grounded drafting helpers, not autonomous AI. | FAQ, welcome note, RSVP reminder, and day-of update helpers use known wedding data and still require explicit insert/edit/send. | Yes | Avoid implying autonomy or server-side AI generation. |
+
+| Migration | DayOf supports a calmer switching path from other wedding platforms. | Migration currently includes intake/source selection, setup guidance, guest-import review truth, story/event/FAQ/registry recovery helpers, and review checklists. It is not yet a full one-click migration system. | Partial | Safe only when framed as guided migration, not complete automated import. |
