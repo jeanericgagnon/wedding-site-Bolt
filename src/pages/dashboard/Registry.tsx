@@ -1051,10 +1051,14 @@ Import a list of links
             </div>
           </div>
 
+          <div className="mb-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 text-xs text-text-secondary">
+            Cleanup tools help repair weak imports and spot duplicates, but they do not silently merge or delete items for you. Review anything important before making public changes.
+          </div>
+
           <div className="mb-4 flex flex-wrap gap-2">
-            {bulkReviewCounts.repair > 0 && <button onClick={() => void handleRepairBadImports()} disabled={repairingBadImports} className="px-3 py-1.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs font-medium disabled:opacity-60">{repairingBadImports ? 'Cleaning up…' : 'Run repair cleanup'}</button>}
+            {bulkReviewCounts.repair > 0 && <button onClick={() => void handleRepairBadImports()} disabled={repairingBadImports} className="px-3 py-1.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs font-medium disabled:opacity-60" title="Re-fetch weak imports without deleting items">{repairingBadImports ? 'Cleaning up…' : 'Run repair cleanup'}</button>}
             {bulkReviewCounts.imageIssues > 0 && <button onClick={() => void handleRefreshImageIssues()} disabled={imageRefreshBusy} className="px-3 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-700 text-xs font-medium disabled:opacity-60">{imageRefreshBusy ? 'Refreshing…' : 'Refresh image issues'}</button>}
-            {duplicateGroups.length > 0 && <button onClick={() => void handleCopyDuplicateReviewList()} className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-medium">Copy duplicate review list</button>}
+            {duplicateGroups.length > 0 && <button onClick={() => void handleCopyDuplicateReviewList()} className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-medium" title="Review duplicates manually before removing anything">Copy duplicate review list</button>}
           </div>
 
           {duplicateGroups.length > 0 && (
