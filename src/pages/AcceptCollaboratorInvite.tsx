@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, Heart, Loader2, LogOut } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { AlertCircle, CheckCircle2, Heart, Loader2, LogOut, ShieldCheck, UserPlus } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth, type AuthUser } from '../contexts/AuthContext';
@@ -61,17 +61,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     if (inviteInfo.site_slug) return `${inviteInfo.site_slug}.dayof.love`;
     return 'this wedding site';
   }, [inviteInfo]);
-
-  const authHandoffSearch = useMemo(() => {
-    if (!inviteInfo || !token) return '';
-
-    return `?${createSearchParams({
-      inviteToken: token,
-      inviteEmail: inviteInfo.invite_email,
-      inviteRole: inviteInfo.role,
-      inviteSite: siteLabel,
-    }).toString()}`;
-  }, [inviteInfo, token, siteLabel]);
 
   useEffect(() => {
     let cancelled = false;
@@ -302,33 +291,52 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const signedInWithDifferentEmail = !!user && !!inviteInfo && !isInviteEmailMatch(user.email, inviteInfo.invite_email);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-surface-subtle to-surface p-4">
-      <div className="w-full max-w-5xl grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="space-y-6">
-          <div className="text-center lg:text-left">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
-              <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-              <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
-            </Link>
-            <p className="text-xs uppercase tracking-[0.24em] text-text-tertiary">DayOf collaborator invite</p>
-            <h1 className="mt-3 text-3xl font-bold text-text-primary">Join as a collaborator</h1>
-            <p className="mt-3 text-text-secondary">
-              Accept your invite, get into the right wedding dashboard, and skip the owner payment flow.
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-surface-subtle to-surface p-4 md:p-6">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <Link to="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
+            <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
+          </Link>
+          <div className="rounded-full border border-border-subtle bg-white/70 px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-text-tertiary">
+            Collaborator access
           </div>
+        </div>
 
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card variant="default" padding="lg" className="shadow-lg">
             <div className="flex items-start gap-3">
-              <div className="mt-1 rounded-full bg-primary/10 p-2 text-primary">
-                <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+              <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+                <ShieldCheck className="h-6 w-6" aria-hidden="true" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-text-primary">Invite details</h2>
-                <p className="mt-1 text-sm text-text-secondary">We’ll validate the token first, then connect the invited email to the wedding site.</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-text-tertiary">Invite-only access</p>
+                <h1 className="mt-3 text-3xl font-bold text-text-primary">Join this wedding team</h1>
+                <p className="mt-3 max-w-2xl text-text-secondary">
+                  This page is only for invited collaborators like planners, coordinators, and support teammates. No payment. No demo mode. Just get into the right dashboard.
+                </p>
               </div>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-border-subtle bg-surface-subtle/20 p-5">
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Step 1</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">Check invite</p>
+                <p className="mt-2 text-sm text-text-secondary">We validate the invite link and lock to the invited email.</p>
+              </div>
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Step 2</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">Sign in or create account</p>
+                <p className="mt-2 text-sm text-text-secondary">Use the invited email to join this wedding team in a minute.</p>
+              </div>
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Step 3</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">Get access</p>
+                <p className="mt-2 text-sm text-text-secondary">We attach your access and send you straight to the dashboard.</p>
+              </div>
+            </div>
+
+            <div className="mt-8 rounded-3xl border border-border-subtle bg-surface-subtle/20 p-6">
               {inviteState === 'loading' && (
                 <div className="flex items-center gap-3 text-text-secondary">
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -353,30 +361,30 @@ export const AcceptCollaboratorInvite: React.FC = () => {
               )}
 
               {inviteInfo && inviteIsClaimable && (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <p className="text-sm text-text-secondary">You were invited to collaborate on</p>
-                    <p className="mt-1 text-lg font-semibold text-text-primary">{siteLabel}</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Wedding team</p>
+                    <p className="mt-2 text-2xl font-semibold text-text-primary">{siteLabel}</p>
+                    <p className="mt-2 text-sm text-text-secondary">Invited for {formatRole(inviteInfo.role)} access.</p>
                   </div>
-                  <dl className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <dt className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Invited name</dt>
-                      <dd className="mt-1 text-sm font-medium text-text-primary">{inviteeLabel}</dd>
+
+                  <dl className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl bg-white p-4">
+                      <dt className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Invite name</dt>
+                      <dd className="mt-2 text-sm font-medium text-text-primary">{inviteeLabel}</dd>
                     </div>
-                    <div>
-                      <dt className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Email</dt>
-                      <dd className="mt-1 text-sm font-medium text-text-primary">{inviteInfo.invite_email}</dd>
+                    <div className="rounded-2xl bg-white p-4">
+                      <dt className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Invited email</dt>
+                      <dd className="mt-2 text-sm font-medium text-text-primary">{inviteInfo.invite_email}</dd>
                     </div>
-                    <div>
+                    <div className="rounded-2xl bg-white p-4">
                       <dt className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Role</dt>
-                      <dd className="mt-1 text-sm font-medium text-text-primary">{formatRole(inviteInfo.role)}</dd>
+                      <dd className="mt-2 text-sm font-medium text-text-primary">{formatRole(inviteInfo.role)}</dd>
                     </div>
-                    {inviteInfo.expires_at && (
-                      <div>
-                        <dt className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Expires</dt>
-                        <dd className="mt-1 text-sm font-medium text-text-primary">{new Date(inviteInfo.expires_at).toLocaleDateString()}</dd>
-                      </div>
-                    )}
+                    <div className="rounded-2xl bg-white p-4">
+                      <dt className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Billing</dt>
+                      <dd className="mt-2 text-sm font-medium text-text-primary">No payment required</dd>
+                    </div>
                   </dl>
                 </div>
               )}
@@ -406,173 +414,162 @@ export const AcceptCollaboratorInvite: React.FC = () => {
               </Link>
             </div>
           </Card>
-        </div>
 
-        <Card variant="default" padding="lg" className="shadow-lg h-fit">
-          {signedInWithDifferentEmail && user && inviteInfo ? (
-            <div className="space-y-5">
-              <div>
-                <h2 className="text-2xl font-bold text-text-primary">Wrong account signed in</h2>
-                <p className="mt-2 text-text-secondary">
-                  You’re signed in as <span className="font-medium text-text-primary">{user.email}</span>, but this invite is for <span className="font-medium text-text-primary">{inviteInfo.invite_email}</span>.
-                </p>
-              </div>
-              <Button type="button" variant="outline" fullWidth onClick={() => { void handleSwitchAccount(); }}>
-                <LogOut className="h-4 w-4" aria-hidden="true" />
-                Sign out and use the invited email
-              </Button>
-            </div>
-          ) : signedInWithInviteEmail && user ? (
-            <div className="space-y-5">
-              <div>
-                <h2 className="text-2xl font-bold text-text-primary">You’re good</h2>
-                <p className="mt-2 text-text-secondary">
-                  Signed in as <span className="font-medium text-text-primary">{user.email}</span>. We’ll finish claiming the invite automatically.
-                </p>
-              </div>
-              <Button type="button" variant="accent" fullWidth disabled>
-                {claiming ? 'Claiming access…' : 'Access ready'}
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="flex rounded-xl bg-surface-subtle p-1 mb-6">
-                <button
-                  type="button"
-                  onClick={() => { setAuthMode('signin'); setAuthError(null); }}
-                  className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${authMode === 'signin' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
-                >
-                  Sign in
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setAuthMode('signup'); setAuthError(null); }}
-                  className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${authMode === 'signup' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
-                >
-                  Create account
-                </button>
-              </div>
-
-              <div className="mb-5 space-y-4">
+          <Card variant="default" padding="lg" className="shadow-lg h-fit">
+            {signedInWithDifferentEmail && user && inviteInfo ? (
+              <div className="space-y-5">
                 <div>
-                  <h2 className="text-2xl font-bold text-text-primary">{authMode === 'signin' ? 'Sign in to accept' : 'Create your collaborator account'}</h2>
+                  <h2 className="text-2xl font-bold text-text-primary">Wrong account signed in</h2>
                   <p className="mt-2 text-text-secondary">
-                    {authMode === 'signin'
-                      ? 'Use the invited email and we’ll attach this invite immediately.'
-                      : 'Create a lightweight collaborator account. No owner billing step on this path.'}
+                    You’re signed in as <span className="font-medium text-text-primary">{user.email}</span>, but this invite is for <span className="font-medium text-text-primary">{inviteInfo.invite_email}</span>.
                   </p>
                 </div>
+                <Button type="button" variant="outline" fullWidth onClick={() => { void handleSwitchAccount(); }}>
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  Sign out and use the invited email
+                </Button>
+              </div>
+            ) : signedInWithInviteEmail && user ? (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-2xl font-bold text-text-primary">You’re in</h2>
+                  <p className="mt-2 text-text-secondary">
+                    Signed in as <span className="font-medium text-text-primary">{user.email}</span>. We’ll finish claiming the invite automatically.
+                  </p>
+                </div>
+                <Button type="button" variant="accent" fullWidth disabled>
+                  {claiming ? 'Claiming access…' : 'Access ready'}
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+                    {authMode === 'signin' ? <ShieldCheck className="h-5 w-5" aria-hidden="true" /> : <UserPlus className="h-5 w-5" aria-hidden="true" />}
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Collaborator access only</p>
+                    <h2 className="text-2xl font-bold text-text-primary">{authMode === 'signin' ? 'Sign in to join' : 'Create collaborator account'}</h2>
+                  </div>
+                </div>
 
-                {inviteIsClaimable && inviteInfo && (
-                  <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">You’re joining</p>
-                    <p className="mt-2 text-base font-semibold text-text-primary">{siteLabel}</p>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
+                <div className="flex rounded-xl bg-surface-subtle p-1 mb-6">
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('signin'); setAuthError(null); }}
+                    className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${authMode === 'signin' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('signup'); setAuthError(null); }}
+                    className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${authMode === 'signup' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+                  >
+                    Create account
+                  </button>
+                </div>
+
+                <div className="mb-5 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                  <p className="text-sm text-text-secondary">
+                    {authMode === 'signin'
+                      ? 'Use the invited email and password below. We’ll attach access right away.'
+                      : 'Create a lightweight collaborator account. This path skips pricing, demo mode, and owner setup.'}
+                  </p>
+                  {inviteIsClaimable && inviteInfo && (
+                    <div className="mt-4 flex flex-wrap gap-2 text-xs text-text-secondary">
                       <span className="rounded-full bg-white px-3 py-1">{formatRole(inviteInfo.role)}</span>
                       <span className="rounded-full bg-white px-3 py-1">{inviteInfo.invite_email}</span>
+                      <span className="rounded-full bg-white px-3 py-1">No payment</span>
                     </div>
+                  )}
+                </div>
+
+                {authError && (
+                  <div className="mb-5 flex items-start gap-2 rounded-lg border border-error/20 bg-error-light px-4 py-3 text-sm text-error">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                    <span>{authError}</span>
                   </div>
                 )}
-              </div>
 
-              {authError && (
-                <div className="mb-5 flex items-start gap-2 rounded-lg border border-error/20 bg-error-light px-4 py-3 text-sm text-error">
-                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                  <span>{authError}</span>
-                </div>
-              )}
-
-              {authMode === 'signin' ? (
-                <form onSubmit={handleEmailSignIn} className="space-y-5">
-                  <Input
-                    label="Email"
-                    type="email"
-                    value={signInForm.email}
-                    onChange={(e) => setSignInForm((prev) => ({ ...prev, email: e.target.value }))}
-                    placeholder="planner@email.com"
-                    required
-                    autoComplete="email"
-                    disabled={!inviteIsClaimable || authLoading || claiming}
-                  />
-                  <Input
-                    label="Password"
-                    type="password"
-                    value={signInForm.password}
-                    onChange={(e) => setSignInForm((prev) => ({ ...prev, password: e.target.value }))}
-                    placeholder="Enter your password"
-                    required
-                    autoComplete="current-password"
-                    disabled={!inviteIsClaimable || authLoading || claiming}
-                  />
-                  <Button type="submit" variant="accent" size="lg" fullWidth disabled={!inviteIsClaimable || authLoading || claiming}>
-                    {authLoading || claiming ? 'Signing in…' : 'Sign in and accept invite'}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleEmailSignUp} className="space-y-5">
-                  <Input
-                    label="Full name"
-                    type="text"
-                    value={signUpForm.fullName}
-                    onChange={(e) => setSignUpForm((prev) => ({ ...prev, fullName: e.target.value }))}
-                    placeholder="Your name"
-                    required
-                    autoComplete="name"
-                    disabled={!inviteIsClaimable || authLoading || claiming}
-                  />
-                  <Input
-                    label="Email"
-                    type="email"
-                    value={signUpForm.email}
-                    onChange={(e) => setSignUpForm((prev) => ({ ...prev, email: e.target.value }))}
-                    placeholder="planner@email.com"
-                    required
-                    autoComplete="email"
-                    disabled={!inviteIsClaimable || authLoading || claiming}
-                  />
-                  <Input
-                    label="Password"
-                    type="password"
-                    value={signUpForm.password}
-                    onChange={(e) => setSignUpForm((prev) => ({ ...prev, password: e.target.value }))}
-                    placeholder="Create a password"
-                    required
-                    autoComplete="new-password"
-                    helperText="Minimum 8 characters"
-                    disabled={!inviteIsClaimable || authLoading || claiming}
-                  />
-                  <Input
-                    label="Confirm password"
-                    type="password"
-                    value={signUpForm.confirmPassword}
-                    onChange={(e) => setSignUpForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="Repeat your password"
-                    required
-                    autoComplete="new-password"
-                    disabled={!inviteIsClaimable || authLoading || claiming}
-                  />
-                  <Button type="submit" variant="accent" size="lg" fullWidth disabled={!inviteIsClaimable || authLoading || claiming}>
-                    {authLoading || claiming ? 'Creating account…' : 'Create account and accept invite'}
-                  </Button>
-                </form>
-              )}
-
-              <div className="mt-6 space-y-3 text-center text-sm text-text-secondary">
-                <p>Need the regular auth pages instead?</p>
-                <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-                  <Link to={`/login${authHandoffSearch}`} className="font-medium text-primary hover:text-primary-hover transition-colors">
-                    Open sign in
-                  </Link>
-                  <span className="hidden text-text-tertiary sm:inline">•</span>
-                  <Link to={`/signup${authHandoffSearch}`} className="font-medium text-primary hover:text-primary-hover transition-colors">
-                    Open create account
-                  </Link>
-                </div>
-                <p className="text-xs text-text-tertiary">We’ll carry your invite details with you so you can come right back and finish.</p>
-              </div>
-            </>
-          )}
-        </Card>
+                {authMode === 'signin' ? (
+                  <form onSubmit={handleEmailSignIn} className="space-y-5">
+                    <Input
+                      label="Invited email"
+                      type="email"
+                      value={signInForm.email}
+                      onChange={(e) => setSignInForm((prev) => ({ ...prev, email: e.target.value }))}
+                      placeholder="planner@email.com"
+                      required
+                      autoComplete="email"
+                      disabled={!inviteIsClaimable || authLoading || claiming}
+                    />
+                    <Input
+                      label="Password"
+                      type="password"
+                      value={signInForm.password}
+                      onChange={(e) => setSignInForm((prev) => ({ ...prev, password: e.target.value }))}
+                      placeholder="Enter your password"
+                      required
+                      autoComplete="current-password"
+                      disabled={!inviteIsClaimable || authLoading || claiming}
+                    />
+                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={!inviteIsClaimable || authLoading || claiming}>
+                      {authLoading || claiming ? 'Signing in…' : 'Sign in and join team'}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleEmailSignUp} className="space-y-5">
+                    <Input
+                      label="Full name"
+                      type="text"
+                      value={signUpForm.fullName}
+                      onChange={(e) => setSignUpForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                      placeholder="Your name"
+                      required
+                      autoComplete="name"
+                      disabled={!inviteIsClaimable || authLoading || claiming}
+                    />
+                    <Input
+                      label="Invited email"
+                      type="email"
+                      value={signUpForm.email}
+                      onChange={(e) => setSignUpForm((prev) => ({ ...prev, email: e.target.value }))}
+                      placeholder="planner@email.com"
+                      required
+                      autoComplete="email"
+                      disabled={!inviteIsClaimable || authLoading || claiming}
+                    />
+                    <Input
+                      label="Create password"
+                      type="password"
+                      value={signUpForm.password}
+                      onChange={(e) => setSignUpForm((prev) => ({ ...prev, password: e.target.value }))}
+                      placeholder="Create a password"
+                      required
+                      autoComplete="new-password"
+                      helperText="Minimum 8 characters"
+                      disabled={!inviteIsClaimable || authLoading || claiming}
+                    />
+                    <Input
+                      label="Confirm password"
+                      type="password"
+                      value={signUpForm.confirmPassword}
+                      onChange={(e) => setSignUpForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                      placeholder="Repeat your password"
+                      required
+                      autoComplete="new-password"
+                      disabled={!inviteIsClaimable || authLoading || claiming}
+                    />
+                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={!inviteIsClaimable || authLoading || claiming}>
+                      {authLoading || claiming ? 'Creating account…' : 'Create account and join team'}
+                    </Button>
+                  </form>
+                )}
+              </>
+            )}
+          </Card>
+        </div>
       </div>
     </div>
   );
