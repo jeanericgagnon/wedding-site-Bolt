@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
@@ -100,7 +101,11 @@ export const DashboardSeatingLookup: React.FC = () => {
       <div className="max-w-5xl mx-auto space-y-5">
         <div className="rounded-2xl border border-border/40 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5">
           <h1 className="text-2xl font-semibold text-text-primary">Guest Seating Lookup</h1>
-          <p className="text-sm text-text-secondary mt-1">Search guests quickly for table + seat assignment.</p>
+          <p className="text-sm text-text-secondary mt-1">Search guests quickly for table + seat assignment when staff needs answers fast.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link to="/dashboard/seating" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open seating chart</Link>
+            <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open coordinator mode</Link>
+          </div>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}

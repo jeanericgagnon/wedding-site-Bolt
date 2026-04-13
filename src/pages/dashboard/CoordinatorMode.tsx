@@ -238,6 +238,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
     return { total, scheduled, immediate, sms, email, byAudience };
   }, [alertLog]);
 
+
+  const nextArrivals = useMemo(() => sortedGuests.filter((g) => !g.checked_in_at).slice(0, 5), [sortedGuests]);
+
+  const liveIssues = useMemo(() => {
+    const items: Array<{ title: string; detail: string; tone: 'warning' | 'success' | 'neutral' }> = [];
+    if (stats.pending > 0) items.push({ title: 'Pending RSVPs still open', detail: `${stats.pending} guest${stats.pending === 1 ? '' : 's'} still have not replied.`, tone: 'warning' });
+    if (events.length > 0 && !events.some((e) => (timelineState[e.id] || 'up-next') === 'live')) items.push({ title: 'No event marked live', detail: 'Pick the event currently happening so updates and focus stay aligned.', tone: 'warning' });
+    if (qnaItems.some((item) => item.status === 'new')) {
+      const open = qnaItems.filter((item) => item.status === 'new').length;
+      items.push({ title: 'Guest questions waiting', detail: `${open} question${open === 1 ? '' : 's'} still need an answer.`, tone: 'warning' });
+    }
+    if (items.length === 0) items.push({ title: 'Ops board looks calm', detail: 'No urgent coordinator flags right now.', tone: 'success' });
+    return items.slice(0, 3);
+  }, [stats.pending, events, timelineState, qnaItems]);
+
   const filteredAlertLog = useMemo(
     () => alertLog.filter((a) => {
       if (alertChannelFilter !== 'all' && a.channel !== alertChannelFilter) return false;
@@ -334,18 +349,42 @@ export const DashboardCoordinatorMode: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            ['Guests', stats.total],
-            ['Confirmed', stats.confirmed],
-            ['Pending', stats.pending],
-            ['Checked In', stats.checkedIn],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="rounded-xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">{label}</p>
-              <p className="text-2xl font-semibold text-text-primary mt-1">{loading ? '—' : value}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              ['Guests', stats.total],
+              ['Confirmed', stats.confirmed],
+              ['Pending', stats.pending],
+              ['Checked In', stats.checkedIn],
+            ].map(([label, value]) => (
+              <div key={String(label)} className="rounded-xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">{label}</p>
+                <p className="text-2xl font-semibold text-text-primary mt-1">{loading ? '—' : value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
+            <p className="text-sm font-medium text-text-primary mb-2">Live priorities</p>
+            <div className="space-y-2">
+              {liveIssues.map((item) => (
+                <div key={item.title} className={`rounded-lg border px-3 py-2 ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-border/50 bg-surface-subtle/40'}`}>
+                  <p className="text-sm font-medium text-text-primary">{item.title}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
+                </div>
+              ))}
             </div>
-          ))}
+            <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
+              <p className="text-xs font-medium text-text-primary">Next arrivals</p>
+              {nextArrivals.length === 0 ? (
+                <p className="mt-1 text-xs text-text-tertiary">Everyone currently in this view is already checked in.</p>
+              ) : (
+                <div className="mt-2 space-y-1">
+                  {nextArrivals.map((guest) => <p key={guest.id} className="text-xs text-text-secondary">• {guest.name} — {guest.rsvp_status}</p>)}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {coordinatorRole === 'viewer' && (
