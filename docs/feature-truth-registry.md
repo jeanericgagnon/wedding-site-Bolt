@@ -63,3 +63,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf supports a calmer switching path from Zola, Joy, The Knot, and similar wedding platforms
 - Actual truth: current migration work is guided and partial, with intake, recovery helpers, import review, and checklists — not a fully automated migration engine
 - Writing rule: say guided migration or switching support, not full automated import
+
+
+### Household and plus-one truth
+- Public-safe claim: DayOf understands household grouping and plus-one status well enough to support guest ops
+- Actual truth: household and plus-one support is now visible and more explicit, but still not a fully comprehensive rules engine for every edge case
+- Writing rule: describe this as clearer household/plus-one handling, not perfect household automation

@@ -40,3 +40,5 @@ This matrix should stay aligned with `docs/feature-truth-registry.md`.
 | Draft assists | Describe these as grounded drafting helpers, not autonomous AI. | FAQ, welcome note, RSVP reminder, and day-of update helpers use known wedding data and still require explicit insert/edit/send. | Yes | Avoid implying autonomy or server-side AI generation. |
 
 | Migration | DayOf supports a calmer switching path from other wedding platforms. | Migration currently includes intake/source selection, setup guidance, guest-import review truth, story/event/FAQ/registry recovery helpers, and review checklists. It is not yet a full one-click migration system. | Partial | Safe only when framed as guided migration, not complete automated import. |
+
+| Household + plus-one | Say that household grouping and plus-one status are clearer and more operational. | Current product now surfaces grouped households, mixed-response household states, plus-one availability, unresolved plus-one names, and household context in guest ops. It is still not a full edge-case rules engine. | Partial | Safe when described as clearer truth and visibility, not perfect automation. |
