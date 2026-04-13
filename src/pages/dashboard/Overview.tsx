@@ -573,6 +573,16 @@ export const DashboardOverview: React.FC = () => {
                     <p className="mt-1 text-xs text-text-secondary">The anniversary vault and memory surfaces should start carrying more weight once the event is over.</p>
                   </div>
                 </div>
+                {archiveMode.isArchiveLike && (
+                  <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-4">
+                    <p className="text-sm font-medium text-stone-900">Archive experience should take the lead now</p>
+                    <p className="mt-1 text-sm text-stone-700">This is where DayOf should start feeling less like a control panel and more like a keepsake: fewer urgent prompts, more story, photos, and anniversary memory surfaces.</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/vault')}>Open anniversary vaults</Button>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>Open photo sharing</Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

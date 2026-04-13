@@ -1449,6 +1449,14 @@ setWeddingSiteId('demo-site-id');
         </div>
       </div>
 
+        <div className={`rounded-2xl border px-4 py-3 text-sm ${archiveMode.isArchiveLike ? 'border-stone-200 bg-stone-50' : 'border-border-subtle bg-white'}`}>
+          <p className="font-medium text-text-primary">{archiveMode.label}</p>
+          <p className="mt-1 text-text-secondary">{archiveMode.detail}</p>
+          {archiveMode.isArchiveLike && (
+            <p className="mt-2 text-xs text-stone-700">The event is behind you, so this should start feeling like the center of gravity for memory, anniversary notes, and what the site becomes next.</p>
+          )}
+        </div>
+
         <Card variant="bordered" padding="md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
