@@ -73,6 +73,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishNotice, setPublishNotice] = useState<string | null>(null);
+  const [publishAttemptedAt, setPublishAttemptedAt] = useState<string | null>(null);
   const [showCoachmarks, setShowCoachmarks] = useState(false);
   const [inspectorHidden, setInspectorHidden] = useState(false);
 
@@ -198,6 +199,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     if (currentState.isSaving || currentState.isPublishing) return;
     setPublishError(null);
     setPublishNotice(null);
+    setPublishAttemptedAt(new Date().toISOString());
 
     const publishValidationError = getPublishValidationError(currentState.project, currentState.weddingData);
     if (publishValidationError) {
@@ -325,6 +327,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           projectName={projectName}
           saveError={saveError}
           publishError={publishError}
+          publishAttemptedAt={publishAttemptedAt}
           publishValidationError={state.project ? getPublishValidationError(state.project, state.weddingData) : null}
           publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData)?.kind ?? null : null}
           inspectorHidden={inspectorHidden}

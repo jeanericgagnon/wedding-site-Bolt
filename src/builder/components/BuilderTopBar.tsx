@@ -40,6 +40,7 @@ interface BuilderTopBarProps {
   projectName?: string;
   saveError?: string | null;
   publishError?: string | null;
+  publishAttemptedAt?: string | null;
   publishValidationError?: string | null;
   publishIssueKind?: string | null;
   inspectorHidden?: boolean;
@@ -82,6 +83,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   projectName,
   saveError,
   publishError,
+  publishAttemptedAt,
   publishValidationError,
   publishIssueKind,
   inspectorHidden = false,

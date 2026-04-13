@@ -62,6 +62,7 @@ See `docs/smoke-test-checklist.md` for the manual QA matrix.
 | `Vault.tsx` | Replaced fake interactive controls with clean "Coming Soon" page |
 | `Messages.tsx` | Honest "Queued" delivery language, background processing note |
 | Builder TopBar | 5 distinct save/publish states with accurate visual indicators |
+| Builder publish attempts | Failed publish state keeps the latest attempt time visible so support is not guessing |
 | Registry | `increment_registry_purchase` RPC wired, `hide_when_purchased` enforced |
 | Itinerary | Time overlap conflict detection added |
 | Guests | Two-click delete with inline confirm state |

@@ -587,6 +587,9 @@ export const DashboardOverview: React.FC = () => {
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 text-sm">
                     <p className="font-medium text-text-primary">{publishState.label}</p>
                     <p className="mt-1 text-text-secondary">{publishState.explainer}</p>
+                    {recentSiteActivity.some((activity) => activity.action === 'publish') && (
+                      <p className="mt-2 text-xs text-text-tertiary">Recent publish activity is listed below so you can verify what happened before trying again.</p>
+                    )}
                   </div>
 
                   <details className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
