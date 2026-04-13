@@ -76,7 +76,7 @@ COMMENT ON COLUMN wedding_sites.active_template_id IS
 The existing RLS policies should continue to work. Ensure that:
 
 1. Users can only access their own wedding sites
-2. Sites are intended to be publicly readable when published, while unpublished access should stay limited to intentional private-preview behavior based on the current implementation and current product language model
+2. Sites are intended to be publicly readable when published, while unpublished access should remain non-public in the current product model
 3. Only the owner can update wedding_data and layout_config
 
 Example RLS policy check:

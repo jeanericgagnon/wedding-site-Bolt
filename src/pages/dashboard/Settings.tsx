@@ -853,7 +853,7 @@ export const DashboardSettings: React.FC = () => {
                         <p className="text-sm font-medium text-text-primary">Visibility states</p>
                         <ul className="space-y-1 text-xs text-text-secondary">
                           <li>• <span className="font-medium text-text-primary">Draft</span> means only you can see the site while editing.</li>
-                          <li>• <span className="font-medium text-text-primary">Private preview</span> is for intentional sharing before a broader launch.</li>
+                          <li>• <span className="font-medium text-text-primary">Protected live access</span> lets you limit who can open the guest-facing site once it is live.</li>
                           <li>• <span className="font-medium text-text-primary">Guest-facing launch</span> makes the site live at your DayOf URL.</li>
                         </ul>
                       </div>
@@ -861,9 +861,9 @@ export const DashboardSettings: React.FC = () => {
                       <div className="space-y-3">
                         {(
                           [
-                            { value: 'public', label: 'Guest-facing launch', desc: 'Anyone with the link can view your site once it is live' },
-                            { value: 'password_protected', label: 'Private preview with password', desc: 'Visitors must enter a password before viewing the preview' },
-                            { value: 'invite_only', label: 'Private preview by link', desc: 'Only guests with your preview link can view' },
+                            { value: 'public', label: 'Public live site', desc: 'Anyone with the link can view your site once it is live' },
+                            { value: 'password_protected', label: 'Password-protected live site', desc: 'Visitors must enter a password before viewing the live site' },
+                            { value: 'invite_only', label: 'Invite-only live site', desc: 'Only guests with your live site link can view' },
                           ] as const
                         ).map(opt => (
                           <label

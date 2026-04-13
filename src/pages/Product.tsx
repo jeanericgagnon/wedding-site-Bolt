@@ -17,7 +17,7 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  { id: 'launch', title: 'Launch a site you’re proud to share', kicker: 'Step 1', outcome: 'Share a polished private preview fast, then go live when you are ready.', detail: 'Start with a strong template, clear setup, and a clean path from draft to private preview to a guest-facing launch.' },
+  { id: 'launch', title: 'Launch a site you’re proud to share', kicker: 'Step 1', outcome: 'Build something polished privately, then go live when you are ready.', detail: 'Start with a strong template, clear setup, and a clean path from draft to a guest-facing launch.' },
   { id: 'guests', title: 'Organize guests + households', kicker: 'Step 2', outcome: 'Know who is invited and where they belong.', detail: 'Households, plus-ones, and statuses in one place.' },
   { id: 'rsvp', title: 'Collect RSVPs cleanly', kicker: 'Step 3', outcome: 'Get responses without confusion.', detail: 'Event-level RSVP and meal tracking without hacks.' },
   { id: 'message', title: 'Message everyone', kicker: 'Step 4', outcome: 'Send the right update to the right group.', detail: 'Stop copy/pasting from spreadsheets to email tools.' },

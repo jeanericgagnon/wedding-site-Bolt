@@ -16,7 +16,7 @@ How dayof.love domains and wedding site slugs work.
 | `dayof.love/builder` | Protected | Site builder |
 | `dayof.love/site/<slug>` | Public | Public wedding website |
 
-Wedding sites are currently accessed via the `/site/<slug>` path on the same origin as the app. No special DNS configuration is required for this to work today, and that route should now align more clearly with draft, private preview, and published/live states, with unpublished sites defaulting to Coming Soon unless a private preview mode is intentional.
+Wedding sites are currently accessed via the `/site/<slug>` path on the same origin as the app. No special DNS configuration is required for this to work today, and that route should now align more clearly with draft and published/live states, with unpublished sites defaulting to Coming Soon.
 
 ---
 
@@ -59,7 +59,7 @@ layout_config   → legacy V1 format (pre-builder sites)
 Error page (no data at all)
 ```
 
-**Coming Soon behavior:** If a site is unpublished, visitors now see a "Coming Soon" page unless the couple is intentionally using a private preview mode such as invite-only or password-protected preview.
+**Coming Soon behavior:** If a site is unpublished, visitors now see a "Coming Soon" page.
 
 ---
 
