@@ -139,6 +139,10 @@ export const DashboardSeatingLookup: React.FC = () => {
             This is the fast staff-facing lookup path: search a guest, answer table/seat questions, then jump back into seating or coordinator mode if something needs to change live.
           </div>
 
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-amber-800">
+            Live exception actions: use coordinator mode for unresolved arrival decisions, and seating for assignment fixes. Lookup is the fast answer surface — not the full command center.
+          </div>
+
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -182,6 +186,14 @@ export const DashboardSeatingLookup: React.FC = () => {
                         {(() => {
                           const states = getCheckInExceptionStates({ checkedInAt: r.checked_in_at, rsvpStatus: r.rsvp_status, tableName: r.table_name });
                           return states.length ? <div className="flex flex-wrap gap-1">{states.map((state) => <span key={state} className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 border border-amber-200">{state}</span>)}</div> : null;
+                        })()}
+                        {(() => {
+                          const states = getCheckInExceptionStates({ checkedInAt: r.checked_in_at, rsvpStatus: r.rsvp_status, tableName: r.table_name });
+                          if (!states.length) return null;
+                          return <div className="flex flex-wrap gap-2 pt-1">
+                            <Link to="/dashboard/coordinator" className="text-[11px] text-primary hover:underline">Open coordinator mode</Link>
+                            <Link to="/dashboard/seating" className="text-[11px] text-primary hover:underline">Open seating</Link>
+                          </div>;
                         })()}
                       </div>
                     </td>
