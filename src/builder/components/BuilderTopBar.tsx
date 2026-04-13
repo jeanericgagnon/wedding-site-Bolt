@@ -31,6 +31,7 @@ import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getPublishBlockedHints, shouldOpenPhotoTipsFromSearch } from '../utils/publishUiHints';
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
+import { getPublishStateDescriptor } from '../../lib/publishState';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -125,6 +126,19 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     return items;
   }, [projectPages.length, activePage?.sections?.length, activePage?.title, publishValidationError, isDirty]);
   const checklistDoneCount = checklistItems.filter((i) => i.done).length;
+  const publishState = getPublishStateDescriptor({
+    isPublished,
+    isPublishing: state.isPublishing,
+    hasUnsavedChanges: isDirty,
+    error: publishError || publishValidationError || null,
+  });
+  const publishToneClass = publishState.tone === 'success'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    : publishState.tone === 'warning'
+      ? 'border-amber-200 bg-amber-50 text-amber-800'
+      : publishState.tone === 'danger'
+        ? 'border-rose-200 bg-rose-50 text-rose-700'
+        : 'border-gray-200 bg-gray-50 text-gray-700';
 
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);

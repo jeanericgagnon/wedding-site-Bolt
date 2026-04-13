@@ -4,7 +4,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
 import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
+import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { LayoutConfigV1 } from '../../types/layoutConfig';
@@ -626,8 +626,6 @@ export const DashboardSettings: React.FC = () => {
                         </Button>
                       </div>
                     </form>
-                      </div>
-                    ); })()}
                   </CardContent>
                 </Card>
 
@@ -862,13 +860,7 @@ export const DashboardSettings: React.FC = () => {
                       </div>
 
                       <div className="space-y-3">
-                        {(
-                          [
-                            { value: 'public', label: 'Public live site', desc: 'Anyone with the link can view your site once it is live' },
-                            { value: 'password_protected', label: 'Password-protected live site', desc: 'Visitors must enter a password before viewing the live site' },
-                            { value: 'invite_only', label: 'Invite-only live site', desc: 'Only guests with your guest link can view' },
-                          ] as const
-                        ).map(opt => (
+                        {getVisibilityModeOptions().map(opt => (
                           <label
                             key={opt.value}
                             className={`flex items-start gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-colors ${

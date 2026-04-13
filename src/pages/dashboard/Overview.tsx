@@ -19,6 +19,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
+import { getPublishStateDescriptor } from '../../lib/publishState';
 
 interface OverviewStats {
   publishedVersion: number | null;
@@ -31,6 +32,8 @@ interface OverviewStats {
   weddingDate: string | null;
   siteSlug: string | null;
   isPublished: boolean;
+  privacyMode: 'public' | 'password_protected' | 'invite_only';
+  hideFromSearch: boolean;
   siteUpdatedAt: string | null;
   templateName: string | null;
   coupleName1: string | null;
@@ -181,6 +184,8 @@ export const DashboardOverview: React.FC = () => {
           weddingDate,
           siteSlug: resolvePublicSiteSlugFromRow(demoWeddingSite as unknown as Record<string, unknown>),
           isPublished: true,
+          privacyMode: 'public',
+          hideFromSearch: false,
           siteUpdatedAt: new Date().toISOString(),
           templateName: 'classic',
           coupleName1: demoWeddingSite.couple_name_1,
@@ -197,7 +202,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+.select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -255,6 +260,8 @@ export const DashboardOverview: React.FC = () => {
         }));
 
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
+      const privacyMode = site?.privacy_mode === 'password_protected' || site?.privacy_mode === 'invite_only' ? site.privacy_mode : 'public';
+      const hideFromSearch = siteJson?.hide_from_search === true;
       const isPublished = Boolean(
         site?.is_published === true ||
           siteJson?.publishStatus === 'published' ||
@@ -272,6 +279,8 @@ export const DashboardOverview: React.FC = () => {
         weddingDate,
         siteSlug: resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null),
         isPublished,
+        privacyMode,
+        hideFromSearch,
         siteUpdatedAt: site?.updated_at ?? null,
         templateName,
         coupleName1: site?.couple_name_1 ?? null,
@@ -338,7 +347,20 @@ export const DashboardOverview: React.FC = () => {
     siteSlug: stats?.siteSlug ?? '',
     templateName: stats?.templateName ?? '',
   }).map((item) => ({ ...item, action: () => navigate(item.route) }));
-  const siteVisibility = getSiteVisibilityState({ isPublished: stats?.isPublished, privacyMode: null, hideFromSearch: null });
+  const siteVisibility = getSiteVisibilityState({ isPublished: stats?.isPublished, privacyMode: stats?.privacyMode, hideFromSearch: stats?.hideFromSearch });
+  const publishState = getPublishStateDescriptor({
+    isPublished: stats?.isPublished,
+    hasUnsavedChanges: stats?.isPublished && stats?.siteUpdatedAt && stats?.lastPublishedAt
+      ? new Date(stats.siteUpdatedAt).getTime() > new Date(stats.lastPublishedAt).getTime()
+      : false,
+  });
+  const publishBadgeVariant = publishState.tone === 'success'
+    ? 'success'
+    : publishState.tone === 'warning'
+      ? 'warning'
+      : publishState.tone === 'danger'
+        ? 'error'
+        : 'secondary';
   const publishProgress = getChecklistProgress(publishReadinessItems);
   const publishBlockers = getIncompleteChecklistItems(publishReadinessItems);
   const firstPublishBlocker = getFirstIncompleteChecklistItem(publishReadinessItems);
@@ -525,11 +547,11 @@ export const DashboardOverview: React.FC = () => {
                     <div>
                       <CardTitle>Your wedding site</CardTitle>
                       <CardDescription>
-                        {stats?.isPublished ? 'Guests can see your live website' : 'Only you can see this draft right now — guests cannot yet'}
+                        {publishState.explainer}
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={stats?.isPublished ? 'success' : 'secondary'}>{stats?.isPublished ? 'Live' : 'Draft only'}</Badge>
+                      <Badge variant={publishBadgeVariant}>{publishState.label}</Badge>
                       {typeof stats?.publishedVersion === 'number' && <Badge variant="secondary">v{stats.publishedVersion}</Badge>}
                     </div>
                   </div>
@@ -553,9 +575,13 @@ export const DashboardOverview: React.FC = () => {
                     <span className="text-text-secondary">Status</span>
                     <span className="text-text-primary">{siteVisibility.label}</span>
                   </div>
-                  <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                     <span className="text-text-secondary">Last live update</span>
                     <span className="text-text-primary">{stats?.lastPublishedAt ? formatRelativeTime(stats.lastPublishedAt) : '—'}</span>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 text-sm">
+                    <p className="font-medium text-text-primary">{publishState.label}</p>
+                    <p className="mt-1 text-text-secondary">{publishState.explainer}</p>
                   </div>
 
                   <details className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
