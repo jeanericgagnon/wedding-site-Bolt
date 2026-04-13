@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
+import { getCheckInExceptionStates } from '../../lib/checkInExceptionState';
 
 type LookupRow = {
   guest_id: string;
@@ -11,6 +12,7 @@ type LookupRow = {
   table_name: string;
   seat_index: number | null;
   checked_in_at: string | null;
+  rsvp_status?: string | null;
 };
 
 export const DashboardSeatingLookup: React.FC = () => {
@@ -58,7 +60,7 @@ export const DashboardSeatingLookup: React.FC = () => {
 
         const { data: assignments } = await supabase
           .from('seating_assignments')
-          .select('guest_id, seat_index, checked_in_at, seating_tables(table_name), guests(first_name,last_name,name,email)')
+          .select('guest_id, seat_index, checked_in_at, seating_tables(table_name), guests(first_name,last_name,name,email,rsvp_status)')
           .eq('seating_event_id', eventId)
           .order('updated_at', { ascending: false });
 
@@ -74,6 +76,7 @@ export const DashboardSeatingLookup: React.FC = () => {
             table_name: a.seating_tables?.table_name || 'Unassigned',
             seat_index: a.seat_index ?? null,
             checked_in_at: a.checked_in_at ?? null,
+            rsvp_status: g.rsvp_status ?? null,
           };
         });
 
@@ -173,7 +176,15 @@ export const DashboardSeatingLookup: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-2.5">{r.seat_index != null ? `Seat ${r.seat_index}` : '—'}</td>
-                    <td className="px-4 py-2.5">{r.checked_in_at ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="space-y-1">
+                        <div>{r.checked_in_at ? 'Yes' : 'No'}</div>
+                        {(() => {
+                          const states = getCheckInExceptionStates({ checkedInAt: r.checked_in_at, rsvpStatus: r.rsvp_status, tableName: r.table_name });
+                          return states.length ? <div className="flex flex-wrap gap-1">{states.map((state) => <span key={state} className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 border border-amber-200">{state}</span>)}</div> : null;
+                        })()}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
