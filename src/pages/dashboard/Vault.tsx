@@ -10,6 +10,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
+import { sendAnniversaryReminder } from '../../lib/emailService';
 
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
@@ -843,6 +844,10 @@ export const DashboardVault: React.FC = () => {
   const [driveHealthChecking, setDriveHealthChecking] = useState(false);
   const [driveHealthMessage, setDriveHealthMessage] = useState<string | null>(null);
   const [driveNeedsReconnect, setDriveNeedsReconnect] = useState(false);
+  const [coupleEmail, setCoupleEmail] = useState<string | null>(null);
+  const [coupleName1, setCoupleName1] = useState<string>('Partner');
+  const [coupleName2, setCoupleName2] = useState<string>('Partner');
+  const [sendingReminderFor, setSendingReminderFor] = useState<string | null>(null);
 
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
@@ -1049,7 +1054,7 @@ setWeddingSiteId('demo-site-id');
       if (!user) return;
       const { data: site } = await supabase
         .from('wedding_sites')
-        .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected')
+        .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected, couple_name_1, couple_name_2')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -1060,6 +1065,9 @@ setWeddingSiteId('demo-site-id');
       void forceGoogleDriveProvider(site.id);
       if (site.wedding_date) setWeddingDate(new Date(site.wedding_date));
       if (site.site_slug) setSiteSlug(site.site_slug as string);
+      setCoupleName1((site as { couple_name_1?: string | null }).couple_name_1 || 'Partner');
+      setCoupleName2((site as { couple_name_2?: string | null }).couple_name_2 || 'Partner');
+      setCoupleEmail(user.email ?? null);
 
       const { data: configData } = await supabase
         .from('vault_configs')
@@ -1173,6 +1181,38 @@ setWeddingSiteId('demo-site-id');
 
     localStorage.setItem(VAULT_RELEASE_NOTICE_KEY, JSON.stringify(Array.from(new Set(next))));
   }, [vaultConfigs, weddingDate]);
+
+  async function handleSendAnniversaryReminder(config: VaultConfig, reminderKind: 'upcoming' | 'unlock' | 'nudge' = 'upcoming') {
+    if (!coupleEmail) {
+      toast('No couple email available for anniversary reminder.', 'error');
+      return;
+    }
+
+    setSendingReminderFor(config.id);
+    try {
+      const unlockDate = weddingDate ? new Date(weddingDate) : null;
+      if (unlockDate) unlockDate.setFullYear(unlockDate.getFullYear() + config.duration_years);
+
+      const vaultUrl = siteSlug ? `${window.location.origin}/vault/${siteSlug}/${config.duration_years}` : null;
+
+      await sendAnniversaryReminder({
+        to: coupleEmail,
+        coupleName1,
+        coupleName2,
+        vaultLabel: config.label || `${config.duration_years}-Year Anniversary Vault`,
+        anniversaryYear: config.duration_years,
+        unlockDate: unlockDate ? unlockDate.toLocaleDateString() : null,
+        vaultUrl,
+        reminderKind,
+      });
+
+      toast(`Anniversary ${reminderKind} email sent.`);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not send anniversary reminder.', 'error');
+    } finally {
+      setSendingReminderFor(null);
+    }
+  }
 
   async function handleAddVault() {
     if (!weddingSiteId || vaultConfigs.length >= MAX_VAULTS || addingVault) return;
@@ -1564,6 +1604,24 @@ setWeddingSiteId('demo-site-id');
                   onToggleEnabled={handleToggleEnabled}
                   onEdit={c => setEditingConfig(c)}
                 />
+                <div className="mt-2 flex flex-wrap gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleSendAnniversaryReminder(config, 'upcoming')}
+                    disabled={sendingReminderFor === config.id}
+                  >
+                    {sendingReminderFor === config.id ? 'Sending…' : 'Send upcoming reminder'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleSendAnniversaryReminder(config, 'unlock')}
+                    disabled={sendingReminderFor === config.id}
+                  >
+                    Send unlock email
+                  </Button>
+                </div>
                 <button
                   onClick={() => handleDeleteVault(config.id)}
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-error/80"
