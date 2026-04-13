@@ -201,19 +201,43 @@ export const DashboardOverview: React.FC = () => {
           registryItemCount: 2,
           photoAlbumCount: 3,
           activePhotoAlbumCount: 2,
-          contactableGuestCount: demoGuests.filter((g) => Boolean(g.email || g.phone)).length,
+          contactableGuestCount: demoGuests.filter((g) => Boolean(g.email)).length,
           recentRsvps,
         });
         return;
       }
 
-      const { data: site, error: siteErr } = await supabase
+      const { data: ownedSite, error: siteErr } = await supabase
         .from('wedding_sites')
 .select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (siteErr) throw siteErr;
+
+      let site = ownedSite;
+
+      if (!site) {
+        const { data: collaboratorLink, error: collaboratorErr } = await supabase
+          .from('wedding_site_collaborators')
+          .select('wedding_site_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (collaboratorErr) throw collaboratorErr;
+
+        if (collaboratorLink?.wedding_site_id) {
+          const { data: collaboratorSite, error: collaboratorSiteErr } = await supabase
+            .from('wedding_sites')
+            .select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+            .eq('id', collaboratorLink.wedding_site_id)
+            .maybeSingle();
+
+          if (collaboratorSiteErr) throw collaboratorSiteErr;
+          site = collaboratorSite;
+        }
+      }
 
       let weddingDate: string | null = null;
       let templateName: string | null = null;
