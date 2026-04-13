@@ -974,6 +974,58 @@ export const DashboardMessages: React.FC = () => {
     toast('Save-the-date preset loaded (scheduled for tomorrow at 10:00).', 'success');
   };
 
+  const quickCreateSaveTheDateCampaign = async () => {
+    applySaveTheDatePreset();
+
+    if (!weddingSite?.id) {
+      toast('Save-the-date draft loaded. Wedding site context missing for instant campaign creation.', 'error');
+      return;
+    }
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+
+    const payload = {
+      wedding_site_id: weddingSite.id,
+      channel: 'email',
+      subject: applyTemplateVariables('Save the Date!'),
+      body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
+      audience_filter: 'all',
+      recipient_filter: { audience: 'all', campaignType: 'save-the-date' },
+      scheduled_for: tomorrow.toISOString(),
+      status: 'scheduled',
+    };
+
+    try {
+      if (isDemoMode) {
+        const demoMessage: Message = {
+          id: `demo-save-the-date-${Date.now()}`,
+          wedding_site_id: weddingSite.id,
+          channel: 'email',
+          subject: payload.subject,
+          body: payload.body,
+          audience_filter: 'all',
+          recipient_filter: payload.recipient_filter,
+          scheduled_for: payload.scheduled_for,
+          status: 'scheduled',
+          delivered_count: 0,
+          failed_count: 0,
+          created_at: new Date().toISOString(),
+        } as Message;
+        setMessages((prev) => [demoMessage, ...prev]);
+      } else {
+        const { error } = await supabase.from('messages').insert(payload);
+        if (error) throw error;
+        await fetchMessages();
+      }
+
+      toast('Save-the-date campaign scheduled for tomorrow at 10:00.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not create save-the-date campaign.', 'error');
+    }
+  };
+
   const applyEventReminderDraft = () => {
     const draft = buildEventReminderDraft({
       audienceLabel: selectedAudience?.label ?? null,
@@ -1591,6 +1643,14 @@ export const DashboardMessages: React.FC = () => {
                     disabled={!canCompose}
                   >
                     Save-the-date draft
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { void quickCreateSaveTheDateCampaign(); }}
+                    disabled={!canCompose}
+                  >
+                    Schedule save-the-date
                   </Button>
                   <Button
                     size="sm"
