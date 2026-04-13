@@ -5,7 +5,7 @@ import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors } from '../../lib/demoData';
-import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import {
   PlanningTask, PlanningBudgetItem, PlanningVendor,
   getWeddingSiteId, getWeddingDate,
@@ -401,6 +401,11 @@ export const DashboardPlanning: React.FC = () => {
             Planner view is on — this workspace stays centered on tasks, vendors, budget, and event execution rather than couple account settings.
           </div>
         )}
+        {planningRole === 'coordinator' && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Coordinator view is on — timeline-facing tasks stay editable here, but budget and vendor records stay with the couple or planner.
+          </div>
+        )}
 
         {loading ? (
           <div className="space-y-4 animate-pulse" aria-hidden="true">
@@ -430,7 +435,7 @@ export const DashboardPlanning: React.FC = () => {
                 onUpdate={handleUpdateTask}
                 onDelete={handleDeleteTask}
                 onCreateMilestones={handleCreateMilestones}
-                canEdit={planningRole !== 'viewer'}
+                canEdit={canEditPlanningTasks(planningRole)}
               />
             )}
             {activeTab === 'budget' && (
@@ -442,7 +447,7 @@ export const DashboardPlanning: React.FC = () => {
                 onAdd={handleAddBudgetItem}
                 onUpdate={handleUpdateBudgetItem}
                 onDelete={handleDeleteBudgetItem}
-                canEdit={planningRole !== 'viewer'}
+                canEdit={canEditPlanningBudget(planningRole)}
               />
             )}
             {activeTab === 'vendors' && (
@@ -451,7 +456,7 @@ export const DashboardPlanning: React.FC = () => {
                 onAdd={handleAddVendor}
                 onUpdate={handleUpdateVendor}
                 onDelete={handleDeleteVendor}
-                canEdit={planningRole !== 'viewer'}
+                canEdit={canEditPlanningVendors(planningRole)}
               />
             )}
           </>

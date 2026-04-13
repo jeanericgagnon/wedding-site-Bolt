@@ -2876,7 +2876,7 @@ Proceed with send?`)) return;
     );
   }
 
-  const canEditGuests = guestsRole !== 'viewer';
+  const canEditGuests = !isGuestsReadOnly;
 
   return (
     <DashboardLayout currentPage="guests">

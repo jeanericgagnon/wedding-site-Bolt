@@ -64,6 +64,26 @@ export function canManagePlanning(role: PlannerAccessRole): boolean {
   return role === 'owner' || role === 'planner' || role === 'coordinator';
 }
 
+export function canEditPlanningTasks(role: PlannerAccessRole): boolean {
+  return role === 'owner' || role === 'planner' || role === 'coordinator';
+}
+
+export function canEditPlanningBudget(role: PlannerAccessRole): boolean {
+  return role === 'owner' || role === 'planner';
+}
+
+export function canEditPlanningVendors(role: PlannerAccessRole): boolean {
+  return role === 'owner' || role === 'planner';
+}
+
+export function canComposeDashboardMessages(role: PlannerAccessRole): boolean {
+  return role === 'owner' || role === 'planner';
+}
+
+export function canSendCoordinatorUpdates(role: PlannerAccessRole): boolean {
+  return role === 'owner' || role === 'planner' || role === 'coordinator';
+}
+
 export interface PlannerInviteRecord {
   name: string;
   email: string;

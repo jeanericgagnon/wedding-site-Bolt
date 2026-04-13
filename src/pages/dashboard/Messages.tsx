@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
+import { canComposeDashboardMessages, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -998,7 +999,7 @@ export const DashboardMessages: React.FC = () => {
     return { delivered, failed, targeted, rate, scheduled: messages.filter((m) => m.status === 'scheduled').length };
   }, [messages]);
 
-  const canCompose = canEditPlannerSurface(messagesRole);
+  const canCompose = canComposeDashboardMessages(messagesRole);
 
   const filteredHistory = useMemo(() => messages.filter((m) => {
     if (historyStatusFilter !== 'all' && m.status !== historyStatusFilter) return false;
@@ -1120,17 +1121,19 @@ export const DashboardMessages: React.FC = () => {
               <h1 className="text-3xl font-bold text-text-primary">Messages</h1>
             </div>
             <p className="text-text-secondary">Write and send guest messages by email or text, with credits ready when you need them.</p>
+            {messagesRole === 'coordinator' && <p className="mt-1 text-xs text-text-tertiary">Coordinator access can review delivery health and day-of comms, but campaign drafting stays with the couple or planner.</p>}
           </div>
           <div>
             <label className="block text-xs text-text-tertiary mb-1">Access view</label>
             <select
               value={messagesRole}
-              onChange={(e) => setMessagesRole(e.target.value as MessagesRole)}
+              onChange={(e) => setMessagesRole(e.target.value as PlannerAccessRole)}
               className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
             >
-              <option value="owner">Owner</option>
+              <option value="owner">Couple owner</option>
+              <option value="planner">Planner</option>
               <option value="coordinator">Coordinator</option>
-              <option value="viewer">Viewer (read only)</option>
+              <option value="viewer">Read only</option>
             </select>
           </div>
         </div>
