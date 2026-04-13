@@ -280,6 +280,9 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 </button>
               ))}
             </div>
+            <div className="rounded-lg border border-neutral-200 bg-white p-3 text-xs text-neutral-600">
+              Next, we will lock in the essentials that make the move feel stable: your names, your date, and the city guests need to orient around. Design cleanup can wait until after that.
+            </div>
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs text-neutral-500">We will use this to shape migration-specific guidance next.</div>
               <button onClick={continueFromMigration} className="rounded-xl bg-neutral-900 text-white px-4 py-2 text-sm hover:bg-neutral-800">Continue</button>
