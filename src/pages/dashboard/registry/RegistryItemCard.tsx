@@ -138,6 +138,15 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const failCount = item.refresh_fail_count ?? 0;
   const sourceLabel = item.metadata_source_method ? `Source: ${item.metadata_source_method}` : null;
   const retailerLabel = item.metadata_retailer ? `Retailer: ${item.metadata_retailer}` : null;
+  const repairGuidance = (() => {
+    const retailer = (item.metadata_retailer || item.merchant || item.store_name || '').toLowerCase();
+    if (retailer.includes('amazon')) return 'Amazon often needs manual title or price cleanup after import.';
+    if (retailer.includes('target')) return 'Target imports can drift; re-import first, then confirm title and price.';
+    if (retailer.includes('walmart')) return 'Walmart usually benefits from a quick image and price check.';
+    if (retailer.includes('etsy')) return 'Etsy listings can hide variant-specific details; review before save.';
+    if (retailer.includes('crate') || retailer.includes('cb2')) return 'Crate & Barrel / CB2 may still need manual cleanup today.';
+    return null;
+  })();
   const goal = item.fund_goal_amount ?? 0;
   const received = item.fund_received_amount ?? 0;
   const fundPct = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
@@ -356,11 +365,12 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             Tip: paste a direct image link in Edit, or refresh metadata from the product URL.
           </p>
         )}
-        {(missingSummary || blockedMessage || hasBadImportTitle) && (
+        {(missingSummary || blockedMessage || hasBadImportTitle || repairGuidance) && (
           <div className="space-y-1">
             {missingSummary && <p className="text-[11px] text-text-tertiary">{missingSummary}</p>}
             {blockedMessage && <p className="text-[11px] text-warning">{blockedMessage}</p>}
-            {hasBadImportTitle && <p className="text-[11px] text-warning">This item looks like an old bad import. Use Refresh or Edit to repair the title/details.</p>}
+            {hasBadImportTitle && <p className="text-[11px] text-warning">This item looks like an old bad import. Use Refresh, Re-import, or Edit to repair the title/details.</p>}
+            {repairGuidance && <p className="text-[11px] text-text-tertiary">{repairGuidance}</p>}
           </div>
         )}
 

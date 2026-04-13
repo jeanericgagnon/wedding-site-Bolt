@@ -87,11 +87,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     if (!v) return null;
     try {
       const host = new URL(normalizeUrl(v)).hostname.toLowerCase();
-      if (host.includes('amazon.')) return 'Amazon tip: Use the full product URL. We’ll auto-fetch image/price; direct image links aren’t required.';
-      if (host.includes('target.')) return 'Target tip: Product links work best with full item pages (not shortened links).';
-      if (host.includes('walmart.')) return 'Walmart tip: Full product links usually import price and image best.';
-      if (host.includes('etsy.')) return 'Etsy tip: Listing pages usually import well; review title/price before save.';
-      return 'Tip: Product page URLs are fine — we’ll try to auto-fetch details and image metadata.';
+      if (host.includes('amazon.')) return 'Amazon repair tip: Use the full product page. If import stays weak, re-import once, then fill title/price manually.';
+      if (host.includes('target.')) return 'Target repair tip: Full item pages work best. If details still look off, prefer manual price/title cleanup after re-import.';
+      if (host.includes('walmart.')) return 'Walmart repair tip: Re-import usually helps, but double-check price and image before save.';
+      if (host.includes('etsy.')) return 'Etsy repair tip: Listing pages usually import well, but variants and pricing can still need a manual check.';
+      if (host.includes('crateandbarrel.') || host.includes('cb2.')) return 'Crate & Barrel / CB2 tip: link save is useful, but this merchant may need more manual cleanup today.';
+      return 'Tip: Product page URLs are fine — we’ll try to auto-fetch details, but manual cleanup is normal when a store gives weak metadata.';
     } catch {
       return null;
     }
