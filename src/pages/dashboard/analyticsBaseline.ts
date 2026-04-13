@@ -3,8 +3,10 @@ export interface AnalyticsBaselineInput {
   confirmedGuests: number;
   declinedGuests: number;
   pendingGuests: number;
+  contactableGuests: number;
   registryItemCount: number;
   photoAlbumCount: number;
+  activePhotoAlbumCount: number;
   interactiveSuggestionCount: number;
 }
 
@@ -22,6 +24,8 @@ function pct(numerator: number, denominator: number): number {
 
 export function buildAnalyticsBaseline(input: AnalyticsBaselineInput): AnalyticsBaselineMetric[] {
   const respondedGuests = input.confirmedGuests + input.declinedGuests;
+  const attendanceRate = input.totalGuests > 0 ? pct(input.confirmedGuests * 100, input.totalGuests) : 0;
+  const contactCoverage = input.totalGuests > 0 ? pct(input.contactableGuests * 100, input.totalGuests) : 0;
   return [
     {
       label: 'RSVP response rate',
@@ -30,10 +34,22 @@ export function buildAnalyticsBaseline(input: AnalyticsBaselineInput): Analytics
       source: 'measured',
     },
     {
+      label: 'Attendance rate',
+      value: `${attendanceRate}%`,
+      detail: `${input.confirmedGuests} of ${input.totalGuests} invited guests are currently marked attending.`,
+      source: 'derived',
+    },
+    {
       label: 'Still waiting',
       value: `${input.pendingGuests}`,
       detail: input.pendingGuests === 0 ? 'No outstanding RSVP backlog right now.' : `${input.pendingGuests} guests still need a reply.`,
       source: 'measured',
+    },
+    {
+      label: 'Contact coverage',
+      value: `${contactCoverage}%`,
+      detail: `${input.contactableGuests} of ${input.totalGuests} guests have email or phone contact available.`,
+      source: 'derived',
     },
     {
       label: 'Registry readiness',
@@ -49,8 +65,8 @@ export function buildAnalyticsBaseline(input: AnalyticsBaselineInput): Analytics
     },
     {
       label: 'Photo collection setup',
-      value: `${input.photoAlbumCount}`,
-      detail: input.photoAlbumCount === 0 ? 'No photo albums are ready yet.' : `${input.photoAlbumCount} album${input.photoAlbumCount === 1 ? '' : 's'} available for uploads.`,
+      value: `${input.activePhotoAlbumCount}/${input.photoAlbumCount}`,
+      detail: input.photoAlbumCount === 0 ? 'No photo albums are ready yet.' : `${input.activePhotoAlbumCount} active album${input.activePhotoAlbumCount === 1 ? '' : 's'} out of ${input.photoAlbumCount} total album${input.photoAlbumCount === 1 ? '' : 's'}.`,
       source: 'measured',
     },
   ];

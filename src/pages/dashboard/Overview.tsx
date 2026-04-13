@@ -46,6 +46,7 @@ interface OverviewStats {
   registryItemCount: number;
   photoAlbumCount: number;
   activePhotoAlbumCount: number;
+  contactableGuestCount: number;
   recentRsvps: RecentRsvp[];
 }
 
@@ -200,6 +201,7 @@ export const DashboardOverview: React.FC = () => {
           registryItemCount: 2,
           photoAlbumCount: 3,
           activePhotoAlbumCount: 2,
+          contactableGuestCount: demoGuests.filter((g) => Boolean(g.email || g.phone)).length,
           recentRsvps,
         });
         return;
@@ -227,7 +229,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: guests, error: guestsErr } = await supabase
         .from('guests')
-        .select('id, rsvp_status, rsvp_received_at, first_name, last_name, name')
+        .select('id, rsvp_status, rsvp_received_at, first_name, last_name, name, email, phone')
         .eq('wedding_site_id', site?.id ?? '')
         .order('rsvp_received_at', { ascending: false });
 
@@ -253,6 +255,7 @@ export const DashboardOverview: React.FC = () => {
       const confirmed = allGuests.filter((g) => g.rsvp_status === 'confirmed');
       const declined = allGuests.filter((g) => g.rsvp_status === 'declined');
       const pending = allGuests.filter((g) => g.rsvp_status === 'pending');
+      const contactableGuestCount = allGuests.filter((g) => Boolean(g.email || g.phone)).length;
 
       const recentRsvps: RecentRsvp[] = allGuests
         .filter((g) => g.rsvp_status !== 'pending' && g.rsvp_received_at)
@@ -296,6 +299,7 @@ export const DashboardOverview: React.FC = () => {
         registryItemCount: registryItemCount ?? 0,
         photoAlbumCount: photoAlbumCount ?? 0,
         activePhotoAlbumCount: activePhotoAlbumCount ?? 0,
+        contactableGuestCount,
         recentRsvps,
       });
     } catch {
@@ -315,8 +319,10 @@ export const DashboardOverview: React.FC = () => {
     confirmedGuests: stats?.confirmedGuests ?? 0,
     declinedGuests: stats?.declinedGuests ?? 0,
     pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuests: stats?.contactableGuestCount ?? 0,
     registryItemCount: stats?.registryItemCount ?? 0,
     photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
     interactiveSuggestionCount: interactiveSuggestions.length,
   });
 
