@@ -138,3 +138,32 @@ export async function sendWeddingInvitation(opts: {
     },
   });
 }
+
+export async function sendAnniversaryReminder(opts: {
+  to: string;
+  coupleName1: string;
+  coupleName2: string;
+  vaultLabel: string;
+  anniversaryYear: number;
+  unlockDate?: string | null;
+  vaultUrl?: string | null;
+  reminderKind?: 'upcoming' | 'unlock' | 'nudge';
+}): Promise<void> {
+  if (!opts.to) throw new Error('Recipient email is required');
+  if (!opts.coupleName1 || !opts.coupleName2) throw new Error('Couple names are required');
+  if (!opts.vaultLabel) throw new Error('Vault label is required');
+
+  await callEmailFunction({
+    type: 'anniversary_reminder',
+    to: opts.to,
+    data: {
+      coupleName1: opts.coupleName1,
+      coupleName2: opts.coupleName2,
+      vaultLabel: opts.vaultLabel,
+      anniversaryYear: opts.anniversaryYear,
+      unlockDate: opts.unlockDate ?? null,
+      vaultUrl: opts.vaultUrl ?? null,
+      reminderKind: opts.reminderKind ?? 'upcoming',
+    },
+  });
+}

@@ -8,9 +8,58 @@ const corsHeaders = {
 };
 
 interface EmailPayload {
-  type: "rsvp_notification" | "rsvp_confirmation" | "signup_welcome" | "wedding_invitation";
+  type: "rsvp_notification" | "rsvp_confirmation" | "signup_welcome" | "wedding_invitation" | "anniversary_reminder";
   to: string;
   data: Record<string, unknown>;
+}
+
+function anniversaryReminderHtml(data: Record<string, unknown>): string {
+  const coupleName1 = data.coupleName1 as string;
+  const coupleName2 = data.coupleName2 as string;
+  const vaultLabel = data.vaultLabel as string;
+  const anniversaryYear = data.anniversaryYear as number;
+  const unlockDate = data.unlockDate as string | null;
+  const vaultUrl = data.vaultUrl as string | null;
+  const reminderKind = (data.reminderKind as string | null) ?? 'upcoming';
+
+  const headline = reminderKind === 'unlock'
+    ? 'Your anniversary vault is ready to open'
+    : reminderKind === 'nudge'
+      ? 'Add one more note before the anniversary arrives'
+      : 'Your anniversary vault is coming up';
+
+  const body = reminderKind === 'unlock'
+    ? `The ${vaultLabel} for ${coupleName1} &amp; ${coupleName2} is now unlocked.`
+    : reminderKind === 'nudge'
+      ? `There’s still time to add something meaningful before the ${anniversaryYear}${anniversaryYear === 1 ? 'st' : anniversaryYear === 2 ? 'nd' : anniversaryYear === 3 ? 'rd' : 'th'} anniversary vault opens.`
+      : `The ${vaultLabel} for ${coupleName1} &amp; ${coupleName2} is coming up soon.`;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f9f7f4;font-family:Georgia,serif;">
+  <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08);">
+    <div style="background:#1a1a1a;padding:32px 40px;text-align:center;">
+      <p style="margin:0;color:#c8a97e;font-size:13px;letter-spacing:3px;text-transform:uppercase;">Anniversary Vault</p>
+      <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:400;">${coupleName1} &amp; ${coupleName2}</h1>
+    </div>
+    <div style="padding:40px;">
+      <p style="font-size:18px;color:#333;margin-bottom:8px;">${headline}</p>
+      <p style="font-size:15px;color:#555;line-height:1.7;margin-bottom:24px;">${body}</p>
+      <div style="background:#f9f7f4;border-radius:8px;padding:20px 24px;margin-bottom:24px;">
+        <p style="margin:0 0 6px;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">Vault</p>
+        <p style="margin:0;font-size:17px;color:#1a1a1a;font-weight:600;">${vaultLabel}</p>
+        ${unlockDate ? `<p style="margin:8px 0 0;font-size:14px;color:#666;">Unlock date: ${unlockDate}</p>` : ''}
+      </div>
+      ${vaultUrl ? `<a href="${vaultUrl}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:14px;letter-spacing:2px;text-transform:uppercase;">Open Vault</a>` : ''}
+    </div>
+    <div style="padding:20px 40px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;">
+      <p style="margin:0;font-size:12px;color:#aaa;">Powered by DayOf</p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 function rsvpNotificationHtml(data: Record<string, unknown>): string {
@@ -287,6 +336,10 @@ Deno.serve(async (req: Request) => {
       case "wedding_invitation":
         subject = `You're Invited – ${coupleName1} & ${coupleName2}`;
         html = weddingInvitationHtml(data);
+        break;
+      case "anniversary_reminder":
+        subject = `Anniversary vault update – ${coupleName1} & ${coupleName2}`;
+        html = anniversaryReminderHtml(data);
         break;
       default:
         return new Response(JSON.stringify({ error: "Unknown email type" }), {
