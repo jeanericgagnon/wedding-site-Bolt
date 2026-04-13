@@ -398,7 +398,7 @@ export const DashboardGuests: React.FC = () => {
   const [csvUnknownEvents, setCsvUnknownEvents] = useState<string[]>([]);
   const [csvDuplicateNames, setCsvDuplicateNames] = useState<string[]>([]);
   const [csvSelectedFilename, setCsvSelectedFilename] = useState<string | null>(null);
-  const [csvMappingSummary, setCsvMappingSummary] = useState<{ core: string[]; rsvp: string[]; household: string[]; eventCols: string[] }>({ core: [], rsvp: [], household: [], eventCols: [] });
+  const [csvMappingSummary, setCsvMappingSummary] = useState<{ core: string[]; rsvp: string[]; household: string[]; eventCols: string[]; weak: string[] }>({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvDataRows, setCsvDataRows] = useState<string[][]>([]);
   const [csvColumnSamples, setCsvColumnSamples] = useState<string[]>([]);
@@ -1982,6 +1982,13 @@ Proceed with send?`)) return;
         return itineraryByNormalizedName.has(normalizeEventName(h));
       });
 
+    const weakMappings = [
+      fieldMap.full_name >= 0 && (fieldMap.first_name < 0 || fieldMap.last_name < 0) ? 'Full name is carrying first/last split' : '',
+      fieldMap.household_name >= 0 && fieldMap.household_id < 0 ? 'Households rely on name/group matching only' : '',
+      fieldMap.email < 0 && fieldMap.phone < 0 ? 'No direct contact column mapped' : '',
+      inviteEventColumns.length === 0 && fieldMap.invited_events.length === 0 ? 'No event-invite mapping detected' : '',
+    ].filter(Boolean);
+
     setCsvMappingSummary({
       core: [
         fieldMap.first_name >= 0 ? 'First Name' : '',
@@ -2001,6 +2008,7 @@ Proceed with send?`)) return;
         fieldMap.household_name >= 0 ? 'household_name / group_name' : '',
       ].filter(Boolean),
       eventCols: inviteEventColumns.map(({ h }) => h),
+      weak: weakMappings,
     });
 
     const skipped: string[] = [];
@@ -4289,7 +4297,7 @@ Proceed with send?`)) return;
 
       {csvPreview && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] }); } }} />
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] }); } }} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-border-subtle">
@@ -4301,20 +4309,21 @@ Proceed with send?`)) return;
                   </p>
                 </div>
                 {!csvImporting && (
-                  <button onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [] }); }} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
+                  <button onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] }); }} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
                     <X className="w-5 h-5 text-text-secondary" />
                   </button>
                 )}
               </div>
 
               <div className="overflow-y-auto flex-1 p-6">
-                {(csvMappingSummary.core.length > 0 || csvMappingSummary.rsvp.length > 0 || csvMappingSummary.household.length > 0 || csvMappingSummary.eventCols.length > 0) && (
+                {(csvMappingSummary.core.length > 0 || csvMappingSummary.rsvp.length > 0 || csvMappingSummary.household.length > 0 || csvMappingSummary.eventCols.length > 0 || csvMappingSummary.weak.length > 0) && (
                   <div className="mb-4 p-3 bg-surface-subtle border border-border rounded-lg space-y-2">
                     <p className="text-xs font-medium text-text-primary">Detected mapping</p>
                     {csvMappingSummary.core.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Core:</span> {csvMappingSummary.core.join(', ')}</p>}
                     {csvMappingSummary.rsvp.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">RSVP:</span> {csvMappingSummary.rsvp.join(', ')}</p>}
                     {csvMappingSummary.household.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Households:</span> {csvMappingSummary.household.join(', ')}</p>}
                     {csvMappingSummary.eventCols.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Itinerary columns:</span> {csvMappingSummary.eventCols.join(', ')}</p>}
+                    {csvMappingSummary.weak.length > 0 && <p className="text-xs text-amber-700"><span className="font-medium text-amber-800">Review closely:</span> {csvMappingSummary.weak.join(' · ')}</p>}
                     <p className="text-[11px] text-text-tertiary">Invite values: Yes/Y/1/True/Included/Invited = invited · No/N/0/False/Excluded/Not Invited = not invited</p>
                   </div>
                 )}
