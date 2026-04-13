@@ -779,12 +779,12 @@ export default function RSVP() {
             )}
 
             {!guest.invite_token && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm space-y-1">
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-base space-y-2">
                 <div className="flex items-start gap-2 font-medium">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
                   Can't submit — missing invitation link
                 </div>
-                <p className="pl-6">To RSVP, open the invitation email you received and click the RSVP button. That link contains a secure code required to submit your response.</p>
+                <p className="pl-7 text-sm text-amber-900/90">To RSVP, open the invitation email you received and click the RSVP button. That link contains a secure code required to submit your response.</p>
               </div>
             )}
 
@@ -808,7 +808,7 @@ export default function RSVP() {
                     <Select
                       value={formData.attending ? 'yes' : 'no'}
                       onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
-                      className="h-11"
+                      className="h-12 text-base"
                       required
                       options={[
                         { value: 'yes', label: "Yes, I'll be there!" },
@@ -820,37 +820,37 @@ export default function RSVP() {
                   {invitedEvents.length > 0 && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm">
                       <p className="font-semibold mb-1.5 text-base text-gray-900">Your event access details</p>
-                      <ul className="list-disc list-inside space-y-1 text-gray-700">
+                      <ul className="list-disc list-inside space-y-1.5 text-base text-gray-800">
                         {invitedEvents.map((ev) => <li key={ev}>{ev}</li>)}
                       </ul>
                     </div>
                   )}
                   {householdGuests.length > 0 && (
                     <div className="text-sm p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
-                      <label className="flex items-start gap-2">
-                        <input type="checkbox" checked={applyToHousehold} onChange={(e) => setApplyToHousehold(e.target.checked)} className="w-4 h-4 mt-0.5" />
-                        <span className="font-medium">Inherit this RSVP to selected household guests</span>
+                      <label className="flex items-start gap-3">
+                        <input type="checkbox" checked={applyToHousehold} onChange={(e) => setApplyToHousehold(e.target.checked)} className="w-5 h-5 mt-0.5" />
+                        <span className="font-semibold text-base text-gray-900">Inherit this RSVP to selected household guests</span>
                       </label>
 
                       {applyToHousehold && (
-                        <details className="rounded-lg border border-amber-200 bg-white/60 p-2">
-                          <summary className="cursor-pointer text-xs font-medium text-amber-800 flex items-center justify-between gap-2">
+                        <details className="rounded-xl border border-amber-200 bg-white/60 p-3">
+                          <summary className="cursor-pointer text-sm font-semibold text-amber-900 flex items-center justify-between gap-2">
                             <span>Choose household guests</span>
-                            <span className="text-[10px] text-amber-700">{selectedHouseholdGuestIds.length}/{householdGuests.length} selected</span>
+                            <span className="text-xs text-amber-800">{selectedHouseholdGuestIds.length}/{householdGuests.length} selected</span>
                           </summary>
                           <div className="mt-2 space-y-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               <button
                                 type="button"
                                 onClick={() => setSelectedHouseholdGuestIds(householdGuests.map((h) => h.id))}
-                                className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
+                                className="text-xs px-3 py-2 rounded-lg border border-amber-300 text-amber-900 hover:bg-amber-100"
                               >
                                 Select all
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setSelectedHouseholdGuestIds([])}
-                                className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
+                                className="text-xs px-3 py-2 rounded-lg border border-amber-300 text-amber-900 hover:bg-amber-100"
                               >
                                 Clear
                               </button>
@@ -863,7 +863,7 @@ export default function RSVP() {
                                 return (
                                   <label key={h.id} className="flex items-center justify-between gap-3 bg-white border border-amber-200 rounded-lg px-3 py-2.5">
                                     <span className="text-sm text-gray-800 font-medium">{label}</span>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-3">
                                       <span className="text-xs text-gray-600">{access}</span>
                                       <input
                                         type="checkbox"
@@ -871,7 +871,7 @@ export default function RSVP() {
                                         onChange={(e) => {
                                           setSelectedHouseholdGuestIds((prev) => e.target.checked ? [...new Set([...prev, h.id])] : prev.filter((id) => id !== h.id));
                                         }}
-                                        className="w-4 h-4"
+                                        className="w-5 h-5"
                                       />
                                     </div>
                                   </label>
@@ -928,7 +928,7 @@ export default function RSVP() {
                           <Select
                             value={formData.meal_choice}
                             onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
-                            className="h-11"
+                            className="h-12 text-base"
                             options={[
                               { value: '', label: 'Select a meal option' },
                               ...mealConfig.options.map((opt) => ({ value: opt, label: opt })),
@@ -947,7 +947,7 @@ export default function RSVP() {
                             value={formData.plus_one_name}
                             onChange={(e) => setFormData({ ...formData, plus_one_name: e.target.value })}
                             placeholder="Guest's full name"
-                            className="h-11"
+                            className="h-12 text-base"
                           />
                           <p className="text-sm text-gray-600 mt-2">You're welcome to bring a guest.</p>
                         </div>
@@ -964,7 +964,7 @@ export default function RSVP() {
                         href={musicPlaylistUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center mt-3 px-3 py-2 rounded-lg bg-violet-600 text-white text-sm hover:bg-violet-700"
+                        className="inline-flex items-center mt-3 px-4 py-3 rounded-xl bg-violet-600 text-white text-base hover:bg-violet-700"
                       >
                         Open Spotify playlist
                       </a>
@@ -1121,13 +1121,13 @@ export default function RSVP() {
               )}
 
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 text-base flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
                   {error}
                 </div>
               )}
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 flex-col sm:flex-row">
                 <Button
                   type="button"
                   variant="outline"
@@ -1139,7 +1139,7 @@ export default function RSVP() {
                       setError('');
                     }
                   }}
-                  className="flex-1"
+                  className="flex-1 min-h-[48px] text-base"
                 >
                   {formStep > 1 ? 'Back' : 'Cancel'}
                 </Button>
@@ -1148,7 +1148,7 @@ export default function RSVP() {
                   <Button
                     type="button"
                     onClick={goToNextFormStep}
-                    className="flex-1"
+                    className="flex-1 min-h-[48px] text-base"
                   >
                     {formStep === 1 ? 'Continue to details' : 'Continue to review'}
                   </Button>
@@ -1156,7 +1156,7 @@ export default function RSVP() {
                   <Button
                     type="submit"
                     disabled={loading || !canSubmit}
-                    className="flex-1"
+                    className="flex-1 min-h-[48px] text-base"
                   >
                     {loading ? 'Submitting...' : existingRsvp ? 'Update RSVP' : 'Submit RSVP'}
                   </Button>
