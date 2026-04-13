@@ -388,10 +388,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <div className="mt-3 flex flex-wrap gap-2">
               <a href="/dashboard/rsvp-board" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open RSVP board</a>
               <a href="/dashboard/seating-lookup" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open seating lookup</a>
+              <a href="/dashboard/planning" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open planning workspace</a>
             </div>
           </div>
         </div>
 
+        {coordinatorRole === 'planner' && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+            Planner view is on — this workspace stays focused on live guest movement, timeline decisions, and day-of updates.
+          </div>
+        )}
         {coordinatorRole === 'viewer' && (
           <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
             Viewer mode is on — timeline, check-in, alerts, and Q&A edits are turned off here.

@@ -396,6 +396,12 @@ export const DashboardPlanning: React.FC = () => {
           </div>
         </div>
 
+        {planningRole === 'planner' && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+            Planner view is on — this workspace stays centered on tasks, vendors, budget, and event execution rather than couple account settings.
+          </div>
+        )}
+
         {loading ? (
           <div className="space-y-4 animate-pulse" aria-hidden="true">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

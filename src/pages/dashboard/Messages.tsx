@@ -1135,6 +1135,11 @@ export const DashboardMessages: React.FC = () => {
           </div>
         </div>
 
+        {messagesRole === 'planner' && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+            Planner view is on — this workspace stays focused on guest communications, reminders, and day-of updates.
+          </div>
+        )}
         {messagesRole === 'viewer' && (
           <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
             Viewer mode is on — writing and sending are turned off here.

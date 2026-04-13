@@ -2899,6 +2899,12 @@ Proceed with send?`)) return;
           </div>
         </div>
 
+        {guestsRole === 'planner' && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+            Planner view is on — this workspace stays focused on guest readiness, response cleanup, and who still needs follow-up.
+          </div>
+        )}
+
         <div className="rounded-lg border border-border/30 bg-white px-3 py-2 text-xs text-text-tertiary">
           Tip: Use <span className="font-medium text-text-secondary">Actions</span> for exports, reminders, and cleanup tasks.
         </div>
