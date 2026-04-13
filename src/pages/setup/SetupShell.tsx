@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
+import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCasePacks';
 import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 
 const steps = [
@@ -132,8 +133,10 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const setupMode = useMemo(() => {
     const prefs = new Set(draft.stylePreferences);
     const destination = prefs.has('Destination');
+    const bilingual = prefs.has('Bilingual');
+    const interfaith = prefs.has('Interfaith');
     const weekend = prefs.has('Weekend') || destination || draft.guestEstimateBand === '200plus';
-    return { destination, weekend };
+    return { destination, bilingual, interfaith, weekend };
   }, [draft.stylePreferences, draft.guestEstimateBand]);
 
   const recommendedTemplates = useMemo(() => {
@@ -354,6 +357,17 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p className="font-medium text-neutral-800">Setup direction</p>
                 <p className="mt-1">{setupMode.destination ? 'Destination wedding mode is on — DayOf should lean harder into travel, hotel, and arrival guidance.' : setupMode.weekend ? 'Weekend-style setup is on — DayOf should expect more than one event and more guest coordination.' : 'Classic single-day setup is fine here. You can still add extra events later.'}</p>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {TEMPLATE_USE_CASE_PACKS.map((pack) => {
+                  const active = (pack.id === 'destination' && setupMode.destination) || (pack.id === 'bilingual' && setupMode.bilingual) || (pack.id === 'interfaith' && setupMode.interfaith);
+                  return (
+                    <div key={pack.id} className={`rounded-lg border p-3 text-xs ${active ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-neutral-200 bg-white text-neutral-600'}`}>
+                      <p className="font-medium text-neutral-900">{pack.label}</p>
+                      <p className="mt-1">{pack.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
               <p className="text-xs text-neutral-500">Optional — helps Dayof pick a better starting direction for your site.</p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
@@ -371,12 +385,13 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Guest estimate:</strong> {draft.guestEstimateBand || 'Not set'}</p>
                 <p><strong>Styles:</strong> {draft.stylePreferences.join(', ') || 'None selected'}</p>
                 <p><strong>Setup direction:</strong> {setupMode.destination ? 'Destination wedding' : setupMode.weekend ? 'Multi-day / weekend wedding' : 'Single-day wedding'}</p>
+                <p><strong>Use-case packs:</strong> {[setupMode.destination && 'Destination', setupMode.bilingual && 'Bilingual', setupMode.interfaith && 'Interfaith'].filter(Boolean).join(', ') || 'None selected yet'}</p>
                 <p><strong>Template:</strong> {selectedTemplateName}</p>
                 <p><strong>Template ID:</strong> {draft.selectedTemplateId}</p>
               </div>
 
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
-                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before publishing.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list.'}
+                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before publishing.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

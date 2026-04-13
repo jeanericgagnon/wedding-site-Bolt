@@ -203,6 +203,7 @@ Start with this
               <button onClick={() => { setStyle('Destination'); setSeason('Summer'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Destination</button>
               <button onClick={() => { setStyle('Classic'); setSeason('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Classic Formal</button>
             </div>
+            <p className="mt-2 text-xs text-neutral-500">Use-case packs are intentionally selectable now: destination, bilingual, and interfaith are the first three we are deepening beyond generic style tags.</p>
           </div>
           {selectedTemplateId && (
             <button
