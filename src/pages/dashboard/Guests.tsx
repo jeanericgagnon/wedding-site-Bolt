@@ -3,7 +3,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
-import { Card, Button, Badge, Input, Select } from '../../components/ui';
+import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -425,6 +425,11 @@ export const DashboardGuests: React.FC = () => {
   const [guestAuditEntries, setGuestAuditEntries] = useState<GuestAuditEntry[]>([]);
   const [rsvpAuditFeed, setRsvpAuditFeed] = useState<GuestAuditEntry[]>([]);
   const [rsvpAuditLoading, setRsvpAuditLoading] = useState(false);
+  const [assistedRsvpGuest, setAssistedRsvpGuest] = useState<GuestWithRSVP | null>(null);
+  const [assistedRsvpStatus, setAssistedRsvpStatus] = useState<'confirmed' | 'declined'>('confirmed');
+  const [assistedRsvpSource, setAssistedRsvpSource] = useState<'phone' | 'text' | 'family' | 'in-person'>('phone');
+  const [assistedRsvpNotes, setAssistedRsvpNotes] = useState('');
+  const [assistedRsvpSaving, setAssistedRsvpSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -1625,6 +1630,58 @@ Proceed with send?`)) return;
 
     return { grouped, ungrouped: [...ungrouped].sort(byName) };
   }, [guests]);
+
+  const openAssistedRsvpModal = (guest: GuestWithRSVP) => {
+    setAssistedRsvpGuest(guest);
+    setAssistedRsvpStatus(guest.rsvp_status === 'declined' ? 'declined' : 'confirmed');
+    setAssistedRsvpSource('phone');
+    setAssistedRsvpNotes('');
+  };
+
+  const handleSaveAssistedRsvp = async () => {
+    if (!assistedRsvpGuest) return;
+    try {
+      setAssistedRsvpSaving(true);
+      const manualTag = `[Manual RSVP source:${assistedRsvpSource} recorded:${new Date().toISOString()}]`;
+      const nextNotes = [manualTag, assistedRsvpNotes.trim()].filter(Boolean).join(' ');
+
+      if (isDemoMode) {
+        setGuests((prev) => prev.map((guest) => guest.id === assistedRsvpGuest.id ? { ...guest, rsvp_status: assistedRsvpStatus, rsvp_received_at: new Date().toISOString(), notes: nextNotes } : guest));
+        setAssistedRsvpGuest(null);
+        toast('RSVP recorded for guest', 'success');
+        return;
+      }
+
+      const { error: guestError } = await supabase
+        .from('guests')
+        .update({ rsvp_status: assistedRsvpStatus, rsvp_received_at: new Date().toISOString(), notes: nextNotes })
+        .eq('id', assistedRsvpGuest.id);
+      if (guestError) throw guestError;
+
+      const { data: existingRsvp } = await supabase
+        .from('rsvps')
+        .select('id, notes')
+        .eq('guest_id', assistedRsvpGuest.id)
+        .maybeSingle();
+
+      if (existingRsvp?.id) {
+        const { error: rsvpError } = await supabase
+          .from('rsvps')
+          .update({ attending: assistedRsvpStatus === 'confirmed', notes: nextNotes })
+          .eq('id', existingRsvp.id);
+        if (rsvpError) throw rsvpError;
+      }
+
+      await fetchGuests();
+      setAssistedRsvpGuest(null);
+      toast('RSVP recorded for guest', 'success');
+    } catch (error) {
+      console.error(error);
+      toast('Failed to save assisted RSVP', 'error');
+    } finally {
+      setAssistedRsvpSaving(false);
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -3762,6 +3819,9 @@ Proceed with send?`)) return;
                                   >
                                     {(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'Thanked' : 'Thank-you'}
                                   </Button>
+                                  <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openAssistedRsvpModal(guest)} disabled={isGuestsReadOnly}>
+                                    Record RSVP
+                                  </Button>
                                   <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)} disabled={isGuestsReadOnly}>
                                     Edit
                                   </Button>
@@ -3802,6 +3862,53 @@ Proceed with send?`)) return;
           </div>
         </Card>
       </div>
+
+
+
+      {assistedRsvpGuest && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/30" onClick={() => !assistedRsvpSaving && setAssistedRsvpGuest(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-lg rounded-2xl border border-border bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-text-primary">Record RSVP for guest</h3>
+                  <p className="text-sm text-text-secondary mt-1">Save a response that came in by phone, text, family relay, or in person.</p>
+                </div>
+                <button onClick={() => !assistedRsvpSaving && setAssistedRsvpGuest(null)} className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
+                  <p className="text-sm font-medium text-text-primary">{assistedRsvpGuest.first_name && assistedRsvpGuest.last_name ? `${assistedRsvpGuest.first_name} ${assistedRsvpGuest.last_name}` : assistedRsvpGuest.name}</p>
+                  <p className="mt-1 text-xs text-text-secondary">This keeps manual handling explicit instead of pretending the guest self-submitted.</p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Response</label>
+                    <Select value={assistedRsvpStatus} onChange={(e) => setAssistedRsvpStatus(e.target.value as 'confirmed' | 'declined')} options={[{ value: 'confirmed', label: 'Attending' }, { value: 'declined', label: 'Declined' }]} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">Source</label>
+                    <Select value={assistedRsvpSource} onChange={(e) => setAssistedRsvpSource(e.target.value as 'phone' | 'text' | 'family' | 'in-person')} options={[{ value: 'phone', label: 'Phone call' }, { value: 'text', label: 'Text message' }, { value: 'family', label: 'Family relay' }, { value: 'in-person', label: 'In person' }]} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Notes</label>
+                  <Textarea value={assistedRsvpNotes} onChange={(e) => setAssistedRsvpNotes(e.target.value)} placeholder="Optional detail, like who confirmed it or what still needs follow-up." rows={4} />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
+                <Button variant="outline" size="sm" onClick={() => setAssistedRsvpGuest(null)} disabled={assistedRsvpSaving}>Cancel</Button>
+                <Button variant="primary" size="md" onClick={handleSaveAssistedRsvp} disabled={assistedRsvpSaving}>
+                  {assistedRsvpSaving ? 'Saving…' : 'Save manual RSVP'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {showAddModal && renderGuestFormModal({
         title: 'Add guest',
