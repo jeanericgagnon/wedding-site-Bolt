@@ -105,3 +105,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf supports couple-led planner collaboration with clearer handoff cues, role framing, and boundary reassurance
 - Actual truth: planner collaboration is meaningfully productized, but handoff maturity is still closer to structured support than a full delegation and approval system
 - Writing rule: describe this as graceful planner collaboration with clear boundaries, not enterprise-grade workflow governance
+
+
+### Public-site usefulness truth
+- Public-safe claim: DayOf gives couples a public wedding site that feels calmer and more useful than a simple brochure page, with stronger RSVP and logistics guidance
+- Actual truth: the public site is materially better at orientation, return visits, and planning support than before, but it is still not deeply personalized for every guest scenario
+- Writing rule: describe this as more useful guest guidance and logistics clarity, not fully individualized guest intelligence
