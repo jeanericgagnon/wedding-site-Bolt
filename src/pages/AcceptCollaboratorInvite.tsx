@@ -47,6 +47,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const [claiming, setClaiming] = useState(false);
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [claimStep, setClaimStep] = useState<string | null>(null);
   const [inviteLookupDebug, setInviteLookupDebug] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [authLoading, setAuthLoading] = useState(false);
@@ -150,6 +151,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       throw new Error(`This invite was sent to ${inviteInfo.invite_email}. Sign in with that email to claim access.`);
     }
 
+    const collaboratorStart = Date.now();
     const { error: collaboratorError } = await supabase
       .from('wedding_site_collaborators')
       .upsert({
@@ -158,28 +160,39 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         role: inviteInfo.role,
       }, { onConflict: 'wedding_site_id,user_id' });
 
-    if (collaboratorError) throw collaboratorError;
+    if (collaboratorError) throw new Error(`Could not add collaborator membership: ${collaboratorError.message}`);
 
+    const collaboratorMs = Date.now() - collaboratorStart;
+    setClaimStep(`Collaborator membership added (${collaboratorMs}ms). Marking invite accepted…`);
+
+    const inviteUpdateStart = Date.now();
     const { error: inviteError } = await supabase
       .from('wedding_site_collaborator_invites')
       .update({ status: 'accepted', accepted_user_id: authUser.id, accepted_at: new Date().toISOString() })
       .eq('id', inviteInfo.id);
 
-    if (inviteError) throw inviteError;
+    if (inviteError) throw new Error(`Could not mark invite accepted: ${inviteError.message}`);
+
+    const inviteUpdateMs = Date.now() - inviteUpdateStart;
+    setClaimStep(`Invite accepted in ${inviteUpdateMs}ms.`);
   };
 
   const finishClaim = async (authUser: AuthUser) => {
     setClaiming(true);
     setClaimError(null);
+    setClaimStep('Preparing claim…');
     setClaimMessage('Claiming your collaborator access…');
 
     try {
+      setClaimStep('Adding collaborator membership…');
       await claimInvite(authUser);
       setInviteState('accepted');
+      setClaimStep('Invite accepted. Redirecting…');
       setClaimMessage('Invite accepted. Redirecting to your dashboard…');
       navigate(getCollaboratorRedirectPath(inviteInfo?.role), { replace: true });
     } catch (err) {
       setClaimError(err instanceof Error ? err.message : 'Could not claim invite.');
+      setClaimStep(null);
       setClaimMessage(null);
       throw err;
     } finally {
@@ -415,7 +428,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
             {claimMessage && (
               <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-text-primary">
-                {claimMessage}
+                <div>{claimMessage}</div>
+                {claimStep && <div className="mt-1 text-xs text-text-tertiary">Step: {claimStep}</div>}
               </div>
             )}
 
