@@ -81,3 +81,9 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf can surface meal choices, missing meal follow-up, and dietary notes in guest ops
 - Actual truth: meal and dietary support is now clearer and more visible, but still not a fully comprehensive catering workflow
 - Writing rule: describe this as stronger meal/dietary handling, not a complete catering operations system
+
+
+### RSVP exception handling truth
+- Public-safe claim: DayOf can help couples spot RSVP exception cases such as split household responses, unnamed plus-ones, partial replies, and manual handling needs
+- Actual truth: the current product surfaces and organizes these cases in guest ops, but it does not fully automate resolution logic or policy decisions
+- Writing rule: present this as clearer exception handling and follow-up support, not fully automated edge-case reconciliation
