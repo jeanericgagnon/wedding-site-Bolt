@@ -50,9 +50,9 @@ try {
     await input.fill(productUrl);
     await page.getByRole('button', { name: /Fetch details/i }).click();
     await page.waitForTimeout(3000);
-    const itemName = await page.getByLabel(/Item Name/i).inputValue();
-    const merchant = await page.getByLabel(/Store \/ Merchant/i).inputValue();
-    const imageUrl = await page.getByLabel(/Image URL/i).inputValue();
+    const itemName = await page.locator('label:has-text("Item Name")').locator('..').locator('input').inputValue();
+    const merchant = await page.locator('label:has-text("Store / Merchant")').locator('..').locator('input').inputValue();
+    const imageUrl = await page.locator('label:has-text("Image URL")').locator('..').locator('input').inputValue();
     return { itemName, merchant, imageUrlPresent: Boolean(imageUrl) };
   });
 

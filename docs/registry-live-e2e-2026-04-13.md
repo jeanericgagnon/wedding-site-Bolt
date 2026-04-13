@@ -5,38 +5,40 @@ Target: `https://dayof.love`
 Script: `scripts/playwright-registry-e2e.mjs`
 Account: test account
 
-## Result
+## First run
 Partial pass, then failure.
 
-## What passed
+### What failed first
+- import URL step timed out waiting for the `Item Name` field via label-based selector lookup
+
+### Root cause
+This appears to have been **script selector drift**, not a proven product/runtime import failure.
+The registry form uses visible label text, but the script was relying on label helpers that did not match the rendered structure robustly enough.
+
+## Fix
+Updated the E2E script to read fields by visible label blocks in the current form structure.
+
+## Re-run result
+Full pass.
+
+### Passed
 - open login
 - sign in
 - open registry
 - open add item form
+- import URL
+- close browser
 
-## What failed
-### Import URL step
-Failure:
-- script timed out waiting for the `Item Name` field after clicking `Fetch details`
-
-Observed error:
-- `TimeoutError: locator.inputValue: Timeout 30000ms exceeded`
-- waiting for `getByLabel(/Item Name/i)`
-
-## What this means
-The live-ish registry flow is **not fully proven** yet.
-Either:
-- the form labels no longer match the script
-- the import flow did not populate as expected
-- or the fetch/import UX stalled before the form became ready
+### Import result
+- item name: `Amazon Echo Dot (3rd Gen)`
+- merchant: `Amazon`
+- image URL present: `true`
 
 ## Safe conclusion
-Phase 8.5.1 found a real E2E failure signal.
-Do not claim full live registry flow proof yet.
+The current live-ish registry flow is now **proven at this smoke level** for:
+- login
+- registry entry
+- URL import trigger
+- autofill of item name / merchant / image presence
 
-## Recommended next move
-- inspect the current registry item form against the Playwright selectors
-- then determine whether the failure is:
-  - selector drift
-  - import UX break
-  - real runtime fetch failure
+This does **not** yet prove deeper multi-merchant reliability, save behavior across merchants, or public purchased-state behavior.
