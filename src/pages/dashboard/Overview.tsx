@@ -608,6 +608,34 @@ export const DashboardOverview: React.FC = () => {
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <div>
+                    <CardTitle>Migration proof</CardTitle>
+                    <CardDescription>Switching should feel structured, not like a total rebuild.</CardDescription>
+                  </div>
+                  <Badge variant="secondary">Migration-ready</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">Guest import has review truth</p>
+                    <p className="mt-1 text-xs text-text-secondary">Imports now show weaker mappings, duplicate-name flags, household merge warnings, and what still needs review.</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">Content recovery is shaping up</p>
+                    <p className="mt-1 text-xs text-text-secondary">Story, event details, FAQs, and registry links now have migration-focused recovery helpers instead of raw carryover only.</p>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">Publish is still review-based</p>
+                    <p className="mt-1 text-xs text-text-secondary">The product now tells you what to verify before publishing so migration does not feel like guess-and-hope.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
                     <CardTitle>Planner command center</CardTitle>
                     <CardDescription>DayOf is not just your website. It is the shared operating layer for the couple, the planner they invite, guests, RSVPs, seating, messages, and event-day coordination.</CardDescription>
                   </div>
