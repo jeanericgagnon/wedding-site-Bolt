@@ -783,14 +783,14 @@ export const DashboardSettings: React.FC = () => {
                           <Users className="w-5 h-5" />
                           Planner access
                         </CardTitle>
-                        <CardDescription>Invite your planner or coordinator from the couple side, with calm boundaries around what they can help manage.</CardDescription>
+                        <CardDescription>Set up planner or coordinator access from the couple side, with calm boundaries around what they can help manage. Full collaborator persistence is still being tightened.</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
                       <p className="text-sm font-medium text-text-primary">Invite your planner, not a generic staff account</p>
-                      <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of DayOf that help someone run the event well.</p>
+                      <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of DayOf that help someone run the event well. Treat this as access setup, not a fully finished multi-admin system yet.</p>
                     </div>
 
                     {plannerInviteSuccess && (
@@ -828,14 +828,14 @@ export const DashboardSettings: React.FC = () => {
                     <div className="rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4 space-y-2">
                       <p className="text-sm font-medium text-text-primary">Permissions preview</p>
                       <p className="mt-1 text-sm text-text-secondary">{plannerInviteRole === 'planner' ? 'Planner access includes guests, planning, seating, messages, and event-day coordination.' : plannerInviteRole === 'coordinator' ? 'Coordinator access stays focused on live operations, check-in, messages, and day-of support.' : 'Read-only access is best for someone who needs visibility without editing anything.'}</p>
-                      <p className="text-xs text-text-tertiary">The couple keeps final ownership. This invite is for support, not a handoff of the whole wedding.</p>
+                      <p className="text-xs text-text-tertiary">The couple keeps final ownership. This is support access, not a handoff of the whole wedding, and persistence is still being hardened.</p>
                     </div>
 
                     {plannerInvite && (
                       <div className="rounded-xl border border-border-subtle bg-white p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-sm font-medium text-text-primary">Invite saved for {plannerInvite.name}</p>
+                            <p className="text-sm font-medium text-text-primary">Access setup saved for {plannerInvite.name}</p>
                             <p className="mt-1 text-xs text-text-secondary">{plannerInvite.email} · {plannerRoleOptions.find((option) => option.value === plannerInvite.role)?.label} · {plannerInvite.status === 'active' ? 'Active' : 'Pending'}</p>
                           </div>
                           <Badge variant={plannerInvite.status === 'active' ? 'success' : 'secondary'}>{plannerInvite.status === 'active' ? 'Active' : 'Pending'}</Badge>
