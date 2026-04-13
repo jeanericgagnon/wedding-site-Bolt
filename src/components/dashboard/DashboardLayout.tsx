@@ -170,7 +170,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
   const siteVisibilityLabel = useMemo(() => {
     if (siteIsPublished) return SITE_VISIBILITY_COPY.publishedStatus;
-    if (sitePrivacyMode === 'password_protected' || sitePrivacyMode === 'invite_only') return SITE_VISIBILITY_COPY.privatePreview;
+    if (sitePrivacyMode === 'password_protected') return 'Private preview (password)';
+    if (sitePrivacyMode === 'invite_only') return 'Private preview (link only)';
     return SITE_VISIBILITY_COPY.draftStatus;
   }, [siteIsPublished, sitePrivacyMode]);
 

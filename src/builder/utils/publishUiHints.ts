@@ -36,7 +36,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
       'If you are not collecting replies yet, remove RSVP calls to action first.',
     ];
   }
-  return ['Use Fix blockers to jump to the next thing to finish.'];
+  return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
 };
 
 export const getPublishCtaLabel = (isPublished: boolean): string =>
