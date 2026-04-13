@@ -85,6 +85,7 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInviteRole, setPlannerInviteRole] = useState<'planner' | 'coordinator' | 'viewer'>('planner');
   const [plannerInviteError, setPlannerInviteError] = useState<string | null>(null);
   const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
+  const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string }>>([]);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
@@ -213,6 +214,15 @@ export const DashboardSettings: React.FC = () => {
         const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
         setRsvpMealEnabled(mealCfg?.enabled ?? true);
         setRsvpMealOptions(Array.isArray(mealCfg?.options) ? mealCfg!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+
+        if ((data.id as string | undefined)) {
+          const { data: inviteRows } = await supabase
+            .from('wedding_site_collaborator_invites')
+            .select('id, invite_email, invite_name, role, status, invited_at')
+            .eq('wedding_site_id', data.id as string)
+            .order('invited_at', { ascending: false });
+          setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string }> | null) ?? []);
+        }
 
       } else {
         setAccountEmail(user.email ?? '');
@@ -865,6 +875,23 @@ export const DashboardSettings: React.FC = () => {
                       ) : (
                         <div className="rounded-xl border border-dashed border-border-subtle bg-white px-4 py-3 text-sm text-text-secondary">
                           No collaborator access setups saved yet.
+                        </div>
+                      )}
+
+                      {collaboratorInvites.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">DB-backed invites</p>
+                          {collaboratorInvites.map((invite) => (
+                            <div key={invite.id} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
+                                  <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {new Date(invite.invited_at).toLocaleDateString()}</p>
+                                </div>
+                                <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
