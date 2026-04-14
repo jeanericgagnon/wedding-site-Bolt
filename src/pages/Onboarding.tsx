@@ -7,6 +7,7 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
+import { createEmptyWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
@@ -19,18 +20,8 @@ export const Onboarding: React.FC = () => {
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [conversationIndex, setConversationIndex] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    partnerNames: '',
-    weddingDate: '',
-    venueName: '',
-    venueLocation: '',
-    story: '',
-    ceremonyTime: '',
-    receptionTime: '',
-    rsvpDeadline: '',
-    registryLink: '',
-    theme: 'garden',
-  });
+  const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
+  const formData = profileToOnboardingForm(weddingProfile);
 
   const conciergeQuestions: Array<{
     key: ConciergeQuestion;
@@ -164,7 +155,7 @@ export const Onboarding: React.FC = () => {
     try {
       const parsed = JSON.parse(saved) as { step?: OnboardingStep; conversationIndex?: number; formData?: typeof formData };
       if (parsed.formData) {
-        setFormData((prev) => ({ ...prev, ...parsed.formData }));
+        setWeddingProfile(onboardingFormToProfile({ ...formData, ...parsed.formData }));
       }
       if (typeof parsed.conversationIndex === 'number') {
         setConversationIndex(parsed.conversationIndex);
@@ -223,28 +214,32 @@ export const Onboarding: React.FC = () => {
   useEffect(() => {
     if (!isDemoMode) return;
 
-    setFormData((prev) => ({
-      ...prev,
-      partnerNames: prev.partnerNames || `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
-      weddingDate: prev.weddingDate || demoWeddingSite.wedding_date || '',
-      venueName: prev.venueName || demoWeddingSite.venue_name || '',
-      venueLocation: prev.venueLocation || demoWeddingSite.venue_location || '',
-      story: prev.story || 'We met on a rainy Tuesday and never stopped choosing each other.',
-      theme: prev.theme || getThemeHint(),
-      ceremonyTime: prev.ceremonyTime || '16:00',
-      receptionTime: prev.receptionTime || '18:00',
-      rsvpDeadline: prev.rsvpDeadline || '2026-05-25',
-      registryLink: prev.registryLink || 'https://www.zola.com/registry/alex-and-jordan',
+    const prevFormData = profileToOnboardingForm(weddingProfile);
+
+    setWeddingProfile(onboardingFormToProfile({
+      ...prevFormData,
+      partnerNames: prevFormData.partnerNames || `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
+      weddingDate: prevFormData.weddingDate || demoWeddingSite.wedding_date || '',
+      venueName: prevFormData.venueName || demoWeddingSite.venue_name || '',
+      venueLocation: prevFormData.venueLocation || demoWeddingSite.venue_location || '',
+      story: prevFormData.story || 'We met on a rainy Tuesday and never stopped choosing each other.',
+      theme: prevFormData.theme || getThemeHint(),
+      ceremonyTime: prevFormData.ceremonyTime || '16:00',
+      receptionTime: prevFormData.receptionTime || '18:00',
+      rsvpDeadline: prevFormData.rsvpDeadline || '2026-05-25',
+      registryLink: prevFormData.registryLink || 'https://www.zola.com/registry/alex-and-jordan',
     }));
-  }, [isDemoMode]);
+  }, [isDemoMode, weddingProfile]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setFormData((prev) => ({
-      ...prev,
+    const nextFormData = {
+      ...formData,
       [e.target.name]: e.target.value,
-    }));
+    };
+
+    setWeddingProfile(onboardingFormToProfile(nextFormData));
   };
 
   const handleQuickSetup = () => {
