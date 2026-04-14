@@ -22,6 +22,7 @@ export const Onboarding: React.FC = () => {
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [conversationIndex, setConversationIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
   const formData = profileToOnboardingForm(weddingProfile);
 
@@ -168,20 +169,26 @@ export const Onboarding: React.FC = () => {
   };
 
   useEffect(() => {
-    if (typeof window === 'undefined' || isDemoMode) return;
+    if (typeof window === 'undefined' || isDemoMode) {
+      setHasHydratedDraft(true);
+      return;
+    }
 
     const saved = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
-    if (!saved) return;
+    if (!saved) {
+      setHasHydratedDraft(true);
+      return;
+    }
 
     try {
       const parsed = JSON.parse(saved) as { step?: OnboardingStep; conversationIndex?: number; formData?: typeof formData; weddingProfile?: typeof weddingProfile };
-      let restoredLocalDraft = false;
       if (parsed.weddingProfile && isWeddingProfile(parsed.weddingProfile)) {
         setWeddingProfile(parsed.weddingProfile);
-        restoredLocalDraft = true;
       } else if (parsed.formData) {
-        hydrateProfile(parsed.formData);
-        restoredLocalDraft = true;
+        setWeddingProfile(onboardingFormToProfile({
+          ...profileToOnboardingForm(createEmptyWeddingProfile()),
+          ...parsed.formData,
+        }));
       }
       const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
       const resumeIndexValue = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_KEY);
@@ -206,11 +213,13 @@ export const Onboarding: React.FC = () => {
       }
     } catch {
       window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+    } finally {
+      setHasHydratedDraft(true);
     }
-  }, [isDemoMode, formData]);
+  }, [isDemoMode]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || isDemoMode || step === 'complete') return;
+    if (typeof window === 'undefined' || isDemoMode || step === 'complete' || !hasHydratedDraft) return;
 
     window.localStorage.setItem(
       ONBOARDING_STORAGE_KEY,
@@ -220,14 +229,14 @@ export const Onboarding: React.FC = () => {
         weddingProfile,
       })
     );
-  }, [conversationIndex, formData, isDemoMode, step, weddingProfile]);
+  }, [conversationIndex, hasHydratedDraft, isDemoMode, step, weddingProfile]);
 
   const clearSavedOnboardingDraft = () => {
     if (typeof window === 'undefined') return;
     window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
   };
 
-  const hydrateProfile = useCallback((partial: Partial<typeof formData>) => {
+  const hydrateProfile = useCallback((partial: Partial<ReturnType<typeof profileToOnboardingForm>>) => {
     const nextProfile = onboardingFormToProfile({
       ...profileToOnboardingForm(createEmptyWeddingProfile()),
       ...formData,
