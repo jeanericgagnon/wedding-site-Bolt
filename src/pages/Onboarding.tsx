@@ -333,7 +333,12 @@ export const Onboarding: React.FC = () => {
   );
 
   const renderQuickStep1 = () => (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <Card variant="bordered" padding="lg">
+        <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2">Step 1 of 3</p>
+        <h2 className="text-2xl font-bold text-text-primary">Start with the essentials</h2>
+        <p className="mt-2 text-text-secondary">We'll use the basics to create your first draft direction.</p>
+      </Card>
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex-1 h-2 bg-primary rounded-full" />
@@ -400,7 +405,12 @@ export const Onboarding: React.FC = () => {
   );
 
   const renderQuickStep2 = () => (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <Card variant="bordered" padding="lg">
+        <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2">Step 2 of 3</p>
+        <h2 className="text-2xl font-bold text-text-primary">Add the setting and personality</h2>
+        <p className="mt-2 text-text-secondary">This is enough for us to shape layout and content direction intelligently.</p>
+      </Card>
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex-1 h-2 bg-primary rounded-full" />
@@ -472,7 +482,12 @@ export const Onboarding: React.FC = () => {
   );
 
   const renderQuickStep3 = () => (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
+      <Card variant="bordered" padding="lg">
+        <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2">Step 3 of 3</p>
+        <h2 className="text-2xl font-bold text-text-primary">Finish the first draft inputs</h2>
+        <p className="mt-2 text-text-secondary">We'll use these details to create a strong starting point instead of dropping you into a blank builder.</p>
+      </Card>
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex-1 h-2 bg-primary rounded-full" />
