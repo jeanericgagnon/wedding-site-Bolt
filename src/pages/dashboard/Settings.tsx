@@ -11,7 +11,7 @@ import { LayoutConfigV1 } from '../../types/layoutConfig';
 import { regenerateLayout } from '../../lib/generateInitialLayout';
 import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
-import { PLANNER_ROLE_OPTIONS, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 
 
@@ -88,6 +88,7 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
   const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string }>>([]);
   const [creatingCollaboratorInvite, setCreatingCollaboratorInvite] = useState(false);
+  const [plannerInvitePermissions, setPlannerInvitePermissions] = useState<PlannerPermissionKey[]>(getPlannerPermissionPreset('planner'));
   const [revokingCollaboratorInviteId, setRevokingCollaboratorInviteId] = useState<string | null>(null);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [privacyCopied, setPrivacyCopied] = useState(false);
@@ -543,6 +544,10 @@ export const DashboardSettings: React.FC = () => {
 
   const publicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
   const plannerRoleOptions = PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner');
+
+  const togglePlannerPermission = (key: PlannerPermissionKey) => {
+    setPlannerInvitePermissions((prev) => prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]);
+  };
   const publicSiteQrUrl = publicSiteUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(publicSiteUrl)}`
     : '';
@@ -909,7 +914,11 @@ export const DashboardSettings: React.FC = () => {
                         <button
                           key={option.value}
                           type="button"
-                          onClick={() => setPlannerInviteRole(option.value as 'planner' | 'coordinator' | 'viewer')}
+                          onClick={() => {
+                            const nextRole = option.value as 'planner' | 'coordinator' | 'viewer';
+                            setPlannerInviteRole(nextRole);
+                            setPlannerInvitePermissions(getPlannerPermissionPreset(nextRole));
+                          }}
                           className={`rounded-xl border p-4 text-left transition-colors ${plannerInviteRole === option.value ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/35'}`}
                         >
                           <p className="text-sm font-medium text-text-primary">{option.label}</p>
@@ -929,10 +938,33 @@ export const DashboardSettings: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4 space-y-2">
-                      <p className="text-sm font-medium text-text-primary">Permissions preview</p>
-                      <p className="mt-1 text-sm text-text-secondary">{plannerInviteRole === 'planner' ? 'Planner access includes guests, planning, seating, messages, and event-day coordination.' : plannerInviteRole === 'coordinator' ? 'Coordinator access stays focused on live operations, check-in, messages, and day-of support.' : 'Read-only access is best for someone who needs visibility without editing anything.'}</p>
-                      <p className="text-xs text-text-tertiary">The couple keeps final ownership. This is support access, not a handoff of the whole wedding, and persistence is still being hardened.</p>
+                    <div className="rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4 space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">Permissions</p>
+                        <p className="mt-1 text-sm text-text-secondary">Start with a role preset, then tighten or expand access simply before you send the invite.</p>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {PLANNER_PERMISSION_GROUPS.map((permission) => {
+                          const checked = plannerInvitePermissions.includes(permission.key);
+                          return (
+                            <label key={permission.key} className={`rounded-xl border p-3 cursor-pointer transition-colors ${checked ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/30'}`}>
+                              <div className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => togglePlannerPermission(permission.key)}
+                                  className="mt-1 h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary/30"
+                                />
+                                <div>
+                                  <p className="text-sm font-medium text-text-primary">{permission.label}</p>
+                                  <p className="mt-1 text-xs text-text-secondary">{permission.description}</p>
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-text-tertiary">Billing and couple ownership stay with the owner. This selector is for support access only.</p>
                     </div>
 
                     {plannerInvite && (

@@ -121,3 +121,58 @@ export function writePlannerInvite(siteId: string | null | undefined, invite: Pl
     // ignore local storage failures
   }
 }
+
+export type PlannerPermissionKey =
+  | 'guests'
+  | 'messages'
+  | 'planning'
+  | 'budget'
+  | 'vendors'
+  | 'seating'
+  | 'timeline'
+  | 'coordinator'
+  | 'photos'
+  | 'registry'
+  | 'settings';
+
+export interface PlannerPermissionPreset {
+  role: Exclude<PlannerAccessRole, 'owner'>;
+  permissions: PlannerPermissionKey[];
+}
+
+export const PLANNER_PERMISSION_GROUPS: Array<{
+  key: PlannerPermissionKey;
+  label: string;
+  description: string;
+}> = [
+  { key: 'guests', label: 'Guests', description: 'View and manage guest list + RSVP data.' },
+  { key: 'messages', label: 'Messages', description: 'Draft and send guest communication.' },
+  { key: 'planning', label: 'Planning', description: 'Work inside planning boards and tasks.' },
+  { key: 'budget', label: 'Budget', description: 'Edit budget details.' },
+  { key: 'vendors', label: 'Vendors', description: 'Manage vendor details and contacts.' },
+  { key: 'seating', label: 'Seating', description: 'Edit seating charts and assignments.' },
+  { key: 'timeline', label: 'Timeline', description: 'Update itinerary and event schedule.' },
+  { key: 'coordinator', label: 'Day-of coordination', description: 'Use coordinator mode and live ops tools.' },
+  { key: 'photos', label: 'Photos & media', description: 'Manage uploads, vault, and media flows.' },
+  { key: 'registry', label: 'Registry', description: 'View or manage registry tools.' },
+  { key: 'settings', label: 'Settings', description: 'Access site settings (not billing).' },
+];
+
+export const PLANNER_PERMISSION_PRESETS: PlannerPermissionPreset[] = [
+  {
+    role: 'planner',
+    permissions: ['guests', 'messages', 'planning', 'budget', 'vendors', 'seating', 'timeline', 'coordinator', 'photos', 'registry', 'settings'],
+  },
+  {
+    role: 'coordinator',
+    permissions: ['guests', 'messages', 'planning', 'seating', 'timeline', 'coordinator', 'photos'],
+  },
+  {
+    role: 'viewer',
+    permissions: ['guests', 'messages', 'planning', 'timeline', 'photos', 'registry'],
+  },
+];
+
+export function getPlannerPermissionPreset(role: Exclude<PlannerAccessRole, 'owner'>): PlannerPermissionKey[] {
+  return PLANNER_PERMISSION_PRESETS.find((preset) => preset.role === role)?.permissions ?? [];
+}
