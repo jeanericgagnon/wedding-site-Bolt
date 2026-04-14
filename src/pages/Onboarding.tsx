@@ -7,7 +7,7 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
-import { createEmptyWeddingProfile, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
+import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
@@ -124,6 +124,7 @@ export const Onboarding: React.FC = () => {
   const completedSetupCount = setupChecklist.filter(item => item.done).length;
   const nextSetupItem = setupChecklist.find(item => !item.done) ?? null;
   const conversationProgress = Math.round(((conversationIndex + 1) / conciergeQuestions.length) * 100);
+  const readiness = evaluateWeddingProfileReadiness(weddingProfile);
 
   const draftMilestones = [
     {
@@ -628,6 +629,18 @@ export const Onboarding: React.FC = () => {
       <div className="h-2 rounded-full bg-border overflow-hidden mb-4">
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${conversationProgress}%` }} />
       </div>
+      <div className="mb-4 rounded-2xl border border-border bg-surface px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Draft readiness</p>
+            <p className="mt-1 text-sm font-medium text-text-primary">{readiness.hasEnoughToDraft ? 'Enough detail to draft' : 'Still missing a few critical inputs'}</p>
+          </div>
+          <span className="text-sm font-semibold text-primary">{readiness.score}%</span>
+        </div>
+        {readiness.missingCriticalFields.length > 0 && (
+          <p className="mt-2 text-xs text-text-secondary">Still needed: {readiness.missingCriticalFields.join(', ')}</p>
+        )}
+      </div>
       <div className="space-y-3">
         {draftMilestones.map((milestone) => (
           <div key={milestone.id} className="flex items-start gap-3">
@@ -722,7 +735,7 @@ export const Onboarding: React.FC = () => {
                 )}
               </div>
               <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
-                {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Saving...' : 'Save brief') : 'Continue'}
+                {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Saving...' : (readiness.hasEnoughToDraft ? 'Save brief' : 'Save draft anyway')) : 'Continue'}
                 {conversationIndex < conciergeQuestions.length - 1 && <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />}
               </Button>
             </div>
