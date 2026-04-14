@@ -292,7 +292,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: ownedSite, error: siteErr } = await supabase
         .from('wedding_sites')
-.select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+.select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -313,7 +313,7 @@ export const DashboardOverview: React.FC = () => {
         if (collaboratorLink?.wedding_site_id) {
           const { data: collaboratorSite, error: collaboratorSiteErr } = await supabase
             .from('wedding_sites')
-            .select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+            .select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
             .eq('id', collaboratorLink.wedding_site_id)
             .maybeSingle();
 
@@ -382,7 +382,7 @@ export const DashboardOverview: React.FC = () => {
         }));
 
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
-      const privacyMode = site?.privacy_mode === 'password_protected' || site?.privacy_mode === 'invite_only' ? site.privacy_mode : 'public';
+      const privacyMode = 'public';
       const hideFromSearch = siteJson?.hide_from_search === true;
       const isPublished = Boolean(
         site?.is_published === true ||
