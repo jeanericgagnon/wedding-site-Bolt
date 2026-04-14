@@ -399,6 +399,51 @@ export const Onboarding: React.FC = () => {
     </div>
   );
 
+  const getQuestionPreview = () => {
+    switch (currentQuestion?.key) {
+      case 'partnerNames':
+        return formData.partnerNames.trim()
+          ? `The homepage hero will introduce ${formData.partnerNames.trim()} right away.`
+          : 'The homepage hero will introduce both of you right away.';
+      case 'weddingDate':
+        return formData.weddingDate
+          ? `We’ll use ${formData.weddingDate} in the hero, schedule, and RSVP timing.`
+          : 'Your date will drive the hero, schedule framing, and RSVP timing.';
+      case 'venueLocation':
+        return formData.venueLocation.trim()
+          ? `Guests will immediately see ${formData.venueLocation.trim()} in the event details.`
+          : 'Location helps anchor travel details, schedule copy, and guest expectations.';
+      case 'venueName':
+        return formData.venueName.trim()
+          ? `${formData.venueName.trim()} will be called out in the event details and story sections.`
+          : 'Venue name helps the draft feel more real, but you can add it later.';
+      case 'theme':
+        return `The draft styling will lean ${formData.theme || 'garden'} so it feels intentional from the start.`;
+      case 'story':
+        return formData.story.trim()
+          ? 'Nice — we can turn that into warmer story copy instead of generic filler.'
+          : 'A few real lines here lets the story section feel human instead of templated.';
+      case 'ceremonyTime':
+        return formData.ceremonyTime
+          ? `Ceremony timing will show as ${formData.ceremonyTime} in the schedule draft.`
+          : 'Ceremony time helps us create a useful event schedule.';
+      case 'receptionTime':
+        return formData.receptionTime
+          ? `Reception timing will show as ${formData.receptionTime} in the schedule draft.`
+          : 'Reception time rounds out the guest-facing schedule.';
+      case 'rsvpDeadline':
+        return formData.rsvpDeadline
+          ? `Guests will see ${formData.rsvpDeadline} as the RSVP target.`
+          : 'RSVP timing helps the draft feel operational, not just pretty.';
+      case 'registryLink':
+        return formData.registryLink.trim()
+          ? 'Nice — registry can be live in the first draft instead of added later.'
+          : 'No problem if this is empty. Registry can stay optional for now.';
+      default:
+        return 'Each answer tightens the draft before you ever touch the builder.';
+    }
+  };
+
   const renderDraftProgress = () => (
     <Card variant="bordered" padding="lg">
       <div className="flex items-center justify-between gap-3 mb-4">
@@ -445,6 +490,10 @@ export const Onboarding: React.FC = () => {
               <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">{currentQuestion.label}</p>
               <h3 className="mt-2 text-2xl font-bold text-text-primary">{currentQuestion.prompt}</h3>
               {currentQuestion.helper && <p className="mt-2 text-text-secondary">{currentQuestion.helper}</p>}
+              <div className="mt-4 rounded-2xl bg-primary-light/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">What this shapes</p>
+                <p className="text-sm text-text-primary">{getQuestionPreview()}</p>
+              </div>
             </div>
 
             {currentQuestion.type === 'textarea' ? (
