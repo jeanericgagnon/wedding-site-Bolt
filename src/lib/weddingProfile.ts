@@ -103,3 +103,17 @@ export const onboardingFormToProfile = (formData: {
     },
   };
 };
+
+
+export const isWeddingProfile = (value: unknown): value is WeddingProfile => {
+  if (!value || typeof value !== 'object') return false;
+
+  const candidate = value as Record<string, unknown>;
+  return Boolean(
+    candidate.couple &&
+    candidate.event &&
+    candidate.story &&
+    candidate.registry &&
+    candidate.design
+  );
+};

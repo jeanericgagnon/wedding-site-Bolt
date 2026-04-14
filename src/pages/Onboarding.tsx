@@ -7,7 +7,7 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
-import { createEmptyWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
+import { createEmptyWeddingProfile, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
@@ -154,7 +154,7 @@ export const Onboarding: React.FC = () => {
 
     try {
       const parsed = JSON.parse(saved) as { step?: OnboardingStep; conversationIndex?: number; formData?: typeof formData; weddingProfile?: typeof weddingProfile };
-      if (parsed.weddingProfile) {
+      if (parsed.weddingProfile && isWeddingProfile(parsed.weddingProfile)) {
         setWeddingProfile(parsed.weddingProfile);
       } else if (parsed.formData) {
         setWeddingProfile(onboardingFormToProfile({ ...formData, ...parsed.formData }));
@@ -201,9 +201,14 @@ export const Onboarding: React.FC = () => {
 
     const { data } = await supabase
       .from('wedding_sites')
-      .select('id')
+      .select('id, onboarding_answers')
       .eq('user_id', user.id)
       .maybeSingle();
+
+    if (data?.onboarding_answers && isWeddingProfile(data.onboarding_answers)) {
+      setWeddingProfile(data.onboarding_answers);
+      clearSavedOnboardingDraft();
+    }
 
     if (data) {
       navigate('/dashboard');
