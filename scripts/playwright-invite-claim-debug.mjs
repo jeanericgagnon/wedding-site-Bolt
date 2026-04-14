@@ -11,7 +11,18 @@ if (!inviteUrl || !email || !password) {
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
-const out = { inviteUrl, steps: [] };
+const out = { inviteUrl, steps: [], console: [], requests: [] };
+
+page.on('console', async (msg) => {
+  out.console.push({ type: msg.type(), text: msg.text() });
+});
+
+page.on('response', async (response) => {
+  const url = response.url();
+  if (url.includes('/rest/v1/') || url.includes('/functions/v1/') || url.includes('/auth/v1/') || url.includes('/rpc/')) {
+    out.requests.push({ url, status: response.status(), ok: response.ok() });
+  }
+});
 
 async function step(name, fn) {
   try {
@@ -40,11 +51,13 @@ try {
   });
 
   await step('submit claim flow', async () => {
-    await page.getByRole('button', { name: /sign in and join team|sign in and accept invite|sign in/i }).click();
-    await page.waitForTimeout(5000);
+    await page.getByRole('button', { name: /sign in and join team/i }).click();
+    await page.waitForTimeout(8000);
     return {
       url: page.url(),
-      body: (await page.locator('body').innerText()).slice(0, 2000),
+      body: (await page.locator('body').innerText()).slice(0, 3000),
+      requests: out.requests.slice(-20),
+      console: out.console.slice(-20),
     };
   });
 } finally {

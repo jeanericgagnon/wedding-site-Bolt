@@ -100,15 +100,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         return;
       }
 
-      const resolvedState = resolveInviteValidationState(data);
-      if (resolvedState !== 'valid') {
-        setInviteInfo(null);
-        setInviteLookupDebug(`Invite status: ${data.status}${data.expires_at ? ` | expires ${data.expires_at}` : ''}`);
-        setInviteState(resolvedState);
-        return;
-      }
-
       let siteDetails: Pick<InviteInfo, 'site_slug' | 'couple_name_1' | 'couple_name_2'> = {};
+
       if (data.wedding_site_id) {
         const { data: siteData } = await supabase
           .from('wedding_sites')
@@ -132,10 +125,12 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         ...siteDetails,
       };
 
+      const resolvedState = resolveInviteValidationState(nextInviteInfo);
       setInviteInfo(nextInviteInfo);
-      setInviteState('valid');
       setSignInForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email }));
       setSignUpForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email, fullName: prev.fullName || nextInviteInfo.invite_name || '' }));
+      setInviteLookupDebug(`Invite loaded: status=${nextInviteInfo.status}`);
+      setInviteState(resolvedState);
     };
 
     void loadInvite();
@@ -318,6 +313,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   };
 
   const inviteIsClaimable = inviteState === 'valid' && !!inviteInfo;
+  const debugFlags = `inviteState=${inviteState} inviteInfo=${inviteInfo ? 'yes' : 'no'} authLoading=${authLoading} claiming=${claiming}`;
   const signedInWithInviteEmail = !!user && !!inviteInfo && isInviteEmailMatch(user.email, inviteInfo.invite_email);
   const signedInWithDifferentEmail = !!user && !!inviteInfo && !isInviteEmailMatch(user.email, inviteInfo.invite_email);
 
@@ -373,6 +369,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   <span>Checking invite…</span>
                 </div>
+              )}
+
+              {inviteLookupDebug && inviteState === 'valid' && (
+                <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>
               )}
 
               {inviteState === 'missing' && (
@@ -525,6 +525,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       ? 'Use the invited email and password below. We’ll attach access right away.'
                       : 'Create a lightweight collaborator account. This path skips pricing, demo mode, and owner setup.'}
                   </p>
+                  <div className="mt-4 text-[11px] text-text-tertiary">{debugFlags}</div>
                   {inviteIsClaimable && inviteInfo && (
                     <div className="mt-4 flex flex-wrap gap-2 text-xs text-text-secondary">
                       <span className="rounded-full bg-white px-3 py-1">{formatRole(inviteInfo.role)}</span>
@@ -551,7 +552,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       placeholder="planner@email.com"
                       required
                       autoComplete="email"
-                      disabled={!inviteIsClaimable || authLoading || claiming}
+                      disabled={authLoading || claiming}
                     />
                     <Input
                       label="Password"
@@ -561,9 +562,9 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       placeholder="Enter your password"
                       required
                       autoComplete="current-password"
-                      disabled={!inviteIsClaimable || authLoading || claiming}
+                      disabled={authLoading || claiming}
                     />
-                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={!inviteIsClaimable || authLoading || claiming}>
+                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={authLoading || claiming}>
                       {authLoading || claiming ? 'Signing in…' : 'Sign in and join team'}
                     </Button>
                   </form>
@@ -577,7 +578,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       placeholder="Your name"
                       required
                       autoComplete="name"
-                      disabled={!inviteIsClaimable || authLoading || claiming}
+                      disabled={authLoading || claiming}
                     />
                     <Input
                       label="Invited email"
@@ -587,7 +588,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       placeholder="planner@email.com"
                       required
                       autoComplete="email"
-                      disabled={!inviteIsClaimable || authLoading || claiming}
+                      disabled={authLoading || claiming}
                     />
                     <Input
                       label="Create password"
@@ -598,7 +599,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       required
                       autoComplete="new-password"
                       helperText="Minimum 8 characters"
-                      disabled={!inviteIsClaimable || authLoading || claiming}
+                      disabled={authLoading || claiming}
                     />
                     <Input
                       label="Confirm password"
@@ -608,9 +609,9 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       placeholder="Repeat your password"
                       required
                       autoComplete="new-password"
-                      disabled={!inviteIsClaimable || authLoading || claiming}
+                      disabled={authLoading || claiming}
                     />
-                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={!inviteIsClaimable || authLoading || claiming}>
+                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={authLoading || claiming}>
                       {authLoading || claiming ? 'Creating account…' : 'Create account and join team'}
                     </Button>
                   </form>
