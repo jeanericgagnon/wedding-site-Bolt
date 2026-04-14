@@ -269,3 +269,11 @@ export const mergeSiteContentWithProvenance = (
     },
   };
 };
+
+
+export const unwrapGeneratedFieldValue = <T>(value: unknown, fallback: T): T => {
+  if (value && typeof value === 'object' && 'value' in (value as Record<string, unknown>)) {
+    return ((value as { value?: T }).value ?? fallback) as T;
+  }
+  return (value as T) ?? fallback;
+};

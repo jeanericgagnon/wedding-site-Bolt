@@ -107,8 +107,48 @@ function resolveWeddingDateFromData(
 
 export const DashboardOverview: React.FC = () => {
 
-  async function refreshDraftFromBrief() {
-    if (!stats?.siteId || draftBrief.length === 0 || refreshingBrief) return;
+
+  async function markBuilderFieldAsUserEdited(fieldPath: string) {
+    if (!stats?.siteId) return;
+
+    const { data, error } = await supabase
+      .from('wedding_sites')
+      .select('site_json')
+      .eq('id', stats.siteId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const nextSiteJson = structuredClone((data?.site_json as Record<string, unknown> | null) ?? {});
+    const segments = fieldPath.split('.');
+    let cursor: Record<string, unknown> = nextSiteJson;
+
+    for (let i = 0; i < segments.length - 1; i += 1) {
+      const key = segments[i];
+      cursor[key] = ((cursor[key] as Record<string, unknown> | undefined) ?? {});
+      cursor = cursor[key] as Record<string, unknown>;
+    }
+
+    const leaf = segments[segments.length - 1];
+    const current = cursor[leaf];
+    if (current && typeof current === 'object' && 'value' in (current as Record<string, unknown>)) {
+      cursor[leaf] = {
+        ...(current as Record<string, unknown>),
+        source: 'user-edited',
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    const { error: updateError } = await supabase
+      .from('wedding_sites')
+      .update({ site_json: nextSiteJson })
+      .eq('id', stats.siteId);
+
+    if (updateError) throw updateError;
+    await loadStats();
+  }
+
+  async function refreshDraftFromBrief() {    if (!stats?.siteId || draftBrief.length === 0 || refreshingBrief) return;
 
     setRefreshingBrief(true);
     try {

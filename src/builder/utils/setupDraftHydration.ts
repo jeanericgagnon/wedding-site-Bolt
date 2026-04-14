@@ -1,4 +1,5 @@
 import type { SetupDraft } from '../../lib/setupDraft';
+import { unwrapGeneratedFieldValue } from '../../lib/weddingProfile';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
 export const hasMeaningfulSetupDraft = (draft: SetupDraft): boolean => {
@@ -57,8 +58,11 @@ export const applySetupDraftToWeddingData = (source: WeddingDataV1, draft: Setup
     ? [next.couple.partner1Name, next.couple.partner2Name].filter(Boolean).join(' & ')
     : 'We';
 
-  if (!next.couple.story?.trim()) {
+  const existingStory = unwrapGeneratedFieldValue<string>(next.couple.story, '');
+  if (!existingStory.trim()) {
     next.couple.story = `${coupleLabel} are so excited to celebrate with our favorite people.`;
+  } else {
+    next.couple.story = existingStory;
   }
 
   if (!next.travel.notes?.trim()) {
