@@ -117,3 +117,18 @@ export const isWeddingProfile = (value: unknown): value is WeddingProfile => {
     candidate.design
   );
 };
+
+
+export const getWeddingProfileSummary = (profile: WeddingProfile) => {
+  const lines = [
+    profile.couple.displayNames ? `Couple: ${profile.couple.displayNames}` : null,
+    profile.event.date ? `Date: ${profile.event.date}` : null,
+    profile.event.venueName ? `Venue: ${profile.event.venueName}` : null,
+    profile.event.venueLocation ? `Location: ${profile.event.venueLocation}` : null,
+    profile.design.theme ? `Theme: ${profile.design.theme}` : null,
+    profile.story.summary ? `Story: ${profile.story.summary}` : null,
+    profile.event.rsvpDeadline ? `RSVP by: ${profile.event.rsvpDeadline}` : null,
+  ].filter(Boolean);
+
+  return lines as string[];
+};

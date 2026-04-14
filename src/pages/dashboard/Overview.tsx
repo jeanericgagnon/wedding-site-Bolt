@@ -15,6 +15,7 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
