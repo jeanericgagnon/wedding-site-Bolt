@@ -39,7 +39,7 @@ const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 export const DashboardSettings: React.FC = () => {
   const navigate = useNavigate();
   const { user, isDemoMode, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'account' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
+  const [activeTab, setActiveTab] = useState<'account' | 'team' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
 
   const [coupleNames, setCoupleNames] = useState('');
   const [accountEmail, setAccountEmail] = useState('');
@@ -715,6 +715,7 @@ export const DashboardSettings: React.FC = () => {
 
   const tabs = [
     { id: 'account' as const, label: 'Account', icon: User },
+    { id: 'team' as const, label: 'Team Access', icon: Users },
     { id: 'site' as const, label: 'Site Settings', icon: Globe },
     { id: 'notifications' as const, label: 'Notifications', icon: Bell },
     { id: 'billing' as const, label: 'Billing', icon: CreditCard },
@@ -878,7 +879,7 @@ export const DashboardSettings: React.FC = () => {
               </>
             )}
 
-            {activeTab === 'site' && (
+            {activeTab === 'team' && (
               <>
 
                 <Card variant="bordered" padding="lg">
@@ -1051,6 +1052,11 @@ export const DashboardSettings: React.FC = () => {
                   </CardContent>
                 </Card>
 
+              </>
+            )}
+
+            {activeTab === 'site' && (
+              <>
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
                     <CardTitle>Site URL</CardTitle>
