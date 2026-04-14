@@ -51,6 +51,15 @@ export const Onboarding: React.FC = () => {
   ];
 
   const currentQuestion = conciergeQuestions[conversationIndex] ?? null;
+  const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'story', 'registryLink'];
+  const isCurrentQuestionOptional = currentQuestion ? optionalQuestionKeys.includes(currentQuestion.key) : false;
+
+  const getStepForIndex = (index: number): OnboardingStep => {
+    if (index < 4) return 'quick-1';
+    if (index < 7) return 'quick-2';
+    return 'quick-3';
+  };
+
 
   const setupChecklist = [
     {
@@ -59,8 +68,7 @@ export const Onboarding: React.FC = () => {
       done: Boolean(formData.partnerNames.trim()),
       actionLabel: 'Go',
       action: () => {
-        setConversationIndex(0);
-        setStep('quick-1' as OnboardingStep);
+        goToQuestionIndex(0);
       },
     },
     {
@@ -69,8 +77,7 @@ export const Onboarding: React.FC = () => {
       done: Boolean(formData.weddingDate),
       actionLabel: 'Go',
       action: () => {
-        setConversationIndex(0);
-        setStep('quick-1' as OnboardingStep);
+        goToQuestionIndex(0);
       },
     },
     {
@@ -79,8 +86,7 @@ export const Onboarding: React.FC = () => {
       done: Boolean(formData.venueName.trim() || formData.venueLocation.trim()),
       actionLabel: 'Go',
       action: () => {
-        setConversationIndex(0);
-        setStep('quick-1' as OnboardingStep);
+        goToQuestionIndex(0);
       },
     },
     {
@@ -89,8 +95,7 @@ export const Onboarding: React.FC = () => {
       done: Boolean(formData.registryLink.trim()),
       actionLabel: 'Go',
       action: () => {
-        setConversationIndex(9);
-        setStep('quick-3' as OnboardingStep);
+        goToQuestionIndex(9);
       },
     },
     {
@@ -99,8 +104,7 @@ export const Onboarding: React.FC = () => {
       done: step === 'complete',
       actionLabel: 'Finish setup',
       action: () => {
-        setConversationIndex(9);
-        setStep('quick-3' as OnboardingStep);
+        goToQuestionIndex(9);
       },
     },
   ];
@@ -176,8 +180,7 @@ export const Onboarding: React.FC = () => {
   };
 
   const handleQuickSetup = () => {
-    setConversationIndex(0);
-    setStep('quick-1');
+    goToQuestionIndex(0);
   };
 
   const handleOneClickStarter = async () => {
@@ -247,13 +250,14 @@ export const Onboarding: React.FC = () => {
     if (ok) navigate('/dashboard');
   };
 
+  const goToQuestionIndex = (index: number) => {
+    setConversationIndex(index);
+    setStep(getStepForIndex(index));
+  };
+
   const nextStep = async () => {
     if (conversationIndex < conciergeQuestions.length - 1) {
-      const nextIndex = conversationIndex + 1;
-      setConversationIndex(nextIndex);
-      if (nextIndex < 4) setStep('quick-1');
-      else if (nextIndex < 7) setStep('quick-2');
-      else setStep('quick-3');
+      goToQuestionIndex(conversationIndex + 1);
       return;
     }
 
@@ -416,13 +420,13 @@ export const Onboarding: React.FC = () => {
       case 'venueName':
         return formData.venueName.trim()
           ? `${formData.venueName.trim()} will be called out in the event details and story sections.`
-          : 'Venue name helps the draft feel more real, but you can add it later.';
+          : 'Venue name is optional right now. We can still build a solid draft without it.';
       case 'theme':
         return `The draft styling will lean ${formData.theme || 'garden'} so it feels intentional from the start.`;
       case 'story':
         return formData.story.trim()
           ? 'Nice — we can turn that into warmer story copy instead of generic filler.'
-          : 'A few real lines here lets the story section feel human instead of templated.';
+          : 'You can skip this for now and come back later if you just want momentum.';
       case 'ceremonyTime':
         return formData.ceremonyTime
           ? `Ceremony timing will show as ${formData.ceremonyTime} in the schedule draft.`
@@ -438,7 +442,7 @@ export const Onboarding: React.FC = () => {
       case 'registryLink':
         return formData.registryLink.trim()
           ? 'Nice — registry can be live in the first draft instead of added later.'
-          : 'No problem if this is empty. Registry can stay optional for now.';
+          : 'No problem if this is empty. Registry can stay optional and be added later.';
       default:
         return 'Each answer tightens the draft before you ever touch the builder.';
     }
@@ -515,14 +519,26 @@ export const Onboarding: React.FC = () => {
             )}
 
             <div className="flex justify-between pt-4">
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => setConversationIndex((prev) => Math.max(0, prev - 1))}
-                disabled={conversationIndex === 0}
-              >
-                Back
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => goToQuestionIndex(Math.max(0, conversationIndex - 1))}
+                  disabled={conversationIndex === 0}
+                >
+                  Back
+                </Button>
+                {isCurrentQuestionOptional && conversationIndex < conciergeQuestions.length - 1 && (
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => goToQuestionIndex(conversationIndex + 1)}
+                    disabled={loading}
+                  >
+                    Skip for now
+                  </Button>
+                )}
+              </div>
               <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
                 {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Creating...' : 'Create My Site') : 'Continue'}
                 {conversationIndex < conciergeQuestions.length - 1 && <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />}
