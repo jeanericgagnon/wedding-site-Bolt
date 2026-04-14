@@ -107,6 +107,29 @@ export const Onboarding: React.FC = () => {
 
   const completedSetupCount = setupChecklist.filter(item => item.done).length;
   const nextSetupItem = setupChecklist.find(item => !item.done) ?? null;
+  const conversationProgress = Math.round(((conversationIndex + 1) / conciergeQuestions.length) * 100);
+
+  const draftMilestones = [
+    {
+      id: 'foundation',
+      title: 'Foundation set',
+      description: 'Names, date, and location are giving the site a real identity.',
+      done: Boolean(formData.partnerNames.trim() && formData.weddingDate && formData.venueLocation.trim()),
+    },
+    {
+      id: 'look-and-feel',
+      title: 'Look and feel forming',
+      description: 'Theme and venue details are shaping the draft direction.',
+      done: Boolean(formData.theme && (formData.venueName.trim() || formData.venueLocation.trim())),
+    },
+    {
+      id: 'guest-ready',
+      title: 'Guest-ready details',
+      description: 'Schedule and RSVP details are enough to make the draft useful.',
+      done: Boolean(formData.ceremonyTime && formData.receptionTime && formData.rsvpDeadline),
+    },
+  ];
+
 
   const checkExistingSite = useCallback(async () => {
     if (!user) return;
@@ -376,6 +399,34 @@ export const Onboarding: React.FC = () => {
     </div>
   );
 
+  const renderDraftProgress = () => (
+    <Card variant="bordered" padding="lg">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Draft progress</p>
+          <h3 className="text-lg font-semibold text-text-primary">We’re shaping your first draft live</h3>
+        </div>
+        <span className="text-sm font-medium text-primary">{conversationProgress}%</span>
+      </div>
+      <div className="h-2 rounded-full bg-border overflow-hidden mb-4">
+        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${conversationProgress}%` }} />
+      </div>
+      <div className="space-y-3">
+        {draftMilestones.map((milestone) => (
+          <div key={milestone.id} className="flex items-start gap-3">
+            <div className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border ${milestone.done ? 'border-success bg-success-light text-success' : 'border-border bg-surface text-text-tertiary'}`}>
+              {milestone.done ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <span className="text-[10px] font-semibold">•</span>}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-text-primary">{milestone.title}</p>
+              <p className="text-xs text-text-secondary">{milestone.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+
   const renderQuestionCard = (stepLabel: string, title: string, subtitle: string) => (
     <div className="max-w-2xl mx-auto space-y-6">
       <Card variant="bordered" padding="lg">
@@ -385,6 +436,7 @@ export const Onboarding: React.FC = () => {
       </Card>
 
       {renderSetupChecklist()}
+      {renderDraftProgress()}
 
       <Card variant="default" padding="lg">
         {currentQuestion && (
