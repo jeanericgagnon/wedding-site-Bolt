@@ -48,6 +48,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimStep, setClaimStep] = useState<string | null>(null);
+  const [claimTrace, setClaimTrace] = useState<string[]>([]);
   const [inviteLookupDebug, setInviteLookupDebug] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [authLoading, setAuthLoading] = useState(false);
@@ -143,6 +144,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     };
   }, [token]);
 
+  const trace = (msg: string) => {
+    setClaimTrace((prev) => [...prev.slice(-11), `${new Date().toISOString()} ${msg}`]);
+  };
+
   const claimInvite = async (authUser: AuthUser) => {
     if (!inviteInfo?.id || !inviteInfo.wedding_site_id || !token) {
       throw new Error('Invite metadata is incomplete.');
@@ -151,18 +156,25 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       throw new Error(`This invite was sent to ${inviteInfo.invite_email}. Sign in with that email to claim access.`);
     }
 
+    trace('claimInvite:start');
     const rpcStart = Date.now();
+    trace('claimInvite:rpc:start');
     const { error: claimError } = await supabase.rpc('claim_collaborator_invite', {
       p_invite_token: token,
     });
 
-    if (claimError) throw new Error(`Could not claim invite: ${claimError.message}`);
+    if (claimError) {
+      trace(`claimInvite:rpc:error:${claimError.message}`);
+      throw new Error(`Could not claim invite: ${claimError.message}`);
+    }
 
     const rpcMs = Date.now() - rpcStart;
+    trace(`claimInvite:rpc:done:${rpcMs}ms`);
     setClaimStep(`Invite claimed in ${rpcMs}ms.`);
   };
 
   const finishClaim = async (authUser: AuthUser) => {
+    trace('finishClaim:start');
     setClaiming(true);
     setClaimError(null);
     setClaimStep('Preparing claim…');
@@ -171,11 +183,14 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     try {
       setClaimStep('Adding collaborator membership…');
       await claimInvite(authUser);
+      trace('finishClaim:accepted');
       setInviteState('accepted');
       setClaimStep('Invite accepted. Redirecting…');
       setClaimMessage('Invite accepted. Redirecting to your dashboard…');
+      trace(`finishClaim:navigate:${getCollaboratorRedirectPath(inviteInfo?.role)}`);
       navigate(getCollaboratorRedirectPath(inviteInfo?.role), { replace: true });
     } catch (err) {
+      trace(`finishClaim:error:${err instanceof Error ? err.message : 'unknown'}`);
       setClaimError(err instanceof Error ? err.message : 'Could not claim invite.');
       setClaimStep(null);
       setClaimMessage(null);
@@ -192,6 +207,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
     const alreadyAccepted = inviteInfo.status === 'accepted';
     if (alreadyAccepted) {
+      trace('finishClaim:accepted');
       setInviteState('accepted');
       setClaimMessage('Invite already accepted. Redirecting to your dashboard…');
       navigate(getCollaboratorRedirectPath(inviteInfo.role), { replace: true });
@@ -421,6 +437,11 @@ export const AcceptCollaboratorInvite: React.FC = () => {
               <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-text-primary">
                 <div>{claimMessage}</div>
                 {claimStep && <div className="mt-1 text-xs text-text-tertiary">Step: {claimStep}</div>}
+                {claimTrace.length > 0 && (
+                  <div className="mt-2 rounded border border-border-subtle bg-white/60 p-2 text-[11px] text-text-tertiary">
+                    {claimTrace.map((line, idx) => <div key={`${idx}-${line}`}>{line}</div>)}
+                  </div>
+                )}
               </div>
             )}
 
