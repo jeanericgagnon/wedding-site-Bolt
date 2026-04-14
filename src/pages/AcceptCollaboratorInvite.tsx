@@ -79,11 +79,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       setClaimMessage(null);
       setInviteLookupDebug(null);
 
-      const { data, error } = await supabase
+      const { data: inviteRows, error } = await supabase
         .from('wedding_site_collaborator_invites')
         .select('id, wedding_site_id, invite_email, invite_name, role, status, expires_at')
-        .eq('invite_token', token)
-        .maybeSingle();
+        .eq('invite_token', token);
 
       if (cancelled) return;
       if (error) {
@@ -93,9 +92,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         return;
       }
 
+      const data = Array.isArray(inviteRows) ? inviteRows[0] : null;
       if (!data) {
         setInviteInfo(null);
-        setInviteLookupDebug('No invite row matched this token.');
+        setInviteLookupDebug(`No invite row matched this token. rows=${Array.isArray(inviteRows) ? inviteRows.length : 'n/a'}`);
         setInviteState('invalid');
         return;
       }
