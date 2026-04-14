@@ -176,3 +176,18 @@ export const PLANNER_PERMISSION_PRESETS: PlannerPermissionPreset[] = [
 export function getPlannerPermissionPreset(role: Exclude<PlannerAccessRole, 'owner'>): PlannerPermissionKey[] {
   return PLANNER_PERMISSION_PRESETS.find((preset) => preset.role === role)?.permissions ?? [];
 }
+
+export function derivePlannerRoleFromPermissions(permissions: PlannerPermissionKey[] | null | undefined): PlannerAccessRole {
+  const set = new Set(permissions ?? []);
+  if (set.size === 0) return 'owner';
+  const plannerPreset = new Set(getPlannerPermissionPreset('planner'));
+  const coordinatorPreset = new Set(getPlannerPermissionPreset('coordinator'));
+  const viewerPreset = new Set(getPlannerPermissionPreset('viewer'));
+  const same = (a: Set<PlannerPermissionKey>, b: Set<PlannerPermissionKey>) => a.size === b.size && [...a].every((item) => b.has(item));
+  if (same(set, plannerPreset)) return 'planner';
+  if (same(set, coordinatorPreset)) return 'coordinator';
+  if (same(set, viewerPreset)) return 'viewer';
+  if (set.has('budget') || set.has('vendors') || set.has('settings')) return 'planner';
+  if (set.has('coordinator') || set.has('seating')) return 'coordinator';
+  return 'viewer';
+}
