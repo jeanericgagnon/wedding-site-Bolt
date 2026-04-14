@@ -116,6 +116,7 @@ export const DashboardOverview: React.FC = () => {
   const [interactiveLoading, setInteractiveLoading] = useState(false);
   const [recentSiteActivity, setRecentSiteActivity] = useState<BuilderRevision[]>([]);
   const [draftBrief, setDraftBrief] = useState<Array<{ id: string; label: string; value: string; questionKey: string }>>([]);
+  const [briefUpdatedAt, setBriefUpdatedAt] = useState<string | null>(null);
   const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
 
   useEffect(() => {
