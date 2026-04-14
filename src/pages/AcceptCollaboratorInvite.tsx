@@ -488,7 +488,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                   {claiming ? 'Claiming access…' : 'Redirecting…'}
                 </Button>
               </div>
-            ) : (
+            ) : inviteInfo ? (
               <>
                 <div className="mb-6 flex items-center gap-3">
                   <div className="rounded-2xl bg-primary/10 p-3 text-primary">
@@ -615,6 +615,11 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                   </form>
                 )}
               </>
+            ) : (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-text-primary">Invite unavailable</h2>
+                <p className="text-text-secondary">This invite has not loaded cleanly yet. Use a fresh invite link or ask for a new one.</p>
+              </div>
             )}
           </Card>
         </div>
