@@ -17,6 +17,7 @@
     "test:coverage": "vitest run --coverage",
     "smoke:web": "bash scripts/smoke-sites.sh",
     "test:e2e:live": "node scripts/playwright-live-smoke.mjs",
+    "test:e2e:invite-claim": "node scripts/playwright-invite-claim-debug.mjs",
     "smoke:rsvp": "node scripts/rsvp_smoke.js",
     "smoke:rsvp:strict": "node scripts/rsvp_smoke.js --strict",
     "smoke:csvmapper": "node scripts/smoke_csv_mapper_guard.js",
