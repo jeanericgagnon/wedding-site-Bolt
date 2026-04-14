@@ -562,7 +562,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       autoComplete="current-password"
                       disabled={authLoading || claiming}
                     />
-                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={!inviteInfo || authLoading || claiming}>
+                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={authLoading || claiming}>
                       {authLoading || claiming ? 'Signing in…' : 'Sign in and join team'}
                     </Button>
                   </form>
@@ -609,7 +609,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       autoComplete="new-password"
                       disabled={authLoading || claiming}
                     />
-                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={!inviteInfo || authLoading || claiming}>
+                    <Button type="submit" variant="accent" size="lg" fullWidth disabled={authLoading || claiming}>
                       {authLoading || claiming ? 'Creating account…' : 'Create account and join team'}
                     </Button>
                   </form>
