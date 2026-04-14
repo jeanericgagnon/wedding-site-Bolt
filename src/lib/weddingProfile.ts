@@ -185,3 +185,32 @@ export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
     },
   },
 });
+
+
+export const mergeSiteContentFromProfile = (
+  existingSiteJson: Record<string, unknown> | null,
+  profile: WeddingProfile
+) => {
+  const generated = buildSiteContentPatchFromProfile(profile);
+  const existingHome = ((existingSiteJson ?? {}).home as Record<string, unknown> | undefined) ?? {};
+  const generatedHome = generated.home as Record<string, unknown>;
+
+  return {
+    ...(existingSiteJson ?? {}),
+    home: {
+      ...existingHome,
+      hero: {
+        ...(((existingHome.hero as Record<string, unknown> | undefined) ?? {})),
+        ...((generatedHome.hero as Record<string, unknown> | undefined) ?? {}),
+      },
+      story: {
+        ...(((existingHome.story as Record<string, unknown> | undefined) ?? {})),
+        ...((generatedHome.story as Record<string, unknown> | undefined) ?? {}),
+      },
+      event: {
+        ...(((existingHome.event as Record<string, unknown> | undefined) ?? {})),
+        ...((generatedHome.event as Record<string, unknown> | undefined) ?? {}),
+      },
+    },
+  };
+};
