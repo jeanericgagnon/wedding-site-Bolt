@@ -1,26 +1,60 @@
+export type WeddingProfileFieldSource = 'user-confirmed' | 'ai-inferred' | 'generated' | 'imported' | 'unknown';
+
+export type WeddingProfileField<T> = {
+  value: T;
+  source: WeddingProfileFieldSource;
+  confidence?: number;
+  updatedAt?: string;
+  confirmedAt?: string;
+};
+
 export type WeddingProfile = {
   couple: {
     displayNames: string;
     partnerOne: string;
     partnerTwo: string;
+    storyTone: string;
   };
   event: {
     date: string;
+    timezone: string;
     venueName: string;
     venueLocation: string;
     ceremonyTime: string;
     receptionTime: string;
     rsvpDeadline: string;
   };
+  venue: {
+    city: string;
+    state: string;
+    country: string;
+  };
   story: {
     summary: string;
+    welcomeNote: string;
   };
   registry: {
     url: string;
+    status: 'missing' | 'linked';
   };
   design: {
     theme: string;
+    vibe: string;
   };
+  guestExperience: {
+    faqTone: string;
+    travelSupportLevel: 'minimal' | 'standard' | 'high';
+  };
+  meta: {
+    readinessScore: number;
+  };
+};
+
+export type WeddingProfileReadiness = {
+  score: number;
+  hasEnoughToDraft: boolean;
+  missingCriticalFields: string[];
+  missingRecommendedFields: string[];
 };
 
 export const createEmptyWeddingProfile = (): WeddingProfile => ({
@@ -28,25 +62,73 @@ export const createEmptyWeddingProfile = (): WeddingProfile => ({
     displayNames: '',
     partnerOne: '',
     partnerTwo: '',
+    storyTone: '',
   },
   event: {
     date: '',
+    timezone: 'America/Los_Angeles',
     venueName: '',
     venueLocation: '',
     ceremonyTime: '',
     receptionTime: '',
     rsvpDeadline: '',
   },
+  venue: {
+    city: '',
+    state: '',
+    country: '',
+  },
   story: {
     summary: '',
+    welcomeNote: '',
   },
   registry: {
     url: '',
+    status: 'missing',
   },
   design: {
     theme: 'garden',
+    vibe: '',
+  },
+  guestExperience: {
+    faqTone: '',
+    travelSupportLevel: 'minimal',
+  },
+  meta: {
+    readinessScore: 0,
   },
 });
+
+export const evaluateWeddingProfileReadiness = (profile: WeddingProfile): WeddingProfileReadiness => {
+  const missingCriticalFields: string[] = [];
+  const missingRecommendedFields: string[] = [];
+
+  if (!profile.couple.displayNames.trim()) missingCriticalFields.push('couple names');
+  if (!profile.event.date) missingCriticalFields.push('wedding date');
+  if (!profile.event.venueLocation.trim()) missingCriticalFields.push('venue location');
+
+  if (!profile.design.theme) missingRecommendedFields.push('theme');
+  if (!profile.story.summary.trim()) missingRecommendedFields.push('story summary');
+  if (!profile.event.ceremonyTime) missingRecommendedFields.push('ceremony time');
+  if (!profile.event.receptionTime) missingRecommendedFields.push('reception time');
+  if (!profile.event.rsvpDeadline) missingRecommendedFields.push('RSVP deadline');
+  if (!profile.registry.url.trim()) missingRecommendedFields.push('registry link');
+
+  const score = Math.max(
+    0,
+    Math.min(
+      100,
+      (3 - missingCriticalFields.length) * 20 + (5 - Math.min(missingRecommendedFields.length, 5)) * 8 + (profile.story.summary.trim() ? 10 : 0)
+    )
+  );
+
+  return {
+    score,
+    hasEnoughToDraft: missingCriticalFields.length === 0,
+    missingCriticalFields,
+    missingRecommendedFields,
+  };
+};
 
 export const profileToOnboardingForm = (profile: WeddingProfile) => ({
   partnerNames: profile.couple.displayNames,
@@ -78,30 +160,53 @@ export const onboardingFormToProfile = (formData: {
     .map((value) => value.trim())
     .filter(Boolean);
 
-  return {
+  const [city = '', state = ''] = formData.venueLocation.split(',').map((value) => value.trim());
+
+  const profile: WeddingProfile = {
     couple: {
       displayNames: formData.partnerNames,
       partnerOne,
       partnerTwo: partnerTwo || partnerOne,
+      storyTone: '',
     },
     event: {
       date: formData.weddingDate,
+      timezone: 'America/Los_Angeles',
       venueName: formData.venueName,
       venueLocation: formData.venueLocation,
       ceremonyTime: formData.ceremonyTime,
       receptionTime: formData.receptionTime,
       rsvpDeadline: formData.rsvpDeadline,
     },
+    venue: {
+      city,
+      state,
+      country: '',
+    },
     story: {
       summary: formData.story,
+      welcomeNote: '',
     },
     registry: {
       url: formData.registryLink,
+      status: formData.registryLink.trim() ? 'linked' : 'missing',
     },
     design: {
       theme: formData.theme,
+      vibe: '',
+    },
+    guestExperience: {
+      faqTone: '',
+      travelSupportLevel: 'minimal',
+    },
+    meta: {
+      readinessScore: 0,
     },
   };
+
+  const readiness = evaluateWeddingProfileReadiness(profile);
+  profile.meta.readinessScore = readiness.score;
+  return profile;
 };
 
 
@@ -114,7 +219,8 @@ export const isWeddingProfile = (value: unknown): value is WeddingProfile => {
     candidate.event &&
     candidate.story &&
     candidate.registry &&
-    candidate.design
+    candidate.design &&
+    candidate.meta
   );
 };
 
