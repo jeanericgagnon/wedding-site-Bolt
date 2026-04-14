@@ -43,10 +43,10 @@ BEGIN
     RAISE EXCEPTION 'Invite email mismatch';
   END IF;
 
-  INSERT INTO wedding_site_collaborators (wedding_site_id, user_id, role, invited_by)
-  VALUES (v_invite.wedding_site_id, auth.uid(), v_invite.role::collaborator_role, v_invite.invited_by)
+  INSERT INTO wedding_site_collaborators (wedding_site_id, user_id, role, invited_by, permissions)
+  VALUES (v_invite.wedding_site_id, auth.uid(), v_invite.role::collaborator_role, v_invite.invited_by, COALESCE(v_invite.permissions, '[]'::jsonb))
   ON CONFLICT (wedding_site_id, user_id)
-  DO UPDATE SET role = EXCLUDED.role, updated_at = now();
+  DO UPDATE SET role = EXCLUDED.role, permissions = EXCLUDED.permissions, updated_at = now();
 
   UPDATE wedding_site_collaborator_invites
   SET status = 'accepted',
