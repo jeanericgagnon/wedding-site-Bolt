@@ -196,7 +196,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!user || inviteState !== 'valid' || !inviteInfo) return;
+    if (!user || !inviteInfo) return;
     if (!isInviteEmailMatch(user.email, inviteInfo.invite_email)) return;
     if (claiming) return;
 
@@ -206,9 +206,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       setInviteState('accepted');
       setClaimMessage('Invite already accepted. Redirecting to your dashboard…');
       navigate(getCollaboratorRedirectPath(inviteInfo.role), { replace: true });
-      return;
     }
-  }, [user, inviteState, inviteInfo, claiming, navigate]);
+  }, [user, inviteInfo, claiming, navigate]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,7 +311,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     await signOut();
   };
 
-  const inviteIsClaimable = inviteState === 'valid' && !!inviteInfo;
+  const inviteIsClaimable = !!inviteInfo && inviteState !== 'missing' && inviteState !== 'invalid' && inviteState !== 'expired' && inviteState !== 'revoked';
   const debugFlags = `inviteState=${inviteState} inviteInfo=${inviteInfo ? 'yes' : 'no'} authLoading=${authLoading} claiming=${claiming}`;
   const signedInWithInviteEmail = !!user && !!inviteInfo && isInviteEmailMatch(user.email, inviteInfo.invite_email);
   const signedInWithDifferentEmail = !!user && !!inviteInfo && !isInviteEmailMatch(user.email, inviteInfo.invite_email);
