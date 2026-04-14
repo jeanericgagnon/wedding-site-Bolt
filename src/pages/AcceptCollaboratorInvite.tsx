@@ -190,8 +190,14 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     if (!isInviteEmailMatch(user.email, inviteInfo.invite_email)) return;
     if (claiming) return;
 
-    void finishClaim(user).catch(() => undefined);
-  }, [user, inviteState, inviteInfo, claiming]);
+    const alreadyAccepted = inviteInfo.status === 'accepted';
+    if (alreadyAccepted) {
+      setInviteState('accepted');
+      setClaimMessage('Invite already accepted. Redirecting to your dashboard…');
+      navigate(getCollaboratorRedirectPath(inviteInfo.role), { replace: true });
+      return;
+    }
+  }, [user, inviteState, inviteInfo, claiming, navigate]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
