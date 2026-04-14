@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { BuilderSectionInstance, BuilderSettingsField } from '../../types/builder/section';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
+import { markFieldAsUserEdited } from '../../lib/weddingProfile';
 import { getSectionManifest } from '../registry/sectionManifests';
 
 interface BuilderSectionFrameProps {
@@ -289,7 +290,7 @@ const InlineEditPanel: React.FC<{
   const handleChange = (key: string, value: string) => {
     dispatch(
       builderActions.updateSection(pageId, section.id, {
-        settings: { ...section.settings, [key]: value },
+        settings: { ...section.settings, [key]: markFieldAsUserEdited(value) },
       })
     );
   };

@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image, Plus, Trash2, Compass, Ruler } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
+import { markFieldAsUserEdited } from '../../lib/weddingProfile';
 import { selectSelectedSection, selectActivePage, selectActivePageSections } from '../state/builderSelectors';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionRail } from './BuilderSectionRail';
@@ -823,14 +824,14 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
   const handleUpdateImage = (index: number, patch: Partial<GalleryImage>) => {
     const updated = images.map((img, i) => i === index ? { ...img, ...patch } : img);
     dispatch(builderActions.updateSection(pageId, sectionId, {
-      settings: { ...currentSettings(), images: updated },
+      settings: { ...currentSettings(), images: markFieldAsUserEdited(updated) },
     }));
   };
 
   const handleRemoveImage = (index: number) => {
     const updated = images.filter((_, i) => i !== index);
     dispatch(builderActions.updateSection(pageId, sectionId, {
-      settings: { ...currentSettings(), images: updated },
+      settings: { ...currentSettings(), images: markFieldAsUserEdited(updated) },
     }));
   };
 
@@ -838,7 +839,7 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
     const newImg: GalleryImage = { id: String(Date.now()), url: '', alt: '', caption: '' };
     const updated = [...images, newImg];
     dispatch(builderActions.updateSection(pageId, sectionId, {
-      settings: { ...currentSettings(), images: updated },
+      settings: { ...currentSettings(), images: markFieldAsUserEdited(updated) },
     }));
     dispatch(builderActions.openImageArrayPicker(sectionId, updated.length - 1));
   };

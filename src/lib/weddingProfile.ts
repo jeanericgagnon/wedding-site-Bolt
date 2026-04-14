@@ -277,3 +277,13 @@ export const unwrapGeneratedFieldValue = <T>(value: unknown, fallback: T): T => 
   }
   return (value as T) ?? fallback;
 };
+
+
+export const markFieldAsUserEdited = (value: unknown) => {
+  const currentValue = unwrapGeneratedFieldValue(value, value);
+  return {
+    value: currentValue,
+    source: 'user-edited',
+    updatedAt: new Date().toISOString(),
+  };
+};
