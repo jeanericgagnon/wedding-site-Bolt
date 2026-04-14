@@ -144,37 +144,22 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   }, [token]);
 
   const claimInvite = async (authUser: AuthUser) => {
-    if (!inviteInfo?.id || !inviteInfo.wedding_site_id) {
+    if (!inviteInfo?.id || !inviteInfo.wedding_site_id || !token) {
       throw new Error('Invite metadata is incomplete.');
     }
     if (!isInviteEmailMatch(authUser.email, inviteInfo.invite_email)) {
       throw new Error(`This invite was sent to ${inviteInfo.invite_email}. Sign in with that email to claim access.`);
     }
 
-    const collaboratorStart = Date.now();
-    const { error: collaboratorError } = await supabase
-      .from('wedding_site_collaborators')
-      .upsert({
-        wedding_site_id: inviteInfo.wedding_site_id,
-        user_id: authUser.id,
-        role: inviteInfo.role,
-      }, { onConflict: 'wedding_site_id,user_id' });
+    const rpcStart = Date.now();
+    const { error: claimError } = await supabase.rpc('claim_collaborator_invite', {
+      p_invite_token: token,
+    });
 
-    if (collaboratorError) throw new Error(`Could not add collaborator membership: ${collaboratorError.message}`);
+    if (claimError) throw new Error(`Could not claim invite: ${claimError.message}`);
 
-    const collaboratorMs = Date.now() - collaboratorStart;
-    setClaimStep(`Collaborator membership added (${collaboratorMs}ms). Marking invite accepted…`);
-
-    const inviteUpdateStart = Date.now();
-    const { error: inviteError } = await supabase
-      .from('wedding_site_collaborator_invites')
-      .update({ status: 'accepted', accepted_user_id: authUser.id, accepted_at: new Date().toISOString() })
-      .eq('id', inviteInfo.id);
-
-    if (inviteError) throw new Error(`Could not mark invite accepted: ${inviteError.message}`);
-
-    const inviteUpdateMs = Date.now() - inviteUpdateStart;
-    setClaimStep(`Invite accepted in ${inviteUpdateMs}ms.`);
+    const rpcMs = Date.now() - rpcStart;
+    setClaimStep(`Invite claimed in ${rpcMs}ms.`);
   };
 
   const finishClaim = async (authUser: AuthUser) => {
