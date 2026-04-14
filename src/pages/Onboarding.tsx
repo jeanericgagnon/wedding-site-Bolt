@@ -231,7 +231,7 @@ export const Onboarding: React.FC = () => {
   };
 
   const checkExistingSite = useCallback(async () => {
-    if (!user) return;
+    if (!user) return null;
 
     const { data } = await supabase
       .from('wedding_sites')
@@ -244,13 +244,11 @@ export const Onboarding: React.FC = () => {
       clearSavedOnboardingDraft();
     }
 
-    if (data) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
+    return data;
+  }, [user]);
 
   useEffect(() => {
-    checkExistingSite();
+    void checkExistingSite();
   }, [checkExistingSite]);
 
   useEffect(() => {
@@ -314,6 +312,28 @@ export const Onboarding: React.FC = () => {
       clearSavedOnboardingDraft();
       navigate('/dashboard/builder');
     }
+  };
+
+  const saveWeddingProfileToExistingSite = async () => {
+    if (!user || isDemoMode) return false;
+
+    const existingSite = await checkExistingSite();
+    if (!existingSite?.id) return false;
+
+    const { error } = await supabase
+      .from('wedding_sites')
+      .update({ onboarding_answers: weddingProfile })
+      .eq('id', existingSite.id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      alert('Failed to update onboarding brief. Please try again.');
+      return false;
+    }
+
+    clearSavedOnboardingDraft();
+    navigate('/dashboard');
+    return true;
   };
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
@@ -396,6 +416,13 @@ export const Onboarding: React.FC = () => {
     }
 
     setLoading(true);
+
+    const existingSite = await checkExistingSite();
+    if (existingSite?.id) {
+      const updated = await saveWeddingProfileToExistingSite();
+      setLoading(false);
+      if (updated) return;
+    }
 
     const names = formData.partnerNames.split('&').map(n => n.trim());
     const firstName = names[0] || '';
@@ -694,7 +721,7 @@ export const Onboarding: React.FC = () => {
                 )}
               </div>
               <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
-                {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Creating...' : 'Create My Site') : 'Continue'}
+                {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Saving...' : 'Save brief') : 'Continue'}
                 {conversationIndex < conciergeQuestions.length - 1 && <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />}
               </Button>
             </div>
