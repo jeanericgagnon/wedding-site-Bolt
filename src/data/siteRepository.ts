@@ -30,7 +30,7 @@ export const siteRepository = {
 
     const bySlug = await supabase
       .from('wedding_sites')
-      .select('id, site_slug, site_url, is_published, site_json, published_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id, wedding_data, layout_config')
+      .select('id, site_slug, site_url, is_published, site_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id, wedding_data, layout_config')
       .eq('site_slug', slug)
       .maybeSingle();
 
@@ -41,7 +41,7 @@ export const siteRepository = {
     for (const candidate of urlCandidates) {
       const bySiteUrl = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, site_url, is_published, site_json, published_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id, wedding_data, layout_config')
+        .select('id, site_slug, site_url, is_published, site_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id, wedding_data, layout_config')
         .eq('site_url', candidate)
         .maybeSingle();
 
