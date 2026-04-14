@@ -135,6 +135,31 @@ export const Onboarding: React.FC = () => {
   ];
 
 
+  const derivedNames = formData.partnerNames.split('&').map((name) => name.trim()).filter(Boolean);
+  const suggestedSiteSlug = derivedNames.length
+    ? derivedNames.map((name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '')).filter(Boolean).join('and')
+    : (user?.email?.split('@')[0] || 'my-wedding');
+
+  const getThemeHint = () => {
+    if (formData.venueLocation.toLowerCase().includes('beach') || formData.venueLocation.toLowerCase().includes('coast')) {
+      return 'coastal';
+    }
+    if (formData.venueLocation.toLowerCase().includes('desert') || formData.venueLocation.toLowerCase().includes('scottsdale')) {
+      return 'desert';
+    }
+    if (formData.venueLocation.toLowerCase().includes('garden') || formData.venueName.toLowerCase().includes('garden')) {
+      return 'garden';
+    }
+    return formData.theme;
+  };
+
+  const getStoryPrompt = () => {
+    if (derivedNames.length >= 2) {
+      return `Tell guests a little about ${derivedNames[0]} and ${derivedNames[1]}.`; 
+    }
+    return 'Tell guests how you met, what this season feels like, or what this day means to you.';
+  };
+
   const checkExistingSite = useCallback(async () => {
     if (!user) return;
 
@@ -163,6 +188,7 @@ export const Onboarding: React.FC = () => {
       venueName: prev.venueName || demoWeddingSite.venue_name || '',
       venueLocation: prev.venueLocation || demoWeddingSite.venue_location || '',
       story: prev.story || 'We met on a rainy Tuesday and never stopped choosing each other.',
+      theme: prev.theme || getThemeHint(),
       ceremonyTime: prev.ceremonyTime || '16:00',
       receptionTime: prev.receptionTime || '18:00',
       rsvpDeadline: prev.rsvpDeadline || '2026-05-25',
@@ -407,7 +433,7 @@ export const Onboarding: React.FC = () => {
     switch (currentQuestion?.key) {
       case 'partnerNames':
         return formData.partnerNames.trim()
-          ? `The homepage hero will introduce ${formData.partnerNames.trim()} right away.`
+          ? `The homepage hero will introduce ${formData.partnerNames.trim()} right away, and your suggested URL becomes ${suggestedSiteSlug}.dayof.love.`
           : 'The homepage hero will introduce both of you right away.';
       case 'weddingDate':
         return formData.weddingDate
@@ -422,11 +448,11 @@ export const Onboarding: React.FC = () => {
           ? `${formData.venueName.trim()} will be called out in the event details and story sections.`
           : 'Venue name is optional right now. We can still build a solid draft without it.';
       case 'theme':
-        return `The draft styling will lean ${formData.theme || 'garden'} so it feels intentional from the start.`;
+        return `The draft styling will lean ${formData.theme || 'garden'} so it feels intentional from the start. Right now the system would nudge toward ${getThemeHint()}.`;
       case 'story':
         return formData.story.trim()
           ? 'Nice — we can turn that into warmer story copy instead of generic filler.'
-          : 'You can skip this for now and come back later if you just want momentum.';
+          : `You can skip this for now, or use a quick starting angle like: ${getStoryPrompt()}`;
       case 'ceremonyTime':
         return formData.ceremonyTime
           ? `Ceremony timing will show as ${formData.ceremonyTime} in the schedule draft.`
@@ -494,16 +520,30 @@ export const Onboarding: React.FC = () => {
               <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">{currentQuestion.label}</p>
               <h3 className="mt-2 text-2xl font-bold text-text-primary">{currentQuestion.prompt}</h3>
               {currentQuestion.helper && <p className="mt-2 text-text-secondary">{currentQuestion.helper}</p>}
-              <div className="mt-4 rounded-2xl bg-primary-light/60 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">What this shapes</p>
-                <p className="text-sm text-text-primary">{getQuestionPreview()}</p>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-2xl bg-primary-light/60 px-4 py-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">What this shapes</p>
+                  <p className="text-sm text-text-primary">{getQuestionPreview()}</p>
+                </div>
+                {currentQuestion.key === 'partnerNames' && (
+                  <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Suggested URL</p>
+                    <p className="text-sm font-medium text-text-primary">{suggestedSiteSlug}.dayof.love</p>
+                  </div>
+                )}
+                {currentQuestion.key === 'theme' && getThemeHint() !== formData.theme && (
+                  <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Smart default</p>
+                    <p className="text-sm text-text-primary">Based on the venue details so far, <span className="font-medium">{getThemeHint()}</span> looks like the best starting direction.</p>
+                  </div>
+                )}
               </div>
             </div>
 
             {currentQuestion.type === 'textarea' ? (
               <Textarea
                 name={currentQuestion.key}
-                placeholder={currentQuestion.placeholder || ''}
+                placeholder={currentQuestion.key === 'story' ? getStoryPrompt() : (currentQuestion.placeholder || '')}
                 value={formData[currentQuestion.key]}
                 onChange={handleChange}
                 rows={5}
