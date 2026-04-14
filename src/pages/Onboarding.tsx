@@ -13,6 +13,7 @@ type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
+const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -53,6 +54,23 @@ export const Onboarding: React.FC = () => {
     return 'quick-3';
   };
 
+  const getFirstIncompleteQuestionIndex = () => {
+    const checks = [
+      !formData.partnerNames.trim(),
+      !formData.weddingDate,
+      !formData.venueLocation.trim(),
+      !formData.venueName.trim(),
+      !formData.theme,
+      !formData.story.trim(),
+      !formData.ceremonyTime,
+      !formData.receptionTime,
+      !formData.rsvpDeadline,
+      !formData.registryLink.trim(),
+    ];
+
+    const firstIncomplete = checks.findIndex(Boolean);
+    return firstIncomplete === -1 ? conciergeQuestions.length - 1 : firstIncomplete;
+  };
 
   const setupChecklist = [
     {
@@ -159,7 +177,13 @@ export const Onboarding: React.FC = () => {
       } else if (parsed.formData) {
         setWeddingProfile(onboardingFormToProfile({ ...formData, ...parsed.formData }));
       }
-      if (typeof parsed.conversationIndex === 'number') {
+      const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
+      if (resumeHint === 'first-incomplete') {
+        const resumeIndex = getFirstIncompleteQuestionIndex();
+        setConversationIndex(resumeIndex);
+        setStep(getStepForIndex(resumeIndex));
+        window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
+      } else if (typeof parsed.conversationIndex === 'number') {
         setConversationIndex(parsed.conversationIndex);
         setStep(getStepForIndex(parsed.conversationIndex));
       } else if (parsed.step && parsed.step !== 'complete') {
