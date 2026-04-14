@@ -39,7 +39,7 @@ BEGIN
     RAISE EXCEPTION 'Invite expired';
   END IF;
 
-  IF lower(coalesce(v_invite.invite_email, '')) <> lower(coalesce((auth.jwt() ->> 'email')::text, '')) THEN
+  IF lower(coalesce(v_invite.invite_email, '')) <> lower(coalesce((SELECT email FROM auth.users WHERE id = auth.uid()), '')) THEN
     RAISE EXCEPTION 'Invite email mismatch';
   END IF;
 
