@@ -175,10 +175,13 @@ export const Onboarding: React.FC = () => {
 
     try {
       const parsed = JSON.parse(saved) as { step?: OnboardingStep; conversationIndex?: number; formData?: typeof formData; weddingProfile?: typeof weddingProfile };
+      let restoredLocalDraft = false;
       if (parsed.weddingProfile && isWeddingProfile(parsed.weddingProfile)) {
         setWeddingProfile(parsed.weddingProfile);
+        restoredLocalDraft = true;
       } else if (parsed.formData) {
         hydrateProfile(parsed.formData);
+        restoredLocalDraft = true;
       }
       const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
       const resumeIndexValue = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_KEY);
@@ -255,10 +258,12 @@ export const Onboarding: React.FC = () => {
 
   useEffect(() => {
     void (async () => {
+      const hasLocalDraft = typeof window !== 'undefined' && Boolean(window.localStorage.getItem(ONBOARDING_STORAGE_KEY));
+      if (hasLocalDraft) return;
+
       const data = await fetchExistingSite();
       if (data?.onboarding_answers && isWeddingProfile(data.onboarding_answers)) {
         setWeddingProfile(data.onboarding_answers);
-        clearSavedOnboardingDraft();
       }
     })();
   }, [fetchExistingSite]);
