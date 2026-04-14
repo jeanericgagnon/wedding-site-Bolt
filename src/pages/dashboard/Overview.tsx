@@ -15,7 +15,7 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
+import { buildDraftSitePatchFromProfile, buildSiteContentPatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -122,9 +122,13 @@ export const DashboardOverview: React.FC = () => {
       if (!isWeddingProfile(data?.onboarding_answers)) throw new Error('No saved brief found');
 
       const patch = buildDraftSitePatchFromProfile(data.onboarding_answers);
+      const contentPatch = buildSiteContentPatchFromProfile(data.onboarding_answers);
       const { error: updateError } = await supabase
         .from('wedding_sites')
-        .update(patch)
+        .update({
+          ...patch,
+          site_json: contentPatch,
+        })
         .eq('id', stats.siteId);
 
       if (updateError) throw updateError;

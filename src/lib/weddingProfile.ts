@@ -160,3 +160,28 @@ export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
   venue_name: profile.event.venueName || null,
   wedding_location: profile.event.venueLocation || null,
 });
+
+
+export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
+  home: {
+    hero: {
+      title: profile.couple.displayNames || 'Our Wedding',
+      subtitle: profile.event.date
+        ? `Join us on ${profile.event.date}${profile.event.venueLocation ? ` in ${profile.event.venueLocation}` : ''}`
+        : 'Celebrate with us',
+    },
+    story: {
+      title: 'Our Story',
+      content: profile.story.summary || 'We are so excited to celebrate with the people we love most.',
+    },
+    event: {
+      title: 'Wedding Details',
+      date: profile.event.date || '',
+      venueName: profile.event.venueName || '',
+      venueLocation: profile.event.venueLocation || '',
+      ceremonyTime: profile.event.ceremonyTime || '',
+      receptionTime: profile.event.receptionTime || '',
+      rsvpDeadline: profile.event.rsvpDeadline || '',
+    },
+  },
+});
