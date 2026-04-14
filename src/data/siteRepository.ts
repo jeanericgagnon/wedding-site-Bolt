@@ -30,7 +30,7 @@ export const siteRepository = {
 
     const bySlug = await supabase
       .from('wedding_sites')
-      .select('id, site_slug, site_url, is_published, privacy_mode, site_password_hash, guest_access_token, hide_from_search, default_language, site_json, published_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id')
+      .select('id, site_slug, site_url, is_published, site_password_hash, guest_access_token, hide_from_search, default_language, site_json, published_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id')
       .eq('site_slug', slug)
       .maybeSingle();
 
@@ -52,7 +52,7 @@ export const siteRepository = {
     // Last-pass fallback for legacy rows that stored full URLs with extra path/query/trailing slash.
     const fuzzy = await supabase
       .from('wedding_sites')
-      .select('id, site_slug, site_url, is_published, privacy_mode, site_password_hash, guest_access_token, hide_from_search, default_language, site_json, published_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id')
+      .select('id, site_slug, site_url, is_published, site_password_hash, guest_access_token, hide_from_search, default_language, site_json, published_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id')
       .ilike('site_url', `%${slug}%`)
       .limit(20);
 
