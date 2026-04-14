@@ -22,9 +22,62 @@ export type OnboardingSessionState = {
   askedQuestions: string[];
   confirmedFields: string[];
   unresolvedConflicts: Array<{ path: string; currentValue: string; nextValue: string }>;
+  suggestedPrompt: string | null;
+  confidence: number;
 };
 
 const normalize = (value: string) => value.trim().toLowerCase();
+
+
+
+const NEED_TO_QUESTION_KEY: Record<string, string> = {
+  'couple names': 'partnerNames',
+  'wedding date': 'weddingDate',
+  'venue location': 'venueLocation',
+  'venue name': 'venueName',
+  'theme': 'theme',
+  'story summary': 'story',
+  'ceremony time': 'ceremonyTime',
+  'reception time': 'receptionTime',
+  'rsvp deadline': 'rsvpDeadline',
+  'registry link': 'registryLink',
+};
+
+const QUESTION_KEY_BY_PATH: Record<string, string> = {
+  'couple.displayNames': 'partnerNames',
+  'event.date': 'weddingDate',
+  'event.venueLocation': 'venueLocation',
+  'event.venueName': 'venueName',
+  'design.theme': 'theme',
+  'story.summary': 'story',
+  'event.ceremonyTime': 'ceremonyTime',
+  'event.receptionTime': 'receptionTime',
+  'event.rsvpDeadline': 'rsvpDeadline',
+  'registry.url': 'registryLink',
+};
+
+const PROMPT_BY_QUESTION_KEY: Record<string, string> = {
+  partnerNames: 'What names should we put on the site?',
+  weddingDate: 'What date are you getting married?',
+  venueLocation: 'Where is the wedding happening?',
+  venueName: 'Do you already know the venue name?',
+  theme: 'What vibe should the site lean toward?',
+  story: 'Anything you want us to know about your story?',
+  ceremonyTime: 'What time does the ceremony start?',
+  receptionTime: 'What time does the reception start?',
+  rsvpDeadline: 'When should guests RSVP by?',
+  registryLink: 'Do you already have a registry link?',
+};
+
+const getQuestionKeyFromNeed = (need: string): string | null => {
+  return NEED_TO_QUESTION_KEY[need.toLowerCase()] ?? null;
+};
+
+const getSuggestedPrompt = (questionKey: string | null) => {
+  if (!questionKey) return null;
+  return PROMPT_BY_QUESTION_KEY[questionKey] ?? null;
+};
+
 
 const getProfileString = (profile: WeddingProfile, path: string): string => {
   const value = path.split('.').reduce<unknown>((current, key) => {
@@ -111,7 +164,8 @@ export const createOnboardingSessionState = (
   askedQuestions: string[] = []
 ): OnboardingSessionState => {
   const readiness = evaluateWeddingProfileReadiness(profile);
-  const nextQuestionKey = readiness.missingCriticalFields[0] ?? readiness.missingRecommendedFields[0] ?? null;
+  const nextNeed = readiness.missingCriticalFields[0] ?? readiness.missingRecommendedFields[0] ?? null;
+  const nextQuestionKey = getQuestionKeyFromNeed(nextNeed ?? '');
 
   return {
     profile,
@@ -125,6 +179,8 @@ export const createOnboardingSessionState = (
     askedQuestions,
     confirmedFields: [],
     unresolvedConflicts: [],
+    suggestedPrompt: getSuggestedPrompt(nextQuestionKey),
+    confidence: readiness.hasEnoughToDraft ? 0.9 : 0.45,
   };
 };
 
@@ -136,6 +192,9 @@ export const applyOnboardingInput = (
   const nextProfile = mergeProfile(session.profile, extraction.updates);
   const readiness = evaluateWeddingProfileReadiness(nextProfile);
 
+  const nextNeed = extraction.conflicts[0]?.path ?? readiness.missingCriticalFields[0] ?? readiness.missingRecommendedFields[0] ?? null;
+  const nextQuestionKey = extraction.conflicts[0]?.path ? QUESTION_KEY_BY_PATH[extraction.conflicts[0].path] ?? extraction.conflicts[0].path : getQuestionKeyFromNeed(nextNeed ?? '');
+
   return {
     profile: nextProfile,
     readiness,
@@ -146,9 +205,11 @@ export const applyOnboardingInput = (
         : readiness.hasEnoughToDraft
           ? 'offer-draft'
           : 'collect-recommended-field',
-    nextQuestionKey: extraction.conflicts[0]?.path ?? readiness.missingCriticalFields[0] ?? readiness.missingRecommendedFields[0] ?? null,
-    askedQuestions: session.askedQuestions,
+    nextQuestionKey,
+    askedQuestions: nextQuestionKey ? [...session.askedQuestions, nextQuestionKey] : session.askedQuestions,
     confirmedFields: session.confirmedFields,
     unresolvedConflicts: extraction.conflicts,
+    suggestedPrompt: getSuggestedPrompt(nextQuestionKey),
+    confidence: extraction.conflicts.length > 0 ? 0.25 : readiness.hasEnoughToDraft ? 0.9 : 0.6,
   };
 };

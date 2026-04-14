@@ -23,3 +23,22 @@ describe('aiOnboarding', () => {
     expect(session.readiness.hasEnoughToDraft).toBe(true);
   });
 });
+
+
+it('suggests the next critical prompt for sparse profiles', () => {
+  const session = createOnboardingSessionState(createEmptyWeddingProfile());
+  expect(session.suggestedPrompt).toBeTruthy();
+  expect(session.nextQuestionKey).toBe('partnerNames');
+});
+
+it('surfaces conflict intent when a conflicting wedding date is provided', () => {
+  const seeded = createOnboardingSessionState({
+    ...createEmptyWeddingProfile(),
+    couple: { ...createEmptyWeddingProfile().couple, displayNames: 'Alex & Jordan', partnerOne: 'Alex', partnerTwo: 'Jordan' },
+    event: { ...createEmptyWeddingProfile().event, date: '2027-06-12', venueLocation: 'San Diego, CA' },
+    meta: { readinessScore: 60 },
+  });
+  const next = applyOnboardingInput(seeded, '2027-07-01');
+  expect(next.currentIntent).toBe('confirm-conflict');
+  expect(next.unresolvedConflicts.length).toBeGreaterThan(0);
+});
