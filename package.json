@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "smoke:web": "bash scripts/smoke-sites.sh",
+    "test:e2e:live": "node scripts/playwright-live-smoke.mjs",
     "smoke:rsvp": "node scripts/rsvp_smoke.js",
     "smoke:rsvp:strict": "node scripts/rsvp_smoke.js --strict",
     "smoke:csvmapper": "node scripts/smoke_csv_mapper_guard.js",
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.5",
