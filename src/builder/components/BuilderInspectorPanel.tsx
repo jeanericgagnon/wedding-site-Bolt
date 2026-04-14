@@ -889,15 +889,15 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
             <div className="p-2 space-y-1.5">
               <input
                 type="text"
-                value={img.alt}
-                onChange={e => handleUpdateImage(i, { alt: e.target.value })}
+                value={readBuilderValue(img.alt as string | { value: string } | undefined, '')}
+                onChange={e => handleUpdateImage(i, { alt: markFieldAsUserEdited(e.target.value) as unknown as string })}
                 placeholder="Describe the image"
                 className="w-full border border-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
               />
               <input
                 type="text"
-                value={img.caption}
-                onChange={e => handleUpdateImage(i, { caption: e.target.value })}
+                value={readBuilderValue(img.caption as string | { value: string } | undefined, '')}
+                onChange={e => handleUpdateImage(i, { caption: markFieldAsUserEdited(e.target.value) as unknown as string })}
                 placeholder="Caption (optional)"
                 className="w-full border border-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
               />
@@ -958,7 +958,7 @@ const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[
             <p className="text-xs font-medium text-[var(--color-text-secondary)]">{label}</p>
             {block.imageUrl ? (
               <div className="relative rounded-xl overflow-hidden border border-[var(--color-border-subtle)] aspect-video bg-gray-100 group">
-                <img src={block.imageUrl} alt={block.imageAlt ?? ''} className="w-full h-full object-cover" />
+                <img src={readBuilderValue(block.imageUrl as string | { value: string } | undefined, '')} alt={readBuilderValue(block.imageAlt as string | { value: string } | undefined, '')} className="w-full h-full object-cover" />
                 <button
                   onClick={() => dispatch(builderActions.openCustomBlockImagePicker(sectionId, path))}
                   className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-1.5"
