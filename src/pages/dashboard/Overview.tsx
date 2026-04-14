@@ -115,6 +115,7 @@ export const DashboardOverview: React.FC = () => {
   const [interactiveSuggestions, setInteractiveSuggestions] = useState<InteractiveSuggestion[]>([]);
   const [interactiveLoading, setInteractiveLoading] = useState(false);
   const [recentSiteActivity, setRecentSiteActivity] = useState<BuilderRevision[]>([]);
+  const [draftBrief, setDraftBrief] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -210,7 +211,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: ownedSite, error: siteErr } = await supabase
         .from('wedding_sites')
-.select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+.select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -231,7 +232,7 @@ export const DashboardOverview: React.FC = () => {
         if (collaboratorLink?.wedding_site_id) {
           const { data: collaboratorSite, error: collaboratorSiteErr } = await supabase
             .from('wedding_sites')
-            .select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+            .select('id, site_slug, site_url, is_published, privacy_mode, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
             .eq('id', collaboratorLink.wedding_site_id)
             .maybeSingle();
 
@@ -250,6 +251,11 @@ export const DashboardOverview: React.FC = () => {
           venue_date: site.venue_date,
         });
         templateName = site.template_id ?? null;
+        if (isWeddingProfile(site.onboarding_answers)) {
+          setDraftBrief(getWeddingProfileSummary(site.onboarding_answers));
+        } else {
+          setDraftBrief([]);
+        }
       }
 
       const { data: guests, error: guestsErr } = await supabase
