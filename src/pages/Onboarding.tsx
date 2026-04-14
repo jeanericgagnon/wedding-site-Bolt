@@ -153,8 +153,10 @@ export const Onboarding: React.FC = () => {
     if (!saved) return;
 
     try {
-      const parsed = JSON.parse(saved) as { step?: OnboardingStep; conversationIndex?: number; formData?: typeof formData };
-      if (parsed.formData) {
+      const parsed = JSON.parse(saved) as { step?: OnboardingStep; conversationIndex?: number; formData?: typeof formData; weddingProfile?: typeof weddingProfile };
+      if (parsed.weddingProfile) {
+        setWeddingProfile(parsed.weddingProfile);
+      } else if (parsed.formData) {
         setWeddingProfile(onboardingFormToProfile({ ...formData, ...parsed.formData }));
       }
       if (typeof parsed.conversationIndex === 'number') {
@@ -177,9 +179,10 @@ export const Onboarding: React.FC = () => {
         step,
         conversationIndex,
         formData,
+        weddingProfile,
       })
     );
-  }, [conversationIndex, formData, isDemoMode, step]);
+  }, [conversationIndex, formData, isDemoMode, step, weddingProfile]);
 
   const clearSavedOnboardingDraft = () => {
     if (typeof window === 'undefined') return;
@@ -275,6 +278,8 @@ export const Onboarding: React.FC = () => {
   };
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
+    const profile = onboardingFormToProfile(formData);
+
     if (!user) return false;
 
     if (isDemoMode) {
@@ -295,7 +300,28 @@ export const Onboarding: React.FC = () => {
           venue_location: data.venue_location || null,
           site_url: data.site_url || null,
           rsvp_deadline: data.rsvp_deadline || null,
+          onboarding_answers: profile,
         });
+
+      if (error && error.message?.includes('onboarding_answers')) {
+        const { error: fallbackError } = await supabase
+          .from('wedding_sites')
+          .insert({
+            user_id: user.id,
+            couple_name_1: data.couple_name_1 || '',
+            couple_name_2: data.couple_name_2 || '',
+            couple_first_name: data.couple_first_name || null,
+            couple_second_name: data.couple_second_name || null,
+            wedding_date: data.wedding_date || null,
+            venue_name: data.venue_name || null,
+            venue_location: data.venue_location || null,
+            site_url: data.site_url || null,
+            rsvp_deadline: data.rsvp_deadline || null,
+          });
+
+        if (fallbackError) throw fallbackError;
+        return true;
+      }
 
       if (error) throw error;
       return true;
