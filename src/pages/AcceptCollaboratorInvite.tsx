@@ -198,7 +198,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   useEffect(() => {
     if (!user || !inviteInfo) return;
     if (!isInviteEmailMatch(user.email, inviteInfo.invite_email)) return;
-    if (claiming) return;
+    if (claiming || authLoading) return;
 
     const alreadyAccepted = inviteInfo.status === 'accepted';
     if (alreadyAccepted) {
@@ -206,8 +206,14 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       setInviteState('accepted');
       setClaimMessage('Invite already accepted. Redirecting to your dashboard…');
       navigate(getCollaboratorRedirectPath(inviteInfo.role), { replace: true });
+      return;
     }
-  }, [user, inviteInfo, claiming, navigate]);
+
+    const claimable = inviteInfo && inviteState !== 'missing' && inviteState !== 'invalid' && inviteState !== 'expired' && inviteState !== 'revoked';
+    if (claimable) {
+      void finishClaim(user).catch(() => undefined);
+    }
+  }, [user, inviteInfo, inviteState, claiming, authLoading, navigate]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -486,7 +492,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                   </p>
                 </div>
                 <Button type="button" variant="accent" fullWidth disabled>
-                  {claiming ? 'Claiming access…' : 'Access ready'}
+                  {claiming ? 'Claiming access…' : 'Redirecting…'}
                 </Button>
               </div>
             ) : (
