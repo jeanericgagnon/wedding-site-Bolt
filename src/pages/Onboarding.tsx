@@ -202,7 +202,7 @@ export const Onboarding: React.FC = () => {
     } catch {
       window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
     }
-  }, [isDemoMode]);
+  }, [isDemoMode, formData]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || isDemoMode || step === 'complete') return;
@@ -230,7 +230,7 @@ export const Onboarding: React.FC = () => {
     return 'Tell guests how you met, what this season feels like, or what this day means to you.';
   };
 
-  const checkExistingSite = useCallback(async () => {
+  const fetchExistingSite = useCallback(async () => {
     if (!user) return null;
 
     const { data } = await supabase
@@ -239,17 +239,18 @@ export const Onboarding: React.FC = () => {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (data?.onboarding_answers && isWeddingProfile(data.onboarding_answers)) {
-      setWeddingProfile(data.onboarding_answers);
-      clearSavedOnboardingDraft();
-    }
-
     return data;
   }, [user]);
 
   useEffect(() => {
-    void checkExistingSite();
-  }, [checkExistingSite]);
+    void (async () => {
+      const data = await fetchExistingSite();
+      if (data?.onboarding_answers && isWeddingProfile(data.onboarding_answers)) {
+        setWeddingProfile(data.onboarding_answers);
+        clearSavedOnboardingDraft();
+      }
+    })();
+  }, [fetchExistingSite]);
 
   useEffect(() => {
     if (!isDemoMode) return;
@@ -317,7 +318,7 @@ export const Onboarding: React.FC = () => {
   const saveWeddingProfileToExistingSite = async () => {
     if (!user || isDemoMode) return false;
 
-    const existingSite = await checkExistingSite();
+    const existingSite = await fetchExistingSite();
     if (!existingSite?.id) return false;
 
     const { error } = await supabase
@@ -417,7 +418,7 @@ export const Onboarding: React.FC = () => {
 
     setLoading(true);
 
-    const existingSite = await checkExistingSite();
+    const existingSite = await fetchExistingSite();
     if (existingSite?.id) {
       const updated = await saveWeddingProfileToExistingSite();
       setLoading(false);
