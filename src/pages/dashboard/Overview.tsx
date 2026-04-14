@@ -15,7 +15,7 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile, mergeSiteContentFromProfile } from '../../lib/weddingProfile';
+import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile, mergeSiteContentWithProvenance } from '../../lib/weddingProfile';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -122,7 +122,7 @@ export const DashboardOverview: React.FC = () => {
       if (!isWeddingProfile(data?.onboarding_answers)) throw new Error('No saved brief found');
 
       const patch = buildDraftSitePatchFromProfile(data.onboarding_answers);
-      const mergedSiteJson = mergeSiteContentFromProfile(
+      const mergedSiteJson = mergeSiteContentWithProvenance(
         (data.site_json as Record<string, unknown> | null) ?? null,
         data.onboarding_answers
       );

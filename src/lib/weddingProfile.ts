@@ -214,3 +214,58 @@ export const mergeSiteContentFromProfile = (
     },
   };
 };
+
+
+type GeneratedContentEnvelope = {
+  value?: unknown;
+  source?: string;
+  updatedAt?: string;
+};
+
+const shouldOverwriteGeneratedField = (existing: unknown) => {
+  if (!existing || typeof existing !== 'object') return true;
+  const envelope = existing as GeneratedContentEnvelope;
+  return !envelope.source || envelope.source === 'concierge-brief';
+};
+
+const wrapGeneratedField = (value: unknown) => ({
+  value,
+  source: 'concierge-brief',
+  updatedAt: new Date().toISOString(),
+});
+
+
+export const mergeSiteContentWithProvenance = (
+  existingSiteJson: Record<string, unknown> | null,
+  profile: WeddingProfile
+) => {
+  const merged = mergeSiteContentFromProfile(existingSiteJson, profile);
+  const existingHome = (((existingSiteJson ?? {}).home as Record<string, unknown> | undefined) ?? {});
+  const home = ((merged.home as Record<string, unknown> | undefined) ?? {});
+
+  const protectSection = (sectionKey: 'hero' | 'story' | 'event') => {
+    const existingSection = ((existingHome[sectionKey] as Record<string, unknown> | undefined) ?? {});
+    const mergedSection = ((home[sectionKey] as Record<string, unknown> | undefined) ?? {});
+    const nextSection: Record<string, unknown> = {};
+
+    Object.entries(mergedSection).forEach(([key, value]) => {
+      const existingValue = existingSection[key];
+      nextSection[key] = shouldOverwriteGeneratedField(existingValue) ? wrapGeneratedField(value) : existingValue;
+    });
+
+    return {
+      ...existingSection,
+      ...nextSection,
+    };
+  };
+
+  return {
+    ...(merged ?? {}),
+    home: {
+      ...home,
+      hero: protectSection('hero'),
+      story: protectSection('story'),
+      event: protectSection('event'),
+    },
+  };
+};
