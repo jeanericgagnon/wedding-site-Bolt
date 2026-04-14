@@ -197,6 +197,7 @@ export const DashboardOverview: React.FC = () => {
   const [briefUpdatedAt, setBriefUpdatedAt] = useState<string | null>(null);
   const [refreshingBrief, setRefreshingBrief] = useState(false);
   const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
+  const [draftBriefDebug, setDraftBriefDebug] = useState<string>('init');
 
   useEffect(() => {
     if (!user) return;
@@ -333,11 +334,14 @@ export const DashboardOverview: React.FC = () => {
         });
         templateName = site.template_id ?? null;
         if (isWeddingProfile(site.onboarding_answers)) {
-          setDraftBrief(getWeddingProfileSummary(site.onboarding_answers));
+          const summary = getWeddingProfileSummary(site.onboarding_answers);
+          setDraftBrief(summary);
           setDraftRefineTargets(getWeddingProfileRefineTargets(site.onboarding_answers));
+          setDraftBriefDebug(`valid:${summary.length}`);
         } else {
           setDraftBrief([]);
           setDraftRefineTargets([]);
+          setDraftBriefDebug(`invalid:${JSON.stringify(site.onboarding_answers ?? null).slice(0, 120)}`);
         }
       }
 
@@ -732,6 +736,58 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {draftBrief.length > 0 && (
+              <Card variant="bordered" padding="lg" className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Saved onboarding brief</CardTitle>
+                  <CardDescription>This is the structured concierge brief currently saved on the site.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    {draftBrief.map((item) => (
+                      <div key={item.id} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-text-tertiary">{item.label}</p>
+                            <p className="mt-1 text-sm text-text-primary">{item.value}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (typeof window !== 'undefined') {
+                                window.localStorage.setItem('dayoflove:onboarding-resume-hint', item.questionKey);
+                              }
+                              navigate('/onboarding');
+                            }}
+                            className="text-xs font-medium text-primary hover:text-primary-hover"
+                          >
+                            Refine
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="accent"
+                      size="sm"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          window.localStorage.setItem('dayoflove:onboarding-resume-hint', 'first-incomplete');
+                        }
+                        navigate('/onboarding');
+                      }}
+                    >
+                      Resume concierge
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => refreshDraftFromBrief()} disabled={refreshingBrief}>
+                      {refreshingBrief ? 'Refreshing draft...' : 'Refresh draft from brief'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
