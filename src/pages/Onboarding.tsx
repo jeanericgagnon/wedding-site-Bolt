@@ -9,11 +9,13 @@ import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
+type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
   const { user, isDemoMode } = useAuth();
   const [step, setStep] = useState<OnboardingStep>('choice');
+  const [conversationIndex, setConversationIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     partnerNames: '',
@@ -28,41 +30,78 @@ export const Onboarding: React.FC = () => {
     theme: 'garden',
   });
 
+  const conciergeQuestions: Array<{
+    key: ConciergeQuestion;
+    label: string;
+    prompt: string;
+    helper?: string;
+    type?: 'text' | 'date' | 'time' | 'textarea';
+    placeholder?: string;
+  }> = [
+    { key: 'partnerNames', label: 'Names', prompt: 'What names should we put on the site?', helper: 'Use the names exactly how you want guests to see them.', placeholder: 'Alex & Jordan' },
+    { key: 'weddingDate', label: 'Date', prompt: 'What date are you getting married?', type: 'date' },
+    { key: 'venueLocation', label: 'Location', prompt: 'Where is the wedding happening?', helper: 'City and state is enough to start.', placeholder: 'San Diego, CA' },
+    { key: 'venueName', label: 'Venue', prompt: 'Do you already know the venue name?', helper: 'If not, you can come back later.', placeholder: 'The Garden Estate' },
+    { key: 'theme', label: 'Vibe', prompt: 'What vibe should the site lean toward?', helper: 'For now, use one clear direction.', placeholder: 'Garden Classic' },
+    { key: 'story', label: 'Story', prompt: 'Anything you want us to know about your story?', type: 'textarea', helper: 'A few lines is enough for a strong first draft.', placeholder: 'We met in college and...' },
+    { key: 'ceremonyTime', label: 'Ceremony', prompt: 'What time does the ceremony start?', type: 'time' },
+    { key: 'receptionTime', label: 'Reception', prompt: 'What time does the reception start?', type: 'time' },
+    { key: 'rsvpDeadline', label: 'RSVP deadline', prompt: 'When should guests RSVP by?', type: 'date' },
+    { key: 'registryLink', label: 'Registry', prompt: 'Do you already have a registry link?', helper: 'Optional for now.', placeholder: 'https://...' },
+  ];
+
+  const currentQuestion = conciergeQuestions[conversationIndex] ?? null;
+
   const setupChecklist = [
     {
       id: 'names',
       label: 'Add couple names',
       done: Boolean(formData.partnerNames.trim()),
       actionLabel: 'Go',
-      action: () => setStep('quick-1' as OnboardingStep),
+      action: () => {
+        setConversationIndex(0);
+        setStep('quick-1' as OnboardingStep);
+      },
     },
     {
       id: 'date',
       label: 'Set wedding date',
       done: Boolean(formData.weddingDate),
       actionLabel: 'Go',
-      action: () => setStep('quick-1' as OnboardingStep),
+      action: () => {
+        setConversationIndex(0);
+        setStep('quick-1' as OnboardingStep);
+      },
     },
     {
       id: 'venue',
       label: 'Add venue/address',
       done: Boolean(formData.venueName.trim() || formData.venueLocation.trim()),
       actionLabel: 'Go',
-      action: () => setStep('quick-1' as OnboardingStep),
+      action: () => {
+        setConversationIndex(0);
+        setStep('quick-1' as OnboardingStep);
+      },
     },
     {
       id: 'registry',
       label: 'Add registry link or keep moving',
       done: Boolean(formData.registryLink.trim()),
       actionLabel: 'Go',
-      action: () => setStep('quick-3' as OnboardingStep),
+      action: () => {
+        setConversationIndex(9);
+        setStep('quick-3' as OnboardingStep);
+      },
     },
     {
       id: 'publish',
       label: 'Publish site',
       done: step === 'complete',
       actionLabel: 'Finish setup',
-      action: () => setStep('quick-3' as OnboardingStep),
+      action: () => {
+        setConversationIndex(9);
+        setStep('quick-3' as OnboardingStep);
+      },
     },
   ];
 
@@ -114,6 +153,7 @@ export const Onboarding: React.FC = () => {
   };
 
   const handleQuickSetup = () => {
+    setConversationIndex(0);
     setStep('quick-1');
   };
 
@@ -185,33 +225,37 @@ export const Onboarding: React.FC = () => {
   };
 
   const nextStep = async () => {
-    if (step === 'quick-1') {
-      setStep('quick-2');
-    } else if (step === 'quick-2') {
-      setStep('quick-3');
-    } else if (step === 'quick-3') {
-      setLoading(true);
-
-      const names = formData.partnerNames.split('&').map(n => n.trim());
-      const firstName = names[0] || '';
-      const secondName = names[1] || names[0] || '';
-
-      const ok = await createWeddingSite({
-        couple_name_1: firstName,
-        couple_name_2: secondName,
-        couple_first_name: firstName,
-        couple_second_name: secondName,
-        wedding_date: formData.weddingDate || null,
-        venue_name: formData.venueName || null,
-        venue_location: formData.venueLocation || null,
-        site_url: user?.email?.split('@')[0] || 'my-wedding',
-        rsvp_deadline: formData.rsvpDeadline || null,
-      });
-
-      setLoading(false);
-      if (ok) setStep('complete');
+    if (conversationIndex < conciergeQuestions.length - 1) {
+      const nextIndex = conversationIndex + 1;
+      setConversationIndex(nextIndex);
+      if (nextIndex < 4) setStep('quick-1');
+      else if (nextIndex < 7) setStep('quick-2');
+      else setStep('quick-3');
+      return;
     }
+
+    setLoading(true);
+
+    const names = formData.partnerNames.split('&').map(n => n.trim());
+    const firstName = names[0] || '';
+    const secondName = names[1] || names[0] || '';
+
+    const ok = await createWeddingSite({
+      couple_name_1: firstName,
+      couple_name_2: secondName,
+      couple_first_name: firstName,
+      couple_second_name: secondName,
+      wedding_date: formData.weddingDate || null,
+      venue_name: formData.venueName || null,
+      venue_location: formData.venueLocation || null,
+      site_url: user?.email?.split('@')[0] || 'my-wedding',
+      rsvp_deadline: formData.rsvpDeadline || null,
+    });
+
+    setLoading(false);
+    if (ok) setStep('complete');
   };
+
 
   const renderSetupChecklist = () => (
     <Card variant="bordered" padding="lg" className="mb-6">
@@ -332,214 +376,81 @@ export const Onboarding: React.FC = () => {
     </div>
   );
 
-  const renderQuickStep1 = () => (
+  const renderQuestionCard = (stepLabel: string, title: string, subtitle: string) => (
     <div className="max-w-2xl mx-auto space-y-6">
       <Card variant="bordered" padding="lg">
-        <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2">Step 1 of 3</p>
-        <h2 className="text-2xl font-bold text-text-primary">Start with the essentials</h2>
-        <p className="mt-2 text-text-secondary">We'll use the basics to create your first draft direction.</p>
+        <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2">{stepLabel}</p>
+        <h2 className="text-2xl font-bold text-text-primary">{title}</h2>
+        <p className="mt-2 text-text-secondary">{subtitle}</p>
       </Card>
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex-1 h-2 bg-primary rounded-full" />
-          <div className="flex-1 h-2 bg-border rounded-full" />
-          <div className="flex-1 h-2 bg-border rounded-full" />
-        </div>
-        <p className="text-sm text-text-secondary">Step 1 of 3</p>
-      </div>
-
-      <h1 className="text-3xl font-bold text-text-primary mb-2">The basics</h1>
-      <p className="text-text-secondary mb-8">Tell us about your big day</p>
 
       {renderSetupChecklist()}
 
       <Card variant="default" padding="lg">
-        <div className="space-y-6">
-          <Input
-            label="Partner names"
-            name="partnerNames"
-            placeholder="Alex & Jordan"
-            value={formData.partnerNames}
-            onChange={handleChange}
-            helperText="How you'd like to be referred to"
-            required
-          />
+        {currentQuestion && (
+          <div className="space-y-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">{currentQuestion.label}</p>
+              <h3 className="mt-2 text-2xl font-bold text-text-primary">{currentQuestion.prompt}</h3>
+              {currentQuestion.helper && <p className="mt-2 text-text-secondary">{currentQuestion.helper}</p>}
+            </div>
 
-          <Input
-            label="Wedding date"
-            type="date"
-            name="weddingDate"
-            value={formData.weddingDate}
-            onChange={handleChange}
-            required
-          />
+            {currentQuestion.type === 'textarea' ? (
+              <Textarea
+                name={currentQuestion.key}
+                placeholder={currentQuestion.placeholder || ''}
+                value={formData[currentQuestion.key]}
+                onChange={handleChange}
+                rows={5}
+              />
+            ) : (
+              <Input
+                type={currentQuestion.type === 'date' || currentQuestion.type === 'time' ? currentQuestion.type : 'text'}
+                name={currentQuestion.key}
+                placeholder={currentQuestion.placeholder || ''}
+                value={formData[currentQuestion.key]}
+                onChange={handleChange}
+              />
+            )}
 
-          <Input
-            label="Venue name"
-            name="venueName"
-            placeholder="The Garden Estate"
-            value={formData.venueName}
-            onChange={handleChange}
-            required
-          />
-
-          <Input
-            label="Venue location"
-            name="venueLocation"
-            placeholder="San Francisco, CA"
-            value={formData.venueLocation}
-            onChange={handleChange}
-            helperText="City and state"
-            required
-          />
-
-          <div className="flex justify-end pt-4">
-            <Button variant="accent" size="lg" onClick={nextStep}>
-              Continue
-              <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
-            </Button>
+            <div className="flex justify-between pt-4">
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => setConversationIndex((prev) => Math.max(0, prev - 1))}
+                disabled={conversationIndex === 0}
+              >
+                Back
+              </Button>
+              <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
+                {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Creating...' : 'Create My Site') : 'Continue'}
+                {conversationIndex < conciergeQuestions.length - 1 && <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </Card>
     </div>
   );
 
-  const renderQuickStep2 = () => (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <Card variant="bordered" padding="lg">
-        <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2">Step 2 of 3</p>
-        <h2 className="text-2xl font-bold text-text-primary">Add the setting and personality</h2>
-        <p className="mt-2 text-text-secondary">This is enough for us to shape layout and content direction intelligently.</p>
-      </Card>
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex-1 h-2 bg-primary rounded-full" />
-          <div className="flex-1 h-2 bg-primary rounded-full" />
-          <div className="flex-1 h-2 bg-border rounded-full" />
-        </div>
-        <p className="text-sm text-text-secondary">Step 2 of 3</p>
-      </div>
-
-      <h1 className="text-3xl font-bold text-text-primary mb-2">Your story and schedule</h1>
-      <p className="text-text-secondary mb-8">Share what makes you two special</p>
-
-      {renderSetupChecklist()}
-
-      <Card variant="default" padding="lg">
-        <div className="space-y-6">
-          <Textarea
-            label="Your story"
-            name="story"
-            placeholder="Tell guests how you met, your journey together, or what this day means to you..."
-            value={formData.story}
-            onChange={handleChange}
-            rows={5}
-            helperText="This will appear on your site's story section"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Ceremony time"
-              type="time"
-              name="ceremonyTime"
-              value={formData.ceremonyTime}
-              onChange={handleChange}
-              required
-            />
-
-            <Input
-              label="Reception time"
-              type="time"
-              name="receptionTime"
-              value={formData.receptionTime}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <Input
-            label="RSVP deadline"
-            type="date"
-            name="rsvpDeadline"
-            value={formData.rsvpDeadline}
-            onChange={handleChange}
-            helperText="When should guests RSVP by?"
-            required
-          />
-
-          <div className="flex justify-between pt-4">
-            <Button variant="ghost" size="lg" onClick={() => setStep('quick-1')}>
-              Back
-            </Button>
-            <Button variant="accent" size="lg" onClick={nextStep}>
-              Continue
-              <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-      </Card>
-    </div>
+  const renderQuickStep1 = () => renderQuestionCard(
+    'Step 1 of 3',
+    'Start with the essentials',
+    "We'll use the basics to create your first draft direction."
   );
 
-  const renderQuickStep3 = () => (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <Card variant="bordered" padding="lg">
-        <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2">Step 3 of 3</p>
-        <h2 className="text-2xl font-bold text-text-primary">Finish the first draft inputs</h2>
-        <p className="mt-2 text-text-secondary">We'll use these details to create a strong starting point instead of dropping you into a blank builder.</p>
-      </Card>
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex-1 h-2 bg-primary rounded-full" />
-          <div className="flex-1 h-2 bg-primary rounded-full" />
-          <div className="flex-1 h-2 bg-primary rounded-full" />
-        </div>
-        <p className="text-sm text-text-secondary">Step 3 of 3</p>
-      </div>
-
-      <h1 className="text-3xl font-bold text-text-primary mb-2">Final touches</h1>
-      <p className="text-text-secondary mb-8">Pick a theme and add optional details</p>
-
-      {renderSetupChecklist()}
-
-      <Card variant="default" padding="lg">
-        <div className="space-y-6">
-          <Select
-            label="Choose a theme"
-            name="theme"
-            value={formData.theme}
-            onChange={handleChange}
-            options={[
-              { value: 'garden', label: 'Garden Classic' },
-              { value: 'desert', label: 'Desert Sunset' },
-              { value: 'lavender', label: 'Lavender Fields' },
-              { value: 'coastal', label: 'Coastal Breeze' },
-              { value: 'rustic', label: 'Rustic Charm' },
-            ]}
-          />
-
-          <Input
-            label="Registry link"
-            type="url"
-            name="registryLink"
-            placeholder="https://registry.example.com/yournames"
-            value={formData.registryLink}
-            onChange={handleChange}
-            helperText="Optional: Link to your gift registry"
-          />
-
-          <div className="flex justify-between pt-4">
-            <Button variant="ghost" size="lg" onClick={() => setStep('quick-2')}>
-              Back
-            </Button>
-            <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
-              {loading ? 'Creating...' : 'Create My Site'}
-            </Button>
-          </div>
-        </div>
-      </Card>
-    </div>
+  const renderQuickStep2 = () => renderQuestionCard(
+    'Step 2 of 3',
+    'Add the setting and personality',
+    'This helps us shape layout and content direction intelligently.'
   );
+
+  const renderQuickStep3 = () => renderQuestionCard(
+    'Step 3 of 3',
+    'Finish the first draft inputs',
+    "We're using these details to create a strong starting point instead of dropping you into a blank builder."
+  );
+
 
   const renderComplete = () => {
     const names = formData.partnerNames.split('&').map(n => n.trim());
