@@ -287,3 +287,21 @@ export const markFieldAsUserEdited = (value: unknown) => {
     updatedAt: new Date().toISOString(),
   };
 };
+
+
+export type ProvenanceValue<T> = {
+  value: T;
+  source?: string;
+  updatedAt?: string;
+};
+
+export const isProvenanceValue = <T>(value: unknown): value is ProvenanceValue<T> => {
+  return Boolean(value && typeof value === 'object' && 'value' in (value as Record<string, unknown>));
+};
+
+export const readBuilderValue = <T>(value: T | ProvenanceValue<T> | undefined | null, fallback: T): T => {
+  if (isProvenanceValue<T>(value)) {
+    return value.value ?? fallback;
+  }
+  return (value ?? fallback) as T;
+};

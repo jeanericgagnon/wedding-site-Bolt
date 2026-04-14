@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image, Plus, Trash2, Compass, Ruler } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { markFieldAsUserEdited } from '../../lib/weddingProfile';
+import { markFieldAsUserEdited, readBuilderValue } from '../../lib/weddingProfile';
 import { selectSelectedSection, selectActivePage, selectActivePageSections } from '../state/builderSelectors';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionRail } from './BuilderSectionRail';
@@ -861,7 +861,7 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
           <div key={img.id} className="group border border-gray-100 rounded-xl overflow-hidden bg-[var(--color-surface-subtle)] hover:border-[var(--color-border-subtle)] transition-colors">
             <div className="relative aspect-video bg-gray-200">
               {img.url ? (
-                <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                <img src={readBuilderValue(img.url as string | { value: string }, '')} alt={readBuilderValue(img.alt as string | { value: string }, '')} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ImageIcon size={20} className="text-gray-300" />
@@ -978,7 +978,7 @@ const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[
             )}
             <input
               type="text"
-              value={block.imageAlt ?? ''}
+              value={readBuilderValue(block.imageAlt as string | { value: string } | undefined, '')}
               onChange={e => {
                 if (!state.activePageId) return;
                 dispatch(builderActions.updateCustomBlock(

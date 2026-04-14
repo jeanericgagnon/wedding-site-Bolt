@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { BuilderSectionInstance, BuilderSettingsField } from '../../types/builder/section';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { markFieldAsUserEdited } from '../../lib/weddingProfile';
+import { markFieldAsUserEdited, readBuilderValue } from '../../lib/weddingProfile';
 import { getSectionManifest } from '../registry/sectionManifests';
 
 interface BuilderSectionFrameProps {
@@ -321,7 +321,7 @@ const InlineEditPanel: React.FC<{
             </label>
             {field.type === 'textarea' ? (
               <textarea
-                value={(section.settings[field.key] as string) ?? (field.defaultValue as string) ?? ''}
+                value={readBuilderValue(section.settings[field.key] as string | { value: string } | undefined, (field.defaultValue as string) ?? '')}
                 onChange={e => handleChange(field.key, e.target.value)}
                 placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
                 rows={3}
@@ -331,7 +331,7 @@ const InlineEditPanel: React.FC<{
             ) : (
               <input
                 type="text"
-                value={(section.settings[field.key] as string) ?? (field.defaultValue as string) ?? ''}
+                value={readBuilderValue(section.settings[field.key] as string | { value: string } | undefined, (field.defaultValue as string) ?? '')}
                 onChange={e => handleChange(field.key, e.target.value)}
                 placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
