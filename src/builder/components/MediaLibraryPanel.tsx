@@ -7,6 +7,7 @@ import { BUILDER_SUPPORTED_IMAGE_TYPES, BUILDER_MAX_FILE_SIZE_MB } from '../cons
 import { mediaService } from '../services/mediaService';
 import { generateBuilderId } from '../../types/builder/project';
 import { getSectionManifest } from '../registry/sectionManifests';
+import { markFieldAsUserEdited } from '../../lib/weddingProfile';
 
 function resolveImageSettingKey(sectionType: string): string {
   try {

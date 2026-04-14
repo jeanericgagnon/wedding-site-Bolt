@@ -985,7 +985,7 @@ const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[
                   state.activePageId,
                   sectionId,
                   path.blockId,
-                  { imageAlt: e.target.value },
+                  { imageAlt: markFieldAsUserEdited(e.target.value) },
                   path.columnIndex,
                   path.columnBlockId
                 ));
