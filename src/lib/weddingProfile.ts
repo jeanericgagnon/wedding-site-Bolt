@@ -119,18 +119,23 @@ export const isWeddingProfile = (value: unknown): value is WeddingProfile => {
 };
 
 
-export const getWeddingProfileSummary = (profile: WeddingProfile) => {
-  const lines = [
-    profile.couple.displayNames ? `Couple: ${profile.couple.displayNames}` : null,
-    profile.event.date ? `Date: ${profile.event.date}` : null,
-    profile.event.venueName ? `Venue: ${profile.event.venueName}` : null,
-    profile.event.venueLocation ? `Location: ${profile.event.venueLocation}` : null,
-    profile.design.theme ? `Theme: ${profile.design.theme}` : null,
-    profile.story.summary ? `Story: ${profile.story.summary}` : null,
-    profile.event.rsvpDeadline ? `RSVP by: ${profile.event.rsvpDeadline}` : null,
-  ].filter(Boolean);
+export type WeddingProfileSummaryItem = {
+  id: string;
+  label: string;
+  value: string;
+  questionKey: string;
+};
 
-  return lines as string[];
+export const getWeddingProfileSummary = (profile: WeddingProfile): WeddingProfileSummaryItem[] => {
+  return [
+    profile.couple.displayNames ? { id: 'couple', label: 'Couple', value: profile.couple.displayNames, questionKey: 'partnerNames' } : null,
+    profile.event.date ? { id: 'date', label: 'Date', value: profile.event.date, questionKey: 'weddingDate' } : null,
+    profile.event.venueName ? { id: 'venue', label: 'Venue', value: profile.event.venueName, questionKey: 'venueName' } : null,
+    profile.event.venueLocation ? { id: 'location', label: 'Location', value: profile.event.venueLocation, questionKey: 'venueLocation' } : null,
+    profile.design.theme ? { id: 'theme', label: 'Theme', value: profile.design.theme, questionKey: 'theme' } : null,
+    profile.story.summary ? { id: 'story', label: 'Story', value: profile.story.summary, questionKey: 'story' } : null,
+    profile.event.rsvpDeadline ? { id: 'rsvp', label: 'RSVP by', value: profile.event.rsvpDeadline, questionKey: 'rsvpDeadline' } : null,
+  ].filter(Boolean) as WeddingProfileSummaryItem[];
 };
 
 
