@@ -143,12 +143,12 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     setClaimTrace((prev) => [...prev.slice(-11), `${new Date().toISOString()} ${msg}`]);
   };
 
-  const claimInvite = async (authUser: AuthUser) => {
-    if (!inviteInfo?.id || !inviteInfo.wedding_site_id || !token) {
+  const claimInvite = async (authUser: AuthUser, currentInvite: InviteInfo) => {
+    if (!currentInvite?.id || !currentInvite.wedding_site_id || !token) {
       throw new Error('Invite metadata is incomplete.');
     }
-    if (!isInviteEmailMatch(authUser.email, inviteInfo.invite_email)) {
-      throw new Error(`This invite was sent to ${inviteInfo.invite_email}. Sign in with that email to claim access.`);
+    if (!isInviteEmailMatch(authUser.email, currentInvite.invite_email)) {
+      throw new Error(`This invite was sent to ${currentInvite.invite_email}. Sign in with that email to claim access.`);
     }
 
     trace('claimInvite:start');
@@ -170,7 +170,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     setClaimStep(`Invite claimed in ${rpcMs}ms.`);
   };
 
-  const finishClaim = async (authUser: AuthUser) => {
+  const finishClaim = async (authUser: AuthUser, currentInvite: InviteInfo) => {
     trace('finishClaim:start');
     setClaiming(true);
     setClaimError(null);
@@ -179,13 +179,13 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
     try {
       setClaimStep('Adding collaborator membership…');
-      await claimInvite(authUser);
+      await claimInvite(authUser, currentInvite);
       trace('finishClaim:accepted');
       setInviteState('accepted');
       setClaimStep('Invite accepted. Redirecting…');
       setClaimMessage('Invite accepted. Redirecting to your dashboard…');
-      trace(`finishClaim:navigate:${getCollaboratorRedirectPath(inviteInfo?.role)}`);
-      navigate(getCollaboratorRedirectPath(inviteInfo?.role), { replace: true });
+      trace(`finishClaim:navigate:${getCollaboratorRedirectPath(currentInvite.role)}`);
+      navigate(getCollaboratorRedirectPath(currentInvite.role), { replace: true });
     } catch (err) {
       trace(`finishClaim:error:${err instanceof Error ? err.message : 'unknown'}`);
       setClaimError(err instanceof Error ? err.message : 'Could not claim invite.');
@@ -226,11 +226,12 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       if (error) throw error;
       if (!data.user) throw new Error('Signed in, but your user session was not ready. Please try again.');
 
+      if (!inviteInfo) throw new Error('Invite metadata is incomplete.');
       await finishClaim({
         id: data.user.id,
         email: data.user.email || signInForm.email,
         name: data.user.user_metadata?.name || data.user.email || signInForm.email,
-      });
+      }, inviteInfo);
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Could not sign you in right now.');
     } finally {
@@ -293,11 +294,12 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         throw new Error('Account created. Please sign in from this page to finish accepting the invite.');
       }
 
+      if (!inviteInfo) throw new Error('Invite metadata is incomplete.');
       await finishClaim({
         id: signedInUser.id,
         email: signedInUser.email || signUpForm.email,
         name: signedInUser.user_metadata?.name || signUpForm.fullName.trim() || signedInUser.email || signUpForm.email,
-      });
+      }, inviteInfo);
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Could not create your account right now.');
     } finally {
