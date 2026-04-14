@@ -132,3 +132,17 @@ export const getWeddingProfileSummary = (profile: WeddingProfile) => {
 
   return lines as string[];
 };
+
+
+export const getWeddingProfileRefineTargets = (profile: WeddingProfile) => [
+  { id: 'names', label: 'Couple names', questionIndex: 0, value: profile.couple.displayNames },
+  { id: 'date', label: 'Wedding date', questionIndex: 1, value: profile.event.date },
+  { id: 'location', label: 'Location', questionIndex: 2, value: profile.event.venueLocation },
+  { id: 'venue', label: 'Venue name', questionIndex: 3, value: profile.event.venueName },
+  { id: 'theme', label: 'Theme', questionIndex: 4, value: profile.design.theme },
+  { id: 'story', label: 'Story', questionIndex: 5, value: profile.story.summary },
+  { id: 'ceremony', label: 'Ceremony time', questionIndex: 6, value: profile.event.ceremonyTime },
+  { id: 'reception', label: 'Reception time', questionIndex: 7, value: profile.event.receptionTime },
+  { id: 'rsvp', label: 'RSVP deadline', questionIndex: 8, value: profile.event.rsvpDeadline },
+  { id: 'registry', label: 'Registry', questionIndex: 9, value: profile.registry.url },
+];

@@ -14,6 +14,7 @@ type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLo
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
+const ONBOARDING_RESUME_INDEX_KEY = 'dayoflove:onboarding-resume-index';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -178,7 +179,16 @@ export const Onboarding: React.FC = () => {
         setWeddingProfile(onboardingFormToProfile({ ...formData, ...parsed.formData }));
       }
       const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
-      if (resumeHint === 'first-incomplete') {
+      const resumeIndexValue = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_KEY);
+      if (resumeHint === 'question' && resumeIndexValue) {
+        const resumeIndex = Number(resumeIndexValue);
+        if (!Number.isNaN(resumeIndex)) {
+          setConversationIndex(resumeIndex);
+          setStep(getStepForIndex(resumeIndex));
+        }
+        window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
+        window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
+      } else if (resumeHint === 'first-incomplete') {
         const resumeIndex = getFirstIncompleteQuestionIndex();
         setConversationIndex(resumeIndex);
         setStep(getStepForIndex(resumeIndex));

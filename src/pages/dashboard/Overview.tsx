@@ -15,7 +15,7 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
+import { getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -116,6 +116,7 @@ export const DashboardOverview: React.FC = () => {
   const [interactiveLoading, setInteractiveLoading] = useState(false);
   const [recentSiteActivity, setRecentSiteActivity] = useState<BuilderRevision[]>([]);
   const [draftBrief, setDraftBrief] = useState<string[]>([]);
+  const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -253,8 +254,10 @@ export const DashboardOverview: React.FC = () => {
         templateName = site.template_id ?? null;
         if (isWeddingProfile(site.onboarding_answers)) {
           setDraftBrief(getWeddingProfileSummary(site.onboarding_answers));
+          setDraftRefineTargets(getWeddingProfileRefineTargets(site.onboarding_answers));
         } else {
           setDraftBrief([]);
+          setDraftRefineTargets([]);
         }
       }
 
