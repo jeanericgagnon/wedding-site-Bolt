@@ -154,6 +154,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     trace('claimInvite:start');
     const rpcStart = Date.now();
     trace('claimInvite:rpc:start');
+    const { data: sessionData } = await supabase.auth.getSession();
+    trace(`claimInvite:session:${sessionData.session ? 'yes' : 'no'}`);
     const { error: claimError } = await supabase.rpc('claim_collaborator_invite', {
       p_invite_token: token,
     });
