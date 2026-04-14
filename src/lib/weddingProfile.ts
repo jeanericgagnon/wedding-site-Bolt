@@ -57,6 +57,43 @@ export type WeddingProfileReadiness = {
   missingRecommendedFields: string[];
 };
 
+
+export type WeddingProfileFieldSpec = {
+  path: string;
+  label: string;
+  requiredForDraft: boolean;
+  inferredAllowed: boolean;
+};
+
+export const WEDDING_PROFILE_FIELD_SPECS: WeddingProfileFieldSpec[] = [
+  { path: 'couple.displayNames', label: 'Couple names', requiredForDraft: true, inferredAllowed: false },
+  { path: 'event.date', label: 'Wedding date', requiredForDraft: true, inferredAllowed: false },
+  { path: 'event.venueLocation', label: 'Venue location', requiredForDraft: true, inferredAllowed: true },
+  { path: 'event.venueName', label: 'Venue name', requiredForDraft: false, inferredAllowed: true },
+  { path: 'design.theme', label: 'Theme', requiredForDraft: false, inferredAllowed: true },
+  { path: 'story.summary', label: 'Story summary', requiredForDraft: false, inferredAllowed: true },
+  { path: 'event.ceremonyTime', label: 'Ceremony time', requiredForDraft: false, inferredAllowed: true },
+  { path: 'event.receptionTime', label: 'Reception time', requiredForDraft: false, inferredAllowed: true },
+  { path: 'event.rsvpDeadline', label: 'RSVP deadline', requiredForDraft: false, inferredAllowed: true },
+  { path: 'registry.url', label: 'Registry link', requiredForDraft: false, inferredAllowed: true },
+];
+
+const getProfileValueByPath = (profile: WeddingProfile, path: string): string => {
+  const value = path.split('.').reduce<unknown>((current, key) => {
+    if (!current || typeof current !== 'object') return '';
+    return (current as Record<string, unknown>)[key];
+  }, profile);
+
+  return typeof value === 'string' ? value : '';
+};
+
+export const getWeddingProfileFieldStatus = (profile: WeddingProfile) =>
+  WEDDING_PROFILE_FIELD_SPECS.map((spec) => ({
+    ...spec,
+    value: getProfileValueByPath(profile, spec.path),
+    complete: Boolean(getProfileValueByPath(profile, spec.path).trim()),
+  }));
+
 export const createEmptyWeddingProfile = (): WeddingProfile => ({
   couple: {
     displayNames: '',
@@ -100,19 +137,9 @@ export const createEmptyWeddingProfile = (): WeddingProfile => ({
 });
 
 export const evaluateWeddingProfileReadiness = (profile: WeddingProfile): WeddingProfileReadiness => {
-  const missingCriticalFields: string[] = [];
-  const missingRecommendedFields: string[] = [];
-
-  if (!profile.couple.displayNames.trim()) missingCriticalFields.push('couple names');
-  if (!profile.event.date) missingCriticalFields.push('wedding date');
-  if (!profile.event.venueLocation.trim()) missingCriticalFields.push('venue location');
-
-  if (!profile.design.theme) missingRecommendedFields.push('theme');
-  if (!profile.story.summary.trim()) missingRecommendedFields.push('story summary');
-  if (!profile.event.ceremonyTime) missingRecommendedFields.push('ceremony time');
-  if (!profile.event.receptionTime) missingRecommendedFields.push('reception time');
-  if (!profile.event.rsvpDeadline) missingRecommendedFields.push('RSVP deadline');
-  if (!profile.registry.url.trim()) missingRecommendedFields.push('registry link');
+  const fieldStatuses = getWeddingProfileFieldStatus(profile);
+  const missingCriticalFields = fieldStatuses.filter((field) => field.requiredForDraft && !field.complete).map((field) => field.label.toLowerCase());
+  const missingRecommendedFields = fieldStatuses.filter((field) => !field.requiredForDraft && !field.complete).map((field) => field.label.toLowerCase());
 
   const score = Math.max(
     0,

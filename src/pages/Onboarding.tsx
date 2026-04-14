@@ -7,7 +7,7 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
-import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
+import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
@@ -125,6 +125,7 @@ export const Onboarding: React.FC = () => {
   const nextSetupItem = setupChecklist.find(item => !item.done) ?? null;
   const conversationProgress = Math.round(((conversationIndex + 1) / conciergeQuestions.length) * 100);
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
+  const fieldStatuses = getWeddingProfileFieldStatus(weddingProfile);
 
   const draftMilestones = [
     {
@@ -640,6 +641,16 @@ export const Onboarding: React.FC = () => {
         {readiness.missingCriticalFields.length > 0 && (
           <p className="mt-2 text-xs text-text-secondary">Still needed: {readiness.missingCriticalFields.join(', ')}</p>
         )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {fieldStatuses.map((field) => (
+            <span
+              key={field.path}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${field.complete ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : field.requiredForDraft ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-surface text-text-secondary border border-border'}`}
+            >
+              {field.label}
+            </span>
+          ))}
+        </div>
       </div>
       <div className="space-y-3">
         {draftMilestones.map((milestone) => (
