@@ -178,7 +178,7 @@ export const Onboarding: React.FC = () => {
       if (parsed.weddingProfile && isWeddingProfile(parsed.weddingProfile)) {
         setWeddingProfile(parsed.weddingProfile);
       } else if (parsed.formData) {
-        setWeddingProfile(onboardingFormToProfile({ ...formData, ...parsed.formData }));
+        hydrateProfile(parsed.formData);
       }
       const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
       const resumeIndexValue = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_KEY);
@@ -214,7 +214,6 @@ export const Onboarding: React.FC = () => {
       JSON.stringify({
         step,
         conversationIndex,
-        formData,
         weddingProfile,
       })
     );
@@ -224,6 +223,16 @@ export const Onboarding: React.FC = () => {
     if (typeof window === 'undefined') return;
     window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
   };
+
+  const hydrateProfile = useCallback((partial: Partial<typeof formData>) => {
+    const nextProfile = onboardingFormToProfile({
+      ...profileToOnboardingForm(createEmptyWeddingProfile()),
+      ...formData,
+      ...partial,
+    });
+    setWeddingProfile(nextProfile);
+    return nextProfile;
+  }, [formData]);
 
   const getStoryPrompt = () => {
     if (derivedNames.length >= 2) {
@@ -259,8 +268,7 @@ export const Onboarding: React.FC = () => {
 
     const prevFormData = profileToOnboardingForm(weddingProfile);
 
-    setWeddingProfile(onboardingFormToProfile({
-      ...prevFormData,
+    hydrateProfile({
       partnerNames: prevFormData.partnerNames || `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
       weddingDate: prevFormData.weddingDate || demoWeddingSite.wedding_date || '',
       venueName: prevFormData.venueName || demoWeddingSite.venue_name || '',
@@ -271,18 +279,13 @@ export const Onboarding: React.FC = () => {
       receptionTime: prevFormData.receptionTime || '18:00',
       rsvpDeadline: prevFormData.rsvpDeadline || '2026-05-25',
       registryLink: prevFormData.registryLink || 'https://www.zola.com/registry/alex-and-jordan',
-    }));
-  }, [isDemoMode, weddingProfile]);
+    });
+  }, [hydrateProfile, isDemoMode, weddingProfile]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const nextFormData = {
-      ...formData,
-      [e.target.name]: e.target.value,
-    };
-
-    setWeddingProfile(onboardingFormToProfile(nextFormData));
+    hydrateProfile({ [e.target.name]: e.target.value });
   };
 
   const handleQuickSetup = () => {
