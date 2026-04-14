@@ -11,6 +11,8 @@ import { demoWeddingSite } from '../lib/demoData';
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
 
+const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
+
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
   const { user, isDemoMode } = useAuth();
@@ -153,6 +155,46 @@ export const Onboarding: React.FC = () => {
     return formData.theme;
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || isDemoMode) return;
+
+    const saved = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
+    if (!saved) return;
+
+    try {
+      const parsed = JSON.parse(saved) as { step?: OnboardingStep; conversationIndex?: number; formData?: typeof formData };
+      if (parsed.formData) {
+        setFormData((prev) => ({ ...prev, ...parsed.formData }));
+      }
+      if (typeof parsed.conversationIndex === 'number') {
+        setConversationIndex(parsed.conversationIndex);
+        setStep(getStepForIndex(parsed.conversationIndex));
+      } else if (parsed.step && parsed.step !== 'complete') {
+        setStep(parsed.step);
+      }
+    } catch {
+      window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+    }
+  }, [isDemoMode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isDemoMode || step === 'complete') return;
+
+    window.localStorage.setItem(
+      ONBOARDING_STORAGE_KEY,
+      JSON.stringify({
+        step,
+        conversationIndex,
+        formData,
+      })
+    );
+  }, [conversationIndex, formData, isDemoMode, step]);
+
+  const clearSavedOnboardingDraft = () => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+  };
+
   const getStoryPrompt = () => {
     if (derivedNames.length >= 2) {
       return `Tell guests a little about ${derivedNames[0]} and ${derivedNames[1]}.`; 
@@ -231,7 +273,10 @@ export const Onboarding: React.FC = () => {
     });
 
     setLoading(false);
-    if (ok) navigate('/dashboard/builder');
+    if (ok) {
+      clearSavedOnboardingDraft();
+      navigate('/dashboard/builder');
+    }
   };
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
@@ -273,7 +318,10 @@ export const Onboarding: React.FC = () => {
       site_url: user?.email?.split('@')[0] || 'my-wedding',
     });
     setLoading(false);
-    if (ok) navigate('/dashboard');
+    if (ok) {
+      clearSavedOnboardingDraft();
+      navigate('/dashboard');
+    }
   };
 
   const goToQuestionIndex = (index: number) => {
@@ -306,7 +354,10 @@ export const Onboarding: React.FC = () => {
     });
 
     setLoading(false);
-    if (ok) setStep('complete');
+    if (ok) {
+      clearSavedOnboardingDraft();
+      setStep('complete');
+    }
   };
 
 
@@ -356,6 +407,9 @@ export const Onboarding: React.FC = () => {
         <p className="text-lg text-text-secondary">
           Choose how you'd like to get started
         </p>
+        {typeof window !== 'undefined' && window.localStorage.getItem(ONBOARDING_STORAGE_KEY) && (
+          <p className="mt-3 text-sm text-primary">You have a saved draft here, so you can pick up where you left off.</p>
+        )}
       </div>
 
       {renderSetupChecklist()}
