@@ -355,8 +355,6 @@ export const DashboardSettings: React.FC = () => {
     setCreatingCollaboratorInvite(true);
     try {
       const inviteToken = crypto.randomUUID();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 14);
       const { data, error } = await supabase
         .from('wedding_site_collaborator_invites')
         .insert({
@@ -366,7 +364,6 @@ export const DashboardSettings: React.FC = () => {
           role: plannerInviteRole,
           status: 'pending',
           invite_token: inviteToken,
-          expires_at: expiresAt.toISOString(),
           invited_by: user.id,
         })
         .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
