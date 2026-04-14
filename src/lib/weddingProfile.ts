@@ -305,3 +305,53 @@ export const readBuilderValue = <T>(value: T | ProvenanceValue<T> | undefined | 
   }
   return (value ?? fallback) as T;
 };
+
+
+export const buildWeddingDataPatchFromProfile = (profile: WeddingProfile) => ({
+  couple: {
+    partner1Name: profile.couple.partnerOne || '',
+    partner2Name: profile.couple.partnerTwo || '',
+    displayName: profile.couple.displayNames || '',
+    story: profile.story.summary || '',
+  },
+  event: {
+    weddingDateISO: profile.event.date ? new Date(profile.event.date).toISOString() : '',
+  },
+  venues: profile.event.venueName || profile.event.venueLocation
+    ? [{ id: 'primary', name: profile.event.venueName || 'Main Venue', address: profile.event.venueLocation || undefined }]
+    : [],
+  theme: {
+    preset: profile.design.theme || 'garden',
+  },
+  registry: {
+    externalUrl: profile.registry.url || '',
+  },
+});
+
+export const mergeWeddingDataFromProfile = (
+  existingWeddingData: Record<string, unknown> | null,
+  profile: WeddingProfile
+) => {
+  const patch = buildWeddingDataPatchFromProfile(profile) as Record<string, unknown>;
+  const existing = (existingWeddingData ?? {}) as Record<string, unknown>;
+  return {
+    ...existing,
+    couple: {
+      ...((existing.couple as Record<string, unknown> | undefined) ?? {}),
+      ...((patch.couple as Record<string, unknown> | undefined) ?? {}),
+    },
+    event: {
+      ...((existing.event as Record<string, unknown> | undefined) ?? {}),
+      ...((patch.event as Record<string, unknown> | undefined) ?? {}),
+    },
+    theme: {
+      ...((existing.theme as Record<string, unknown> | undefined) ?? {}),
+      ...((patch.theme as Record<string, unknown> | undefined) ?? {}),
+    },
+    registry: {
+      ...((existing.registry as Record<string, unknown> | undefined) ?? {}),
+      ...((patch.registry as Record<string, unknown> | undefined) ?? {}),
+    },
+    venues: (patch.venues as unknown[]) ?? ((existing.venues as unknown[]) ?? []),
+  };
+};

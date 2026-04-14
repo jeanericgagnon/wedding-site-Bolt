@@ -15,7 +15,7 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile, mergeSiteContentWithProvenance } from '../../lib/weddingProfile';
+import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile, mergeSiteContentWithProvenance, mergeWeddingDataFromProfile } from '../../lib/weddingProfile';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -154,7 +154,7 @@ export const DashboardOverview: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('wedding_sites')
-        .select('onboarding_answers, site_json')
+        .select('onboarding_answers, site_json, wedding_data')
         .eq('id', stats.siteId)
         .maybeSingle();
 
@@ -166,11 +166,16 @@ export const DashboardOverview: React.FC = () => {
         (data.site_json as Record<string, unknown> | null) ?? null,
         data.onboarding_answers
       );
+      const mergedWeddingData = mergeWeddingDataFromProfile(
+        (data.wedding_data as Record<string, unknown> | null) ?? null,
+        data.onboarding_answers
+      );
       const { error: updateError } = await supabase
         .from('wedding_sites')
         .update({
           ...patch,
           site_json: mergedSiteJson,
+          wedding_data: mergedWeddingData,
         })
         .eq('id', stats.siteId);
 
