@@ -151,3 +151,12 @@ export const getWeddingProfileRefineTargets = (profile: WeddingProfile) => [
   { id: 'rsvp', label: 'RSVP deadline', questionIndex: 8, value: profile.event.rsvpDeadline },
   { id: 'registry', label: 'Registry', questionIndex: 9, value: profile.registry.url },
 ];
+
+
+export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
+  couple_name_1: profile.couple.partnerOne || null,
+  couple_name_2: profile.couple.partnerTwo || null,
+  wedding_date: profile.event.date || null,
+  venue_name: profile.event.venueName || null,
+  wedding_location: profile.event.venueLocation || null,
+});

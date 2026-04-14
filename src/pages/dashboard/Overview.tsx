@@ -15,7 +15,7 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
+import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -106,6 +106,37 @@ function resolveWeddingDateFromData(
 }
 
 export const DashboardOverview: React.FC = () => {
+
+  async function refreshDraftFromBrief() {
+    if (!stats?.siteId || draftBrief.length === 0 || refreshingBrief) return;
+
+    setRefreshingBrief(true);
+    try {
+      const { data, error } = await supabase
+        .from('wedding_sites')
+        .select('onboarding_answers')
+        .eq('id', stats.siteId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!isWeddingProfile(data?.onboarding_answers)) throw new Error('No saved brief found');
+
+      const patch = buildDraftSitePatchFromProfile(data.onboarding_answers);
+      const { error: updateError } = await supabase
+        .from('wedding_sites')
+        .update(patch)
+        .eq('id', stats.siteId);
+
+      if (updateError) throw updateError;
+      await loadStats();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to refresh draft from brief';
+      alert(message);
+    } finally {
+      setRefreshingBrief(false);
+    }
+  }
+
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<OverviewStats | null>(null);
@@ -117,6 +148,7 @@ export const DashboardOverview: React.FC = () => {
   const [recentSiteActivity, setRecentSiteActivity] = useState<BuilderRevision[]>([]);
   const [draftBrief, setDraftBrief] = useState<Array<{ id: string; label: string; value: string; questionKey: string }>>([]);
   const [briefUpdatedAt, setBriefUpdatedAt] = useState<string | null>(null);
+  const [refreshingBrief, setRefreshingBrief] = useState(false);
   const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
 
   useEffect(() => {
