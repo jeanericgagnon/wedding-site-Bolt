@@ -184,40 +184,10 @@ const guardGeneratedDraft = (
     hasVenue ? [] : [/venue city/i, /date to be/i, /details will be updated/i]
   );
 
-  const safeRegistryIntro = preferDeterministicField(
-    generated.registryIntro,
-    deterministic.registryIntro,
-    hasRegistry ? [/don'?t have a registry/i, /registry details will follow soon/i] : [/don'?t have a registry/i]
-  );
-
   const safeWeddingPartyIntro = preferDeterministicField(
     generated.weddingPartyIntro,
     deterministic.weddingPartyIntro,
     [/dear friends and family standing with us/i]
-  );
-
-  const safeRsvpCallToAction = preferDeterministicField(
-    generated.rsvpCallToAction,
-    deterministic.rsvpCallToAction,
-    [/please rsvp when you can/i]
-  );
-
-  const safeFaqIntro = preferDeterministicField(
-    generated.faqIntro,
-    deterministic.faqIntro,
-    [/answers to common questions/i, /helpful info/i]
-  );
-
-  const safeTravelIntro = preferDeterministicField(
-    generated.travelIntro,
-    deterministic.travelIntro,
-    [/key details to help you plan your trip/i, /information to assist with your trip/i, /useful details to support your trip/i]
-  );
-
-  const safeAccommodationsIntro = preferDeterministicField(
-    generated.accommodationsIntro,
-    deterministic.accommodationsIntro,
-    [/nearby lodging options/i, /recommended nearby lodging options/i, /suggestions and information for lodging/i]
   );
 
   const safeDressCodeIntro = preferDeterministicField(
@@ -248,6 +218,56 @@ const guardGeneratedDraft = (
     generated.storyBody,
     deterministic.storyBody,
     [/this day is about sharing a special moment/i, /cherish their time together/i]
+  );
+
+  const safeRegistryIntro = rejectIfTooGeneric(
+    preferDeterministicField(
+      generated.registryIntro,
+      deterministic.registryIntro,
+      hasRegistry ? [/don'?t have a registry/i, /registry details will follow soon/i] : [/don'?t have a registry/i]
+    ),
+    deterministic.registryIntro,
+    [/your presence is the greatest gift/i, /grateful for your support and kindness/i, /appreciate your thoughtfulness/i]
+  );
+
+  const safeFaqIntro = rejectIfTooGeneric(
+    preferDeterministicField(
+      generated.faqIntro,
+      deterministic.faqIntro,
+      [/answers to common questions/i, /helpful info/i]
+    ),
+    deterministic.faqIntro,
+    [/here are some answers/i, /we ve shared a few details/i, /a few notes to help make your visit comfortable and clear/i]
+  );
+
+  const safeTravelIntro = rejectIfTooGeneric(
+    preferDeterministicField(
+      generated.travelIntro,
+      deterministic.travelIntro,
+      [/key details to help you plan your trip/i, /information to assist with your trip/i, /useful details to support your trip/i]
+    ),
+    deterministic.travelIntro,
+    [/information to help you prepare/i, /details to make your trip/i, /information to assist with your travel plans/i]
+  );
+
+  const safeAccommodationsIntro = rejectIfTooGeneric(
+    preferDeterministicField(
+      generated.accommodationsIntro,
+      deterministic.accommodationsIntro,
+      [/nearby lodging options/i, /recommended nearby lodging options/i, /suggestions and information for lodging/i]
+    ),
+    deterministic.accommodationsIntro,
+    [/we ve provided some lodging information/i, /recommendations to make your stay/i, /comfortable lodging/i]
+  );
+
+  const safeRsvpCallToAction = rejectIfTooGeneric(
+    preferDeterministicField(
+      generated.rsvpCallToAction,
+      deterministic.rsvpCallToAction,
+      [/please rsvp when you can/i]
+    ),
+    deterministic.rsvpCallToAction,
+    [/kindly respond/i, /kindly let us know/i, /kindly rsvp/i, /your reply means a great deal/i]
   );
 
   return {
