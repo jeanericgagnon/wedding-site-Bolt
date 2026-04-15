@@ -30,9 +30,9 @@ const ensureServer = async () => {
   throw new Error(`Dev server did not come up at ${baseUrl}`);
 };
 
-const run = (label, command) => {
+const run = (label, command, env = {}) => {
   try {
-    const output = execSync(command, { stdio: 'pipe', encoding: 'utf8' });
+    const output = execSync(command, { stdio: 'pipe', encoding: 'utf8', env: { ...process.env, ...env } });
     return { label, ok: true, output };
   } catch (error) {
     return {
@@ -45,12 +45,16 @@ const run = (label, command) => {
 };
 
 const collaboratorEmail = `matrix.collab.${Date.now()}@gmail.com`;
+const forcedDeterministicEnv = { VITE_FORCE_DETERMINISTIC_AI: 'true' };
+const openAiEnabledEnv = { VITE_FORCE_DETERMINISTIC_AI: 'false' };
 
 await ensureServer();
 
 const results = [
-  run('ai-regression-existing-site', `node scripts/playwright-ai-regression.mjs ${baseUrl} ${ownerEmail} ${ownerPassword} testandkaras`),
-  run('ai-draft-generator-tests', 'npx vitest run src/lib/aiDraftGenerator.test.ts'),
+  run('ai-regression-existing-site-fallback', `node scripts/playwright-ai-regression.mjs ${baseUrl} ${ownerEmail} ${ownerPassword} testandkaras`, forcedDeterministicEnv),
+  run('ai-draft-generator-tests-fallback', 'npx vitest run src/lib/aiDraftGenerator.test.ts', forcedDeterministicEnv),
+  run('ai-regression-existing-site-openai', `node scripts/playwright-ai-regression.mjs ${baseUrl} ${ownerEmail} ${ownerPassword} testandkaras`, openAiEnabledEnv),
+  run('ai-draft-generator-tests-openai', 'npx vitest run src/lib/aiDraftGenerator.test.ts', openAiEnabledEnv),
   run('collaborator-flow', `node scripts/playwright-owner-create-invite-and-claim.mjs ${baseUrl} ${ownerEmail} ${ownerPassword} ${collaboratorEmail} 12345678`),
 ];
 

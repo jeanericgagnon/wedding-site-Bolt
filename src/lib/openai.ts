@@ -5,9 +5,11 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/responses';
 const getOpenAiApiKey = () => import.meta.env.VITE_OPENAI_API_KEY?.trim() || '';
 const getOpenAiModel = () => import.meta.env.VITE_OPENAI_MODEL?.trim() || 'gpt-4.1-mini';
 
-export const isOpenAiConfigured = () => Boolean(getOpenAiApiKey());
+export const isOpenAiForcedOff = () => import.meta.env.VITE_FORCE_DETERMINISTIC_AI === 'true';
+export const isOpenAiConfigured = () => Boolean(getOpenAiApiKey()) && !isOpenAiForcedOff();
 export const getOpenAiRuntimeConfig = () => ({
   configured: isOpenAiConfigured(),
+  forcedOff: isOpenAiForcedOff(),
   model: getOpenAiModel(),
 });
 
