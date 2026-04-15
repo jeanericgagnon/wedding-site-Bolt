@@ -8,6 +8,7 @@ import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
 import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
+import { createOnboardingSessionState } from '../lib/aiOnboarding';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
@@ -127,6 +128,7 @@ export const Onboarding: React.FC = () => {
   const conversationProgress = Math.round(((conversationIndex + 1) / conciergeQuestions.length) * 100);
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
   const fieldStatuses = getWeddingProfileFieldStatus(weddingProfile);
+  const onboardingSession = createOnboardingSessionState(weddingProfile, currentQuestion ? [currentQuestion.key] : []);
 
   const draftMilestones = [
     {
@@ -707,6 +709,13 @@ export const Onboarding: React.FC = () => {
                 <div className="rounded-2xl bg-primary-light/60 px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">What this shapes</p>
                   <p className="text-sm text-text-primary">{getQuestionPreview()}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-surface px-4 py-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">AI guidance state</p>
+                  <p className="text-sm text-text-primary">Intent: {onboardingSession.currentIntent}</p>
+                  {onboardingSession.suggestedPrompt && (
+                    <p className="mt-1 text-xs text-text-secondary">Suggested next ask: {onboardingSession.suggestedPrompt}</p>
+                  )}
                 </div>
                 {currentQuestion.key === 'partnerNames' && (
                   <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
