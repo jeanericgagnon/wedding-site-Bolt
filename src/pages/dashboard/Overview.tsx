@@ -15,7 +15,8 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile, mergeSiteContentWithProvenance, mergeWeddingDataFromProfile } from '../../lib/weddingProfile';
+import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile, mergeSiteContentWithProvenance } from '../../lib/weddingProfile';
+import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -162,11 +163,12 @@ export const DashboardOverview: React.FC = () => {
       if (!isWeddingProfile(data?.onboarding_answers)) throw new Error('No saved brief found');
 
       const patch = buildDraftSitePatchFromProfile(data.onboarding_answers);
+      const generatedDraft = generateDraftFromWeddingProfile(data.onboarding_answers);
       const mergedSiteJson = mergeSiteContentWithProvenance(
         (data.site_json as Record<string, unknown> | null) ?? null,
         data.onboarding_answers
       );
-      const mergedWeddingData = mergeWeddingDataFromProfile(
+      const mergedWeddingData = mergeGeneratedDraftIntoWeddingData(
         (data.wedding_data as Record<string, unknown> | null) ?? null,
         data.onboarding_answers
       );
@@ -174,8 +176,11 @@ export const DashboardOverview: React.FC = () => {
         .from('wedding_sites')
         .update({
           ...patch,
-          site_json: mergedSiteJson,
           wedding_data: mergedWeddingData,
+          site_json: {
+            ...mergedSiteJson,
+            aiDraft: generatedDraft,
+          },
         })
         .eq('id', stats.siteId);
 
