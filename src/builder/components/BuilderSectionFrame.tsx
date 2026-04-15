@@ -314,32 +314,37 @@ const InlineEditPanel: React.FC<{
         </button>
       </div>
       <div className="p-4 grid gap-3">
-        {fields.map(field => (
-          <div key={field.key}>
-            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-              {field.label}
-            </label>
-            {field.type === 'textarea' ? (
-              <textarea
-                value={readBuilderValue(section.settings[field.key] as string | { value: string } | undefined, (field.defaultValue as string) ?? '')}
-                onChange={e => handleChange(field.key, e.target.value)}
-                placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
-                rows={3}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none bg-gray-50 focus:bg-white transition-colors"
-                autoFocus={fields[0].key === field.key}
-              />
-            ) : (
-              <input
-                type="text"
-                value={readBuilderValue(section.settings[field.key] as string | { value: string } | undefined, (field.defaultValue as string) ?? '')}
-                onChange={e => handleChange(field.key, e.target.value)}
-                placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
-                autoFocus={fields[0].key === field.key}
-              />
-            )}
-          </div>
-        ))}
+        {fields.map(field => {
+          const inputId = `inline-edit-${section.id}-${field.key}`;
+          return (
+            <div key={field.key}>
+              <label htmlFor={inputId} className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">
+                {field.label}
+              </label>
+              {field.type === 'textarea' ? (
+                <textarea
+                  id={inputId}
+                  value={readBuilderValue(section.settings[field.key] as string | { value: string } | undefined, (field.defaultValue as string) ?? '')}
+                  onChange={e => handleChange(field.key, e.target.value)}
+                  placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
+                  rows={3}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none bg-gray-50 focus:bg-white transition-colors"
+                  autoFocus={fields[0].key === field.key}
+                />
+              ) : (
+                <input
+                  id={inputId}
+                  type="text"
+                  value={readBuilderValue(section.settings[field.key] as string | { value: string } | undefined, (field.defaultValue as string) ?? '')}
+                  onChange={e => handleChange(field.key, e.target.value)}
+                  placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
+                  autoFocus={fields[0].key === field.key}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
