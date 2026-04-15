@@ -48,8 +48,13 @@ describe('aiDraftGenerator', () => {
     expect(draft.heroSubtitle.trim().length).toBeGreaterThan(10);
     expect(draft.storyBody.trim().length).toBeGreaterThan(20);
     expect(draft.countdownTitle).toBe('Taylor & Sam');
+    expect(draft.countdownMessage.trim().length).toBeGreaterThan(15);
+    expect(draft.venueTitle).toBe('Venue');
+    expect(draft.scheduleTitle).toBe('Schedule');
     expect(draft.galleryTitle).toBe('Photos');
     expect(draft.rsvpTitle).toBe('RSVP');
+    expect(draft.rsvpCallToAction.trim().length).toBeGreaterThan(10);
+    expect(draft.eventHeadline.trim().length).toBeGreaterThan(10);
   });
 
   it('merges generated draft content into wedding data', () => {
