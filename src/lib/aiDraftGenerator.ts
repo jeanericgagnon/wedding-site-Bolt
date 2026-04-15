@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { runOpenAiStructuredPrompt, isOpenAiConfigured, getOpenAiRuntimeConfig } from './openai';
 import { WeddingProfile, buildWeddingDataPatchFromProfile, mergeWeddingDataFromProfile } from './weddingProfile';
-import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildSectionInstructionMap } from './aiDraftPrompts';
+import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildSectionInstructionMap, buildWeddingCopyCriticPrompt } from './aiDraftPrompts';
 
 export type DraftGenerationResult = {
   heroTitle: string;
@@ -73,6 +73,10 @@ const buildDraftPrompt = (profile: WeddingProfile) => {
   return `${buildWeddingCopyUserPrompt(profile)}\n\nWrite these fields with section-specific intent:\n${JSON.stringify(instructions, null, 2)}`;
 };
 
+const buildDraftCriticPrompt = (profile: WeddingProfile, draft: Omit<DraftGenerationResult, 'weddingDataPatch'>) => {
+  return `${buildWeddingCopyUserPrompt(profile)}\n\nImprove this draft where needed:\n${JSON.stringify(draft, null, 2)}\n\nFocus especially on heroSubtitle, storyBody, and rsvpCallToAction.`;
+};
+
 export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): Promise<DraftGenerationResult> => {
   const deterministic = deterministicDraftFromWeddingProfile(profile);
 
@@ -90,9 +94,17 @@ export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): 
       model: getOpenAiRuntimeConfig().model,
     });
 
+    const refined = await runOpenAiStructuredPrompt({
+      system: buildWeddingCopyCriticPrompt(),
+      user: buildDraftCriticPrompt(profile, generated),
+      schemaName: 'wedding_homepage_draft_refined',
+      schema: draftGenerationSchema,
+      model: getOpenAiRuntimeConfig().model,
+    });
+
     console.info('[aiDraftGenerator] using OpenAI draft generation', getOpenAiRuntimeConfig());
     return {
-      ...generated,
+      ...refined,
       weddingDataPatch: buildWeddingDataPatchFromProfile(profile),
     };
   } catch (error) {

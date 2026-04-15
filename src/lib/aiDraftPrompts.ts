@@ -51,3 +51,12 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful.`,
   rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic.`,
 });
+
+export const buildWeddingCopyCriticPrompt = () => `You are editing wedding website copy to make it stronger.
+
+Rules:
+- Remove clichés, filler, and startup/product language
+- Keep the tone warm, elegant, and human
+- Keep facts intact
+- Make copy more specific and graceful when possible
+- Keep outputs concise and directly usable on a wedding website`;
