@@ -1,5 +1,24 @@
 import { DraftGenerationResult } from './aiDraftGenerator';
 
+
+const shouldReplaceSectionSetting = (value: unknown) => {
+  if (!value || typeof value !== 'object') return true;
+  const record = value as Record<string, unknown>;
+  return !record.source || record.source === 'concierge-brief';
+};
+
+const toGeneratedSetting = (value: string) => ({
+  value,
+  source: 'concierge-brief',
+  updatedAt: new Date().toISOString(),
+});
+
+const mergeGeneratedSetting = (current: unknown, nextValue: string) => {
+  if (!shouldReplaceSectionSetting(current)) return current;
+  return toGeneratedSetting(nextValue);
+};
+
+
 export const mergeGeneratedDraftIntoBuilderProject = (
   existingSiteJson: Record<string, unknown> | null,
   generatedDraft: DraftGenerationResult
@@ -18,8 +37,9 @@ export const mergeGeneratedDraftIntoBuilderProject = (
           ...section,
           settings: {
             ...settings,
-            headline: generatedDraft.heroTitle,
-            subtitle: generatedDraft.heroSubtitle,
+            headline: mergeGeneratedSetting(settings.headline, generatedDraft.heroTitle),
+            subtitle: mergeGeneratedSetting(settings.subtitle, generatedDraft.heroSubtitle),
+            title: mergeGeneratedSetting(settings.title, 'We are getting married'),
           },
         };
       }
@@ -29,8 +49,8 @@ export const mergeGeneratedDraftIntoBuilderProject = (
           ...section,
           settings: {
             ...settings,
-            title: generatedDraft.storyTitle,
-            storyText: generatedDraft.storyBody,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.storyTitle),
+            storyText: mergeGeneratedSetting(settings.storyText, generatedDraft.storyBody),
           },
         };
       }
@@ -40,8 +60,8 @@ export const mergeGeneratedDraftIntoBuilderProject = (
           ...section,
           settings: {
             ...settings,
-            headline: generatedDraft.rsvpCallToAction,
-            subtext: generatedDraft.eventHeadline,
+            headline: mergeGeneratedSetting(settings.headline, generatedDraft.rsvpCallToAction),
+            subtext: mergeGeneratedSetting(settings.subtext, generatedDraft.eventHeadline),
           },
         };
       }
