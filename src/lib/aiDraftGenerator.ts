@@ -40,7 +40,7 @@ export type DraftGenerationResult = {
   weddingDataPatch: Record<string, unknown>;
 };
 
-const draftGenerationSchema = z.object({
+export const draftGenerationSchema = z.object({
   heroTitle: z.string().min(1),
   heroSubtitle: z.string().min(1),
   storyTitle: z.string().min(1),

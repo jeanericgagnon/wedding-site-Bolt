@@ -6,6 +6,7 @@ import {
   buildWeddingCopyCriticPayloadPrompt,
   buildSectionInstructionMap,
 } from '../src/lib/aiDraftPrompts.ts';
+import { draftGenerationSchema } from '../src/lib/aiDraftGenerator.ts';
 
 const richProfile = {
   ...createEmptyWeddingProfile(),
@@ -60,4 +61,7 @@ for (const [label, profile] of Object.entries({ rich: richProfile, medium: mediu
   } else {
     console.log(buildWeddingCopyCriticPayloadPrompt(profile));
   }
+
+  console.log(`\n=== ${label.toUpperCase()} RESPONSE SCHEMA ===\n`);
+  console.log(JSON.stringify(draftGenerationSchema.shape[targetSection] ? { [targetSection]: 'string' } : Object.fromEntries(Object.keys(draftGenerationSchema.shape).map((key) => [key, 'string'])), null, 2));
 }
