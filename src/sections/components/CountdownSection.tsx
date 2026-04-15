@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Clock } from 'lucide-react';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -48,10 +49,10 @@ export const CountdownSection: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle !== false && (
           <div className="mb-10">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
-              {settings.eyebrow || 'Counting down to'}
+              {readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'Counting down to')}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
-              {settings.title || displayName}
+              {readBuilderValue(settings.title as string | { value: string } | undefined, displayName)}
             </h2>
             <div className="w-10 h-px bg-primary mx-auto mt-5" />
           </div>
@@ -88,9 +89,9 @@ export const CountdownSection: React.FC<Props> = ({ data, instance }) => {
             <p className="text-sm">Set your wedding date to show the countdown here.</p>
           </div>
         )}
-        {settings.message && (
+        {readBuilderValue(settings.message as string | { value: string } | undefined, '') && (
           <p className="mt-10 text-text-secondary max-w-lg mx-auto text-base">
-            {settings.message}
+            {readBuilderValue(settings.message as string | { value: string } | undefined, '')}
           </p>
         )}
       </div>
@@ -117,10 +118,10 @@ export const CountdownBanner: React.FC<Props> = ({ data, instance }) => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-white/60 mb-1">
-              {settings.eyebrow || 'Time remaining'}
+              {readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'Time remaining')}
             </p>
             <h2 className="text-xl font-medium text-white">
-              {settings.title || 'Until the big day'}
+              {readBuilderValue(settings.title as string | { value: string } | undefined, 'Until the big day')}
             </h2>
           </div>
           <div className="flex items-center gap-6 md:gap-10">
