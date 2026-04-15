@@ -76,6 +76,9 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
       : `Celebration details to come`;
   const hasVenue = Boolean(profile.event.venueName || profile.event.venueLocation);
   const hasDeadline = Boolean(profile.event.rsvpDeadline);
+  const hasRegistry = Boolean(profile.registry.url);
+  const hasTravelSupport = profile.guestExperience.travelSupportLevel === 'high';
+  const hasStory = Boolean(profile.story.summary?.trim());
 
   return {
     heroTitle: names,
@@ -93,15 +96,25 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     rsvpTitle: 'Will You Be There?',
     rsvpIntro: 'Let us know if we’ll get to celebrate with you.',
     registryTitle: 'Registry',
-    registryIntro: 'Your presence is more than enough, but for those who have asked, a few gift ideas are gathered here.',
+    registryIntro: hasRegistry
+      ? 'For anyone who asked, our registry is gathered here with a few things we would genuinely use and enjoy.'
+      : 'Your presence is gift enough, but for those who have asked, a few ideas are gathered here.',
     faqHeadline: 'Frequently Asked Questions',
-    faqIntro: 'A few helpful answers before the weekend begins.',
+    faqIntro: hasTravelSupport
+      ? 'A few quick answers to make travel, timing, and weekend plans easier.'
+      : 'A few quick answers before the celebration begins.',
     travelTitle: 'Travel & Stay',
-    travelIntro: hasVenue ? `A few planning details to make getting to ${location} feel easy.` : 'A few planning details to make the weekend feel easy.',
+    travelIntro: hasVenue
+      ? `Travel notes, arrival details, and local planning help for getting to ${location}.`
+      : 'Travel notes and planning details for the weekend.',
     accommodationsTitle: 'Accommodations',
-    accommodationsIntro: 'A few stay options and planning notes for the weekend.',
+    accommodationsIntro: hasTravelSupport
+      ? 'A few stay options to make the weekend feel easy from check-in to celebration.'
+      : 'A few nearby places to stay for the weekend.',
     weddingPartyTitle: 'Wedding Party',
-    weddingPartyIntro: 'The people who have loved us, supported us, and helped shape this season of our lives.',
+    weddingPartyIntro: hasStory
+      ? 'The people who have been part of our story and will be standing with us on the day.'
+      : 'The people we are lucky to have beside us on this day.',
     eventHeadline,
     rsvpCallToAction: hasDeadline
       ? `Please reply by ${profile.event.rsvpDeadline}`

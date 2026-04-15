@@ -30,6 +30,11 @@ describe('aiDraftGenerator', () => {
     expect(draft.galleryIntro.length).toBeGreaterThan(10);
     expect(draft.rsvpTitle).toBe('Will You Be There?');
     expect(draft.rsvpIntro.length).toBeGreaterThan(10);
+    expect(draft.registryIntro).toContain('gift enough');
+    expect(draft.faqIntro).toContain('quick answers');
+    expect(draft.travelIntro).toContain('San Diego, CA');
+    expect(draft.accommodationsIntro).toContain('nearby places');
+    expect(draft.weddingPartyIntro).toContain('part of our story');
   });
 
   it('keeps a minimum quality floor for richer profiles', async () => {
@@ -64,6 +69,11 @@ describe('aiDraftGenerator', () => {
     expect(draft.rsvpIntro.trim().length).toBeGreaterThan(10);
     expect(draft.rsvpCallToAction.trim().length).toBeGreaterThan(10);
     expect(draft.eventHeadline.trim().length).toBeGreaterThan(10);
+    expect(draft.registryIntro).toContain('gift enough');
+    expect(draft.faqIntro).toContain('quick answers');
+    expect(draft.travelIntro).toContain('planning details');
+    expect(draft.accommodationsIntro).toContain('nearby places');
+    expect(draft.weddingPartyIntro).toContain('lucky to have beside us');
   });
 
   it('merges generated draft content into wedding data', async () => {

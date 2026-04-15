@@ -45,11 +45,11 @@ describe('aiBuilderProjectPatch', () => {
     expect(heroHeadline.source).toBe('concierge-brief');
     expect(storyText.value).toContain('We met in college');
     expect(ctaHeadline.value).toContain('2027-05-01');
-    expect(registryMessage.value).toContain('presence is more than enough');
+    expect(registryMessage.value).toContain('presence is gift enough');
     expect(faqHeadline.value).toBe('Frequently Asked Questions');
     expect(travelIntro.value).toContain('San Diego, CA');
-    expect(accommodationsNote.value).toContain('stay options');
-    expect(weddingPartyIntro.value).toContain('supported us');
+    expect(accommodationsNote.value).toContain('stay');
+    expect(weddingPartyIntro.value).toContain('part of our story');
   });
 });
 
