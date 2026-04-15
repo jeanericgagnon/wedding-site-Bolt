@@ -9,6 +9,8 @@ import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { LayoutConfigV1 } from '../../types/layoutConfig';
 import { regenerateLayout } from '../../lib/generateInitialLayout';
+import { fromExistingLayoutToBuilderProject } from '../../builder/adapters/layoutAdapter';
+import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
 import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
@@ -687,7 +689,7 @@ export const DashboardSettings: React.FC = () => {
     try {
       const { data, error: fetchError } = await supabase
         .from('wedding_sites')
-        .select('wedding_data, layout_config')
+        .select('wedding_data, layout_config, site_json')
         .eq('id', weddingSiteId)
         .maybeSingle();
 
@@ -697,10 +699,16 @@ export const DashboardSettings: React.FC = () => {
       const weddingData = data.wedding_data as WeddingDataV1;
       const currentLayout = data.layout_config as LayoutConfigV1;
       const newLayout = regenerateLayout(newTemplateId, weddingData, currentLayout);
+      const rebuiltProject = fromExistingLayoutToBuilderProject(weddingSiteId, newLayout);
+      const aiDraft = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.aiDraft as import('../../lib/aiDraftGenerator').DraftGenerationResult | undefined) ?? null);
+      const aiContent = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.aiContent as import('../../lib/aiCanonicalContent').AiCanonicalSectionContent | undefined) ?? null);
+      const remappedSiteJson = aiDraft
+        ? mergeGeneratedDraftIntoBuilderProject(rebuiltProject as unknown as Record<string, unknown>, aiDraft, aiContent)
+        : rebuiltProject;
 
       const { error: updateError } = await supabase
         .from('wedding_sites')
-        .update({ active_template_id: newTemplateId, layout_config: newLayout })
+        .update({ active_template_id: newTemplateId, layout_config: newLayout, site_json: remappedSiteJson })
         .eq('id', weddingSiteId);
 
       if (updateError) throw updateError;
