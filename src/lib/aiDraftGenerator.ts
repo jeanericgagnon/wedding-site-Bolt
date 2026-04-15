@@ -18,6 +18,7 @@ export type DraftGenerationResult = {
   galleryIntro: string;
   rsvpTitle: string;
   rsvpIntro: string;
+  registryTitle: string;
   eventHeadline: string;
   rsvpCallToAction: string;
   weddingDataPatch: Record<string, unknown>;
@@ -38,6 +39,7 @@ const draftGenerationSchema = z.object({
   galleryIntro: z.string().min(1),
   rsvpTitle: z.string().min(1),
   rsvpIntro: z.string().min(1),
+  registryTitle: z.string().min(1),
   eventHeadline: z.string().min(1),
   rsvpCallToAction: z.string().min(1),
 });
@@ -72,6 +74,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     galleryIntro: 'A few favorite moments, all in one place.',
     rsvpTitle: 'Will You Be There?',
     rsvpIntro: 'Let us know if we’ll get to celebrate with you.',
+    registryTitle: 'Registry',
     eventHeadline,
     rsvpCallToAction: hasDeadline
       ? `Please reply by ${profile.event.rsvpDeadline}`

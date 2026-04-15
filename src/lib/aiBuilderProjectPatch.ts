@@ -121,6 +121,16 @@ export const mergeGeneratedDraftIntoBuilderProject = (
         };
       }
 
+      if (type === 'registry') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.registryTitle),
+          },
+        };
+      }
+
       return section;
     });
 
