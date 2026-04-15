@@ -76,6 +76,16 @@ describe('aiDraftGenerator', () => {
     expect(draft.weddingPartyIntro).toContain('lucky to have beside us');
   });
 
+  it('keeps sparse fallback rails against placeholder-like event copy', async () => {
+    const sparse = createEmptyWeddingProfile();
+    sparse.couple.displayNames = 'Taylor & Sam';
+
+    const draft = await generateDraftFromWeddingProfile(sparse);
+    expect(draft.eventHeadline).not.toContain('[');
+    expect(draft.eventHeadline).not.toMatch(/to be confirmed/i);
+    expect(draft.eventHeadline).not.toMatch(/details will be updated/i);
+  });
+
   it('merges generated draft content into wedding data', async () => {
     const merged = await mergeGeneratedDraftIntoWeddingData({}, baseProfile);
     expect((merged.couple as Record<string, unknown>).headline).toBe('Alex & Jordan');

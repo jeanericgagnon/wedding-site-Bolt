@@ -132,6 +132,58 @@ const buildDraftCriticPrompt = (profile: WeddingProfile, draft: Omit<DraftGenera
   return `${buildWeddingCopyUserPrompt(profile)}\n\nImprove this draft where needed:\n${JSON.stringify(draft, null, 2)}\n\nFocus especially on heroSubtitle, storyBody, and rsvpCallToAction.`;
 };
 
+const hasPlaceholderLikeText = (value: string) => /\[[^\]]+\]|\bTBD\b|to be confirmed/i.test(value);
+
+const preferDeterministicField = (generated: string, fallback: string, invalidPatterns: RegExp[]) => {
+  const value = (generated || '').trim();
+  if (!value) return fallback;
+  if (hasPlaceholderLikeText(value)) return fallback;
+  if (invalidPatterns.some((pattern) => pattern.test(value))) return fallback;
+  return value;
+};
+
+const guardGeneratedDraft = (
+  generated: Omit<DraftGenerationResult, 'weddingDataPatch'>,
+  deterministic: DraftGenerationResult,
+  profile: WeddingProfile
+): DraftGenerationResult => {
+  const hasVenue = Boolean(profile.event.venueName || profile.event.venueLocation);
+  const hasRegistry = Boolean(profile.registry.url);
+  const safeEventHeadline = preferDeterministicField(
+    generated.eventHeadline,
+    deterministic.eventHeadline,
+    hasVenue ? [] : [/venue city/i, /date to be/i, /details will be updated/i]
+  );
+
+  const safeRegistryIntro = preferDeterministicField(
+    generated.registryIntro,
+    deterministic.registryIntro,
+    hasRegistry ? [/don'?t have a registry/i, /registry details will follow soon/i] : [/don'?t have a registry/i]
+  );
+
+  const safeWeddingPartyIntro = preferDeterministicField(
+    generated.weddingPartyIntro,
+    deterministic.weddingPartyIntro,
+    [/dear friends and family standing with us/i]
+  );
+
+  const safeRsvpCallToAction = preferDeterministicField(
+    generated.rsvpCallToAction,
+    deterministic.rsvpCallToAction,
+    [/please rsvp when you can/i]
+  );
+
+  return {
+    ...deterministic,
+    ...generated,
+    eventHeadline: safeEventHeadline,
+    registryIntro: safeRegistryIntro,
+    weddingPartyIntro: safeWeddingPartyIntro,
+    rsvpCallToAction: safeRsvpCallToAction,
+    weddingDataPatch: deterministic.weddingDataPatch,
+  };
+};
+
 export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): Promise<DraftGenerationResult> => {
   const deterministic = deterministicDraftFromWeddingProfile(profile);
 
@@ -158,10 +210,7 @@ export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): 
     });
 
     console.info('[aiDraftGenerator] using OpenAI draft generation', getOpenAiRuntimeConfig());
-    return {
-      ...refined,
-      weddingDataPatch: buildWeddingDataPatchFromProfile(profile),
-    };
+    return guardGeneratedDraft(refined, deterministic, profile);
   } catch (error) {
     console.warn('[aiDraftGenerator] OpenAI draft generation failed, falling back to deterministic generator', error);
     return deterministic;
