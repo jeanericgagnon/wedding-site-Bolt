@@ -27,6 +27,16 @@ describe('aiSectionContext', () => {
     expect(payloads.travelIntro.mode).toBe('fill');
     expect(payloads.accommodationsIntro.mode).toBe('fill');
     expect(payloads.storyBody.mode).toBe('fill');
+    expect(payloads.weddingPartyIntro.mode).toBe('fill');
+    expect(payloads.rsvpCallToAction.mode).toBe('light-fill');
+    expect(payloads.directionsIntro.mode).toBe('fill');
+  });
+
+  it('uses fill mode for RSVP when a deadline exists', () => {
+    const profile = createEmptyWeddingProfile();
+    profile.event.rsvpDeadline = '2027-05-01';
+
+    const payloads = buildSectionPromptPayloads(profile);
+    expect(payloads.rsvpCallToAction.mode).toBe('fill');
   });
 });
-

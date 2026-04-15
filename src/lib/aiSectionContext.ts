@@ -98,6 +98,80 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'If details are sparse, be restrained and honest.',
       ],
     },
+    weddingPartyIntro: {
+      section: 'weddingPartyIntro',
+      mode: hasStory ? 'fill' : 'light-fill',
+      facts: {
+        coupleNames: profile.couple.displayNames,
+        storySummary: profile.story.summary,
+      },
+      tone: {
+        storyTone: profile.couple.storyTone,
+      },
+      rules: [
+        'Keep it affectionate and grounded.',
+        'Do not sound ceremonial or generic.',
+      ],
+    },
+    rsvpCallToAction: {
+      section: 'rsvpCallToAction',
+      mode: hasValue(profile.event.rsvpDeadline) ? 'fill' : 'light-fill',
+      facts: {
+        rsvpDeadline: profile.event.rsvpDeadline,
+        eventDate: profile.event.date,
+      },
+      tone: {
+        guestFeeling: profile.story.welcomeNote,
+      },
+      rules: [
+        'Keep it gracious and direct.',
+        'Do not sound canned or passive.',
+      ],
+    },
+    contactIntro: {
+      section: 'contactIntro',
+      mode: 'light-fill',
+      facts: {
+        coupleNames: profile.couple.displayNames,
+        faqTone: profile.guestExperience.faqTone,
+      },
+      tone: {
+        guestFeeling: profile.story.welcomeNote,
+      },
+      rules: [
+        'Make guests feel comfortable reaching out.',
+        'Do not sound like support copy.',
+      ],
+    },
+    directionsIntro: {
+      section: 'directionsIntro',
+      mode: hasVenue ? 'fill' : 'light-fill',
+      facts: {
+        venueName: profile.event.venueName,
+        venueLocation: profile.event.venueLocation,
+      },
+      tone: {
+        vibe: profile.design.vibe,
+      },
+      rules: [
+        'Keep it orienting and practical.',
+        'Do not sound like map-app UI copy.',
+      ],
+    },
+    dressCodeIntro: {
+      section: 'dressCodeIntro',
+      mode: 'light-fill',
+      facts: {
+        designTheme: profile.design.theme,
+        designVibe: profile.design.vibe,
+      },
+      tone: {
+        vibe: profile.design.vibe,
+      },
+      rules: [
+        'Help guests choose something appropriate.',
+        'Do not sound stiff or fashion-editorial.',
+      ],
+    },
   };
 };
-
