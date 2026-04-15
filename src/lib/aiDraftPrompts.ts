@@ -9,6 +9,8 @@ Rules:
 - Avoid cheesy wedding clichés and startup/product language
 - Be concise, polished, and emotionally warm
 - Do not invent detailed facts that are not in the input
+- Never output bracket placeholders, template variables, or fill-in-the-blank text like [Venue], [City], or TBD-style stand-ins
+- If a fact is missing, write around the absence cleanly instead of fabricating or inserting a placeholder
 - Prefer tasteful specificity over generic filler
 - Avoid vague luxury language like "meaningful day," "serene embrace," "cherished friends," "journey," "quiet elegance," or "special day" unless the profile clearly earns it
 - Avoid generic bridal-magazine phrasing and default mush
@@ -65,7 +67,7 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   accommodationsIntro: `Write one short line introducing accommodations or hotel guidance. It should be helpful and warm, not hotel-brochure copy.`,
   weddingPartyTitle: `Write the wedding party section title. It should feel warm, personal, and human.`,
   weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy, ceremonial, or overblown.`,
-  eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful.`,
+  eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful. Use only known facts. If date or venue details are missing, do not invent them and do not use placeholders—write a clean generic line instead.`,
   rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic, wedding-industry canned, or excessively formal.`,
 });
 
@@ -75,6 +77,7 @@ Rules:
 - Remove clichés, filler, and startup/product language
 - Keep the tone warm, elegant, and human
 - Keep facts intact
+- Remove any invented detail, placeholder, bracket text, or fake-specific phrasing
 - Make copy more specific and graceful when possible
 - Cut vague soft-luxury phrasing and bridal-magazine mush
 - Prefer grounded specificity over abstract beauty words
