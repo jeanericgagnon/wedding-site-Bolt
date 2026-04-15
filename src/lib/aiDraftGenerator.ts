@@ -37,7 +37,7 @@ const draftGenerationSchema = z.object({
 const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGenerationResult => {
   const names = profile.couple.displayNames || 'Our Wedding';
   const location = profile.event.venueLocation || profile.event.venueName || 'the place we love most';
-  const date = profile.event.date || 'our wedding weekend';
+  const date = profile.event.date || 'our celebration weekend';
   const storyBody = profile.story.summary?.trim()
     ? profile.story.summary.trim()
     : `${names} are excited to gather everyone they love for a celebration that feels warm, personal, and easy to enjoy.`;
@@ -45,7 +45,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     ? `${profile.event.venueName} · ${profile.event.venueLocation || date}`
     : profile.event.venueLocation
       ? `${profile.event.venueLocation} · ${date}`
-      : `${date} · details to come`;
+      : `Celebration details to come`;
   const hasVenue = Boolean(profile.event.venueName || profile.event.venueLocation);
   const hasDeadline = Boolean(profile.event.rsvpDeadline);
 
