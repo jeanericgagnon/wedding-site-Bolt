@@ -1,4 +1,5 @@
 import { WeddingProfile } from './weddingProfile';
+import { buildSectionPromptPayloads } from './aiSectionContext';
 
 const names = (profile: WeddingProfile) => profile.couple.displayNames || 'The couple';
 
@@ -35,11 +36,16 @@ export const buildWeddingCopyUserPrompt = (profile: WeddingProfile) => {
     rsvpDeadline: profile.event.rsvpDeadline,
   };
 
+  const sectionPayloads = buildSectionPromptPayloads(profile);
+
   return `Couple profile:
 ${JSON.stringify(profile, null, 2)}
 
 Emotional context:
-${JSON.stringify(emotionalContext, null, 2)}`;
+${JSON.stringify(emotionalContext, null, 2)}
+
+Section prompt payloads:
+${JSON.stringify(sectionPayloads, null, 2)}`;
 };
 
 export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
