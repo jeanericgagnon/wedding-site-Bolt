@@ -96,7 +96,31 @@ const onboardingExtractionSchema = z.object({
 });
 
 const getQuestionKeyFromNeed = (need: string): string | null => NEED_TO_QUESTION_KEY[need.toLowerCase()] ?? null;
-const getSuggestedPrompt = (questionKey: string | null) => (questionKey ? PROMPT_BY_QUESTION_KEY[questionKey] ?? null : null);
+const getSuggestedPrompt = (questionKey: string | null, profile?: WeddingProfile) => {
+  if (!questionKey) return null;
+
+  const base = PROMPT_BY_QUESTION_KEY[questionKey] ?? null;
+  if (!base) return null;
+
+  if (!profile) return base;
+
+  switch (questionKey) {
+    case 'venueName':
+      return profile.event.venueLocation
+        ? `Do you already know the venue name for ${profile.event.venueLocation}?`
+        : base;
+    case 'story':
+      return profile.couple.displayNames
+        ? `What should we say about ${profile.couple.displayNames} on the site?`
+        : base;
+    case 'rsvpDeadline':
+      return profile.event.date
+        ? `What RSVP date should we show if the wedding is on ${profile.event.date}?`
+        : base;
+    default:
+      return base;
+  }
+};
 
 const getProfileString = (profile: WeddingProfile, path: string): string => {
   const value = path.split('.').reduce<unknown>((current, key) => {
@@ -263,7 +287,7 @@ export const createOnboardingSessionState = (
     askedQuestions,
     confirmedFields: [],
     unresolvedConflicts: [],
-    suggestedPrompt: getSuggestedPrompt(nextQuestionKey),
+    suggestedPrompt: getSuggestedPrompt(nextQuestionKey, profile),
     confidence: readiness.hasEnoughToDraft ? 0.9 : 0.45,
   };
 };
@@ -293,7 +317,7 @@ export const applyOnboardingInput = async (
     askedQuestions: nextQuestionKey ? [...session.askedQuestions, nextQuestionKey] : session.askedQuestions,
     confirmedFields: session.confirmedFields,
     unresolvedConflicts: extraction.conflicts,
-    suggestedPrompt: getSuggestedPrompt(nextQuestionKey),
+    suggestedPrompt: getSuggestedPrompt(nextQuestionKey, nextProfile),
     confidence: extraction.conflicts.length > 0 || extraction.requiresConfirmation ? extraction.confidence : readiness.hasEnoughToDraft ? Math.max(extraction.confidence, 0.9) : Math.max(extraction.confidence, 0.6),
   };
 };

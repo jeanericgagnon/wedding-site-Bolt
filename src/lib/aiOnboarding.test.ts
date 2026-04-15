@@ -75,3 +75,14 @@ it('captures venue names from venue-like phrases', async () => {
   const next = await applyOnboardingInput(createOnboardingSessionState(createEmptyWeddingProfile()), 'Grand Estate');
   expect(next.profile.event.venueName).toBe('Grand Estate');
 });
+
+it('personalizes the next suggested prompt from known profile context', async () => {
+  const seeded = createOnboardingSessionState({
+    ...createEmptyWeddingProfile(),
+    couple: { ...createEmptyWeddingProfile().couple, displayNames: 'Alex & Jordan', partnerOne: 'Alex', partnerTwo: 'Jordan' },
+    event: { ...createEmptyWeddingProfile().event, venueLocation: 'San Diego, CA' },
+  });
+  const next = await applyOnboardingInput(seeded, '2027-06-12');
+  expect(next.nextQuestionKey).toBe('venueName');
+  expect(next.suggestedPrompt).toContain('San Diego, CA');
+});
