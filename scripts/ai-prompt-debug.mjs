@@ -22,9 +22,18 @@ const sparseProfile = {
   couple: { ...createEmptyWeddingProfile().couple, displayNames: 'Taylor & Sam' },
 };
 
+const mediumProfile = {
+  ...createEmptyWeddingProfile(),
+  couple: { ...createEmptyWeddingProfile().couple, displayNames: 'Maya & Chris', storyTone: 'easygoing and warm' },
+  event: { ...createEmptyWeddingProfile().event, date: '2026-10-04', venueLocation: 'Ojai, California' },
+  story: { ...createEmptyWeddingProfile().story, welcomeNote: 'We want people to feel relaxed and taken care of through the weekend.' },
+  design: { ...createEmptyWeddingProfile().design, vibe: 'practical with emotional undertone' },
+  guestExperience: { ...createEmptyWeddingProfile().guestExperience, faqTone: 'easygoing', travelSupportLevel: 'high' },
+};
+
 const targetSection = process.argv[2] || '';
 
-for (const [label, profile] of Object.entries({ rich: richProfile, sparse: sparseProfile })) {
+for (const [label, profile] of Object.entries({ rich: richProfile, medium: mediumProfile, sparse: sparseProfile })) {
   const payloads = buildSectionPromptPayloads(profile);
 
   console.log(`\n=== ${label.toUpperCase()} SYSTEM ===\n`);
