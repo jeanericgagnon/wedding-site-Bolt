@@ -220,7 +220,7 @@ const guardGeneratedDraft = (
       [/celebrating together with those we hold dear/i, /we look forward to celebrating with you/i]
     ),
     deterministic.heroSubtitle,
-    72
+    80
   );
 
   const safeStoryBody = rejectIfLowScore(
@@ -230,7 +230,7 @@ const guardGeneratedDraft = (
       [/this day is about sharing a special moment/i, /cherish their time together/i]
     ),
     deterministic.storyBody,
-    70
+    82
   );
 
   const safeRegistryIntro = rejectIfLowScore(rejectIfTooGeneric(
@@ -283,11 +283,18 @@ const guardGeneratedDraft = (
     [/kindly respond/i, /kindly let us know/i, /kindly rsvp/i, /your reply means a great deal/i]
   ), deterministic.rsvpCallToAction, 70);
 
+  const safeCountdownMessage = rejectIfLowScore(
+    generated.countdownMessage,
+    deterministic.countdownMessage,
+    82
+  );
+
   return {
     ...deterministic,
     ...generated,
     heroSubtitle: safeHeroSubtitle,
     storyBody: safeStoryBody,
+    countdownMessage: safeCountdownMessage,
     eventHeadline: safeEventHeadline,
     registryIntro: safeRegistryIntro,
     faqIntro: safeFaqIntro,
