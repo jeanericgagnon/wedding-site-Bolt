@@ -349,9 +349,17 @@ export const DashboardOverview: React.FC = () => {
           setDraftRefineTargets(getWeddingProfileRefineTargets(site.onboarding_answers));
           setDraftBriefDebug(`valid:${summary.length}`);
         } else {
-          setDraftBrief([]);
+          const weddingData = (site.wedding_data as Record<string, unknown> | null) ?? null;
+          const fallbackSummary = [
+            site.couple_name_1 || site.couple_name_2 ? { id: 'couple', label: 'Couple', value: [site.couple_name_1, site.couple_name_2].filter(Boolean).join(' & '), questionKey: 'partnerNames' } : null,
+            site.wedding_date ? { id: 'date', label: 'Date', value: site.wedding_date, questionKey: 'weddingDate' } : null,
+            site.venue_name ? { id: 'venue', label: 'Venue', value: site.venue_name, questionKey: 'venueName' } : null,
+            site.wedding_location ? { id: 'location', label: 'Location', value: site.wedding_location, questionKey: 'venueLocation' } : null,
+            typeof (weddingData?.couple as Record<string, unknown> | undefined)?.story === 'string' ? { id: 'story', label: 'Story', value: (weddingData?.couple as Record<string, unknown>).story as string, questionKey: 'story' } : null,
+          ].filter(Boolean) as Array<{ id: string; label: string; value: string; questionKey: string }>;
+          setDraftBrief(fallbackSummary);
           setDraftRefineTargets([]);
-          setDraftBriefDebug(`invalid:${JSON.stringify(site.onboarding_answers ?? null).slice(0, 120)}`);
+          setDraftBriefDebug(`fallback:${fallbackSummary.length}`);
         }
       }
 
