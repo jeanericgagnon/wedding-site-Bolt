@@ -100,7 +100,28 @@ Why it matters:
 - useful for engagement -> wedding transition
 - useful for schedule updates, RSVP nudges, reminders, and post-event follow-up
 
-## 6) Product framing note
+## 6) Optional opt-in updates using collected emails
+
+Idea:
+- Use collected emails as an optional opt-in channel for future updates.
+
+Suggested guest-facing copy:
+- "Get updates about photos and future events (optional)"
+
+Possible use cases:
+- photo gallery launch
+- new album drops
+- anniversary or reunion events
+- future couple-hosted events
+- post-wedding thank-you / memory-sharing follow-up
+
+Important behavior:
+- must be clearly optional
+- should be separate from required RSVP/contact fields when appropriate
+- should preserve consent truth cleanly
+- should be easy for the couple to turn on or off
+
+## 7) Product framing note
 
 Strategic framing:
 - This should evolve from a wedding website builder into:
