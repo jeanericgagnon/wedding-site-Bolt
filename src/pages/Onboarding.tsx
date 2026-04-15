@@ -57,6 +57,12 @@ export const Onboarding: React.FC = () => {
     return 'quick-3';
   };
 
+  const getQuestionIndexByKey = (key: string | null) => {
+    if (!key) return 0;
+    const index = conciergeQuestions.findIndex((question) => question.key === key);
+    return index >= 0 ? index : 0;
+  };
+
   const getFirstIncompleteQuestionIndex = () => {
     const checks = [
       !formData.partnerNames.trim(),
@@ -82,7 +88,7 @@ export const Onboarding: React.FC = () => {
       done: Boolean(formData.partnerNames.trim()),
       actionLabel: 'Go',
       action: () => {
-        goToQuestionIndex(0);
+        goToQuestionIndex(getQuestionIndexByKey(onboardingSession.nextQuestionKey));
       },
     },
     {
@@ -91,7 +97,7 @@ export const Onboarding: React.FC = () => {
       done: Boolean(formData.weddingDate),
       actionLabel: 'Go',
       action: () => {
-        goToQuestionIndex(0);
+        goToQuestionIndex(getQuestionIndexByKey(onboardingSession.nextQuestionKey));
       },
     },
     {
@@ -100,7 +106,7 @@ export const Onboarding: React.FC = () => {
       done: Boolean(formData.venueName.trim() || formData.venueLocation.trim()),
       actionLabel: 'Go',
       action: () => {
-        goToQuestionIndex(0);
+        goToQuestionIndex(getQuestionIndexByKey(onboardingSession.nextQuestionKey));
       },
     },
     {
@@ -305,7 +311,7 @@ export const Onboarding: React.FC = () => {
   };
 
   const handleQuickSetup = () => {
-    goToQuestionIndex(0);
+    goToQuestionIndex(getQuestionIndexByKey(onboardingSession.nextQuestionKey));
   };
 
   const handleOneClickStarter = async () => {
@@ -713,6 +719,7 @@ export const Onboarding: React.FC = () => {
                 <div className="rounded-2xl border border-border bg-surface px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">AI guidance state</p>
                   <p className="text-sm text-text-primary">Intent: {onboardingSession.currentIntent}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Confidence: {Math.round(onboardingSession.confidence * 100)}%</p>
                   {onboardingSession.suggestedPrompt && (
                     <p className="mt-1 text-xs text-text-secondary">Suggested next ask: {onboardingSession.suggestedPrompt}</p>
                   )}
