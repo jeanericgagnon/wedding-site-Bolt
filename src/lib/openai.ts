@@ -2,10 +2,16 @@ import { z } from 'zod';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses';
 
-const getOpenAiApiKey = () => import.meta.env.VITE_OPENAI_API_KEY?.trim() || '';
-const getOpenAiModel = () => import.meta.env.VITE_OPENAI_MODEL?.trim() || 'gpt-4.1-mini';
+const getEnvValue = (key: string) => {
+  const viteValue = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env[key] : undefined;
+  const processValue = typeof process !== 'undefined' ? process.env[key] : undefined;
+  return (viteValue || processValue || '').trim();
+};
 
-export const isOpenAiForcedOff = () => import.meta.env.VITE_FORCE_DETERMINISTIC_AI === 'true';
+const getOpenAiApiKey = () => getEnvValue('VITE_OPENAI_API_KEY');
+const getOpenAiModel = () => getEnvValue('VITE_OPENAI_MODEL') || 'gpt-4.1-mini';
+
+export const isOpenAiForcedOff = () => getEnvValue('VITE_FORCE_DETERMINISTIC_AI') === 'true';
 export const isOpenAiConfigured = () => Boolean(getOpenAiApiKey()) && !isOpenAiForcedOff();
 export const getOpenAiRuntimeConfig = () => ({
   configured: isOpenAiConfigured(),
