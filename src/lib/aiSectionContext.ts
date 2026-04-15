@@ -8,6 +8,10 @@ export type SectionPromptPayload = {
   facts: Record<string, unknown>;
   tone: Record<string, unknown>;
   rules: string[];
+  examples?: {
+    good?: string[];
+    avoid?: string[];
+  };
 };
 
 const hasValue = (value?: string | null) => Boolean(value && value.trim());
@@ -34,6 +38,16 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'Do not say there is no registry if this section is present.',
         'Do not sound transactional or gift-grabby.',
       ],
+      examples: {
+        good: [
+          'Many of you are traveling across the globe to celebrate with us, so your presence means the world to us and is all we ask for.',
+          'Your presence and prayers on our big day are all we ask for.',
+        ],
+        avoid: [
+          'Your presence is the greatest gift.',
+          'We appreciate your thoughtfulness.',
+        ],
+      },
     },
     faqIntro: {
       section: 'faqIntro',
@@ -50,6 +64,16 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'Keep it guest-helpful.',
         'Avoid support-center phrasing.',
       ],
+      examples: {
+        good: [
+          'You have questions, we have answers.',
+          'This site has everything you’ll need leading up to the big day.',
+        ],
+        avoid: [
+          'Answers to common questions.',
+          'A few helpful details.',
+        ],
+      },
     },
     travelIntro: {
       section: 'travelIntro',
@@ -66,6 +90,16 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'Keep it practical and calm.',
         'Do not sound like destination marketing copy.',
       ],
+      examples: {
+        good: [
+          'Pack your bags, we’re going to Mexico!',
+          'Join us in Tuscany for a weekend of celebration.',
+        ],
+        avoid: [
+          'Local planning help.',
+          'Arrival details and information.',
+        ],
+      },
     },
     accommodationsIntro: {
       section: 'accommodationsIntro',
@@ -81,6 +115,14 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'Keep it practical and welcoming.',
         'Do not sound like hotel brochure copy.',
       ],
+      examples: {
+        good: [
+          'We’ve gathered a few places to stay nearby for the weekend.',
+        ],
+        avoid: [
+          'Comfortable nearby lodging options.',
+        ],
+      },
     },
     storyBody: {
       section: 'storyBody',
@@ -97,6 +139,15 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'Do not invent backstory.',
         'If details are sparse, be restrained and honest.',
       ],
+      examples: {
+        good: [
+          'We met at the Library in San Luis Obispo, CA.',
+          'Our journey began in a way I never expected — at a wedding!',
+        ],
+        avoid: [
+          'We knew we wanted to spend the rest of our lives together from the very start.',
+        ],
+      },
     },
     weddingPartyIntro: {
       section: 'weddingPartyIntro',
@@ -112,6 +163,12 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'Keep it affectionate and grounded.',
         'Do not sound ceremonial or generic.',
       ],
+      examples: {
+        avoid: [
+          'The people who mean the most to us.',
+          'Standing with us on this special day.',
+        ],
+      },
     },
     rsvpCallToAction: {
       section: 'rsvpCallToAction',
@@ -127,6 +184,16 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'Keep it gracious and direct.',
         'Do not sound canned or passive.',
       ],
+      examples: {
+        good: [
+          'Will we see you in Italy? Let’s make it official :)',
+          'We hope you can celebrate with us!',
+        ],
+        avoid: [
+          'Kindly confirm your attendance.',
+          'Please RSVP when you can.',
+        ],
+      },
     },
     contactIntro: {
       section: 'contactIntro',
