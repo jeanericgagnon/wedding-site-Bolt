@@ -42,3 +42,22 @@ it('surfaces conflict intent when a conflicting wedding date is provided', () =>
   expect(next.currentIntent).toBe('confirm-conflict');
   expect(next.unresolvedConflicts.length).toBeGreaterThan(0);
 });
+
+
+it('assigns high confidence to explicit registry links', () => {
+  const result = extractWeddingProfileUpdates('https://zola.com/our-registry', createEmptyWeddingProfile());
+  expect(result.confidence).toBeGreaterThan(0.9);
+  expect(result.requiresConfirmation).toBe(false);
+});
+
+it('requires confirmation for conflicting dates', () => {
+  const seeded = createOnboardingSessionState({
+    ...createEmptyWeddingProfile(),
+    event: { ...createEmptyWeddingProfile().event, date: '2027-06-12', venueLocation: 'San Diego, CA' },
+    couple: { ...createEmptyWeddingProfile().couple, displayNames: 'Alex & Jordan', partnerOne: 'Alex', partnerTwo: 'Jordan' },
+    meta: { readinessScore: 60 },
+  });
+  const next = applyOnboardingInput(seeded, '2027-07-01');
+  expect(next.currentIntent).toBe('confirm-conflict');
+  expect(next.confidence).toBeLessThan(0.5);
+});

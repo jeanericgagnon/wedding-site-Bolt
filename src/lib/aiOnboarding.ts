@@ -12,6 +12,8 @@ export type OnboardingExtractionResult = {
   inferred: string[];
   conflicts: Array<{ path: string; currentValue: string; nextValue: string }>;
   notes: string[];
+  confidence: number;
+  requiresConfirmation: boolean;
 };
 
 export type OnboardingSessionState = {
@@ -109,10 +111,12 @@ export const extractWeddingProfileUpdates = (
   const inferred: string[] = [];
   const conflicts: Array<{ path: string; currentValue: string; nextValue: string }> = [];
   const notes: string[] = [];
+  let confidence = 0.2;
+  let requiresConfirmation = false;
   const trimmed = input.trim();
 
   if (!trimmed) {
-    return { updates, inferred, conflicts, notes };
+    return { updates, inferred, conflicts, notes, confidence, requiresConfirmation };
   }
 
   if (trimmed.includes('&') && !profile.couple.displayNames) {
@@ -124,39 +128,47 @@ export const extractWeddingProfileUpdates = (
       partnerTwo: partnerTwo || partnerOne,
     };
     notes.push('Captured couple names');
+    confidence = Math.max(confidence, 0.92);
   }
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
     const current = getProfileString(profile, 'event.date');
     if (current && normalize(current) !== normalize(trimmed)) {
       conflicts.push({ path: 'event.date', currentValue: current, nextValue: trimmed });
+      requiresConfirmation = true;
+      confidence = Math.max(confidence, 0.35);
     } else {
       updates.event = { ...profile.event, date: trimmed };
       notes.push('Captured wedding date');
+      confidence = Math.max(confidence, 0.95);
     }
   }
 
   if (/https?:\/\//i.test(trimmed)) {
     updates.registry = { ...profile.registry, url: trimmed, status: 'linked' };
     notes.push('Captured registry link');
+    confidence = Math.max(confidence, 0.97);
   }
 
   if (!updates.event && /,/.test(trimmed) && trimmed.length >= 6 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
     updates.event = { ...profile.event, venueLocation: trimmed };
     notes.push('Captured venue location');
+    confidence = Math.max(confidence, 0.78);
   }
 
   if (/garden|coastal|desert|classic|editorial/i.test(trimmed)) {
     updates.design = { ...profile.design, theme: trimmed.toLowerCase() };
     inferred.push('design.theme');
+    confidence = Math.max(confidence, 0.62);
   }
 
   if (!updates.story && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed)) {
     updates.story = { ...profile.story, summary: trimmed };
     notes.push('Captured story summary');
+    confidence = Math.max(confidence, 0.58);
   }
 
-  return { updates, inferred, conflicts, notes };
+  return { updates, inferred, conflicts, notes, confidence, requiresConfirmation };
 };
 
 export const createOnboardingSessionState = (
@@ -198,7 +210,7 @@ export const applyOnboardingInput = (
   return {
     profile: nextProfile,
     readiness,
-    currentIntent: extraction.conflicts.length > 0
+    currentIntent: extraction.conflicts.length > 0 || extraction.requiresConfirmation
       ? 'confirm-conflict'
       : readiness.missingCriticalFields.length > 0
         ? 'collect-critical-field'
@@ -210,6 +222,6 @@ export const applyOnboardingInput = (
     confirmedFields: session.confirmedFields,
     unresolvedConflicts: extraction.conflicts,
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey),
-    confidence: extraction.conflicts.length > 0 ? 0.25 : readiness.hasEnoughToDraft ? 0.9 : 0.6,
+    confidence: extraction.conflicts.length > 0 || extraction.requiresConfirmation ? extraction.confidence : readiness.hasEnoughToDraft ? Math.max(extraction.confidence, 0.9) : Math.max(extraction.confidence, 0.6),
   };
 };
