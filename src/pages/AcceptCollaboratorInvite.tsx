@@ -66,10 +66,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   }, [inviteInfo]);
 
   useEffect(() => {
-    if (authMode === 'signup') {
+    if (authMode === 'signup' && !authLoading && !claiming) {
       setAuthError(null);
     }
-  }, [authMode]);
+  }, [authMode, authLoading, claiming]);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,7 +133,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
       const resolvedState = resolveInviteValidationState(nextInviteInfo);
       setInviteInfo(nextInviteInfo);
-      setAuthMode('signup');
+      setAuthMode((prev) => prev === 'signin' ? 'signup' : prev);
       setSignInForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email }));
       setSignUpForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email, fullName: prev.fullName || nextInviteInfo.invite_name || '' }));
       setInviteLookupDebug(`Invite loaded: status=${nextInviteInfo.status}`);

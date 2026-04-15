@@ -93,6 +93,7 @@ try {
         await collaboratorPage.getByText(/create account/i).first().click().catch(() => {});
         await collaboratorPage.waitForTimeout(500);
       }
+      await collaboratorPage.waitForTimeout(750);
       const fullName = collaboratorPage.getByLabel(/full name/i);
       if (await fullName.count()) {
         await fullName.fill('Test One');
