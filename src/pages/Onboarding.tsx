@@ -723,6 +723,20 @@ export const Onboarding: React.FC = () => {
                   {onboardingSession.suggestedPrompt && (
                     <p className="mt-1 text-xs text-text-secondary">Suggested next ask: {onboardingSession.suggestedPrompt}</p>
                   )}
+                  {onboardingSession.suggestedFollowUps.length > 0 && (
+                    <div className="mt-3 rounded-2xl bg-primary-light/30 px-3 py-3">
+                      <p className="text-xs uppercase tracking-[0.18em] text-primary mb-2">High-leverage follow-ups</p>
+                      <ul className="space-y-2">
+                        {onboardingSession.suggestedFollowUps.map((question, index) => (
+                          <li key={question.key} className="text-xs text-text-secondary">
+                            <span className="font-medium text-text-primary">{index + 1}.</span>{' '}
+                            {question.variants[0]}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-[11px] text-text-tertiary">We cap follow-ups and only surface the highest-leverage missing details.</p>
+                    </div>
+                  )}
                 </div>
                 {currentQuestion.key === 'partnerNames' && (
                   <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
