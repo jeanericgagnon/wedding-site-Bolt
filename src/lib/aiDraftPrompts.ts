@@ -12,8 +12,30 @@ Rules:
 - Prefer tasteful specificity over generic filler
 - Return copy that can be placed directly on a wedding website`;
 
-export const buildWeddingCopyUserPrompt = (profile: WeddingProfile) => `Couple profile:
-${JSON.stringify(profile, null, 2)}`;
+export const buildWeddingCopyUserPrompt = (profile: WeddingProfile) => {
+  const emotionalContext = {
+    names: profile.couple.displayNames,
+    storySummary: profile.story.summary,
+    storyTone: profile.couple.storyTone,
+    designTheme: profile.design.theme,
+    designVibe: profile.design.vibe,
+    guestFeeling: profile.story.welcomeNote,
+    faqTone: profile.guestExperience.faqTone,
+    travelSupportLevel: profile.guestExperience.travelSupportLevel,
+    eventDate: profile.event.date,
+    venueName: profile.event.venueName,
+    venueLocation: profile.event.venueLocation,
+    ceremonyTime: profile.event.ceremonyTime,
+    receptionTime: profile.event.receptionTime,
+    rsvpDeadline: profile.event.rsvpDeadline,
+  };
+
+  return `Couple profile:
+${JSON.stringify(profile, null, 2)}
+
+Emotional context:
+${JSON.stringify(emotionalContext, null, 2)}`;
+};
 
 export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   heroTitle: `Write the main hero title for ${names(profile)}. Usually this is just the names, unless a more elegant headline is clearly better.`,
