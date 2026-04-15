@@ -17,6 +17,7 @@ import { SiteViewContext } from '../contexts/SiteViewContext';
 import { siteRepository } from '../data/siteRepository';
 import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
+import { getSectionVariants } from '../sections/sectionRegistry';
 import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
@@ -126,6 +127,27 @@ function createDemoFallbackSections(templateId = 'modern-luxe'): BuilderSectionI
     locked: section.locked,
     settings: { ...section.settings },
   }));
+}
+
+function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSectionInstance[] {
+  return sections.map((section) => {
+    const supported = getSectionVariants(section.type);
+    if (supported.includes(section.variant)) return section;
+
+    const fallbackMap: Record<string, Record<string, string>> = {
+      hero: { video: 'default' },
+      countdown: { rings: 'default', photo: 'default' },
+      venue: { split: 'card' },
+      schedule: { minimal: 'timeline' },
+      rsvp: { form: 'default' },
+      'footer-cta': { expanded: 'default' },
+      story: { editorial: 'default' },
+      gallery: { fullwidth: 'default' },
+    };
+
+    const nextVariant = fallbackMap[section.type]?.[section.variant] ?? supported[0] ?? 'default';
+    return { ...section, variant: nextVariant };
+  });
 }
 
 function createAlexJordanDemoWeddingData(): WeddingDataV1 {
@@ -497,7 +519,7 @@ export const SiteView: React.FC = () => {
 
         if (siteJson && siteJson.pages?.length > 0) {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
-          const sections = homePage.sections.filter(s => s.enabled);
+          const sections = normalizeSectionVariants(homePage.sections.filter(s => s.enabled));
 
           if (sections.length === 0) {
             if (resolvedSlug === 'alex-jordan-demo') {
