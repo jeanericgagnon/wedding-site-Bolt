@@ -58,17 +58,17 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   rsvpTitle: `Write the RSVP section title. It should feel inviting and human.`,
   rsvpIntro: `Write one short line encouraging guests to reply. It should feel gracious and easy, not robotic or overly formal.`,
   registryTitle: `Write the registry section title. It should feel gracious and tasteful, not transactional.`,
-  registryIntro: `Write one short registry note. It should feel gracious, warm, and non-transactional. Avoid sounding gift-grabby, apologetic, or stiff.`,
+  registryIntro: `Write one short registry note. It should feel gracious, warm, and non-transactional. Avoid sounding gift-grabby, apologetic, stiff, or like generic etiquette copy. Prefer simple sincerity over polished sameness.`,
   faqHeadline: `Write the FAQ section title. It should feel clear, calm, and guest-friendly.`,
-  faqIntro: `Write one short line introducing the FAQ section. It should feel helpful and reassuring, not robotic or blandly corporate.`,
+  faqIntro: `Write one short line introducing the FAQ section. It should feel helpful and reassuring, not robotic or blandly corporate. Avoid generic support-center language like "answers to common questions" unless there is truly nothing better.`,
   travelTitle: `Write the travel section title. It should feel useful and guest-centered.`,
   travelIntro: `Write one short line introducing travel details. It should help guests plan without sounding generic, tourism-board polished, or filler-heavy.`,
   accommodationsTitle: `Write the accommodations section title. It should feel clean, useful, and welcoming.`,
-  accommodationsIntro: `Write one short line introducing accommodations or hotel guidance. It should be helpful and warm, not hotel-brochure copy.`,
+  accommodationsIntro: `Write one short line introducing accommodations or hotel guidance. It should be helpful and warm, not hotel-brochure copy. Avoid generic phrases like "nearby lodging options" unless the profile is extremely sparse.`,
   weddingPartyTitle: `Write the wedding party section title. It should feel warm, personal, and human.`,
-  weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy, ceremonial, or overblown.`,
+  weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy, ceremonial, or overblown. Avoid default lines like "meet the friends and family standing with us" unless there is no better grounded option.`,
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful. Use only known facts. If date or venue details are missing, do not invent them and do not use placeholders—write a clean generic line instead.`,
-  rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic, wedding-industry canned, or excessively formal.`,
+  rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic, wedding-industry canned, or excessively formal. Avoid generic lines like "please RSVP when you can" if a warmer, cleaner line is possible.`,
 });
 
 export const buildWeddingCopyCriticPrompt = () => `You are editing wedding website copy to make it stronger.
@@ -81,4 +81,5 @@ Rules:
 - Make copy more specific and graceful when possible
 - Cut vague soft-luxury phrasing and bridal-magazine mush
 - Prefer grounded specificity over abstract beauty words
+- Cut generic etiquette copy and default wedding-site filler when a cleaner human line is possible
 - Keep outputs concise and directly usable on a wedding website`;
