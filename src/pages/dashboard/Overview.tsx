@@ -18,6 +18,7 @@ import { supabase } from '../../lib/supabase';
 import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
+import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -165,6 +166,7 @@ export const DashboardOverview: React.FC = () => {
 
       const patch = buildDraftSitePatchFromProfile(data.onboarding_answers);
       const generatedDraft = await generateDraftFromWeddingProfile(data.onboarding_answers);
+      const canonicalAiContent = createCanonicalContentFromDraft(generatedDraft);
       const mergedWeddingData = await mergeGeneratedDraftIntoWeddingData(
         (data.wedding_data as Record<string, unknown> | null) ?? null,
         data.onboarding_answers
@@ -185,6 +187,7 @@ export const DashboardOverview: React.FC = () => {
             meta: {
               ...((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}))),
               aiDraft: generatedDraft,
+              aiContent: canonicalAiContent,
             },
           },
           site_json: patchedBuilderProject,
