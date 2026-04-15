@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { runOpenAiStructuredPrompt, isOpenAiConfigured } from './openai';
+import { runOpenAiStructuredPrompt, isOpenAiConfigured, getOpenAiRuntimeConfig } from './openai';
 import { WeddingProfile, buildWeddingDataPatchFromProfile, mergeWeddingDataFromProfile } from './weddingProfile';
 
 export type DraftGenerationResult = {
@@ -76,6 +76,7 @@ export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): 
   const deterministic = deterministicDraftFromWeddingProfile(profile);
 
   if (!isOpenAiConfigured()) {
+    console.info('[aiDraftGenerator] using deterministic fallback: OpenAI not configured');
     return deterministic;
   }
 
@@ -85,13 +86,16 @@ export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): 
       user: buildDraftPrompt(profile),
       schemaName: 'wedding_homepage_draft',
       schema: draftGenerationSchema,
+      model: getOpenAiRuntimeConfig().model,
     });
 
+    console.info('[aiDraftGenerator] using OpenAI draft generation', getOpenAiRuntimeConfig());
     return {
       ...generated,
       weddingDataPatch: buildWeddingDataPatchFromProfile(profile),
     };
-  } catch {
+  } catch (error) {
+    console.warn('[aiDraftGenerator] OpenAI draft generation failed, falling back to deterministic generator', error);
     return deterministic;
   }
 };

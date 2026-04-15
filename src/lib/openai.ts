@@ -3,8 +3,13 @@ import { z } from 'zod';
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses';
 
 const getOpenAiApiKey = () => import.meta.env.VITE_OPENAI_API_KEY?.trim() || '';
+const getOpenAiModel = () => import.meta.env.VITE_OPENAI_MODEL?.trim() || 'gpt-4.1-mini';
 
 export const isOpenAiConfigured = () => Boolean(getOpenAiApiKey());
+export const getOpenAiRuntimeConfig = () => ({
+  configured: isOpenAiConfigured(),
+  model: getOpenAiModel(),
+});
 
 export class OpenAiNotConfiguredError extends Error {
   constructor() {
@@ -25,7 +30,7 @@ export async function runOpenAiStructuredPrompt<TSchema extends z.ZodTypeAny>({
   user,
   schemaName,
   schema,
-  model = 'gpt-4.1-mini',
+  model = getOpenAiModel(),
 }: StructuredPromptOptions<TSchema>): Promise<z.infer<TSchema>> {
   const apiKey = getOpenAiApiKey();
   if (!apiKey) throw new OpenAiNotConfiguredError();

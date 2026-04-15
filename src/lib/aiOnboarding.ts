@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { WeddingProfile, WeddingProfileReadiness, evaluateWeddingProfileReadiness, createEmptyWeddingProfile } from './weddingProfile';
-import { isOpenAiConfigured, runOpenAiStructuredPrompt } from './openai';
+import { isOpenAiConfigured, runOpenAiStructuredPrompt, getOpenAiRuntimeConfig } from './openai';
 
 export type OnboardingIntent =
   | 'collect-critical-field'
@@ -233,7 +233,10 @@ export const extractWeddingProfileUpdates = async (
 ): Promise<OnboardingExtractionResult> => {
   const deterministic = deterministicExtractWeddingProfileUpdates(input, profile);
 
-  if (!isOpenAiConfigured()) return deterministic;
+  if (!isOpenAiConfigured()) {
+    console.info('[aiOnboarding] using deterministic fallback: OpenAI not configured');
+    return deterministic;
+  }
 
   try {
     const modelResult = await runOpenAiStructuredPrompt({
@@ -241,6 +244,7 @@ export const extractWeddingProfileUpdates = async (
       user: `Profile:\n${JSON.stringify(profile, null, 2)}\n\nUser message:\n${input}`,
       schemaName: 'wedding_onboarding_extraction',
       schema: onboardingExtractionSchema,
+      model: getOpenAiRuntimeConfig().model,
     });
 
     const candidate = mergeProfile(createEmptyWeddingProfile(), modelResult.updates as Partial<WeddingProfile>);
@@ -254,6 +258,7 @@ export const extractWeddingProfileUpdates = async (
       }
     }
 
+    console.info('[aiOnboarding] using OpenAI extraction', getOpenAiRuntimeConfig());
     return {
       updates: modelResult.updates as Partial<WeddingProfile>,
       inferred: modelResult.inferred,
@@ -262,7 +267,8 @@ export const extractWeddingProfileUpdates = async (
       confidence: modelResult.confidence,
       requiresConfirmation: conflicts.length > 0,
     };
-  } catch {
+  } catch (error) {
+    console.warn('[aiOnboarding] OpenAI extraction failed, falling back to deterministic extractor', error);
     return deterministic;
   }
 };
