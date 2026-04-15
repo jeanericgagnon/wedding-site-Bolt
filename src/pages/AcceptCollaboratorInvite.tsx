@@ -127,6 +127,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
       const resolvedState = resolveInviteValidationState(nextInviteInfo);
       setInviteInfo(nextInviteInfo);
+      setAuthMode('signup');
       setSignInForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email }));
       setSignUpForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email, fullName: prev.fullName || nextInviteInfo.invite_name || '' }));
       setInviteLookupDebug(`Invite loaded: status=${nextInviteInfo.status}`);
