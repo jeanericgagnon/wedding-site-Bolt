@@ -131,6 +131,39 @@ export const mergeGeneratedDraftIntoBuilderProject = (
         };
       }
 
+      if (type === 'faq') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            headline: mergeGeneratedSetting(settings.headline, generatedDraft.faqHeadline),
+            subheadline: mergeGeneratedSetting(settings.subheadline, generatedDraft.faqIntro),
+          },
+        };
+      }
+
+      if (type === 'travel') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            headline: mergeGeneratedSetting(settings.headline, generatedDraft.travelTitle),
+            intro: mergeGeneratedSetting(settings.intro, generatedDraft.travelIntro),
+          },
+        };
+      }
+
+      if (type === 'accommodations') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            headline: mergeGeneratedSetting(settings.headline, generatedDraft.accommodationsTitle),
+            generalNote: mergeGeneratedSetting(settings.generalNote, generatedDraft.accommodationsIntro),
+          },
+        };
+      }
+
       return section;
     });
 

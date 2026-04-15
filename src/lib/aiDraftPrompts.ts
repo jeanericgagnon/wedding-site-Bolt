@@ -53,6 +53,12 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   rsvpTitle: `Write the RSVP section title. It should feel inviting and human.`,
   rsvpIntro: `Write one short line encouraging guests to reply. It should feel gracious and easy, not robotic.`,
   registryTitle: `Write the registry section title. It should feel gracious and tasteful, not transactional.`,
+  faqHeadline: `Write the FAQ section title. It should feel clear, calm, and guest-friendly.`,
+  faqIntro: `Write one short line introducing the FAQ section. It should feel helpful and reassuring, not robotic.`,
+  travelTitle: `Write the travel section title. It should feel useful and guest-centered.`,
+  travelIntro: `Write one short line introducing travel details. It should help guests plan without sounding generic.`,
+  accommodationsTitle: `Write the accommodations section title. It should feel clean, useful, and welcoming.`,
+  accommodationsIntro: `Write one short line introducing accommodations or hotel guidance. It should be helpful and warm.`,
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful.`,
   rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic.`,
 });
