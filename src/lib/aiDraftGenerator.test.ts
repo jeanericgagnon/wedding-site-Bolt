@@ -21,6 +21,35 @@ describe('aiDraftGenerator', () => {
     expect(draft.heroTitle).toBe('Alex & Jordan');
     expect(draft.heroSubtitle).toContain('San Diego, CA');
     expect(draft.storyBody).toContain('kept choosing each other');
+    expect(draft.countdownTitle).toBe('Alex & Jordan');
+    expect(draft.venueTitle).toBe('Venue');
+    expect(draft.scheduleTitle).toBe('Schedule');
+    expect(draft.galleryTitle).toBe('Photos');
+    expect(draft.rsvpTitle).toBe('RSVP');
+  });
+
+  it('keeps a minimum quality floor for richer profiles', () => {
+    const draft = generateDraftFromWeddingProfile(baseProfile);
+    expect(draft.heroTitle.trim().length).toBeGreaterThan(3);
+    expect(draft.heroSubtitle).toContain('Join us in');
+    expect(draft.heroSubtitle).not.toBe('Join us in our favorite place on our wedding weekend');
+    expect(draft.storyBody).not.toBe('Alex & Jordan are so excited to celebrate with the people they love most.');
+    expect(draft.eventHeadline).toContain('Grand Estate');
+    expect(draft.rsvpCallToAction).toContain('2027-05-01');
+    expect(draft.countdownMessage).toContain('San Diego, CA');
+  });
+
+  it('still returns non-broken homepage copy for sparse profiles', () => {
+    const sparse = createEmptyWeddingProfile();
+    sparse.couple.displayNames = 'Taylor & Sam';
+
+    const draft = generateDraftFromWeddingProfile(sparse);
+    expect(draft.heroTitle).toBe('Taylor & Sam');
+    expect(draft.heroSubtitle.trim().length).toBeGreaterThan(10);
+    expect(draft.storyBody.trim().length).toBeGreaterThan(20);
+    expect(draft.countdownTitle).toBe('Taylor & Sam');
+    expect(draft.galleryTitle).toBe('Photos');
+    expect(draft.rsvpTitle).toBe('RSVP');
   });
 
   it('merges generated draft content into wedding data', () => {
