@@ -146,6 +146,7 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         ],
         avoid: [
           'We knew we wanted to spend the rest of our lives together from the very start.',
+          'This moment is a quiet continuation of our commitment.',
         ],
       },
     },
@@ -164,9 +165,13 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         'Do not sound ceremonial or generic.',
       ],
       examples: {
+        good: [
+          'These are the people we’re lucky to have beside us.',
+        ],
         avoid: [
           'The people who mean the most to us.',
           'Standing with us on this special day.',
+          'A brief note about those standing with us.',
         ],
       },
     },

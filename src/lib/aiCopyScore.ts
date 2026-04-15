@@ -24,6 +24,9 @@ export const genericCopyPatterns = [
   /rest of our lives/i,
   /soul ?mates?/i,
   /forever/i,
+  /those we love most/i,
+  /quiet continuation/i,
+  /a brief note about/i,
 ];
 
 export const scoreCopyLine = (value: string) => {
@@ -40,6 +43,7 @@ export const scoreCopyLine = (value: string) => {
   if (/support|helpful information|planning help|details to help/i.test(text)) score -= 8;
   if (/\bthey\b|\btheir\b/.test(text) && /met|celebrate|look forward|chosen|grateful/.test(text)) score -= 10;
   if (/\bplease reply by\b|\bplease let us know\b|\bconfirm your attendance\b/.test(text)) score -= 8;
+  if (/those we love most|quiet continuation|brief note about|side by side|closest friends and family/i.test(text)) score -= 12;
 
   return score;
 };
