@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { runOpenAiStructuredPrompt, isOpenAiConfigured, getOpenAiRuntimeConfig } from './openai';
 import { WeddingProfile, buildWeddingDataPatchFromProfile, mergeWeddingDataFromProfile } from './weddingProfile';
-import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildSectionInstructionMap, buildWeddingCopyCriticPrompt } from './aiDraftPrompts';
+import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildWeddingCopySectionPayloadPrompt, buildSectionInstructionMap, buildWeddingCopyCriticPrompt } from './aiDraftPrompts';
 
 export type DraftGenerationResult = {
   heroTitle: string;
@@ -145,7 +145,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
 
 const buildDraftPrompt = (profile: WeddingProfile) => {
   const instructions = buildSectionInstructionMap(profile);
-  return `${buildWeddingCopyUserPrompt(profile)}\n\nWrite these fields with section-specific intent:\n${JSON.stringify(instructions, null, 2)}`;
+  return `${buildWeddingCopySectionPayloadPrompt(profile)}\n\nWrite these fields with section-specific intent:\n${JSON.stringify(instructions, null, 2)}`;
 };
 
 const buildDraftCriticPrompt = (profile: WeddingProfile, draft: Omit<DraftGenerationResult, 'weddingDataPatch'>) => {
