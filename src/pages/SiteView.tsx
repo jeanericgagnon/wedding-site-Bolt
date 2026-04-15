@@ -480,7 +480,7 @@ export const SiteView: React.FC = () => {
 
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
 
-        if (persistedSections.length > 0) {
+        if (persistedSections.length > 0 && !(siteJson && siteJson.pages?.length > 0)) {
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(
               safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData())
