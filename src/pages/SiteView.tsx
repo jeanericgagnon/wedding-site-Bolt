@@ -20,6 +20,7 @@ import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
 import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
+import { getSiteVisibilityState } from '../lib/siteVisibilityState';
 
 interface PublicItineraryRow {
   id?: string;
@@ -460,7 +461,7 @@ export const SiteView: React.FC = () => {
         setPrivacyGate('open');
 
         const rawSiteJson = safeJsonParse<BuilderProject | null>(
-          isPublished ? (data.published_json ?? data.site_json) : data.site_json,
+          data.site_json,
           null
         );
         const siteJson = rawSiteJson ? rewriteSignedMediaUrlsToPublicDeep(rawSiteJson) : null;
