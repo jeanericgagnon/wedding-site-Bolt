@@ -28,6 +28,10 @@ export type DraftGenerationResult = {
   accommodationsIntro: string;
   dressCodeTitle: string;
   dressCodeIntro: string;
+  contactTitle: string;
+  contactIntro: string;
+  directionsTitle: string;
+  directionsIntro: string;
   weddingPartyTitle: string;
   weddingPartyIntro: string;
   eventHeadline: string;
@@ -60,6 +64,10 @@ const draftGenerationSchema = z.object({
   accommodationsIntro: z.string().min(1),
   dressCodeTitle: z.string().min(1),
   dressCodeIntro: z.string().min(1),
+  contactTitle: z.string().min(1),
+  contactIntro: z.string().min(1),
+  directionsTitle: z.string().min(1),
+  directionsIntro: z.string().min(1),
   weddingPartyTitle: z.string().min(1),
   weddingPartyIntro: z.string().min(1),
   eventHeadline: z.string().min(1),
@@ -117,6 +125,12 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
       : 'A few nearby places to stay for the weekend.',
     dressCodeTitle: 'Dress Code',
     dressCodeIntro: 'A few notes to help you choose something that feels right for the celebration.',
+    contactTitle: 'Questions?',
+    contactIntro: 'If you need anything before the celebration, we’re happy to help.',
+    directionsTitle: 'Location & Directions',
+    directionsIntro: hasVenue
+      ? `A few details to help you find your way to ${location}.`
+      : 'A few details to help you find your way on the day.',
     weddingPartyTitle: 'Wedding Party',
     weddingPartyIntro: hasStory
       ? 'The people who have been part of our story and will be standing with us on the day.'
@@ -203,6 +217,18 @@ const guardGeneratedDraft = (
     [/fashion-editorial/i, /dress to impress/i, /what to wear for our special day/i]
   );
 
+  const safeContactIntro = preferDeterministicField(
+    generated.contactIntro,
+    deterministic.contactIntro,
+    [/customer support/i, /reach out to our team/i]
+  );
+
+  const safeDirectionsIntro = preferDeterministicField(
+    generated.directionsIntro,
+    deterministic.directionsIntro,
+    [/map-app/i, /google maps/i, /use the address below/i]
+  );
+
   return {
     ...deterministic,
     ...generated,
@@ -212,6 +238,8 @@ const guardGeneratedDraft = (
     travelIntro: safeTravelIntro,
     accommodationsIntro: safeAccommodationsIntro,
     dressCodeIntro: safeDressCodeIntro,
+    contactIntro: safeContactIntro,
+    directionsIntro: safeDirectionsIntro,
     weddingPartyIntro: safeWeddingPartyIntro,
     rsvpCallToAction: safeRsvpCallToAction,
     weddingDataPatch: deterministic.weddingDataPatch,

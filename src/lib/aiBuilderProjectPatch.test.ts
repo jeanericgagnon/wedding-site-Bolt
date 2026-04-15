@@ -23,6 +23,8 @@ const project = {
         { type: 'travel', settings: {} },
         { type: 'accommodations', settings: {} },
         { type: 'dress-code', settings: {} },
+        { type: 'contact', settings: {} },
+        { type: 'directions', settings: {} },
         { type: 'weddingParty', settings: {} },
       ],
     },
@@ -42,6 +44,8 @@ describe('aiBuilderProjectPatch', () => {
     const travelIntro = sections.find((section) => section.type === 'travel')?.settings.intro as { value: string; source: string };
     const accommodationsNote = sections.find((section) => section.type === 'accommodations')?.settings.generalNote as { value: string; source: string };
     const dressCodeDescription = sections.find((section) => section.type === 'dress-code')?.settings.description as { value: string; source: string };
+    const contactIntro = sections.find((section) => section.type === 'contact')?.settings.introText as { value: string; source: string };
+    const directionsTitle = sections.find((section) => section.type === 'directions')?.settings.title as { value: string; source: string };
     const weddingPartyIntro = sections.find((section) => section.type === 'weddingParty')?.settings.subheadline as { value: string; source: string };
     expect(heroHeadline.value).toBe('Alex & Jordan');
     expect(heroHeadline.source).toBe('concierge-brief');
@@ -52,6 +56,8 @@ describe('aiBuilderProjectPatch', () => {
     expect(travelIntro.value).toContain('San Diego, CA');
     expect(accommodationsNote.value).toContain('stay');
     expect(dressCodeDescription.value).toContain('choose something that feels right');
+    expect(contactIntro.value).toContain('happy to help');
+    expect(directionsTitle.value).toBe('Location & Directions');
     expect(weddingPartyIntro.value).toContain('part of our story');
   });
 });

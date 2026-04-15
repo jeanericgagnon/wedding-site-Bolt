@@ -176,6 +176,29 @@ export const mergeGeneratedDraftIntoBuilderProject = (
         };
       }
 
+      if (type === 'contact') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.contactTitle),
+            introText: mergeGeneratedSetting(settings.introText, generatedDraft.contactIntro),
+          },
+        };
+      }
+
+      if (type === 'directions') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.directionsTitle),
+            description: mergeGeneratedSetting(settings.description, generatedDraft.directionsIntro),
+            headline: mergeGeneratedSetting(settings.headline, generatedDraft.directionsTitle),
+          },
+        };
+      }
+
       if (type === 'weddingParty') {
         return {
           ...section,
