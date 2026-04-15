@@ -464,7 +464,19 @@ export const SiteView: React.FC = () => {
           data.site_json,
           null
         );
-        const siteJson = rawSiteJson ? rewriteSignedMediaUrlsToPublicDeep(rawSiteJson) : null;
+        const siteJson = rawSiteJson
+          ? rewriteSignedMediaUrlsToPublicDeep({
+              ...rawSiteJson,
+              pages: (rawSiteJson.pages ?? []).map((page) => ({
+                ...page,
+                sections: (page.sections ?? []).map((section) =>
+                  section.type === 'hero' && section.variant === 'video'
+                    ? { ...section, variant: 'default' }
+                    : section
+                ),
+              })),
+            })
+          : null;
 
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
 
