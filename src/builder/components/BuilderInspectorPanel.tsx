@@ -106,9 +106,10 @@ export const BuilderInspectorPanel: React.FC = () => {
   })();
 
   const handleUpdateSetting = (key: string, value: string | boolean | number) => {
+    const nextValue = typeof value === 'string' ? markFieldAsUserEdited(value) : value;
     dispatch(
       builderActions.updateSection(activePage.id, selectedSection.id, {
-        settings: { ...selectedSection.settings, [key]: value },
+        settings: { ...selectedSection.settings, [key]: nextValue },
       })
     );
   };
