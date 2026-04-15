@@ -22,10 +22,12 @@ export const generateDraftFromWeddingProfile = (profile: WeddingProfile): DraftG
   const date = profile.event.date || 'our wedding weekend';
   const storyBody = profile.story.summary?.trim()
     ? profile.story.summary.trim()
-    : `${names} are excited to celebrate this season with the people who know them best.`;
+    : `${names} are getting ready to celebrate with the people who know and love them best.`;
   const eventHeadline = profile.event.venueName
     ? `${profile.event.venueName} · ${profile.event.venueLocation || date}`
-    : `${location} · ${date}`;
+    : profile.event.venueLocation
+      ? `${profile.event.venueLocation} · ${date}`
+      : `${date} · celebration details coming soon`;
   const hasVenue = Boolean(profile.event.venueName || profile.event.venueLocation);
   const hasDeadline = Boolean(profile.event.rsvpDeadline);
 

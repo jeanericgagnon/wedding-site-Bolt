@@ -37,6 +37,7 @@ describe('aiDraftGenerator', () => {
     expect(draft.eventHeadline).toContain('Grand Estate');
     expect(draft.rsvpCallToAction).toContain('2027-05-01');
     expect(draft.countdownMessage).toContain('San Diego, CA');
+    expect(draft.eventHeadline).not.toContain('our wedding weekend');
   });
 
   it('still returns non-broken homepage copy for sparse profiles', () => {
