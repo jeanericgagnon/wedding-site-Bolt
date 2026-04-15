@@ -66,6 +66,57 @@ export const mergeGeneratedDraftIntoBuilderProject = (
         };
       }
 
+      if (type === 'countdown') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.countdownTitle),
+            message: mergeGeneratedSetting(settings.message, generatedDraft.countdownMessage),
+          },
+        };
+      }
+
+      if (type === 'venue') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.venueTitle),
+          },
+        };
+      }
+
+      if (type === 'schedule') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.scheduleTitle),
+          },
+        };
+      }
+
+      if (type === 'gallery') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.galleryTitle),
+          },
+        };
+      }
+
+      if (type === 'rsvp') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.rsvpTitle),
+          },
+        };
+      }
+
       return section;
     });
 

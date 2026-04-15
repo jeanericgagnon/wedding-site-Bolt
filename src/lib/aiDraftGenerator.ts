@@ -5,6 +5,12 @@ export type DraftGenerationResult = {
   heroSubtitle: string;
   storyTitle: string;
   storyBody: string;
+  countdownTitle: string;
+  countdownMessage: string;
+  venueTitle: string;
+  scheduleTitle: string;
+  galleryTitle: string;
+  rsvpTitle: string;
   eventHeadline: string;
   rsvpCallToAction: string;
   weddingDataPatch: Record<string, unknown>;
@@ -23,6 +29,12 @@ export const generateDraftFromWeddingProfile = (profile: WeddingProfile): DraftG
     heroSubtitle: `Join us in ${location} on ${date}`,
     storyTitle: 'Our Story',
     storyBody,
+    countdownTitle: names,
+    countdownMessage: `We can't wait to celebrate in ${location}.`,
+    venueTitle: profile.event.venueName ? `Venue` : 'Venue',
+    scheduleTitle: 'Schedule',
+    galleryTitle: 'Photos',
+    rsvpTitle: 'RSVP',
     eventHeadline: profile.event.venueName
       ? `${profile.event.venueName} · ${profile.event.venueLocation || date}`
       : `${location} · ${date}`,
