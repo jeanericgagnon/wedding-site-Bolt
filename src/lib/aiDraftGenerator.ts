@@ -37,15 +37,15 @@ export const generateDraftFromWeddingProfile = (profile: WeddingProfile): DraftG
     storyTitle: 'Our Story',
     storyBody,
     countdownTitle: names,
-    countdownMessage: hasVenue ? `We can't wait to celebrate in ${location}.` : `We can't wait to celebrate together.`,
-    venueTitle: 'Venue',
-    scheduleTitle: 'Schedule',
-    galleryTitle: 'Photos',
-    rsvpTitle: 'RSVP',
+    countdownMessage: hasVenue ? `We can't wait to celebrate with you in ${location}.` : `We can't wait to celebrate with our favorite people.`,
+    venueTitle: hasVenue ? 'Venue Details' : 'Venue Details',
+    scheduleTitle: 'The Plan',
+    galleryTitle: 'Moments to Remember',
+    rsvpTitle: 'Will You Be There?',
     eventHeadline,
     rsvpCallToAction: hasDeadline
-      ? `Please RSVP by ${profile.event.rsvpDeadline}`
-      : 'Please RSVP when you can',
+      ? `Please reply by ${profile.event.rsvpDeadline}`
+      : 'Reply when you are ready',
     weddingDataPatch: buildWeddingDataPatchFromProfile(profile),
   };
 };

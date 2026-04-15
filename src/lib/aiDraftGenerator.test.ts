@@ -22,10 +22,10 @@ describe('aiDraftGenerator', () => {
     expect(draft.heroSubtitle).toContain('San Diego, CA');
     expect(draft.storyBody).toContain('kept choosing each other');
     expect(draft.countdownTitle).toBe('Alex & Jordan');
-    expect(draft.venueTitle).toBe('Venue');
-    expect(draft.scheduleTitle).toBe('Schedule');
-    expect(draft.galleryTitle).toBe('Photos');
-    expect(draft.rsvpTitle).toBe('RSVP');
+    expect(draft.venueTitle).toBe('Venue Details');
+    expect(draft.scheduleTitle).toBe('The Plan');
+    expect(draft.galleryTitle).toBe('Moments to Remember');
+    expect(draft.rsvpTitle).toBe('Will You Be There?');
   });
 
   it('keeps a minimum quality floor for richer profiles', () => {
@@ -50,10 +50,10 @@ describe('aiDraftGenerator', () => {
     expect(draft.storyBody.trim().length).toBeGreaterThan(20);
     expect(draft.countdownTitle).toBe('Taylor & Sam');
     expect(draft.countdownMessage.trim().length).toBeGreaterThan(15);
-    expect(draft.venueTitle).toBe('Venue');
-    expect(draft.scheduleTitle).toBe('Schedule');
-    expect(draft.galleryTitle).toBe('Photos');
-    expect(draft.rsvpTitle).toBe('RSVP');
+    expect(draft.venueTitle).toBe('Venue Details');
+    expect(draft.scheduleTitle).toBe('The Plan');
+    expect(draft.galleryTitle).toBe('Moments to Remember');
+    expect(draft.rsvpTitle).toBe('Will You Be There?');
     expect(draft.rsvpCallToAction.trim().length).toBeGreaterThan(10);
     expect(draft.eventHeadline.trim().length).toBeGreaterThan(10);
   });
