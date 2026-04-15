@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { runOpenAiStructuredPrompt, isOpenAiConfigured, getOpenAiRuntimeConfig } from './openai';
 import { WeddingProfile, buildWeddingDataPatchFromProfile, mergeWeddingDataFromProfile } from './weddingProfile';
 import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildWeddingCopySectionPayloadPrompt, buildWeddingCopyCriticPayloadPrompt, buildSectionInstructionMap, buildWeddingCopyCriticPrompt } from './aiDraftPrompts';
+import { scoreCopyLine } from './aiCopyScore';
 
 export type DraftGenerationResult = {
   heroTitle: string;
@@ -171,6 +172,10 @@ const rejectIfTooGeneric = (generated: string, fallback: string, genericPatterns
   return value;
 };
 
+const rejectIfLowScore = (generated: string, fallback: string, minimumScore: number) => {
+  return scoreCopyLine(generated) >= minimumScore ? generated : fallback;
+};
+
 const guardGeneratedDraft = (
   generated: Omit<DraftGenerationResult, 'weddingDataPatch'>,
   deterministic: DraftGenerationResult,
@@ -208,19 +213,27 @@ const guardGeneratedDraft = (
     [/map-app/i, /google maps/i, /use the address below/i]
   );
 
-  const safeHeroSubtitle = rejectIfTooGeneric(
-    generated.heroSubtitle,
+  const safeHeroSubtitle = rejectIfLowScore(
+    rejectIfTooGeneric(
+      generated.heroSubtitle,
+      deterministic.heroSubtitle,
+      [/celebrating together with those we hold dear/i, /we look forward to celebrating with you/i]
+    ),
     deterministic.heroSubtitle,
-    [/celebrating together with those we hold dear/i, /we look forward to celebrating with you/i]
+    72
   );
 
-  const safeStoryBody = rejectIfTooGeneric(
-    generated.storyBody,
+  const safeStoryBody = rejectIfLowScore(
+    rejectIfTooGeneric(
+      generated.storyBody,
+      deterministic.storyBody,
+      [/this day is about sharing a special moment/i, /cherish their time together/i]
+    ),
     deterministic.storyBody,
-    [/this day is about sharing a special moment/i, /cherish their time together/i]
+    70
   );
 
-  const safeRegistryIntro = rejectIfTooGeneric(
+  const safeRegistryIntro = rejectIfLowScore(rejectIfTooGeneric(
     preferDeterministicField(
       generated.registryIntro,
       deterministic.registryIntro,
@@ -228,9 +241,9 @@ const guardGeneratedDraft = (
     ),
     deterministic.registryIntro,
     [/your presence is the greatest gift/i, /grateful for your support and kindness/i, /appreciate your thoughtfulness/i]
-  );
+  ), deterministic.registryIntro, 68);
 
-  const safeFaqIntro = rejectIfTooGeneric(
+  const safeFaqIntro = rejectIfLowScore(rejectIfTooGeneric(
     preferDeterministicField(
       generated.faqIntro,
       deterministic.faqIntro,
@@ -238,9 +251,9 @@ const guardGeneratedDraft = (
     ),
     deterministic.faqIntro,
     [/here are some answers/i, /we ve shared a few details/i, /a few notes to help make your visit comfortable and clear/i]
-  );
+  ), deterministic.faqIntro, 68);
 
-  const safeTravelIntro = rejectIfTooGeneric(
+  const safeTravelIntro = rejectIfLowScore(rejectIfTooGeneric(
     preferDeterministicField(
       generated.travelIntro,
       deterministic.travelIntro,
@@ -248,9 +261,9 @@ const guardGeneratedDraft = (
     ),
     deterministic.travelIntro,
     [/information to help you prepare/i, /details to make your trip/i, /information to assist with your travel plans/i]
-  );
+  ), deterministic.travelIntro, 68);
 
-  const safeAccommodationsIntro = rejectIfTooGeneric(
+  const safeAccommodationsIntro = rejectIfLowScore(rejectIfTooGeneric(
     preferDeterministicField(
       generated.accommodationsIntro,
       deterministic.accommodationsIntro,
@@ -258,9 +271,9 @@ const guardGeneratedDraft = (
     ),
     deterministic.accommodationsIntro,
     [/we ve provided some lodging information/i, /recommendations to make your stay/i, /comfortable lodging/i]
-  );
+  ), deterministic.accommodationsIntro, 68);
 
-  const safeRsvpCallToAction = rejectIfTooGeneric(
+  const safeRsvpCallToAction = rejectIfLowScore(rejectIfTooGeneric(
     preferDeterministicField(
       generated.rsvpCallToAction,
       deterministic.rsvpCallToAction,
@@ -268,7 +281,7 @@ const guardGeneratedDraft = (
     ),
     deterministic.rsvpCallToAction,
     [/kindly respond/i, /kindly let us know/i, /kindly rsvp/i, /your reply means a great deal/i]
-  );
+  ), deterministic.rsvpCallToAction, 70);
 
   return {
     ...deterministic,
