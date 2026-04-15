@@ -59,6 +59,8 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   travelIntro: `Write one short line introducing travel details. It should help guests plan without sounding generic.`,
   accommodationsTitle: `Write the accommodations section title. It should feel clean, useful, and welcoming.`,
   accommodationsIntro: `Write one short line introducing accommodations or hotel guidance. It should be helpful and warm.`,
+  weddingPartyTitle: `Write the wedding party section title. It should feel warm, personal, and human.`,
+  weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy.`,
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful.`,
   rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic.`,
 });

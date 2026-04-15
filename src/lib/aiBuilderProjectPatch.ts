@@ -164,6 +164,17 @@ export const mergeGeneratedDraftIntoBuilderProject = (
         };
       }
 
+      if (type === 'weddingParty') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            headline: mergeGeneratedSetting(settings.headline, generatedDraft.weddingPartyTitle),
+            subheadline: mergeGeneratedSetting(settings.subheadline, generatedDraft.weddingPartyIntro),
+          },
+        };
+      }
+
       return section;
     });
 

@@ -25,6 +25,8 @@ export type DraftGenerationResult = {
   travelIntro: string;
   accommodationsTitle: string;
   accommodationsIntro: string;
+  weddingPartyTitle: string;
+  weddingPartyIntro: string;
   eventHeadline: string;
   rsvpCallToAction: string;
   weddingDataPatch: Record<string, unknown>;
@@ -52,6 +54,8 @@ const draftGenerationSchema = z.object({
   travelIntro: z.string().min(1),
   accommodationsTitle: z.string().min(1),
   accommodationsIntro: z.string().min(1),
+  weddingPartyTitle: z.string().min(1),
+  weddingPartyIntro: z.string().min(1),
   eventHeadline: z.string().min(1),
   rsvpCallToAction: z.string().min(1),
 });
@@ -93,6 +97,8 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     travelIntro: hasVenue ? `A few planning details to make getting to ${location} feel easy.` : 'A few planning details to make the weekend feel easy.',
     accommodationsTitle: 'Accommodations',
     accommodationsIntro: 'A few stay options and planning notes for the weekend.',
+    weddingPartyTitle: 'Wedding Party',
+    weddingPartyIntro: 'The people who have loved us, supported us, and helped shape this season of our lives.',
     eventHeadline,
     rsvpCallToAction: hasDeadline
       ? `Please reply by ${profile.event.rsvpDeadline}`
