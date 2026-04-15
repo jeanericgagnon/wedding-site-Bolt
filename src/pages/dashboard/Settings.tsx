@@ -927,12 +927,12 @@ export const DashboardSettings: React.FC = () => {
 
                     <div className="grid gap-3 md:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Planner name</label>
-                        <Input value={plannerInviteName} onChange={(e) => setPlannerInviteName(e.target.value)} placeholder="Your planner or coordinator" />
+                        <label htmlFor="planner-invite-name" className="block text-sm font-medium text-text-primary mb-2">Planner name</label>
+                        <Input id="planner-invite-name" value={plannerInviteName} onChange={(e) => setPlannerInviteName(e.target.value)} placeholder="Your planner or coordinator" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Planner email</label>
-                        <Input value={plannerInviteEmail} onChange={(e) => setPlannerInviteEmail(e.target.value)} placeholder="planner@example.com" />
+                        <label htmlFor="planner-invite-email" className="block text-sm font-medium text-text-primary mb-2">Planner email</label>
+                        <Input id="planner-invite-email" value={plannerInviteEmail} onChange={(e) => setPlannerInviteEmail(e.target.value)} placeholder="planner@example.com" />
                       </div>
                     </div>
 
