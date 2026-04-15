@@ -153,12 +153,21 @@ const buildDraftCriticPrompt = (profile: WeddingProfile, draft: Omit<DraftGenera
 };
 
 const hasPlaceholderLikeText = (value: string) => /\[[^\]]+\]|\bTBD\b|to be confirmed/i.test(value);
+const normalizeForScoring = (value: string) => value.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
 
 const preferDeterministicField = (generated: string, fallback: string, invalidPatterns: RegExp[]) => {
   const value = (generated || '').trim();
   if (!value) return fallback;
   if (hasPlaceholderLikeText(value)) return fallback;
   if (invalidPatterns.some((pattern) => pattern.test(value))) return fallback;
+  return value;
+};
+
+const rejectIfTooGeneric = (generated: string, fallback: string, genericPatterns: RegExp[]) => {
+  const value = (generated || '').trim();
+  if (!value) return fallback;
+  const normalized = normalizeForScoring(value);
+  if (genericPatterns.some((pattern) => pattern.test(normalized))) return fallback;
   return value;
 };
 
@@ -229,9 +238,23 @@ const guardGeneratedDraft = (
     [/map-app/i, /google maps/i, /use the address below/i]
   );
 
+  const safeHeroSubtitle = rejectIfTooGeneric(
+    generated.heroSubtitle,
+    deterministic.heroSubtitle,
+    [/celebrating together with those we hold dear/i, /we look forward to celebrating with you/i]
+  );
+
+  const safeStoryBody = rejectIfTooGeneric(
+    generated.storyBody,
+    deterministic.storyBody,
+    [/this day is about sharing a special moment/i, /cherish their time together/i]
+  );
+
   return {
     ...deterministic,
     ...generated,
+    heroSubtitle: safeHeroSubtitle,
+    storyBody: safeStoryBody,
     eventHeadline: safeEventHeadline,
     registryIntro: safeRegistryIntro,
     faqIntro: safeFaqIntro,
