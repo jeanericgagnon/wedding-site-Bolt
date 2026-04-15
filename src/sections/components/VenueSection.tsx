@@ -1,6 +1,7 @@
 import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
+import { readBuilderValue } from '../../lib/weddingProfile';
 import { MapPin, ExternalLink } from 'lucide-react';
 
 interface Props {
@@ -20,7 +21,7 @@ export const VenueSection: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle && (
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{settings.title || 'Venue'}</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
           )}
           <p className="text-text-secondary">Venue details will appear here once they’re added.</p>
         </div>
@@ -32,7 +33,7 @@ export const VenueSection: React.FC<Props> = ({ data, instance }) => {
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle && (
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{settings.title || 'Venue'}</h2>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
         )}
         <div className="space-y-6 md:space-y-7">
           {venuesToShow.map(venue => (
@@ -65,7 +66,7 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 md:py-20 px-4 bg-background">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle && (
-            <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{settings.title || 'Venue'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
           )}
           <p className="text-text-secondary">Venue details will appear here once they’re added.</p>
         </div>
@@ -79,7 +80,7 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle && (
           <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Venue details</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'Venue'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
