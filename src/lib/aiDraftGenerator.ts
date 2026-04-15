@@ -19,6 +19,7 @@ export type DraftGenerationResult = {
   rsvpTitle: string;
   rsvpIntro: string;
   registryTitle: string;
+  registryIntro: string;
   faqHeadline: string;
   faqIntro: string;
   travelTitle: string;
@@ -48,6 +49,7 @@ const draftGenerationSchema = z.object({
   rsvpTitle: z.string().min(1),
   rsvpIntro: z.string().min(1),
   registryTitle: z.string().min(1),
+  registryIntro: z.string().min(1),
   faqHeadline: z.string().min(1),
   faqIntro: z.string().min(1),
   travelTitle: z.string().min(1),
@@ -91,6 +93,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     rsvpTitle: 'Will You Be There?',
     rsvpIntro: 'Let us know if we’ll get to celebrate with you.',
     registryTitle: 'Registry',
+    registryIntro: 'Your presence is more than enough, but for those who have asked, a few gift ideas are gathered here.',
     faqHeadline: 'Frequently Asked Questions',
     faqIntro: 'A few helpful answers before the weekend begins.',
     travelTitle: 'Travel & Stay',

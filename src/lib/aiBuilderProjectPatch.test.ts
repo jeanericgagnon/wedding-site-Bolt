@@ -18,6 +18,7 @@ const project = {
         { type: 'hero', settings: {} },
         { type: 'story', settings: {} },
         { type: 'footer-cta', settings: {} },
+        { type: 'registry', settings: {} },
         { type: 'faq', settings: {} },
         { type: 'travel', settings: {} },
         { type: 'accommodations', settings: {} },
@@ -35,6 +36,7 @@ describe('aiBuilderProjectPatch', () => {
     const heroHeadline = sections.find((section) => section.type === 'hero')?.settings.headline as { value: string; source: string };
     const storyText = sections.find((section) => section.type === 'story')?.settings.storyText as { value: string; source: string };
     const ctaHeadline = sections.find((section) => section.type === 'footer-cta')?.settings.headline as { value: string; source: string };
+    const registryMessage = sections.find((section) => section.type === 'registry')?.settings.message as { value: string; source: string };
     const faqHeadline = sections.find((section) => section.type === 'faq')?.settings.headline as { value: string; source: string };
     const travelIntro = sections.find((section) => section.type === 'travel')?.settings.intro as { value: string; source: string };
     const accommodationsNote = sections.find((section) => section.type === 'accommodations')?.settings.generalNote as { value: string; source: string };
@@ -43,6 +45,7 @@ describe('aiBuilderProjectPatch', () => {
     expect(heroHeadline.source).toBe('concierge-brief');
     expect(storyText.value).toContain('We met in college');
     expect(ctaHeadline.value).toContain('2027-05-01');
+    expect(registryMessage.value).toContain('presence is more than enough');
     expect(faqHeadline.value).toBe('Frequently Asked Questions');
     expect(travelIntro.value).toContain('San Diego, CA');
     expect(accommodationsNote.value).toContain('stay options');

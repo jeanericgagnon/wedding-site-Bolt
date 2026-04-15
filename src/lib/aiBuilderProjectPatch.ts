@@ -127,6 +127,7 @@ export const mergeGeneratedDraftIntoBuilderProject = (
           settings: {
             ...settings,
             title: mergeGeneratedSetting(settings.title, generatedDraft.registryTitle),
+            message: mergeGeneratedSetting(settings.message, generatedDraft.registryIntro),
           },
         };
       }

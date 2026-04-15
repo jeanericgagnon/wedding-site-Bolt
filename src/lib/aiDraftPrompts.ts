@@ -53,6 +53,7 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   rsvpTitle: `Write the RSVP section title. It should feel inviting and human.`,
   rsvpIntro: `Write one short line encouraging guests to reply. It should feel gracious and easy, not robotic.`,
   registryTitle: `Write the registry section title. It should feel gracious and tasteful, not transactional.`,
+  registryIntro: `Write one short registry note. It should feel gracious, warm, and non-transactional. Avoid sounding gift-grabby.`,
   faqHeadline: `Write the FAQ section title. It should feel clear, calm, and guest-friendly.`,
   faqIntro: `Write one short line introducing the FAQ section. It should feel helpful and reassuring, not robotic.`,
   travelTitle: `Write the travel section title. It should feel useful and guest-centered.`,
