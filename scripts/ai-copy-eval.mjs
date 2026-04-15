@@ -40,6 +40,11 @@ for (const entry of profiles) {
     heroSubtitle: draft.heroSubtitle,
     storyBody: draft.storyBody,
     countdownMessage: draft.countdownMessage,
+    registryIntro: draft.registryIntro,
+    faqIntro: draft.faqIntro,
+    travelIntro: draft.travelIntro,
+    accommodationsIntro: draft.accommodationsIntro,
+    weddingPartyIntro: draft.weddingPartyIntro,
     eventHeadline: draft.eventHeadline,
     rsvpCallToAction: draft.rsvpCallToAction,
   }, null, 2));
