@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { runOpenAiStructuredPrompt, isOpenAiConfigured, getOpenAiRuntimeConfig } from './openai';
 import { WeddingProfile, buildWeddingDataPatchFromProfile, mergeWeddingDataFromProfile } from './weddingProfile';
+import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildSectionInstructionMap } from './aiDraftPrompts';
 
 export type DraftGenerationResult = {
   heroTitle: string;
@@ -68,8 +69,8 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
 };
 
 const buildDraftPrompt = (profile: WeddingProfile) => {
-  const names = profile.couple.displayNames || 'Our Wedding';
-  return `Create elegant wedding website homepage copy for this couple. Return concise, tasteful, non-cheesy copy.\n\nProfile:\n${JSON.stringify(profile, null, 2)}\n\nRules:\n- Keep each field short and usable on a wedding website\n- Avoid generic filler and startup-sounding copy\n- Make sparse profiles still sound human and warm\n- Do not invent factual specifics beyond tasteful framing\n- Use the couple's names naturally when available\n- RSVP call-to-action should feel polished, not robotic\n- Venue/schedule/gallery titles should feel premium, not placeholder-ish\n\nCouple: ${names}`;
+  const instructions = buildSectionInstructionMap(profile);
+  return `${buildWeddingCopyUserPrompt(profile)}\n\nWrite these fields with section-specific intent:\n${JSON.stringify(instructions, null, 2)}`;
 };
 
 export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): Promise<DraftGenerationResult> => {
@@ -82,7 +83,7 @@ export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): 
 
   try {
     const generated = await runOpenAiStructuredPrompt({
-      system: 'You write polished wedding website copy and return strictly valid structured JSON.',
+      system: buildWeddingCopySystemPrompt(),
       user: buildDraftPrompt(profile),
       schemaName: 'wedding_homepage_draft',
       schema: draftGenerationSchema,
