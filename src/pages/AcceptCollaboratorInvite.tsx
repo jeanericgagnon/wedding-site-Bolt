@@ -66,6 +66,12 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   }, [inviteInfo]);
 
   useEffect(() => {
+    if (authMode === 'signup') {
+      setAuthError(null);
+    }
+  }, [authMode]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const loadInvite = async () => {
@@ -282,6 +288,9 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
         if (signInRes.error) {
           const msg = signInRes.error.message.toLowerCase();
+          if (msg.includes('invalid login credentials')) {
+            throw new Error('Account creation did not complete cleanly. Please press Create account and join team once more, or use a fresh invited email.');
+          }
           if (msg.includes('email not confirmed') || msg.includes('email_not_confirmed')) {
             throw new Error(`Account created for ${signUpForm.email}. Check your email to confirm your address, then come back to this invite link to finish joining.`);
           }

@@ -94,9 +94,9 @@ try {
         await collaboratorPage.waitForTimeout(500);
       }
       const fullName = collaboratorPage.getByLabel(/full name/i);
-      if (await fullName.isVisible().catch(() => false)) {
+      if (await fullName.count()) {
         await fullName.fill('Test One');
-        await collaboratorPage.getByLabel(/invited email|email/i).fill(collaboratorEmail);
+        await collaboratorPage.getByLabel(/invited email/i).fill(collaboratorEmail);
         await collaboratorPage.getByLabel(/create password/i).fill(collaboratorPassword);
         await collaboratorPage.getByLabel(/confirm password/i).fill(collaboratorPassword);
         await collaboratorPage.getByRole('button', { name: /create account and join team/i }).click();
