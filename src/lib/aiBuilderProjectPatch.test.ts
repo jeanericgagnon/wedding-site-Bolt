@@ -24,8 +24,8 @@ const project = {
 };
 
 describe('aiBuilderProjectPatch', () => {
-  it('patches visible builder sections with generated draft content', () => {
-    const generated = generateDraftFromWeddingProfile(profile);
+  it('patches visible builder sections with generated draft content', async () => {
+    const generated = await generateDraftFromWeddingProfile(profile);
     const next = mergeGeneratedDraftIntoBuilderProject(project, generated) as { pages: Array<{ sections: Array<{ type: string; settings: Record<string, unknown> }> }> };
     const sections = next.pages[0].sections;
     const heroHeadline = sections.find((section) => section.type === 'hero')?.settings.headline as { value: string; source: string };
@@ -39,8 +39,8 @@ describe('aiBuilderProjectPatch', () => {
 });
 
 
-it('preserves user-edited hero headline values', () => {
-  const generated = generateDraftFromWeddingProfile(profile);
+it('preserves user-edited hero headline values', async () => {
+  const generated = await generateDraftFromWeddingProfile(profile);
   const protectedProject = {
     pages: [
       {

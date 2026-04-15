@@ -164,8 +164,8 @@ export const DashboardOverview: React.FC = () => {
       if (!isWeddingProfile(data?.onboarding_answers)) throw new Error('No saved brief found');
 
       const patch = buildDraftSitePatchFromProfile(data.onboarding_answers);
-      const generatedDraft = generateDraftFromWeddingProfile(data.onboarding_answers);
-      const mergedWeddingData = mergeGeneratedDraftIntoWeddingData(
+      const generatedDraft = await generateDraftFromWeddingProfile(data.onboarding_answers);
+      const mergedWeddingData = await mergeGeneratedDraftIntoWeddingData(
         (data.wedding_data as Record<string, unknown> | null) ?? null,
         data.onboarding_answers
       ) as Record<string, unknown>;

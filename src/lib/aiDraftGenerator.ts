@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { runOpenAiStructuredPrompt, isOpenAiConfigured } from './openai';
 import { WeddingProfile, buildWeddingDataPatchFromProfile, mergeWeddingDataFromProfile } from './weddingProfile';
 
 export type DraftGenerationResult = {
@@ -16,7 +18,22 @@ export type DraftGenerationResult = {
   weddingDataPatch: Record<string, unknown>;
 };
 
-export const generateDraftFromWeddingProfile = (profile: WeddingProfile): DraftGenerationResult => {
+const draftGenerationSchema = z.object({
+  heroTitle: z.string().min(1),
+  heroSubtitle: z.string().min(1),
+  storyTitle: z.string().min(1),
+  storyBody: z.string().min(1),
+  countdownTitle: z.string().min(1),
+  countdownMessage: z.string().min(1),
+  venueTitle: z.string().min(1),
+  scheduleTitle: z.string().min(1),
+  galleryTitle: z.string().min(1),
+  rsvpTitle: z.string().min(1),
+  eventHeadline: z.string().min(1),
+  rsvpCallToAction: z.string().min(1),
+});
+
+const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGenerationResult => {
   const names = profile.couple.displayNames || 'Our Wedding';
   const location = profile.event.venueLocation || profile.event.venueName || 'the place we love most';
   const date = profile.event.date || 'our wedding weekend';
@@ -38,7 +55,7 @@ export const generateDraftFromWeddingProfile = (profile: WeddingProfile): DraftG
     storyBody,
     countdownTitle: names,
     countdownMessage: hasVenue ? `We can't wait to celebrate with you in ${location}.` : `We can't wait to celebrate with our favorite people.`,
-    venueTitle: hasVenue ? 'Venue Details' : 'Venue Details',
+    venueTitle: 'Venue Details',
     scheduleTitle: 'The Plan',
     galleryTitle: 'Moments to Remember',
     rsvpTitle: 'Will You Be There?',
@@ -50,11 +67,40 @@ export const generateDraftFromWeddingProfile = (profile: WeddingProfile): DraftG
   };
 };
 
-export const mergeGeneratedDraftIntoWeddingData = (
+const buildDraftPrompt = (profile: WeddingProfile) => {
+  const names = profile.couple.displayNames || 'Our Wedding';
+  return `Create elegant wedding website homepage copy for this couple. Return concise, tasteful, non-cheesy copy.\n\nProfile:\n${JSON.stringify(profile, null, 2)}\n\nRules:\n- Keep each field short and usable on a wedding website\n- Avoid generic filler and startup-sounding copy\n- Make sparse profiles still sound human and warm\n- Do not invent factual specifics beyond tasteful framing\n- Use the couple's names naturally when available\n- RSVP call-to-action should feel polished, not robotic\n- Venue/schedule/gallery titles should feel premium, not placeholder-ish\n\nCouple: ${names}`;
+};
+
+export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): Promise<DraftGenerationResult> => {
+  const deterministic = deterministicDraftFromWeddingProfile(profile);
+
+  if (!isOpenAiConfigured()) {
+    return deterministic;
+  }
+
+  try {
+    const generated = await runOpenAiStructuredPrompt({
+      system: 'You write polished wedding website copy and return strictly valid structured JSON.',
+      user: buildDraftPrompt(profile),
+      schemaName: 'wedding_homepage_draft',
+      schema: draftGenerationSchema,
+    });
+
+    return {
+      ...generated,
+      weddingDataPatch: buildWeddingDataPatchFromProfile(profile),
+    };
+  } catch {
+    return deterministic;
+  }
+};
+
+export const mergeGeneratedDraftIntoWeddingData = async (
   existingWeddingData: Record<string, unknown> | null,
   profile: WeddingProfile
 ) => {
-  const generated = generateDraftFromWeddingProfile(profile);
+  const generated = await generateDraftFromWeddingProfile(profile);
   const merged = mergeWeddingDataFromProfile(existingWeddingData, profile) as Record<string, unknown>;
 
   return {

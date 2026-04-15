@@ -16,8 +16,8 @@ const baseProfile = {
 };
 
 describe('aiDraftGenerator', () => {
-  it('generates a usable draft payload from a wedding profile', () => {
-    const draft = generateDraftFromWeddingProfile(baseProfile);
+  it('generates a usable draft payload from a wedding profile', async () => {
+    const draft = await generateDraftFromWeddingProfile(baseProfile);
     expect(draft.heroTitle).toBe('Alex & Jordan');
     expect(draft.heroSubtitle).toContain('San Diego, CA');
     expect(draft.storyBody).toContain('kept choosing each other');
@@ -28,8 +28,8 @@ describe('aiDraftGenerator', () => {
     expect(draft.rsvpTitle).toBe('Will You Be There?');
   });
 
-  it('keeps a minimum quality floor for richer profiles', () => {
-    const draft = generateDraftFromWeddingProfile(baseProfile);
+  it('keeps a minimum quality floor for richer profiles', async () => {
+    const draft = await generateDraftFromWeddingProfile(baseProfile);
     expect(draft.heroTitle.trim().length).toBeGreaterThan(3);
     expect(draft.heroSubtitle).toContain('Join us in');
     expect(draft.heroSubtitle).not.toBe('Join us in our favorite place on our wedding weekend');
@@ -40,11 +40,11 @@ describe('aiDraftGenerator', () => {
     expect(draft.eventHeadline).not.toContain('our wedding weekend');
   });
 
-  it('still returns non-broken homepage copy for sparse profiles', () => {
+  it('still returns non-broken homepage copy for sparse profiles', async () => {
     const sparse = createEmptyWeddingProfile();
     sparse.couple.displayNames = 'Taylor & Sam';
 
-    const draft = generateDraftFromWeddingProfile(sparse);
+    const draft = await generateDraftFromWeddingProfile(sparse);
     expect(draft.heroTitle).toBe('Taylor & Sam');
     expect(draft.heroSubtitle.trim().length).toBeGreaterThan(10);
     expect(draft.storyBody.trim().length).toBeGreaterThan(20);
@@ -58,8 +58,8 @@ describe('aiDraftGenerator', () => {
     expect(draft.eventHeadline.trim().length).toBeGreaterThan(10);
   });
 
-  it('merges generated draft content into wedding data', () => {
-    const merged = mergeGeneratedDraftIntoWeddingData({}, baseProfile);
+  it('merges generated draft content into wedding data', async () => {
+    const merged = await mergeGeneratedDraftIntoWeddingData({}, baseProfile);
     expect((merged.couple as Record<string, unknown>).headline).toBe('Alex & Jordan');
     expect((merged.event as Record<string, unknown>).rsvpCallToAction).toContain('2027-05-01');
   });
