@@ -34,6 +34,7 @@ describe('aiDraftGenerator', () => {
     expect(draft.faqIntro).toContain('quick answers');
     expect(draft.travelIntro).toContain('San Diego, CA');
     expect(draft.accommodationsIntro).toContain('nearby places');
+    expect(draft.dressCodeIntro).toContain('choose something that feels right');
     expect(draft.weddingPartyIntro).toContain('part of our story');
   });
 
@@ -73,6 +74,7 @@ describe('aiDraftGenerator', () => {
     expect(draft.faqIntro).toContain('quick answers');
     expect(draft.travelIntro).toContain('planning details');
     expect(draft.accommodationsIntro).toContain('nearby places');
+    expect(draft.dressCodeIntro).toContain('choose something that feels right');
     expect(draft.weddingPartyIntro).toContain('lucky to have beside us');
   });
 

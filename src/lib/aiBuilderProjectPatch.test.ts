@@ -22,6 +22,7 @@ const project = {
         { type: 'faq', settings: {} },
         { type: 'travel', settings: {} },
         { type: 'accommodations', settings: {} },
+        { type: 'dress-code', settings: {} },
         { type: 'weddingParty', settings: {} },
       ],
     },
@@ -40,6 +41,7 @@ describe('aiBuilderProjectPatch', () => {
     const faqHeadline = sections.find((section) => section.type === 'faq')?.settings.headline as { value: string; source: string };
     const travelIntro = sections.find((section) => section.type === 'travel')?.settings.intro as { value: string; source: string };
     const accommodationsNote = sections.find((section) => section.type === 'accommodations')?.settings.generalNote as { value: string; source: string };
+    const dressCodeDescription = sections.find((section) => section.type === 'dress-code')?.settings.description as { value: string; source: string };
     const weddingPartyIntro = sections.find((section) => section.type === 'weddingParty')?.settings.subheadline as { value: string; source: string };
     expect(heroHeadline.value).toBe('Alex & Jordan');
     expect(heroHeadline.source).toBe('concierge-brief');
@@ -49,6 +51,7 @@ describe('aiBuilderProjectPatch', () => {
     expect(faqHeadline.value).toBe('Frequently Asked Questions');
     expect(travelIntro.value).toContain('San Diego, CA');
     expect(accommodationsNote.value).toContain('stay');
+    expect(dressCodeDescription.value).toContain('choose something that feels right');
     expect(weddingPartyIntro.value).toContain('part of our story');
   });
 });

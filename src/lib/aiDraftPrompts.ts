@@ -65,6 +65,8 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   travelIntro: `Write one short line introducing travel details. It should help guests plan without sounding generic, tourism-board polished, or filler-heavy.`,
   accommodationsTitle: `Write the accommodations section title. It should feel clean, useful, and welcoming.`,
   accommodationsIntro: `Write one short line introducing accommodations or hotel guidance. It should be helpful and warm, not hotel-brochure copy. Avoid generic phrases like "nearby lodging options" unless the profile is extremely sparse.`,
+  dressCodeTitle: `Write the dress code section title. It should feel clear, tasteful, and guest-friendly.`,
+  dressCodeIntro: `Write one short dress code note. It should help guests understand what to wear without sounding stiff, vague, or overly fashion-editorial.`,
   weddingPartyTitle: `Write the wedding party section title. It should feel warm, personal, and human.`,
   weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy, ceremonial, or overblown. Avoid default lines like "meet the friends and family standing with us" unless there is no better grounded option.`,
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful. Use only known facts. If date or venue details are missing, do not invent them and do not use placeholders—write a clean generic line instead.`,

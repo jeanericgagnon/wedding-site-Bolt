@@ -165,6 +165,17 @@ export const mergeGeneratedDraftIntoBuilderProject = (
         };
       }
 
+      if (type === 'dress-code') {
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            title: mergeGeneratedSetting(settings.title, generatedDraft.dressCodeTitle),
+            description: mergeGeneratedSetting(settings.description, generatedDraft.dressCodeIntro),
+          },
+        };
+      }
+
       if (type === 'weddingParty') {
         return {
           ...section,

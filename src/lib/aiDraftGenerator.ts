@@ -26,6 +26,8 @@ export type DraftGenerationResult = {
   travelIntro: string;
   accommodationsTitle: string;
   accommodationsIntro: string;
+  dressCodeTitle: string;
+  dressCodeIntro: string;
   weddingPartyTitle: string;
   weddingPartyIntro: string;
   eventHeadline: string;
@@ -56,6 +58,8 @@ const draftGenerationSchema = z.object({
   travelIntro: z.string().min(1),
   accommodationsTitle: z.string().min(1),
   accommodationsIntro: z.string().min(1),
+  dressCodeTitle: z.string().min(1),
+  dressCodeIntro: z.string().min(1),
   weddingPartyTitle: z.string().min(1),
   weddingPartyIntro: z.string().min(1),
   eventHeadline: z.string().min(1),
@@ -111,6 +115,8 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     accommodationsIntro: hasTravelSupport
       ? 'A few stay options to make the weekend feel easy from check-in to celebration.'
       : 'A few nearby places to stay for the weekend.',
+    dressCodeTitle: 'Dress Code',
+    dressCodeIntro: 'A few notes to help you choose something that feels right for the celebration.',
     weddingPartyTitle: 'Wedding Party',
     weddingPartyIntro: hasStory
       ? 'The people who have been part of our story and will be standing with us on the day.'
@@ -191,6 +197,12 @@ const guardGeneratedDraft = (
     [/nearby lodging options/i, /recommended nearby lodging options/i, /suggestions and information for lodging/i]
   );
 
+  const safeDressCodeIntro = preferDeterministicField(
+    generated.dressCodeIntro,
+    deterministic.dressCodeIntro,
+    [/fashion-editorial/i, /dress to impress/i, /what to wear for our special day/i]
+  );
+
   return {
     ...deterministic,
     ...generated,
@@ -199,6 +211,7 @@ const guardGeneratedDraft = (
     faqIntro: safeFaqIntro,
     travelIntro: safeTravelIntro,
     accommodationsIntro: safeAccommodationsIntro,
+    dressCodeIntro: safeDressCodeIntro,
     weddingPartyIntro: safeWeddingPartyIntro,
     rsvpCallToAction: safeRsvpCallToAction,
     weddingDataPatch: deterministic.weddingDataPatch,
