@@ -45,9 +45,13 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   countdownTitle: `Write the countdown section title. Keep it short and elegant.`,
   countdownMessage: `Write one short line under the countdown that builds anticipation without sounding cheesy.`,
   venueTitle: `Write the venue section title. It should feel premium and clear.`,
+  venueIntro: `Write one short line introducing the venue/details section. It should help guests feel oriented and welcomed, not sound like brochure filler.`,
   scheduleTitle: `Write the schedule section title. It should feel elegant, not corporate.`,
+  scheduleIntro: `Write one short line introducing the schedule so guests understand the flow of the event without stiffness.`,
   galleryTitle: `Write the gallery section title. It should feel warm and memory-driven.`,
+  galleryIntro: `Write one short line framing the photo/gallery section in a warm, tasteful way.`,
   rsvpTitle: `Write the RSVP section title. It should feel inviting and human.`,
+  rsvpIntro: `Write one short line encouraging guests to reply. It should feel gracious and easy, not robotic.`,
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful.`,
   rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic.`,
 });

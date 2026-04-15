@@ -23,9 +23,13 @@ describe('aiDraftGenerator', () => {
     expect(draft.storyBody).toContain('kept choosing each other');
     expect(draft.countdownTitle).toBe('Alex & Jordan');
     expect(draft.venueTitle).toBe('Venue Details');
+    expect(draft.venueIntro.length).toBeGreaterThan(10);
     expect(draft.scheduleTitle).toBe('The Plan');
+    expect(draft.scheduleIntro.length).toBeGreaterThan(10);
     expect(draft.galleryTitle).toBe('Moments to Remember');
+    expect(draft.galleryIntro.length).toBeGreaterThan(10);
     expect(draft.rsvpTitle).toBe('Will You Be There?');
+    expect(draft.rsvpIntro.length).toBeGreaterThan(10);
   });
 
   it('keeps a minimum quality floor for richer profiles', async () => {
@@ -51,9 +55,13 @@ describe('aiDraftGenerator', () => {
     expect(draft.countdownTitle).toBe('Taylor & Sam');
     expect(draft.countdownMessage.trim().length).toBeGreaterThan(15);
     expect(draft.venueTitle).toBe('Venue Details');
+    expect(draft.venueIntro.trim().length).toBeGreaterThan(10);
     expect(draft.scheduleTitle).toBe('The Plan');
+    expect(draft.scheduleIntro.trim().length).toBeGreaterThan(10);
     expect(draft.galleryTitle).toBe('Moments to Remember');
+    expect(draft.galleryIntro.trim().length).toBeGreaterThan(10);
     expect(draft.rsvpTitle).toBe('Will You Be There?');
+    expect(draft.rsvpIntro.trim().length).toBeGreaterThan(10);
     expect(draft.rsvpCallToAction.trim().length).toBeGreaterThan(10);
     expect(draft.eventHeadline.trim().length).toBeGreaterThan(10);
   });

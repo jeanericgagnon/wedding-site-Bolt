@@ -11,9 +11,13 @@ export type DraftGenerationResult = {
   countdownTitle: string;
   countdownMessage: string;
   venueTitle: string;
+  venueIntro: string;
   scheduleTitle: string;
+  scheduleIntro: string;
   galleryTitle: string;
+  galleryIntro: string;
   rsvpTitle: string;
+  rsvpIntro: string;
   eventHeadline: string;
   rsvpCallToAction: string;
   weddingDataPatch: Record<string, unknown>;
@@ -27,9 +31,13 @@ const draftGenerationSchema = z.object({
   countdownTitle: z.string().min(1),
   countdownMessage: z.string().min(1),
   venueTitle: z.string().min(1),
+  venueIntro: z.string().min(1),
   scheduleTitle: z.string().min(1),
+  scheduleIntro: z.string().min(1),
   galleryTitle: z.string().min(1),
+  galleryIntro: z.string().min(1),
   rsvpTitle: z.string().min(1),
+  rsvpIntro: z.string().min(1),
   eventHeadline: z.string().min(1),
   rsvpCallToAction: z.string().min(1),
 });
@@ -57,9 +65,13 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     countdownTitle: names,
     countdownMessage: hasVenue ? `We can't wait to celebrate with you in ${location}.` : `We can't wait to celebrate together.`,
     venueTitle: 'Venue Details',
+    venueIntro: hasVenue ? `Everything you need to know for celebrating with us at ${location}.` : 'Everything you need to know for the celebration.',
     scheduleTitle: 'The Plan',
+    scheduleIntro: 'A simple look at how the day will unfold.',
     galleryTitle: 'Moments to Remember',
+    galleryIntro: 'A few favorite moments, all in one place.',
     rsvpTitle: 'Will You Be There?',
+    rsvpIntro: 'Let us know if we’ll get to celebrate with you.',
     eventHeadline,
     rsvpCallToAction: hasDeadline
       ? `Please reply by ${profile.event.rsvpDeadline}`

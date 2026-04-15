@@ -83,6 +83,7 @@ export const mergeGeneratedDraftIntoBuilderProject = (
           settings: {
             ...settings,
             title: mergeGeneratedSetting(settings.title, generatedDraft.venueTitle),
+            subtitle: mergeGeneratedSetting(settings.subtitle, generatedDraft.venueIntro),
           },
         };
       }
@@ -93,6 +94,7 @@ export const mergeGeneratedDraftIntoBuilderProject = (
           settings: {
             ...settings,
             title: mergeGeneratedSetting(settings.title, generatedDraft.scheduleTitle),
+            subtitle: mergeGeneratedSetting(settings.subtitle, generatedDraft.scheduleIntro),
           },
         };
       }
@@ -103,6 +105,7 @@ export const mergeGeneratedDraftIntoBuilderProject = (
           settings: {
             ...settings,
             title: mergeGeneratedSetting(settings.title, generatedDraft.galleryTitle),
+            subtitle: mergeGeneratedSetting(settings.subtitle, generatedDraft.galleryIntro),
           },
         };
       }
@@ -113,6 +116,7 @@ export const mergeGeneratedDraftIntoBuilderProject = (
           settings: {
             ...settings,
             title: mergeGeneratedSetting(settings.title, generatedDraft.rsvpTitle),
+            subtitle: mergeGeneratedSetting(settings.subtitle, generatedDraft.rsvpIntro),
           },
         };
       }
