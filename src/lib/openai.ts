@@ -25,6 +25,34 @@ export class OpenAiNotConfiguredError extends Error {
   }
 }
 
+const extractResponseText = (payload: unknown): string => {
+  const record = (payload && typeof payload === 'object') ? payload as Record<string, unknown> : {};
+
+  if (typeof record.output_text === 'string' && record.output_text.trim()) {
+    return record.output_text;
+  }
+
+  const output = Array.isArray(record.output) ? record.output as Array<Record<string, unknown>> : [];
+  const textParts: string[] = [];
+
+  for (const item of output) {
+    const content = Array.isArray(item.content) ? item.content as Array<Record<string, unknown>> : [];
+    for (const entry of content) {
+      if (typeof entry.text === 'string' && entry.text.trim()) {
+        textParts.push(entry.text);
+        continue;
+      }
+
+      const maybeText = entry.text;
+      if (maybeText && typeof maybeText === 'object' && typeof (maybeText as Record<string, unknown>).value === 'string') {
+        textParts.push((maybeText as Record<string, unknown>).value as string);
+      }
+    }
+  }
+
+  return textParts.join('\n').trim();
+};
+
 type StructuredPromptOptions<TSchema extends z.ZodTypeAny> = {
   system: string;
   user: string;
@@ -72,9 +100,9 @@ export async function runOpenAiStructuredPrompt<TSchema extends z.ZodTypeAny>({
   }
 
   const payload = await response.json();
-  const contentText = payload.output_text;
+  const contentText = extractResponseText(payload);
   if (!contentText) {
-    throw new Error('OpenAI response did not contain output_text.');
+    throw new Error(`OpenAI response did not contain extractable text. Payload keys: ${Object.keys(payload ?? {}).join(', ')}`);
   }
 
   return schema.parse(JSON.parse(contentText));
