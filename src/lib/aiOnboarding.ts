@@ -156,6 +156,17 @@ export const extractWeddingProfileUpdates = (
     confidence = Math.max(confidence, 0.78);
   }
 
+  if (/^\d{1,2}:\d{2}$/.test(trimmed)) {
+    if (!profile.event.ceremonyTime) {
+      updates.event = { ...profile.event, ceremonyTime: trimmed };
+      notes.push('Captured ceremony time');
+    } else if (!profile.event.receptionTime) {
+      updates.event = { ...profile.event, receptionTime: trimmed };
+      notes.push('Captured reception time');
+    }
+    confidence = Math.max(confidence, 0.82);
+  }
+
   if (/garden|coastal|desert|classic|editorial/i.test(trimmed)) {
     updates.design = { ...profile.design, theme: trimmed.toLowerCase() };
     inferred.push('design.theme');
@@ -166,6 +177,12 @@ export const extractWeddingProfileUpdates = (
     updates.story = { ...profile.story, summary: trimmed };
     notes.push('Captured story summary');
     confidence = Math.max(confidence, 0.58);
+  }
+
+  if (!updates.event?.venueName && trimmed.length > 3 && /venue|garden|estate|hotel|club|barn|beach/i.test(trimmed) && !/,/.test(trimmed)) {
+    updates.event = { ...(updates.event ?? profile.event), venueName: trimmed };
+    notes.push('Captured venue name');
+    confidence = Math.max(confidence, 0.7);
   }
 
   return { updates, inferred, conflicts, notes, confidence, requiresConfirmation };

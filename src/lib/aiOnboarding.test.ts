@@ -61,3 +61,17 @@ it('requires confirmation for conflicting dates', () => {
   expect(next.currentIntent).toBe('confirm-conflict');
   expect(next.confidence).toBeLessThan(0.5);
 });
+
+
+it('captures ceremony and reception times progressively', () => {
+  let session = createOnboardingSessionState(createEmptyWeddingProfile());
+  session = applyOnboardingInput(session, '4:00');
+  expect(session.profile.event.ceremonyTime).toBe('4:00');
+  session = applyOnboardingInput(session, '7:30');
+  expect(session.profile.event.receptionTime).toBe('7:30');
+});
+
+it('captures venue names from venue-like phrases', () => {
+  const next = applyOnboardingInput(createOnboardingSessionState(createEmptyWeddingProfile()), 'Grand Estate');
+  expect(next.profile.event.venueName).toBe('Grand Estate');
+});
