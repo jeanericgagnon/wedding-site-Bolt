@@ -14,6 +14,8 @@ export const genericCopyPatterns = [
   /arrival details/i,
   /local planning help/i,
   /appreciate your thoughtfulness/i,
+  /some words about/i,
+  /standing with us on this day/i,
 ];
 
 export const scoreCopyLine = (value: string) => {
@@ -26,9 +28,10 @@ export const scoreCopyLine = (value: string) => {
   if (genericCopyPatterns.some((pattern) => pattern.test(text))) score -= 35;
   if (/\[[^\]]+\]|\bTBD\b|to be confirmed/i.test(text)) score -= 60;
   if (/meaningful|cherished|journey|special|beautiful/i.test(text)) score -= 10;
-  if (/kindly|grateful|thoughtfulness/i.test(text)) score -= 8;
+  if (/kindly|grateful|thoughtfulness|attendance/i.test(text)) score -= 8;
   if (/support|helpful information|planning help|details to help/i.test(text)) score -= 8;
   if (/\bthey\b|\btheir\b/.test(text) && /met|celebrate|look forward|chosen|grateful/.test(text)) score -= 10;
+  if (/\bplease reply by\b|\bplease let us know\b|\bconfirm your attendance\b/.test(text)) score -= 8;
 
   return score;
 };

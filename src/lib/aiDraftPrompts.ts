@@ -96,9 +96,9 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   directionsTitle: `Write the directions section title. It should feel practical, clear, and guest-friendly.`,
   directionsIntro: `Write one short directions/location note. It should help guests feel oriented without sounding like map-app copy.`,
   weddingPartyTitle: `Write the wedding party section title. It should feel warm, personal, and human.`,
-  weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy, ceremonial, or overblown. Avoid default lines like "meet the friends and family standing with us" unless there is no better grounded option.`,
+  weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy, ceremonial, or overblown. Prefer first person when it feels natural. Avoid default lines like "meet the friends and family standing with us" or generic label-copy like "some words about" unless there is no better grounded option.`,
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful. Use only known facts. If date or venue details are missing, do not invent them and do not use placeholders—write a clean generic line instead.`,
-  rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. Prefer first person. It should feel gracious and polished, not robotic, wedding-industry canned, excessively formal, or corporate. Avoid generic lines like "please RSVP when you can" if a warmer, cleaner line is possible.`,
+  rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. Prefer first person. It should feel gracious and polished, not robotic, wedding-industry canned, excessively formal, or corporate. Avoid generic lines like "please RSVP when you can" if a warmer, cleaner line is possible. Prefer direct, human phrasing over polite formality.`,
 });
 
 export const buildWeddingCopyCriticPrompt = () => `You are editing wedding website copy to make it stronger.
