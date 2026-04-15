@@ -196,7 +196,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         Pages · {projectPages.length}
       </button>
 
-      <div className="hidden">
+      <div className="relative group">
         <button
           onClick={() => dispatch(builderActions.undo())}
           disabled={!undoRedo.canUndo}
