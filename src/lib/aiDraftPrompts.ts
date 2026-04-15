@@ -39,9 +39,9 @@ ${JSON.stringify(emotionalContext, null, 2)}`;
 
 export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   heroTitle: `Write the main hero title for ${names(profile)}. Usually this is just the names, unless a more elegant headline is clearly better.`,
-  heroSubtitle: `Write a premium but concise hero subtitle. It should help guests immediately understand the event feeling and key context without sounding templated.`,
+  heroSubtitle: `Generate 3 possible premium but concise hero subtitle options mentally, then return only the strongest one. It should help guests immediately understand the event feeling and key context without sounding templated.`,
   storyTitle: `Write a tasteful title for the story section. Usually short and classic.`,
-  storyBody: `Write a warm, specific short story paragraph for the couple. Avoid generic celebration filler. Use details from their profile if available.`,
+  storyBody: `Generate 3 possible story paragraph options mentally, then return only the strongest one. Write a warm, specific short story paragraph for the couple. Avoid generic celebration filler. Use details from their profile if available.`,
   countdownTitle: `Write the countdown section title. Keep it short and elegant.`,
   countdownMessage: `Write one short line under the countdown that builds anticipation without sounding cheesy.`,
   venueTitle: `Write the venue section title. It should feel premium and clear.`,
@@ -49,5 +49,5 @@ export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   galleryTitle: `Write the gallery section title. It should feel warm and memory-driven.`,
   rsvpTitle: `Write the RSVP section title. It should feel inviting and human.`,
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful.`,
-  rsvpCallToAction: `Write a short RSVP prompt that feels gracious and polished, not robotic.`,
+  rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic.`,
 });
