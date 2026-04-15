@@ -10,6 +10,9 @@ Rules:
 - Be concise, polished, and emotionally warm
 - Do not invent detailed facts that are not in the input
 - Prefer tasteful specificity over generic filler
+- Avoid vague luxury language like "meaningful day," "serene embrace," "cherished friends," "journey," "quiet elegance," or "special day" unless the profile clearly earns it
+- Avoid generic bridal-magazine phrasing and default mush
+- When details are sparse, be simple and clean instead of poetic
 - Return copy that can be placed directly on a wedding website`;
 
 export const buildWeddingCopyUserPrompt = (profile: WeddingProfile) => {
@@ -39,31 +42,31 @@ ${JSON.stringify(emotionalContext, null, 2)}`;
 
 export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   heroTitle: `Write the main hero title for ${names(profile)}. Usually this is just the names, unless a more elegant headline is clearly better.`,
-  heroSubtitle: `Generate 3 possible premium but concise hero subtitle options mentally, then return only the strongest one. It should help guests immediately understand the event feeling and key context without sounding templated.`,
+  heroSubtitle: `Generate 3 possible concise hero subtitle options mentally, then return only the strongest one. It should quickly orient guests to the celebration without sounding airy, luxury-generic, or over-written. Prefer plain elegance over poetic mush.`,
   storyTitle: `Write a tasteful title for the story section. Usually short and classic.`,
-  storyBody: `Generate 3 possible story paragraph options mentally, then return only the strongest one. Write a warm, specific short story paragraph for the couple. Avoid generic celebration filler. Use details from their profile if available.`,
+  storyBody: `Generate 3 possible story paragraph options mentally, then return only the strongest one. Write a warm, specific short story paragraph for the couple. Avoid invented backstory, romance-novel language, and generic celebration filler. If details are sparse, be restrained and honest rather than decorative.`,
   countdownTitle: `Write the countdown section title. Keep it short and elegant.`,
-  countdownMessage: `Write one short line under the countdown that builds anticipation without sounding cheesy.`,
+  countdownMessage: `Write one short line under the countdown that builds anticipation without sounding cheesy, grand, or sentimental-forced.`,
   venueTitle: `Write the venue section title. It should feel premium and clear.`,
-  venueIntro: `Write one short line introducing the venue/details section. It should help guests feel oriented and welcomed, not sound like brochure filler.`,
+  venueIntro: `Write one short line introducing the venue/details section. It should help guests feel oriented and welcomed, not sound like brochure filler or destination-marketing copy.`,
   scheduleTitle: `Write the schedule section title. It should feel elegant, not corporate.`,
-  scheduleIntro: `Write one short line introducing the schedule so guests understand the flow of the event without stiffness.`,
+  scheduleIntro: `Write one short line introducing the schedule so guests understand the flow of the event without stiffness or event-planner jargon.`,
   galleryTitle: `Write the gallery section title. It should feel warm and memory-driven.`,
-  galleryIntro: `Write one short line framing the photo/gallery section in a warm, tasteful way.`,
+  galleryIntro: `Write one short line framing the photo/gallery section in a warm, tasteful way. Keep it grounded and avoid memory-book cliché language.`,
   rsvpTitle: `Write the RSVP section title. It should feel inviting and human.`,
-  rsvpIntro: `Write one short line encouraging guests to reply. It should feel gracious and easy, not robotic.`,
+  rsvpIntro: `Write one short line encouraging guests to reply. It should feel gracious and easy, not robotic or overly formal.`,
   registryTitle: `Write the registry section title. It should feel gracious and tasteful, not transactional.`,
-  registryIntro: `Write one short registry note. It should feel gracious, warm, and non-transactional. Avoid sounding gift-grabby.`,
+  registryIntro: `Write one short registry note. It should feel gracious, warm, and non-transactional. Avoid sounding gift-grabby, apologetic, or stiff.`,
   faqHeadline: `Write the FAQ section title. It should feel clear, calm, and guest-friendly.`,
-  faqIntro: `Write one short line introducing the FAQ section. It should feel helpful and reassuring, not robotic.`,
+  faqIntro: `Write one short line introducing the FAQ section. It should feel helpful and reassuring, not robotic or blandly corporate.`,
   travelTitle: `Write the travel section title. It should feel useful and guest-centered.`,
-  travelIntro: `Write one short line introducing travel details. It should help guests plan without sounding generic.`,
+  travelIntro: `Write one short line introducing travel details. It should help guests plan without sounding generic, tourism-board polished, or filler-heavy.`,
   accommodationsTitle: `Write the accommodations section title. It should feel clean, useful, and welcoming.`,
-  accommodationsIntro: `Write one short line introducing accommodations or hotel guidance. It should be helpful and warm.`,
+  accommodationsIntro: `Write one short line introducing accommodations or hotel guidance. It should be helpful and warm, not hotel-brochure copy.`,
   weddingPartyTitle: `Write the wedding party section title. It should feel warm, personal, and human.`,
-  weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy.`,
+  weddingPartyIntro: `Write one short line introducing the wedding party section. It should feel affectionate and specific without sounding cheesy, ceremonial, or overblown.`,
   eventHeadline: `Write a concise event detail line for venue/date framing. It should be clean and useful.`,
-  rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic.`,
+  rsvpCallToAction: `Generate 3 possible RSVP invitation lines mentally, then return only the strongest one. It should feel gracious and polished, not robotic, wedding-industry canned, or excessively formal.`,
 });
 
 export const buildWeddingCopyCriticPrompt = () => `You are editing wedding website copy to make it stronger.
@@ -73,4 +76,6 @@ Rules:
 - Keep the tone warm, elegant, and human
 - Keep facts intact
 - Make copy more specific and graceful when possible
+- Cut vague soft-luxury phrasing and bridal-magazine mush
+- Prefer grounded specificity over abstract beauty words
 - Keep outputs concise and directly usable on a wedding website`;
