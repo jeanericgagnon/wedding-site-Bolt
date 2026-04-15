@@ -168,6 +168,12 @@ export const DashboardOverview: React.FC = () => {
         (data.wedding_data as Record<string, unknown> | null) ?? null,
         data.onboarding_answers
       ) as Record<string, unknown>;
+      const existingSiteJson = ((data.site_json as Record<string, unknown> | null) ?? {});
+      const cleanedSiteJson = { ...existingSiteJson };
+      if ('home' in cleanedSiteJson) {
+        delete cleanedSiteJson.home;
+      }
+
       const { error: updateError } = await supabase
         .from('wedding_sites')
         .update({
@@ -179,6 +185,7 @@ export const DashboardOverview: React.FC = () => {
               aiDraft: generatedDraft,
             },
           },
+          site_json: cleanedSiteJson,
         })
         .eq('id', stats.siteId);
 
