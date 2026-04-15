@@ -16,6 +16,11 @@ export const genericCopyPatterns = [
   /appreciate your thoughtfulness/i,
   /some words about/i,
   /standing with us on this day/i,
+  /our journey continues/i,
+  /those we hold dear/i,
+  /mean the most to us/i,
+  /pleased to introduce/i,
+  /focus is on celebrating with you/i,
 ];
 
 export const scoreCopyLine = (value: string) => {
@@ -27,7 +32,7 @@ export const scoreCopyLine = (value: string) => {
   if (text.length > 180) score -= 10;
   if (genericCopyPatterns.some((pattern) => pattern.test(text))) score -= 35;
   if (/\[[^\]]+\]|\bTBD\b|to be confirmed/i.test(text)) score -= 60;
-  if (/meaningful|cherished|journey|special|beautiful/i.test(text)) score -= 10;
+  if (/meaningful|cherished|journey|special|beautiful|dear/i.test(text)) score -= 10;
   if (/kindly|grateful|thoughtfulness|attendance/i.test(text)) score -= 8;
   if (/support|helpful information|planning help|details to help/i.test(text)) score -= 8;
   if (/\bthey\b|\btheir\b/.test(text) && /met|celebrate|look forward|chosen|grateful/.test(text)) score -= 10;
