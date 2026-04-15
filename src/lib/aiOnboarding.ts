@@ -1,4 +1,6 @@
+import { z } from 'zod';
 import { WeddingProfile, WeddingProfileReadiness, evaluateWeddingProfileReadiness, createEmptyWeddingProfile } from './weddingProfile';
+import { isOpenAiConfigured, runOpenAiStructuredPrompt } from './openai';
 
 export type OnboardingIntent =
   | 'collect-critical-field'
@@ -29,8 +31,6 @@ export type OnboardingSessionState = {
 };
 
 const normalize = (value: string) => value.trim().toLowerCase();
-
-
 
 const NEED_TO_QUESTION_KEY: Record<string, string> = {
   'couple names': 'partnerNames',
@@ -71,15 +71,32 @@ const PROMPT_BY_QUESTION_KEY: Record<string, string> = {
   registryLink: 'Do you already have a registry link?',
 };
 
-const getQuestionKeyFromNeed = (need: string): string | null => {
-  return NEED_TO_QUESTION_KEY[need.toLowerCase()] ?? null;
-};
+const onboardingExtractionSchema = z.object({
+  updates: z.object({
+    couple: z.object({
+      displayNames: z.string().optional(),
+      partnerOne: z.string().optional(),
+      partnerTwo: z.string().optional(),
+    }).partial().optional(),
+    event: z.object({
+      date: z.string().optional(),
+      venueLocation: z.string().optional(),
+      venueName: z.string().optional(),
+      ceremonyTime: z.string().optional(),
+      receptionTime: z.string().optional(),
+      rsvpDeadline: z.string().optional(),
+    }).partial().optional(),
+    story: z.object({ summary: z.string().optional() }).partial().optional(),
+    registry: z.object({ url: z.string().optional(), status: z.string().optional() }).partial().optional(),
+    design: z.object({ theme: z.string().optional() }).partial().optional(),
+  }).partial(),
+  inferred: z.array(z.string()).default([]),
+  notes: z.array(z.string()).default([]),
+  confidence: z.number().min(0).max(1).default(0.5),
+});
 
-const getSuggestedPrompt = (questionKey: string | null) => {
-  if (!questionKey) return null;
-  return PROMPT_BY_QUESTION_KEY[questionKey] ?? null;
-};
-
+const getQuestionKeyFromNeed = (need: string): string | null => NEED_TO_QUESTION_KEY[need.toLowerCase()] ?? null;
+const getSuggestedPrompt = (questionKey: string | null) => (questionKey ? PROMPT_BY_QUESTION_KEY[questionKey] ?? null : null);
 
 const getProfileString = (profile: WeddingProfile, path: string): string => {
   const value = path.split('.').reduce<unknown>((current, key) => {
@@ -103,7 +120,7 @@ const mergeProfile = (profile: WeddingProfile, updates: Partial<WeddingProfile>)
   meta: { ...profile.meta, ...(updates.meta ?? {}) },
 });
 
-export const extractWeddingProfileUpdates = (
+const deterministicExtractWeddingProfileUpdates = (
   input: string,
   profile: WeddingProfile
 ): OnboardingExtractionResult => {
@@ -115,9 +132,7 @@ export const extractWeddingProfileUpdates = (
   let requiresConfirmation = false;
   const trimmed = input.trim();
 
-  if (!trimmed) {
-    return { updates, inferred, conflicts, notes, confidence, requiresConfirmation };
-  }
+  if (!trimmed) return { updates, inferred, conflicts, notes, confidence, requiresConfirmation };
 
   if (trimmed.includes('&') && !profile.couple.displayNames) {
     const [partnerOne = '', partnerTwo = ''] = trimmed.split('&').map((part) => part.trim()).filter(Boolean);
@@ -188,6 +203,46 @@ export const extractWeddingProfileUpdates = (
   return { updates, inferred, conflicts, notes, confidence, requiresConfirmation };
 };
 
+export const extractWeddingProfileUpdates = async (
+  input: string,
+  profile: WeddingProfile
+): Promise<OnboardingExtractionResult> => {
+  const deterministic = deterministicExtractWeddingProfileUpdates(input, profile);
+
+  if (!isOpenAiConfigured()) return deterministic;
+
+  try {
+    const modelResult = await runOpenAiStructuredPrompt({
+      system: 'Extract structured wedding planning facts from user messages. Be conservative, return only what is actually supported.',
+      user: `Profile:\n${JSON.stringify(profile, null, 2)}\n\nUser message:\n${input}`,
+      schemaName: 'wedding_onboarding_extraction',
+      schema: onboardingExtractionSchema,
+    });
+
+    const candidate = mergeProfile(createEmptyWeddingProfile(), modelResult.updates as Partial<WeddingProfile>);
+    const conflicts: Array<{ path: string; currentValue: string; nextValue: string }> = [];
+
+    for (const path of Object.keys(QUESTION_KEY_BY_PATH)) {
+      const currentValue = getProfileString(profile, path);
+      const nextValue = getProfileString(candidate, path);
+      if (currentValue && nextValue && normalize(currentValue) !== normalize(nextValue)) {
+        conflicts.push({ path, currentValue, nextValue });
+      }
+    }
+
+    return {
+      updates: modelResult.updates as Partial<WeddingProfile>,
+      inferred: modelResult.inferred,
+      conflicts,
+      notes: modelResult.notes,
+      confidence: modelResult.confidence,
+      requiresConfirmation: conflicts.length > 0,
+    };
+  } catch {
+    return deterministic;
+  }
+};
+
 export const createOnboardingSessionState = (
   profile: WeddingProfile = createEmptyWeddingProfile(),
   askedQuestions: string[] = []
@@ -213,11 +268,11 @@ export const createOnboardingSessionState = (
   };
 };
 
-export const applyOnboardingInput = (
+export const applyOnboardingInput = async (
   session: OnboardingSessionState,
   input: string
-): OnboardingSessionState => {
-  const extraction = extractWeddingProfileUpdates(input, session.profile);
+): Promise<OnboardingSessionState> => {
+  const extraction = await extractWeddingProfileUpdates(input, session.profile);
   const nextProfile = mergeProfile(session.profile, extraction.updates);
   const readiness = evaluateWeddingProfileReadiness(nextProfile);
 

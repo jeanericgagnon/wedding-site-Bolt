@@ -3,8 +3,8 @@ import { applyOnboardingInput, createOnboardingSessionState, extractWeddingProfi
 import { createEmptyWeddingProfile } from './weddingProfile';
 
 describe('aiOnboarding', () => {
-  it('extracts couple names from ampersand input', () => {
-    const result = extractWeddingProfileUpdates('Alex & Jordan', createEmptyWeddingProfile());
+  it('extracts couple names from ampersand input', async () => {
+    const result = await extractWeddingProfileUpdates('Alex & Jordan', createEmptyWeddingProfile());
     expect(result.updates.couple?.displayNames).toBe('Alex & Jordan');
     expect(result.updates.couple?.partnerOne).toBe('Alex');
   });
@@ -15,11 +15,11 @@ describe('aiOnboarding', () => {
     expect(session.nextQuestionKey).toBeTruthy();
   });
 
-  it('moves toward draft readiness after critical inputs are applied', () => {
+  it('moves toward draft readiness after critical inputs are applied', async () => {
     let session = createOnboardingSessionState(createEmptyWeddingProfile());
-    session = applyOnboardingInput(session, 'Alex & Jordan');
-    session = applyOnboardingInput(session, '2027-06-12');
-    session = applyOnboardingInput(session, 'San Diego, CA');
+    session = await applyOnboardingInput(session, 'Alex & Jordan');
+    session = await applyOnboardingInput(session, '2027-06-12');
+    session = await applyOnboardingInput(session, 'San Diego, CA');
     expect(session.readiness.hasEnoughToDraft).toBe(true);
   });
 });
@@ -31,47 +31,47 @@ it('suggests the next critical prompt for sparse profiles', () => {
   expect(session.nextQuestionKey).toBe('partnerNames');
 });
 
-it('surfaces conflict intent when a conflicting wedding date is provided', () => {
+it('surfaces conflict intent when a conflicting wedding date is provided', async () => {
   const seeded = createOnboardingSessionState({
     ...createEmptyWeddingProfile(),
     couple: { ...createEmptyWeddingProfile().couple, displayNames: 'Alex & Jordan', partnerOne: 'Alex', partnerTwo: 'Jordan' },
     event: { ...createEmptyWeddingProfile().event, date: '2027-06-12', venueLocation: 'San Diego, CA' },
     meta: { readinessScore: 60 },
   });
-  const next = applyOnboardingInput(seeded, '2027-07-01');
+  const next = await applyOnboardingInput(seeded, '2027-07-01');
   expect(next.currentIntent).toBe('confirm-conflict');
   expect(next.unresolvedConflicts.length).toBeGreaterThan(0);
 });
 
 
-it('assigns high confidence to explicit registry links', () => {
-  const result = extractWeddingProfileUpdates('https://zola.com/our-registry', createEmptyWeddingProfile());
+it('assigns high confidence to explicit registry links', async () => {
+  const result = await extractWeddingProfileUpdates('https://zola.com/our-registry', createEmptyWeddingProfile());
   expect(result.confidence).toBeGreaterThan(0.9);
   expect(result.requiresConfirmation).toBe(false);
 });
 
-it('requires confirmation for conflicting dates', () => {
+it('requires confirmation for conflicting dates', async () => {
   const seeded = createOnboardingSessionState({
     ...createEmptyWeddingProfile(),
     event: { ...createEmptyWeddingProfile().event, date: '2027-06-12', venueLocation: 'San Diego, CA' },
     couple: { ...createEmptyWeddingProfile().couple, displayNames: 'Alex & Jordan', partnerOne: 'Alex', partnerTwo: 'Jordan' },
     meta: { readinessScore: 60 },
   });
-  const next = applyOnboardingInput(seeded, '2027-07-01');
+  const next = await applyOnboardingInput(seeded, '2027-07-01');
   expect(next.currentIntent).toBe('confirm-conflict');
   expect(next.confidence).toBeLessThan(0.5);
 });
 
 
-it('captures ceremony and reception times progressively', () => {
+it('captures ceremony and reception times progressively', async () => {
   let session = createOnboardingSessionState(createEmptyWeddingProfile());
-  session = applyOnboardingInput(session, '4:00');
+  session = await applyOnboardingInput(session, '4:00');
   expect(session.profile.event.ceremonyTime).toBe('4:00');
-  session = applyOnboardingInput(session, '7:30');
+  session = await applyOnboardingInput(session, '7:30');
   expect(session.profile.event.receptionTime).toBe('7:30');
 });
 
-it('captures venue names from venue-like phrases', () => {
-  const next = applyOnboardingInput(createOnboardingSessionState(createEmptyWeddingProfile()), 'Grand Estate');
+it('captures venue names from venue-like phrases', async () => {
+  const next = await applyOnboardingInput(createOnboardingSessionState(createEmptyWeddingProfile()), 'Grand Estate');
   expect(next.profile.event.venueName).toBe('Grand Estate');
 });
