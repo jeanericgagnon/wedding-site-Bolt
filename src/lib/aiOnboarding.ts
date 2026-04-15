@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { WeddingProfile, WeddingProfileReadiness, evaluateWeddingProfileReadiness, createEmptyWeddingProfile } from './weddingProfile';
 import { isOpenAiConfigured, runOpenAiStructuredPrompt, getOpenAiRuntimeConfig } from './openai';
+import { FollowUpQuestion, planFollowUpQuestions } from './aiFollowUpPlanner';
 
 export type OnboardingIntent =
   | 'collect-critical-field'
@@ -27,8 +28,20 @@ export type OnboardingSessionState = {
   confirmedFields: string[];
   unresolvedConflicts: Array<{ path: string; currentValue: string; nextValue: string }>;
   suggestedPrompt: string | null;
+  suggestedFollowUps: FollowUpQuestion[];
   confidence: number;
 };
+
+const buildIntakeSnapshot = (profile: WeddingProfile) => ({
+  howWeMet: profile.story.summary,
+  storyDetail: profile.story.summary,
+  city: profile.event.venueLocation,
+  venue: profile.event.venueName,
+  guestFeel: profile.story.welcomeNote,
+  registryPosture: profile.registry.status,
+  rsvpDeadline: profile.event.rsvpDeadline,
+  travelNotes: profile.guestExperience.travelSupportLevel,
+});
 
 const normalize = (value: string) => value.trim().toLowerCase();
 
@@ -294,6 +307,7 @@ export const createOnboardingSessionState = (
     confirmedFields: [],
     unresolvedConflicts: [],
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, profile),
+    suggestedFollowUps: planFollowUpQuestions(buildIntakeSnapshot(profile), askedQuestions.length).questions,
     confidence: readiness.hasEnoughToDraft ? 0.9 : 0.45,
   };
 };
@@ -324,6 +338,7 @@ export const applyOnboardingInput = async (
     confirmedFields: session.confirmedFields,
     unresolvedConflicts: extraction.conflicts,
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, nextProfile),
+    suggestedFollowUps: planFollowUpQuestions(buildIntakeSnapshot(nextProfile), session.askedQuestions.length).questions,
     confidence: extraction.conflicts.length > 0 || extraction.requiresConfirmation ? extraction.confidence : readiness.hasEnoughToDraft ? Math.max(extraction.confidence, 0.9) : Math.max(extraction.confidence, 0.6),
   };
 };
