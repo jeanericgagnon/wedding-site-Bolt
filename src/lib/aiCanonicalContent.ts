@@ -100,8 +100,8 @@ export const createCanonicalContentFromDraft = (draft: {
   weddingPartyIntro: string;
   eventHeadline: string;
   rsvpCallToAction: string;
-  ctaHeadline: string;
-  ctaSubtext: string;
+  ctaHeadline?: string;
+  ctaSubtext?: string;
 }): AiCanonicalSectionContent => ({
   hero: {
     title: draft.heroTitle,
@@ -166,7 +166,7 @@ export const createCanonicalContentFromDraft = (draft: {
     intro: draft.contactIntro,
   },
   footerCta: {
-    headline: draft.ctaHeadline,
-    subtext: draft.ctaSubtext,
+    headline: draft.ctaHeadline ?? '',
+    subtext: draft.ctaSubtext ?? '',
   },
 });

@@ -1,4 +1,6 @@
 import { DraftGenerationResult } from './aiDraftGenerator';
+import { createCanonicalContentFromDraft } from './aiCanonicalContent';
+import { mapCanonicalContentToSectionSettings } from './aiCanonicalContentMapper';
 
 
 const shouldReplaceSectionSetting = (value: unknown) => {
@@ -25,12 +27,31 @@ export const mergeGeneratedDraftIntoBuilderProject = (
 ) => {
   const project = (existingSiteJson ?? {}) as Record<string, unknown>;
   const pages = Array.isArray(project.pages) ? (project.pages as Array<Record<string, unknown>>) : [];
+  const canonicalContent = createCanonicalContentFromDraft(generatedDraft);
 
   const nextPages = pages.map((page) => {
     const sections = Array.isArray(page.sections) ? (page.sections as Array<Record<string, unknown>>) : [];
     const nextSections = sections.map((section) => {
       const type = section.type;
       const settings = ((section.settings as Record<string, unknown> | undefined) ?? {});
+
+      const mappedSettings = typeof type === 'string'
+        ? mapCanonicalContentToSectionSettings(type, canonicalContent)
+        : null;
+
+      if (mappedSettings) {
+        const mergedMappedSettings = Object.fromEntries(
+          Object.entries(mappedSettings).map(([key, value]) => [key, mergeGeneratedSetting(settings[key], value)])
+        );
+
+        return {
+          ...section,
+          settings: {
+            ...settings,
+            ...mergedMappedSettings,
+          },
+        };
+      }
 
       if (type === 'hero') {
         return {

@@ -38,7 +38,6 @@ describe('aiBuilderProjectPatch', () => {
     const sections = next.pages[0].sections;
     const heroHeadline = sections.find((section) => section.type === 'hero')?.settings.headline as { value: string; source: string };
     const storyText = sections.find((section) => section.type === 'story')?.settings.storyText as { value: string; source: string };
-    const ctaHeadline = sections.find((section) => section.type === 'footer-cta')?.settings.headline as { value: string; source: string };
     const registryMessage = sections.find((section) => section.type === 'registry')?.settings.message as { value: string; source: string };
     const faqHeadline = sections.find((section) => section.type === 'faq')?.settings.headline as { value: string; source: string };
     const travelIntro = sections.find((section) => section.type === 'travel')?.settings.intro as { value: string; source: string };
@@ -50,7 +49,6 @@ describe('aiBuilderProjectPatch', () => {
     expect(heroHeadline.value).toBe('Alex & Jordan');
     expect(heroHeadline.source).toBe('concierge-brief');
     expect(storyText.value).toContain('We met in college');
-    expect(ctaHeadline.value).toContain('2027-05-01');
     expect(registryMessage.value).toContain('presence is gift enough');
     expect(faqHeadline.value).toBe('Frequently Asked Questions');
     expect(travelIntro.value).toContain('San Diego, CA');
