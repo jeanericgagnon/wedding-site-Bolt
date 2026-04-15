@@ -42,10 +42,12 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         good: [
           'Many of you are traveling across the globe to celebrate with us, so your presence means the world to us and is all we ask for.',
           'Your presence and prayers on our big day are all we ask for.',
+          'If you’ve asked about gifts, we’ve put a few ideas in one place.',
         ],
         avoid: [
           'Your presence is the greatest gift.',
           'We appreciate your thoughtfulness.',
+          'Your presence is truly enough.',
         ],
       },
     },
@@ -68,6 +70,7 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         good: [
           'You have questions, we have answers.',
           'This site has everything you’ll need leading up to the big day.',
+          'If you’re wondering about travel, timing, or what to wear, start here.',
         ],
         avoid: [
           'Answers to common questions.',
@@ -94,6 +97,7 @@ export const buildSectionPromptPayloads = (profile: WeddingProfile): Record<stri
         good: [
           'Pack your bags, we’re going to Mexico!',
           'Join us in Tuscany for a weekend of celebration.',
+          'If you’re making the trip, here’s what to know before you go.',
         ],
         avoid: [
           'Local planning help.',
