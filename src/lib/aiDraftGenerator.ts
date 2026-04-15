@@ -51,7 +51,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
 
   return {
     heroTitle: names,
-    heroSubtitle: hasVenue ? `Join us in ${location} on ${date}` : `Celebrate with us during ${date}`,
+    heroSubtitle: hasVenue ? `Join us in ${location} on ${date}` : `Celebrate with us soon`,
     storyTitle: 'Our Story',
     storyBody,
     countdownTitle: names,
@@ -63,7 +63,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     eventHeadline,
     rsvpCallToAction: hasDeadline
       ? `Please reply by ${profile.event.rsvpDeadline}`
-      : 'Please reply when you can',
+      : 'We would love to hear from you',
     weddingDataPatch: buildWeddingDataPatchFromProfile(profile),
   };
 };
