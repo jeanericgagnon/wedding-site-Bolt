@@ -176,7 +176,12 @@ export const DashboardOverview: React.FC = () => {
       if ('home' in cleanedSiteJson) {
         delete cleanedSiteJson.home;
       }
-      const patchedBuilderProject = mergeGeneratedDraftIntoBuilderProject(cleanedSiteJson, generatedDraft);
+      const existingAiContent = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.aiContent as Record<string, unknown> | undefined) ?? null);
+      const patchedBuilderProject = mergeGeneratedDraftIntoBuilderProject(
+        cleanedSiteJson,
+        generatedDraft,
+        (existingAiContent as unknown as import('../../lib/aiCanonicalContent').AiCanonicalSectionContent | null) ?? canonicalAiContent
+      );
 
       const { error: updateError } = await supabase
         .from('wedding_sites')

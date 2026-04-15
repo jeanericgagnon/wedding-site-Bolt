@@ -1,5 +1,5 @@
 import { DraftGenerationResult } from './aiDraftGenerator';
-import { createCanonicalContentFromDraft } from './aiCanonicalContent';
+import { AiCanonicalSectionContent, createCanonicalContentFromDraft } from './aiCanonicalContent';
 import { mapCanonicalContentToSectionSettings } from './aiCanonicalContentMapper';
 
 
@@ -23,11 +23,12 @@ const mergeGeneratedSetting = (current: unknown, nextValue: string) => {
 
 export const mergeGeneratedDraftIntoBuilderProject = (
   existingSiteJson: Record<string, unknown> | null,
-  generatedDraft: DraftGenerationResult
+  generatedDraft: DraftGenerationResult,
+  canonicalContentOverride?: AiCanonicalSectionContent | null
 ) => {
   const project = (existingSiteJson ?? {}) as Record<string, unknown>;
   const pages = Array.isArray(project.pages) ? (project.pages as Array<Record<string, unknown>>) : [];
-  const canonicalContent = createCanonicalContentFromDraft(generatedDraft);
+  const canonicalContent = canonicalContentOverride ?? createCanonicalContentFromDraft(generatedDraft);
 
   const nextPages = pages.map((page) => {
     const sections = Array.isArray(page.sections) ? (page.sections as Array<Record<string, unknown>>) : [];
