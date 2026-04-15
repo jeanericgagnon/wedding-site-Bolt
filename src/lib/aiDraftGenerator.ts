@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { runOpenAiStructuredPrompt, isOpenAiConfigured, getOpenAiRuntimeConfig } from './openai';
 import { WeddingProfile, buildWeddingDataPatchFromProfile, mergeWeddingDataFromProfile } from './weddingProfile';
-import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildWeddingCopySectionPayloadPrompt, buildSectionInstructionMap, buildWeddingCopyCriticPrompt } from './aiDraftPrompts';
+import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildWeddingCopySectionPayloadPrompt, buildWeddingCopyCriticPayloadPrompt, buildSectionInstructionMap, buildWeddingCopyCriticPrompt } from './aiDraftPrompts';
 
 export type DraftGenerationResult = {
   heroTitle: string;
@@ -149,7 +149,7 @@ const buildDraftPrompt = (profile: WeddingProfile) => {
 };
 
 const buildDraftCriticPrompt = (profile: WeddingProfile, draft: Omit<DraftGenerationResult, 'weddingDataPatch'>) => {
-  return `${buildWeddingCopyUserPrompt(profile)}\n\nImprove this draft where needed:\n${JSON.stringify(draft, null, 2)}\n\nFocus especially on heroSubtitle, storyBody, and rsvpCallToAction.`;
+  return `${buildWeddingCopyCriticPayloadPrompt(profile)}\n\nCurrent draft to improve:\n${JSON.stringify(draft, null, 2)}\n\nImprove this draft where needed. Focus especially on heroSubtitle, storyBody, and rsvpCallToAction.`;
 };
 
 const hasPlaceholderLikeText = (value: string) => /\[[^\]]+\]|\bTBD\b|to be confirmed/i.test(value);

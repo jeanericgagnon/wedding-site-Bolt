@@ -56,6 +56,14 @@ ${JSON.stringify(sectionPayloads, null, 2)}
 Only use facts found in these payloads. If a section is marked light-fill, keep the copy modest and restrained. If context is thin, write simply instead of trying to sound profound.`;
 };
 
+export const buildWeddingCopyCriticPayloadPrompt = (profile: WeddingProfile) => {
+  const sectionPayloads = buildSectionPromptPayloads(profile);
+  return `Section prompt payloads for critique:
+${JSON.stringify(sectionPayloads, null, 2)}
+
+When revising, keep each field aligned with its section mode and rules. Do not add facts outside these payloads. If a light-fill field sounds over-written, simplify it.`;
+};
+
 export const buildSectionInstructionMap = (profile: WeddingProfile) => ({
   heroTitle: `Write the main hero title for ${names(profile)}. Usually this is just the names, unless a more elegant headline is clearly better.`,
   heroSubtitle: `Generate 3 possible concise hero subtitle options mentally, then return only the strongest one. It should quickly orient guests to the celebration without sounding airy, luxury-generic, or over-written. Prefer plain elegance over poetic mush.`,
