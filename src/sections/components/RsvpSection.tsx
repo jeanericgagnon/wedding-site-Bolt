@@ -3,6 +3,7 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Calendar } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -164,7 +165,7 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle && (
           <>
             <p className="text-xs uppercase tracking-[0.3em] text-primary/80 mb-3 font-medium">Kindly reply</p>
-            <h2 className="text-3xl md:text-5xl font-light text-text-primary mb-4 leading-tight">{settings.title || 'RSVP'}</h2>
+            <h2 className="text-3xl md:text-5xl font-light text-text-primary mb-4 leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP')}</h2>
           </>
         )}
         {deadline && (
@@ -215,7 +216,7 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle && (
           <>
             <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-4 font-medium">You’re invited</p>
-            <h2 className="text-3xl md:text-5xl font-light text-white mb-3 leading-tight">{settings.title || 'RSVP'}</h2>
+            <h2 className="text-3xl md:text-5xl font-light text-white mb-3 leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP')}</h2>
             <p className="text-white/80 mb-8">Join {displayName} in celebrating their wedding</p>
           </>
         )}
