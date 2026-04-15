@@ -40,22 +40,22 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
   const date = profile.event.date || 'our wedding weekend';
   const storyBody = profile.story.summary?.trim()
     ? profile.story.summary.trim()
-    : `${names} are getting ready to celebrate with the people who know and love them best.`;
+    : `${names} are excited to gather everyone they love for a celebration that feels warm, personal, and easy to enjoy.`;
   const eventHeadline = profile.event.venueName
     ? `${profile.event.venueName} · ${profile.event.venueLocation || date}`
     : profile.event.venueLocation
       ? `${profile.event.venueLocation} · ${date}`
-      : `${date} · celebration details coming soon`;
+      : `${date} · details to come`;
   const hasVenue = Boolean(profile.event.venueName || profile.event.venueLocation);
   const hasDeadline = Boolean(profile.event.rsvpDeadline);
 
   return {
     heroTitle: names,
-    heroSubtitle: hasVenue ? `Join us in ${location} on ${date}` : `Celebrate with us on ${date}`,
+    heroSubtitle: hasVenue ? `Join us in ${location} on ${date}` : `Celebrate with us during ${date}`,
     storyTitle: 'Our Story',
     storyBody,
     countdownTitle: names,
-    countdownMessage: hasVenue ? `We can't wait to celebrate with you in ${location}.` : `We can't wait to celebrate with our favorite people.`,
+    countdownMessage: hasVenue ? `We can't wait to celebrate with you in ${location}.` : `We can't wait to celebrate together.`,
     venueTitle: 'Venue Details',
     scheduleTitle: 'The Plan',
     galleryTitle: 'Moments to Remember',
@@ -63,7 +63,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
     eventHeadline,
     rsvpCallToAction: hasDeadline
       ? `Please reply by ${profile.event.rsvpDeadline}`
-      : 'Reply when you are ready',
+      : 'Please reply when you can',
     weddingDataPatch: buildWeddingDataPatchFromProfile(profile),
   };
 };
