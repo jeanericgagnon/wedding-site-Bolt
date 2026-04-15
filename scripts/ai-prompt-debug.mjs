@@ -1,4 +1,5 @@
 import { createEmptyWeddingProfile } from '../src/lib/weddingProfile.ts';
+import { buildSectionPromptPayloads } from '../src/lib/aiSectionContext.ts';
 import {
   buildWeddingCopySystemPrompt,
   buildWeddingCopySectionPayloadPrompt,
@@ -21,16 +22,33 @@ const sparseProfile = {
   couple: { ...createEmptyWeddingProfile().couple, displayNames: 'Taylor & Sam' },
 };
 
+const targetSection = process.argv[2] || '';
+
 for (const [label, profile] of Object.entries({ rich: richProfile, sparse: sparseProfile })) {
+  const payloads = buildSectionPromptPayloads(profile);
+
   console.log(`\n=== ${label.toUpperCase()} SYSTEM ===\n`);
   console.log(buildWeddingCopySystemPrompt());
 
   console.log(`\n=== ${label.toUpperCase()} DRAFT PAYLOAD ===\n`);
-  console.log(buildWeddingCopySectionPayloadPrompt(profile));
+  if (targetSection) {
+    console.log(JSON.stringify({ [targetSection]: payloads[targetSection] ?? null }, null, 2));
+  } else {
+    console.log(buildWeddingCopySectionPayloadPrompt(profile));
+  }
 
   console.log(`\n=== ${label.toUpperCase()} SECTION INSTRUCTIONS ===\n`);
-  console.log(JSON.stringify(buildSectionInstructionMap(profile), null, 2));
+  if (targetSection) {
+    const instructions = buildSectionInstructionMap(profile);
+    console.log(JSON.stringify({ [targetSection]: instructions[targetSection] ?? null }, null, 2));
+  } else {
+    console.log(JSON.stringify(buildSectionInstructionMap(profile), null, 2));
+  }
 
   console.log(`\n=== ${label.toUpperCase()} CRITIC PAYLOAD ===\n`);
-  console.log(buildWeddingCopyCriticPayloadPrompt(profile));
+  if (targetSection) {
+    console.log(JSON.stringify({ [targetSection]: payloads[targetSection] ?? null }, null, 2));
+  } else {
+    console.log(buildWeddingCopyCriticPayloadPrompt(profile));
+  }
 }
