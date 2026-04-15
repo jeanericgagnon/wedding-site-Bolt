@@ -1,6 +1,7 @@
 import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -20,9 +21,9 @@ function formatDate(iso: string | undefined): string {
 export const HeroSection: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = (settings.headline as string) || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
-  const bgImage = (settings.backgroundImage as string) || media.heroImageUrl || '';
+  const bgImage = readBuilderValue(settings.backgroundImage as string | { value: string } | undefined, '') || media.heroImageUrl || '';
   const opacity = typeof settings.overlayOpacity === 'number' ? settings.overlayOpacity / 100 : 0.3;
 
   return (
@@ -36,7 +37,7 @@ export const HeroSection: React.FC<Props> = ({ data, instance }) => {
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         {settings.showTitle !== false && (
           <p className="text-sm uppercase tracking-[0.25em] text-text-secondary mb-6 font-medium">
-            {(settings.title as string) || 'We are getting married'}
+            {readBuilderValue(settings.title as string | { value: string } | undefined, 'We are getting married')}
           </p>
         )}
         <h1 className="text-5xl md:text-7xl font-bold text-text-primary mb-6 leading-tight">
@@ -44,7 +45,7 @@ export const HeroSection: React.FC<Props> = ({ data, instance }) => {
         </h1>
         <div className="w-16 h-px bg-primary mx-auto mb-6" />
         <p className="text-xl md:text-2xl text-text-secondary">
-          {(settings.subtitle as string) || date}
+          {readBuilderValue(settings.subtitle as string | { value: string } | undefined, date)}
         </p>
       </div>
     </section>
@@ -54,9 +55,9 @@ export const HeroSection: React.FC<Props> = ({ data, instance }) => {
 export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = (settings.headline as string) || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
-  const bgImage = (settings.backgroundImage as string) || media.heroImageUrl || '';
+  const bgImage = readBuilderValue(settings.backgroundImage as string | { value: string } | undefined, '') || media.heroImageUrl || '';
   const hasImage = !!bgImage;
 
   return (
@@ -71,14 +72,14 @@ export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
         <div className="max-w-6xl mx-auto">
           {settings.showTitle !== false && (
             <p className={"text-sm uppercase tracking-[0.25em] font-medium mb-3 " + (hasImage ? "text-white/70" : "text-text-secondary")}>
-              {(settings.title as string) || 'We are getting married'}
+              {readBuilderValue(settings.title as string | { value: string } | undefined, 'We are getting married')}
             </p>
           )}
           <h1 className={"text-6xl md:text-8xl font-light tracking-tight mb-3 " + (hasImage ? "text-white" : "text-text-primary")}>
             {displayName}
           </h1>
           <p className={"text-lg md:text-xl font-light " + (hasImage ? "text-white/80" : "text-text-secondary")}>
-            {(settings.subtitle as string) || date}
+            {readBuilderValue(settings.subtitle as string | { value: string } | undefined, date)}
           </p>
         </div>
       </div>
@@ -89,9 +90,9 @@ export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
 export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = (settings.headline as string) || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
-  const bgImage = (settings.backgroundImage as string) || media.heroImageUrl || '';
+  const bgImage = readBuilderValue(settings.backgroundImage as string | { value: string } | undefined, '') || media.heroImageUrl || '';
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden bg-neutral-900">
@@ -105,7 +106,7 @@ export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
       <div className="absolute inset-0 bg-black/30" />
       <div className="relative z-10 text-center px-4">
         <p className="text-xs uppercase tracking-[0.4em] text-white/70 mb-8 font-medium">
-          {(settings.subtitle as string) || date}
+          {readBuilderValue(settings.subtitle as string | { value: string } | undefined, date)}
         </p>
         <h1 className="text-6xl md:text-9xl font-light tracking-tight text-white leading-none mb-8">
           {displayName}
@@ -114,7 +115,7 @@ export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
           <div className="flex items-center justify-center gap-6">
             <div className="h-px w-12 bg-white/50" />
             <p className="text-sm tracking-widest text-white/70 uppercase font-medium">
-              {(settings.title as string) || 'Celebrate with us'}
+              {readBuilderValue(settings.title as string | { value: string } | undefined, 'Celebrate with us')}
             </p>
             <div className="h-px w-12 bg-white/50" />
           </div>
@@ -140,9 +141,9 @@ function getCountdownParts(weddingDateISO?: string) {
 export const HeroCountdown: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = (settings.headline as string) || couple.displayName || `${couple.partner1Name} & ${couple.partner2Name}`;
+  const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || `${couple.partner1Name} & ${couple.partner2Name}`;
   const date = formatDate(event.weddingDateISO);
-  const bgImage = (settings.backgroundImage as string) || media.heroImageUrl || '';
+  const bgImage = readBuilderValue(settings.backgroundImage as string | { value: string } | undefined, '') || media.heroImageUrl || '';
   const countdown = getCountdownParts(event.weddingDateISO);
 
   return (
@@ -159,11 +160,11 @@ export const HeroCountdown: React.FC<Props> = ({ data, instance }) => {
       <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
         {settings.showTitle !== false && (
           <p className="text-xs uppercase tracking-[0.35em] text-white/70 mb-5 font-medium">
-            {(settings.title as string) || 'Save the date'}
+            {readBuilderValue(settings.title as string | { value: string } | undefined, 'Save the date')}
           </p>
         )}
         <h1 className="text-5xl md:text-8xl font-light tracking-tight text-white leading-tight mb-4">{displayName}</h1>
-        <p className="text-base md:text-xl text-white/80 mb-8">{(settings.subtitle as string) || date}</p>
+        <p className="text-base md:text-xl text-white/80 mb-8">{readBuilderValue(settings.subtitle as string | { value: string } | undefined, date)}</p>
 
         {countdown && (
           <div className="inline-flex items-center gap-4 md:gap-8 px-6 py-4 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20">
