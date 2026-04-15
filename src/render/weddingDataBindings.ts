@@ -225,7 +225,7 @@ function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Recor
   return {
     ...section.data,
     // Core names/text
-    headline: coupleName || section.data.headline,
+    headline: section.data.headline ?? coupleName,
     title: section.data.title ?? coupleName,
     coupleName: section.data.coupleName ?? coupleName,
     names: section.data.names ?? coupleName,
