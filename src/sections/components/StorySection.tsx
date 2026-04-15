@@ -1,6 +1,7 @@
 import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -10,15 +11,15 @@ interface Props {
 export const StorySection: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = (settings.photo as string) || '';
+  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
+  const photoUrl = readBuilderValue(settings.photo as string | { value: string } | undefined, '') || '';
 
   return (
     <section className="py-16 px-4 bg-surface">
       <div className="max-w-3xl mx-auto">
         {settings.showTitle !== false && (
           <h2 className="text-4xl font-bold text-text-primary text-center mb-8">
-            {(settings.title as string) || 'Our Story'}
+            {readBuilderValue(settings.title as string | { value: string } | undefined, 'Our Story')}
           </h2>
         )}
         {photoUrl && (
@@ -37,8 +38,8 @@ export const StorySection: React.FC<Props> = ({ data, instance }) => {
 export const StoryCentered: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = (settings.photo as string) || '';
+  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
+  const photoUrl = readBuilderValue(settings.photo as string | { value: string } | undefined, '') || '';
 
   return (
     <section className="py-20 px-4 bg-surface">
@@ -49,7 +50,7 @@ export const StoryCentered: React.FC<Props> = ({ data, instance }) => {
               How it began
             </p>
             <h2 className="text-4xl md:text-5xl font-light text-text-primary mb-10">
-              {(settings.title as string) || 'Our Story'}
+              {readBuilderValue(settings.title as string | { value: string } | undefined, 'Our Story')}
             </h2>
             <div className="w-12 h-px bg-primary mx-auto mb-10" />
           </>
@@ -71,8 +72,8 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const media = data?.media;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = (settings.photo as string) || media?.heroImageUrl || '';
+  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
+  const photoUrl = readBuilderValue(settings.photo as string | { value: string } | undefined, '') || media?.heroImageUrl || '';
 
   return (
     <section className="py-20 bg-surface">
@@ -91,7 +92,7 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
             <>
               <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">About us</p>
               <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8">
-                {(settings.title as string) || 'Our Story'}
+                {readBuilderValue(settings.title as string | { value: string } | undefined, 'Our Story')}
               </h2>
               <div className="w-10 h-px bg-primary mb-8" />
             </>
@@ -106,7 +107,7 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
 export const StoryTimeline: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const { settings } = instance;
-  const story = (settings.storyText as string) || couple?.story || 'More of our story will be shared here soon.';
+  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
   const baseLines = story
     .split(/\n+/)
     .map((line) => line.trim())
@@ -131,7 +132,7 @@ export const StoryTimeline: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle !== false && (
           <div className="text-center mb-10">
             <p className="text-xs uppercase tracking-[0.25em] text-primary mb-3 font-medium">The journey</p>
-            <h2 className="text-3xl md:text-4xl font-light text-text-primary">{(settings.title as string) || 'Our Story'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Our Story')}</h2>
           </div>
         )}
 

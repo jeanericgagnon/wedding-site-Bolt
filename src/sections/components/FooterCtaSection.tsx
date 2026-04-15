@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Heart } from 'lucide-react';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -22,10 +23,10 @@ export const FooterCtaSection: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = data.couple.displayName || `${data.couple.partner1Name} & ${data.couple.partner2Name}`;
   const date = formatDate(data.event.weddingDateISO);
-  const rsvpUrl = (settings.rsvpUrl as string) || '#rsvp';
-  const buttonLabel = (settings.buttonLabel as string) || 'Send RSVP';
-  const headline = (settings.headline as string) || `We hope to see you there`;
-  const subtext = (settings.subtext as string) || (data.rsvp.deadlineISO ? `Please reply by ${formatDate(data.rsvp.deadlineISO)}` : 'We’re so glad to celebrate with you');
+  const rsvpUrl = readBuilderValue(settings.rsvpUrl as string | { value: string } | undefined, '#rsvp') || '#rsvp';
+  const buttonLabel = readBuilderValue(settings.buttonLabel as string | { value: string } | undefined, 'Send RSVP');
+  const headline = readBuilderValue(settings.headline as string | { value: string } | undefined, 'We hope to see you there');
+  const subtext = readBuilderValue(settings.subtext as string | { value: string } | undefined, data.rsvp.deadlineISO ? `Please reply by ${formatDate(data.rsvp.deadlineISO)}` : 'We’re so glad to celebrate with you');
 
   return (
     <section className="relative py-24 px-4 bg-primary overflow-hidden">
@@ -60,8 +61,8 @@ export const FooterCtaSection: React.FC<Props> = ({ data, instance }) => {
           </a>
         )}
 
-        {settings.footerNote && (
-          <p className="mt-10 text-xs text-white/40 italic">{settings.footerNote as string}</p>
+        {readBuilderValue(settings.footerNote as string | { value: string } | undefined, '') && (
+          <p className="mt-10 text-xs text-white/40 italic">{readBuilderValue(settings.footerNote as string | { value: string } | undefined, '')}</p>
         )}
       </div>
     </section>
@@ -72,10 +73,10 @@ export const FooterCtaMinimal: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = data.couple.displayName || `${data.couple.partner1Name} & ${data.couple.partner2Name}`;
   const date = formatDate(data.event.weddingDateISO);
-  const rsvpUrl = (settings.rsvpUrl as string) || '#rsvp';
-  const buttonLabel = (settings.buttonLabel as string) || 'Send RSVP';
-  const headline = (settings.headline as string) || `We can't wait to celebrate with you`;
-  const subtext = (settings.subtext as string) || (data.rsvp.deadlineISO ? `Please reply by ${formatDate(data.rsvp.deadlineISO)}` : '');
+  const rsvpUrl = readBuilderValue(settings.rsvpUrl as string | { value: string } | undefined, '#rsvp') || '#rsvp';
+  const buttonLabel = readBuilderValue(settings.buttonLabel as string | { value: string } | undefined, 'Send RSVP');
+  const headline = readBuilderValue(settings.headline as string | { value: string } | undefined, "We can't wait to celebrate with you");
+  const subtext = readBuilderValue(settings.subtext as string | { value: string } | undefined, data.rsvp.deadlineISO ? `Please reply by ${formatDate(data.rsvp.deadlineISO)}` : '');
 
   return (
     <section className="py-20 px-4 bg-surface border-t border-border">
