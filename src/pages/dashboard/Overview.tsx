@@ -17,6 +17,7 @@ import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, 
 import { supabase } from '../../lib/supabase';
 import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
+import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -173,6 +174,7 @@ export const DashboardOverview: React.FC = () => {
       if ('home' in cleanedSiteJson) {
         delete cleanedSiteJson.home;
       }
+      const patchedBuilderProject = mergeGeneratedDraftIntoBuilderProject(cleanedSiteJson, generatedDraft);
 
       const { error: updateError } = await supabase
         .from('wedding_sites')
@@ -185,7 +187,7 @@ export const DashboardOverview: React.FC = () => {
               aiDraft: generatedDraft,
             },
           },
-          site_json: cleanedSiteJson,
+          site_json: patchedBuilderProject,
         })
         .eq('id', stats.siteId);
 
