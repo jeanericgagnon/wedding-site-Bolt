@@ -179,7 +179,9 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     bindings: section.bindings,
   }, weddingData);
 
-  const resolved = !preferLegacyRenderer
+  const shouldUseResolvedRenderer = isPreview || strictVariantMatching;
+
+  const resolved = !preferLegacyRenderer && shouldUseResolvedRenderer
     ? resolveAndParse(
       section.type,
       section.variant,
