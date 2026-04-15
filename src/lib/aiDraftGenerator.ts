@@ -173,11 +173,32 @@ const guardGeneratedDraft = (
     [/please rsvp when you can/i]
   );
 
+  const safeFaqIntro = preferDeterministicField(
+    generated.faqIntro,
+    deterministic.faqIntro,
+    [/answers to common questions/i, /helpful info/i]
+  );
+
+  const safeTravelIntro = preferDeterministicField(
+    generated.travelIntro,
+    deterministic.travelIntro,
+    [/key details to help you plan your trip/i, /information to assist with your trip/i, /useful details to support your trip/i]
+  );
+
+  const safeAccommodationsIntro = preferDeterministicField(
+    generated.accommodationsIntro,
+    deterministic.accommodationsIntro,
+    [/nearby lodging options/i, /recommended nearby lodging options/i, /suggestions and information for lodging/i]
+  );
+
   return {
     ...deterministic,
     ...generated,
     eventHeadline: safeEventHeadline,
     registryIntro: safeRegistryIntro,
+    faqIntro: safeFaqIntro,
+    travelIntro: safeTravelIntro,
+    accommodationsIntro: safeAccommodationsIntro,
     weddingPartyIntro: safeWeddingPartyIntro,
     rsvpCallToAction: safeRsvpCallToAction,
     weddingDataPatch: deterministic.weddingDataPatch,
