@@ -8,7 +8,8 @@ import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
 import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
-import { createOnboardingSessionState } from '../lib/aiOnboarding';
+import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
+import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnboarding';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'weddingDate' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'extraGuestNotes' | 'rsvpDeadline' | 'registryLink';
@@ -141,6 +142,7 @@ export const Onboarding: React.FC = () => {
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
   const fieldStatuses = getWeddingProfileFieldStatus(weddingProfile);
   const onboardingSession = createOnboardingSessionState(weddingProfile, currentQuestion ? [currentQuestion.key] : []);
+  const followUpPlan = planFollowUpQuestions(buildIntakeSnapshot(weddingProfile), Object.keys(followUpAnswers).filter((key) => followUpAnswers[key]?.trim()).length);
 
   const draftMilestones = [
     {
@@ -733,6 +735,20 @@ export const Onboarding: React.FC = () => {
               <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Optional refinement</p>
               <h3 className="mt-2 text-2xl font-bold text-text-primary">A few smart follow-ups before we build</h3>
               <p className="mt-2 text-text-secondary">We already have enough to generate a strong baseline site. These are the highest-leverage details that would make it feel more personal.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
+                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">This round</p>
+                  <p className="text-sm font-medium text-text-primary">Up to {Math.min(3, followUpPlan.remainingBudget)} questions</p>
+                </div>
+                <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
+                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Asked so far</p>
+                  <p className="text-sm font-medium text-text-primary">{followUpPlan.askedCount} of 5</p>
+                </div>
+                <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
+                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Stop rule</p>
+                  <p className="text-sm font-medium text-text-primary">Build once it feels write-ready</p>
+                </div>
+              </div>
             </div>
             <div className="space-y-3">
               {onboardingSession.suggestedFollowUps.slice(0, 3).map((question, index) => (

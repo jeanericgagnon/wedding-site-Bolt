@@ -32,7 +32,7 @@ export type OnboardingSessionState = {
   confidence: number;
 };
 
-const buildIntakeSnapshot = (profile: WeddingProfile) => ({
+export const buildIntakeSnapshot = (profile: WeddingProfile) => ({
   howWeMet: profile.story.summary,
   storyDetail: profile.story.summary,
   city: profile.event.venueLocation,
