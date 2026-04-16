@@ -129,6 +129,15 @@ const SOFT = '#F5F4F2';
 const SOFT_HOVER = '#EEEDEB';
 const BORDER = '#E0DED9';
 const STORAGE_KEY = 'dayoflove:quickstart-shell';
+const PROCESSING_STEPS = [
+  'Aggregating your answers',
+  'Mapping wedding details',
+  'Checking for missing guest-facing info',
+  'Shaping the first draft structure',
+  'Tuning tone and style',
+  'Deciding if we need anything else',
+  'Preparing your next step',
+];
 
 export const QuickStart: React.FC = () => {
   const navigate = useNavigate();
@@ -137,6 +146,8 @@ export const QuickStart: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showFollowUps, setShowFollowUps] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const [processingStep, setProcessingStep] = useState(0);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
@@ -298,6 +309,15 @@ export const QuickStart: React.FC = () => {
     }
   };
 
+  const runProcessingInterstitial = async () => {
+    setIsThinking(true);
+    for (let i = 0; i < PROCESSING_STEPS.length; i += 1) {
+      setProcessingStep(i);
+      await new Promise((resolve) => setTimeout(resolve, i === PROCESSING_STEPS.length - 1 ? 380 : 220));
+    }
+    setIsThinking(false);
+  };
+
   const goNext = async (value: string) => {
     if (!currentQuestion) return;
     if (!value.trim() && !currentQuestion.optional) return;
@@ -310,6 +330,7 @@ export const QuickStart: React.FC = () => {
       }, currentQuestion.type === 'choice' ? 260 : 0);
       return;
     }
+    await runProcessingInterstitial();
     if (followUpPlan.questions.length > 0) {
       setShowFollowUps(true);
       return;
@@ -336,7 +357,27 @@ export const QuickStart: React.FC = () => {
         )}
 
         <AnimatePresence mode="wait">
-          {!showFollowUps ? (
+          {isThinking ? (
+            <motion.div key="thinking" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <h1 className="mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500 }}>
+                One sec while I shape this
+              </h1>
+              <p className="mb-8 text-[14px]" style={{ color: MUTED }}>
+                I’m pulling your answers together and deciding whether I need anything else before I build.
+              </p>
+              <div className="space-y-3">
+                {PROCESSING_STEPS.map((step, index) => {
+                  const active = index <= processingStep;
+                  return (
+                    <div key={step} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ backgroundColor: active ? SOFT : 'transparent', border: active ? `1px solid ${BORDER}` : '1px solid transparent' }}>
+                      <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: active ? WARM : BORDER }} />
+                      <p className="text-[14px]" style={{ color: active ? TEXT : MUTED }}>{step}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          ) : !showFollowUps ? (
             <motion.div key={currentQuestion?.key || 'done'} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
               <h1 className="mb-8" style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500 }}>
                 {currentQuestion?.prompt}
