@@ -7,7 +7,7 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
-import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile } from '../lib/weddingProfile';
+import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile } from '../lib/weddingProfile';
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState, createOnboardingSessionStateFromInitialSetup } from '../lib/aiOnboarding';
 import { createEmptyInitialSetupAnswers, createEmptyOnboardingFormShapeFromInitialSetup, initialSetupAnswersToOnboardingFormShape, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
@@ -208,10 +208,23 @@ export const Onboarding: React.FC = () => {
       if (parsed.weddingProfile && isWeddingProfile(parsed.weddingProfile)) {
         setWeddingProfile(parsed.weddingProfile);
       } else if (parsed.formData) {
-        setWeddingProfile(onboardingFormToProfile({
-          ...createEmptyOnboardingFormShapeFromInitialSetup(),
-          ...parsed.formData,
-        }));
+        const nextAnswers = {
+          ...createEmptyInitialSetupAnswers(),
+          names: parsed.formData.partnerNames || '',
+          whenWhere: parsed.formData.weddingDate && parsed.formData.venueLocation ? `${parsed.formData.weddingDate} — ${parsed.formData.venueLocation}` : parsed.formData.venueLocation || '',
+          venueNameOrTbd: parsed.formData.venueName || '',
+          style: parsed.formData.theme || '',
+          weekendEventsRaw: parsed.formData.weekendEvents || '',
+          ceremonyArrivalTime: parsed.formData.ceremonyTime || '',
+          guestCountBand: (parsed.formData.guestCount || '') as InitialSetupAnswers['guestCountBand'],
+          plusOnePolicy: (parsed.formData.plusOnePolicy || '') as InitialSetupAnswers['plusOnePolicy'],
+          rsvpDeadline: parsed.formData.rsvpDeadline || '',
+          mealChoice: (parsed.formData.mealChoice || '') as InitialSetupAnswers['mealChoice'],
+          registryIntent: (parsed.formData.registryIntent || '') as InitialSetupAnswers['registryIntent'],
+          optionalStory: parsed.formData.story || '',
+        };
+        setInitialSetupAnswers(nextAnswers);
+        setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(nextAnswers));
       }
       const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
       const resumeIndexValue = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_KEY);
@@ -265,9 +278,8 @@ export const Onboarding: React.FC = () => {
       ...formData,
       ...partial,
     };
-    const nextProfile = onboardingFormToProfile(nextForm);
-    setInitialSetupAnswers((prev) => ({
-      ...prev,
+    const nextAnswers = {
+      ...initialSetupAnswers,
       names: nextForm.partnerNames,
       whenWhere: nextForm.weddingDate && nextForm.venueLocation ? `${nextForm.weddingDate} — ${nextForm.venueLocation}` : nextForm.venueLocation,
       venueNameOrTbd: nextForm.venueName,
@@ -280,7 +292,9 @@ export const Onboarding: React.FC = () => {
       mealChoice: (nextForm.mealChoice || '') as InitialSetupAnswers['mealChoice'],
       registryIntent: (nextForm.registryIntent || '') as InitialSetupAnswers['registryIntent'],
       optionalStory: nextForm.story,
-    }));
+    };
+    const nextProfile = applyInitialSetupAnswersToWeddingProfile(nextAnswers);
+    setInitialSetupAnswers(nextAnswers);
     setWeddingProfile(nextProfile);
     return nextProfile;
   }, [formData]);
