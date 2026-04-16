@@ -359,12 +359,16 @@ export const Onboarding: React.FC = () => {
 
     for (const [key, rawValue] of answeredEntries) {
       const value = rawValue.trim();
-      if (key === 'guest-feel') {
-        patches.guestExperience = value;
+      if (key === 'guest-count') {
+        patches.guestCount = value;
+        continue;
+      }
+      if (key === 'plus-one-policy') {
+        patches.plusOnePolicy = value;
         continue;
       }
       if (key === 'registry-posture') {
-        patches.registryLink = append(formData.registryLink, value);
+        patches.registryIntent = value;
         continue;
       }
       if (key === 'meeting-city' || key === 'first-detail') {
