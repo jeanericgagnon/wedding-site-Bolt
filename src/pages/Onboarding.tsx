@@ -12,6 +12,7 @@ import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnboarding';
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
 import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
+import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
@@ -461,11 +462,10 @@ export const Onboarding: React.FC = () => {
     const existingSite = await fetchExistingSite();
     if (!existingSite?.id) return false;
 
-    const itinerarySeeds = buildItinerarySeedFromStructuredEvents(weddingProfile);
-    const rsvpEventSeeds = buildRsvpEventSeedFromStructuredEvents(weddingProfile);
+    const { itinerarySeeds, rsvpEventSeeds, weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers);
     const { error } = await supabase
       .from('wedding_sites')
-      .update({ onboarding_answers: weddingProfile, wedding_data: { meta: { onboardingEventSeeds: itinerarySeeds, rsvpEventSeeds } } })
+      .update({ onboarding_answers: derivedProfile, wedding_data: { meta: { onboardingEventSeeds: itinerarySeeds, rsvpEventSeeds } } })
       .eq('id', existingSite.id)
       .eq('user_id', user.id);
 
@@ -481,9 +481,7 @@ export const Onboarding: React.FC = () => {
   };
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
-    const profile = onboardingFormToProfile(formData);
-    const itinerarySeeds = buildItinerarySeedFromStructuredEvents(profile);
-    const rsvpEventSeeds = buildRsvpEventSeedFromStructuredEvents(profile);
+    const { weddingProfile: profile, itinerarySeeds, rsvpEventSeeds } = buildInitialSetupDerivedOutputs(initialSetupAnswers);
 
     if (!user) return false;
 
