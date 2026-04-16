@@ -110,12 +110,9 @@ export const WEDDING_PROFILE_FIELD_SPECS: WeddingProfileFieldSpec[] = [
   { path: 'event.venueName', label: 'Venue name', requiredForDraft: false, inferredAllowed: true },
   { path: 'design.theme', label: 'Style', requiredForDraft: false, inferredAllowed: true },
   { path: 'story.summary', label: 'Story', requiredForDraft: false, inferredAllowed: true },
-  { path: 'guestExperience.summary', label: 'Guest count', requiredForDraft: false, inferredAllowed: true },
-  { path: 'guestExperience.faqTone', label: 'Plus-one policy', requiredForDraft: false, inferredAllowed: true },
   { path: 'event.weekendEvents', label: 'Weekend events', requiredForDraft: false, inferredAllowed: true },
   { path: 'event.ceremonyTime', label: 'Ceremony arrival time', requiredForDraft: false, inferredAllowed: true },
   { path: 'event.rsvpDeadline', label: 'RSVP deadline', requiredForDraft: false, inferredAllowed: true },
-  { path: 'registry.url', label: 'Registry intent', requiredForDraft: false, inferredAllowed: true },
 ];
 
 const getProfileValueByPath = (profile: WeddingProfile, path: string): string => {
@@ -208,17 +205,17 @@ export const profileToOnboardingForm = (profile: WeddingProfile) => ({
   venueName: profile.event.venueName,
   venueLocation: profile.event.venueLocation,
   story: profile.story.summary,
-  guestExperience: profile.guestExperience.summary || profile.story.welcomeNote,
+  guestExperience: '',
   weekendEvents: profile.event.weekendEvents,
   partnerLabels: `${profile.couple.partnerOneLabel || 'none'}|${profile.couple.partnerTwoLabel || 'none'}`,
   extraGuestNotes: profile.story.welcomeNote || '',
   rsvpDeadline: profile.event.rsvpDeadline,
-  registryLink: profile.registry.url,
+  registryLink: '',
   ceremonyTime: profile.event.ceremonyTime || '',
-  guestCount: profile.guestExperience.summary || '',
-  plusOnePolicy: profile.guestExperience.faqTone || '',
-  mealChoice: profile.guestExperience.travelSupportLevel === 'high' ? 'yes' : 'no',
-  registryIntent: profile.registry.url || '',
+  guestCount: '',
+  plusOnePolicy: '',
+  mealChoice: '',
+  registryIntent: '',
   theme: profile.design.theme,
 });
 
