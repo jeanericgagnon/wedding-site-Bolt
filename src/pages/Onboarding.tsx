@@ -414,7 +414,20 @@ export const Onboarding: React.FC = () => {
       .map((seed) => ({ ...seed, wedding_site_id: siteId }));
 
     if (!missingRows.length) return;
-    const { error: insertError } = await supabase.from('itinerary_events').insert(missingRows);
+    const driftFields = ['display_order', 'description', 'dress_code', 'location_address', 'notes', 'onboarding_seeded', 'rsvp_enabled'];
+    const insertRows = missingRows.map((row) => ({ ...row }));
+    let insertError: { message?: string } | null = null;
+
+    for (let i = 0; i <= driftFields.length; i += 1) {
+      const result = await supabase.from('itinerary_events').insert(insertRows);
+      insertError = result.error;
+      if (!insertError) break;
+
+      const field = driftFields.find((candidate) => insertError?.message?.includes(candidate));
+      if (!field) break;
+      insertRows.forEach((row) => { delete (row as Record<string, unknown>)[field]; });
+    }
+
     if (insertError) throw insertError;
   };
 
