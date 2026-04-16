@@ -2,12 +2,12 @@ import React from 'react';
 import { ImagePlus } from 'lucide-react';
 import { CanonicalPhotoBuckets, PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 
-const BUCKETS: Array<{ key: PhotoBucketKind; title: string; description: string }> = [
-  { key: 'main-couple', title: 'Main photo of you two', description: 'One favorite photo. We use this for the hero by default.' },
-  { key: 'couple-gallery', title: 'A few more of you two', description: 'More couple photos for story and gallery placement.' },
-  { key: 'weekend-vibe', title: 'Weekend / destination photos', description: 'Hotel, beach, town, views, and weekend atmosphere.' },
-  { key: 'friends-family', title: 'Friends, family, candid', description: 'Supportive gallery photos and candid moments.' },
-  { key: 'extras', title: 'Extras', description: 'Anything else. Saved with lower placement priority.' },
+const BUCKETS: Array<{ key: PhotoBucketKind; title: string; description: string; placementHint: string }> = [
+  { key: 'main-couple', title: 'Main photo of you two', description: 'One favorite photo. We use this for the hero by default.', placementHint: 'Usually lands in the hero first.' },
+  { key: 'couple-gallery', title: 'A few more of you two', description: 'More couple photos for story and gallery placement.', placementHint: 'Usually feeds the story section and top gallery slots.' },
+  { key: 'weekend-vibe', title: 'Weekend / destination photos', description: 'Hotel, beach, town, views, and weekend atmosphere.', placementHint: 'Usually feeds travel sections and supporting gallery images.' },
+  { key: 'friends-family', title: 'Friends, family, candid', description: 'Supportive gallery photos and candid moments.', placementHint: 'Usually fills the broader gallery.' },
+  { key: 'extras', title: 'Extras', description: 'Anything else. Saved with lower placement priority.', placementHint: 'Used last when we need more gallery coverage.' },
 ];
 
 type Props = {
@@ -26,6 +26,7 @@ export const PhotoBucketCards: React.FC<Props> = ({ buckets, onUploadClick }) =>
               <div>
                 <h3 className="text-base font-semibold text-text-primary">{bucket.title}</h3>
                 <p className="mt-1 text-sm text-text-secondary">{bucket.description}</p>
+                <p className="mt-2 text-xs text-text-tertiary">{bucket.placementHint}</p>
               </div>
               <span className="rounded-full bg-primary-light px-2.5 py-1 text-xs font-medium text-primary">{items.length}</span>
             </div>
