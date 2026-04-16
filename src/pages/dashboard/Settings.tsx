@@ -702,8 +702,9 @@ export const DashboardSettings: React.FC = () => {
       const rebuiltProject = fromExistingLayoutToBuilderProject(weddingSiteId, newLayout);
       const aiDraft = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.aiDraft as import('../../lib/aiDraftGenerator').DraftGenerationResult | undefined) ?? null);
       const aiContent = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.aiContent as import('../../lib/aiCanonicalContent').AiCanonicalSectionContent | undefined) ?? null);
+      const photoBuckets = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.photoBuckets as import('../../lib/aiPhotoBuckets').CanonicalPhotoBuckets | undefined) ?? null);
       const remappedSiteJson = aiDraft
-        ? mergeGeneratedDraftIntoBuilderProject(rebuiltProject as unknown as Record<string, unknown>, aiDraft, aiContent)
+        ? mergeGeneratedDraftIntoBuilderProject(rebuiltProject as unknown as Record<string, unknown>, aiDraft, aiContent, photoBuckets)
         : rebuiltProject;
 
       const { error: updateError } = await supabase
