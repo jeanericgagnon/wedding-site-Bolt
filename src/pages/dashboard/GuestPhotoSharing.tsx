@@ -11,6 +11,8 @@ import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
+import { mediaRepository } from '../../builder/services/mediaRepository';
+import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 
 type ItineraryEvent = {
   id: string;
@@ -121,6 +123,8 @@ export const GuestPhotoSharing: React.FC = () => {
   const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
   const [slideshowPreviewOpen, setSlideshowPreviewOpen] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
+  const bucketFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingBucket, setPendingBucket] = useState<PhotoBucketKind | null>(null);
   const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
 
   useEffect(() => {
@@ -159,6 +163,62 @@ export const GuestPhotoSharing: React.FC = () => {
       const { data } = await supabase.auth.refreshSession();
       if (!data.session) throw err;
       return await invokeFunctionOrThrow(supabase, fnName, body);
+    }
+  };
+
+  const persistPhotoBuckets = async (nextBuckets: ReturnType<typeof createEmptyPhotoBuckets>) => {
+    if (!siteId) return;
+    const { data, error } = await supabase
+      .from('wedding_sites')
+      .select('wedding_data')
+      .eq('id', siteId)
+      .maybeSingle();
+    if (error) throw error;
+    const weddingData = (data?.wedding_data as Record<string, unknown> | null) ?? {};
+    const nextWeddingData = {
+      ...weddingData,
+      meta: {
+        ...(((weddingData.meta as Record<string, unknown> | undefined) ?? {})),
+        photoBuckets: nextBuckets,
+      },
+    };
+    const { error: updateError } = await supabase.from('wedding_sites').update({ wedding_data: nextWeddingData }).eq('id', siteId);
+    if (updateError) throw updateError;
+  };
+
+  const handleBucketUploadClick = (bucket: PhotoBucketKind) => {
+    setPendingBucket(bucket);
+    bucketFileInputRef.current?.click();
+  };
+
+  const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !pendingBucket || !siteId) return;
+    try {
+      setSubmitting(true);
+      const nextBuckets = { ...photoBuckets };
+      for (const file of Array.from(files)) {
+        const uploaded = await mediaRepository.upload(siteId, file);
+        nextBuckets[pendingBucket] = [
+          ...nextBuckets[pendingBucket],
+          {
+            id: uploaded.path,
+            url: uploaded.url,
+            bucket: pendingBucket,
+            label: file.name,
+            uploadedAt: new Date().toISOString(),
+          },
+        ];
+      }
+      setPhotoBuckets(nextBuckets);
+      await persistPhotoBuckets(nextBuckets);
+      setSuccess('Photo bucket updated.');
+    } catch (err) {
+      setError((err as Error)?.message || 'Failed to upload photo bucket items.');
+    } finally {
+      setSubmitting(false);
+      setPendingBucket(null);
+      if (event.target) event.target.value = '';
     }
   };
 
@@ -795,7 +855,8 @@ export const GuestPhotoSharing: React.FC = () => {
             <h2 className="text-xl font-semibold text-neutral-900">Auto-place couple photos</h2>
             <p className="mt-1 text-sm text-neutral-600">Bucket photos into a few simple groups and we will place them into the right site sections automatically.</p>
           </div>
-          <PhotoBucketCards buckets={photoBuckets} />
+          <PhotoBucketCards buckets={photoBuckets} onUploadClick={handleBucketUploadClick} />
+          <input ref={bucketFileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleBucketFilesSelected} />
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
