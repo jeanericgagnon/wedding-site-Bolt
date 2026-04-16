@@ -351,6 +351,16 @@ export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
 });
 
 
+
+export const buildWeddingScheduleFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || [])
+  .map((event, index) => ({
+    id: event.id || `weekend-event-${index + 1}`,
+    label: event.title,
+    startTimeISO: '',
+    notes: [event.dateLabel, event.locationName, event.notes].filter(Boolean).join(' — ') || undefined,
+  }))
+  .filter((event) => event.label);
+
 export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
   home: {
     hero: {
@@ -376,6 +386,7 @@ export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
       rsvpDeadline: profile.event.rsvpDeadline || '',
     },
   },
+  schedule: buildWeddingScheduleFromStructuredEvents(profile),
 });
 
 
