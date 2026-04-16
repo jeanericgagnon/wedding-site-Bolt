@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
@@ -25,6 +25,7 @@ const ONBOARDING_RESUME_INDEX_KEY = 'dayoflove:onboarding-resume-index';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isDemoMode } = useAuth();
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [conversationIndex, setConversationIndex] = useState(0);
@@ -61,6 +62,7 @@ export const Onboarding: React.FC = () => {
   ];
 
   const currentQuestion = conciergeQuestions[conversationIndex] ?? null;
+  const requestedMode = searchParams.get('mode');
   const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'story'];
   const isCurrentQuestionOptional = currentQuestion ? optionalQuestionKeys.includes(currentQuestion.key) : false;
 
@@ -417,9 +419,17 @@ export const Onboarding: React.FC = () => {
     }
   };
 
-  const handleQuickSetup = () => {
+  const handleQuickSetup = useCallback(() => {
     goToQuestionIndex(getQuestionIndexByKey(onboardingSession.nextQuestionKey));
-  };
+  }, [onboardingSession.nextQuestionKey]);
+
+  useEffect(() => {
+    if (requestedMode !== 'quick' || step !== 'choice') return;
+    handleQuickSetup();
+    const next = new URLSearchParams(searchParams);
+    next.delete('mode');
+    setSearchParams(next, { replace: true });
+  }, [requestedMode, step, handleQuickSetup, searchParams, setSearchParams]);
 
   const handleOneClickStarter = async () => {
     setLoading(true);

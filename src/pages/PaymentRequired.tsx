@@ -97,7 +97,7 @@ export const PaymentRequired: React.FC = () => {
   };
 
   const handleBypassForNow = () => {
-    navigate('/onboarding?bypassPayment=1', { replace: true });
+    navigate('/onboarding?bypassPayment=1&mode=quick', { replace: true });
   };
 
   const handleCheckStatus = async () => {
@@ -107,7 +107,7 @@ export const PaymentRequired: React.FC = () => {
     try {
       const status = await fetchPaymentStatus(user.id);
       if (status === 'active') {
-        navigate('/onboarding?from=payment', { replace: true });
+        navigate('/onboarding?from=payment&mode=quick', { replace: true });
       } else {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
       }
