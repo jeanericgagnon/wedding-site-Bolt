@@ -11,6 +11,7 @@ import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructu
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnboarding';
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
+import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
@@ -144,8 +145,8 @@ export const Onboarding: React.FC = () => {
   const conversationProgress = Math.round(((conversationIndex + 1) / conciergeQuestions.length) * 100);
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
   const fieldStatuses = getWeddingProfileFieldStatus(weddingProfile);
-  const onboardingSession = createOnboardingSessionState(weddingProfile, currentQuestion ? [currentQuestion.key] : []);
-  const followUpPlan = planFollowUpQuestions(buildIntakeSnapshot(weddingProfile), Object.keys(followUpAnswers).filter((key) => followUpAnswers[key]?.trim()).length);
+  const onboardingSession = createOnboardingSessionState(applyInitialSetupAnswersToWeddingProfile(initialSetupAnswers), currentQuestion ? [currentQuestion.key] : []);
+  const followUpPlan = planFollowUpQuestions(buildInitialSetupSnapshot(initialSetupAnswers), Object.keys(followUpAnswers).filter((key) => followUpAnswers[key]?.trim()).length);
 
   const draftMilestones = [
     {
