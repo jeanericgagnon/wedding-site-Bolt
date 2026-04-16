@@ -143,6 +143,7 @@ export const QuickStart: React.FC = () => {
         weddingDate: nextAnswers.date || '',
         location: nextAnswers.location || '',
       });
+      delete (updateData as Record<string, unknown>).site_slug;
 
       const { data: targetSite, error: targetSiteError } = await supabase
         .from('wedding_sites')
