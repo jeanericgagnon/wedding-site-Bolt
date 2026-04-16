@@ -144,7 +144,18 @@ export const QuickStart: React.FC = () => {
         location: nextAnswers.location || '',
       });
 
-      const { error: updateError } = await supabase.from('wedding_sites').update(updateData).eq('user_id', user.id);
+      const { data: targetSite, error: targetSiteError } = await supabase
+        .from('wedding_sites')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (targetSiteError) throw targetSiteError;
+      if (!targetSite?.id) throw new Error('No wedding site found for this account');
+
+      const { error: updateError } = await supabase.from('wedding_sites').update(updateData).eq('id', targetSite.id);
       if (updateError) throw updateError;
 
       navigate('/dashboard?bypassPayment=1', {
