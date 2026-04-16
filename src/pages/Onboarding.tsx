@@ -318,6 +318,37 @@ export const Onboarding: React.FC = () => {
     hydrateProfile({ [e.target.name]: e.target.value });
   };
 
+  const applyFollowUpAnswers = () => {
+    const answeredEntries = Object.entries(followUpAnswers).filter(([, value]) => value.trim());
+    if (answeredEntries.length === 0) return;
+
+    const append = (current: string, next: string) => [current, next].filter(Boolean).join(current && next ? '\n\n' : '');
+    const patches: Record<string, string> = {};
+
+    for (const [key, rawValue] of answeredEntries) {
+      const value = rawValue.trim();
+      if (key === 'guest-feel') {
+        patches.guestExperience = value;
+        continue;
+      }
+      if (key === 'registry-posture') {
+        patches.registryLink = append(formData.registryLink, value);
+        continue;
+      }
+      if (key === 'meeting-city' || key === 'first-detail') {
+        patches.story = append(patches.story ?? formData.story, value);
+        continue;
+      }
+      if (key === 'location-why') {
+        patches.extraGuestNotes = append((patches.extraGuestNotes ?? formData.extraGuestNotes) || '', `Why this location matters: ${value}`);
+        continue;
+      }
+      patches.extraGuestNotes = append((patches.extraGuestNotes ?? formData.extraGuestNotes) || '', `${key}: ${value}`);
+    }
+
+    if (Object.keys(patches).length > 0) hydrateProfile(patches);
+  };
+
   const handleQuickSetup = () => {
     goToQuestionIndex(getQuestionIndexByKey(onboardingSession.nextQuestionKey));
   };
@@ -456,16 +487,7 @@ export const Onboarding: React.FC = () => {
       return;
     }
 
-    const mergedExtraNotes = Object.entries(followUpAnswers)
-      .filter(([, value]) => value.trim())
-      .map(([key, value]) => `${key}: ${value.trim()}`)
-      .join('\n');
-
-    if (mergedExtraNotes) {
-      hydrateProfile({
-        extraGuestNotes: [formData.extraGuestNotes, mergedExtraNotes].filter(Boolean).join('\n\n'),
-      });
-    }
+    applyFollowUpAnswers();
 
     setLoading(true);
 
