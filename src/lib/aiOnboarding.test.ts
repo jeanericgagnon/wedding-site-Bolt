@@ -63,12 +63,16 @@ it('requires confirmation for conflicting dates', async () => {
 });
 
 
-it('captures ceremony and reception times progressively', async () => {
+it('captures guest experience from tone-oriented input', async () => {
   let session = createOnboardingSessionState(createEmptyWeddingProfile());
-  session = await applyOnboardingInput(session, '4:00');
-  expect(session.profile.event.ceremonyTime).toBe('4:00');
-  session = await applyOnboardingInput(session, '7:30');
-  expect(session.profile.event.receptionTime).toBe('7:30');
+  session = await applyOnboardingInput(session, 'Relaxed, welcomed, and genuinely taken care of');
+  expect(session.profile.guestExperience.summary).toBe('Relaxed, welcomed, and genuinely taken care of');
+});
+
+it('captures weekend events from itinerary-like input', async () => {
+  let session = createOnboardingSessionState(createEmptyWeddingProfile());
+  session = await applyOnboardingInput(session, 'Friday welcome dinner, Saturday wedding, Sunday brunch');
+  expect(session.profile.event.weekendEvents).toBe('Friday welcome dinner, Saturday wedding, Sunday brunch');
 });
 
 it('captures venue names from venue-like phrases', async () => {

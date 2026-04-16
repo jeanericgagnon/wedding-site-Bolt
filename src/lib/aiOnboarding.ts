@@ -37,10 +37,10 @@ const buildIntakeSnapshot = (profile: WeddingProfile) => ({
   storyDetail: profile.story.summary,
   city: profile.event.venueLocation,
   venue: profile.event.venueName,
-  guestFeel: profile.story.welcomeNote,
+  guestFeel: profile.guestExperience.summary || profile.story.welcomeNote,
   registryPosture: profile.registry.status,
   rsvpDeadline: profile.event.rsvpDeadline,
-  travelNotes: profile.guestExperience.travelSupportLevel,
+  travelNotes: profile.event.weekendEvents || profile.guestExperience.travelSupportLevel,
 });
 
 const normalize = (value: string) => value.trim().toLowerCase();
@@ -52,8 +52,8 @@ const NEED_TO_QUESTION_KEY: Record<string, string> = {
   'venue name': 'venueName',
   'theme': 'theme',
   'story summary': 'story',
-  'ceremony time': 'ceremonyTime',
-  'reception time': 'receptionTime',
+  'guest experience': 'guestExperience',
+  'weekend events': 'weekendEvents',
   'rsvp deadline': 'rsvpDeadline',
   'registry link': 'registryLink',
 };
@@ -65,8 +65,8 @@ const QUESTION_KEY_BY_PATH: Record<string, string> = {
   'event.venueName': 'venueName',
   'design.theme': 'theme',
   'story.summary': 'story',
-  'event.ceremonyTime': 'ceremonyTime',
-  'event.receptionTime': 'receptionTime',
+  'guestExperience.summary': 'guestExperience',
+  'event.weekendEvents': 'weekendEvents',
   'event.rsvpDeadline': 'rsvpDeadline',
   'registry.url': 'registryLink',
 };
@@ -78,8 +78,8 @@ const PROMPT_BY_QUESTION_KEY: Record<string, string> = {
   venueName: 'Do you already know the venue name?',
   theme: 'What vibe should the site lean toward?',
   story: 'Anything you want us to know about your story?',
-  ceremonyTime: 'What time does the ceremony start?',
-  receptionTime: 'What time does the reception start?',
+  guestExperience: 'How do you want guests to feel over the weekend?',
+  weekendEvents: 'What else is happening around the wedding weekend?',
   rsvpDeadline: 'When should guests RSVP by?',
   registryLink: 'Do you already have a registry link?',
 };
@@ -95,13 +95,13 @@ const onboardingExtractionSchema = z.object({
       date: z.string().optional(),
       venueLocation: z.string().optional(),
       venueName: z.string().optional(),
-      ceremonyTime: z.string().optional(),
-      receptionTime: z.string().optional(),
+      weekendEvents: z.string().optional(),
       rsvpDeadline: z.string().optional(),
     }).partial().optional(),
     story: z.object({ summary: z.string().optional() }).partial().optional(),
     registry: z.object({ url: z.string().optional(), status: z.string().optional() }).partial().optional(),
     design: z.object({ theme: z.string().optional() }).partial().optional(),
+    guestExperience: z.object({ summary: z.string().optional(), faqTone: z.string().optional() }).partial().optional(),
   }).partial(),
   inferred: z.array(z.string()).default([]),
   notes: z.array(z.string()).default([]),
@@ -125,6 +125,14 @@ const getSuggestedPrompt = (questionKey: string | null, profile?: WeddingProfile
     case 'story':
       return profile.couple.displayNames
         ? `What should we say about ${profile.couple.displayNames} on the site?`
+        : base;
+    case 'guestExperience':
+      return profile.event.venueLocation
+        ? `How do you want guests to feel when they arrive in ${profile.event.venueLocation}?`
+        : base;
+    case 'weekendEvents':
+      return profile.event.date
+        ? `What else is happening around ${profile.event.date} besides the wedding itself?`
         : base;
     case 'rsvpDeadline':
       return profile.event.date
@@ -208,24 +216,29 @@ const deterministicExtractWeddingProfileUpdates = (
     confidence = Math.max(confidence, 0.78);
   }
 
-  if (/^\d{1,2}:\d{2}$/.test(trimmed)) {
-    if (!profile.event.ceremonyTime) {
-      updates.event = { ...profile.event, ceremonyTime: trimmed };
-      notes.push('Captured ceremony time');
-    } else if (!profile.event.receptionTime) {
-      updates.event = { ...profile.event, receptionTime: trimmed };
-      notes.push('Captured reception time');
-    }
-    confidence = Math.max(confidence, 0.82);
-  }
-
   if (/garden|coastal|desert|classic|editorial/i.test(trimmed)) {
     updates.design = { ...profile.design, theme: trimmed.toLowerCase() };
     inferred.push('design.theme');
     confidence = Math.max(confidence, 0.62);
   }
 
-  if (!updates.story && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed)) {
+  if (!profile.guestExperience.summary && /relaxed|welcomed|welcome|celebratory|intimate|connected|easy|joyful|fun|warm/i.test(trimmed)) {
+    updates.guestExperience = {
+      ...profile.guestExperience,
+      summary: trimmed,
+      faqTone: trimmed,
+    };
+    notes.push('Captured guest experience');
+    confidence = Math.max(confidence, 0.72);
+  }
+
+  if (!profile.event.weekendEvents && /welcome|rehearsal|brunch|dinner|party|pool|pickleball|boat|after[- ]party/i.test(trimmed)) {
+    updates.event = { ...(updates.event ?? profile.event), weekendEvents: trimmed };
+    notes.push('Captured weekend events');
+    confidence = Math.max(confidence, 0.72);
+  }
+
+  if (!updates.story && !updates.guestExperience && !(updates.event && 'weekendEvents' in updates.event) && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed)) {
     updates.story = { ...profile.story, summary: trimmed };
     notes.push('Captured story summary');
     confidence = Math.max(confidence, 0.58);

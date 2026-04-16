@@ -11,7 +11,7 @@ import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingP
 import { createOnboardingSessionState } from '../lib/aiOnboarding';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
-type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueName' | 'venueLocation' | 'story' | 'ceremonyTime' | 'receptionTime' | 'rsvpDeadline' | 'registryLink' | 'theme';
+type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'rsvpDeadline' | 'registryLink';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
@@ -35,20 +35,20 @@ export const Onboarding: React.FC = () => {
     type?: 'text' | 'date' | 'time' | 'textarea';
     placeholder?: string;
   }> = [
-    { key: 'partnerNames', label: 'Names', prompt: 'What names should we put on the site?', helper: 'Use the names exactly how you want guests to see them.', placeholder: 'Alex & Jordan' },
-    { key: 'weddingDate', label: 'Date', prompt: 'What date are you getting married?', type: 'date' },
-    { key: 'venueLocation', label: 'Location', prompt: 'Where is the wedding happening?', helper: 'City and state is enough to start.', placeholder: 'San Diego, CA' },
-    { key: 'venueName', label: 'Venue', prompt: 'Do you already know the venue name?', helper: 'If not, you can come back later.', placeholder: 'The Garden Estate' },
-    { key: 'theme', label: 'Vibe', prompt: 'What vibe should the site lean toward?', helper: 'For now, use one clear direction.', placeholder: 'Garden Classic' },
-    { key: 'story', label: 'Story', prompt: 'Anything you want us to know about your story?', type: 'textarea', helper: 'A few lines is enough for a strong first draft.', placeholder: 'We met in college and...' },
-    { key: 'ceremonyTime', label: 'Ceremony', prompt: 'What time does the ceremony start?', type: 'time' },
-    { key: 'receptionTime', label: 'Reception', prompt: 'What time does the reception start?', type: 'time' },
-    { key: 'rsvpDeadline', label: 'RSVP deadline', prompt: 'When should guests RSVP by?', type: 'date' },
-    { key: 'registryLink', label: 'Registry', prompt: 'Do you already have a registry link?', helper: 'Optional for now.', placeholder: 'https://...' },
+    { key: 'partnerNames', label: 'Who’s getting married?', prompt: 'Who’s getting married?', helper: 'Use the names exactly how you want guests to see them on the site.', placeholder: 'Alex & Jordan' },
+    { key: 'weddingDate', label: 'When is it?', prompt: 'When are you getting married?', helper: 'Just the date is perfect for now.', type: 'date' },
+    { key: 'venueLocation', label: 'Where is it?', prompt: 'When and where are you getting married?', helper: 'City or region is enough to start if you do not want to overthink it yet.', placeholder: 'Sayulita, Mexico' },
+    { key: 'venueName', label: 'Venue + feel', prompt: 'What’s the venue, and what’s the overall setting?', helper: 'Boutique hotel, garden estate, tropical beach, backyard, city rooftop, whatever fits.', placeholder: 'Amor Boutique Hotel, tropical and intimate' },
+    { key: 'theme', label: 'Site vibe', prompt: 'What overall vibe should the site lean into?', helper: 'A few words is enough. Editorial, playful, coastal, timeless, intimate, modern, relaxed.', placeholder: 'Editorial, playful, coastal' },
+    { key: 'story', label: 'How you met', prompt: 'How did you two meet?', type: 'textarea', helper: 'And what is one detail that makes the story actually yours?', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...' },
+    { key: 'guestExperience', label: 'Guest feel', prompt: 'What do you want guests to feel over the weekend?', helper: 'Relaxed, welcomed, excited, taken care of, connected — whatever matters most.', placeholder: 'Relaxed, welcomed, excited' },
+    { key: 'weekendEvents', label: 'Weekend plans', prompt: 'What’s happening besides the wedding itself?', type: 'textarea', helper: 'Welcome dinner, rehearsal dinner, pool day, pickleball, brunch, anything like that.', placeholder: 'Friday pickleball and welcome dinner, Saturday rehearsal dinner, Sunday wedding' },
+    { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This helps us make the RSVP ask feel clear and natural.', type: 'date' },
+    { key: 'registryLink', label: 'Registry', prompt: 'Anything we should know about gifts or the registry?', helper: 'If you want it to feel grateful, casual, no-pressure, or skip it entirely, that is good to know.', placeholder: 'https://... or “grateful, no pressure”' },
   ];
 
   const currentQuestion = conciergeQuestions[conversationIndex] ?? null;
-  const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'story', 'registryLink'];
+  const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'registryLink'];
   const isCurrentQuestionOptional = currentQuestion ? optionalQuestionKeys.includes(currentQuestion.key) : false;
 
   const getStepForIndex = (index: number): OnboardingStep => {
@@ -69,10 +69,10 @@ export const Onboarding: React.FC = () => {
       !formData.weddingDate,
       !formData.venueLocation.trim(),
       !formData.venueName.trim(),
-      !formData.theme,
+      !formData.theme.trim(),
       !formData.story.trim(),
-      !formData.ceremonyTime,
-      !formData.receptionTime,
+      !formData.guestExperience.trim(),
+      !formData.weekendEvents.trim(),
       !formData.rsvpDeadline,
       !formData.registryLink.trim(),
     ];
@@ -146,14 +146,14 @@ export const Onboarding: React.FC = () => {
     {
       id: 'look-and-feel',
       title: 'Look and feel forming',
-      description: 'Theme and venue details are shaping the draft direction.',
-      done: Boolean(formData.theme && (formData.venueName.trim() || formData.venueLocation.trim())),
+      description: 'Theme, story, and venue details are shaping the draft direction.',
+      done: Boolean(formData.theme.trim() && formData.story.trim() && (formData.venueName.trim() || formData.venueLocation.trim())),
     },
     {
       id: 'guest-ready',
       title: 'Guest-ready details',
-      description: 'Schedule and RSVP details are enough to make the draft useful.',
-      done: Boolean(formData.ceremonyTime && formData.receptionTime && formData.rsvpDeadline),
+      description: 'Guest experience, weekend plans, and RSVP details are enough to make the draft useful.',
+      done: Boolean(formData.guestExperience.trim() && formData.weekendEvents.trim() && formData.rsvpDeadline),
     },
   ];
 
@@ -297,8 +297,8 @@ export const Onboarding: React.FC = () => {
       venueLocation: prevFormData.venueLocation || demoWeddingSite.venue_location || '',
       story: prevFormData.story || 'We met on a rainy Tuesday and never stopped choosing each other.',
       theme: prevFormData.theme || getThemeHint(),
-      ceremonyTime: prevFormData.ceremonyTime || '16:00',
-      receptionTime: prevFormData.receptionTime || '18:00',
+      guestExperience: prevFormData.guestExperience || 'Relaxed, welcomed, and genuinely taken care of.',
+      weekendEvents: prevFormData.weekendEvents || 'Friday welcome drinks, Saturday wedding, Sunday brunch.',
       rsvpDeadline: prevFormData.rsvpDeadline || '2026-05-25',
       registryLink: prevFormData.registryLink || 'https://www.zola.com/registry/alex-and-jordan',
     });
@@ -617,19 +617,19 @@ export const Onboarding: React.FC = () => {
           ? `${formData.venueName.trim()} will be called out in the event details and story sections.`
           : 'Venue name is optional right now. We can still build a solid draft without it.';
       case 'theme':
-        return `The draft styling will lean ${formData.theme || 'garden'} so it feels intentional from the start. Right now the system would nudge toward ${getThemeHint()}.`;
+        return `The draft styling will lean ${formData.theme || 'garden'} so the whole site feels intentional from the start. Right now the system would nudge toward ${getThemeHint()}.`;
       case 'story':
         return formData.story.trim()
           ? 'Nice — we can turn that into warmer story copy instead of generic filler.'
           : `You can skip this for now, or use a quick starting angle like: ${getStoryPrompt()}`;
-      case 'ceremonyTime':
-        return formData.ceremonyTime
-          ? `Ceremony timing will show as ${formData.ceremonyTime} in the schedule draft.`
-          : 'Ceremony time helps us create a useful event schedule.';
-      case 'receptionTime':
-        return formData.receptionTime
-          ? `Reception timing will show as ${formData.receptionTime} in the schedule draft.`
-          : 'Reception time rounds out the guest-facing schedule.';
+      case 'guestExperience':
+        return formData.guestExperience.trim()
+          ? `We’ll use "${formData.guestExperience.trim()}" to shape the tone of the hero, FAQ, and travel copy.`
+          : 'This helps the first draft feel hospitable, not generic.';
+      case 'weekendEvents':
+        return formData.weekendEvents.trim()
+          ? 'Nice — we can frame the weekend as an experience, not just a single ceremony.'
+          : 'A quick outline helps us draft a more useful schedule and guest flow.';
       case 'rsvpDeadline':
         return formData.rsvpDeadline
           ? `Guests will see ${formData.rsvpDeadline} as the RSVP target.`
@@ -861,14 +861,14 @@ export const Onboarding: React.FC = () => {
               <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
                 <p className="font-medium text-text-primary">A design direction is already applied</p>
-                <p className="text-sm text-text-secondary">{formData.theme} styling is already carrying the look</p>
+                <p className="text-sm text-text-secondary">{formData.theme || getThemeHint()} styling is already carrying the look</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
-                <p className="font-medium text-text-primary">You can refine before sharing</p>
-                <p className="text-sm text-text-secondary">Edit any section, add more detail, or publish when it feels right</p>
+                <p className="font-medium text-text-primary">The guest-facing tone is already anchored</p>
+                <p className="text-sm text-text-secondary">{formData.guestExperience || 'Warm, welcoming'} and {formData.weekendEvents ? 'your weekend plans are already informing the draft.' : 'your weekend flow can be layered in next.'}</p>
               </div>
             </div>
           </div>
