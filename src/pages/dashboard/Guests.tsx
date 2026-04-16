@@ -604,7 +604,7 @@ export const DashboardGuests: React.FC = () => {
       }
 
       try {
-        const [eventsRes, invitesRes] = await Promise.all([
+        const [eventsRes, invitesRes, siteRes] = await Promise.all([
           supabase
             .from('itinerary_events')
             .select('id, event_name, event_date, start_time, location_name')
@@ -613,11 +613,24 @@ export const DashboardGuests: React.FC = () => {
           supabase
             .from('event_invitations')
             .select('event_id, guest_id'),
+          supabase
+            .from('wedding_sites')
+            .select('wedding_data')
+            .eq('id', weddingSiteId)
+            .maybeSingle(),
         ]);
 
         if (cancelled) return;
 
-        setItineraryFilterEvents((eventsRes.data ?? []) as ItineraryEvent[]);
+        const seededEvents = (((siteRes.data?.wedding_data as { meta?: { rsvpEventSeeds?: Array<{ id: string; label: string; dateLabel?: string; locationName?: string | null }> } } | null)?.meta?.rsvpEventSeeds) ?? []).map((seed, index) => ({
+          id: seed.id || `seed-${index + 1}`,
+          event_name: seed.label || 'Event',
+          event_date: '',
+          start_time: '',
+          location_name: seed.locationName || '',
+        }));
+
+        setItineraryFilterEvents(((eventsRes.data ?? []) as ItineraryEvent[]).length > 0 ? ((eventsRes.data ?? []) as ItineraryEvent[]) : seededEvents as ItineraryEvent[]);
 
         const next = new Map<string, Set<string>>();
         ((invitesRes.data ?? []) as Array<{ event_id: string; guest_id: string }>).forEach((row) => {
