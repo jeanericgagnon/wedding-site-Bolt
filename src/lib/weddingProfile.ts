@@ -353,6 +353,16 @@ export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
 
 
 
+
+export const buildRsvpEventSeedFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || []).map((event, index) => ({
+  id: event.id || `weekend-event-${index + 1}`,
+  label: event.title,
+  dateLabel: event.dateLabel || '',
+  locationName: event.locationName || null,
+  locationAddress: event.locationAddress || null,
+  rsvpEnabled: event.rsvpEnabled !== false,
+}));
+
 export const buildItinerarySeedFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || []).map((event, index) => ({
   event_name: event.title,
   event_date: profile.event.date || null,
