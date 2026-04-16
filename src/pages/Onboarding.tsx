@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
@@ -25,6 +25,7 @@ const ONBOARDING_RESUME_INDEX_KEY = 'dayoflove:onboarding-resume-index';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isDemoMode } = useAuth();
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [conversationIndex, setConversationIndex] = useState(0);
@@ -36,6 +37,7 @@ export const Onboarding: React.FC = () => {
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
   const [initialSetupFollowUps, setInitialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
+  const forceShowChooser = searchParams.get('showChooser') === '1';
 
   const conciergeQuestions: Array<{
     key: ConciergeQuestion;
@@ -228,7 +230,12 @@ export const Onboarding: React.FC = () => {
       }
       const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
       const resumeIndexValue = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_KEY);
-      if (resumeHint === 'question' && resumeIndexValue) {
+      if (forceShowChooser) {
+        setConversationIndex(0);
+        setStep('choice');
+        window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
+        window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
+      } else if (resumeHint === 'question' && resumeIndexValue) {
         const resumeIndex = Number(resumeIndexValue);
         if (!Number.isNaN(resumeIndex)) {
           setConversationIndex(resumeIndex);
@@ -252,7 +259,14 @@ export const Onboarding: React.FC = () => {
     } finally {
       setHasHydratedDraft(true);
     }
-  }, [isDemoMode]);
+  }, [forceShowChooser, isDemoMode]);
+
+  useEffect(() => {
+    if (!forceShowChooser) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('showChooser');
+    setSearchParams(next, { replace: true });
+  }, [forceShowChooser, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || isDemoMode || step === 'complete' || !hasHydratedDraft) return;
