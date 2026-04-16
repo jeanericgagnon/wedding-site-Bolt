@@ -536,37 +536,41 @@ export const Onboarding: React.FC = () => {
     applyFollowUpAnswers();
 
     setLoading(true);
-
-    const existingSite = await fetchExistingSite();
-    if (existingSite?.id) {
-      const updated = await saveWeddingProfileToExistingSite();
-      setLoading(false);
-      if (updated) {
-        setStep('complete');
-        return;
+    try {
+      const existingSite = await fetchExistingSite();
+      if (existingSite?.id) {
+        const updated = await saveWeddingProfileToExistingSite();
+        if (updated) {
+          setStep('complete');
+          return;
+        }
       }
-    }
 
-    const names = formData.partnerNames.split('&').map(n => n.trim());
-    const firstName = names[0] || '';
-    const secondName = names[1] || names[0] || '';
+      const names = formData.partnerNames.split('&').map(n => n.trim());
+      const firstName = names[0] || '';
+      const secondName = names[1] || names[0] || '';
 
-    const ok = await createWeddingSite({
-      couple_name_1: firstName,
-      couple_name_2: secondName,
-      couple_first_name: firstName,
-      couple_second_name: secondName,
-      wedding_date: formData.weddingDate || null,
-      venue_name: formData.venueName || null,
-      venue_location: formData.venueLocation || null,
-      site_url: user?.email?.split('@')[0] || 'my-wedding',
-      rsvp_deadline: formData.rsvpDeadline || null,
-    });
+      const ok = await createWeddingSite({
+        couple_name_1: firstName,
+        couple_name_2: secondName,
+        couple_first_name: firstName,
+        couple_second_name: secondName,
+        wedding_date: formData.weddingDate || null,
+        venue_name: formData.venueName || null,
+        venue_location: formData.venueLocation || null,
+        site_url: user?.email?.split('@')[0] || 'my-wedding',
+        rsvp_deadline: formData.rsvpDeadline || null,
+      });
 
-    setLoading(false);
-    if (ok) {
-      clearSavedOnboardingDraft();
-      setStep('complete');
+      if (ok) {
+        clearSavedOnboardingDraft();
+        setStep('complete');
+      }
+    } catch (error) {
+      console.error('ONBOARDING_NEXT_STEP_FAILED', error);
+      alert('Something went wrong while finishing setup. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
