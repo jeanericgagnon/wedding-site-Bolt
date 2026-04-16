@@ -354,6 +354,18 @@ export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
 
 
 
+const dayToOffset: Record<string, number> = { friday: -2, saturday: -1, sunday: 0, monday: 1, thursday: -3 };
+
+const getSeedEventDate = (weddingDate: string, dateLabel: string) => {
+  if (!weddingDate) return null;
+  const match = dateLabel.trim().toLowerCase();
+  const offset = dayToOffset[match];
+  if (offset === undefined) return weddingDate;
+  const date = new Date(`${weddingDate}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+};
+
 export const buildRsvpEventSeedFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || []).map((event, index) => ({
   id: event.id || `weekend-event-${index + 1}`,
   label: event.title,
@@ -365,7 +377,7 @@ export const buildRsvpEventSeedFromStructuredEvents = (profile: WeddingProfile) 
 
 export const buildItinerarySeedFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || []).map((event, index) => ({
   event_name: event.title,
-  event_date: profile.event.date || null,
+  event_date: getSeedEventDate(profile.event.date, event.dateLabel) || profile.event.date || null,
   start_time: null,
   end_time: null,
   location_name: event.locationName || null,
