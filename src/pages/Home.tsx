@@ -12,6 +12,7 @@ import {
   Hotel,
   ChevronDown,
   ArrowRight,
+  Wallet,
 } from 'lucide-react';
 import { GridItem, HeroReveal, Reveal, SlideReveal, StaggerGrid } from '../components/marketing/Reveal';
 
@@ -87,7 +88,7 @@ export const Home: React.FC = () => {
   ] as const;
 
   const handleSignUp = async () => {
-    navigate('/templates');
+    navigate('/signup');
   };
 
   const handleDemoLogin = async () => {

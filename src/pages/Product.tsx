@@ -56,7 +56,7 @@ export const Product: React.FC = () => {
   const [messageState, setMessageState] = useState<'draft' | 'sent'>('draft');
   const [seated, setSeated] = useState(42);
 
-  const handleSignUp = () => navigate('/templates');
+  const handleSignUp = () => navigate('/signup');
 
   const handleDemoLogin = async () => {
     if (demoLoading) return;
