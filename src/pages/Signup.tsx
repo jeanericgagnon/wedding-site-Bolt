@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams, createSearchParams } from 'react-ro
 import { Chrome, Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
+import { isPaymentGateEnabled } from '../lib/paymentGate';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -54,6 +55,7 @@ export const Signup: React.FC = () => {
     confirmPassword: '',
   });
 
+  const paymentGateEnabled = isPaymentGateEnabled();
   const inviteToken = searchParams.get('inviteToken');
   const inviteEmail = searchParams.get('inviteEmail');
   const inviteRole = searchParams.get('inviteRole');
@@ -82,7 +84,7 @@ export const Signup: React.FC = () => {
     try {
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
-        : '/payment-required?oauth=google';
+        : (paymentGateEnabled ? '/payment-required?oauth=google' : '/onboarding?oauth=google');
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -151,7 +153,7 @@ export const Signup: React.FC = () => {
       }
 
       await ensureMinimalWeddingSite(userId, formData.email);
-      navigate('/payment-required?signup=1');
+      navigate(paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1');
     } catch (err: unknown) {
       setError((err as Error).message || 'Couldn’t create your account right now. Please try again.');
     } finally {
@@ -169,7 +171,7 @@ export const Signup: React.FC = () => {
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Create your account</h1>
           <p className="text-text-secondary">
-            {hasInviteContext ? 'Create a collaborator account, then jump straight back into this invite.' : 'Step 1: account setup. Step 2: site details after payment.'}
+            {hasInviteContext ? 'Create a collaborator account, then jump straight back into this invite.' : (paymentGateEnabled ? 'Step 1: account setup. Step 2: site details after payment.' : 'Create your account, then go straight into setup.')}
           </p>
         </div>
 
