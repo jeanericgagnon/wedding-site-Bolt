@@ -8,6 +8,39 @@ export type WeddingProfileField<T> = {
   confirmedAt?: string;
 };
 
+export type StructuredWeekendEvent = {
+  id: string;
+  title: string;
+  dateLabel: string;
+  locationName?: string;
+  locationAddress?: string;
+  timeLabel?: string;
+  notes?: string;
+  rsvpEnabled?: boolean;
+};
+
+const slugifyEventId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'event';
+
+export const parseWeekendEvents = (input: string): StructuredWeekendEvent[] => input
+  .split(/\n|,(?=\s*(?:friday|saturday|sunday|thursday|monday|tuesday|wednesday))/i)
+  .map((part) => part.trim())
+  .filter(Boolean)
+  .map((part, index) => {
+    const normalized = part.replace(/^and\s+/i, '').trim();
+    const dayMatch = normalized.match(/^(friday|saturday|sunday|thursday|monday|tuesday|wednesday)\b/i);
+    const dateLabel = dayMatch ? `${dayMatch[1][0].toUpperCase()}${dayMatch[1].slice(1).toLowerCase()}` : '';
+    const title = normalized
+      .replace(/^(friday|saturday|sunday|thursday|monday|tuesday|wednesday)\b[:,\-\s]*/i, '')
+      .replace(/^(then|and)\s+/i, '')
+      .trim();
+    return {
+      id: `${slugifyEventId(title)}-${index + 1}`,
+      title: title || normalized,
+      dateLabel,
+      rsvpEnabled: true,
+    };
+  });
+
 export type WeddingProfile = {
   couple: {
     displayNames: string;
@@ -23,6 +56,7 @@ export type WeddingProfile = {
     venueName: string;
     venueLocation: string;
     weekendEvents: string;
+    structuredWeekendEvents: StructuredWeekendEvent[];
     ceremonyTime: string;
     receptionTime: string;
     rsvpDeadline: string;
@@ -113,6 +147,7 @@ export const createEmptyWeddingProfile = (): WeddingProfile => ({
     venueName: '',
     venueLocation: '',
     weekendEvents: '',
+    structuredWeekendEvents: [],
     ceremonyTime: '',
     receptionTime: '',
     rsvpDeadline: '',
@@ -218,6 +253,7 @@ export const onboardingFormToProfile = (formData: OnboardingFormShape): WeddingP
       venueName: formData.venueName,
       venueLocation: formData.venueLocation,
       weekendEvents: formData.weekendEvents,
+      structuredWeekendEvents: parseWeekendEvents(formData.weekendEvents),
       ceremonyTime: '',
       receptionTime: '',
       rsvpDeadline: formData.rsvpDeadline,
@@ -286,7 +322,7 @@ export const getWeddingProfileSummary = (profile: WeddingProfile): WeddingProfil
     profile.design.theme ? { id: 'theme', label: 'Theme', value: profile.design.theme, questionKey: 'theme' } : null,
     profile.story.summary ? { id: 'story', label: 'Story', value: profile.story.summary, questionKey: 'story' } : null,
     profile.guestExperience.summary ? { id: 'guest-experience', label: 'Guest experience', value: profile.guestExperience.summary, questionKey: 'guestExperience' } : null,
-    profile.event.weekendEvents ? { id: 'weekend-events', label: 'Weekend events', value: profile.event.weekendEvents, questionKey: 'weekendEvents' } : null,
+    profile.event.structuredWeekendEvents.length ? { id: 'weekend-events', label: 'Weekend events', value: profile.event.structuredWeekendEvents.map((event) => `${event.dateLabel ? `${event.dateLabel}: ` : ''}${event.title}${event.locationName ? ` @ ${event.locationName}` : ''}`).join('; '), questionKey: 'weekendEvents' } : profile.event.weekendEvents ? { id: 'weekend-events', label: 'Weekend events', value: profile.event.weekendEvents, questionKey: 'weekendEvents' } : null,
     profile.event.rsvpDeadline ? { id: 'rsvp', label: 'RSVP by', value: profile.event.rsvpDeadline, questionKey: 'rsvpDeadline' } : null,
   ].filter(Boolean) as WeddingProfileSummaryItem[];
 };
@@ -336,6 +372,7 @@ export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
       receptionTime: '',
       guestExperience: profile.guestExperience.summary || '',
       weekendEvents: profile.event.weekendEvents || '',
+      structuredWeekendEvents: profile.event.structuredWeekendEvents || [],
       rsvpDeadline: profile.event.rsvpDeadline || '',
     },
   },
