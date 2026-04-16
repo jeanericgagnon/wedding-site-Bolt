@@ -5,7 +5,7 @@ import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
-import { isPaymentGateEnabled } from '../lib/paymentGate';
+import { isPaymentBypassAllowed, isPaymentGateEnabled } from '../lib/paymentGate';
 
 const FEATURES = [
   'Your own wedding website with custom URL',
@@ -57,6 +57,7 @@ const ensureMinimalWeddingSite = async (userId: string, email?: string | null): 
 export const PaymentRequired: React.FC = () => {
   const { user } = useAuth();
   const paymentGateEnabled = isPaymentGateEnabled();
+  const paymentBypassAllowed = isPaymentBypassAllowed();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
@@ -211,7 +212,7 @@ export const PaymentRequired: React.FC = () => {
               )}
             </Button>
 
-            {!paymentGateEnabled && (
+            {paymentBypassAllowed && (
               <Button
                 variant="outline"
                 size="lg"
