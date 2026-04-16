@@ -4,6 +4,7 @@ import { generateWeddingSlug } from './slugify';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 import { serializeImportedFaqLines, shapeImportedFaqLines } from './faqMigration';
 import { carryOverRegistryLinks } from './registryLinkCarryover';
+import { assertCanonicalTemplateLayout } from './canonicalTemplateRuntime';
 
 interface CoupleNames {
   name1: string;
@@ -88,6 +89,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
   });
 
   const layoutConfig = generateInitialLayout(input.template, weddingData);
+  assertCanonicalTemplateLayout(layoutConfig, `onboardingMapper:${input.template}`);
   const siteSlug = generateWeddingSlug(input.coupleNames.name1, input.coupleNames.name2);
 
   return {
