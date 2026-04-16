@@ -25,6 +25,7 @@ export const Onboarding: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
+  const [showFollowUpReview, setShowFollowUpReview] = useState(false);
   const formData = profileToOnboardingForm(weddingProfile);
 
   const conciergeQuestions: Array<{
@@ -447,6 +448,11 @@ export const Onboarding: React.FC = () => {
       return;
     }
 
+    if (!showFollowUpReview && onboardingSession.suggestedFollowUps.length > 0) {
+      setShowFollowUpReview(true);
+      return;
+    }
+
     setLoading(true);
 
     const existingSite = await fetchExistingSite();
@@ -709,7 +715,29 @@ export const Onboarding: React.FC = () => {
       {renderDraftProgress()}
 
       <Card variant="default" padding="lg">
-        {currentQuestion && (
+        {showFollowUpReview ? (
+          <div className="space-y-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Optional refinement</p>
+              <h3 className="mt-2 text-2xl font-bold text-text-primary">A few smart follow-ups before we build</h3>
+              <p className="mt-2 text-text-secondary">We already have enough to generate a strong baseline site. These are the highest-leverage details that would make it feel more personal.</p>
+            </div>
+            <div className="space-y-3">
+              {onboardingSession.suggestedFollowUps.slice(0, 3).map((question, index) => (
+                <div key={question.key} className="rounded-2xl border border-border bg-surface px-4 py-4">
+                  <p className="text-sm font-medium text-text-primary">{index + 1}. {question.variants[0]}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Alternate phrasings: {question.variants[1]} / {question.variants[2]}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between pt-4">
+              <Button variant="ghost" size="lg" onClick={() => setShowFollowUpReview(false)}>Back</Button>
+              <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
+                {loading ? 'Building...' : 'Build the site'}
+              </Button>
+            </div>
+          </div>
+        ) : currentQuestion && (
           <div className="space-y-6">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">{currentQuestion.label}</p>
