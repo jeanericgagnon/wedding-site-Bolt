@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
-import { getSectionComponent } from '../sections/sectionRegistry';
+import { getSectionRenderer } from '../builder/registry';
 import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
 import { demoWeddingSite, demoEvents } from '../lib/demoData';
@@ -1070,7 +1070,7 @@ export const BuilderV2Lab: React.FC = () => {
                           const mappedType = (SECTION_TYPE_MAP[normalizedType] ?? 'custom') as SectionType;
                           let PreviewComp: React.FC<{ data: WeddingDataV1; instance: SectionInstance }> | null = null;
                           try {
-                            PreviewComp = getSectionComponent(mappedType, previewVariant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
+                            PreviewComp = getSectionRenderer(mappedType as never, previewVariant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
                           } catch {
                             PreviewComp = null;
                           }
@@ -1116,7 +1116,7 @@ export const BuilderV2Lab: React.FC = () => {
                           const mappedType = (SECTION_TYPE_MAP[normalizedType] ?? 'custom') as SectionType;
                           let PreviewComp: React.FC<{ data: WeddingDataV1; instance: SectionInstance }> | null = null;
                           try {
-                            PreviewComp = getSectionComponent(mappedType, variant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
+                            PreviewComp = getSectionRenderer(mappedType as never, variant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
                           } catch {
                             PreviewComp = null;
                           }
@@ -1185,7 +1185,7 @@ export const BuilderV2Lab: React.FC = () => {
 
                   let Content: React.FC<{ data: WeddingDataV1; instance: SectionInstance }> | null = null;
                   try {
-                    Content = getSectionComponent(instance.type, instance.variant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
+                    Content = getSectionRenderer(instance.type as never, instance.variant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
                   } catch {
                     Content = null;
                   }
