@@ -827,17 +827,22 @@ export const Onboarding: React.FC = () => {
                 </div>
               ))}
             </div>
-            <div className="flex justify-between pt-4">
-              <Button variant="ghost" size="lg" onClick={() => setShowFollowUpReview(false)}>Back to answers</Button>
-              <Button variant="outline" size="lg" onClick={nextStep} disabled={loading}>
-                {loading ? 'Building...' : 'Skip these and build'}
-              </Button>
-              <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
-                {loading ? 'Building...' : 'Use these answers and build'}
-              </Button>
+            <div className="flex flex-wrap justify-between gap-3 pt-4">
+              <div className="flex flex-wrap gap-3">
+                <Button variant="ghost" size="lg" onClick={() => setShowFollowUpReview(false)}>Back to answers</Button>
+                <Button variant="outline" size="lg" onClick={handleManualSetup} disabled={loading}>Switch to manual setup</Button>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" size="lg" onClick={nextStep} disabled={loading}>
+                  {loading ? 'Building...' : 'Skip these and build'}
+                </Button>
+                <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
+                  {loading ? 'Building...' : 'Use these answers and build'}
+                </Button>
+              </div>
             </div>
           </div>
-        ) : currentQuestion && (
+        ) : currentQuestion ? (
           <div className="space-y-6">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">{currentQuestion.label}</p>
@@ -932,8 +937,8 @@ export const Onboarding: React.FC = () => {
               />
             )}
 
-            <div className="flex justify-between pt-4">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-wrap justify-between gap-3 pt-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
                   variant="ghost"
                   size="lg"
@@ -953,13 +958,18 @@ export const Onboarding: React.FC = () => {
                   </Button>
                 )}
               </div>
-              <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
-                {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Saving...' : (readiness.hasEnoughToDraft ? 'Save brief' : 'Save draft anyway')) : 'Continue'}
-                {conversationIndex < conciergeQuestions.length - 1 && <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />}
-              </Button>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" size="lg" onClick={handleManualSetup} disabled={loading}>
+                  Switch to manual setup
+                </Button>
+                <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
+                  {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Saving...' : (readiness.hasEnoughToDraft ? 'Save brief' : 'Save draft anyway')) : 'Continue'}
+                  {conversationIndex < conciergeQuestions.length - 1 && <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />}
+                </Button>
+              </div>
             </div>
           </div>
-        )}
+        ) : null}
       </Card>
     </div>
   );
