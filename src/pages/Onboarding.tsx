@@ -11,7 +11,7 @@ import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingP
 import { createOnboardingSessionState } from '../lib/aiOnboarding';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
-type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'extraGuestNotes' | 'rsvpDeadline' | 'registryLink';
+type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'weddingDate' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'extraGuestNotes' | 'rsvpDeadline' | 'registryLink';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
@@ -36,6 +36,7 @@ export const Onboarding: React.FC = () => {
     placeholder?: string;
   }> = [
     { key: 'partnerNames', label: 'Who’s getting married?', prompt: 'Who’s getting married?', helper: 'Use the names exactly how you want guests to see them on the site.', placeholder: 'Alex & Jordan' },
+    { key: 'partnerLabels', label: 'Labels', prompt: 'How should we refer to each of you on the site, if at all?', helper: 'Use labels like bride, groom, partner, or just use names.', placeholder: 'groom|bride' },
     { key: 'weddingDate', label: 'When is it?', prompt: 'When are you getting married?', helper: 'Just the date is perfect for now.', type: 'date' },
     { key: 'venueLocation', label: 'Where is it?', prompt: 'When and where are you getting married?', helper: 'City or region is enough to start if you do not want to overthink it yet.', placeholder: 'Sayulita, Mexico' },
     { key: 'venueName', label: 'Venue + feel', prompt: 'What’s the venue, and what’s the overall setting?', helper: 'Boutique hotel, garden estate, tropical beach, backyard, city rooftop, whatever fits.', placeholder: 'Amor Boutique Hotel, tropical and intimate' },
@@ -67,6 +68,7 @@ export const Onboarding: React.FC = () => {
   const getFirstIncompleteQuestionIndex = () => {
     const checks = [
       !formData.partnerNames.trim(),
+      false,
       !formData.weddingDate,
       !formData.venueLocation.trim(),
       !formData.venueName.trim(),

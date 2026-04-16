@@ -13,6 +13,8 @@ export type WeddingProfile = {
     displayNames: string;
     partnerOne: string;
     partnerTwo: string;
+    partnerOneLabel?: 'bride' | 'groom' | 'partner' | 'none';
+    partnerTwoLabel?: 'bride' | 'groom' | 'partner' | 'none';
     storyTone: string;
   };
   event: {
@@ -101,6 +103,8 @@ export const createEmptyWeddingProfile = (): WeddingProfile => ({
     displayNames: '',
     partnerOne: '',
     partnerTwo: '',
+    partnerOneLabel: 'none',
+    partnerTwoLabel: 'none',
     storyTone: '',
   },
   event: {
@@ -187,6 +191,7 @@ export type OnboardingFormShape = {
   rsvpDeadline: string;
   registryLink: string;
   theme: string;
+  partnerLabels?: string;
 };
 
 export const onboardingFormToProfile = (formData: OnboardingFormShape): WeddingProfile => {
@@ -202,6 +207,8 @@ export const onboardingFormToProfile = (formData: OnboardingFormShape): WeddingP
       displayNames: formData.partnerNames,
       partnerOne,
       partnerTwo: partnerTwo || partnerOne,
+      partnerOneLabel: ((formData.partnerLabels || '').split('|')[0] as 'bride' | 'groom' | 'partner' | 'none' | '') || 'none',
+      partnerTwoLabel: ((formData.partnerLabels || '').split('|')[1] as 'bride' | 'groom' | 'partner' | 'none' | '') || 'none',
       storyTone: '',
     },
     event: {
