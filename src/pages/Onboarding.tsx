@@ -82,11 +82,11 @@ export const Onboarding: React.FC = () => {
       !formData.venueName.trim(),
       !formData.theme.trim(),
       !formData.story.trim(),
-      !formData.guestExperience.trim(),
+      !formData.guestCount?.trim(),
       !formData.weekendEvents.trim(),
-      false,
+      !formData.plusOnePolicy?.trim(),
       !formData.rsvpDeadline,
-      !formData.registryLink.trim(),
+      !formData.registryIntent?.trim(),
     ];
 
     const firstIncomplete = checks.findIndex(Boolean);
@@ -124,7 +124,7 @@ export const Onboarding: React.FC = () => {
     {
       id: 'registry',
       label: 'Add registry link or keep moving',
-      done: Boolean(formData.registryLink.trim()),
+      done: Boolean(formData.registryIntent?.trim()),
       actionLabel: 'Go',
       action: () => {
         goToQuestionIndex(9);
@@ -166,7 +166,7 @@ export const Onboarding: React.FC = () => {
       id: 'guest-ready',
       title: 'Guest-ready details',
       description: 'Guest experience, weekend plans, and RSVP details are enough to make the draft useful.',
-      done: Boolean(formData.guestExperience.trim() && formData.weekendEvents.trim() && formData.rsvpDeadline),
+      done: Boolean(formData.guestCount?.trim() && formData.weekendEvents.trim() && formData.plusOnePolicy?.trim() && formData.rsvpDeadline && formData.registryIntent?.trim()),
     },
   ];
 
@@ -1091,7 +1091,7 @@ export const Onboarding: React.FC = () => {
               <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
                 <p className="font-medium text-text-primary">The guest-facing tone is already anchored</p>
-                <p className="text-sm text-text-secondary">{formData.guestExperience || 'Warm, welcoming'} and {formData.weekendEvents ? 'your weekend plans are already informing the draft.' : 'your weekend flow can be layered in next.'}</p>
+                <p className="text-sm text-text-secondary">{formData.guestCount || 'Your guest count'} and {formData.weekendEvents ? 'your weekend plans are already informing the draft.' : 'your weekend flow can be layered in next.'}</p>
               </div>
             </div>
           </div>
