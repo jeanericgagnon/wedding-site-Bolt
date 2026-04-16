@@ -7,7 +7,7 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
-import { buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
+import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnboarding';
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
@@ -318,7 +318,9 @@ export const Onboarding: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setInitialSetupAnswers((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const nextAnswers = { ...initialSetupAnswers, [e.target.name]: e.target.value };
+    setInitialSetupAnswers(nextAnswers);
+    setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(nextAnswers));
     if (e.target.name === 'venueLocation' && !formData.weddingDate) {
       const parts = e.target.value.split(/\s+[—-]\s+/);
       if (parts.length >= 2) {
