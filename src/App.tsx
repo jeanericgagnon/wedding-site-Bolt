@@ -15,6 +15,8 @@ const WeddingStatus = lazy(() => import('./pages/onboarding/WeddingStatus').then
 const Celebration = lazy(() => import('./pages/onboarding/Celebration').then(m => ({ default: m.Celebration })));
 const QuickStart = lazy(() => import('./pages/onboarding/QuickStart').then(m => ({ default: m.QuickStart })));
 const GuidedSetup = lazy(() => import('./pages/onboarding/GuidedSetup').then(m => ({ default: m.GuidedSetup })));
+const Privacy = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })));
+const Terms = lazy(() => import('./pages/Terms').then(m => ({ default: m.Terms })));
 const SetupShell = lazy(() => import('./pages/setup/SetupShell').then(m => ({ default: m.SetupShell })));
 const RSVP = lazy(() => import('./pages/RSVP'));
 const EventRSVP = lazy(() => import('./pages/EventRSVP'));
@@ -95,6 +97,8 @@ const AppContent = () => {
         <Route path="/features/seating" element={<SeatingFeature />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route
           path="/payment-required"
           element={
