@@ -11,6 +11,7 @@ import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructu
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState, createOnboardingSessionStateFromInitialSetup } from '../lib/aiOnboarding';
 import { createEmptyInitialSetupAnswers, createEmptyOnboardingFormShapeFromInitialSetup, initialSetupAnswersToOnboardingFormShape, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
+import { createEmptyInitialSetupFollowUps } from '../lib/initialSetupFollowUps';
 import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
@@ -33,6 +34,7 @@ export const Onboarding: React.FC = () => {
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [showFollowUpReview, setShowFollowUpReview] = useState(false);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
+  const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
 
   const conciergeQuestions: Array<{
