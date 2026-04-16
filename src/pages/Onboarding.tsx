@@ -10,7 +10,7 @@ import { demoWeddingSite } from '../lib/demoData';
 import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState, createOnboardingSessionStateFromInitialSetup } from '../lib/aiOnboarding';
-import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
+import { createEmptyInitialSetupAnswers, initialSetupAnswersToOnboardingFormShape, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
 import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
@@ -33,7 +33,7 @@ export const Onboarding: React.FC = () => {
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [showFollowUpReview, setShowFollowUpReview] = useState(false);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
-  const formData = profileToOnboardingForm(weddingProfile);
+  const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
 
   const conciergeQuestions: Array<{
     key: ConciergeQuestion;

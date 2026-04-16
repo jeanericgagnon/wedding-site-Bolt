@@ -39,3 +39,24 @@ export const createEmptyInitialSetupAnswers = (): InitialSetupAnswers => ({
   registryIntent: '',
   optionalStory: '',
 });
+
+
+export const initialSetupAnswersToOnboardingFormShape = (answers: InitialSetupAnswers) => ({
+  partnerNames: answers.names,
+  partnerLabels: answers.labelPreference === 'bride-groom' ? 'groom|bride' : answers.labelPreference === 'bride-bride' ? 'bride|bride' : answers.labelPreference === 'groom-groom' ? 'groom|groom' : 'none|none',
+  weddingDate: answers.whenWhere.split(/\s+[—-]\s+/)[0] || '',
+  venueLocation: answers.whenWhere.split(/\s+[—-]\s+/).slice(1).join(' — '),
+  venueName: answers.venueNameOrTbd,
+  theme: answers.style,
+  story: answers.optionalStory,
+  guestExperience: '',
+  weekendEvents: answers.weekendEventsRaw,
+  ceremonyTime: answers.ceremonyArrivalTime,
+  guestCount: answers.guestCountBand,
+  plusOnePolicy: answers.plusOnePolicy,
+  mealChoice: answers.mealChoice,
+  registryIntent: answers.registryIntent,
+  extraGuestNotes: '',
+  rsvpDeadline: answers.rsvpDeadline,
+  registryLink: '',
+});
