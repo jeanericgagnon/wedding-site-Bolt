@@ -385,6 +385,7 @@ const getSeedEventDate = (weddingDate: string, dateLabel: string) => {
   const offset = dayToOffset[match];
   if (offset === undefined) return weddingDate;
   const date = new Date(`${weddingDate}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
   date.setUTCDate(date.getUTCDate() + offset);
   return date.toISOString().slice(0, 10);
 };
