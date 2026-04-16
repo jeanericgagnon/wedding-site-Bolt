@@ -884,13 +884,31 @@ export const Onboarding: React.FC = () => {
                     onChange={(event) => {
                       const value = event.target.value;
                       setFollowUpAnswers((prev) => ({ ...prev, [question.key]: value }));
-                      if (question.key.startsWith('event-location-')) {
-                        const index = Number.parseInt(question.key.replace('event-location-', ''), 10) - 1;
+                      if (question.key.startsWith('event-location-') || question.key.startsWith('event-time-')) {
+                        const prefix = question.key.startsWith('event-location-') ? 'event-location-' : 'event-time-';
+                        const index = Number.parseInt(question.key.replace(prefix, ''), 10) - 1;
                         const eventKey = weddingProfile.event.structuredWeekendEvents[index]?.id || question.key;
                         setInitialSetupFollowUps((prev) => ({
                           ...prev,
-                          eventLocations: { ...prev.eventLocations, [eventKey]: value },
+                          eventLocations: question.key.startsWith('event-location-') ? { ...prev.eventLocations, [eventKey]: value } : prev.eventLocations,
+                          eventTimes: question.key.startsWith('event-time-') ? { ...prev.eventTimes, [eventKey]: value } : prev.eventTimes,
                         }));
+                        return;
+                      }
+                      if (question.key === 'venue-clarity') {
+                        setInitialSetupFollowUps((prev) => ({ ...prev, venueClarification: value }));
+                        return;
+                      }
+                      if (question.key === 'rsvp-config') {
+                        setInitialSetupFollowUps((prev) => ({ ...prev, rsvpClarification: value }));
+                        return;
+                      }
+                      if (question.key === 'registry-posture') {
+                        setInitialSetupFollowUps((prev) => ({ ...prev, registryClarification: value }));
+                        return;
+                      }
+                      if (question.key === 'story-detail') {
+                        setInitialSetupFollowUps((prev) => ({ ...prev, storyClarification: value }));
                       }
                     }}
                     rows={3}

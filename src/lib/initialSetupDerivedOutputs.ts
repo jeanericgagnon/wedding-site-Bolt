@@ -19,6 +19,10 @@ export const buildInitialSetupDerivedOutputs = (answers: InitialSetupAnswers, fo
       locationName: followUps.eventLocations[event.id] || event.locationName,
       timeLabel: followUps.eventTimes[event.id] || event.timeLabel,
     }));
+    if (followUps.storyClarification) weddingProfile.story.summary = followUps.storyClarification;
+    if (followUps.registryClarification) { weddingProfile.registry.url = followUps.registryClarification; weddingProfile.registry.status = 'linked'; }
+    if (followUps.rsvpClarification) weddingProfile.event.rsvpDeadline = followUps.rsvpClarification || weddingProfile.event.rsvpDeadline;
+    if (followUps.venueClarification) weddingProfile.event.venueName = followUps.venueClarification;
   }
   return {
     weddingProfile,
