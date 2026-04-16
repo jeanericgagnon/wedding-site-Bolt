@@ -138,7 +138,7 @@ export const QuickStart: React.FC = () => {
           name2: nameParts[1] || '',
         },
         planningStatus: 'quick_start_complete',
-        template: 'modern',
+        template: 'modern-luxe',
         colorScheme: 'romantic',
         weddingDate: nextAnswers.date || '',
         location: nextAnswers.location || '',
@@ -164,6 +164,7 @@ export const QuickStart: React.FC = () => {
         },
       });
     } catch (err) {
+      console.error('QUICK_START_SAVE_FAILED', err);
       setError(err instanceof Error ? err.message : 'Failed to save. Please try again.');
       setLoading(false);
     }
