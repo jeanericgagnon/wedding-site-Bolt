@@ -108,12 +108,14 @@ export const WEDDING_PROFILE_FIELD_SPECS: WeddingProfileFieldSpec[] = [
   { path: 'event.date', label: 'Wedding date', requiredForDraft: true, inferredAllowed: false },
   { path: 'event.venueLocation', label: 'Venue location', requiredForDraft: true, inferredAllowed: true },
   { path: 'event.venueName', label: 'Venue name', requiredForDraft: false, inferredAllowed: true },
-  { path: 'design.theme', label: 'Theme', requiredForDraft: false, inferredAllowed: true },
-  { path: 'story.summary', label: 'Story summary', requiredForDraft: false, inferredAllowed: true },
-  { path: 'guestExperience.summary', label: 'Guest experience', requiredForDraft: false, inferredAllowed: true },
+  { path: 'design.theme', label: 'Style', requiredForDraft: false, inferredAllowed: true },
+  { path: 'story.summary', label: 'Story', requiredForDraft: false, inferredAllowed: true },
+  { path: 'guestExperience.summary', label: 'Guest count', requiredForDraft: false, inferredAllowed: true },
+  { path: 'guestExperience.faqTone', label: 'Plus-one policy', requiredForDraft: false, inferredAllowed: true },
   { path: 'event.weekendEvents', label: 'Weekend events', requiredForDraft: false, inferredAllowed: true },
+  { path: 'event.ceremonyTime', label: 'Ceremony arrival time', requiredForDraft: false, inferredAllowed: true },
   { path: 'event.rsvpDeadline', label: 'RSVP deadline', requiredForDraft: false, inferredAllowed: true },
-  { path: 'registry.url', label: 'Registry link', requiredForDraft: false, inferredAllowed: true },
+  { path: 'registry.url', label: 'Registry intent', requiredForDraft: false, inferredAllowed: true },
 ];
 
 const getProfileValueByPath = (profile: WeddingProfile, path: string): string => {
