@@ -143,7 +143,20 @@ export const QuickStart: React.FC = () => {
         weddingDate: nextAnswers.date || '',
         location: nextAnswers.location || '',
       });
-      delete (updateData as Record<string, unknown>).site_slug;
+
+      const safeUpdateData = {
+        wedding_date: updateData.wedding_date,
+        venue_date: updateData.venue_date,
+        venue_name: nextAnswers.location || null,
+        wedding_location: updateData.wedding_location,
+        planning_status: updateData.planning_status,
+        active_template_id: updateData.active_template_id,
+        template_id: updateData.template_id,
+        wedding_data: updateData.wedding_data,
+        layout_config: updateData.layout_config,
+        couple_name_1: updateData.couple_name_1,
+        couple_name_2: updateData.couple_name_2,
+      };
 
       const { data: targetSite, error: targetSiteError } = await supabase
         .from('wedding_sites')
@@ -156,7 +169,7 @@ export const QuickStart: React.FC = () => {
       if (targetSiteError) throw targetSiteError;
       if (!targetSite?.id) throw new Error('No wedding site found for this account');
 
-      const { error: updateError } = await supabase.from('wedding_sites').update(updateData).eq('id', targetSite.id);
+      const { error: updateError } = await supabase.from('wedding_sites').update(safeUpdateData).eq('id', targetSite.id);
       if (updateError) throw updateError;
 
       navigate('/dashboard?bypassPayment=1', {
