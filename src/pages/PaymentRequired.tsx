@@ -5,6 +5,7 @@ import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
+import { isPaymentGateEnabled } from '../lib/paymentGate';
 
 const FEATURES = [
   'Your own wedding website with custom URL',
@@ -55,6 +56,7 @@ const ensureMinimalWeddingSite = async (userId: string, email?: string | null): 
 
 export const PaymentRequired: React.FC = () => {
   const { user } = useAuth();
+  const paymentGateEnabled = isPaymentGateEnabled();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
@@ -91,6 +93,10 @@ export const PaymentRequired: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Could not start checkout right now. Please try again.');
       setLoading(false);
     }
+  };
+
+  const handleBypassForNow = () => {
+    navigate('/onboarding?bypassPayment=1', { replace: true });
   };
 
   const handleCheckStatus = async () => {
@@ -204,6 +210,19 @@ export const PaymentRequired: React.FC = () => {
                 </>
               )}
             </Button>
+
+            {!paymentGateEnabled && (
+              <Button
+                variant="outline"
+                size="lg"
+                fullWidth
+                onClick={handleBypassForNow}
+                disabled={loading || checkingStatus}
+                className="mt-3"
+              >
+                Continue without payment for now
+              </Button>
+            )}
 
             <button
               type="button"
