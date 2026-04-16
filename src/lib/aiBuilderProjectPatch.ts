@@ -1,6 +1,9 @@
 import { DraftGenerationResult } from './aiDraftGenerator';
 import { AiCanonicalSectionContent, createCanonicalContentFromDraft } from './aiCanonicalContent';
 import { mapCanonicalContentToSectionSettings } from './aiCanonicalContentMapper';
+import { CanonicalPhotoBuckets } from './aiPhotoBuckets';
+import { buildPhotoPlacementPlan } from './aiPhotoPlacement';
+import { mapPhotoPlacementToSectionSettings } from './aiPhotoBuilderMapper';
 
 
 const shouldReplaceSectionSetting = (value: unknown) => {
@@ -24,11 +27,13 @@ const mergeGeneratedSetting = (current: unknown, nextValue: string) => {
 export const mergeGeneratedDraftIntoBuilderProject = (
   existingSiteJson: Record<string, unknown> | null,
   generatedDraft: DraftGenerationResult,
-  canonicalContentOverride?: AiCanonicalSectionContent | null
+  canonicalContentOverride?: AiCanonicalSectionContent | null,
+  photoBuckets?: CanonicalPhotoBuckets | null
 ) => {
   const project = (existingSiteJson ?? {}) as Record<string, unknown>;
   const pages = Array.isArray(project.pages) ? (project.pages as Array<Record<string, unknown>>) : [];
   const canonicalContent = canonicalContentOverride ?? createCanonicalContentFromDraft(generatedDraft);
+  const photoPlacement = photoBuckets ? buildPhotoPlacementPlan(photoBuckets) : null;
 
   const nextPages = pages.map((page) => {
     const sections = Array.isArray(page.sections) ? (page.sections as Array<Record<string, unknown>>) : [];
@@ -39,10 +44,13 @@ export const mergeGeneratedDraftIntoBuilderProject = (
       const mappedSettings = typeof type === 'string'
         ? mapCanonicalContentToSectionSettings(type, canonicalContent)
         : null;
+      const mappedPhotoSettings = typeof type === 'string' && photoPlacement
+        ? mapPhotoPlacementToSectionSettings(type, photoPlacement)
+        : null;
 
-      if (mappedSettings) {
+      if (mappedSettings || mappedPhotoSettings) {
         const mergedMappedSettings = Object.fromEntries(
-          Object.entries(mappedSettings).map(([key, value]) => [key, mergeGeneratedSetting(settings[key], value)])
+          Object.entries({ ...(mappedSettings ?? {}), ...(mappedPhotoSettings ?? {}) }).map(([key, value]) => [key, typeof value === 'string' ? mergeGeneratedSetting(settings[key], value) : value])
         );
 
         return {
