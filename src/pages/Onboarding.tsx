@@ -697,8 +697,6 @@ export const Onboarding: React.FC = () => {
         )}
       </div>
 
-      {renderSetupChecklist()}
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card variant="bordered" padding="lg" className="hover:border-primary transition-colors cursor-pointer">
           <div className="flex flex-col h-full">
@@ -764,6 +762,10 @@ export const Onboarding: React.FC = () => {
             </Button>
           </div>
         </Card>
+      </div>
+
+      <div className="mt-8">
+        {renderSetupChecklist()}
       </div>
     </div>
   );
