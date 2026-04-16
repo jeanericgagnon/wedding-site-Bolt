@@ -12,6 +12,14 @@ export type CanonicalSectionDefinition = {
   variants: Record<string, CanonicalSectionVariantDefinition>;
 };
 
+const LEGACY_VARIANT_ALIASES: Record<string, Record<string, string>> = {
+  venue: { default: 'card' },
+  schedule: { default: 'timeline', classic: 'timeline', cards: 'agendaCards' },
+  gallery: { default: 'masonry', grid: 'masonry' },
+  travel: { cards: 'list', default: 'list' },
+  registry: { grid: 'cards', default: 'cards' },
+};
+
 export type BuilderManifestLike = {
   type: string;
   defaultVariant: string;
@@ -29,23 +37,31 @@ export const manifestToCanonicalSectionDefinition = (
       .map((field) => [field.key, field.defaultValue])
   );
 
+  const declaredVariants = Object.fromEntries(
+    manifest.supportedVariants.map((variantId) => {
+      const meta = manifest.variantMeta?.find((item) => item.id === variantId);
+      return [
+        variantId,
+        {
+          componentKey: `${manifest.type}:${variantId}`,
+          schemaKey: `${manifest.type}:settings`,
+          defaults,
+          label: meta?.label,
+          description: meta?.description,
+        },
+      ];
+    })
+  );
+
+  const aliasVariants = Object.fromEntries(
+    Object.entries(LEGACY_VARIANT_ALIASES[manifest.type] ?? {})
+      .filter(([, target]) => Boolean(declaredVariants[target]))
+      .map(([alias, target]) => [alias, declaredVariants[target]])
+  );
+
   return {
     type: manifest.type,
     defaultVariant: manifest.defaultVariant,
-    variants: Object.fromEntries(
-      manifest.supportedVariants.map((variantId) => {
-        const meta = manifest.variantMeta?.find((item) => item.id === variantId);
-        return [
-          variantId,
-          {
-            componentKey: `${manifest.type}:${variantId}`,
-            schemaKey: `${manifest.type}:settings`,
-            defaults,
-            label: meta?.label,
-            description: meta?.description,
-          },
-        ];
-      })
-    ),
+    variants: { ...declaredVariants, ...aliasVariants },
   };
 };
