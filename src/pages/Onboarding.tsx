@@ -440,7 +440,6 @@ export const Onboarding: React.FC = () => {
     await syncOnboardingEventSeeds(existingSite.id, itinerarySeeds);
 
     clearSavedOnboardingDraft();
-    navigate('/dashboard');
     return true;
   };
 
