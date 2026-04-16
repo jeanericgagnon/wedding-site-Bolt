@@ -226,13 +226,21 @@ const deterministicExtractWeddingProfileUpdates = (
     confidence = Math.max(confidence, 0.62);
   }
 
-  if (!profile.guestExperience.summary && /relaxed|welcomed|welcome|celebratory|intimate|connected|easy|joyful|fun|warm/i.test(trimmed)) {
+  if (!profile.guestExperience.summary && /under 50|50-100|100-150|150-250|250\+|250 plus|small wedding|big wedding/i.test(trimmed)) {
     updates.guestExperience = {
       ...profile.guestExperience,
       summary: trimmed,
+    };
+    notes.push('Captured guest count context');
+    confidence = Math.max(confidence, 0.72);
+  }
+
+  if (!profile.guestExperience.faqTone && /none|some|all/i.test(trimmed)) {
+    updates.guestExperience = {
+      ...profile.guestExperience,
       faqTone: trimmed,
     };
-    notes.push('Captured guest experience');
+    notes.push('Captured plus-one policy');
     confidence = Math.max(confidence, 0.72);
   }
 
@@ -242,7 +250,7 @@ const deterministicExtractWeddingProfileUpdates = (
     confidence = Math.max(confidence, 0.72);
   }
 
-  if (!updates.story && !updates.guestExperience && !(updates.event && 'weekendEvents' in updates.event) && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed) && !/cash|gifts|both|unsure|none for now/i.test(trimmed)) {
+  if (!updates.story && !updates.guestExperience && !(updates.event && 'weekendEvents' in updates.event) && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed) && !/cash|gifts|both|unsure|none for now|under 50|50-100|100-150|150-250|250\+|250 plus/i.test(trimmed)) {
     updates.story = { ...profile.story, summary: trimmed };
     notes.push('Captured story summary');
     confidence = Math.max(confidence, 0.58);
