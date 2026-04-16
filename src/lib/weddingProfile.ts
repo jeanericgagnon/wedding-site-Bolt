@@ -356,6 +356,14 @@ export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
 
 const dayToOffset: Record<string, number> = { friday: -2, saturday: -1, sunday: 0, monday: 1, thursday: -3 };
 
+const inferDressCode = (profile: WeddingProfile) => {
+  const notes = `${profile.story.welcomeNote} ${profile.design.theme}`.toLowerCase();
+  if (notes.includes('tropical formal')) return 'Tropical formal';
+  if (notes.includes('formal')) return 'Formal';
+  if (notes.includes('cocktail')) return 'Cocktail';
+  return null;
+};
+
 const getSeedEventDate = (weddingDate: string, dateLabel: string) => {
   if (!weddingDate) return null;
   const match = dateLabel.trim().toLowerCase();
@@ -377,11 +385,13 @@ export const buildRsvpEventSeedFromStructuredEvents = (profile: WeddingProfile) 
 
 export const buildItinerarySeedFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || []).map((event, index) => ({
   event_name: event.title,
+  description: `${event.dateLabel ? `${event.dateLabel} ` : ''}${event.title}`.trim(),
   event_date: getSeedEventDate(profile.event.date, event.dateLabel) || profile.event.date || null,
   start_time: null,
   end_time: null,
   location_name: event.locationName || null,
   location_address: event.locationAddress || null,
+  dress_code: inferDressCode(profile),
   notes: [event.dateLabel, event.notes].filter(Boolean).join(' — ') || null,
   is_visible: true,
   display_order: index,
