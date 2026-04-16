@@ -9,6 +9,8 @@ import { Input } from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
+import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
+import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
 
 type ItineraryEvent = {
   id: string;
@@ -113,6 +115,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
   const [bulkModerating, setBulkModerating] = useState(false);
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const [photoBuckets] = useState(() => createEmptyPhotoBuckets());
   const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
   const [slideshowAlbumFilter, setSlideshowAlbumFilter] = useState<string>('all');
   const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
@@ -784,6 +787,14 @@ export const GuestPhotoSharing: React.FC = () => {
           <h1 className="text-3xl font-bold text-neutral-900">Guest photo sharing</h1>
           <p className="mt-2 text-neutral-600">Create albums, collect guest photos by event, and keep the upload flow organized.</p>
         </div>
+
+        <Card className="p-6 border border-border bg-surface">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-neutral-900">Auto-place couple photos</h2>
+            <p className="mt-1 text-sm text-neutral-600">Bucket photos into a few simple groups and we will place them into the right site sections automatically.</p>
+          </div>
+          <PhotoBucketCards buckets={photoBuckets} />
+        </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Card className="p-4">
