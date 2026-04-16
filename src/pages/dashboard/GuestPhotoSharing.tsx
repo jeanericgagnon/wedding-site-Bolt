@@ -13,6 +13,7 @@ import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
 import { mediaRepository } from '../../builder/services/mediaRepository';
 import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
+import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 
 type ItineraryEvent = {
   id: string;
@@ -170,7 +171,7 @@ export const GuestPhotoSharing: React.FC = () => {
     if (!siteId) return;
     const { data, error } = await supabase
       .from('wedding_sites')
-      .select('wedding_data')
+      .select('wedding_data, site_json')
       .eq('id', siteId)
       .maybeSingle();
     if (error) throw error;
@@ -182,7 +183,12 @@ export const GuestPhotoSharing: React.FC = () => {
         photoBuckets: nextBuckets,
       },
     };
-    const { error: updateError } = await supabase.from('wedding_sites').update({ wedding_data: nextWeddingData }).eq('id', siteId);
+    const aiDraft = ((((weddingData.meta as Record<string, unknown> | undefined) ?? {}).aiDraft as import('../../lib/aiDraftGenerator').DraftGenerationResult | undefined) ?? null);
+    const aiContent = ((((weddingData.meta as Record<string, unknown> | undefined) ?? {}).aiContent as import('../../lib/aiCanonicalContent').AiCanonicalSectionContent | undefined) ?? null);
+    const nextSiteJson = aiDraft
+      ? mergeGeneratedDraftIntoBuilderProject((data?.site_json as Record<string, unknown> | null) ?? null, aiDraft, aiContent, nextBuckets)
+      : data?.site_json;
+    const { error: updateError } = await supabase.from('wedding_sites').update({ wedding_data: nextWeddingData, site_json: nextSiteJson }).eq('id', siteId);
     if (updateError) throw updateError;
   };
 
