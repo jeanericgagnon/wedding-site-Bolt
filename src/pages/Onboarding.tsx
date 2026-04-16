@@ -414,7 +414,7 @@ export const Onboarding: React.FC = () => {
       .map((seed) => ({ ...seed, wedding_site_id: siteId }));
 
     if (!missingRows.length) return;
-    const driftFields = ['display_order', 'description', 'dress_code', 'location_address', 'notes', 'onboarding_seeded', 'rsvp_enabled'];
+    const driftFields = ['display_order', 'description', 'dress_code', 'location_address', 'notes', 'onboarding_seeded', 'rsvp_enabled', 'is_visible'];
     const insertRows = missingRows.map((row) => ({ ...row }));
     let insertError: { message?: string } | null = null;
 
