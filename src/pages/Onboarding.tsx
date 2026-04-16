@@ -326,10 +326,12 @@ export const Onboarding: React.FC = () => {
       venueLocation: prevFormData.venueLocation || demoWeddingSite.venue_location || '',
       story: prevFormData.story || 'We met on a rainy Tuesday and never stopped choosing each other.',
       theme: prevFormData.theme || getThemeHint(),
-      guestExperience: prevFormData.guestExperience || 'Relaxed, welcomed, and genuinely taken care of.',
+      guestCount: prevFormData.guestCount || '50-100',
       weekendEvents: prevFormData.weekendEvents || 'Friday welcome drinks, Saturday wedding, Sunday brunch.',
       rsvpDeadline: prevFormData.rsvpDeadline || '2026-05-25',
-      registryLink: prevFormData.registryLink || 'https://www.zola.com/registry/alex-and-jordan',
+      plusOnePolicy: prevFormData.plusOnePolicy || 'some',
+      mealChoice: prevFormData.mealChoice || 'yes',
+      registryIntent: prevFormData.registryIntent || 'both',
     });
   }, [hydrateProfile, isDemoMode, weddingProfile]);
 
