@@ -322,6 +322,7 @@ export const Onboarding: React.FC = () => {
 
     const append = (current: string, next: string) => [current, next].filter(Boolean).join(current && next ? '\n\n' : '');
     const patches: Record<string, string> = {};
+    const nextStructuredEvents = [...(weddingProfile.event.structuredWeekendEvents || [])];
 
     for (const [key, rawValue] of answeredEntries) {
       const value = rawValue.trim();
@@ -341,10 +342,24 @@ export const Onboarding: React.FC = () => {
         patches.extraGuestNotes = append((patches.extraGuestNotes ?? formData.extraGuestNotes) || '', `Why this location matters: ${value}`);
         continue;
       }
+      if (key.startsWith('event-location-')) {
+        const index = Number.parseInt(key.replace('event-location-', ''), 10) - 1;
+        if (nextStructuredEvents[index]) nextStructuredEvents[index] = { ...nextStructuredEvents[index], locationName: value };
+        continue;
+      }
       patches.extraGuestNotes = append((patches.extraGuestNotes ?? formData.extraGuestNotes) || '', `${key}: ${value}`);
     }
 
     if (Object.keys(patches).length > 0) hydrateProfile(patches);
+    if (nextStructuredEvents.length > 0) {
+      setWeddingProfile((prev) => ({
+        ...prev,
+        event: {
+          ...prev.event,
+          structuredWeekendEvents: nextStructuredEvents,
+        },
+      }));
+    }
   };
 
   const handleQuickSetup = () => {
