@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { buildOnboardingUpdateData } from '../../lib/onboardingMapper';
 
 type Question = {
-  id: 'names' | 'date' | 'location' | 'style';
+  id: 'names' | 'title' | 'date' | 'location';
   prompt: string;
   type: 'text' | 'choice';
   placeholder?: string;
@@ -14,9 +14,9 @@ type Question = {
 
 const questions: Question[] = [
   { id: 'names', prompt: 'What are your names?', type: 'text', placeholder: 'e.g. Eric & Kara' },
+  { id: 'title', prompt: 'How should we refer to you on the site?', type: 'choice', choices: ['Just our names', 'Bride & Groom', 'Bride & Bride', 'Groom & Groom'] },
   { id: 'date', prompt: 'When is the big day?', type: 'text', placeholder: 'e.g. January 17, 2027' },
   { id: 'location', prompt: 'Where will it be?', type: 'text', placeholder: 'e.g. Sayulita, Mexico' },
-  { id: 'style', prompt: 'What style should the site lean into?', type: 'choice', choices: ['Romantic', 'Modern', 'Editorial', 'Garden party'] },
 ];
 
 const PAGE_BG = '#FAF9F7';
@@ -41,7 +41,7 @@ export const QuickStart: React.FC = () => {
       if (!user) return;
       const { data } = await supabase
         .from('wedding_sites')
-        .select('couple_name_1, couple_name_2, wedding_date, venue_name, location, wedding_style')
+        .select('couple_name_1, couple_name_2, wedding_date, venue_name, location')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })
         .limit(1)
@@ -53,7 +53,6 @@ export const QuickStart: React.FC = () => {
         ...(seededNames ? { names: seededNames } : {}),
         ...(data.wedding_date ? { date: data.wedding_date } : {}),
         ...((data.venue_name || data.location) ? { location: data.venue_name || data.location } : {}),
-        ...(data.wedding_style ? { style: data.wedding_style } : {}),
       }));
       if (seededNames && currentQuestion.id === 'names') setInputValue(seededNames);
     };
@@ -89,7 +88,7 @@ export const QuickStart: React.FC = () => {
         coupleNames: { name1: nameParts[0] || '', name2: nameParts[1] || '' },
         planningStatus: 'quick_start_complete',
         template: 'modern',
-        colorScheme: (nextAnswers.style || 'romantic').toLowerCase(),
+        colorScheme: 'romantic',
         weddingDate: nextAnswers.date || '',
         location: nextAnswers.location || '',
       });
@@ -107,10 +106,10 @@ export const QuickStart: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-12" style={{ backgroundColor: PAGE_BG }}>
-      <div className="w-full max-w-[560px]">
+      <div className="w-full max-w-[580px]">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-16">
-          <p className="text-[13px] tracking-wide uppercase mb-1" style={{ color: WARM }}>Day of Love AI Setup</p>
-          <p className="text-[13px]" style={{ color: MUTED }}>About 2 minutes to shape your first draft</p>
+          <p className="text-[13px] tracking-[0.08em] uppercase mb-1" style={{ color: WARM }}>Day of Love Setup</p>
+          <p className="text-[13px]" style={{ color: MUTED }}>About 2 minutes to get your site live</p>
         </motion.div>
 
         {previousAnswers.length > 0 && (
@@ -133,7 +132,7 @@ export const QuickStart: React.FC = () => {
           >
             <h1
               className="mb-8"
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500 }}
+              style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500, letterSpacing: '-0.02em' }}
             >
               {currentQuestion.prompt}
             </h1>
@@ -147,8 +146,8 @@ export const QuickStart: React.FC = () => {
                   onKeyDown={(e) => e.key === 'Enter' && !loading && advance(inputValue)}
                   placeholder={currentQuestion.placeholder}
                   autoFocus
-                  className="w-full px-6 py-5 rounded-2xl border-0 outline-none transition-all duration-200"
-                  style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }}
+                  className="w-full px-6 py-5 rounded-[20px] border-0 outline-none transition-all duration-200"
+                  style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT, boxShadow: 'none' }}
                 />
                 <button
                   onClick={() => advance(inputValue)}
@@ -168,7 +167,7 @@ export const QuickStart: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="w-full px-6 py-5 rounded-2xl transition-all duration-200 text-left hover:scale-[1.01]"
+                    className="w-full px-6 py-5 rounded-[20px] transition-all duration-200 text-left hover:scale-[1.01]"
                     style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT, border: '1px solid transparent' }}
                   >
                     {choice}
