@@ -10,6 +10,7 @@ import { demoWeddingSite } from '../lib/demoData';
 import { buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnboarding';
+import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'weddingDate' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'extraGuestNotes' | 'rsvpDeadline' | 'registryLink';
@@ -402,9 +403,7 @@ export const Onboarding: React.FC = () => {
       .eq('wedding_site_id', siteId);
     if (existingError) throw existingError;
 
-    const existingNames = new Set(((existingRows ?? []) as Array<{ event_name?: string | null }>).map((row) => (row.event_name || '').trim().toLowerCase()).filter(Boolean));
-    const missingRows = seeds
-      .filter((seed) => !existingNames.has((seed.event_name || '').trim().toLowerCase()))
+    const missingRows = filterMissingOnboardingEventSeeds(((existingRows ?? []) as Array<{ event_name?: string | null }>), seeds)
       .map((seed) => ({ ...seed, wedding_site_id: siteId }));
 
     if (!missingRows.length) return;
