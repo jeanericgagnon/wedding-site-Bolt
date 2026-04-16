@@ -352,6 +352,21 @@ export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
 
 
 
+
+export const buildItinerarySeedFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || []).map((event, index) => ({
+  event_name: event.title,
+  event_date: profile.event.date || null,
+  start_time: null,
+  end_time: null,
+  location_name: event.locationName || null,
+  location_address: event.locationAddress || null,
+  notes: [event.dateLabel, event.notes].filter(Boolean).join(' — ') || null,
+  is_visible: true,
+  display_order: index,
+  onboarding_seeded: true,
+  rsvp_enabled: event.rsvpEnabled !== false,
+}));
+
 export const buildWeddingScheduleFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || [])
   .map((event, index) => ({
     id: event.id || `weekend-event-${index + 1}`,

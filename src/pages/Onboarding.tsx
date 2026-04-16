@@ -7,7 +7,7 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
-import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
+import { buildItinerarySeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnboarding';
 
@@ -400,9 +400,10 @@ export const Onboarding: React.FC = () => {
     const existingSite = await fetchExistingSite();
     if (!existingSite?.id) return false;
 
+    const itinerarySeeds = buildItinerarySeedFromStructuredEvents(weddingProfile);
     const { error } = await supabase
       .from('wedding_sites')
-      .update({ onboarding_answers: weddingProfile })
+      .update({ onboarding_answers: weddingProfile, wedding_data: { meta: { onboardingEventSeeds: itinerarySeeds } } })
       .eq('id', existingSite.id)
       .eq('user_id', user.id);
 
@@ -418,6 +419,7 @@ export const Onboarding: React.FC = () => {
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
     const profile = onboardingFormToProfile(formData);
+    const itinerarySeeds = buildItinerarySeedFromStructuredEvents(profile);
 
     if (!user) return false;
 
@@ -440,6 +442,7 @@ export const Onboarding: React.FC = () => {
           site_url: data.site_url || null,
           rsvp_deadline: data.rsvp_deadline || null,
           onboarding_answers: profile,
+          wedding_data: { meta: { onboardingEventSeeds: itinerarySeeds } },
         });
 
       if (error && error.message?.includes('onboarding_answers')) {
