@@ -39,7 +39,7 @@ export const buildIntakeSnapshot = (profile: WeddingProfile) => ({
   storyDetail: profile.story.summary,
   city: profile.event.venueLocation,
   venue: profile.event.venueName,
-  guestFeel: profile.guestExperience.summary || profile.story.welcomeNote,
+  guestFeel: '',
   registryPosture: profile.registry.status,
   rsvpDeadline: profile.event.rsvpDeadline,
   travelNotes: profile.event.weekendEvents || profile.guestExperience.travelSupportLevel,

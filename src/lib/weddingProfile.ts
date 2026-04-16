@@ -205,12 +205,12 @@ export const profileToOnboardingForm = (profile: WeddingProfile) => ({
   venueName: profile.event.venueName,
   venueLocation: profile.event.venueLocation,
   story: profile.story.summary,
-  guestExperience: '',
+  guestExperience: '', // legacy compatibility only
   weekendEvents: profile.event.weekendEvents,
   partnerLabels: `${profile.couple.partnerOneLabel || 'none'}|${profile.couple.partnerTwoLabel || 'none'}`,
   extraGuestNotes: profile.story.welcomeNote || '',
   rsvpDeadline: profile.event.rsvpDeadline,
-  registryLink: '',
+  registryLink: '', // legacy compatibility only
   ceremonyTime: profile.event.ceremonyTime || '',
   guestCount: '',
   plusOnePolicy: '',
@@ -283,15 +283,15 @@ export const onboardingFormToProfile = (formData: OnboardingFormShape): WeddingP
       welcomeNote: formData.extraGuestNotes || '',
     },
     registry: {
-      url: formData.registryIntent || formData.registryLink,
-      status: (formData.registryIntent || formData.registryLink).trim() ? 'linked' : 'missing',
+      url: formData.registryIntent || '',
+      status: (formData.registryIntent || '').trim() ? 'linked' : 'missing',
     },
     design: {
       theme: formData.theme,
       vibe: '',
     },
     guestExperience: {
-      summary: formData.guestCount || formData.guestExperience,
+      summary: formData.guestCount || '',
       faqTone: formData.plusOnePolicy || '',
       travelSupportLevel: formData.mealChoice === 'yes' ? 'high' : 'minimal',
     },
@@ -336,7 +336,7 @@ export const getWeddingProfileSummary = (profile: WeddingProfile): WeddingProfil
     profile.event.venueLocation ? { id: 'location', label: 'Location', value: profile.event.venueLocation, questionKey: 'venueLocation' } : null,
     profile.design.theme ? { id: 'theme', label: 'Theme', value: profile.design.theme, questionKey: 'theme' } : null,
     profile.story.summary ? { id: 'story', label: 'Story', value: profile.story.summary, questionKey: 'story' } : null,
-    profile.guestExperience.summary ? { id: 'guest-experience', label: 'Guest experience', value: profile.guestExperience.summary, questionKey: 'guestExperience' } : null,
+    profile.guestExperience.summary ? { id: 'guest-count', label: 'Guest count', value: profile.guestExperience.summary, questionKey: 'guestCount' } : null,
     profile.event.structuredWeekendEvents.length ? { id: 'weekend-events', label: 'Weekend events', value: profile.event.structuredWeekendEvents.map((event) => `${event.dateLabel ? `${event.dateLabel}: ` : ''}${event.title}${event.locationName ? ` @ ${event.locationName}` : ''}`).join('; '), questionKey: 'weekendEvents' } : profile.event.weekendEvents ? { id: 'weekend-events', label: 'Weekend events', value: profile.event.weekendEvents, questionKey: 'weekendEvents' } : null,
     profile.event.rsvpDeadline ? { id: 'rsvp', label: 'RSVP by', value: profile.event.rsvpDeadline, questionKey: 'rsvpDeadline' } : null,
   ].filter(Boolean) as WeddingProfileSummaryItem[];
@@ -350,10 +350,10 @@ export const getWeddingProfileRefineTargets = (profile: WeddingProfile) => [
   { id: 'venue', label: 'Venue name', questionIndex: 3, value: profile.event.venueName },
   { id: 'theme', label: 'Theme', questionIndex: 4, value: profile.design.theme },
   { id: 'story', label: 'Story', questionIndex: 5, value: profile.story.summary },
-  { id: 'guest-experience', label: 'Guest experience', questionIndex: 6, value: profile.guestExperience.summary },
+  { id: 'guest-count', label: 'Guest count', questionIndex: 7, value: profile.guestExperience.summary },
   { id: 'weekend-events', label: 'Weekend events', questionIndex: 7, value: profile.event.weekendEvents },
   { id: 'rsvp', label: 'RSVP deadline', questionIndex: 8, value: profile.event.rsvpDeadline },
-  { id: 'registry', label: 'Registry', questionIndex: 9, value: profile.registry.url },
+  { id: 'registry', label: 'Registry', questionIndex: 11, value: profile.registry.url },
 ];
 
 
@@ -442,7 +442,7 @@ export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
       venueLocation: profile.event.venueLocation || '',
       ceremonyTime: profile.event.ceremonyTime || '',
       receptionTime: '',
-      guestExperience: profile.guestExperience.summary || '',
+      guestExperience: '',
       weekendEvents: profile.event.weekendEvents || '',
       structuredWeekendEvents: profile.event.structuredWeekendEvents || [],
       rsvpDeadline: profile.event.rsvpDeadline || '',
