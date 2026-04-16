@@ -57,10 +57,11 @@ const NEED_TO_QUESTION_KEY: Record<string, string> = {
   'venue name': 'venueName',
   'theme': 'theme',
   'story summary': 'story',
-  'guest experience': 'guestExperience',
+  'guest count': 'guestCount',
+  'plus one policy': 'plusOnePolicy',
   'weekend events': 'weekendEvents',
   'rsvp deadline': 'rsvpDeadline',
-  'registry link': 'registryLink',
+  'registry intent': 'registryIntent',
 };
 
 const QUESTION_KEY_BY_PATH: Record<string, string> = {
@@ -70,10 +71,11 @@ const QUESTION_KEY_BY_PATH: Record<string, string> = {
   'event.venueName': 'venueName',
   'design.theme': 'theme',
   'story.summary': 'story',
-  'guestExperience.summary': 'guestExperience',
+  'guestExperience.summary': 'guestCount',
+  'guestExperience.faqTone': 'plusOnePolicy',
   'event.weekendEvents': 'weekendEvents',
   'event.rsvpDeadline': 'rsvpDeadline',
-  'registry.url': 'registryLink',
+  'registry.url': 'registryIntent',
 };
 
 const PROMPT_BY_QUESTION_KEY: Record<string, string> = {
@@ -83,10 +85,11 @@ const PROMPT_BY_QUESTION_KEY: Record<string, string> = {
   venueName: 'Do you already know the venue name?',
   theme: 'What vibe should the site lean toward?',
   story: 'Anything you want us to know about your story?',
-  guestExperience: 'How do you want guests to feel over the weekend?',
+  guestCount: 'About how many guests are you inviting?',
+  plusOnePolicy: "What's your plus-one policy?",
   weekendEvents: 'What else is happening around the wedding weekend?',
   rsvpDeadline: 'When should guests RSVP by?',
-  registryLink: 'Do you already have a registry link?',
+  registryIntent: "What's the registry plan?",
 };
 
 const onboardingExtractionSchema = z.object({
@@ -243,7 +246,7 @@ const deterministicExtractWeddingProfileUpdates = (
     confidence = Math.max(confidence, 0.72);
   }
 
-  if (!updates.story && !updates.guestExperience && !(updates.event && 'weekendEvents' in updates.event) && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed)) {
+  if (!updates.story && !updates.guestExperience && !(updates.event && 'weekendEvents' in updates.event) && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed) && !/cash|gifts|both|unsure|none for now/i.test(trimmed)) {
     updates.story = { ...profile.story, summary: trimmed };
     notes.push('Captured story summary');
     confidence = Math.max(confidence, 0.58);
