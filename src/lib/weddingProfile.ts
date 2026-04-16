@@ -212,6 +212,11 @@ export const profileToOnboardingForm = (profile: WeddingProfile) => ({
   extraGuestNotes: profile.story.welcomeNote || '',
   rsvpDeadline: profile.event.rsvpDeadline,
   registryLink: profile.registry.url,
+  ceremonyTime: profile.event.ceremonyTime || '',
+  guestCount: profile.guestExperience.summary || '',
+  plusOnePolicy: profile.guestExperience.faqTone || '',
+  mealChoice: profile.guestExperience.travelSupportLevel === 'high' ? 'yes' : 'no',
+  registryIntent: profile.registry.url || '',
   theme: profile.design.theme,
 });
 
@@ -229,6 +234,11 @@ export type OnboardingFormShape = {
   story: string;
   guestExperience: string;
   weekendEvents: string;
+  ceremonyTime?: string;
+  guestCount?: string;
+  plusOnePolicy?: string;
+  mealChoice?: string;
+  registryIntent?: string;
   extraGuestNotes?: string;
   rsvpDeadline: string;
   registryLink: string;
@@ -260,7 +270,7 @@ export const onboardingFormToProfile = (formData: OnboardingFormShape): WeddingP
       venueLocation: formData.venueLocation,
       weekendEvents: formData.weekendEvents,
       structuredWeekendEvents: parseWeekendEvents(formData.weekendEvents),
-      ceremonyTime: '',
+      ceremonyTime: formData.ceremonyTime || '',
       receptionTime: '',
       rsvpDeadline: formData.rsvpDeadline,
     },
@@ -274,17 +284,17 @@ export const onboardingFormToProfile = (formData: OnboardingFormShape): WeddingP
       welcomeNote: formData.extraGuestNotes || '',
     },
     registry: {
-      url: formData.registryLink,
-      status: formData.registryLink.trim() ? 'linked' : 'missing',
+      url: formData.registryIntent || formData.registryLink,
+      status: (formData.registryIntent || formData.registryLink).trim() ? 'linked' : 'missing',
     },
     design: {
       theme: formData.theme,
       vibe: '',
     },
     guestExperience: {
-      summary: formData.guestExperience,
-      faqTone: formData.guestExperience,
-      travelSupportLevel: formData.venueLocation.trim() ? 'standard' : 'minimal',
+      summary: formData.guestCount || formData.guestExperience,
+      faqTone: formData.plusOnePolicy || '',
+      travelSupportLevel: formData.mealChoice === 'yes' ? 'high' : 'minimal',
     },
     meta: {
       readinessScore: 0,
@@ -431,7 +441,7 @@ export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
       date: profile.event.date || '',
       venueName: profile.event.venueName || '',
       venueLocation: profile.event.venueLocation || '',
-      ceremonyTime: '',
+      ceremonyTime: profile.event.ceremonyTime || '',
       receptionTime: '',
       guestExperience: profile.guestExperience.summary || '',
       weekendEvents: profile.event.weekendEvents || '',

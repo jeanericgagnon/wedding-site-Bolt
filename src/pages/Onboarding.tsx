@@ -13,7 +13,7 @@ import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnbo
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
-type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'extraGuestNotes' | 'rsvpDeadline' | 'registryLink';
+type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'rsvpDeadline' | 'mealChoice' | 'registryIntent' | 'story';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
@@ -40,20 +40,22 @@ export const Onboarding: React.FC = () => {
     placeholder?: string;
   }> = [
     { key: 'partnerNames', label: 'Who’s getting married?', prompt: 'Who’s getting married?', helper: 'Use the names exactly how you want guests to see them on the site.', placeholder: 'Alex & Jordan' },
-    { key: 'partnerLabels', label: 'Labels', prompt: 'How should we refer to each of you on the site, if at all?', helper: 'Use labels like bride, groom, partner, or just use names.', placeholder: 'groom|bride' },
-    { key: 'venueLocation', label: 'When + where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'November 14, 2026 — Sayulita, Mexico' },
-    { key: 'venueName', label: 'Venue', prompt: 'What venue are you getting married at?', helper: 'Boutique hotel, garden estate, tropical beach, backyard, city rooftop — whatever fits.', placeholder: 'Amor Boutique Hotel' },
-    { key: 'theme', label: 'Site vibe', prompt: 'What overall vibe should the site lean into?', helper: 'A few words is enough. Editorial, playful, coastal, timeless, intimate, modern, relaxed.', placeholder: 'Editorial, playful, coastal' },
-    { key: 'story', label: 'How you met', prompt: 'How did you two meet?', type: 'textarea', helper: 'And what is one detail that makes the story actually yours?', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...' },
-    { key: 'guestExperience', label: 'Guest feel', prompt: 'What do you want guests to feel over the weekend?', helper: 'Relaxed, welcomed, excited, taken care of, connected — whatever matters most.', placeholder: 'Relaxed, welcomed, excited' },
-    { key: 'weekendEvents', label: 'Weekend plans', prompt: 'What’s happening besides the wedding itself?', type: 'textarea', helper: 'Welcome dinner, rehearsal dinner, pool day, pickleball, brunch, anything like that.', placeholder: 'Friday pickleball and welcome dinner, Saturday rehearsal dinner, Sunday wedding' },
-    { key: 'extraGuestNotes', label: 'Anything else?', prompt: 'Anything else guests should know?', type: 'textarea', helper: 'Anything we missed that would make the site feel more like you two or make the weekend easier for guests.', placeholder: 'Guests should stay through Monday, airport transport is handled, tropical formal, etc.' },
-    { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This helps us make the RSVP ask feel clear and natural.', type: 'date' },
-    { key: 'registryLink', label: 'Registry', prompt: 'Anything we should know about gifts or the registry?', helper: 'If you want it to feel grateful, casual, no-pressure, or skip it entirely, that is good to know.', placeholder: 'https://... or “grateful, no pressure”' },
+    { key: 'partnerLabels', label: 'Labels', prompt: 'How should we refer to each of you on the site?', helper: 'Choose the simplest option that fits best.', placeholder: 'groom|bride' },
+    { key: 'venueLocation', label: 'When + where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'January 17, 2027 — Sayulita, Mexico' },
+    { key: 'venueName', label: 'Venue', prompt: 'What venue are you getting married at?', helper: 'Use the venue name or write TBD if you are still deciding.', placeholder: 'Amor Boutique Hotel or TBD' },
+    { key: 'theme', label: 'Style', prompt: 'What style should the site lean into?', helper: 'A few words is enough. Tropical, modern, editorial, classic, relaxed.', placeholder: 'Tropical, relaxed' },
+    { key: 'weekendEvents', label: 'Events', prompt: 'What events are happening over the wedding weekend?', type: 'textarea', helper: 'Use one short line or sentence. We will turn it into structured events.', placeholder: 'Friday pickleball tournament and welcome dinner, Saturday rehearsal dinner, Sunday wedding' },
+    { key: 'ceremonyTime', label: 'Ceremony arrival', prompt: 'What time should guests arrive for the ceremony?', helper: 'A simple arrival time is enough.', placeholder: '4:30 PM' },
+    { key: 'guestCount', label: 'Guest count', prompt: 'About how many guests are you inviting?', helper: 'Pick the closest range.', placeholder: '50-100' },
+    { key: 'plusOnePolicy', label: 'Plus-ones', prompt: 'What’s your plus-one policy?', helper: 'Choose the policy you want the RSVP flow to follow.', placeholder: 'some' },
+    { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This drives the RSVP setup immediately.', type: 'date' },
+    { key: 'mealChoice', label: 'Meals', prompt: 'Do you want to collect meal choices?', helper: 'Choose yes or no.', placeholder: 'yes' },
+    { key: 'registryIntent', label: 'Registry', prompt: 'What’s the registry plan?', helper: 'Cash, gifts, both, unsure, or no registry for now.', placeholder: 'both' },
+    { key: 'story', label: 'Story', prompt: 'Want to add your story? (totally optional)', type: 'textarea', helper: 'Optional, but helpful for stronger copy.', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...' },
   ];
 
   const currentQuestion = conciergeQuestions[conversationIndex] ?? null;
-  const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'extraGuestNotes', 'registryLink'];
+  const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'story'];
   const isCurrentQuestionOptional = currentQuestion ? optionalQuestionKeys.includes(currentQuestion.key) : false;
 
   const getStepForIndex = (index: number): OnboardingStep => {
@@ -730,10 +732,14 @@ export const Onboarding: React.FC = () => {
         return formData.story.trim()
           ? 'Nice — we can turn that into warmer story copy instead of generic filler.'
           : `You can skip this for now, or use a quick starting angle like: ${getStoryPrompt()}`;
-      case 'guestExperience':
-        return formData.guestExperience.trim()
-          ? `We’ll use "${formData.guestExperience.trim()}" to shape the tone of the hero, FAQ, and travel copy.`
-          : 'This helps the first draft feel hospitable, not generic.';
+      case 'guestCount':
+        return formData.guestCount?.trim()
+          ? `We’ll use the ${formData.guestCount.trim()} guest count range to tune RSVP defaults and overall site assumptions.`
+          : 'Guest count helps us tune RSVP defaults and overall site assumptions.';
+      case 'plusOnePolicy':
+        return formData.plusOnePolicy?.trim()
+          ? `We’ll carry a ${formData.plusOnePolicy.trim()} plus-one policy into RSVP setup.`
+          : 'Plus-one policy sets the RSVP defaults.';
       case 'weekendEvents':
         return formData.weekendEvents.trim()
           ? 'Nice — we can frame the weekend as an experience, not just a single ceremony.'
@@ -742,10 +748,14 @@ export const Onboarding: React.FC = () => {
         return formData.rsvpDeadline
           ? `Guests will see ${formData.rsvpDeadline} as the RSVP target.`
           : 'RSVP timing helps the draft feel operational, not just pretty.';
-      case 'registryLink':
-        return formData.registryLink.trim()
-          ? 'Nice — registry can be live in the first draft instead of added later.'
-          : 'No problem if this is empty. Registry can stay optional and be added later.';
+      case 'mealChoice':
+        return formData.mealChoice?.trim()
+          ? `RSVP meal collection is set to ${formData.mealChoice.trim()}.`
+          : 'Meal collection can be switched on or off here.';
+      case 'registryIntent':
+        return formData.registryIntent?.trim()
+          ? `We’ll use a ${formData.registryIntent.trim()} registry posture in the draft.`
+          : 'Registry intent tells us whether to show gifts, cash, both, or hold off.';
       default:
         return 'Each answer tightens the draft before you ever touch the builder.';
     }
