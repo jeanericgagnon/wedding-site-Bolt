@@ -864,7 +864,7 @@ export const Onboarding: React.FC = () => {
       {renderSetupChecklist()}
       {renderDraftProgress()}
 
-      <Card variant="default" padding="lg" className="border-0 shadow-2xl bg-white/90 backdrop-blur">
+      <Card variant="default" padding="lg" className="border-0 shadow-[0_24px_80px_rgba(0,0,0,0.08)] bg-white/85 backdrop-blur-xl">
         {showFollowUpReview ? (
           <div className="space-y-6">
             <div>
@@ -892,7 +892,7 @@ export const Onboarding: React.FC = () => {
                   <p className="text-sm font-medium text-text-primary">{index + 1}. {question.variants[0]}</p>
                   <p className="mt-1 text-xs text-text-secondary">Alternate phrasings: {question.variants[1]} / {question.variants[2]}</p>
                   <Textarea
-                    className="mt-3"
+                    className="mt-3 min-h-[132px] rounded-2xl border-border/70 bg-white/90 text-base shadow-sm"
                     placeholder="Optional answer"
                     value={followUpAnswers[question.key] || ''}
                     onChange={(event) => {
@@ -930,7 +930,7 @@ export const Onboarding: React.FC = () => {
                 </div>
               ))}
             </div>
-            <div className="flex flex-wrap justify-between gap-3 pt-4">
+            <div className="flex flex-wrap justify-between gap-3 border-t border-border/60 pt-6">
               <div className="flex flex-wrap gap-3">
                 <Button variant="ghost" size="lg" onClick={() => setShowFollowUpReview(false)}>Back to answers</Button>
                 <Button variant="outline" size="lg" onClick={handleManualSetup} disabled={loading}>Switch to manual setup</Button>
@@ -1005,7 +1005,7 @@ export const Onboarding: React.FC = () => {
                     <label key={field.key} className="rounded-2xl border border-border bg-surface p-4">
                       <p className="mb-2 text-sm font-medium text-text-primary">{field.label}</p>
                       <select
-                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-text-primary"
+                        className="w-full rounded-2xl border border-border/70 bg-white/90 px-4 py-3 text-sm text-text-primary shadow-sm"
                         value={value}
                         onChange={(event) => {
                           const next = [...parts];
@@ -1024,6 +1024,7 @@ export const Onboarding: React.FC = () => {
               </div>
             ) : currentQuestion.type === 'textarea' ? (
               <Textarea
+                className="min-h-[132px] rounded-2xl border-border/70 bg-white/90 text-base shadow-sm"
                 name={currentQuestion.key}
                 placeholder={currentQuestion.key === 'story' ? getStoryPrompt() : (currentQuestion.placeholder || '')}
                 value={formData[currentQuestion.key as keyof typeof formData]}
@@ -1032,6 +1033,7 @@ export const Onboarding: React.FC = () => {
               />
             ) : (
               <Input
+                className="h-14 rounded-2xl border-border/70 bg-white/90 text-base shadow-sm"
                 type={currentQuestion.type === 'date' || currentQuestion.type === 'time' ? currentQuestion.type : 'text'}
                 name={currentQuestion.key}
                 placeholder={currentQuestion.placeholder || ''}
@@ -1040,7 +1042,7 @@ export const Onboarding: React.FC = () => {
               />
             )}
 
-            <div className="flex flex-wrap justify-between gap-3 pt-4">
+            <div className="flex flex-wrap justify-between gap-3 border-t border-border/60 pt-6">
               <div className="flex flex-wrap items-center gap-3">
                 <Button
                   variant="ghost"
