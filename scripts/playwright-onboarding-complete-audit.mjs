@@ -4,16 +4,20 @@ const baseUrl = process.argv[2] || 'http://127.0.0.1:4178';
 const email = process.argv[3] || 'test@gmail.com';
 const password = process.argv[4] || '12345678';
 
-const textAnswers = [
+const values = [
   'Eric & Kara',
   'January 17, 2027 — Sayulita, Mexico',
   'Amor Boutique Hotel',
   'Tropical, relaxed',
   'Friday pickleball tournament, Friday welcome dinner, Saturday rehearsal dinner, Sunday wedding',
   '4:30 PM',
-  'We met on Hinge and finally met in person after a concert idea turned into an actual plan.',
+  '50-100',
+  'some',
+  '2026-10-17',
+  'yes',
+  'both',
+  'We met on Hinge after I bought concert tickets.',
 ];
-const selectAnswers = ['bride-groom', '50-100', 'some', 'yes', 'both'];
 
 const result = {
   completed: false,
@@ -35,38 +39,40 @@ try {
 
   await page.goto(`${baseUrl}/onboarding`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /start guided setup/i }).click();
-  await page.waitForTimeout(1000);
 
-  let answerIndex = 0;
-  let selectIndex = 0;
-  for (let step = 0; step < 12; step += 1) {
-    const textInput = page.locator('input[type="text"]').first();
+  let valueIndex = 0;
+  for (let step = 0; step < 16; step += 1) {
+    await page.waitForTimeout(400);
+
+    const selectLocator = page.locator('select');
     const dateInput = page.locator('input[type="date"]').first();
+    const textInput = page.locator('input[type="text"]').first();
     const textarea = page.locator('textarea').first();
-    const select = page.locator('select').first();
 
-    if (await select.count()) {
-      const value = selectAnswers[Math.min(selectIndex, selectAnswers.length - 1)];
-      await select.selectOption(value).catch(() => {});
-      if (value === 'bride-groom') {
-        const second = page.locator('select').nth(1);
-        if (await second.count()) await second.selectOption('bride-groom').catch(() => {});
+    const selectCount = await selectLocator.count();
+    if (selectCount > 0) {
+      await selectLocator.nth(0).selectOption({ index: 1 }).catch(() => {});
+      if (selectCount > 1) {
+        await selectLocator.nth(1).selectOption({ index: 1 }).catch(() => {});
       }
-      selectIndex += 1;
-    } else if (await dateInput.count()) {
-      await dateInput.fill('2026-10-17').catch(() => {});
-    } else if (await textarea.count()) {
-      await textarea.fill(textAnswers[Math.min(answerIndex, textAnswers.length - 1)]).catch(() => {});
-      answerIndex += 1;
-    } else if (await textInput.count()) {
-      await textInput.fill(textAnswers[Math.min(answerIndex, textAnswers.length - 1)]).catch(() => {});
-      answerIndex += 1;
     }
 
-    const continueBtn = page.getByRole('button', { name: /continue|save brief|save draft anyway|skip these and build|use these answers and build/i }).last();
+    if (await dateInput.count()) {
+      await dateInput.fill('2026-10-17').catch(() => {});
+    } else if (await textarea.count()) {
+      await textarea.fill(values[Math.min(valueIndex, values.length - 1)]).catch(() => {});
+      valueIndex += 1;
+    } else if (await textInput.count()) {
+      await textInput.fill(values[Math.min(valueIndex, values.length - 1)]).catch(() => {});
+      valueIndex += 1;
+    }
+
+    const continueBtn = page.getByRole('button', {
+      name: /continue|save brief|save draft anyway|skip these and build|use these answers and build/i,
+    }).last();
+
     if (await continueBtn.count()) {
       await continueBtn.click().catch(() => {});
-      await page.waitForTimeout(1500);
     }
 
     if (await page.getByRole('button', { name: /import guest csv/i }).count()) {
@@ -74,14 +80,14 @@ try {
     }
   }
 
-  await page.waitForTimeout(2000);
-  result.sawCsvCta = await page.getByRole('button', { name: /import guest csv/i }).count() > 0;
-  result.sawReviewWebsite = await page.getByRole('button', { name: /review website first/i }).count() > 0;
-  result.finalUrl = page.url();
+  await page.waitForTimeout(4000);
   const bodyText = await page.locator('body').innerText();
-  result.completed = result.sawCsvCta && /your website is ready to shape/i.test(bodyText);
+  result.sawCsvCta = /import guest csv/i.test(bodyText);
+  result.sawReviewWebsite = /review website first/i.test(bodyText);
+  result.finalUrl = page.url();
+  result.completed = /your website is ready to shape/i.test(bodyText) && result.sawCsvCta && result.sawReviewWebsite;
 } catch (error) {
-  result.error = error.message;
+  result.error = error instanceof Error ? error.message : String(error);
 } finally {
   await browser.close();
 }
