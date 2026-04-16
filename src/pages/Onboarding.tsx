@@ -256,11 +256,27 @@ export const Onboarding: React.FC = () => {
   };
 
   const hydrateProfile = useCallback((partial: Partial<ReturnType<typeof profileToOnboardingForm>>) => {
-    const nextProfile = onboardingFormToProfile({
+    const nextForm = {
       ...profileToOnboardingForm(createEmptyWeddingProfile()),
       ...formData,
       ...partial,
-    });
+    };
+    const nextProfile = onboardingFormToProfile(nextForm);
+    setInitialSetupAnswers((prev) => ({
+      ...prev,
+      names: nextForm.partnerNames,
+      whenWhere: nextForm.weddingDate && nextForm.venueLocation ? `${nextForm.weddingDate} — ${nextForm.venueLocation}` : nextForm.venueLocation,
+      venueNameOrTbd: nextForm.venueName,
+      style: nextForm.theme,
+      weekendEventsRaw: nextForm.weekendEvents,
+      ceremonyArrivalTime: nextForm.ceremonyTime || '',
+      guestCountBand: (nextForm.guestCount || '') as InitialSetupAnswers['guestCountBand'],
+      plusOnePolicy: (nextForm.plusOnePolicy || '') as InitialSetupAnswers['plusOnePolicy'],
+      rsvpDeadline: nextForm.rsvpDeadline,
+      mealChoice: (nextForm.mealChoice || '') as InitialSetupAnswers['mealChoice'],
+      registryIntent: (nextForm.registryIntent || '') as InitialSetupAnswers['registryIntent'],
+      optionalStory: nextForm.story,
+    }));
     setWeddingProfile(nextProfile);
     return nextProfile;
   }, [formData]);
