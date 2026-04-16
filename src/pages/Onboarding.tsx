@@ -788,9 +788,12 @@ export const Onboarding: React.FC = () => {
               ))}
             </div>
             <div className="flex justify-between pt-4">
-              <Button variant="ghost" size="lg" onClick={() => setShowFollowUpReview(false)}>Back</Button>
+              <Button variant="ghost" size="lg" onClick={() => setShowFollowUpReview(false)}>Back to answers</Button>
+              <Button variant="outline" size="lg" onClick={nextStep} disabled={loading}>
+                {loading ? 'Building...' : 'Skip these and build'}
+              </Button>
               <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
-                {loading ? 'Building...' : 'Build the site'}
+                {loading ? 'Building...' : 'Use these answers and build'}
               </Button>
             </div>
           </div>
