@@ -61,10 +61,10 @@ try {
       answerIndex += 1;
     }
 
-    const continueBtn = page.getByRole('button', { name: /continue|save brief|save draft anyway/i }).last();
+    const continueBtn = page.getByRole('button', { name: /continue|save brief|save draft anyway|skip these and build|use these answers and build/i }).last();
     if (await continueBtn.count()) {
       await continueBtn.click().catch(() => {});
-      await page.waitForTimeout(800);
+      await page.waitForTimeout(1500);
     }
 
     if (await page.getByRole('button', { name: /import guest csv/i }).count()) {
@@ -72,10 +72,12 @@ try {
     }
   }
 
+  await page.waitForTimeout(2000);
   result.sawCsvCta = await page.getByRole('button', { name: /import guest csv/i }).count() > 0;
   result.sawReviewWebsite = await page.getByRole('button', { name: /review website first/i }).count() > 0;
   result.finalUrl = page.url();
-  result.completed = result.sawCsvCta;
+  const bodyText = await page.locator('body').innerText();
+  result.completed = result.sawCsvCta && /your website is ready to shape/i.test(bodyText);
 } catch (error) {
   result.error = error.message;
 } finally {
