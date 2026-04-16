@@ -13,9 +13,10 @@ const BUCKETS: Array<{ key: PhotoBucketKind; title: string; description: string;
 type Props = {
   buckets: CanonicalPhotoBuckets;
   onUploadClick?: (bucket: PhotoBucketKind) => void;
+  onRemoveClick?: (bucket: PhotoBucketKind, itemId: string) => void;
 };
 
-export const PhotoBucketCards: React.FC<Props> = ({ buckets, onUploadClick }) => {
+export const PhotoBucketCards: React.FC<Props> = ({ buckets, onUploadClick, onRemoveClick }) => {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {BUCKETS.map((bucket) => {
@@ -32,7 +33,19 @@ export const PhotoBucketCards: React.FC<Props> = ({ buckets, onUploadClick }) =>
             </div>
             <div className="mt-4 flex min-h-[72px] flex-wrap gap-2 rounded-2xl bg-muted/40 p-2">
               {items.length > 0 ? items.slice(0, 4).map((item) => (
-                <img key={item.id} src={item.url} alt={item.label ?? bucket.title} className="h-16 w-16 rounded-xl object-cover" />
+                <div key={item.id} className="group relative">
+                  <img src={item.url} alt={item.label ?? bucket.title} className="h-16 w-16 rounded-xl object-cover" />
+                  {onRemoveClick && (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveClick(bucket.key, item.id)}
+                      className="absolute -right-1 -top-1 rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-text-primary shadow opacity-0 transition group-hover:opacity-100"
+                      aria-label={`Remove ${item.label ?? bucket.title}`}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
               )) : (
                 <div className="flex h-16 w-full items-center justify-center rounded-xl border border-dashed border-border text-xs text-text-tertiary">
                   No uploads yet

@@ -197,6 +197,23 @@ export const GuestPhotoSharing: React.FC = () => {
     bucketFileInputRef.current?.click();
   };
 
+  const handleBucketRemoveClick = async (bucket: PhotoBucketKind, itemId: string) => {
+    try {
+      setSubmitting(true);
+      const nextBuckets = {
+        ...photoBuckets,
+        [bucket]: photoBuckets[bucket].filter((item) => item.id !== itemId),
+      };
+      setPhotoBuckets(nextBuckets);
+      await persistPhotoBuckets(nextBuckets);
+      setSuccess('Photo removed from bucket.');
+    } catch (err) {
+      setError((err as Error)?.message || 'Failed to remove photo bucket item.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || !pendingBucket || !siteId) return;
@@ -861,7 +878,7 @@ export const GuestPhotoSharing: React.FC = () => {
             <h2 className="text-xl font-semibold text-neutral-900">Auto-place couple photos</h2>
             <p className="mt-1 text-sm text-neutral-600">Bucket photos into a few simple groups and we will place them into the right site sections automatically.</p>
           </div>
-          <PhotoBucketCards buckets={photoBuckets} onUploadClick={handleBucketUploadClick} />
+          <PhotoBucketCards buckets={photoBuckets} onUploadClick={handleBucketUploadClick} onRemoveClick={handleBucketRemoveClick} />
           <input ref={bucketFileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleBucketFilesSelected} />
         </Card>
 
