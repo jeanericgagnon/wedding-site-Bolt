@@ -97,6 +97,11 @@ export const PaymentRequired: React.FC = () => {
   };
 
   const handleBypassForNow = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('dayoflove:onboarding-draft');
+      window.localStorage.removeItem('dayoflove:onboarding-resume-hint');
+      window.localStorage.removeItem('dayoflove:onboarding-resume-index');
+    }
     navigate('/onboarding?bypassPayment=1&showChooser=1', { replace: true });
   };
 
