@@ -11,7 +11,7 @@ import { createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingP
 import { createOnboardingSessionState } from '../lib/aiOnboarding';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
-type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'rsvpDeadline' | 'registryLink';
+type ConciergeQuestion = 'partnerNames' | 'weddingDate' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'extraGuestNotes' | 'rsvpDeadline' | 'registryLink';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
@@ -43,12 +43,13 @@ export const Onboarding: React.FC = () => {
     { key: 'story', label: 'How you met', prompt: 'How did you two meet?', type: 'textarea', helper: 'And what is one detail that makes the story actually yours?', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...' },
     { key: 'guestExperience', label: 'Guest feel', prompt: 'What do you want guests to feel over the weekend?', helper: 'Relaxed, welcomed, excited, taken care of, connected — whatever matters most.', placeholder: 'Relaxed, welcomed, excited' },
     { key: 'weekendEvents', label: 'Weekend plans', prompt: 'What’s happening besides the wedding itself?', type: 'textarea', helper: 'Welcome dinner, rehearsal dinner, pool day, pickleball, brunch, anything like that.', placeholder: 'Friday pickleball and welcome dinner, Saturday rehearsal dinner, Sunday wedding' },
+    { key: 'extraGuestNotes', label: 'Anything else?', prompt: 'Anything else guests should know?', type: 'textarea', helper: 'Anything we missed that would make the site feel more like you two or make the weekend easier for guests.', placeholder: 'Guests should stay through Monday, airport transport is handled, tropical formal, etc.' },
     { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This helps us make the RSVP ask feel clear and natural.', type: 'date' },
     { key: 'registryLink', label: 'Registry', prompt: 'Anything we should know about gifts or the registry?', helper: 'If you want it to feel grateful, casual, no-pressure, or skip it entirely, that is good to know.', placeholder: 'https://... or “grateful, no pressure”' },
   ];
 
   const currentQuestion = conciergeQuestions[conversationIndex] ?? null;
-  const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'registryLink'];
+  const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'extraGuestNotes', 'registryLink'];
   const isCurrentQuestionOptional = currentQuestion ? optionalQuestionKeys.includes(currentQuestion.key) : false;
 
   const getStepForIndex = (index: number): OnboardingStep => {
@@ -73,6 +74,7 @@ export const Onboarding: React.FC = () => {
       !formData.story.trim(),
       !formData.guestExperience.trim(),
       !formData.weekendEvents.trim(),
+      false,
       !formData.rsvpDeadline,
       !formData.registryLink.trim(),
     ];
@@ -757,7 +759,7 @@ export const Onboarding: React.FC = () => {
               <Textarea
                 name={currentQuestion.key}
                 placeholder={currentQuestion.key === 'story' ? getStoryPrompt() : (currentQuestion.placeholder || '')}
-                value={formData[currentQuestion.key]}
+                value={formData[currentQuestion.key as keyof typeof formData]}
                 onChange={handleChange}
                 rows={5}
               />
@@ -766,7 +768,7 @@ export const Onboarding: React.FC = () => {
                 type={currentQuestion.type === 'date' || currentQuestion.type === 'time' ? currentQuestion.type : 'text'}
                 name={currentQuestion.key}
                 placeholder={currentQuestion.placeholder || ''}
-                value={formData[currentQuestion.key]}
+                value={formData[currentQuestion.key as keyof typeof formData]}
                 onChange={handleChange}
               />
             )}

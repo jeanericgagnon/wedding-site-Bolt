@@ -169,6 +169,7 @@ export const profileToOnboardingForm = (profile: WeddingProfile) => ({
   story: profile.story.summary,
   guestExperience: profile.guestExperience.summary || profile.story.welcomeNote,
   weekendEvents: profile.event.weekendEvents,
+  extraGuestNotes: profile.story.welcomeNote || '',
   rsvpDeadline: profile.event.rsvpDeadline,
   registryLink: profile.registry.url,
   theme: profile.design.theme,
@@ -182,6 +183,7 @@ export type OnboardingFormShape = {
   story: string;
   guestExperience: string;
   weekendEvents: string;
+  extraGuestNotes?: string;
   rsvpDeadline: string;
   registryLink: string;
   theme: string;
@@ -219,7 +221,7 @@ export const onboardingFormToProfile = (formData: OnboardingFormShape): WeddingP
     },
     story: {
       summary: formData.story,
-      welcomeNote: '',
+      welcomeNote: formData.extraGuestNotes || '',
     },
     registry: {
       url: formData.registryLink,
