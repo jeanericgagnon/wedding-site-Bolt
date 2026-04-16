@@ -100,11 +100,7 @@ export const PaymentRequired: React.FC = () => {
     try {
       const status = await fetchPaymentStatus(user.id);
       if (status === 'active') {
-        if (isNewSignup) {
-          navigate('/builder?openTemplates=1&from=signup', { replace: true });
-        } else {
-          navigate('/onboarding/status', { replace: true });
-        }
+        navigate('/onboarding?from=payment', { replace: true });
       } else {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
       }
@@ -133,7 +129,7 @@ export const PaymentRequired: React.FC = () => {
           <p className="text-text-secondary">
             {isExpired
               ? 'Your 2-year access has ended. Renew below or switch to annual billing.'
-              : 'Account created. After payment, you will set names, site URL, and wedding details.'}
+              : 'Account created. After payment, you will go straight into setup and shape your site from there.'}
           </p>
         </div>
 
@@ -164,7 +160,7 @@ export const PaymentRequired: React.FC = () => {
             {isNewSignup && !error && !isCanceled && !isExpired && (
               <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg text-sm text-success border border-success/20 mb-4">
                 <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>Account created successfully. Complete payment to unlock site setup and publishing.</span>
+                <span>Account created successfully. Complete payment to unlock setup and publishing.</span>
               </div>
             )}
 

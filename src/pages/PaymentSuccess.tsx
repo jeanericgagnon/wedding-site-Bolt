@@ -27,7 +27,7 @@ export const PaymentSuccess: React.FC = () => {
           const verified = await verifyCheckoutSession(sessionId);
           if (verified.paid) {
             setStatus('confirmed');
-            setTimeout(() => navigate('/builder?openTemplates=1&from=checkout', { replace: true }), 1200);
+            setTimeout(() => navigate('/onboarding?from=checkout', { replace: true }), 1200);
             return;
           }
         } catch {
@@ -40,7 +40,7 @@ export const PaymentSuccess: React.FC = () => {
           const paymentStatus = await fetchPaymentStatus(user.id);
           if (paymentStatus === 'active') {
             setStatus('confirmed');
-            setTimeout(() => navigate('/builder?openTemplates=1&from=checkout', { replace: true }), 1500);
+            setTimeout(() => navigate('/onboarding?from=checkout', { replace: true }), 1500);
             return;
           }
         } catch {
@@ -81,7 +81,7 @@ export const PaymentSuccess: React.FC = () => {
               <CheckCircle2 className="w-10 h-10 text-success" />
             </div>
             <h1 className="text-2xl font-bold text-text-primary mb-2">Payment confirmed!</h1>
-            <p className="text-text-secondary">Taking you to your dashboard...</p>
+            <p className="text-text-secondary">Taking you into setup...</p>
           </>
         )}
 
