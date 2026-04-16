@@ -115,7 +115,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
   const [bulkModerating, setBulkModerating] = useState(false);
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
-  const [photoBuckets] = useState(() => createEmptyPhotoBuckets());
+  const [photoBuckets, setPhotoBuckets] = useState(() => createEmptyPhotoBuckets());
   const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
   const [slideshowAlbumFilter, setSlideshowAlbumFilter] = useState<string>('all');
   const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
@@ -182,7 +182,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
       const { data: site, error: siteErr } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug')
+        .select('id, site_slug, wedding_data')
         .eq('user_id', userId)
         .single();
 
@@ -190,6 +190,8 @@ export const GuestPhotoSharing: React.FC = () => {
 
       setSiteId(site.id as string);
       setSiteSlug((site.site_slug as string) ?? null);
+      const savedBuckets = ((((site.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.photoBuckets as ReturnType<typeof createEmptyPhotoBuckets> | undefined) ?? null);
+      if (savedBuckets) setPhotoBuckets(savedBuckets);
 
       const [{ data: eventsData }, { data: albumData }, { data: uploadsData }] = await Promise.all([
         supabase
