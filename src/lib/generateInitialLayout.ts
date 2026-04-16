@@ -2,6 +2,7 @@ import { LayoutConfigV1, SectionInstance } from '../types/layoutConfig';
 import { WeddingDataV1 } from '../types/weddingData';
 import { getTemplate } from '../templates/registry';
 import { resolveBuilderVariant } from './sectionVariantCompatibility';
+import { assertCanonicalTemplateLayout } from './canonicalTemplateRuntime';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -81,8 +82,8 @@ export function generateInitialLayout(
     return section;
   });
 
-  return {
-    version: '1',
+  const layout = {
+    version: '1' as const,
     templateId,
     pages: [
       {
@@ -96,6 +97,9 @@ export function generateInitialLayout(
       updatedAtISO: now,
     },
   };
+
+  assertCanonicalTemplateLayout(layout, `generateInitialLayout:${templateId}`);
+  return layout;
 }
 
 export function regenerateLayout(
