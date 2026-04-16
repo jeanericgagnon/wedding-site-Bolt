@@ -10,6 +10,7 @@ import { demoWeddingSite } from '../lib/demoData';
 import { buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnboarding';
+import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
@@ -27,6 +28,7 @@ export const Onboarding: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
+  const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [showFollowUpReview, setShowFollowUpReview] = useState(false);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
   const formData = profileToOnboardingForm(weddingProfile);
@@ -316,6 +318,7 @@ export const Onboarding: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
+    setInitialSetupAnswers((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     if (e.target.name === 'venueLocation' && !formData.weddingDate) {
       const parts = e.target.value.split(/\s+[—-]\s+/);
       if (parts.length >= 2) {
