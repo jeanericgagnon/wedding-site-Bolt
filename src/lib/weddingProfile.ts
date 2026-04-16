@@ -225,6 +225,7 @@ const splitWhenAndWhere = (value: string) => {
   return { weddingDate: '', venueLocation: value.trim() };
 };
 
+// Legacy onboarding bridge moved to src/lib/legacyOnboardingBridge.ts
 export type OnboardingFormShape = {
   partnerNames: string;
   weddingDate: string;
