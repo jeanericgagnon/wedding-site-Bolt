@@ -60,3 +60,6 @@ export const initialSetupAnswersToOnboardingFormShape = (answers: InitialSetupAn
   rsvpDeadline: answers.rsvpDeadline,
   registryLink: '',
 });
+
+
+export const createEmptyOnboardingFormShapeFromInitialSetup = () => initialSetupAnswersToOnboardingFormShape(createEmptyInitialSetupAnswers());

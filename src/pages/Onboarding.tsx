@@ -7,10 +7,10 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
-import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
+import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile } from '../lib/weddingProfile';
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState, createOnboardingSessionStateFromInitialSetup } from '../lib/aiOnboarding';
-import { createEmptyInitialSetupAnswers, initialSetupAnswersToOnboardingFormShape, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
+import { createEmptyInitialSetupAnswers, createEmptyOnboardingFormShapeFromInitialSetup, initialSetupAnswersToOnboardingFormShape, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
 import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
@@ -207,7 +207,7 @@ export const Onboarding: React.FC = () => {
         setWeddingProfile(parsed.weddingProfile);
       } else if (parsed.formData) {
         setWeddingProfile(onboardingFormToProfile({
-          ...profileToOnboardingForm(createEmptyWeddingProfile()),
+          ...createEmptyOnboardingFormShapeFromInitialSetup(),
           ...parsed.formData,
         }));
       }
@@ -257,9 +257,9 @@ export const Onboarding: React.FC = () => {
     window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
   };
 
-  const hydrateProfile = useCallback((partial: Partial<ReturnType<typeof profileToOnboardingForm>>) => {
+  const hydrateProfile = useCallback((partial: Partial<ReturnType<typeof initialSetupAnswersToOnboardingFormShape>>) => {
     const nextForm = {
-      ...profileToOnboardingForm(createEmptyWeddingProfile()),
+      ...createEmptyOnboardingFormShapeFromInitialSetup(),
       ...formData,
       ...partial,
     };
@@ -317,7 +317,7 @@ export const Onboarding: React.FC = () => {
   useEffect(() => {
     if (!isDemoMode) return;
 
-    const prevFormData = profileToOnboardingForm(weddingProfile);
+    const prevFormData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
 
     hydrateProfile({
       partnerNames: prevFormData.partnerNames || `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
