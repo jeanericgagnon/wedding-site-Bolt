@@ -9,7 +9,7 @@ import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
 import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile, onboardingFormToProfile, profileToOnboardingForm } from '../lib/weddingProfile';
 import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
-import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnboarding';
+import { buildIntakeSnapshot, createOnboardingSessionState, createOnboardingSessionStateFromInitialSetup } from '../lib/aiOnboarding';
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
 import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
@@ -146,7 +146,7 @@ export const Onboarding: React.FC = () => {
   const conversationProgress = Math.round(((conversationIndex + 1) / conciergeQuestions.length) * 100);
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
   const fieldStatuses = getWeddingProfileFieldStatus(weddingProfile);
-  const onboardingSession = createOnboardingSessionState(applyInitialSetupAnswersToWeddingProfile(initialSetupAnswers), currentQuestion ? [currentQuestion.key] : []);
+  const onboardingSession = createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, currentQuestion ? [currentQuestion.key] : []);
   const followUpPlan = planFollowUpQuestions(buildInitialSetupSnapshot(initialSetupAnswers), Object.keys(followUpAnswers).filter((key) => followUpAnswers[key]?.trim()).length);
 
   const draftMilestones = [

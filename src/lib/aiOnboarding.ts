@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { WeddingProfile, WeddingProfileReadiness, evaluateWeddingProfileReadiness, createEmptyWeddingProfile } from './weddingProfile';
 import { isOpenAiConfigured, runOpenAiStructuredPrompt, getOpenAiRuntimeConfig } from './openai';
 import { FollowUpQuestion, planFollowUpQuestions } from './aiFollowUpPlanner';
+import type { InitialSetupAnswers } from './initialSetupAnswers';
+import { buildInitialSetupSnapshot } from './initialSetupSnapshot';
 
 export type OnboardingIntent =
   | 'collect-critical-field'
@@ -356,5 +358,30 @@ export const applyOnboardingInput = async (
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, nextProfile),
     suggestedFollowUps: planFollowUpQuestions(buildIntakeSnapshot(nextProfile), session.askedQuestions.length).questions,
     confidence: extraction.conflicts.length > 0 || extraction.requiresConfirmation ? extraction.confidence : readiness.hasEnoughToDraft ? Math.max(extraction.confidence, 0.9) : Math.max(extraction.confidence, 0.6),
+  };
+};
+
+
+export const createOnboardingSessionStateFromInitialSetup = (
+  answers: InitialSetupAnswers,
+  askedQuestions: string[] = []
+): OnboardingSessionState => {
+  const profile = createEmptyWeddingProfile();
+  const readiness = evaluateWeddingProfileReadiness(profile);
+  return {
+    profile,
+    readiness,
+    currentIntent: readiness.missingCriticalFields.length > 0
+      ? 'collect-critical-field'
+      : readiness.hasEnoughToDraft
+        ? 'offer-draft'
+        : 'collect-recommended-field',
+    nextQuestionKey: null,
+    askedQuestions,
+    confirmedFields: [],
+    unresolvedConflicts: [],
+    suggestedPrompt: null,
+    suggestedFollowUps: planFollowUpQuestions(buildInitialSetupSnapshot(answers), askedQuestions.length).questions,
+    confidence: 0.45,
   };
 };
