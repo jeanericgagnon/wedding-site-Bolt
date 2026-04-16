@@ -621,3 +621,61 @@ export const mergeWeddingDataFromProfile = (
     venues: (patch.venues as unknown[]) ?? ((existing.venues as unknown[]) ?? []),
   };
 };
+
+
+import type { InitialSetupAnswers } from './initialSetupAnswers';
+import { interpretInitialSetupAnswers } from './initialSetupInterpreter';
+
+export const applyInitialSetupAnswersToWeddingProfile = (answers: InitialSetupAnswers): WeddingProfile => {
+  const interpreted = interpretInitialSetupAnswers(answers);
+  const displayNames = answers.names.trim();
+  const [partnerOne = '', partnerTwo = ''] = interpreted.names;
+
+  return {
+    ...createEmptyWeddingProfile(),
+    couple: {
+      displayNames,
+      partnerOne,
+      partnerTwo: partnerTwo || partnerOne,
+      partnerOneLabel: answers.labelPreference === 'bride-groom' ? 'groom' : answers.labelPreference === 'bride-bride' ? 'bride' : answers.labelPreference === 'groom-groom' ? 'groom' : 'none',
+      partnerTwoLabel: answers.labelPreference === 'bride-groom' ? 'bride' : answers.labelPreference === 'bride-bride' ? 'bride' : answers.labelPreference === 'groom-groom' ? 'groom' : 'none',
+      storyTone: answers.style,
+    },
+    event: {
+      date: interpreted.weddingDate,
+      timezone: 'America/Los_Angeles',
+      venueName: answers.venueNameOrTbd,
+      venueLocation: interpreted.weddingLocation,
+      weekendEvents: answers.weekendEventsRaw,
+      structuredWeekendEvents: interpreted.structuredWeekendEvents,
+      ceremonyTime: answers.ceremonyArrivalTime,
+      receptionTime: '',
+      rsvpDeadline: answers.rsvpDeadline,
+    },
+    venue: {
+      city: interpreted.weddingLocation,
+      state: '',
+      country: '',
+    },
+    story: {
+      summary: answers.optionalStory,
+      welcomeNote: '',
+    },
+    registry: {
+      url: answers.registryIntent,
+      status: answers.registryIntent ? 'linked' : 'missing',
+    },
+    design: {
+      theme: answers.style || 'garden',
+      vibe: answers.style,
+    },
+    guestExperience: {
+      summary: answers.guestCountBand,
+      faqTone: answers.plusOnePolicy,
+      travelSupportLevel: answers.mealChoice === 'yes' ? 'high' : 'minimal',
+    },
+    meta: {
+      readinessScore: 0,
+    },
+  };
+};
