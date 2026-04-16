@@ -68,6 +68,11 @@ export const QuickStart: React.FC = () => {
     [answers, currentStep],
   );
 
+  const labelForAnswer = (questionId: string, value: string) => {
+    if (questionId === 'title') return value;
+    return value;
+  };
+
   const advance = async (value: string) => {
     if (!value.trim()) return;
     const nextAnswers = { ...answers, [currentQuestion.id]: value.trim() };
@@ -115,9 +120,9 @@ export const QuickStart: React.FC = () => {
         {previousAnswers.length > 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 space-y-2">
             {previousAnswers.map((item) => (
-              <div key={item.id} className="text-[13px]" style={{ color: '#B0B0B0' }}>
-                {item.prompt.replace('?', '')}: <span style={{ color: '#909090' }}>{item.value}</span>
-              </div>
+              <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="text-[13px]" style={{ color: '#B0B0B0' }}>
+                {item.prompt.replace('?', '')}: <span style={{ color: '#909090' }}>{labelForAnswer(item.id, item.value)}</span>
+              </motion.div>
             ))}
           </motion.div>
         )}
@@ -152,7 +157,7 @@ export const QuickStart: React.FC = () => {
                 <button
                   onClick={() => advance(inputValue)}
                   disabled={!inputValue.trim() || loading}
-                  className="px-8 py-4 rounded-full transition-all duration-200 disabled:opacity-30"
+                  className="px-8 py-4 rounded-full transition-all duration-200 disabled:opacity-30 hover:opacity-90"
                   style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}
                 >
                   {loading ? 'Building...' : 'Continue'}
