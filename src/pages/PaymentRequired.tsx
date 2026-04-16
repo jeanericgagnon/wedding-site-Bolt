@@ -101,6 +101,8 @@ export const PaymentRequired: React.FC = () => {
       window.localStorage.removeItem('dayoflove:onboarding-draft');
       window.localStorage.removeItem('dayoflove:onboarding-resume-hint');
       window.localStorage.removeItem('dayoflove:onboarding-resume-index');
+      window.location.assign('/onboarding/celebration?bypassPayment=1');
+      return;
     }
     navigate('/onboarding/celebration?bypassPayment=1', { replace: true });
   };
