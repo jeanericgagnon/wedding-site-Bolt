@@ -26,6 +26,7 @@ export const Onboarding: React.FC = () => {
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
   const [showFollowUpReview, setShowFollowUpReview] = useState(false);
+  const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
   const formData = profileToOnboardingForm(weddingProfile);
 
   const conciergeQuestions: Array<{
@@ -453,6 +454,17 @@ export const Onboarding: React.FC = () => {
       return;
     }
 
+    const mergedExtraNotes = Object.entries(followUpAnswers)
+      .filter(([, value]) => value.trim())
+      .map(([key, value]) => `${key}: ${value.trim()}`)
+      .join('\n');
+
+    if (mergedExtraNotes) {
+      hydrateProfile({
+        extraGuestNotes: [formData.extraGuestNotes, mergedExtraNotes].filter(Boolean).join('\n\n'),
+      });
+    }
+
     setLoading(true);
 
     const existingSite = await fetchExistingSite();
@@ -727,6 +739,13 @@ export const Onboarding: React.FC = () => {
                 <div key={question.key} className="rounded-2xl border border-border bg-surface px-4 py-4">
                   <p className="text-sm font-medium text-text-primary">{index + 1}. {question.variants[0]}</p>
                   <p className="mt-1 text-xs text-text-secondary">Alternate phrasings: {question.variants[1]} / {question.variants[2]}</p>
+                  <Textarea
+                    className="mt-3"
+                    placeholder="Optional answer"
+                    value={followUpAnswers[question.key] || ''}
+                    onChange={(event) => setFollowUpAnswers((prev) => ({ ...prev, [question.key]: event.target.value }))}
+                    rows={3}
+                  />
                 </div>
               ))}
             </div>
