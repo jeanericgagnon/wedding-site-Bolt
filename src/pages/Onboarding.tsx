@@ -13,7 +13,7 @@ import { buildIntakeSnapshot, createOnboardingSessionState } from '../lib/aiOnbo
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
-type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'weddingDate' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'extraGuestNotes' | 'rsvpDeadline' | 'registryLink';
+type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'story' | 'guestExperience' | 'weekendEvents' | 'extraGuestNotes' | 'rsvpDeadline' | 'registryLink';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
@@ -100,7 +100,7 @@ export const Onboarding: React.FC = () => {
     {
       id: 'date',
       label: 'Set wedding date',
-      done: Boolean(formData.weddingDate),
+      done: Boolean(formData.weddingDate || formData.venueLocation.trim()),
       actionLabel: 'Go',
       action: () => {
         goToQuestionIndex(getQuestionIndexByKey(onboardingSession.nextQuestionKey));
@@ -148,7 +148,7 @@ export const Onboarding: React.FC = () => {
       id: 'foundation',
       title: 'Foundation set',
       description: 'Names, date, and location are giving the site a real identity.',
-      done: Boolean(formData.partnerNames.trim() && formData.weddingDate && formData.venueLocation.trim()),
+      done: Boolean(formData.partnerNames.trim() && formData.venueLocation.trim()),
     },
     {
       id: 'look-and-feel',
@@ -690,10 +690,6 @@ export const Onboarding: React.FC = () => {
         return formData.partnerNames.trim()
           ? `The homepage hero will introduce ${formData.partnerNames.trim()} right away, and your suggested URL becomes ${suggestedSiteSlug}.dayof.love.`
           : 'The homepage hero will introduce both of you right away.';
-      case 'weddingDate':
-        return formData.weddingDate
-          ? `We’ll use ${formData.weddingDate} in the hero, schedule, and RSVP timing.`
-          : 'Your date will drive the hero, schedule framing, and RSVP timing.';
       case 'venueLocation':
         return formData.venueLocation.trim()
           ? `Guests will immediately see ${formData.venueLocation.trim()} in the event details.`

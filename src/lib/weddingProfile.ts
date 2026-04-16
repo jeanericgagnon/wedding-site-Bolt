@@ -215,6 +215,12 @@ export const profileToOnboardingForm = (profile: WeddingProfile) => ({
   theme: profile.design.theme,
 });
 
+const splitWhenAndWhere = (value: string) => {
+  const parts = value.split(/\s+[—-]\s+/);
+  if (parts.length >= 2) return { weddingDate: parts[0].trim(), venueLocation: parts.slice(1).join(' — ').trim() };
+  return { weddingDate: '', venueLocation: value.trim() };
+};
+
 export type OnboardingFormShape = {
   partnerNames: string;
   weddingDate: string;
