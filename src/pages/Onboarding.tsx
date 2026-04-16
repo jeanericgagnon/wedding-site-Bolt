@@ -394,6 +394,24 @@ export const Onboarding: React.FC = () => {
     }
   };
 
+  const syncOnboardingEventSeeds = async (siteId: string, seeds: ReturnType<typeof buildItinerarySeedFromStructuredEvents>) => {
+    if (!seeds.length) return;
+    const { data: existingRows, error: existingError } = await supabase
+      .from('itinerary_events')
+      .select('event_name')
+      .eq('wedding_site_id', siteId);
+    if (existingError) throw existingError;
+
+    const existingNames = new Set(((existingRows ?? []) as Array<{ event_name?: string | null }>).map((row) => (row.event_name || '').trim().toLowerCase()).filter(Boolean));
+    const missingRows = seeds
+      .filter((seed) => !existingNames.has((seed.event_name || '').trim().toLowerCase()))
+      .map((seed) => ({ ...seed, wedding_site_id: siteId }));
+
+    if (!missingRows.length) return;
+    const { error: insertError } = await supabase.from('itinerary_events').insert(missingRows);
+    if (insertError) throw insertError;
+  };
+
   const saveWeddingProfileToExistingSite = async () => {
     if (!user || isDemoMode) return false;
 
@@ -412,6 +430,8 @@ export const Onboarding: React.FC = () => {
       return false;
     }
 
+    await syncOnboardingEventSeeds(existingSite.id, itinerarySeeds);
+
     clearSavedOnboardingDraft();
     navigate('/dashboard');
     return true;
@@ -428,7 +448,7 @@ export const Onboarding: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { data: createdSite, error } = await supabase
         .from('wedding_sites')
         .insert({
           user_id: user.id,
@@ -443,7 +463,9 @@ export const Onboarding: React.FC = () => {
           rsvp_deadline: data.rsvp_deadline || null,
           onboarding_answers: profile,
           wedding_data: { meta: { onboardingEventSeeds: itinerarySeeds } },
-        });
+        })
+        .select('id')
+        .single();
 
       if (error && error.message?.includes('onboarding_answers')) {
         const { error: fallbackError } = await supabase
@@ -466,6 +488,7 @@ export const Onboarding: React.FC = () => {
       }
 
       if (error) throw error;
+      if (createdSite?.id) await syncOnboardingEventSeeds(createdSite.id, itinerarySeeds);
       return true;
     } catch {
       alert('Failed to create wedding site. Please try again.');
