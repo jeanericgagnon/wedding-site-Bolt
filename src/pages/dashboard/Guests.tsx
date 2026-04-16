@@ -9,6 +9,7 @@ import { getPlusOneState } from '../../lib/plusOneState';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
+import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -622,15 +623,9 @@ export const DashboardGuests: React.FC = () => {
 
         if (cancelled) return;
 
-        const seededEvents = (((siteRes.data?.wedding_data as { meta?: { rsvpEventSeeds?: Array<{ id: string; label: string; dateLabel?: string; locationName?: string | null }> } } | null)?.meta?.rsvpEventSeeds) ?? []).map((seed, index) => ({
-          id: seed.id || `seed-${index + 1}`,
-          event_name: seed.label || 'Event',
-          event_date: '',
-          start_time: '',
-          location_name: seed.locationName || '',
-        }));
+        const seededEvents = (((siteRes.data?.wedding_data as { meta?: { rsvpEventSeeds?: Array<{ id: string; label: string; dateLabel?: string; locationName?: string | null }> } } | null)?.meta?.rsvpEventSeeds) ?? []);
 
-        setItineraryFilterEvents(((eventsRes.data ?? []) as ItineraryEvent[]).length > 0 ? ((eventsRes.data ?? []) as ItineraryEvent[]) : seededEvents as ItineraryEvent[]);
+        setItineraryFilterEvents(deriveInviteEvents((eventsRes.data ?? []) as ItineraryEvent[], seededEvents) as ItineraryEvent[]);
 
         const next = new Map<string, Set<string>>();
         ((invitesRes.data ?? []) as Array<{ event_id: string; guest_id: string }>).forEach((row) => {
