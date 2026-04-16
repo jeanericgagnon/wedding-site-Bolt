@@ -39,7 +39,7 @@ export const Celebration: React.FC = () => {
   };
 
   const handleGuidedSetup = () => {
-    navigate('/onboarding/guided');
+    navigate('/onboarding');
   };
 
   const handleManualSetup = () => {
@@ -103,20 +103,20 @@ export const Celebration: React.FC = () => {
                   <Sparkles className="w-6 h-6 text-accent" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
-                  Quick start
+                  AI setup
                 </h2>
-                <p className="text-xs text-accent font-medium mb-3">Fastest path to a strong first draft</p>
+                <p className="text-xs text-accent font-medium mb-3">Fastest path with AI help</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Answer a few quick questions and get a polished starting website with your core pages ready.
+                  Launch the AI-assisted setup flow and let it help shape your first draft fast.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>Start with the basics</span>
+                    <span>AI-led fastest path</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>Main pages already set up</span>
+                    <span>Get a strong first draft quickly</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
@@ -125,7 +125,7 @@ export const Celebration: React.FC = () => {
                 </ul>
               </div>
               <Button variant="accent" size="lg" fullWidth>
-                Start quick setup
+                Start AI setup
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>
@@ -145,18 +145,18 @@ export const Celebration: React.FC = () => {
                 <h2 className="text-xl font-bold text-text-primary mb-2">
                   Guided setup
                 </h2>
-                <p className="text-xs text-primary font-medium mb-3">5-10 minutes, step-by-step</p>
+                <p className="text-xs text-primary font-medium mb-3">Current structured setup flow</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Work section by section with more control, while still moving quickly.
+                  Use the current structured onboarding flow with more control and visible progress.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    <span>Section by section</span>
+                    <span>Current onboarding flow</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    <span>See progress as you go</span>
+                    <span>Step by step answers</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>

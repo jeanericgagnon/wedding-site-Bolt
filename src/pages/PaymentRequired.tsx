@@ -102,7 +102,7 @@ export const PaymentRequired: React.FC = () => {
       window.localStorage.removeItem('dayoflove:onboarding-resume-hint');
       window.localStorage.removeItem('dayoflove:onboarding-resume-index');
     }
-    navigate('/onboarding?bypassPayment=1&showChooser=1', { replace: true });
+    navigate('/onboarding/celebration?bypassPayment=1', { replace: true });
   };
 
   const handleCheckStatus = async () => {
@@ -112,7 +112,7 @@ export const PaymentRequired: React.FC = () => {
     try {
       const status = await fetchPaymentStatus(user.id);
       if (status === 'active') {
-        navigate('/onboarding?from=payment&showChooser=1', { replace: true });
+        navigate('/onboarding/celebration?from=payment', { replace: true });
       } else {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
       }
