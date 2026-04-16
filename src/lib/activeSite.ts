@@ -45,6 +45,8 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
     .from('wedding_sites')
     .select('id')
     .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   if (ownedError) throw ownedError;

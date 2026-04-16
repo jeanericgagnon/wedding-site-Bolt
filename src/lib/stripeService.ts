@@ -223,6 +223,8 @@ export async function fetchPaymentStatus(userId: string): Promise<'payment_requi
     .from('wedding_sites')
     .select('id, payment_status')
     .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
@@ -235,6 +237,8 @@ export async function fetchWeddingSiteId(userId: string): Promise<string | null>
     .from('wedding_sites')
     .select('id')
     .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   if (error) throw new Error(error.message);

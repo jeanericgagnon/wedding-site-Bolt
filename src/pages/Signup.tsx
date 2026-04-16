@@ -16,6 +16,8 @@ async function ensureMinimalWeddingSite(userId: string, email: string): Promise<
     .from('wedding_sites')
     .select('id')
     .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   if (existing.data?.id) return;
