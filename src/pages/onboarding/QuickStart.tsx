@@ -145,17 +145,15 @@ export const QuickStart: React.FC = () => {
       });
 
       const safeUpdateData = {
-        wedding_date: updateData.wedding_date,
-        venue_date: updateData.venue_date,
+        wedding_date: nextAnswers.date || null,
+        venue_date: nextAnswers.date || null,
         venue_name: nextAnswers.location || null,
-        wedding_location: updateData.wedding_location,
-        planning_status: updateData.planning_status,
-        active_template_id: updateData.active_template_id,
-        template_id: updateData.template_id,
-        wedding_data: updateData.wedding_data,
-        layout_config: updateData.layout_config,
-        couple_name_1: updateData.couple_name_1,
-        couple_name_2: updateData.couple_name_2,
+        wedding_location: nextAnswers.location || null,
+        planning_status: 'quick_start_complete',
+        active_template_id: 'modern-luxe',
+        template_id: 'modern-luxe',
+        couple_name_1: nameParts[0] || '',
+        couple_name_2: nameParts[1] || '',
       };
 
       const { data: targetSite, error: targetSiteError } = await supabase
