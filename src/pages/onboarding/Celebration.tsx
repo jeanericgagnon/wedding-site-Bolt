@@ -35,15 +35,15 @@ export const Celebration: React.FC = () => {
   }, []);
 
   const handleQuickStart = () => {
-    navigate('/onboarding/quick-start');
+    navigate('/onboarding/quick-start?bypassPayment=1');
   };
 
   const handleGuidedSetup = () => {
-    navigate('/onboarding');
+    navigate('/onboarding?bypassPayment=1');
   };
 
   const handleManualSetup = () => {
-    navigate('/dashboard');
+    navigate('/dashboard?bypassPayment=1');
   };
 
   return (
