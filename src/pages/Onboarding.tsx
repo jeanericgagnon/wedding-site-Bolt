@@ -34,7 +34,7 @@ export const Onboarding: React.FC = () => {
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [showFollowUpReview, setShowFollowUpReview] = useState(false);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
-  const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
+  const [initialSetupFollowUps, setInitialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
 
   const conciergeQuestions: Array<{
@@ -470,7 +470,7 @@ export const Onboarding: React.FC = () => {
     const existingSite = await fetchExistingSite();
     if (!existingSite?.id) return false;
 
-    const { itinerarySeeds, rsvpEventSeeds, weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers);
+    const { itinerarySeeds, rsvpEventSeeds, weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
     const { error } = await supabase
       .from('wedding_sites')
       .update({ onboarding_answers: derivedProfile, wedding_data: { meta: { onboardingEventSeeds: itinerarySeeds, rsvpEventSeeds } } })
@@ -489,7 +489,7 @@ export const Onboarding: React.FC = () => {
   };
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
-    const { weddingProfile: profile, itinerarySeeds, rsvpEventSeeds } = buildInitialSetupDerivedOutputs(initialSetupAnswers);
+    const { weddingProfile: profile, itinerarySeeds, rsvpEventSeeds } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
 
     if (!user) return false;
 
@@ -881,7 +881,18 @@ export const Onboarding: React.FC = () => {
                     className="mt-3"
                     placeholder="Optional answer"
                     value={followUpAnswers[question.key] || ''}
-                    onChange={(event) => setFollowUpAnswers((prev) => ({ ...prev, [question.key]: event.target.value }))}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setFollowUpAnswers((prev) => ({ ...prev, [question.key]: value }));
+                      if (question.key.startsWith('event-location-')) {
+                        const index = Number.parseInt(question.key.replace('event-location-', ''), 10) - 1;
+                        const eventKey = weddingProfile.event.structuredWeekendEvents[index]?.id || question.key;
+                        setInitialSetupFollowUps((prev) => ({
+                          ...prev,
+                          eventLocations: { ...prev.eventLocations, [eventKey]: value },
+                        }));
+                      }
+                    }}
                     rows={3}
                   />
                 </div>
