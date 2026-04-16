@@ -20,7 +20,19 @@ export type IntakeSnapshot = {
   registryPosture?: string;
   rsvpDeadline?: string;
   travelNotes?: string;
+  eventLocationGaps?: string[];
 };
+
+const buildEventLocationQuestion = (eventTitle: string, index: number): FollowUpQuestion => ({
+  key: `event-location-${index + 1}` ,
+  priority: 120 - index,
+  affects: ['scheduleIntro', 'travelIntro', 'faqIntro'],
+  variants: [
+    `Where is ${eventTitle} happening?`,
+    `What’s the location for ${eventTitle}?`,
+    `Where should guests go for ${eventTitle}?`,
+  ],
+});
 
 const FOLLOW_UP_BANK: FollowUpQuestion[] = [
   {
@@ -86,16 +98,19 @@ export const planFollowUpQuestions = (
   }
 
   const neededKeys = new Set<string>();
+  const eventLocationQuestions = (snapshot.eventLocationGaps ?? []).slice(0, Math.min(3, remainingBudget)).map((eventTitle, index) => buildEventLocationQuestion(eventTitle, index));
   if (!snapshot.city && snapshot.howWeMet) neededKeys.add('meeting-city');
   if (!snapshot.storyDetail && snapshot.howWeMet) neededKeys.add('first-detail');
   if (!snapshot.guestFeel) neededKeys.add('guest-feel');
   if (!snapshot.travelNotes && snapshot.venue) neededKeys.add('location-why');
   if (!snapshot.registryPosture) neededKeys.add('registry-posture');
 
-  const questions = FOLLOW_UP_BANK
-    .filter((q) => neededKeys.has(q.key))
-    .sort((a, b) => b.priority - a.priority)
-    .slice(0, Math.min(3, remainingBudget));
+  const questions = [
+    ...eventLocationQuestions,
+    ...FOLLOW_UP_BANK
+      .filter((q) => neededKeys.has(q.key))
+      .sort((a, b) => b.priority - a.priority),
+  ].slice(0, Math.min(3, remainingBudget));
 
   return {
     askedCount,

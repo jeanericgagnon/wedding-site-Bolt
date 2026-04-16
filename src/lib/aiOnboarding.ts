@@ -41,6 +41,9 @@ export const buildIntakeSnapshot = (profile: WeddingProfile) => ({
   registryPosture: profile.registry.status,
   rsvpDeadline: profile.event.rsvpDeadline,
   travelNotes: profile.event.weekendEvents || profile.guestExperience.travelSupportLevel,
+  eventLocationGaps: (profile.event.structuredWeekendEvents || [])
+    .filter((event) => !event.locationName?.trim())
+    .map((event) => `${event.dateLabel ? `${event.dateLabel} ` : ''}${event.title}`.trim()),
 });
 
 const normalize = (value: string) => value.trim().toLowerCase();
