@@ -4,18 +4,16 @@ const baseUrl = process.argv[2] || 'http://127.0.0.1:4178';
 const email = process.argv[3] || 'test@gmail.com';
 const password = process.argv[4] || '12345678';
 
-const answers = [
+const textAnswers = [
   'Eric & Kara',
   'January 17, 2027 — Sayulita, Mexico',
   'Amor Boutique Hotel',
   'Tropical, relaxed',
-  'We met on Hinge and finally met in person after a concert idea turned into an actual plan.',
-  'Relaxed, warm, cheerful',
   'Friday pickleball tournament, Friday welcome dinner, Saturday rehearsal dinner, Sunday wedding',
-  'Fly into Puerto Vallarta. Transportation details coming soon. Please come for the full weekend if you can.',
-  '2026-10-17',
-  'Coming soon',
+  '4:30 PM',
+  'We met on Hinge and finally met in person after a concert idea turned into an actual plan.',
 ];
+const selectAnswers = ['bride-groom', '50-100', 'some', 'yes', 'both'];
 
 const result = {
   completed: false,
@@ -39,25 +37,29 @@ try {
   await page.getByRole('button', { name: /start guided setup/i }).click();
   await page.waitForTimeout(1000);
 
-  const selects = page.locator('select');
-  if (await selects.count()) {
-    await selects.nth(0).selectOption('groom').catch(() => {});
-    if (await selects.count() > 1) await selects.nth(1).selectOption('bride').catch(() => {});
-  }
-
   let answerIndex = 0;
+  let selectIndex = 0;
   for (let step = 0; step < 12; step += 1) {
     const textInput = page.locator('input[type="text"]').first();
     const dateInput = page.locator('input[type="date"]').first();
     const textarea = page.locator('textarea').first();
+    const select = page.locator('select').first();
 
-    if (await dateInput.count()) {
-      await dateInput.fill('2027-01-17').catch(() => {});
+    if (await select.count()) {
+      const value = selectAnswers[Math.min(selectIndex, selectAnswers.length - 1)];
+      await select.selectOption(value).catch(() => {});
+      if (value === 'bride-groom') {
+        const second = page.locator('select').nth(1);
+        if (await second.count()) await second.selectOption('bride-groom').catch(() => {});
+      }
+      selectIndex += 1;
+    } else if (await dateInput.count()) {
+      await dateInput.fill('2026-10-17').catch(() => {});
     } else if (await textarea.count()) {
-      await textarea.fill(answers[Math.min(answerIndex, answers.length - 1)]).catch(() => {});
+      await textarea.fill(textAnswers[Math.min(answerIndex, textAnswers.length - 1)]).catch(() => {});
       answerIndex += 1;
     } else if (await textInput.count()) {
-      await textInput.fill(answers[Math.min(answerIndex, answers.length - 1)]).catch(() => {});
+      await textInput.fill(textAnswers[Math.min(answerIndex, textAnswers.length - 1)]).catch(() => {});
       answerIndex += 1;
     }
 
