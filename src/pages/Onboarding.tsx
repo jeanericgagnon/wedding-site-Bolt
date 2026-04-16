@@ -314,6 +314,13 @@ export const Onboarding: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
+    if (e.target.name === 'venueLocation' && !formData.weddingDate) {
+      const parts = e.target.value.split(/\s+[—-]\s+/);
+      if (parts.length >= 2) {
+        hydrateProfile({ weddingDate: parts[0].trim(), venueLocation: parts.slice(1).join(' — ').trim() });
+        return;
+      }
+    }
     hydrateProfile({ [e.target.name]: e.target.value });
   };
 
