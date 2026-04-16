@@ -42,7 +42,7 @@ export const buildIntakeSnapshot = (profile: WeddingProfile) => ({
   guestFeel: '',
   registryPosture: profile.registry.status,
   rsvpDeadline: profile.event.rsvpDeadline,
-  travelNotes: profile.event.weekendEvents || profile.guestExperience.travelSupportLevel,
+  travelNotes: profile.event.weekendEvents || profile.event.venueLocation,
   eventLocationGaps: (profile.event.structuredWeekendEvents || [])
     .filter((event) => !event.locationName?.trim())
     .map((event) => `${event.dateLabel ? `${event.dateLabel} ` : ''}${event.title}`.trim()),
@@ -133,10 +133,6 @@ const getSuggestedPrompt = (questionKey: string | null, profile?: WeddingProfile
     case 'story':
       return profile.couple.displayNames
         ? `What should we say about ${profile.couple.displayNames} on the site?`
-        : base;
-    case 'guestExperience':
-      return profile.event.venueLocation
-        ? `How do you want guests to feel when they arrive in ${profile.event.venueLocation}?`
         : base;
     case 'weekendEvents':
       return profile.event.date
