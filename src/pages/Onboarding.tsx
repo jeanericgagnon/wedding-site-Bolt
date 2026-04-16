@@ -40,8 +40,7 @@ export const Onboarding: React.FC = () => {
   }> = [
     { key: 'partnerNames', label: 'Who’s getting married?', prompt: 'Who’s getting married?', helper: 'Use the names exactly how you want guests to see them on the site.', placeholder: 'Alex & Jordan' },
     { key: 'partnerLabels', label: 'Labels', prompt: 'How should we refer to each of you on the site, if at all?', helper: 'Use labels like bride, groom, partner, or just use names.', placeholder: 'groom|bride' },
-    { key: 'weddingDate', label: 'When is it?', prompt: 'When are you getting married?', helper: 'Just the date is perfect for now.', type: 'date' },
-    { key: 'venueLocation', label: 'Where is it?', prompt: 'When and where are you getting married?', helper: 'City or region is enough to start if you do not want to overthink it yet.', placeholder: 'Sayulita, Mexico' },
+    { key: 'venueLocation', label: 'When + where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'November 14, 2026 — Sayulita, Mexico' },
     { key: 'venueName', label: 'Venue + feel', prompt: 'What’s the venue, and what’s the overall setting?', helper: 'Boutique hotel, garden estate, tropical beach, backyard, city rooftop, whatever fits.', placeholder: 'Amor Boutique Hotel, tropical and intimate' },
     { key: 'theme', label: 'Site vibe', prompt: 'What overall vibe should the site lean into?', helper: 'A few words is enough. Editorial, playful, coastal, timeless, intimate, modern, relaxed.', placeholder: 'Editorial, playful, coastal' },
     { key: 'story', label: 'How you met', prompt: 'How did you two meet?', type: 'textarea', helper: 'And what is one detail that makes the story actually yours?', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...' },
@@ -72,7 +71,6 @@ export const Onboarding: React.FC = () => {
     const checks = [
       !formData.partnerNames.trim(),
       false,
-      !formData.weddingDate,
       !formData.venueLocation.trim(),
       !formData.venueName.trim(),
       !formData.theme.trim(),
