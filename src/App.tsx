@@ -130,7 +130,7 @@ const AppContent = () => {
         <Route
           path="/onboarding/celebration"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute skipPaymentGate>
               <Celebration />
             </ProtectedRoute>
           }
