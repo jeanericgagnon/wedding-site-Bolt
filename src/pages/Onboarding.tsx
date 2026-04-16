@@ -670,7 +670,7 @@ export const Onboarding: React.FC = () => {
   );
 
   const renderChoice = () => (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-text-primary mb-4">
           Let's create your wedding site
@@ -864,7 +864,7 @@ export const Onboarding: React.FC = () => {
       {renderSetupChecklist()}
       {renderDraftProgress()}
 
-      <Card variant="default" padding="lg">
+      <Card variant="default" padding="lg" className="border-0 shadow-2xl bg-white/90 backdrop-blur">
         {showFollowUpReview ? (
           <div className="space-y-6">
             <div>
