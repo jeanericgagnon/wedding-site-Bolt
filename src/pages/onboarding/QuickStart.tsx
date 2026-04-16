@@ -14,7 +14,12 @@ type Question = {
 
 const questions: Question[] = [
   { id: 'names', prompt: 'What are your names?', type: 'text', placeholder: 'e.g. Eric & Kara' },
-  { id: 'title', prompt: 'How should we refer to you on the site?', type: 'choice', choices: ['Just our names', 'Bride & Groom', 'Bride & Bride', 'Groom & Groom'] },
+  {
+    id: 'title',
+    prompt: 'How should we refer to you on the site?',
+    type: 'choice',
+    choices: ['Just our names', 'Bride & Groom', 'Bride & Bride', 'Groom & Groom'],
+  },
   { id: 'date', prompt: 'When is the big day?', type: 'text', placeholder: 'e.g. January 17, 2027' },
   { id: 'location', prompt: 'Where will it be?', type: 'text', placeholder: 'e.g. Sayulita, Mexico' },
 ];
@@ -23,7 +28,9 @@ const PAGE_BG = '#FAF9F7';
 const MUTED = '#A0A0A0';
 const WARM = '#8B7355';
 const SOFT = '#F5F4F2';
+const SOFT_HOVER = '#EEEDEB';
 const TEXT = '#2B2B2B';
+const BORDER = '#E0DED9';
 
 export const QuickStart: React.FC = () => {
   const navigate = useNavigate();
@@ -32,13 +39,17 @@ export const QuickStart: React.FC = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
   const currentQuestion = questions[currentStep];
   const isLastQuestion = currentStep === questions.length - 1;
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
+
       const { data } = await supabase
         .from('wedding_sites')
         .select('couple_name_1, couple_name_2, wedding_date, venue_name, location')
@@ -46,7 +57,9 @@ export const QuickStart: React.FC = () => {
         .order('created_at', { ascending: true })
         .limit(1)
         .maybeSingle();
+
       if (!data) return;
+
       const seededNames = [data.couple_name_1, data.couple_name_2].filter(Boolean).join(' & ');
       setAnswers((prev) => ({
         ...prev,
@@ -54,55 +67,67 @@ export const QuickStart: React.FC = () => {
         ...(data.wedding_date ? { date: data.wedding_date } : {}),
         ...((data.venue_name || data.location) ? { location: data.venue_name || data.location } : {}),
       }));
-      if (seededNames && currentQuestion.id === 'names') setInputValue(seededNames);
+      if (seededNames && currentQuestion.id === 'names') {
+        setInputValue(seededNames);
+      }
     };
+
     fetchWeddingSite();
   }, []);
 
   useEffect(() => {
     setInputValue(answers[currentQuestion.id] || '');
-  }, [currentQuestion.id]);
+  }, [answers, currentQuestion.id]);
 
   const previousAnswers = useMemo(
     () => questions.slice(0, currentStep).map((q) => ({ ...q, value: answers[q.id] || '' })).filter((q) => q.value.trim()),
     [answers, currentStep],
   );
 
-  const labelForAnswer = (questionId: string, value: string) => {
-    if (questionId === 'title') return value;
-    return value;
-  };
-
   const advance = async (value: string) => {
     if (!value.trim()) return;
+
     const nextAnswers = { ...answers, [currentQuestion.id]: value.trim() };
     setAnswers(nextAnswers);
     setError('');
 
     if (!isLastQuestion) {
-      setTimeout(() => setCurrentStep((step) => step + 1), currentQuestion.type === 'choice' ? 220 : 0);
+      setTimeout(() => setCurrentStep((step) => step + 1), currentQuestion.type === 'choice' ? 280 : 0);
       return;
     }
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      const nameParts = nextAnswers.names.split('&').map((v) => v.trim()).filter(Boolean);
+
+      const nameParts = nextAnswers.names
+        .split('&')
+        .map((value) => value.trim())
+        .filter(Boolean);
+
       const updateData = buildOnboardingUpdateData({
-        coupleNames: { name1: nameParts[0] || '', name2: nameParts[1] || '' },
+        coupleNames: {
+          name1: nameParts[0] || '',
+          name2: nameParts[1] || '',
+        },
         planningStatus: 'quick_start_complete',
         template: 'modern',
         colorScheme: 'romantic',
         weddingDate: nextAnswers.date || '',
         location: nextAnswers.location || '',
       });
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update(updateData)
-        .eq('user_id', user.id);
+
+      const { error: updateError } = await supabase.from('wedding_sites').update(updateData).eq('user_id', user.id);
       if (updateError) throw updateError;
-      navigate('/dashboard?bypassPayment=1', { state: { showWelcome: true } });
+
+      navigate('/dashboard?bypassPayment=1', {
+        state: {
+          showWelcome: true,
+        },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save. Please try again.');
       setLoading(false);
@@ -110,18 +135,29 @@ export const QuickStart: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-12" style={{ backgroundColor: PAGE_BG }}>
-      <div className="w-full max-w-[580px]">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-16">
-          <p className="text-[13px] tracking-[0.08em] uppercase mb-1" style={{ color: WARM }}>Day of Love Setup</p>
-          <p className="text-[13px]" style={{ color: MUTED }}>About 2 minutes to get your site live</p>
+    <div className="min-h-screen px-6 py-12" style={{ backgroundColor: PAGE_BG }}>
+      <div className="mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-[580px] flex-col justify-center">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-20">
+          <p className="mb-1 text-[13px] uppercase tracking-[0.08em]" style={{ color: WARM }}>
+            Day of Love Setup
+          </p>
+          <p className="text-[13px]" style={{ color: MUTED }}>
+            About 2 minutes to get your site live
+          </p>
         </motion.div>
 
         {previousAnswers.length > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 space-y-2">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-10 space-y-2">
             {previousAnswers.map((item) => (
-              <motion.div key={item.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="text-[13px]" style={{ color: '#B0B0B0' }}>
-                {item.prompt.replace('?', '')}: <span style={{ color: '#909090' }}>{labelForAnswer(item.id, item.value)}</span>
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+                className="text-[13px]"
+                style={{ color: '#B0B0B0' }}
+              >
+                {item.prompt.replace('?', '')}: <span style={{ color: '#909090' }}>{item.value}</span>
               </motion.div>
             ))}
           </motion.div>
@@ -130,14 +166,21 @@ export const QuickStart: React.FC = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}
           >
             <h1
-              className="mb-8"
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500, letterSpacing: '-0.02em' }}
+              className="mb-10"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: '42px',
+                lineHeight: '1.18',
+                color: TEXT,
+                fontWeight: 500,
+                letterSpacing: '-0.025em',
+              }}
             >
               {currentQuestion.prompt}
             </h1>
@@ -147,18 +190,29 @@ export const QuickStart: React.FC = () => {
                 <input
                   type="text"
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !loading && advance(inputValue)}
+                  onChange={(event) => setInputValue(event.target.value)}
+                  onKeyDown={(event) => event.key === 'Enter' && !loading && advance(inputValue)}
                   placeholder={currentQuestion.placeholder}
                   autoFocus
-                  className="w-full px-6 py-5 rounded-[20px] border-0 outline-none transition-all duration-200"
-                  style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT, boxShadow: 'none' }}
+                  className="w-full rounded-[22px] border-0 px-6 py-5 text-left outline-none transition-all duration-200"
+                  style={{
+                    backgroundColor: SOFT,
+                    fontSize: '17px',
+                    color: TEXT,
+                    boxShadow: 'none',
+                  }}
                 />
+
                 <button
                   onClick={() => advance(inputValue)}
                   disabled={!inputValue.trim() || loading}
-                  className="px-8 py-4 rounded-full transition-all duration-200 disabled:opacity-30 hover:opacity-90"
-                  style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}
+                  className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30 hover:opacity-90"
+                  style={{
+                    backgroundColor: TEXT,
+                    color: '#FFFFFF',
+                    fontSize: '15px',
+                    fontWeight: 500,
+                  }}
                 >
                   {loading ? 'Building...' : 'Continue'}
                 </button>
@@ -171,21 +225,39 @@ export const QuickStart: React.FC = () => {
                     onClick={() => advance(choice)}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="w-full px-6 py-5 rounded-[20px] transition-all duration-200 text-left hover:scale-[1.01]"
-                    style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT, border: '1px solid transparent' }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                    className="w-full rounded-[22px] px-6 py-5 text-left transition-all duration-200 hover:scale-[1.01]"
+                    style={{
+                      backgroundColor: SOFT,
+                      fontSize: '17px',
+                      color: TEXT,
+                      border: '1px solid transparent',
+                    }}
+                    onMouseEnter={(event) => {
+                      event.currentTarget.style.backgroundColor = SOFT_HOVER;
+                      event.currentTarget.style.borderColor = BORDER;
+                    }}
+                    onMouseLeave={(event) => {
+                      event.currentTarget.style.backgroundColor = SOFT;
+                      event.currentTarget.style.borderColor = 'transparent';
+                    }}
                   >
                     {choice}
                   </motion.button>
                 ))}
               </div>
             )}
+
             {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
           </motion.div>
         </AnimatePresence>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16">
-          <button onClick={() => navigate('/dashboard?bypassPayment=1')} className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }} className="mt-16">
+          <button
+            onClick={() => navigate('/dashboard?bypassPayment=1')}
+            className="text-[13px] transition-opacity duration-200 hover:opacity-60"
+            style={{ color: MUTED }}
+          >
             Switch to manual setup
           </button>
         </motion.div>
