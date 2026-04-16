@@ -173,6 +173,7 @@ export const profileToOnboardingForm = (profile: WeddingProfile) => ({
   story: profile.story.summary,
   guestExperience: profile.guestExperience.summary || profile.story.welcomeNote,
   weekendEvents: profile.event.weekendEvents,
+  partnerLabels: `${profile.couple.partnerOneLabel || 'none'}|${profile.couple.partnerTwoLabel || 'none'}`,
   extraGuestNotes: profile.story.welcomeNote || '',
   rsvpDeadline: profile.event.rsvpDeadline,
   registryLink: profile.registry.url,

@@ -757,7 +757,36 @@ export const Onboarding: React.FC = () => {
               </div>
             </div>
 
-            {currentQuestion.type === 'textarea' ? (
+            {currentQuestion.key === 'partnerLabels' ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {[
+                  { key: 'partnerOneLabel', label: 'Your label' },
+                  { key: 'partnerTwoLabel', label: 'Partner label' },
+                ].map((field, index) => {
+                  const parts = (formData.partnerLabels || 'none|none').split('|');
+                  const value = parts[index] || 'none';
+                  return (
+                    <label key={field.key} className="rounded-2xl border border-border bg-surface p-4">
+                      <p className="mb-2 text-sm font-medium text-text-primary">{field.label}</p>
+                      <select
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-text-primary"
+                        value={value}
+                        onChange={(event) => {
+                          const next = [...parts];
+                          next[index] = event.target.value;
+                          handleChange({ target: { name: 'partnerLabels', value: `${next[0] || 'none'}|${next[1] || 'none'}` } } as React.ChangeEvent<HTMLInputElement>);
+                        }}
+                      >
+                        <option value="none">No label / just use names</option>
+                        <option value="bride">Bride</option>
+                        <option value="groom">Groom</option>
+                        <option value="partner">Partner</option>
+                      </select>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : currentQuestion.type === 'textarea' ? (
               <Textarea
                 name={currentQuestion.key}
                 placeholder={currentQuestion.key === 'story' ? getStoryPrompt() : (currentQuestion.placeholder || '')}
