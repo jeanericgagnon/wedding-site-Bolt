@@ -193,6 +193,7 @@ export const DashboardOverview: React.FC = () => {
               ...((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}))),
               aiDraft: generatedDraft,
               aiContent: canonicalAiContent,
+              photoBuckets: ((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}).photoBuckets as Record<string, unknown> | undefined) ?? null),
             },
           },
           site_json: patchedBuilderProject,
