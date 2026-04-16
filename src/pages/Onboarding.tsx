@@ -1045,12 +1045,24 @@ export const Onboarding: React.FC = () => {
           </div>
         </Card>
 
+      <Card variant="bordered" padding="lg" className="mb-8 text-left">
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-text-primary">Recommended next step</p>
+          <p className="text-sm text-text-secondary">Bring in your guest list now so invites, RSVP events, and event-specific guest flows are ready to go.</p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button variant="accent" size="lg" onClick={() => navigate('/dashboard/guests')}>
+              Import guest CSV
+            </Button>
+            <Button variant="outline" size="lg" onClick={() => navigate('/dashboard/builder')}>
+              Review website first
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button variant="accent" size="lg" onClick={() => navigate('/dashboard')}>
+        <Button variant="outline" size="lg" onClick={() => navigate('/dashboard')}>
           Go to Dashboard
-        </Button>
-        <Button variant="outline" size="lg" onClick={() => navigate('/dashboard/builder')}>
-          Review website
         </Button>
       </div>
     </div>
