@@ -541,7 +541,10 @@ export const Onboarding: React.FC = () => {
     if (existingSite?.id) {
       const updated = await saveWeddingProfileToExistingSite();
       setLoading(false);
-      if (updated) return;
+      if (updated) {
+        setStep('complete');
+        return;
+      }
     }
 
     const names = formData.partnerNames.split('&').map(n => n.trim());
