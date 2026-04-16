@@ -13,6 +13,7 @@ import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
 import { mediaRepository } from '../../builder/services/mediaRepository';
 import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
+import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 
 type ItineraryEvent = {
@@ -235,7 +236,14 @@ export const GuestPhotoSharing: React.FC = () => {
       }
       setPhotoBuckets(nextBuckets);
       await persistPhotoBuckets(nextBuckets);
-      setSuccess('Photo bucket updated.');
+      const placement = buildPhotoPlacementPlan(nextBuckets);
+      const placementSummary = [
+        placement.heroImage ? 'hero' : null,
+        placement.storyImage ? 'story' : null,
+        placement.travelImage ? 'travel' : null,
+        placement.galleryImages.length ? `gallery (${placement.galleryImages.length})` : null,
+      ].filter(Boolean).join(', ');
+      setSuccess(placementSummary ? `Photo bucket updated. Current auto-placement: ${placementSummary}.` : 'Photo bucket updated.');
     } catch (err) {
       setError((err as Error)?.message || 'Failed to upload photo bucket items.');
     } finally {
