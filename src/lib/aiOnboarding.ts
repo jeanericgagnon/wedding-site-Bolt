@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { WeddingProfile, WeddingProfileReadiness, evaluateWeddingProfileReadiness, createEmptyWeddingProfile } from './weddingProfile';
+import { WeddingProfile, WeddingProfileReadiness, evaluateWeddingProfileReadiness, createEmptyWeddingProfile, applyInitialSetupAnswersToWeddingProfile } from './weddingProfile';
 import { isOpenAiConfigured, runOpenAiStructuredPrompt, getOpenAiRuntimeConfig } from './openai';
 import { FollowUpQuestion, planFollowUpQuestions } from './aiFollowUpPlanner';
 import type { InitialSetupAnswers } from './initialSetupAnswers';
@@ -373,7 +373,7 @@ export const createOnboardingSessionStateFromInitialSetup = (
   answers: InitialSetupAnswers,
   askedQuestions: string[] = []
 ): OnboardingSessionState => {
-  const profile = createEmptyWeddingProfile();
+  const profile = applyInitialSetupAnswersToWeddingProfile(answers);
   const readiness = evaluateWeddingProfileReadiness(profile);
   return {
     profile,
