@@ -375,13 +375,17 @@ export const QuickStart: React.FC = () => {
   const goNext = async (value: string) => {
     if (!currentQuestion) return;
     if (!value.trim() && !currentQuestion.optional) return;
-    applyAnswer(currentQuestion.key, value);
+
+    const answeredQuestion = currentQuestion;
+    const answeredIndex = currentIndex;
+
+    applyAnswer(answeredQuestion.key, value);
     setError('');
     setAiDebug('');
 
     const nextAnswers = (() => {
       const draft = { ...initialSetupAnswers };
-      switch (currentQuestion.key) {
+      switch (answeredQuestion.key) {
         case 'partnerNames': draft.names = value.trim(); break;
         case 'partnerLabels':
           if (value.trim() === 'bride|groom') draft.labelPreference = 'bride-groom';
@@ -406,16 +410,16 @@ export const QuickStart: React.FC = () => {
 
     try {
       const aiSession = await applyOnboardingInput(
-        createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, questions.slice(0, currentIndex).map((q) => q.key)),
+        createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, questions.slice(0, answeredIndex).map((q) => q.key)),
         value.trim(),
       );
 
-      const shouldRunProcessing = currentIndex >= questions.length - 1;
+      const shouldRunProcessing = answeredIndex >= questions.length - 1;
       if (shouldRunProcessing) {
         await runProcessingInterstitial();
       }
 
-      if (aiSession.currentIntent === 'offer-draft' || currentIndex >= questions.length - 1) {
+      if (aiSession.currentIntent === 'offer-draft' || answeredIndex >= questions.length - 1) {
         const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
         setAiDebug(`intent=${aiSession.currentIntent}; mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
         const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
@@ -432,8 +436,8 @@ export const QuickStart: React.FC = () => {
       }
 
       const aiNextIndex = questions.findIndex((question) => question.key === aiSession.nextQuestionKey);
-      const fallbackIndex = currentIndex + 1;
-      const nextIndex = aiNextIndex >= 0 && aiNextIndex > currentIndex ? aiNextIndex : fallbackIndex;
+      const fallbackIndex = answeredIndex + 1;
+      const nextIndex = aiNextIndex >= 0 && aiNextIndex > answeredIndex ? aiNextIndex : fallbackIndex;
 
       if (nextIndex >= questions.length) {
         const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
@@ -456,7 +460,7 @@ export const QuickStart: React.FC = () => {
     } catch (err) {
       console.error('QUICK_START_AI_STEP_FAILED', err);
       setError(err instanceof Error ? err.message : 'AI step failed.');
-      setAiDebug(`step=${currentQuestion.key}; value=${value.trim().slice(0, 80)}`);
+      setAiDebug(`step=${answeredQuestion.key}; value=${value.trim().slice(0, 80)}`);
       setLoading(false);
       setIsThinking(false);
     }
