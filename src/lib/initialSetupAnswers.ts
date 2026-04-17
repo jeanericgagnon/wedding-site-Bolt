@@ -2,6 +2,7 @@ export type LabelPreference = 'names-only' | 'bride-groom' | 'bride-bride' | 'gr
 export type GuestCountBand = 'under-50' | '50-100' | '100-150' | '150-250' | '250-plus' | '';
 export type PlusOnePolicy = 'none' | 'some' | 'all' | '';
 export type MealChoicePolicy = 'yes' | 'no' | '';
+export type ChildPolicy = 'yes' | 'no' | 'unsure' | '';
 export type RegistryIntent = 'cash' | 'gifts' | 'both' | 'unsure' | 'none-for-now' | '';
 
 export type InitialSetupAnswers = {
@@ -17,6 +18,7 @@ export type InitialSetupAnswers = {
   ceremonyArrivalTime: string;
   guestCountBand: GuestCountBand;
   plusOnePolicy: PlusOnePolicy;
+  childrenAllowed: ChildPolicy;
   rsvpDeadline: string;
   mealChoice: MealChoicePolicy;
   registryIntent: RegistryIntent;
@@ -36,6 +38,7 @@ export const createEmptyInitialSetupAnswers = (): InitialSetupAnswers => ({
   ceremonyArrivalTime: '',
   guestCountBand: '',
   plusOnePolicy: '',
+  childrenAllowed: '',
   rsvpDeadline: '',
   mealChoice: '',
   registryIntent: '',
@@ -56,6 +59,7 @@ export const initialSetupAnswersToOnboardingFormShape = (answers: InitialSetupAn
   ceremonyTime: answers.ceremonyArrivalTime,
   guestCount: answers.guestCountBand,
   plusOnePolicy: answers.plusOnePolicy,
+  childrenAllowed: answers.childrenAllowed,
   mealChoice: answers.mealChoice,
   registryIntent: answers.registryIntent,
   extraGuestNotes: '',

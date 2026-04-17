@@ -16,7 +16,7 @@ import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutpu
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
-type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'rsvpDeadline' | 'mealChoice' | 'story';
+type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
@@ -55,6 +55,7 @@ export const Onboarding: React.FC = () => {
     { key: 'ceremonyTime', label: 'Ceremony arrival', prompt: 'What time should guests arrive for the ceremony?', helper: 'A simple arrival time is enough.', placeholder: '4:30 PM' },
     { key: 'guestCount', label: 'Guest count', prompt: 'About how many guests are you inviting?', helper: 'Pick the closest range.', placeholder: '50-100' },
     { key: 'plusOnePolicy', label: 'Plus-ones', prompt: 'What’s your plus-one policy?', helper: 'Choose the policy you want the RSVP flow to follow.', placeholder: 'some' },
+    { key: 'childrenAllowed', label: 'Children', prompt: 'Are children invited?', helper: 'Choose yes, no, or unsure for now.', placeholder: 'unsure' },
     { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This drives the RSVP setup immediately.', type: 'date' },
     { key: 'mealChoice', label: 'Meals', prompt: 'Do you want to collect meal choices?', helper: 'Choose yes or no.', placeholder: 'yes' },
     { key: 'story', label: 'Story', prompt: 'Want to add your story? (totally optional)', type: 'textarea', helper: 'Optional, but helpful for stronger copy.', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...' },
@@ -218,6 +219,7 @@ export const Onboarding: React.FC = () => {
           ceremonyArrivalTime: parsed.formData.ceremonyTime || '',
           guestCountBand: (parsed.formData.guestCount || '') as InitialSetupAnswers['guestCountBand'],
           plusOnePolicy: (parsed.formData.plusOnePolicy || '') as InitialSetupAnswers['plusOnePolicy'],
+          childrenAllowed: (parsed.formData.childrenAllowed || '') as InitialSetupAnswers['childrenAllowed'],
           rsvpDeadline: parsed.formData.rsvpDeadline || '',
           mealChoice: (parsed.formData.mealChoice || '') as InitialSetupAnswers['mealChoice'],
           optionalStory: parsed.formData.story || '',
@@ -299,6 +301,7 @@ export const Onboarding: React.FC = () => {
       ceremonyArrivalTime: nextForm.ceremonyTime || '',
       guestCountBand: (nextForm.guestCount || '') as InitialSetupAnswers['guestCountBand'],
       plusOnePolicy: (nextForm.plusOnePolicy || '') as InitialSetupAnswers['plusOnePolicy'],
+      childrenAllowed: (nextForm.childrenAllowed || '') as InitialSetupAnswers['childrenAllowed'],
       rsvpDeadline: nextForm.rsvpDeadline,
       mealChoice: (nextForm.mealChoice || '') as InitialSetupAnswers['mealChoice'],
       optionalStory: nextForm.story,
@@ -356,6 +359,7 @@ export const Onboarding: React.FC = () => {
       weekendEvents: prevFormData.weekendEvents || 'Friday welcome drinks, Saturday wedding, Sunday brunch.',
       rsvpDeadline: prevFormData.rsvpDeadline || '2026-05-25',
       plusOnePolicy: prevFormData.plusOnePolicy || 'some',
+      childrenAllowed: (prevFormData.childrenAllowed || 'unsure') as InitialSetupAnswers['childrenAllowed'],
       mealChoice: prevFormData.mealChoice || 'yes',
     });
   }, [hydrateProfile, isDemoMode, weddingProfile]);

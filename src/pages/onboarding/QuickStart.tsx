@@ -32,6 +32,7 @@ type ConciergeQuestion =
   | 'ceremonyTime'
   | 'guestCount'
   | 'plusOnePolicy'
+  | 'childrenAllowed'
   | 'rsvpDeadline'
   | 'mealChoice'
   | 'story';
@@ -92,6 +93,18 @@ const questions: QuestionDef[] = [
       { label: 'No plus-ones', value: 'none' },
       { label: 'Some plus-ones', value: 'some' },
       { label: 'Everyone gets one', value: 'all' },
+    ],
+  },
+  {
+    key: 'childrenAllowed',
+    label: 'Children',
+    prompt: 'Are children invited?',
+    helper: 'Choose yes, no, or unsure for now.',
+    type: 'choice',
+    choices: [
+      { label: 'Yes', value: 'yes' },
+      { label: 'No', value: 'no' },
+      { label: 'Unsure', value: 'unsure' },
     ],
   },
   { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This drives the RSVP setup immediately.', type: 'date' },
@@ -234,6 +247,7 @@ export const QuickStart: React.FC = () => {
       case 'ceremonyTime': return data.ceremonyTime || '';
       case 'guestCount': return data.guestCount || '';
       case 'plusOnePolicy': return data.plusOnePolicy || '';
+      case 'childrenAllowed': return (data as typeof data & { childrenAllowed?: string }).childrenAllowed || '';
       case 'rsvpDeadline': return data.rsvpDeadline || '';
       case 'mealChoice': return data.mealChoice || '';
       case 'story': return data.story || '';
@@ -266,6 +280,7 @@ export const QuickStart: React.FC = () => {
         case 'ceremonyTime': next.ceremonyArrivalTime = value; break;
         case 'guestCount': next.guestCountBand = value as InitialSetupAnswers['guestCountBand']; break;
         case 'plusOnePolicy': next.plusOnePolicy = value as InitialSetupAnswers['plusOnePolicy']; break;
+        case 'childrenAllowed': next.childrenAllowed = value as InitialSetupAnswers['childrenAllowed']; break;
         case 'rsvpDeadline': next.rsvpDeadline = value; break;
         case 'mealChoice': next.mealChoice = value as InitialSetupAnswers['mealChoice']; break;
         case 'story': next.optionalStory = value; break;
@@ -376,6 +391,7 @@ export const QuickStart: React.FC = () => {
         case 'ceremonyTime': draft.ceremonyArrivalTime = value.trim(); break;
         case 'guestCount': draft.guestCountBand = value.trim() as InitialSetupAnswers['guestCountBand']; break;
         case 'plusOnePolicy': draft.plusOnePolicy = value.trim() as InitialSetupAnswers['plusOnePolicy']; break;
+        case 'childrenAllowed': draft.childrenAllowed = value.trim() as InitialSetupAnswers['childrenAllowed']; break;
         case 'rsvpDeadline': draft.rsvpDeadline = value.trim(); break;
         case 'mealChoice': draft.mealChoice = value.trim() as InitialSetupAnswers['mealChoice']; break;
         case 'story': draft.optionalStory = value.trim(); break;
