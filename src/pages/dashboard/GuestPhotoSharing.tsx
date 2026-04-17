@@ -22,7 +22,7 @@ type ItineraryEvent = {
   event_date: string;
 };
 
-type PhotoAlbumRow = {
+type PhotoBucketRow = {
   id: string;
   name: string;
   slug: string;
@@ -36,7 +36,7 @@ type PhotoAlbumRow = {
 
 type PhotoUploadRow = {
   id: string;
-  photo_album_id: string;
+  photo_bucket_id: string;
   original_filename: string;
   guest_name: string | null;
   guest_email: string | null;
@@ -50,8 +50,8 @@ type SlideshowTheme = 'classic' | 'editorial' | 'party';
 
 type SlideshowFrame = {
   uploadId: string;
-  albumId: string;
-  albumName: string;
+  bucketId: string;
+  bucketName: string;
   title: string;
   caption: string;
 };
@@ -65,9 +65,9 @@ const toDatetimeLocal = (iso: string | null): string => {
 
 const fromDatetimeLocal = (v: string): string | null => (v.trim() ? new Date(v).toISOString() : null);
 
-const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoAlbumLinks';
+const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoBucketLinks';
 
-const readStoredAlbumLinks = (): Record<string, string> => {
+const readStoredBucketLinks = (): Record<string, string> => {
   try {
     const raw = localStorage.getItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
     if (!raw) return {};
@@ -78,7 +78,7 @@ const readStoredAlbumLinks = (): Record<string, string> => {
   }
 };
 
-const writeStoredAlbumLinks = (value: Record<string, string>) => {
+const writeStoredBucketLinks = (value: Record<string, string>) => {
   try {
     localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify(value));
   } catch {
@@ -101,20 +101,20 @@ export const GuestPhotoSharing: React.FC = () => {
   const [siteId, setSiteId] = useState<string | null>(null);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [events, setEvents] = useState<ItineraryEvent[]>([]);
-  const [albums, setAlbums] = useState<PhotoAlbumRow[]>([]);
+  const [buckets, setBuckets] = useState<PhotoBucketRow[]>([]);
   const [uploads, setUploads] = useState<PhotoUploadRow[]>([]);
   const [showHidden, setShowHidden] = useState(false);
   const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
 
   const [name, setName] = useState(search.get('eventName') ?? '');
   const [itineraryEventId, setItineraryEventId] = useState(search.get('eventId') ?? '');
-  const [albumSearch, setAlbumSearch] = useState('');
+  const [bucketSearch, setBucketSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
 
   const [latestUploadUrl, setLatestUploadUrl] = useState<string>('');
-  const [albumUploadLinks, setAlbumUploadLinks] = useState<Record<string, string>>(() => readStoredAlbumLinks());
+  const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredBucketLinks());
   const [copied, setCopied] = useState<string>('');
-  const [workingAlbumId, setWorkingAlbumId] = useState<string>('');
+  const [workingBucketId, setWorkingBucketId] = useState<string>('');
 
   const [windowDrafts, setWindowDrafts] = useState<Record<string, { opensAt: string; closesAt: string }>>({});
   const [bulkCreating, setBulkCreating] = useState(false);
@@ -124,7 +124,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [photoBuckets, setPhotoBuckets] = useState(() => createEmptyPhotoBuckets());
   const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
-  const [slideshowAlbumFilter, setSlideshowAlbumFilter] = useState<string>('all');
+  const [slideshowBucketFilter, setSlideshowBucketFilter] = useState<string>('all');
   const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
   const [slideshowPreviewOpen, setSlideshowPreviewOpen] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
@@ -154,8 +154,8 @@ export const GuestPhotoSharing: React.FC = () => {
   }, [actionsMenuOpen]);
 
   useEffect(() => {
-    writeStoredAlbumLinks(albumUploadLinks);
-  }, [albumUploadLinks]);
+    writeStoredBucketLinks(bucketUploadLinks);
+  }, [bucketUploadLinks]);
 
   const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {
     try {
@@ -287,7 +287,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const savedBuckets = ((((site.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.photoBuckets as ReturnType<typeof createEmptyPhotoBuckets> | undefined) ?? null);
       if (savedBuckets) setPhotoBuckets(savedBuckets);
 
-      const [{ data: eventsData }, { data: albumData }, { data: uploadsData }] = await Promise.all([
+      const [{ data: eventsData }, { data: bucketData }, { data: uploadsData }] = await Promise.all([
         supabase
           .from('itinerary_events')
           .select('id,event_name,event_date')
@@ -295,25 +295,25 @@ export const GuestPhotoSharing: React.FC = () => {
           .order('event_date', { ascending: true })
           .order('start_time', { ascending: true }),
         supabase
-          .from('photo_albums')
+          .from('photo_buckets')
           .select('id,name,slug,drive_folder_url,is_active,created_at,itinerary_event_id,opens_at,closes_at')
           .eq('wedding_site_id', site.id)
           .order('created_at', { ascending: false }),
         supabase
           .from('photo_uploads')
-          .select('id,photo_album_id,original_filename,guest_name,guest_email,is_hidden,is_flagged,uploaded_at')
+          .select('id,photo_bucket_id,original_filename,guest_name,guest_email,is_hidden,is_flagged,uploaded_at')
           .eq('wedding_site_id', site.id)
           .order('uploaded_at', { ascending: false })
           .limit(200),
       ]);
 
-      const nextAlbums = (albumData as PhotoAlbumRow[] | null) ?? [];
+      const nextBuckets = (bucketData as PhotoBucketRow[] | null) ?? [];
       setEvents((eventsData as ItineraryEvent[] | null) ?? []);
-      setAlbums(nextAlbums);
+      setBuckets(nextBuckets);
       setUploads((uploadsData as PhotoUploadRow[] | null) ?? []);
 
       const nextDrafts: Record<string, { opensAt: string; closesAt: string }> = {};
-      nextAlbums.forEach((a) => {
+      nextBuckets.forEach((a) => {
         nextDrafts[a.id] = {
           opensAt: toDatetimeLocal(a.opens_at),
           closesAt: toDatetimeLocal(a.closes_at),
@@ -334,58 +334,58 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   }
 
-  const countsByAlbum = useMemo(() => {
+  const countsByBucket = useMemo(() => {
     const m = new Map<string, number>();
-    uploads.forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
+    uploads.forEach((u) => m.set(u.photo_bucket_id, (m.get(u.photo_bucket_id) ?? 0) + 1));
     return m;
   }, [uploads]);
 
-  const hiddenCountsByAlbum = useMemo(() => {
+  const hiddenCountsByBucket = useMemo(() => {
     const m = new Map<string, number>();
-    uploads.filter((u) => u.is_hidden).forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
+    uploads.filter((u) => u.is_hidden).forEach((u) => m.set(u.photo_bucket_id, (m.get(u.photo_bucket_id) ?? 0) + 1));
     return m;
   }, [uploads]);
 
-  const flaggedCountsByAlbum = useMemo(() => {
+  const flaggedCountsByBucket = useMemo(() => {
     const m = new Map<string, number>();
-    uploads.filter((u) => u.is_flagged).forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
+    uploads.filter((u) => u.is_flagged).forEach((u) => m.set(u.photo_bucket_id, (m.get(u.photo_bucket_id) ?? 0) + 1));
     return m;
   }, [uploads]);
 
-  const recentByAlbum = useMemo(() => {
+  const recentByBucket = useMemo(() => {
     const m = new Map<string, PhotoUploadRow[]>();
     uploads
       .filter((u) => (showHidden || !u.is_hidden) && (!showFlaggedOnly || u.is_flagged))
       .forEach((u) => {
-        const arr = m.get(u.photo_album_id) ?? [];
+        const arr = m.get(u.photo_bucket_id) ?? [];
         if (arr.length < 5) arr.push(u);
-        m.set(u.photo_album_id, arr);
+        m.set(u.photo_bucket_id, arr);
       });
     return m;
   }, [uploads, showHidden, showFlaggedOnly]);
 
-  const slideshowReadyAlbumCount = useMemo(
-    () => albums.filter((album) => (countsByAlbum.get(album.id) ?? 0) >= 3).length,
-    [albums, countsByAlbum]
+  const slideshowReadyBucketCount = useMemo(
+    () => buckets.filter((bucket) => (countsByBucket.get(bucket.id) ?? 0) >= 3).length,
+    [buckets, countsByBucket]
   );
 
   const slideshowFrames = useMemo<SlideshowFrame[]>(() => {
-    const sourceAlbums = albums.filter((album) => {
-      if (!album.is_active) return false;
-      if ((countsByAlbum.get(album.id) ?? 0) < 3) return false;
-      if (slideshowAlbumFilter === 'all') return true;
-      return album.id === slideshowAlbumFilter;
+    const sourceBuckets = buckets.filter((bucket) => {
+      if (!bucket.is_active) return false;
+      if ((countsByBucket.get(bucket.id) ?? 0) < 3) return false;
+      if (slideshowBucketFilter === 'all') return true;
+      return bucket.id === slideshowBucketFilter;
     });
 
-    const sourceAlbumIds = new Set(sourceAlbums.map((album) => album.id));
+    const sourceBucketIds = new Set(sourceBuckets.map((bucket) => bucket.id));
     let selectedUploads = uploads
-      .filter((upload) => !upload.is_hidden && !upload.is_flagged && sourceAlbumIds.has(upload.photo_album_id))
+      .filter((upload) => !upload.is_hidden && !upload.is_flagged && sourceBucketIds.has(upload.photo_bucket_id))
       .map((upload) => {
-        const album = albums.find((entry) => entry.id === upload.photo_album_id);
+        const bucket = buckets.find((entry) => entry.id === upload.photo_bucket_id);
         return {
           uploadId: upload.id,
-          albumId: upload.photo_album_id,
-          albumName: album?.name || 'Album',
+          bucketId: upload.photo_bucket_id,
+          bucketName: bucket?.name || 'Bucket',
           title: upload.original_filename,
           caption: `${upload.guest_name || 'Guest'} · ${new Date(upload.uploaded_at).toLocaleDateString()}`,
           uploadedAt: upload.uploaded_at,
@@ -401,7 +401,7 @@ export const GuestPhotoSharing: React.FC = () => {
     }
 
     return selectedUploads.slice(0, 24).map(({ uploadedAt: _uploadedAt, ...frame }) => frame);
-  }, [albums, uploads, countsByAlbum, slideshowAlbumFilter, slideshowOrder]);
+  }, [buckets, uploads, countsByBucket, slideshowBucketFilter, slideshowOrder]);
 
   const slideshowThemeMeta: Record<SlideshowTheme, { label: string; cardClass: string; chipClass: string; helper: string }> = {
     classic: {
@@ -439,7 +439,7 @@ export const GuestPhotoSharing: React.FC = () => {
       generatedAt: new Date().toISOString(),
       theme: slideshowTheme,
       order: slideshowOrder,
-      albumFilter: slideshowAlbumFilter,
+      bucketFilter: slideshowBucketFilter,
       frameCount: slideshowFrames.length,
       frames: slideshowFrames,
     };
@@ -454,8 +454,8 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
-  const exportAlbumCsv = (albumId: string, albumName: string) => {
-    const rows = uploads.filter((u) => u.photo_album_id === albumId);
+  const exportBucketCsv = (bucketId: string, bucketName: string) => {
+    const rows = uploads.filter((u) => u.photo_bucket_id === bucketId);
     if (rows.length === 0) return;
 
     const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
@@ -474,7 +474,7 @@ export const GuestPhotoSharing: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${albumName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'album'}-uploads.csv`;
+    a.download = `${bucketName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'bucket'}-uploads.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -487,38 +487,38 @@ export const GuestPhotoSharing: React.FC = () => {
   }, [siteSlug]);
 
   const totalUploads = useMemo(() => uploads.length, [uploads]);
-  const activeAlbumsCount = useMemo(() => albums.filter((a) => a.is_active).length, [albums]);
-  const pausedAlbumsCount = useMemo(() => albums.filter((a) => !a.is_active).length, [albums]);
+  const activeBucketsCount = useMemo(() => buckets.filter((a) => a.is_active).length, [buckets]);
+  const pausedBucketsCount = useMemo(() => buckets.filter((a) => !a.is_active).length, [buckets]);
 
-  const filteredAlbums = useMemo(() => {
-    const q = albumSearch.trim().toLowerCase();
-    return albums.filter((a) => {
+  const filteredBuckets = useMemo(() => {
+    const q = bucketSearch.trim().toLowerCase();
+    return buckets.filter((a) => {
       const statusOk = statusFilter === 'all' || (statusFilter === 'active' ? a.is_active : !a.is_active);
       const searchOk = !q || a.name.toLowerCase().includes(q) || a.slug.toLowerCase().includes(q);
       return statusOk && searchOk;
     });
-  }, [albums, albumSearch, statusFilter]);
+  }, [buckets, bucketSearch, statusFilter]);
 
   const missingItineraryEvents = useMemo(() => {
-    const linked = new Set(albums.map((a) => a.itinerary_event_id).filter(Boolean));
+    const linked = new Set(buckets.map((a) => a.itinerary_event_id).filter(Boolean));
     return events.filter((e) => !linked.has(e.id));
-  }, [events, albums]);
+  }, [events, buckets]);
 
-  const makeShareMessage = (albumName: string, link: string) =>
-    `Please upload your ${albumName} photos here: ${link}`;
+  const makeShareMessage = (bucketName: string, link: string) =>
+    `Please upload your ${bucketName} photos here: ${link}`;
 
-  const sendAllActiveAlbumRequests = () => {
-    const lines = albums
+  const sendAllActiveBucketRequests = () => {
+    const lines = buckets
       .filter((a) => a.is_active)
       .map((a) => {
-        const link = albumUploadLinks[a.id];
+        const link = bucketUploadLinks[a.id];
         if (!link) return null;
         return `${a.name}: ${makeShareMessage(a.name, link)}`;
       })
       .filter((v): v is string => typeof v === 'string');
 
     if (lines.length === 0) {
-      setError('No active albums with links available to send.');
+      setError('No active buckets with links available to send.');
       return;
     }
 
@@ -528,9 +528,9 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const copyAllShareMessages = async () => {
-    const lines = albums
+    const lines = buckets
       .map((a) => {
-        const link = albumUploadLinks[a.id];
+        const link = bucketUploadLinks[a.id];
         if (!link) return null;
         return `${a.name}: ${makeShareMessage(a.name, link)}`;
       })
@@ -546,8 +546,8 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const copyAllKnownLinks = async () => {
-    const links = albums
-      .map((a) => albumUploadLinks[a.id])
+    const links = buckets
+      .map((a) => bucketUploadLinks[a.id])
       .filter((v): v is string => typeof v === 'string' && v.length > 0);
 
     if (links.length === 0) {
@@ -559,10 +559,10 @@ export const GuestPhotoSharing: React.FC = () => {
     setSuccess(`Copied ${links.length} link(s).`);
   };
 
-  const regenerateAllKnownAlbumLinks = async () => {
-    const targetAlbums = albums.filter((a) => albumUploadLinks[a.id]);
-    if (targetAlbums.length === 0) {
-      setError('No album links are ready to refresh yet.');
+  const regenerateAllKnownBucketLinks = async () => {
+    const targetBuckets = buckets.filter((a) => bucketUploadLinks[a.id]);
+    if (targetBuckets.length === 0) {
+      setError('No bucket links are ready to refresh yet.');
       return;
     }
 
@@ -571,14 +571,14 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       const updated: Record<string, string> = {};
 
-      for (const album of targetAlbums) {
-        const data = await invokeOrThrow('photo-album-manage', { action: 'regenerate_link', albumId: album.id });
+      for (const bucket of targetBuckets) {
+        const data = await invokeOrThrow('photo-bucket-manage', { action: 'regenerate_link', bucketId: bucket.id });
         const link = typeof data?.uploadUrl === 'string' ? data.uploadUrl : '';
-        if (link) updated[album.id] = link;
+        if (link) updated[bucket.id] = link;
       }
 
       if (Object.keys(updated).length > 0) {
-        setAlbumUploadLinks((prev) => ({ ...prev, ...updated }));
+        setBucketUploadLinks((prev) => ({ ...prev, ...updated }));
       }
       setSuccess(`Rotated ${Object.keys(updated).length} link(s).`);
     } catch (err: unknown) {
@@ -589,9 +589,9 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const exportSharePackCsv = () => {
-    const rows = albums
+    const rows = buckets
       .map((a) => {
-        const link = albumUploadLinks[a.id] || '';
+        const link = bucketUploadLinks[a.id] || '';
         return {
           name: a.name,
           status: a.is_active ? 'active' : 'paused',
@@ -620,13 +620,13 @@ export const GuestPhotoSharing: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const exportAlbumLinksCsv = () => {
-    const rows = albums
+  const exportBucketLinksCsv = () => {
+    const rows = buckets
       .map((a) => ({
         name: a.name,
         slug: a.slug,
         status: a.is_active ? 'active' : 'paused',
-        upload_link: albumUploadLinks[a.id] || '',
+        upload_link: bucketUploadLinks[a.id] || '',
         drive_folder_url: a.drive_folder_url || '',
       }))
       .filter((r) => r.upload_link || r.drive_folder_url);
@@ -643,17 +643,17 @@ export const GuestPhotoSharing: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'photo-album-links.csv';
+    a.download = 'photo-bucket-links.csv';
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
   };
 
-  const createMissingAlbumsFromItinerary = async () => {
+  const createMissingBucketsFromItinerary = async () => {
     if (!siteId) return;
     if (missingItineraryEvents.length === 0) {
-      setSuccess('All itinerary events already have albums.');
+      setSuccess('All itinerary events already have buckets.');
       return;
     }
 
@@ -666,27 +666,27 @@ export const GuestPhotoSharing: React.FC = () => {
       const links: Record<string, string> = {};
 
       for (const event of missingItineraryEvents) {
-        const data = await invokeOrThrow('photo-album-create', {
+        const data = await invokeOrThrow('photo-bucket-create', {
           siteId,
           name: event.event_name,
           itineraryEventId: event.id,
         });
-        if (data?.album?.id) {
+        if (data?.bucket?.id) {
           created.push(event.event_name);
           if (typeof data.uploadUrl === 'string' && data.uploadUrl) {
-            links[String(data.album.id)] = data.uploadUrl;
+            links[String(data.bucket.id)] = data.uploadUrl;
           }
         }
       }
 
       if (Object.keys(links).length > 0) {
-        setAlbumUploadLinks((prev) => ({ ...prev, ...links }));
+        setBucketUploadLinks((prev) => ({ ...prev, ...links }));
       }
 
       await load();
-      setSuccess(`Created ${created.length} album(s) from itinerary events.`);
+      setSuccess(`Created ${created.length} bucket(s) from itinerary events.`);
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to create itinerary albums.');
+      setError((err as Error)?.message || 'Failed to create itinerary buckets.');
     } finally {
       setBulkCreating(false);
     }
@@ -734,10 +734,10 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
-  const setAllAlbumsActive = async (isActive: boolean) => {
-    const targetAlbums = albums.filter((a) => a.is_active !== isActive);
-    if (targetAlbums.length === 0) {
-      setSuccess(isActive ? 'All albums are already active.' : 'All albums are already paused.');
+  const setAllBucketsActive = async (isActive: boolean) => {
+    const targetBuckets = buckets.filter((a) => a.is_active !== isActive);
+    if (targetBuckets.length === 0) {
+      setSuccess(isActive ? 'All buckets are already active.' : 'All buckets are already paused.');
       return;
     }
 
@@ -746,14 +746,14 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      for (const album of targetAlbums) {
-        await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId: album.id, isActive });
+      for (const bucket of targetBuckets) {
+        await invokeOrThrow('photo-bucket-manage', { action: 'set_active', bucketId: bucket.id, isActive });
       }
 
       await load();
-      setSuccess(`${isActive ? 'Activated' : 'Paused'} ${targetAlbums.length} album(s).`);
+      setSuccess(`${isActive ? 'Activated' : 'Paused'} ${targetBuckets.length} bucket(s).`);
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to update album statuses.');
+      setError((err as Error)?.message || 'Failed to update bucket statuses.');
     } finally {
       setBulkUpdatingStatus(false);
     }
@@ -769,44 +769,44 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
-  const setAlbumActive = async (albumId: string, isActive: boolean) => {
+  const setBucketActive = async (bucketId: string, isActive: boolean) => {
     try {
-      setWorkingAlbumId(albumId);
+      setWorkingBucketId(bucketId);
       setError(null);
-      await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId, isActive });
+      await invokeOrThrow('photo-bucket-manage', { action: 'set_active', bucketId, isActive });
       await load();
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to update album status.');
+      setError((err as Error)?.message || 'Failed to update bucket status.');
     } finally {
-      setWorkingAlbumId('');
+      setWorkingBucketId('');
     }
   };
 
-  const regenerateLink = async (albumId: string) => {
+  const regenerateLink = async (bucketId: string) => {
     try {
-      setWorkingAlbumId(albumId);
+      setWorkingBucketId(bucketId);
       setError(null);
       setSuccess(null);
-      const data = await invokeOrThrow('photo-album-manage', { action: 'regenerate_link', albumId });
+      const data = await invokeOrThrow('photo-bucket-manage', { action: 'regenerate_link', bucketId });
       const uploadUrl = (data?.uploadUrl as string) ?? '';
       setLatestUploadUrl(uploadUrl);
       if (uploadUrl) {
-        setAlbumUploadLinks((prev) => ({ ...prev, [albumId]: uploadUrl }));
+        setBucketUploadLinks((prev) => ({ ...prev, [bucketId]: uploadUrl }));
       }
-      setSuccess('Album link regenerated. Old link is now invalid.');
+      setSuccess('Bucket link regenerated. Old link is now invalid.');
       await load();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to regenerate upload link.');
     } finally {
-      setWorkingAlbumId('');
+      setWorkingBucketId('');
     }
   };
 
-  const applySuggestedWindow = (albumId: string) => {
-    const album = albums.find((a) => a.id === albumId);
-    if (!album) return;
+  const applySuggestedWindow = (bucketId: string) => {
+    const bucket = buckets.find((a) => a.id === bucketId);
+    if (!bucket) return;
 
-    const event = events.find((e) => e.id === album.itinerary_event_id);
+    const event = events.find((e) => e.id === bucket.itinerary_event_id);
     const baseDate = event?.event_date ? new Date(`${event.event_date}T00:00:00`) : new Date();
     const opens = baseDate;
     const closes = new Date(baseDate.getTime() + 72 * 60 * 60 * 1000); // +72h
@@ -818,35 +818,35 @@ export const GuestPhotoSharing: React.FC = () => {
 
     setWindowDrafts((prev) => ({
       ...prev,
-      [albumId]: { opensAt: toLocal(opens), closesAt: toLocal(closes) },
+      [bucketId]: { opensAt: toLocal(opens), closesAt: toLocal(closes) },
     }));
   };
 
-  const saveWindow = async (albumId: string) => {
+  const saveWindow = async (bucketId: string) => {
     try {
-      setWorkingAlbumId(albumId);
+      setWorkingBucketId(bucketId);
       setError(null);
       setSuccess(null);
-      const draft = windowDrafts[albumId] ?? { opensAt: '', closesAt: '' };
+      const draft = windowDrafts[bucketId] ?? { opensAt: '', closesAt: '' };
       const opensAt = fromDatetimeLocal(draft.opensAt);
       const closesAt = fromDatetimeLocal(draft.closesAt);
       if (opensAt && closesAt && new Date(closesAt) <= new Date(opensAt)) {
         throw new Error('Close time must be after open time.');
       }
-      await invokeOrThrow('photo-album-manage', { action: 'set_window', albumId, opensAt, closesAt });
+      await invokeOrThrow('photo-bucket-manage', { action: 'set_window', bucketId, opensAt, closesAt });
       setSuccess('Upload window saved.');
       await load();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to save upload window.');
     } finally {
-      setWorkingAlbumId('');
+      setWorkingBucketId('');
     }
   };
 
-  const createAlbum = async () => {
+  const createBucket = async () => {
     if (!siteId) return;
     if (!name.trim()) {
-      setError('Album name is required.');
+      setError('Bucket name is required.');
       return;
     }
 
@@ -855,22 +855,22 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      const data = await invokeOrThrow('photo-album-create', {
+      const data = await invokeOrThrow('photo-bucket-create', {
         siteId,
         name: name.trim(),
         itineraryEventId: itineraryEventId || null,
       });
-      if (!data?.album?.id) throw new Error('Album creation failed.');
+      if (!data?.bucket?.id) throw new Error('Bucket creation failed.');
 
       const uploadUrl = (data.uploadUrl as string) ?? '';
       setLatestUploadUrl(uploadUrl);
-      if (uploadUrl && data.album?.id) {
-        setAlbumUploadLinks((prev) => ({ ...prev, [String(data.album.id)]: uploadUrl }));
+      if (uploadUrl && data.bucket?.id) {
+        setBucketUploadLinks((prev) => ({ ...prev, [String(data.bucket.id)]: uploadUrl }));
       }
-      setSuccess(`Album "${data.album.name}" created.`);
+      setSuccess(`Bucket "${data.bucket.name}" created.`);
       await load();
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to create album.');
+      setError((err as Error)?.message || 'Failed to create bucket.');
     } finally {
       setSubmitting(false);
     }
@@ -893,8 +893,8 @@ export const GuestPhotoSharing: React.FC = () => {
           </Card>
         )}
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Guest photo sharing</h1>
-          <p className="mt-2 text-neutral-600">Create albums, collect guest photos by event, and keep the upload flow organized.</p>
+          <h1 className="text-3xl font-bold text-neutral-900">Memories</h1>
+          <p className="mt-2 text-neutral-600">Create buckets, collect guest uploads, and keep memories organized beautifully.</p>
         </div>
 
         <Card className="p-6 border border-border bg-surface">
@@ -908,14 +908,14 @@ export const GuestPhotoSharing: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Card className="p-4">
-            <p className="text-xs text-neutral-500">Albums</p>
-            <p className="text-2xl font-semibold text-neutral-900">{albums.length}</p>
-            <p className="text-xs text-neutral-500">{activeAlbumsCount} active · {pausedAlbumsCount} paused</p>
+            <p className="text-xs text-neutral-500">Buckets</p>
+            <p className="text-2xl font-semibold text-neutral-900">{buckets.length}</p>
+            <p className="text-xs text-neutral-500">{activeBucketsCount} active · {pausedBucketsCount} paused</p>
           </Card>
           <Card className="p-4">
             <p className="text-xs text-neutral-500">Uploads</p>
             <p className="text-2xl font-semibold text-neutral-900">{totalUploads}</p>
-            <p className="text-xs text-neutral-500">Across all albums</p>
+            <p className="text-xs text-neutral-500">Across all buckets</p>
           </Card>
         </div>
 
@@ -927,10 +927,10 @@ export const GuestPhotoSharing: React.FC = () => {
                 <h2 className="text-xl font-semibold text-violet-950">Slideshow generator</h2>
               </div>
               <p className="text-sm text-violet-900/80">
-                Turn uploaded guest photos into a simple album-driven slideshow. Start with your strongest event albums, preview the sequence, then polish later.
+                Turn uploaded guest photos into a simple bucket-driven slideshow. Start with your strongest event buckets, preview the sequence, then polish later.
               </p>
               <p className="mt-2 text-xs text-violet-900/70">
-                Ready now: <span className="font-semibold text-violet-950">{slideshowReadyAlbumCount}</span> album{slideshowReadyAlbumCount === 1 ? '' : 's'} with 3+ uploads.
+                Ready now: <span className="font-semibold text-violet-950">{slideshowReadyBucketCount}</span> bucket{slideshowReadyBucketCount === 1 ? '' : 's'} with 3+ uploads.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -950,15 +950,15 @@ export const GuestPhotoSharing: React.FC = () => {
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <select
-                value={slideshowAlbumFilter}
-                onChange={(e) => setSlideshowAlbumFilter(e.target.value)}
+                value={slideshowBucketFilter}
+                onChange={(e) => setSlideshowBucketFilter(e.target.value)}
                 className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
               >
-                <option value="all">All slideshow-ready albums</option>
-                {albums
-                  .filter((album) => album.is_active && (countsByAlbum.get(album.id) ?? 0) >= 3)
-                  .map((album) => (
-                    <option key={album.id} value={album.id}>{album.name}</option>
+                <option value="all">All slideshow-ready buckets</option>
+                {buckets
+                  .filter((bucket) => bucket.is_active && (countsByBucket.get(bucket.id) ?? 0) >= 3)
+                  .map((bucket) => (
+                    <option key={bucket.id} value={bucket.id}>{bucket.name}</option>
                   ))}
               </select>
               <select
@@ -990,12 +990,12 @@ export const GuestPhotoSharing: React.FC = () => {
 
           {slideshowFrames.length === 0 ? (
             <div className="rounded-xl border border-dashed border-neutral-300 bg-surface-subtle/20 px-4 py-6 text-sm text-neutral-600">
-              Need at least one active album with 3+ visible uploads before a slideshow can be assembled.
+              Need at least one active bucket with 3+ visible uploads before a slideshow can be assembled.
             </div>
           ) : (
             <div className="space-y-4">
               <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
-                Built <span className="font-semibold text-neutral-900">{slideshowFrames.length}</span> frames from <span className="font-semibold text-neutral-900">{slideshowAlbumFilter === 'all' ? slideshowReadyAlbumCount : 1}</span> album source{slideshowAlbumFilter === 'all' ? 's' : ''}.
+                Built <span className="font-semibold text-neutral-900">{slideshowFrames.length}</span> frames from <span className="font-semibold text-neutral-900">{slideshowBucketFilter === 'all' ? slideshowReadyBucketCount : 1}</span> bucket source{slideshowBucketFilter === 'all' ? 's' : ''}.
               </div>
               <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${slideshowThemeMeta[slideshowTheme].chipClass}`}>
@@ -1008,7 +1008,7 @@ export const GuestPhotoSharing: React.FC = () => {
                   <div key={frame.uploadId} className={`rounded-xl border px-4 py-3 ${slideshowThemeMeta[slideshowTheme].cardClass}`}>
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-neutral-900">Frame {index + 1}</p>
-                      <span className={`text-xs rounded-full px-2 py-0.5 ${slideshowThemeMeta[slideshowTheme].chipClass}`}>{frame.albumName}</span>
+                      <span className={`text-xs rounded-full px-2 py-0.5 ${slideshowThemeMeta[slideshowTheme].chipClass}`}>{frame.bucketName}</span>
                     </div>
                     <p className="mt-2 text-sm text-neutral-800 truncate">{frame.title}</p>
                     <p className="mt-1 text-xs text-neutral-500">{frame.caption}</p>
@@ -1034,7 +1034,7 @@ export const GuestPhotoSharing: React.FC = () => {
                   <div key={frame.uploadId} className={`rounded-xl border px-4 py-4 ${slideshowThemeMeta[slideshowTheme].cardClass}`}>
                     <p className="text-xs uppercase tracking-wide text-neutral-500">Slide {index + 1}</p>
                     <p className="mt-2 text-base font-semibold text-neutral-900 truncate">{frame.title}</p>
-                    <p className="mt-1 text-sm text-neutral-700">{frame.albumName}</p>
+                    <p className="mt-1 text-sm text-neutral-700">{frame.bucketName}</p>
                     <p className="mt-2 text-xs text-neutral-500">{frame.caption}</p>
                   </div>
                 ))}
@@ -1046,12 +1046,12 @@ export const GuestPhotoSharing: React.FC = () => {
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Plus className="w-5 h-5 text-rose-600" />
-            <h2 className="text-xl font-semibold text-neutral-900">Create album</h2>
+            <h2 className="text-xl font-semibold text-neutral-900">Create bucket</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Album name</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Bucket name</label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ceremony" />
             </div>
 
@@ -1074,9 +1074,9 @@ export const GuestPhotoSharing: React.FC = () => {
 
           <div className="mt-4 space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <Button onClick={createAlbum} disabled={submitting || loading} className="w-full sm:w-auto">
+              <Button onClick={createBucket} disabled={submitting || loading} className="w-full sm:w-auto">
                 <Camera className="w-4 h-4 mr-1" />
-                {submitting ? 'Creating...' : 'Create album'}
+                {submitting ? 'Creating...' : 'Create bucket'}
               </Button>
               {uploadLanding && (
                 <Button variant="outline" onClick={() => window.open(uploadLanding, '_blank')} className="w-full sm:w-auto">
@@ -1087,16 +1087,16 @@ export const GuestPhotoSharing: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2">
               <p className="text-xs text-text-secondary">
-                Missing event albums: <span className="font-semibold text-text-primary">{missingItineraryEvents.length}</span>
+                Missing event buckets: <span className="font-semibold text-text-primary">{missingItineraryEvents.length}</span>
               </p>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => void createMissingAlbumsFromItinerary()}
+                onClick={() => void createMissingBucketsFromItinerary()}
                 disabled={bulkCreating || loading || missingItineraryEvents.length === 0}
                 className="w-full sm:w-auto"
               >
-                {bulkCreating ? 'Creating event albums...' : 'Create missing event albums'}
+                {bulkCreating ? 'Creating event buckets...' : 'Create missing event buckets'}
               </Button>
             </div>
           </div>
@@ -1106,7 +1106,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
           {latestUploadUrl && (
             <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-              <p className="text-sm font-medium text-emerald-900 mb-1">Newest upload link</p>
+              <p className="text-sm font-medium text-emerald-900 mb-1">Newest bucket upload link</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs text-emerald-800 break-all">{latestUploadUrl}</code>
                 <Button size="sm" variant="outline" onClick={() => copyText(latestUploadUrl, 'latest')}>
@@ -1119,15 +1119,15 @@ export const GuestPhotoSharing: React.FC = () => {
 
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-neutral-900">Albums</h2>
+            <h2 className="text-xl font-semibold text-neutral-900">Buckets</h2>
             <ActionsMenu
               open={actionsMenuOpen}
               onToggle={() => setActionsMenuOpen((v) => !v)}
               align="right"
               menuRef={actionsMenuRef}
             >
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportAlbumLinksCsv(); setActionsMenuOpen(false); }}>
-                Export album links
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportBucketLinksCsv(); setActionsMenuOpen(false); }}>
+                Export bucket links
               </Button>
               <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportSharePackCsv(); setActionsMenuOpen(false); }}>
                 Export sharing pack
@@ -1138,10 +1138,10 @@ export const GuestPhotoSharing: React.FC = () => {
               <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void copyAllShareMessages(); setActionsMenuOpen(false); }}>
                 {copied === 'all-share-messages' ? 'Copied messages' : 'Copy all messages'}
               </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { sendAllActiveAlbumRequests(); setActionsMenuOpen(false); }}>
-                Send all active album requests
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { sendAllActiveBucketRequests(); setActionsMenuOpen(false); }}>
+                Send all active bucket requests
               </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void regenerateAllKnownAlbumLinks(); setActionsMenuOpen(false); }} disabled={bulkRegenerating}>
+              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void regenerateAllKnownBucketLinks(); setActionsMenuOpen(false); }} disabled={bulkRegenerating}>
                 {bulkRegenerating ? 'Refreshing links...' : 'Refresh saved links'}
               </Button>
               <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setShowFlaggedOnly((v) => !v)}>
@@ -1168,9 +1168,9 @@ export const GuestPhotoSharing: React.FC = () => {
           </div>
           <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
             <Input
-              value={albumSearch}
-              onChange={(e) => setAlbumSearch(e.target.value)}
-              placeholder="Search album name or slug"
+              value={bucketSearch}
+              onChange={(e) => setBucketSearch(e.target.value)}
+              placeholder="Search bucket name or slug"
             />
             <select
               value={statusFilter}
@@ -1181,82 +1181,82 @@ export const GuestPhotoSharing: React.FC = () => {
               <option value="active">Active only</option>
               <option value="paused">Paused only</option>
             </select>
-            <div className="text-xs text-neutral-500 flex items-center">{filteredAlbums.length} album(s)</div>
+            <div className="text-xs text-neutral-500 flex items-center">{filteredBuckets.length} bucket(s)</div>
           </div>
 
           {loading ? (
-            <p className="text-sm text-neutral-500">Loading albums…</p>
-          ) : albums.length === 0 ? (
-            <p className="text-sm text-neutral-600">No albums yet. Create your first one above.</p>
-          ) : filteredAlbums.length === 0 ? (
-            <p className="text-sm text-neutral-600">No albums match those filters.</p>
+            <p className="text-sm text-neutral-500">Loading buckets…</p>
+          ) : buckets.length === 0 ? (
+            <p className="text-sm text-neutral-600">No buckets yet. Create your first one above.</p>
+          ) : filteredBuckets.length === 0 ? (
+            <p className="text-sm text-neutral-600">No buckets match those filters.</p>
           ) : (
             <div className="space-y-3">
-              {filteredAlbums.map((album) => {
-                const uploadCount = countsByAlbum.get(album.id) ?? 0;
-                const hiddenCount = hiddenCountsByAlbum.get(album.id) ?? 0;
-                const flaggedCount = flaggedCountsByAlbum.get(album.id) ?? 0;
-                const recents = recentByAlbum.get(album.id) ?? [];
-                const draft = windowDrafts[album.id] ?? { opensAt: '', closesAt: '' };
-                const knownUploadLink = albumUploadLinks[album.id] || '';
-                const hasWindow = Boolean(album.opens_at || album.closes_at);
+              {filteredBuckets.map((bucket) => {
+                const uploadCount = countsByBucket.get(bucket.id) ?? 0;
+                const hiddenCount = hiddenCountsByBucket.get(bucket.id) ?? 0;
+                const flaggedCount = flaggedCountsByBucket.get(bucket.id) ?? 0;
+                const recents = recentByBucket.get(bucket.id) ?? [];
+                const draft = windowDrafts[bucket.id] ?? { opensAt: '', closesAt: '' };
+                const knownUploadLink = bucketUploadLinks[bucket.id] || '';
+                const hasWindow = Boolean(bucket.opens_at || bucket.closes_at);
                 const hasLink = Boolean(knownUploadLink);
 
                 return (
-                  <div key={album.id} className="rounded-lg border border-neutral-200 p-4">
+                  <div key={bucket.id} className="rounded-lg border border-neutral-200 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-medium text-neutral-900">{album.name}</p>
-                        <p className="text-xs text-neutral-500">Created {new Date(album.created_at).toLocaleString()}</p>
+                        <p className="font-medium text-neutral-900">{bucket.name}</p>
+                        <p className="text-xs text-neutral-500">Created {new Date(bucket.created_at).toLocaleString()}</p>
                         <div className="mt-1 text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex rounded px-2 py-0.5 ${album.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>
-                            {album.is_active ? 'Active' : 'Paused'}
+                          <span className={`inline-flex rounded px-2 py-0.5 ${bucket.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>
+                            {bucket.is_active ? 'Active' : 'Paused'}
                           </span>
                           <span>{uploadCount} uploads</span>
                           {!hasLink && <span className="text-rose-700">no saved link yet</span>}
                           {!hasWindow && <span className="text-amber-700">no upload window yet</span>}
                           {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
                           {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
-                          <span>slug: {album.slug}</span>
+                          <span>slug: {bucket.slug}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 flex-wrap justify-end">
-                        {album.drive_folder_url && (
-                          <Button size="sm" variant="outline" onClick={() => window.open(album.drive_folder_url!, '_blank')}>
+                        {bucket.drive_folder_url && (
+                          <Button size="sm" variant="outline" onClick={() => window.open(bucket.drive_folder_url!, '_blank')}>
                             <ExternalLink className="w-3 h-3 mr-1" /> Drive
                           </Button>
                         )}
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={workingAlbumId === album.id}
-                          onClick={() => void regenerateLink(album.id)}
+                          disabled={workingBucketId === bucket.id}
+                          onClick={() => void regenerateLink(bucket.id)}
                         >
                           <LinkIcon className="w-3 h-3 mr-1" />
-                          {workingAlbumId === album.id ? 'Working...' : 'Create new link'}
+                          {workingBucketId === bucket.id ? 'Working...' : 'Create new link'}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           disabled={!knownUploadLink}
-                          onClick={() => void copyText(knownUploadLink, `uplink-${album.id}`)}
+                          onClick={() => void copyText(knownUploadLink, `uplink-${bucket.id}`)}
                         >
                           <Copy className="w-3 h-3 mr-1" />
-                          {copied === `uplink-${album.id}` ? 'Copied' : 'Copy link'}
+                          {copied === `uplink-${bucket.id}` ? 'Copied' : 'Copy link'}
                         </Button>
                         <Button
                           size="sm"
-                          variant={album.is_active ? 'outline' : 'accent'}
-                          disabled={workingAlbumId === album.id}
-                          onClick={() => void setAlbumActive(album.id, !album.is_active)}
+                          variant={bucket.is_active ? 'outline' : 'accent'}
+                          disabled={workingBucketId === bucket.id}
+                          onClick={() => void setBucketActive(bucket.id, !bucket.is_active)}
                         >
-                          {workingAlbumId === album.id ? 'Working...' : album.is_active ? 'Pause' : 'Activate'}
+                          {workingBucketId === bucket.id ? 'Working...' : bucket.is_active ? 'Pause' : 'Activate'}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => exportAlbumCsv(album.id, album.name)}
+                          onClick={() => exportBucketCsv(bucket.id, bucket.name)}
                           disabled={uploadCount === 0}
                         >
                           Export CSV
@@ -1265,17 +1265,17 @@ export const GuestPhotoSharing: React.FC = () => {
                           size="sm"
                           variant="outline"
                           disabled={!knownUploadLink}
-                          onClick={() => void copyText(makeShareMessage(album.name, knownUploadLink), `share-msg-${album.id}`)}
+                          onClick={() => void copyText(makeShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
                         >
-                          {copied === `share-msg-${album.id}` ? 'Copied message' : 'Copy message'}
+                          {copied === `share-msg-${bucket.id}` ? 'Copied message' : 'Copy message'}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => {
                             const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
-                            const subject = encodeURIComponent(`${album.name} photos upload`);
-                            const body = encodeURIComponent(makeShareMessage(album.name, shareUrl));
+                            const subject = encodeURIComponent(`${bucket.name} photos upload`);
+                            const body = encodeURIComponent(makeShareMessage(bucket.name, shareUrl));
                             window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
                           }}
                         >
@@ -1294,7 +1294,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           <Input
                             type="datetime-local"
                             value={draft.opensAt}
-                            onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [album.id]: { ...draft, opensAt: e.target.value } }))}
+                            onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [bucket.id]: { ...draft, opensAt: e.target.value } }))}
                           />
                         </div>
                         <div>
@@ -1302,14 +1302,14 @@ export const GuestPhotoSharing: React.FC = () => {
                           <Input
                             type="datetime-local"
                             value={draft.closesAt}
-                            onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [album.id]: { ...draft, closesAt: e.target.value } }))}
+                            onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [bucket.id]: { ...draft, closesAt: e.target.value } }))}
                           />
                         </div>
-                        <Button size="sm" variant="outline" disabled={workingAlbumId === album.id} onClick={() => applySuggestedWindow(album.id)}>
+                        <Button size="sm" variant="outline" disabled={workingBucketId === bucket.id} onClick={() => applySuggestedWindow(bucket.id)}>
                           Suggested window
                         </Button>
-                        <Button size="sm" variant="outline" disabled={workingAlbumId === album.id} onClick={() => void saveWindow(album.id)}>
-                          {workingAlbumId === album.id ? 'Saving...' : 'Save window'}
+                        <Button size="sm" variant="outline" disabled={workingBucketId === bucket.id} onClick={() => void saveWindow(bucket.id)}>
+                          {workingBucketId === bucket.id ? 'Saving...' : 'Save window'}
                         </Button>
                       </div>
                     </div>
