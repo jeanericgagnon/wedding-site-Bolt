@@ -156,9 +156,11 @@ export const planFollowUpQuestions = (
 
   const shouldPrioritizeEventStructure = rawEventTitles.length === 0 || hasVagueEventTitles || hasUndecidedVenue;
 
+  const missingStorySignal = !howWeMet || isThinStory;
+
   if (!hasCity && howWeMet && mentionsDigitalOrigin && !shouldPrioritizeEventStructure) neededKeys.add('meeting-city');
   if (shouldPrioritizeEventStructure) neededKeys.add('event-structure');
-  if (howWeMet && isThinStory && eventLocationCandidates.length <= 1 && !hasVagueEventTitles) neededKeys.add('first-detail');
+  if (missingStorySignal && eventLocationCandidates.length <= 1 && !hasVagueEventTitles) neededKeys.add('first-detail');
   if (!snapshot.guestFeel && (hasVenue || hasCity) && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
   if (!snapshot.travelNotes && hasVenue && !hasUndecidedTravel && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
   if (!hasRegistry && eventLocationCandidates.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
