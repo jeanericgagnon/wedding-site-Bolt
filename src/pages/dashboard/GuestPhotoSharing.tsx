@@ -4,7 +4,6 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { ActionsMenu } from '../../components/ui/ActionsMenu';
 import { Input } from '../../components/ui/Input';
 import { supabase } from '../../lib/supabase';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
@@ -121,13 +120,11 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bulkUpdatingStatus, setBulkUpdatingStatus] = useState(false);
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
   const [bulkModerating, setBulkModerating] = useState(false);
-  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [photoBuckets, setPhotoBuckets] = useState(() => createEmptyPhotoBuckets());
   const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
   const [slideshowBucketFilter, setSlideshowBucketFilter] = useState<string>('all');
   const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
   const [slideshowPreviewOpen, setSlideshowPreviewOpen] = useState(false);
-  const actionsMenuRef = useRef<HTMLDivElement | null>(null);
   const bucketFileInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingBucket, setPendingBucket] = useState<PhotoBucketKind | null>(null);
   const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
@@ -136,22 +133,6 @@ export const GuestPhotoSharing: React.FC = () => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    const onPointerDown = (event: MouseEvent) => {
-      if (!actionsMenuOpen) return;
-      if (!actionsMenuRef.current?.contains(event.target as Node)) setActionsMenuOpen(false);
-    };
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setActionsMenuOpen(false);
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onEscape);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onEscape);
-    };
-  }, [actionsMenuOpen]);
 
   useEffect(() => {
     writeStoredBucketLinks(bucketUploadLinks);
@@ -1157,54 +1138,49 @@ export const GuestPhotoSharing: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-neutral-900">Buckets</h2>
-            <ActionsMenu
-              open={actionsMenuOpen}
-              onToggle={() => setActionsMenuOpen((v) => !v)}
-              align="right"
-              menuRef={actionsMenuRef}
-            >
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportBucketLinksCsv(); setActionsMenuOpen(false); }}>
-                Export bucket links
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { exportSharePackCsv(); setActionsMenuOpen(false); }}>
-                Export sharing pack
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void copyAllKnownLinks(); setActionsMenuOpen(false); }}>
-                {copied === 'all-links' ? 'Copied all' : 'Copy all links'}
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void copyAllShareMessages(); setActionsMenuOpen(false); }}>
-                {copied === 'all-share-messages' ? 'Copied messages' : 'Copy all messages'}
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { sendAllActiveBucketRequests(); setActionsMenuOpen(false); }}>
-                Send all active bucket requests
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => { void regenerateAllKnownBucketLinks(); setActionsMenuOpen(false); }} disabled={bulkRegenerating}>
-                {bulkRegenerating ? 'Refreshing links...' : 'Refresh saved links'}
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setShowFlaggedOnly((v) => !v)}>
-                <Flag className="w-3.5 h-3.5 mr-1" />
-                {showFlaggedOnly ? 'Show all uploads' : 'Show flagged only'}
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setShowHidden((v) => !v)}>
-                {showHidden ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
-                {showHidden ? 'Hide hidden items' : 'Show hidden items'}
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsFlaggedByFilter(true)} disabled={bulkModerating}>
-                Flag visible
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsFlaggedByFilter(false)} disabled={bulkModerating}>
-                Unflag visible
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsHiddenByFilter(true)} disabled={bulkModerating}>
-                Hide visible
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => void setUploadsHiddenByFilter(false)} disabled={bulkModerating}>
-                Unhide visible
-              </Button>
-            </ActionsMenu>
+        <Card className="p-6 border-0 shadow-sm">
+          <div className="mb-6 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-semibold text-neutral-900">Buckets</h2>
+              <div className="text-xs text-neutral-500">{filteredBuckets.length} visible</div>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
+              <div className="rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Sharing dashboard</p>
+                <p className="mt-2 text-sm text-neutral-700">Copy links, QR codes, and guest-facing prompts without digging through menus.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => void copyAllKnownLinks()}>
+                    {copied === 'all-links' ? 'Copied all links' : 'Copy all bucket links'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void copyAllShareMessages()}>
+                    {copied === 'all-share-messages' ? 'Copied prompts' : 'Copy all share prompts'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => sendAllActiveBucketRequests()}>
+                    Send all active bucket requests
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void regenerateAllKnownBucketLinks()} disabled={bulkRegenerating}>
+                    {bulkRegenerating ? 'Refreshing links...' : 'Refresh all links'}
+                  </Button>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-neutral-200 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Ops tools</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => exportBucketLinksCsv()}>Export bucket links</Button>
+                  <Button size="sm" variant="outline" onClick={() => exportSharePackCsv()}>Export sharing pack</Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowFlaggedOnly((v) => !v)}>
+                    {showFlaggedOnly ? 'Show all uploads' : 'Show flagged only'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowHidden((v) => !v)}>
+                    {showHidden ? 'Hide hidden items' : 'Show hidden items'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void setUploadsFlaggedByFilter(true)} disabled={bulkModerating}>Flag visible</Button>
+                  <Button size="sm" variant="outline" onClick={() => void setUploadsFlaggedByFilter(false)} disabled={bulkModerating}>Unflag visible</Button>
+                  <Button size="sm" variant="outline" onClick={() => void setUploadsHiddenByFilter(true)} disabled={bulkModerating}>Hide visible</Button>
+                  <Button size="sm" variant="outline" onClick={() => void setUploadsHiddenByFilter(false)} disabled={bulkModerating}>Unhide visible</Button>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
             <Input
