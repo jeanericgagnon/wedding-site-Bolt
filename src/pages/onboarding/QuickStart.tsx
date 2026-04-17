@@ -153,6 +153,7 @@ export const QuickStart: React.FC = () => {
   const [aiDebug, setAiDebug] = useState('');
   const [showFollowUps, setShowFollowUps] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [viewState, setViewState] = useState<'question' | 'thinking' | 'followups'>('question');
   const [processingStep, setProcessingStep] = useState(0);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
   const [clarifyingState, setClarifyingState] = useState<ReturnType<typeof createClarifyingPersistenceFromDecision> | null>(null);
@@ -175,6 +176,7 @@ export const QuickStart: React.FC = () => {
       setClarifyingState(null);
       setCurrentIndex(0);
       setShowFollowUps(false);
+      setViewState('question');
       setInputValue('');
       return;
     }
@@ -189,14 +191,17 @@ export const QuickStart: React.FC = () => {
       }
       if (typeof parsed.currentIndex === 'number') setCurrentIndex(parsed.currentIndex);
       if (parsed.followUpAnswers) setFollowUpAnswers(parsed.followUpAnswers);
-      if (parsed.showFollowUps) setShowFollowUps(true);
+      if (parsed.showFollowUps) {
+        setShowFollowUps(true);
+        setViewState('followups');
+      }
       if (parsed.clarifyingState) setClarifyingState(parsed.clarifyingState);
     } catch {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState }));
-  }, [initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }));
+  }, [initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState]);
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
@@ -390,11 +395,13 @@ export const QuickStart: React.FC = () => {
 
   const runProcessingInterstitial = async () => {
     setIsThinking(true);
+    setViewState('thinking');
     for (let i = 0; i < PROCESSING_STEPS.length; i += 1) {
       setProcessingStep(i);
       await new Promise((resolve) => setTimeout(resolve, i === PROCESSING_STEPS.length - 1 ? PROCESSING_FINAL_STEP_MS : PROCESSING_STEP_MS));
     }
     setIsThinking(false);
+    setViewState(showFollowUps ? 'followups' : 'question');
   };
 
   const goNext = async (value: string) => {
@@ -452,6 +459,7 @@ export const QuickStart: React.FC = () => {
       if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
         setLoading(false);
         setShowFollowUps(true);
+        setViewState('followups');
         return;
       }
       const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
@@ -484,6 +492,7 @@ export const QuickStart: React.FC = () => {
                 onClick={() => {
                   setCurrentIndex(index);
                   setShowFollowUps(false);
+                  setViewState('question');
                   setError('');
                 }}
                 className="block text-left text-[13px] transition-opacity duration-200 hover:opacity-70"
@@ -496,7 +505,7 @@ export const QuickStart: React.FC = () => {
         )}
 
         <AnimatePresence mode="wait">
-          {isThinking ? (
+          {viewState === 'thinking' ? (
             <motion.div key="thinking" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <h1 className="mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500 }}>
                 One sec while I shape this
@@ -516,7 +525,7 @@ export const QuickStart: React.FC = () => {
                 })}
               </div>
             </motion.div>
-          ) : !showFollowUps ? (
+          ) : viewState !== 'followups' ? (
             <motion.div key={currentQuestion?.key || 'done'} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}>
               <h1 className="mb-8" style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500 }}>
                 {currentQuestion?.prompt}
