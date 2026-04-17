@@ -16,7 +16,8 @@ import { createEmptyInitialSetupFollowUps } from '../../lib/initialSetupFollowUp
 import { buildInitialSetupSnapshot } from '../../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../../lib/initialSetupDerivedOutputs';
 import { createOnboardingSessionStateFromInitialSetup, applyOnboardingInput } from '../../lib/aiOnboarding';
-import { planFollowUpQuestions } from '../../lib/aiFollowUpPlanner';
+import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
+import { answerClarifyingQuestion } from '../../lib/aiClarifyingFlow';
 
 type ConciergeQuestion =
   | 'partnerNames'
@@ -151,6 +152,7 @@ export const QuickStart: React.FC = () => {
   const [isThinking, setIsThinking] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
+  const [clarifyingState, setClarifyingState] = useState<ReturnType<typeof createClarifyingPersistenceFromDecision> | null>(null);
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
@@ -159,7 +161,7 @@ export const QuickStart: React.FC = () => {
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
   const onboardingSession = createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, currentQuestion ? [currentQuestion.key] : []);
-  const followUpPlan = planFollowUpQuestions(buildInitialSetupSnapshot(initialSetupAnswers), Object.keys(followUpAnswers).filter((key) => followUpAnswers[key]?.trim()).length);
+  const activeClarifyingQuestions = clarifyingState?.clarifying.questions ?? [];
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -369,8 +371,9 @@ export const QuickStart: React.FC = () => {
     }
 
     if (aiSession.currentIntent === 'offer-draft' || currentIndex >= questions.length - 1) {
-      const shouldAskFollowUps = !aiSession.readiness.hasEnoughToDraft && followUpPlan.questions.length > 0;
-      if (shouldAskFollowUps) {
+      const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
+      if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
+        setClarifyingState(createClarifyingPersistenceFromDecision(clarifyingDecision));
         setShowFollowUps(true);
         return;
       }
@@ -383,7 +386,9 @@ export const QuickStart: React.FC = () => {
     const nextIndex = aiNextIndex >= 0 && aiNextIndex > currentIndex ? aiNextIndex : fallbackIndex;
 
     if (nextIndex >= questions.length) {
-      if (followUpPlan.questions.length > 0) {
+      const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
+      if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
+        setClarifyingState(createClarifyingPersistenceFromDecision(clarifyingDecision));
         setShowFollowUps(true);
         return;
       }
@@ -507,10 +512,16 @@ export const QuickStart: React.FC = () => {
                 We already have enough to draft. These are just the highest-leverage details the AI still wants.
               </p>
               <div className="space-y-4">
-                {followUpPlan.questions.slice(0, 3).map((question) => (
-                  <div key={question.key}>
-                    <p className="mb-2 text-[14px]" style={{ color: TEXT }}>{question.variants[0]}</p>
-                    <textarea value={followUpAnswers[question.key] || ''} onChange={(event) => setFollowUpAnswers((prev) => ({ ...prev, [question.key]: event.target.value }))} rows={3} className="w-full rounded-2xl border-0 px-6 py-4 outline-none resize-none" style={{ backgroundColor: SOFT, fontSize: '16px', color: TEXT }} />
+                {activeClarifyingQuestions.slice(0, 3).map((question) => (
+                  <div key={question.id}>
+                    <p className="mb-2 text-[14px]" style={{ color: TEXT }}>{question.question}</p>
+                    <textarea value={followUpAnswers[question.id] || ''} onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setFollowUpAnswers((prev) => ({ ...prev, [question.id]: nextValue }));
+                      if (clarifyingState) {
+                        setClarifyingState(answerClarifyingQuestion(clarifyingState, question.id, nextValue, nextValue.trim() ? 'answered' : 'pending'));
+                      }
+                    }} rows={3} className="w-full rounded-2xl border-0 px-6 py-4 outline-none resize-none" style={{ backgroundColor: SOFT, fontSize: '16px', color: TEXT }} />
                   </div>
                 ))}
               </div>
