@@ -109,7 +109,7 @@ export const planFollowUpQuestions = (
   }
 
   const neededKeys = new Set<string>();
-  const eventLocationQuestions = (snapshot.eventLocationGaps ?? [])
+  const rawEventLocationQuestions = (snapshot.eventLocationGaps ?? [])
     .filter((eventTitle) => {
       const normalized = eventTitle.trim().toLowerCase();
       if (!normalized) return false;
@@ -117,7 +117,6 @@ export const planFollowUpQuestions = (
       if (/^something\s+(friday|saturday|sunday|thursday|monday|tuesday|wednesday)?$/i.test(normalized)) return false;
       return true;
     })
-    .slice(0, Math.min(3, remainingBudget))
     .map((eventTitle, index) => buildEventLocationQuestion(eventTitle, index));
   const howWeMet = (snapshot.howWeMet || '').trim();
   const storyDetail = (snapshot.storyDetail || '').trim();
@@ -129,17 +128,19 @@ export const planFollowUpQuestions = (
   const hasRegistry = Boolean((snapshot.registryPosture || '').trim()) && !/^(unsure|maybe)/i.test((snapshot.registryPosture || '').trim());
 
   if (!hasCity && howWeMet && mentionsDigitalOrigin) neededKeys.add('meeting-city');
-  if (howWeMet && isThinStory) neededKeys.add('first-detail');
-  if (!snapshot.guestFeel && (hasVenue || hasCity)) neededKeys.add('guest-feel');
-  if (!snapshot.travelNotes && hasVenue) neededKeys.add('location-why');
-  if (!hasRegistry) neededKeys.add('registry-posture');
+  if (howWeMet && isThinStory && rawEventLocationQuestions.length <= 1) neededKeys.add('first-detail');
+  if (!snapshot.guestFeel && (hasVenue || hasCity) && rawEventLocationQuestions.length === 0) neededKeys.add('guest-feel');
+  if (!snapshot.travelNotes && hasVenue && rawEventLocationQuestions.length === 0) neededKeys.add('location-why');
+  if (!hasRegistry && rawEventLocationQuestions.length <= 1) neededKeys.add('registry-posture');
 
-  const questions = [
-    ...eventLocationQuestions,
-    ...FOLLOW_UP_BANK
-      .filter((q) => neededKeys.has(q.key))
-      .sort((a, b) => b.priority - a.priority),
-  ].slice(0, Math.min(3, remainingBudget));
+  const maxEventQuestions = rawEventLocationQuestions.length >= 3 ? 2 : rawEventLocationQuestions.length;
+  const eventLocationQuestions = rawEventLocationQuestions.slice(0, Math.min(maxEventQuestions, remainingBudget));
+  const nonEventQuestions = FOLLOW_UP_BANK
+    .filter((q) => neededKeys.has(q.key))
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, Math.max(0, remainingBudget - eventLocationQuestions.length));
+
+  const questions = [...eventLocationQuestions, ...nonEventQuestions].slice(0, Math.min(3, remainingBudget));
 
   return {
     askedCount,
