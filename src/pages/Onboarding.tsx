@@ -325,7 +325,7 @@ export const Onboarding: React.FC = () => {
 
     const { data } = await supabase
       .from('wedding_sites')
-      .select('id, onboarding_answers')
+      .select('id, onboarding_answers, wedding_data')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -499,9 +499,18 @@ export const Onboarding: React.FC = () => {
     if (!existingSite?.id) return false;
 
     const { itinerarySeeds, rsvpEventSeeds, weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
+    const existingWeddingData = (existingSite as { wedding_data?: Record<string, unknown> }).wedding_data || {};
+    const nextWeddingData = {
+      ...existingWeddingData,
+      meta: {
+        ...(((existingWeddingData as Record<string, unknown>).meta as Record<string, unknown>) || {}),
+        onboardingEventSeeds: itinerarySeeds,
+        rsvpEventSeeds,
+      },
+    };
     const { error } = await supabase
       .from('wedding_sites')
-      .update({ onboarding_answers: derivedProfile, wedding_data: { meta: { onboardingEventSeeds: itinerarySeeds, rsvpEventSeeds } } })
+      .update({ onboarding_answers: derivedProfile, wedding_data: nextWeddingData })
       .eq('id', existingSite.id)
       .eq('user_id', user.id);
 
