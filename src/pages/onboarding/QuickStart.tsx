@@ -416,6 +416,7 @@ export const QuickStart: React.FC = () => {
       const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
       setClarifyingState(persistence);
       if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
+        setLoading(false);
         setShowFollowUps(true);
         return;
       }
@@ -434,6 +435,7 @@ export const QuickStart: React.FC = () => {
       const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
       setClarifyingState(persistence);
       if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
+        setLoading(false);
         setShowFollowUps(true);
         return;
       }
