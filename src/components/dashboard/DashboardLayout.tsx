@@ -161,6 +161,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       title: 'Core',
       items: [
         { id: 'builder', label: 'Website', icon: Globe, path: '/dashboard/builder' },
+        { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
         { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
         { id: 'itinerary', label: 'Events & Seating', icon: Calendar, path: '/dashboard/itinerary' },
         { id: 'messages', label: 'Messaging', icon: Mail, path: '/dashboard/messages' },
@@ -172,7 +173,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     {
       title: 'More',
       items: [
-        { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
         { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
         { id: 'coordinator', label: 'Coordinator Mode', icon: Radio, path: '/dashboard/coordinator' },
         { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
