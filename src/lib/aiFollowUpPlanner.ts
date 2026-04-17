@@ -24,13 +24,13 @@ export type IntakeSnapshot = {
 };
 
 const buildEventLocationQuestion = (eventTitle: string, index: number): FollowUpQuestion => ({
-  key: `event-location-${index + 1}` ,
+  key: `event-location-${index + 1}`,
   priority: 120 - index,
   affects: ['scheduleIntro', 'travelIntro', 'faqIntro'],
   variants: [
-    `Where is ${eventTitle} happening?`,
-    `What’s the location for ${eventTitle}?`,
-    `Where should guests go for ${eventTitle}?`,
+    'Walk me through the wedding weekend. What’s happening, and where are guests actually going?',
+    'What should guests know about where each part of the weekend is taking place?',
+    'If guests are moving around over the weekend, where do they actually need to be?',
   ],
 });
 
@@ -98,12 +98,32 @@ export const planFollowUpQuestions = (
   }
 
   const neededKeys = new Set<string>();
-  const eventLocationQuestions = (snapshot.eventLocationGaps ?? []).slice(0, Math.min(3, remainingBudget)).map((eventTitle, index) => buildEventLocationQuestion(eventTitle, index));
-  if (!snapshot.city && snapshot.howWeMet) neededKeys.add('meeting-city');
-  if (!snapshot.storyDetail && snapshot.howWeMet) neededKeys.add('first-detail');
-  if (!snapshot.guestFeel) neededKeys.add('guest-feel');
-  if (!snapshot.travelNotes && snapshot.venue) neededKeys.add('location-why');
-  if (!snapshot.registryPosture) neededKeys.add('registry-posture');
+  const eventLocationQuestions = (snapshot.eventLocationGaps ?? [])
+    .filter((eventTitle) => {
+      const normalized = eventTitle.trim().toLowerCase();
+      if (!normalized) return false;
+      if (normalized.includes('wedding') || normalized.includes('ceremony') || normalized.includes('reception') || normalized.includes('brunch') || normalized.includes('welcome')) {
+        return false;
+      }
+      if (normalized.split(/\s+/).length > 6) return false;
+      return true;
+    })
+    .slice(0, Math.min(3, remainingBudget))
+    .map((eventTitle, index) => buildEventLocationQuestion(eventTitle, index));
+  const howWeMet = (snapshot.howWeMet || '').trim();
+  const storyDetail = (snapshot.storyDetail || '').trim();
+  const storyWordCount = howWeMet.split(/\s+/).filter(Boolean).length;
+  const isThinStory = storyWordCount < 8;
+  const mentionsDigitalOrigin = /hinge|bumble|tinder|online|app|instagram|dm|texted/i.test(howWeMet);
+  const hasCity = Boolean((snapshot.city || '').trim());
+  const hasVenue = Boolean((snapshot.venue || '').trim()) && !/^(tbd|unknown|not sure|maybe)/i.test((snapshot.venue || '').trim());
+  const hasRegistry = Boolean((snapshot.registryPosture || '').trim()) && !/^(unsure|maybe)/i.test((snapshot.registryPosture || '').trim());
+
+  if (!hasCity && howWeMet && mentionsDigitalOrigin) neededKeys.add('meeting-city');
+  if (howWeMet && isThinStory) neededKeys.add('first-detail');
+  if (!snapshot.guestFeel && (hasVenue || hasCity)) neededKeys.add('guest-feel');
+  if (!snapshot.travelNotes && hasVenue) neededKeys.add('location-why');
+  if (!hasRegistry) neededKeys.add('registry-posture');
 
   const questions = [
     ...eventLocationQuestions,
