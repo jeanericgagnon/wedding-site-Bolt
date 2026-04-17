@@ -562,7 +562,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const updated: Record<string, string> = {};
 
       for (const bucket of targetBuckets) {
-        const data = await invokeOrThrow('photo-bucket-manage', { action: 'regenerate_link', bucketId: bucket.id });
+        const data = await invokeOrThrow('photo-album-manage', { action: 'regenerate_link', albumId: bucket.id });
         const link = typeof data?.uploadUrl === 'string' ? data.uploadUrl : '';
         if (link) updated[bucket.id] = link;
       }
@@ -656,7 +656,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const links: Record<string, string> = {};
 
       for (const event of missingItineraryEvents) {
-        const data = await invokeOrThrow('photo-bucket-create', {
+        const data = await invokeOrThrow('photo-album-create', {
           siteId,
           name: event.event_name,
           itineraryEventId: event.id,
@@ -737,7 +737,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSuccess(null);
 
       for (const bucket of targetBuckets) {
-        await invokeOrThrow('photo-bucket-manage', { action: 'set_active', bucketId: bucket.id, isActive });
+        await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId: bucket.id, isActive });
       }
 
       await load();
@@ -763,7 +763,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setWorkingBucketId(bucketId);
       setError(null);
-      await invokeOrThrow('photo-bucket-manage', { action: 'set_active', bucketId, isActive });
+      await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId: bucketId, isActive });
       await load();
     } catch (err: unknown) {
       setError((err as Error)?.message || 'Failed to update bucket status.');
@@ -777,7 +777,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setWorkingBucketId(bucketId);
       setError(null);
       setSuccess(null);
-      const data = await invokeOrThrow('photo-bucket-manage', { action: 'regenerate_link', bucketId });
+      const data = await invokeOrThrow('photo-album-manage', { action: 'regenerate_link', albumId: bucketId });
       const uploadUrl = (data?.uploadUrl as string) ?? '';
       setLatestUploadUrl(uploadUrl);
       if (uploadUrl) {
@@ -823,7 +823,7 @@ export const GuestPhotoSharing: React.FC = () => {
       if (opensAt && closesAt && new Date(closesAt) <= new Date(opensAt)) {
         throw new Error('Close time must be after open time.');
       }
-      await invokeOrThrow('photo-bucket-manage', { action: 'set_window', bucketId, opensAt, closesAt });
+      await invokeOrThrow('photo-album-manage', { action: 'set_window', albumId: bucketId, opensAt, closesAt });
       setSuccess('Upload window saved.');
       await load();
     } catch (err: unknown) {
@@ -847,7 +847,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      const data = await invokeOrThrow('photo-bucket-create', {
+      const data = await invokeOrThrow('photo-album-create', {
         siteId,
         name: name.trim(),
         itineraryEventId: itineraryEventId || null,
@@ -926,8 +926,8 @@ export const GuestPhotoSharing: React.FC = () => {
 
         <Card className="p-6 border border-border bg-surface">
           <div className="mb-4">
-            <h2 className="text-xl font-semibold text-neutral-900">Auto-place couple photos</h2>
-            <p className="mt-1 text-sm text-neutral-600">Bucket photos into a few simple groups and we will place them into the right site sections automatically.</p>
+            <h2 className="text-xl font-semibold text-neutral-900">Couple photo buckets</h2>
+            <p className="mt-1 text-sm text-neutral-600">Create your own couple-photo buckets here so uploads stay organized by the moments and photo types you actually care about.</p>
           </div>
           <PhotoBucketCards buckets={photoBuckets} onUploadClick={handleBucketUploadClick} onRemoveClick={handleBucketRemoveClick} />
           <input ref={bucketFileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleBucketFilesSelected} />
