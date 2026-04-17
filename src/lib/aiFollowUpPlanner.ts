@@ -162,7 +162,8 @@ export const planFollowUpQuestions = (
 
   const needsEventStructure = neededKeys.has('event-structure');
   const shouldUseEventCluster = eventLocationCandidates.length > 0;
-  const shouldSuppressEventStructure = shouldUseEventCluster && !hasVagueEventTitles;
+  const eventClusterLabels = eventLocationCandidates.slice(0, Math.min(2, eventLocationCandidates.length)).map((value) => humanizeEventTitle(value).toLowerCase());
+  const shouldSuppressEventStructure = shouldUseEventCluster && !hasVagueEventTitles && eventClusterLabels.every((label) => !/wedding|ceremony|reception/.test(label));
   if (shouldSuppressEventStructure) neededKeys.delete('event-structure');
   const eventLocationQuestions = shouldUseEventCluster
     ? [buildEventClusterQuestion(eventLocationCandidates.slice(0, Math.min(2, eventLocationCandidates.length)))].slice(0, Math.min(1, remainingBudget))
@@ -170,7 +171,12 @@ export const planFollowUpQuestions = (
   const sortedNonEventQuestions = FOLLOW_UP_BANK
     .filter((q) => neededKeys.has(q.key))
     .sort((a, b) => b.priority - a.priority);
-  const nonEventLimit = needsEventStructure ? 1 : Math.max(0, remainingBudget - eventLocationQuestions.length);
+  const allowPairedNonEvent = shouldUseEventCluster && eventLocationCandidates.length <= 2 && sortedNonEventQuestions[0]?.priority >= 95;
+  const nonEventLimit = needsEventStructure
+    ? 1
+    : allowPairedNonEvent
+      ? 1
+      : Math.max(0, remainingBudget - eventLocationQuestions.length);
   const nonEventQuestions = sortedNonEventQuestions.slice(0, nonEventLimit);
 
   const questions = [...eventLocationQuestions, ...nonEventQuestions].slice(0, Math.min(3, remainingBudget));
