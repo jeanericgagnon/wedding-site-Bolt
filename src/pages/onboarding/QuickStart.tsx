@@ -141,6 +141,8 @@ const PROCESSING_STEPS = [
   'Deciding if we need anything else',
   'Preparing your next step',
 ];
+const PROCESSING_STEP_MS = 90;
+const PROCESSING_FINAL_STEP_MS = 140;
 
 export const QuickStart: React.FC = () => {
   const navigate = useNavigate();
@@ -363,7 +365,7 @@ export const QuickStart: React.FC = () => {
     setIsThinking(true);
     for (let i = 0; i < PROCESSING_STEPS.length; i += 1) {
       setProcessingStep(i);
-      await new Promise((resolve) => setTimeout(resolve, i === PROCESSING_STEPS.length - 1 ? 380 : 220));
+      await new Promise((resolve) => setTimeout(resolve, i === PROCESSING_STEPS.length - 1 ? PROCESSING_FINAL_STEP_MS : PROCESSING_STEP_MS));
     }
     setIsThinking(false);
   };
