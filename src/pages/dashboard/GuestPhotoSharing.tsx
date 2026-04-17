@@ -1117,7 +1117,7 @@ export const GuestPhotoSharing: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <Button onClick={createBucket} disabled={submitting || loading} className="w-full sm:w-auto">
                 <Camera className="w-4 h-4 mr-1" />
-                {submitting ? 'Creating...' : 'Create bucket'}
+                {submitting ? 'Creating...' : 'Add bucket'}
               </Button>
               {latestUploadUrl && (
                 <Button variant="outline" onClick={() => void copyText(latestUploadUrl, 'sheet-dashboard-link')} className="w-full sm:w-auto">
@@ -1132,7 +1132,7 @@ export const GuestPhotoSharing: React.FC = () => {
               )}
               {uploadLanding && (
                 <Button variant="outline" onClick={() => window.open(uploadLanding, '_blank')} className="w-full sm:w-auto">
-                  <ExternalLink className="w-4 h-4 mr-1" /> Open site
+                  <ExternalLink className="w-4 h-4 mr-1" /> Open guest upload site
                 </Button>
               )}
             </div>
@@ -1264,7 +1264,9 @@ export const GuestPhotoSharing: React.FC = () => {
               </div>
             </div>
           ) : filteredBuckets.length === 0 ? (
-            <p className="text-sm text-neutral-600">No buckets match those filters.</p>
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-5 text-sm text-neutral-600">
+              No buckets match those filters. Try a different search, switch the status filter, or clear your hidden / flagged view.
+            </div>
           ) : (
             <div className="space-y-3">
               {filteredBuckets.map((bucket) => {
