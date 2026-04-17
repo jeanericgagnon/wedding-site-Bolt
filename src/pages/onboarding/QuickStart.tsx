@@ -365,7 +365,8 @@ export const QuickStart: React.FC = () => {
     }
 
     if (aiSession.currentIntent === 'offer-draft' || currentIndex >= questions.length - 1) {
-      if (followUpPlan.questions.length > 0) {
+      const shouldAskFollowUps = !aiSession.readiness.hasEnoughToDraft && followUpPlan.questions.length > 0;
+      if (shouldAskFollowUps) {
         setShowFollowUps(true);
         return;
       }
