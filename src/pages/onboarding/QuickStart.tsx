@@ -15,7 +15,7 @@ import {
 import { createEmptyInitialSetupFollowUps } from '../../lib/initialSetupFollowUps';
 import { buildInitialSetupSnapshot } from '../../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../../lib/initialSetupDerivedOutputs';
-import { createOnboardingSessionStateFromInitialSetup, applyOnboardingInput } from '../../lib/aiOnboarding';
+import { createOnboardingSessionStateFromInitialSetup } from '../../lib/aiOnboarding';
 import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
 import { answerClarifyingQuestion, buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
 import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
@@ -415,53 +415,24 @@ export const QuickStart: React.FC = () => {
     }
 
     try {
-      const aiSession = await applyOnboardingInput(
-        createOnboardingSessionStateFromInitialSetup(nextAnswers, questions.slice(0, answeredIndex + 1).map((q) => q.key)),
-        value.trim(),
-      );
-
-      const shouldRunProcessing = answeredIndex >= questions.length - 1;
-      if (shouldRunProcessing) {
-        await runProcessingInterstitial();
-      }
-
-      if (aiSession.currentIntent === 'offer-draft' || answeredIndex >= questions.length - 1) {
-        const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
-        setAiDebug(`intent=${aiSession.currentIntent}; mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
-        const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
-        setClarifyingState(persistence);
-        if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
-          setLoading(false);
-          setShowFollowUps(true);
-          return;
-        }
-        const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
-        console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
-        await finishFlow();
+      if (answeredIndex < questions.length - 1) {
         return;
       }
 
-      const aiNextIndex = questions.findIndex((question) => question.key === aiSession.nextQuestionKey);
-      const nextIndex = aiNextIndex >= 0 && aiNextIndex > answeredIndex ? aiNextIndex : fallbackIndex;
-
-      if (nextIndex >= questions.length) {
-        const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
-        setAiDebug(`intent=${aiSession.currentIntent}; mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
-        const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
-        setClarifyingState(persistence);
-        if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
-          setLoading(false);
-          setShowFollowUps(true);
-          return;
-        }
-        const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
-        console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
-        await finishFlow();
+      await runProcessingInterstitial();
+      const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
+      setAiDebug(`mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
+      const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
+      setClarifyingState(persistence);
+      if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
+        setLoading(false);
+        setShowFollowUps(true);
         return;
       }
-
-      setCurrentIndex(nextIndex);
-      setInputValue(getValueForQuestion(questions[nextIndex].key, initialSetupAnswersToOnboardingFormShape(nextAnswers)));
+      const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
+      console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
+      await finishFlow();
+      return;
     } catch (err) {
       console.error('QUICK_START_AI_STEP_FAILED', err);
       setError(err instanceof Error ? err.message : 'AI step failed.');
