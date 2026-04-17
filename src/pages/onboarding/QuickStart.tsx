@@ -221,11 +221,6 @@ export const QuickStart: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex]);
 
-  const previousAnswers = useMemo(
-    () => questions.slice(0, currentIndex).map((q) => ({ ...q, value: getValueForQuestion(q.key, formData) })).filter((entry) => entry.value.trim()),
-    [currentIndex, formData],
-  );
-
   const getValueForQuestion = (key: ConciergeQuestion, data: typeof formData): string => {
     switch (key) {
       case 'partnerNames': return data.partnerNames || '';
@@ -254,6 +249,11 @@ export const QuickStart: React.FC = () => {
       default: return '';
     }
   };
+
+  const previousAnswers = useMemo(
+    () => questions.slice(0, currentIndex).map((q) => ({ ...q, value: getValueForQuestion(q.key, formData) })).filter((entry) => entry.value.trim()),
+    [currentIndex, formData],
+  );
 
   const applyAnswer = (questionKey: ConciergeQuestion, rawValue: string) => {
     const value = rawValue.trim();
