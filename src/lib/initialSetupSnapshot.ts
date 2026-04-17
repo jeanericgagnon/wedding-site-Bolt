@@ -7,7 +7,6 @@ export type InitialSetupSnapshot = {
   city?: string;
   venue?: string;
   guestFeel?: string;
-  registryPosture?: string;
   rsvpDeadline?: string;
   travelNotes?: string;
   eventLocationGaps?: string[];
@@ -21,7 +20,6 @@ export const buildInitialSetupSnapshot = (answers: InitialSetupAnswers): Initial
     city: interpreted.weddingLocation,
     venue: answers.venueNameOrTbd,
     guestFeel: answers.style,
-    registryPosture: answers.registryIntent,
     rsvpDeadline: answers.rsvpDeadline,
     travelNotes: answers.whenWhere,
     eventLocationGaps: interpreted.structuredWeekendEvents

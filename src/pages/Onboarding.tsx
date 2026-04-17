@@ -933,10 +933,6 @@ export const Onboarding: React.FC = () => {
                         setInitialSetupFollowUps((prev) => ({ ...prev, rsvpClarification: value }));
                         return;
                       }
-                      if (question.key === 'registry-posture') {
-                        setInitialSetupFollowUps((prev) => ({ ...prev, registryClarification: value }));
-                        return;
-                      }
                       if (question.key === 'story-detail') {
                         setInitialSetupFollowUps((prev) => ({ ...prev, storyClarification: value }));
                       }

@@ -42,7 +42,6 @@ export const buildIntakeSnapshot = (profile: WeddingProfile) => ({
   city: profile.event.venueLocation,
   venue: profile.event.venueName,
   guestFeel: '',
-  registryPosture: profile.registry.status,
   rsvpDeadline: profile.event.rsvpDeadline,
   travelNotes: profile.event.weekendEvents || profile.event.venueLocation,
   eventLocationGaps: (profile.event.structuredWeekendEvents || [])
@@ -63,7 +62,6 @@ const NEED_TO_QUESTION_KEY: Record<string, string> = {
   'plus one policy': 'plusOnePolicy',
   'weekend events': 'weekendEvents',
   'rsvp deadline': 'rsvpDeadline',
-  'registry intent': 'registryIntent',
 };
 
 const QUESTION_KEY_BY_PATH: Record<string, string> = {
@@ -77,7 +75,6 @@ const QUESTION_KEY_BY_PATH: Record<string, string> = {
   'guestExperience.faqTone': 'plusOnePolicy',
   'event.weekendEvents': 'weekendEvents',
   'event.rsvpDeadline': 'rsvpDeadline',
-  'registry.url': 'registryIntent',
 };
 
 const PROMPT_BY_QUESTION_KEY: Record<string, string> = {
@@ -91,7 +88,6 @@ const PROMPT_BY_QUESTION_KEY: Record<string, string> = {
   plusOnePolicy: "What's your plus-one policy?",
   weekendEvents: 'What else is happening around the wedding weekend?',
   rsvpDeadline: 'When should guests RSVP by?',
-  registryIntent: "What's the registry plan?",
 };
 
 const onboardingExtractionSchema = z.object({
