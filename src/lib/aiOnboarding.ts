@@ -119,6 +119,22 @@ const onboardingExtractionSchema = z.object({
 });
 
 const getQuestionKeyFromNeed = (need: string): string | null => NEED_TO_QUESTION_KEY[need.toLowerCase()] ?? null;
+const getSuggestedFollowUps = (
+  clarifying: ClarifyingPersistenceEnvelope | undefined,
+  fallback: FollowUpQuestion[],
+): FollowUpQuestion[] => {
+  const clarifyingQuestions = clarifying?.clarifying.questions ?? [];
+  if (!clarifyingQuestions.length) return fallback;
+
+  return clarifyingQuestions.map((question) => ({
+    key: question.id,
+    priority: 100,
+    impact: question.affectedSections.length,
+    category: question.category,
+    variants: [question.question],
+  }));
+};
+
 const getSuggestedPrompt = (questionKey: string | null, profile?: WeddingProfile) => {
   if (!questionKey) return null;
 
@@ -355,7 +371,7 @@ export const createOnboardingSessionState = (
     confirmedFields: [],
     unresolvedConflicts: [],
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, profile),
-    suggestedFollowUps: planFollowUpQuestions(buildIntakeSnapshot(profile), askedQuestions.length).questions,
+    suggestedFollowUps: getSuggestedFollowUps(undefined, planFollowUpQuestions(buildIntakeSnapshot(profile), askedQuestions.length).questions),
     clarifying: undefined,
     confidence: readiness.hasEnoughToDraft ? 0.9 : 0.45,
   };
@@ -387,7 +403,7 @@ export const applyOnboardingInput = async (
     confirmedFields: session.confirmedFields,
     unresolvedConflicts: extraction.conflicts,
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, nextProfile),
-    suggestedFollowUps: planFollowUpQuestions(buildIntakeSnapshot(nextProfile), session.askedQuestions.length).questions,
+    suggestedFollowUps: getSuggestedFollowUps(session.clarifying, planFollowUpQuestions(buildIntakeSnapshot(nextProfile), session.askedQuestions.length).questions),
     clarifying: session.clarifying,
     confidence: extraction.conflicts.length > 0 || extraction.requiresConfirmation ? extraction.confidence : readiness.hasEnoughToDraft ? Math.max(extraction.confidence, 0.9) : Math.max(extraction.confidence, 0.6),
   };
@@ -413,7 +429,7 @@ export const createOnboardingSessionStateFromInitialSetup = (
     confirmedFields: [],
     unresolvedConflicts: [],
     suggestedPrompt: null,
-    suggestedFollowUps: planFollowUpQuestions(buildInitialSetupSnapshot(answers), askedQuestions.length).questions,
+    suggestedFollowUps: getSuggestedFollowUps(undefined, planFollowUpQuestions(buildInitialSetupSnapshot(answers), askedQuestions.length).questions),
     clarifying: undefined,
     confidence: 0.45,
   };
