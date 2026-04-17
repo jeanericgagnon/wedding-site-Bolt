@@ -36,10 +36,11 @@ export const parseWeekendEvents = (input: string): StructuredWeekendEvent[] => i
       .replace(/\s+if people stay$/i, '')
       .replace(/^wedding\s+(friday|saturday|sunday|thursday|monday|tuesday|wednesday)$/i, 'wedding')
       .replace(/^something\s+(friday|saturday|sunday|thursday|monday|tuesday|wednesday)$/i, '')
+      .replace(/^something$/i, '')
       .trim();
     return {
-      id: `${slugifyEventId(title)}-${index + 1}`,
-      title: title || normalized,
+      id: `${slugifyEventId(title || normalized)}-${index + 1}`,
+      title: title || '',
       dateLabel,
       rsvpEnabled: true,
     };
