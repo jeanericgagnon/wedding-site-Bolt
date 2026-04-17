@@ -22,23 +22,25 @@ export const RegistrySection: React.FC<RegistrySectionProps> = ({ content }) => 
         )}
 
         {content.links && content.links.length > 0 ? (
-          <div className="mb-4 max-w-2xl mx-auto rounded-2xl border border-border-subtle bg-surface-secondary/30 px-5 py-4 text-sm text-text-secondary">
-            Registry availability may be updated over time as gifts are purchased or links are adjusted. If something looks unavailable, please check another option or come back later.
-          </div>
-          <div className="flex flex-col items-center gap-4">
-            {content.links.map((link, index) => (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                {link.name}
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            ))}
-          </div>
+          <>
+            <div className="mb-4 max-w-2xl mx-auto rounded-2xl border border-border-subtle bg-surface-secondary/30 px-5 py-4 text-sm text-text-secondary">
+              Registry availability may be updated over time as gifts are purchased or links are adjusted. If something looks unavailable, please check another option or come back later.
+            </div>
+            <div className="flex flex-col items-center gap-4">
+              {content.links.map((link, index) => (
+                <a
+                  key={index}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  {link.name}
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="max-w-xl mx-auto rounded-2xl border border-border-subtle bg-surface-secondary/40 px-6 py-5">
             <p className="text-text-primary font-medium">No registry linked right now</p>
