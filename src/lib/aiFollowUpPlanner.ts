@@ -31,6 +31,11 @@ const humanizeEventTitle = (eventTitle: string) => {
   return cleaned || eventTitle.trim();
 };
 
+const isVagueEventTitle = (eventTitle: string) => {
+  const normalized = eventTitle.trim().toLowerCase();
+  return /\b(thing|something|stuff|hang|party stuff|plans)\b/.test(normalized);
+};
+
 const buildEventLocationQuestion = (eventTitle: string, index: number): FollowUpQuestion => {
   const label = humanizeEventTitle(eventTitle);
   return {
@@ -96,6 +101,16 @@ const FOLLOW_UP_BANK: FollowUpQuestion[] = [
       'What should the registry note emphasize most?',
     ],
   },
+  {
+    key: 'event-structure',
+    priority: 110,
+    affects: ['scheduleIntro', 'travelIntro', 'faqIntro'],
+    variants: [
+      'What events are actually happening around the wedding, and which ones should guests know about?',
+      'Besides the wedding itself, what else is happening that guests should plan around?',
+      'What should guests expect across the wedding weekend, if anything beyond the main event?',
+    ],
+  },
 ];
 
 export const planFollowUpQuestions = (
@@ -109,14 +124,16 @@ export const planFollowUpQuestions = (
   }
 
   const neededKeys = new Set<string>();
-  const rawEventLocationQuestions = (snapshot.eventLocationGaps ?? [])
-    .filter((eventTitle) => {
-      const normalized = eventTitle.trim().toLowerCase();
-      if (!normalized) return false;
-      if (normalized.length > 80) return false;
-      if (/^something\s+(friday|saturday|sunday|thursday|monday|tuesday|wednesday)?$/i.test(normalized)) return false;
-      return true;
-    })
+  const rawEventTitles = (snapshot.eventLocationGaps ?? []).filter((eventTitle) => {
+    const normalized = eventTitle.trim().toLowerCase();
+    if (!normalized) return false;
+    if (normalized.length > 80) return false;
+    if (/^something\s+(friday|saturday|sunday|thursday|monday|tuesday|wednesday)?$/i.test(normalized)) return false;
+    return true;
+  });
+  const hasVagueEventTitles = rawEventTitles.some((eventTitle) => isVagueEventTitle(eventTitle));
+  const rawEventLocationQuestions = rawEventTitles
+    .filter((eventTitle) => !isVagueEventTitle(eventTitle))
     .map((eventTitle, index) => buildEventLocationQuestion(eventTitle, index));
   const howWeMet = (snapshot.howWeMet || '').trim();
   const storyDetail = (snapshot.storyDetail || '').trim();
@@ -128,10 +145,11 @@ export const planFollowUpQuestions = (
   const hasRegistry = Boolean((snapshot.registryPosture || '').trim()) && !/^(unsure|maybe)/i.test((snapshot.registryPosture || '').trim());
 
   if (!hasCity && howWeMet && mentionsDigitalOrigin) neededKeys.add('meeting-city');
-  if (howWeMet && isThinStory && rawEventLocationQuestions.length <= 1) neededKeys.add('first-detail');
-  if (!snapshot.guestFeel && (hasVenue || hasCity) && rawEventLocationQuestions.length === 0) neededKeys.add('guest-feel');
-  if (!snapshot.travelNotes && hasVenue && rawEventLocationQuestions.length === 0) neededKeys.add('location-why');
-  if (!hasRegistry && rawEventLocationQuestions.length <= 1) neededKeys.add('registry-posture');
+  if (rawEventTitles.length === 0 || hasVagueEventTitles) neededKeys.add('event-structure');
+  if (howWeMet && isThinStory && rawEventLocationQuestions.length <= 1 && !hasVagueEventTitles) neededKeys.add('first-detail');
+  if (!snapshot.guestFeel && (hasVenue || hasCity) && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
+  if (!snapshot.travelNotes && hasVenue && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
+  if (!hasRegistry && rawEventLocationQuestions.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
   const maxEventQuestions = rawEventLocationQuestions.length >= 3 ? 2 : rawEventLocationQuestions.length;
   const eventLocationQuestions = rawEventLocationQuestions.slice(0, Math.min(maxEventQuestions, remainingBudget));
