@@ -1069,7 +1069,26 @@ export const GuestPhotoSharing: React.FC = () => {
             </div>
             <p className="text-sm text-neutral-600">Create buckets for the moments you want people to upload into. Think welcome party, dance floor, disposables, table shots, brunch, or anything else worth collecting.</p>
           </div>
-          <div className="p-6">
+          <div className="p-6 space-y-5">
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: 'Welcome party', hint: 'pre-wedding energy' },
+              { label: 'Ceremony', hint: 'the core moment' },
+              { label: 'Dance floor', hint: 'the fun stuff' },
+              { label: 'Disposables', hint: 'film and candid dumps' },
+            ].map((template) => (
+              <button
+                key={template.label}
+                type="button"
+                onClick={() => setName(template.label)}
+                className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-4 text-left transition hover:border-neutral-300 hover:bg-white"
+              >
+                <p className="text-sm font-medium text-neutral-900">{template.label}</p>
+                <p className="mt-1 text-xs text-neutral-500">{template.hint}</p>
+              </button>
+            ))}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -1138,13 +1157,23 @@ export const GuestPhotoSharing: React.FC = () => {
           {success && <p className="mt-3 text-sm text-emerald-700">{success}</p>}
 
           {latestUploadUrl && (
-            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-              <p className="text-sm font-medium text-emerald-900 mb-1">Newest bucket upload link</p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 text-xs text-emerald-800 break-all">{latestUploadUrl}</code>
-                <Button size="sm" variant="outline" onClick={() => copyText(latestUploadUrl, 'latest')}>
-                  <Copy className="w-3 h-3 mr-1" /> {copied === 'latest' ? 'Copied' : 'Copy'}
-                </Button>
+            <div className="grid gap-3 lg:grid-cols-[1.35fr_0.9fr]">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-sm font-medium text-emerald-900 mb-1">Newest bucket upload link</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs text-emerald-800 break-all">{latestUploadUrl}</code>
+                  <Button size="sm" variant="outline" onClick={() => copyText(latestUploadUrl, 'latest')}>
+                    <Copy className="w-3 h-3 mr-1" /> {copied === 'latest' ? 'Copied' : 'Copy'}
+                  </Button>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Upload dashboard</p>
+                <p className="mt-2 text-sm text-neutral-700">Guests should land on one clean place to upload, not hunt through your site.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => window.open(latestUploadUrl, '_blank')}>Open upload dashboard</Button>
+                  <Button size="sm" variant="outline" onClick={() => window.open(getBucketQrUrl(latestUploadUrl), '_blank')}>Open QR</Button>
+                </div>
               </div>
             </div>
           )}
