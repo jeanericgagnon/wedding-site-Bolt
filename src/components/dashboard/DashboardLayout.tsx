@@ -13,7 +13,6 @@ import {
   X,
   Mail,
   Calendar,
-  Sparkles,
   ExternalLink,
   ClipboardList,
   Armchair,
@@ -21,6 +20,8 @@ import {
   ScrollText,
   ChevronDown,
   ChevronRight,
+  Globe,
+  Archive,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -52,7 +53,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [siteIsPublished, setSiteIsPublished] = useState(false);
   const [sitePrivacyMode, setSitePrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
   const [showMoreFeatures, setShowMoreFeatures] = useState(false);
-  const [enabledFeatureIds, setEnabledFeatureIds] = useState<string[]>([]);
   const [siteMemberships, setSiteMemberships] = useState<SiteMembershipOption[]>([]);
   const [activeSiteRole, setActiveSiteRole] = useState<string | null>(null);
   const { user, isDemoMode } = useAuth();
@@ -155,80 +155,38 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     return 'U';
   };
 
-  const navItems: Array<{
-    id: string;
-    label: string;
-    icon: LucideIcon;
-    path: string;
-    pinned?: boolean;
+  const navSections: Array<{
+    title?: string;
+    items: Array<{ id: string; label: string; icon: LucideIcon; path: string }>;
   }> = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/dashboard/overview', pinned: true },
-    { id: 'builder', label: 'Your Site', icon: Palette, path: '/dashboard/builder', pinned: true },
-    { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests', pinned: true },
-    { id: 'itinerary', label: 'Itinerary', icon: Calendar, path: '/dashboard/itinerary', pinned: true },
-    { id: 'coordinator', label: 'Coordinator Mode', icon: Radio, path: '/dashboard/coordinator' },
-    { id: 'messages', label: 'Messages', icon: Mail, path: '/dashboard/messages' },
-    { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
-    { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
-    { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
-    { id: 'photos', label: 'Photo Sharing', icon: Camera, path: '/dashboard/photos' },
-    { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry', pinned: true },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
-    { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: '/dashboard/audit-logs' },
+    {
+      items: [
+        { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/dashboard/overview' },
+      ],
+    },
+    {
+      title: 'Core',
+      items: [
+        { id: 'builder', label: 'Website', icon: Globe, path: '/dashboard/builder' },
+        { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
+        { id: 'itinerary', label: 'Events & Seating', icon: Calendar, path: '/dashboard/itinerary' },
+        { id: 'messages', label: 'Messaging', icon: Mail, path: '/dashboard/messages' },
+        { id: 'photos', label: 'Memories', icon: Archive, path: '/dashboard/photos' },
+        { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
+        { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
+      ],
+    },
+    {
+      title: 'More',
+      items: [
+        { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
+        { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
+        { id: 'coordinator', label: 'Coordinator Mode', icon: Radio, path: '/dashboard/coordinator' },
+        { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
+        { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: '/dashboard/audit-logs' },
+      ],
+    },
   ];
-
-  const pinnedNavItems = navItems.filter((item) => item.pinned);
-  const optionalNavItems = navItems.filter((item) => !item.pinned);
-  const enabledOptionalNavItems = optionalNavItems.filter((item) => enabledFeatureIds.includes(item.id));
-  const hiddenOptionalNavItems = optionalNavItems.filter((item) => !enabledFeatureIds.includes(item.id));
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem('dashboard-enabled-features');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setEnabledFeatureIds((prev) => prev.length > 0 ? prev : parsed.filter((v): v is string => typeof v === 'string'));
-          return;
-        }
-      }
-    } catch {
-      // ignore localStorage issues
-    }
-    setEnabledFeatureIds((prev) => prev.length > 0 ? prev : ['settings']);
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem('dashboard-enabled-features', JSON.stringify(enabledFeatureIds));
-    } catch {
-      // ignore localStorage issues
-    }
-  }, [enabledFeatureIds]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    const timeout = window.setTimeout(() => {
-      const nextSiteJson: Record<string, unknown> = {
-        ...(siteJsonState ?? {}),
-        dashboard: {
-          ...(((siteJsonState ?? {}).dashboard as Record<string, unknown> | undefined) ?? {}),
-          sidebarFeatures: enabledFeatureIds,
-        },
-      };
-      setSiteJsonState(nextSiteJson);
-      void supabase
-        .from('wedding_sites')
-        .update({ site_json: nextSiteJson })
-        .eq('id', siteId);
-    }, 400);
-
-    return () => window.clearTimeout(timeout);
-  }, [siteId, enabledFeatureIds]);
-
-  const toggleFeature = (id: string) => {
-    setEnabledFeatureIds((prev) => prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]);
-  };
 
   const handleSiteSwitch = (nextSiteId: string) => {
     setStoredActiveSiteId(nextSiteId);
@@ -288,99 +246,50 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               </div>
             )}
 
-            <ul className="space-y-1">
-              {pinnedNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentPage === item.id;
-                return (
-                  <li key={item.id}>
-                    <Link
-                      to={item.path}
-                      className={`
-                        flex items-center gap-3 px-4 py-3 rounded-lg text-base
-                        transition-colors no-underline min-h-[44px]
-                        ${isActive
-                          ? 'bg-primary text-white shadow-sm'
-                          : 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle'
-                        }
-                      `}
-                      onClick={() => setSidebarOpen(false)}
+            <div className="space-y-6">
+              {navSections.map((section, sectionIndex) => (
+                <div key={section.title || `section-${sectionIndex}`}>
+                  {section.title && (
+                    <button
+                      type="button"
+                      onClick={() => section.title === 'More' && setShowMoreFeatures((prev) => !prev)}
+                      className={`mb-2 flex w-full items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide ${section.title === 'More' ? 'text-text-secondary hover:text-text-primary' : 'text-text-tertiary'}`}
                     >
-                      <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-                      <span>{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                      <span>{section.title}</span>
+                      {section.title === 'More' ? (showMoreFeatures ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />) : null}
+                    </button>
+                  )}
 
-            {(enabledOptionalNavItems.length > 0 || hiddenOptionalNavItems.length > 0) && (
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowMoreFeatures((prev) => !prev)}
-                  className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
-                >
-                  <span>More features</span>
-                  {showMoreFeatures ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                </button>
-
-                {showMoreFeatures && (
-                  <div className="mt-2 space-y-1">
-                    {enabledOptionalNavItems.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = currentPage === item.id;
-                      return (
-                        <div key={item.id} className="flex items-center gap-2">
-                          <Link
-                            to={item.path}
-                            className={`
-                              flex-1 flex items-center gap-3 px-4 py-3 rounded-lg text-base
-                              transition-colors no-underline min-h-[44px]
-                              ${isActive
-                                ? 'bg-primary text-white shadow-sm'
-                                : 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle'
-                              }
-                            `}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-                            <span>{item.label}</span>
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => toggleFeature(item.id)}
-                            className="px-2 py-2 text-xs text-text-tertiary hover:text-text-primary"
-                            aria-label={`Hide ${item.label}`}
-                          >
-                            Hide
-                          </button>
-                        </div>
-                      );
-                    })}
-
-                    {hiddenOptionalNavItems.length > 0 && (
-                      <div className="mt-3 border-t border-border-subtle pt-3">
-                        <p className="px-4 text-xs uppercase tracking-wide text-text-tertiary">Hidden</p>
-                        <div className="mt-2 space-y-1">
-                          {hiddenOptionalNavItems.map((item) => (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => toggleFeature(item.id)}
-                              className="w-full flex items-center justify-between px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-subtle rounded-lg"
+                  {(section.title !== 'More' || showMoreFeatures) && (
+                    <ul className="space-y-1">
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentPage === item.id;
+                        return (
+                          <li key={item.id}>
+                            <Link
+                              to={item.path}
+                              className={`
+                                flex items-center gap-3 px-4 py-3 rounded-lg text-base
+                                transition-colors no-underline min-h-[44px]
+                                ${isActive
+                                  ? 'bg-primary text-white shadow-sm'
+                                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle'
+                                }
+                              `}
+                              onClick={() => setSidebarOpen(false)}
                             >
+                              <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                               <span>{item.label}</span>
-                              <span className="text-xs">Show</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
           </nav>
 
           <div className="p-4 border-t border-border-subtle">
