@@ -4,6 +4,48 @@ import { generateClarifyingQuestionDecision, type ClarifyingQuestionInput, type 
 import type { ClarifyingPersistenceEnvelope, StoredClarifyingQuestion } from './aiClarifyingPersistence';
 import { createEmptyClarifyingPersistence } from './aiClarifyingPersistence';
 
+const splitWeekendEvents = (raw: string) => raw
+  .split(/\n|,|;/)
+  .map((part) => part.trim())
+  .filter(Boolean)
+  .filter((part) => !/^(maybe|tbd|unknown)$/i.test(part));
+
+const expandEventStructureQuestions = (decision: ClarifyingQuestionDecision, answers: InitialSetupAnswers): ClarifyingQuestionDecision => {
+  const baseEventQuestion = decision.questions.find((question) => question.category === 'event_structure');
+  if (!baseEventQuestion) return decision;
+
+  const events = splitWeekendEvents(answers.weekendEventsRaw);
+  if (!events.length) return decision;
+
+  const expandedQuestions = events.flatMap((event, index) => {
+    const title = event.replace(/^(friday|saturday|sunday|thursday|monday)\s+/i, '').trim() || event;
+    return [
+      {
+        ...baseEventQuestion,
+        id: `${baseEventQuestion.id || 'event-structure'}-${index + 1}-time`,
+        question: `${title}: what time is it?`,
+        targetFields: [`events.${index}.time`],
+        affectedSections: ['schedule'],
+      },
+      {
+        ...baseEventQuestion,
+        id: `${baseEventQuestion.id || 'event-structure'}-${index + 1}-location`,
+        question: `${title}: where is it happening?`,
+        targetFields: [`events.${index}.location`],
+        affectedSections: ['schedule', 'travel'],
+      },
+    ];
+  });
+
+  return {
+    ...decision,
+    questions: [
+      ...decision.questions.filter((question) => question !== baseEventQuestion),
+      ...expandedQuestions,
+    ].slice(0, 6),
+  };
+};
+
 const toClarifyingInputFromInitialSetup = (answers: InitialSetupAnswers): ClarifyingQuestionInput => ({
   intakeSummary: JSON.stringify(answers),
   knownResolved: Object.entries(answers)
@@ -36,7 +78,8 @@ export const createClarifyingPersistenceFromDecision = (
 });
 
 export const createClarifyingDecisionFromInitialSetup = async (answers: InitialSetupAnswers) => {
-  return generateClarifyingQuestionDecision(toClarifyingInputFromInitialSetup(answers));
+  const decision = await generateClarifyingQuestionDecision(toClarifyingInputFromInitialSetup(answers));
+  return expandEventStructureQuestions(decision, answers);
 };
 
 export const attachEmptyClarifyingPersistence = (session: OnboardingSessionState) => ({
