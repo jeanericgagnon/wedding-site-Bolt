@@ -252,7 +252,16 @@ const deterministicExtractWeddingProfileUpdates = (
     confidence = Math.max(confidence, 0.72);
   }
 
-  if (!updates.story && !updates.guestExperience && !(updates.event && 'weekendEvents' in updates.event) && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed) && !/cash|gifts|both|unsure|none for now|under 50|50-100|100-150|150-250|250\+|250 plus/i.test(trimmed)) {
+  if (!profile.guestExperience.summary && /relaxed|welcomed|welcome|taken care of|warm|excited|elegant|fun|emotional|intimate/i.test(trimmed) && trimmed.length > 12) {
+    updates.guestExperience = {
+      ...(updates.guestExperience ?? profile.guestExperience),
+      summary: trimmed,
+    };
+    notes.push('Captured guest experience tone');
+    confidence = Math.max(confidence, 0.7);
+  }
+
+  if (!updates.story && !(updates.guestExperience && 'summary' in updates.guestExperience) && !(updates.event && 'weekendEvents' in updates.event) && trimmed.length > 24 && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed) && !/https?:\/\//i.test(trimmed) && !/cash|gifts|both|unsure|none for now|under 50|50-100|100-150|150-250|250\+|250 plus/i.test(trimmed)) {
     updates.story = { ...profile.story, summary: trimmed };
     notes.push('Captured story summary');
     confidence = Math.max(confidence, 0.58);
