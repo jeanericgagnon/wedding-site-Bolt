@@ -1371,10 +1371,19 @@ export const GuestPhotoSharing: React.FC = () => {
                     </div>
                     <div className="px-5 py-4 space-y-4">
 
+                    {hasLink && (
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Upload dashboard ready</p>
+                        <p className="mt-1 text-sm text-emerald-900">Share one clean upload destination for this bucket.</p>
+                        <p className="mt-2 truncate text-xs text-emerald-800">{knownUploadLink}</p>
+                      </div>
+                    )}
+
                     <div className="rounded-2xl border border-neutral-200 p-3 bg-neutral-50">
                       <div className="flex items-center gap-2 mb-2 text-xs font-medium text-neutral-700">
-                        <CalendarClock className="w-3.5 h-3.5" /> Upload window
+                        <CalendarClock className="w-3.5 h-3.5" /> Collect between
                       </div>
+                      <p className="mb-3 text-xs text-neutral-500">Optional. Use this when you want uploads to open and close around a specific event.</p>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
                         <div>
                           <label className="block text-xs text-neutral-500 mb-1">Opens</label>
