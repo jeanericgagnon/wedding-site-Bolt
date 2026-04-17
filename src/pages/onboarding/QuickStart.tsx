@@ -538,8 +538,8 @@ export const QuickStart: React.FC = () => {
                     }
                   }} placeholder={currentQuestion.placeholder} rows={5} className="w-full rounded-2xl border-0 px-6 py-5 outline-none transition-all duration-200 resize-none" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
                   <div className="flex gap-3">
-                    {currentQuestion.optional && <button onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
-                    <button onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                    {currentQuestion.optional && <button type="button" onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
+                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                       {loading ? 'Building...' : currentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
@@ -548,8 +548,8 @@ export const QuickStart: React.FC = () => {
                 <div className="space-y-4">
                   <input type="text" value={inputValue} onChange={(event) => setInputValue(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && !loading && void goNext(inputValue)} placeholder={currentQuestion?.type === 'date' ? 'YYYY-MM-DD or a clear date like 2026-12-01' : currentQuestion?.placeholder} autoFocus className="w-full rounded-2xl border-0 px-6 py-5 outline-none transition-all duration-200" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
                   <div className="flex gap-3">
-                    {currentQuestion?.optional && <button onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
-                    <button onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion?.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                    {currentQuestion?.optional && <button type="button" onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
+                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion?.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                       {loading ? 'Building...' : currentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
@@ -580,10 +580,10 @@ export const QuickStart: React.FC = () => {
                 ))}
               </div>
               <div className="mt-6 flex gap-3">
-                <button onClick={() => void finishFlow()} disabled={loading} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                <button type="button" onClick={() => void finishFlow()} disabled={loading} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                   {loading ? 'Building...' : 'Build my draft'}
                 </button>
-                <button onClick={() => setShowFollowUps(false)} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
+                <button type="button" onClick={() => setShowFollowUps(false)} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
                   Back
                 </button>
               </div>
