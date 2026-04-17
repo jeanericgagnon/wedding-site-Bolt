@@ -162,6 +162,8 @@ export const planFollowUpQuestions = (
 
   const needsEventStructure = neededKeys.has('event-structure');
   const shouldUseEventCluster = eventLocationCandidates.length > 0;
+  const shouldSuppressEventStructure = shouldUseEventCluster && !hasVagueEventTitles;
+  if (shouldSuppressEventStructure) neededKeys.delete('event-structure');
   const eventLocationQuestions = shouldUseEventCluster
     ? [buildEventClusterQuestion(eventLocationCandidates.slice(0, Math.min(2, eventLocationCandidates.length)))].slice(0, Math.min(1, remainingBudget))
     : [];
