@@ -150,6 +150,7 @@ export const QuickStart: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [aiDebug, setAiDebug] = useState('');
   const [showFollowUps, setShowFollowUps] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
@@ -375,6 +376,7 @@ export const QuickStart: React.FC = () => {
     if (!value.trim() && !currentQuestion.optional) return;
     applyAnswer(currentQuestion.key, value);
     setError('');
+    setAiDebug('');
 
     const nextAnswers = (() => {
       const draft = { ...initialSetupAnswers };
@@ -401,52 +403,62 @@ export const QuickStart: React.FC = () => {
       return draft;
     })();
 
-    const aiSession = await applyOnboardingInput(
-      createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, questions.slice(0, currentIndex).map((q) => q.key)),
-      value.trim(),
-    );
+    try {
+      const aiSession = await applyOnboardingInput(
+        createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, questions.slice(0, currentIndex).map((q) => q.key)),
+        value.trim(),
+      );
 
-    const shouldRunProcessing = currentIndex >= questions.length - 1;
-    if (shouldRunProcessing) {
-      await runProcessingInterstitial();
-    }
+      const shouldRunProcessing = currentIndex >= questions.length - 1;
+      if (shouldRunProcessing) {
+        await runProcessingInterstitial();
+      }
 
-    if (aiSession.currentIntent === 'offer-draft' || currentIndex >= questions.length - 1) {
-      const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
-      const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
-      setClarifyingState(persistence);
-      if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
-        setLoading(false);
-        setShowFollowUps(true);
+      if (aiSession.currentIntent === 'offer-draft' || currentIndex >= questions.length - 1) {
+        const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
+        setAiDebug(`intent=${aiSession.currentIntent}; mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
+        const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
+        setClarifyingState(persistence);
+        if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
+          setLoading(false);
+          setShowFollowUps(true);
+          return;
+        }
+        const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
+        console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
+        await finishFlow();
         return;
       }
-      const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
-      console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
-      await finishFlow();
-      return;
-    }
 
-    const aiNextIndex = questions.findIndex((question) => question.key === aiSession.nextQuestionKey);
-    const fallbackIndex = currentIndex + 1;
-    const nextIndex = aiNextIndex >= 0 && aiNextIndex > currentIndex ? aiNextIndex : fallbackIndex;
+      const aiNextIndex = questions.findIndex((question) => question.key === aiSession.nextQuestionKey);
+      const fallbackIndex = currentIndex + 1;
+      const nextIndex = aiNextIndex >= 0 && aiNextIndex > currentIndex ? aiNextIndex : fallbackIndex;
 
-    if (nextIndex >= questions.length) {
-      const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
-      const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
-      setClarifyingState(persistence);
-      if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
-        setLoading(false);
-        setShowFollowUps(true);
+      if (nextIndex >= questions.length) {
+        const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
+        setAiDebug(`intent=${aiSession.currentIntent}; mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
+        const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
+        setClarifyingState(persistence);
+        if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
+          setLoading(false);
+          setShowFollowUps(true);
+          return;
+        }
+        const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
+        console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
+        await finishFlow();
         return;
       }
-      const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
-      console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
-      await finishFlow();
-      return;
-    }
 
-    setCurrentIndex(nextIndex);
-    setInputValue(getValueForQuestion(questions[nextIndex].key, initialSetupAnswersToOnboardingFormShape(nextAnswers)));
+      setCurrentIndex(nextIndex);
+      setInputValue(getValueForQuestion(questions[nextIndex].key, initialSetupAnswersToOnboardingFormShape(nextAnswers)));
+    } catch (err) {
+      console.error('QUICK_START_AI_STEP_FAILED', err);
+      setError(err instanceof Error ? err.message : 'AI step failed.');
+      setAiDebug(`step=${currentQuestion.key}; value=${value.trim().slice(0, 80)}`);
+      setLoading(false);
+      setIsThinking(false);
+    }
   };
 
   return (
@@ -588,6 +600,7 @@ export const QuickStart: React.FC = () => {
                 </button>
               </div>
               {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+              {aiDebug && <p className="mt-2 text-xs" style={{ color: MUTED }}>AI debug: {aiDebug}</p>}
             </motion.div>
           )}
         </AnimatePresence>
