@@ -473,13 +473,10 @@ export const QuickStart: React.FC = () => {
           )}
         </AnimatePresence>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16 flex items-center justify-between">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16">
           <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => navigate('/dashboard?bypassPayment=1')}>
             Switch to manual setup
           </button>
-          <span className="text-[13px]" style={{ color: MUTED }}>
-            {readiness.hasEnoughToDraft ? 'Draft-ready' : `${Math.round(onboardingSession.confidence * 100)}% confidence`}
-          </span>
         </motion.div>
       </div>
     </div>
