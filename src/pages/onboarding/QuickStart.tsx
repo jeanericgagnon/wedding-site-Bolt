@@ -427,7 +427,7 @@ export const QuickStart: React.FC = () => {
                   <div className="flex gap-3">
                     {currentQuestion.optional && <button onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
                     <button onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
-                      {loading ? 'Building...' : 'Continue'}
+                      {loading ? 'Building...' : currentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
                 </div>
@@ -437,7 +437,7 @@ export const QuickStart: React.FC = () => {
                   <div className="flex gap-3">
                     {currentQuestion?.optional && <button onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
                     <button onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion?.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
-                      {loading ? 'Building...' : 'Continue'}
+                      {loading ? 'Building...' : currentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
                 </div>
