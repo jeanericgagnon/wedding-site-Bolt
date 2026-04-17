@@ -12,6 +12,9 @@ export type FollowUpPlan = {
   questions: FollowUpQuestion[];
 };
 
+const EVENT_LANE_KEYS = new Set(['event-structure']);
+const NON_EVENT_LANE_KEYS = new Set(['meeting-city', 'first-detail', 'guest-feel', 'location-why', 'registry-posture']);
+
 export type IntakeSnapshot = {
   howWeMet?: string;
   storyDetail?: string;
@@ -168,18 +171,27 @@ export const planFollowUpQuestions = (
   const eventLocationQuestions = shouldUseEventCluster
     ? [buildEventClusterQuestion(eventLocationCandidates.slice(0, Math.min(2, eventLocationCandidates.length)))].slice(0, Math.min(1, remainingBudget))
     : [];
-  const sortedNonEventQuestions = FOLLOW_UP_BANK
+  if (!shouldUseEventCluster && rawEventTitles.length > 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
+  const laneQuestions = FOLLOW_UP_BANK
     .filter((q) => neededKeys.has(q.key))
     .sort((a, b) => b.priority - a.priority);
-  const allowPairedNonEvent = shouldUseEventCluster && eventLocationCandidates.length <= 2 && sortedNonEventQuestions[0]?.priority >= 95;
-  const nonEventLimit = needsEventStructure
-    ? 1
-    : allowPairedNonEvent
-      ? 1
-      : Math.max(0, remainingBudget - eventLocationQuestions.length);
-  const nonEventQuestions = sortedNonEventQuestions.slice(0, nonEventLimit);
+  const eventLaneQuestions = laneQuestions.filter((q) => EVENT_LANE_KEYS.has(q.key));
+  const nonEventLaneQuestions = laneQuestions.filter((q) => NON_EVENT_LANE_KEYS.has(q.key));
 
-  const questions = [...eventLocationQuestions, ...nonEventQuestions].slice(0, Math.min(3, remainingBudget));
+  const questions: FollowUpQuestion[] = [];
+  if (eventLocationQuestions.length > 0) {
+    questions.push(eventLocationQuestions[0]);
+  } else if (eventLaneQuestions.length > 0) {
+    questions.push(eventLaneQuestions[0]);
+  }
+
+  if (questions.length < remainingBudget && nonEventLaneQuestions.length > 0) {
+    questions.push(nonEventLaneQuestions[0]);
+  }
+
+  if (questions.length === 0 && eventLaneQuestions.length > 0) {
+    questions.push(eventLaneQuestions[0]);
+  }
 
   return {
     askedCount,
