@@ -529,6 +529,10 @@ export const applyInitialSetupAnswersToWeddingProfile = (answers: InitialSetupAn
   const interpreted = interpretInitialSetupAnswers(answers);
   const displayNames = answers.names.trim();
   const [partnerOne = '', partnerTwo = ''] = interpreted.names;
+  const guestPolicyNotes = [
+    answers.plusOnePolicy ? `plus-ones:${answers.plusOnePolicy}` : '',
+    answers.childrenAllowed ? `children:${answers.childrenAllowed}` : '',
+  ].filter(Boolean).join(' | ');
 
   return {
     ...createEmptyWeddingProfile(),
@@ -570,7 +574,7 @@ export const applyInitialSetupAnswersToWeddingProfile = (answers: InitialSetupAn
     },
     guestExperience: {
       summary: answers.guestCountBand,
-      faqTone: answers.plusOnePolicy,
+      faqTone: guestPolicyNotes,
       travelSupportLevel: answers.mealChoice === 'yes' ? 'high' : 'minimal',
     },
     meta: {
