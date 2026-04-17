@@ -50,6 +50,33 @@ Return JSON with:
 
 export const buildClarifyingQuestionUserPrompt = (input: ClarifyingQuestionInput) => `Current intake summary:\n${input.intakeSummary}\n\nResolved:\n${input.knownResolved.join('\n') || '- none listed'}\n\nUnresolved / TBD:\n${input.knownUnresolved.join('\n') || '- none listed'}\n\nReadiness:\n${input.readinessSummary}\n\nDecide whether we should ask any clarifying questions before drafting the site.`;
 
+export const simulateClarifyingQuestionDecision = (input: ClarifyingQuestionInput): ClarifyingQuestionDecision => {
+  const unresolved = input.knownUnresolved.join(' ').toLowerCase();
+  const questions: string[] = [];
+  const whyTheseQuestions: string[] = [];
+
+  if (/event|weekend|welcome|brunch|schedule/.test(unresolved)) {
+    questions.push('What events are actually happening across the weekend, even if rough?');
+    whyTheseQuestions.push('Improves schedule, FAQ, and travel clarity.');
+  }
+
+  if (questions.length < 3 && /guest|travel|local|confus|unclear|expect/.test(unresolved)) {
+    questions.push('What should guests expect from the weekend overall?');
+    whyTheseQuestions.push('Improves homepage tone, FAQ usefulness, and guest guidance.');
+  }
+
+  if (questions.length < 3 && /registry|gifts|cash|meal|plus-one/.test(unresolved)) {
+    questions.push('Do you want to guide guests at all on gifts or keep it open?');
+    whyTheseQuestions.push('Improves decision clarity in guest-facing sections.');
+  }
+
+  return {
+    shouldAskFollowUps: questions.length > 0,
+    questions,
+    whyTheseQuestions,
+  };
+};
+
 export const generateClarifyingQuestionDecision = async (input: ClarifyingQuestionInput): Promise<ClarifyingQuestionDecision> => {
   try {
     return await runOpenAiStructuredPrompt({
