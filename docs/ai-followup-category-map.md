@@ -77,6 +77,19 @@ Ask when:
 - prefer categories that help guests operationally
 - prefer categories that paint the picture cleanly
 - do not ask category questions if the draft is already strong enough
+- prefer one higher-leverage non-event question over several low-value refinements
+
+## AI token discipline
+When the planner is eventually used in live AI turns, token economy matters.
+
+Rules:
+- prefer fewer, broader follow-up questions
+- batch event asks into one cluster where possible
+- ask at most one non-event clarification per round unless there is a very strong reason
+- do not ask follow-ups for fields the user has already marked as undecided / TBD
+- do not spend a model turn on low-impact cleanup
+- prefer prompts that improve multiple sections at once
+- stop early when the site is already good enough to draft honestly
 
 ## Prompting rule
 Generate follow-up wording from the category intent, not from raw user strings.
