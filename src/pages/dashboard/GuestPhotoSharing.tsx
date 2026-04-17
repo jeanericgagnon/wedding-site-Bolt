@@ -488,6 +488,15 @@ export const GuestPhotoSharing: React.FC = () => {
   const makeShareMessage = (bucketName: string, link: string) =>
     `Please upload your ${bucketName} photos here: ${link}`;
 
+  const bucketCardTone = (bucketName: string) => {
+    const name = bucketName.toLowerCase();
+    if (/ceremony|vows|aisle/.test(name)) return 'Save the quiet, meaningful moments.';
+    if (/welcome|party|cocktail/.test(name)) return 'Capture the energy before everyone settles in.';
+    if (/dance|after party|after-party/.test(name)) return 'This is for the blurry, loud, great stuff.';
+    if (/brunch|recovery|farewell/.test(name)) return 'Keep the softer next-day memories here.';
+    return 'A clean bucket for one specific moment guests can easily understand.';
+  };
+
   const sendAllActiveBucketRequests = () => {
     const lines = buckets
       .filter((a) => a.is_active)
@@ -1285,6 +1294,7 @@ export const GuestPhotoSharing: React.FC = () => {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-medium text-neutral-900">{bucket.name}</p>
+                          <p className="mt-1 text-sm text-neutral-600">{bucketCardTone(bucket.name)}</p>
                           <p className="text-xs text-neutral-500">Created {new Date(bucket.created_at).toLocaleString()}</p>
                           <div className="mt-1 text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
                             <span className={`inline-flex rounded px-2 py-0.5 ${bucket.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>
