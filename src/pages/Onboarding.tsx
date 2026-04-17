@@ -8,7 +8,6 @@ import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
 import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile } from '../lib/weddingProfile';
-import { planFollowUpQuestions } from '../lib/aiFollowUpPlanner';
 import { buildIntakeSnapshot, createOnboardingSessionState, createOnboardingSessionStateFromInitialSetup } from '../lib/aiOnboarding';
 import { createEmptyInitialSetupAnswers, createEmptyOnboardingFormShapeFromInitialSetup, initialSetupAnswersToOnboardingFormShape, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
 import { createEmptyInitialSetupFollowUps } from '../lib/initialSetupFollowUps';
@@ -151,7 +150,8 @@ export const Onboarding: React.FC = () => {
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
   const fieldStatuses = getWeddingProfileFieldStatus(weddingProfile);
   const onboardingSession = createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, currentQuestion ? [currentQuestion.key] : []);
-  const followUpPlan = planFollowUpQuestions(buildInitialSetupSnapshot(initialSetupAnswers), Object.keys(followUpAnswers).filter((key) => followUpAnswers[key]?.trim()).length);
+  const answeredFollowUpCount = Object.keys(followUpAnswers).filter((key) => followUpAnswers[key]?.trim()).length;
+  const remainingFollowUpBudget = Math.max(0, 5 - answeredFollowUpCount);
 
   const draftMilestones = [
     {
@@ -890,11 +890,11 @@ export const Onboarding: React.FC = () => {
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
                   <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">This round</p>
-                  <p className="text-sm font-medium text-text-primary">Up to {Math.min(3, followUpPlan.remainingBudget)} questions</p>
+                  <p className="text-sm font-medium text-text-primary">Up to {Math.min(3, remainingFollowUpBudget)} questions</p>
                 </div>
                 <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
                   <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Asked so far</p>
-                  <p className="text-sm font-medium text-text-primary">{followUpPlan.askedCount} of 5</p>
+                  <p className="text-sm font-medium text-text-primary">{answeredFollowUpCount} of 5</p>
                 </div>
                 <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
                   <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Stop rule</p>
