@@ -15,7 +15,7 @@ import {
 import { createEmptyInitialSetupFollowUps } from '../../lib/initialSetupFollowUps';
 import { buildInitialSetupSnapshot } from '../../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../../lib/initialSetupDerivedOutputs';
-import { createOnboardingSessionStateFromInitialSetup } from '../../lib/aiOnboarding';
+import { createOnboardingSessionStateFromInitialSetup, applyOnboardingInput } from '../../lib/aiOnboarding';
 import { planFollowUpQuestions } from '../../lib/aiFollowUpPlanner';
 
 type ConciergeQuestion =
@@ -328,19 +328,63 @@ export const QuickStart: React.FC = () => {
     if (!value.trim() && !currentQuestion.optional) return;
     applyAnswer(currentQuestion.key, value);
     setError('');
-    if (currentIndex < questions.length - 1) {
-      setTimeout(() => {
-        setCurrentIndex((prev) => prev + 1);
-        setInputValue('');
-      }, currentQuestion.type === 'choice' ? 260 : 0);
-      return;
-    }
+
+    const nextAnswers = (() => {
+      const draft = { ...initialSetupAnswers };
+      switch (currentQuestion.key) {
+        case 'partnerNames': draft.names = value.trim(); break;
+        case 'partnerLabels':
+          if (value.trim() === 'bride|groom') draft.labelPreference = 'bride-groom';
+          else if (value.trim() === 'bride|bride') draft.labelPreference = 'bride-bride';
+          else if (value.trim() === 'groom|groom') draft.labelPreference = 'groom-groom';
+          else draft.labelPreference = 'names-only';
+          break;
+        case 'venueLocation': draft.whenWhere = value.trim(); break;
+        case 'venueName': draft.venueNameOrTbd = value.trim(); break;
+        case 'theme': draft.style = value.trim(); break;
+        case 'weekendEvents': draft.weekendEventsRaw = value.trim(); break;
+        case 'ceremonyTime': draft.ceremonyArrivalTime = value.trim(); break;
+        case 'guestCount': draft.guestCountBand = value.trim() as InitialSetupAnswers['guestCountBand']; break;
+        case 'plusOnePolicy': draft.plusOnePolicy = value.trim() as InitialSetupAnswers['plusOnePolicy']; break;
+        case 'rsvpDeadline': draft.rsvpDeadline = value.trim(); break;
+        case 'mealChoice': draft.mealChoice = value.trim() as InitialSetupAnswers['mealChoice']; break;
+        case 'registryIntent': draft.registryIntent = value.trim() as InitialSetupAnswers['registryIntent']; break;
+        case 'story': draft.optionalStory = value.trim(); break;
+      }
+      return draft;
+    })();
+
+    const aiSession = await applyOnboardingInput(
+      createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, questions.slice(0, currentIndex).map((q) => q.key)),
+      value.trim(),
+    );
+
     await runProcessingInterstitial();
-    if (followUpPlan.questions.length > 0) {
-      setShowFollowUps(true);
+
+    if (aiSession.currentIntent === 'offer-draft' || currentIndex >= questions.length - 1) {
+      if (followUpPlan.questions.length > 0) {
+        setShowFollowUps(true);
+        return;
+      }
+      await finishFlow();
       return;
     }
-    await finishFlow();
+
+    const aiNextIndex = questions.findIndex((question) => question.key === aiSession.nextQuestionKey);
+    const fallbackIndex = currentIndex + 1;
+    const nextIndex = aiNextIndex >= 0 && aiNextIndex > currentIndex ? aiNextIndex : fallbackIndex;
+
+    if (nextIndex >= questions.length) {
+      if (followUpPlan.questions.length > 0) {
+        setShowFollowUps(true);
+        return;
+      }
+      await finishFlow();
+      return;
+    }
+
+    setCurrentIndex(nextIndex);
+    setInputValue(getValueForQuestion(questions[nextIndex].key, initialSetupAnswersToOnboardingFormShape(nextAnswers)));
   };
 
   return (
