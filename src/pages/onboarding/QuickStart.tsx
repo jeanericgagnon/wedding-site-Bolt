@@ -304,7 +304,9 @@ export const QuickStart: React.FC = () => {
         .eq('id', site.id);
       if (updateError) throw updateError;
       localStorage.removeItem(STORAGE_KEY);
-      navigate('/dashboard?bypassPayment=1', { state: { showWelcome: true } });
+      navigate('/dashboard/guests?bypassPayment=1&fromQuickStart=1&next=photos', {
+        state: { showWelcome: true, nextStep: 'guest-import' },
+      });
     } catch (err) {
       console.error('QUICK_START_FINISH_FAILED', err);
       setError(err instanceof Error ? err.message : 'Failed to save. Please try again.');
