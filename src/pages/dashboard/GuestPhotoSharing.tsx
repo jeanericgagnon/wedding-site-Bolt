@@ -1106,6 +1106,17 @@ export const GuestPhotoSharing: React.FC = () => {
                 <Camera className="w-4 h-4 mr-1" />
                 {submitting ? 'Creating...' : 'Create bucket'}
               </Button>
+              {latestUploadUrl && (
+                <Button variant="outline" onClick={() => void copyText(latestUploadUrl, 'sheet-dashboard-link')} className="w-full sm:w-auto">
+                  <Copy className="w-4 h-4 mr-1" />
+                  {copied === 'sheet-dashboard-link' ? 'Copied dashboard link' : 'Copy upload dashboard link'}
+                </Button>
+              )}
+              {latestUploadUrl && (
+                <Button variant="outline" onClick={() => window.open(getBucketQrUrl(latestUploadUrl), '_blank')} className="w-full sm:w-auto">
+                  QR for dashboard
+                </Button>
+              )}
               {uploadLanding && (
                 <Button variant="outline" onClick={() => window.open(uploadLanding, '_blank')} className="w-full sm:w-auto">
                   <ExternalLink className="w-4 h-4 mr-1" /> Open site
@@ -1216,7 +1227,24 @@ export const GuestPhotoSharing: React.FC = () => {
           {loading ? (
             <p className="text-sm text-neutral-500">Loading buckets…</p>
           ) : buckets.length === 0 ? (
-            <p className="text-sm text-neutral-600">No buckets yet. Create your first one above.</p>
+            <div className="rounded-[24px] border border-dashed border-neutral-300 bg-gradient-to-br from-neutral-50 to-rose-50/50 p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Blank bucket sheet</p>
+              <h3 className="mt-3 text-2xl font-semibold text-neutral-900">Start with the moments you actually want back.</h3>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">Create a few simple buckets first, then share the upload dashboard link or QR so guests know exactly where to send photos.</p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {['Welcome party', 'Ceremony', 'Dance floor', 'Brunch'].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setName(suggestion)}
+                    className="rounded-2xl border border-white bg-white/80 px-4 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <p className="text-sm font-medium text-neutral-900">{suggestion}</p>
+                    <p className="mt-1 text-xs text-neutral-500">Use this as your next bucket</p>
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : filteredBuckets.length === 0 ? (
             <p className="text-sm text-neutral-600">No buckets match those filters.</p>
           ) : (
