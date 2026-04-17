@@ -36,6 +36,8 @@ const isVagueEventTitle = (eventTitle: string) => {
   return /\b(thing|something|stuff|hang|party stuff|plans|maybe|probably)\b/.test(normalized);
 };
 
+const isUndecidedValue = (value?: string) => /\b(tbd|not sure|still deciding|maybe|probably|if it works out|to be decided|unsure)\b/i.test((value || '').trim());
+
 const buildEventLocationQuestion = (eventTitle: string, index: number): FollowUpQuestion => {
   const label = humanizeEventTitle(eventTitle);
   return {
@@ -132,8 +134,11 @@ export const planFollowUpQuestions = (
     return true;
   });
   const hasVagueEventTitles = rawEventTitles.some((eventTitle) => isVagueEventTitle(eventTitle));
+  const hasUndecidedVenue = isUndecidedValue(snapshot.venue);
+  const hasUndecidedTravel = isUndecidedValue(snapshot.travelNotes);
   const rawEventLocationQuestions = rawEventTitles
     .filter((eventTitle) => !isVagueEventTitle(eventTitle))
+    .filter((eventTitle) => !isUndecidedValue(eventTitle))
     .map((eventTitle, index) => buildEventLocationQuestion(eventTitle, index));
   const howWeMet = (snapshot.howWeMet || '').trim();
   const storyDetail = (snapshot.storyDetail || '').trim();
@@ -141,16 +146,16 @@ export const planFollowUpQuestions = (
   const isThinStory = storyWordCount < 8;
   const mentionsDigitalOrigin = /hinge|bumble|tinder|online|app|instagram|dm|texted/i.test(howWeMet);
   const hasCity = Boolean((snapshot.city || '').trim());
-  const hasVenue = Boolean((snapshot.venue || '').trim()) && !/^(tbd|unknown|not sure|maybe)/i.test((snapshot.venue || '').trim());
+  const hasVenue = Boolean((snapshot.venue || '').trim()) && !isUndecidedValue(snapshot.venue) && !/^(unknown)/i.test((snapshot.venue || '').trim());
   const hasRegistry = Boolean((snapshot.registryPosture || '').trim()) && !/^(unsure|maybe)/i.test((snapshot.registryPosture || '').trim());
 
-  const shouldPrioritizeEventStructure = rawEventTitles.length === 0 || hasVagueEventTitles;
+  const shouldPrioritizeEventStructure = rawEventTitles.length === 0 || hasVagueEventTitles || hasUndecidedVenue;
 
   if (!hasCity && howWeMet && mentionsDigitalOrigin && !shouldPrioritizeEventStructure) neededKeys.add('meeting-city');
   if (shouldPrioritizeEventStructure) neededKeys.add('event-structure');
   if (howWeMet && isThinStory && rawEventLocationQuestions.length <= 1 && !hasVagueEventTitles) neededKeys.add('first-detail');
   if (!snapshot.guestFeel && (hasVenue || hasCity) && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
-  if (!snapshot.travelNotes && hasVenue && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
+  if (!snapshot.travelNotes && hasVenue && !hasUndecidedTravel && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
   if (!hasRegistry && rawEventLocationQuestions.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
   const needsEventStructure = neededKeys.has('event-structure');
