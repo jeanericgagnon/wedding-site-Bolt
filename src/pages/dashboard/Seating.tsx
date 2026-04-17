@@ -199,7 +199,8 @@ function TableCard({
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: table.id });
   const occupied = guests.length;
-  const isFull = occupied >= table.capacity;
+  const effectiveCapacity = Math.max(table.capacity, occupied, 1);
+  const isFull = occupied >= effectiveCapacity;
 
   const guestMap = new Map(allGuests.map(g => [g.id, g]));
   const assignedGuests = assignments
@@ -289,7 +290,7 @@ function TableCard({
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
-              {occupied}/{table.capacity}
+              {occupied}/{effectiveCapacity}
             </span>
             {isSelected && (
               <>
@@ -325,10 +326,10 @@ function TableCard({
                 <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border flex items-center justify-center text-[11px] text-text-tertiary ${palette.fill}`}>
                   {table.table_name}
                 </div>
-                {Array.from({ length: table.capacity }).map((_, idx) => {
+                {Array.from({ length: effectiveCapacity }).map((_, idx) => {
                   const seatNumber = idx + 1;
-                  const angle = (idx / table.capacity) * Math.PI * 2 - Math.PI / 2;
-                  const radius = Math.max(88, Math.min(112, 78 + table.capacity * 2));
+                  const angle = (idx / effectiveCapacity) * Math.PI * 2 - Math.PI / 2;
+                  const radius = Math.max(88, Math.min(112, 78 + effectiveCapacity * 2));
                   const x = Math.cos(angle) * radius;
                   const y = Math.sin(angle) * radius;
                   const seatAssignment = bySeat.get(seatNumber);
@@ -362,7 +363,7 @@ function TableCard({
                   </div>
 
                   {(() => {
-                    const total = Math.max(1, table.capacity);
+                    const total = effectiveCapacity;
                     const seatsTop = Math.ceil(total / 4);
                     const seatsRight = Math.ceil((total - seatsTop) / 3);
                     const seatsBottom = Math.ceil((total - seatsTop - seatsRight) / 2);

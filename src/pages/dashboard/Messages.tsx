@@ -1208,26 +1208,48 @@ export const DashboardMessages: React.FC = () => {
   return (
     <DashboardLayout currentPage="messages">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-text-primary">Messages</h1>
+        <div className="rounded-[32px] border border-border-subtle bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Communications</p>
+              <h1 className="mt-3 text-4xl font-semibold tracking-tight text-text-primary">Message guests with more control and a lot less dashboard sludge.</h1>
+              <p className="mt-3 text-sm leading-6 text-text-secondary">Draft reminders, day-of updates, and follow-ups from one place. Keep the audience clear, the send timing obvious, and the results easy to scan after the fact.</p>
+              {messagesRole === 'coordinator' && <p className="mt-2 text-xs text-text-tertiary">Coordinator access can review delivery health and day-of comms, but campaign drafting stays with the couple or planner.</p>}
             </div>
-            <p className="text-text-secondary">Write and send guest messages by email or text, with credits ready when you need them.</p>
-            {messagesRole === 'coordinator' && <p className="mt-1 text-xs text-text-tertiary">Coordinator access can review delivery health and day-of comms, but campaign drafting stays with the couple or planner.</p>}
+            <div className="grid gap-3 sm:grid-cols-3 xl:w-[420px]">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">Scheduled</p>
+                <p className="mt-2 text-2xl font-semibold text-text-primary">{deliveryStats.scheduled}</p>
+              </div>
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">Recipients</p>
+                <p className="mt-2 text-2xl font-semibold text-text-primary">{deliveryStats.targeted}</p>
+              </div>
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">Delivery rate</p>
+                <p className="mt-2 text-2xl font-semibold text-text-primary">{deliveryStats.rate}%</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs text-text-tertiary mb-1">Access view</label>
-            <select
-              value={messagesRole}
-              onChange={(e) => setMessagesRole(e.target.value as PlannerAccessRole)}
-              className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
-            >
-              <option value="owner">Couple owner</option>
-              <option value="planner">Planner</option>
-              <option value="coordinator">Coordinator</option>
-              <option value="viewer">Read only</option>
-            </select>
+          <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="inline-flex flex-wrap items-center gap-2 text-xs text-text-tertiary">
+              <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Email + SMS</span>
+              <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Audience-aware drafts</span>
+              <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Live delivery history</span>
+            </div>
+            <div>
+              <label className="block text-xs text-text-tertiary mb-1">Access view</label>
+              <select
+                value={messagesRole}
+                onChange={(e) => setMessagesRole(e.target.value as PlannerAccessRole)}
+                className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
+              >
+                <option value="owner">Couple owner</option>
+                <option value="planner">Planner</option>
+                <option value="coordinator">Coordinator</option>
+                <option value="viewer">Read only</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1263,21 +1285,6 @@ export const DashboardMessages: React.FC = () => {
         )}
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {[
-              ['Scheduled', deliveryStats.scheduled],
-              ['Recipients', deliveryStats.targeted],
-              ['Delivered', deliveryStats.delivered],
-              ['Failed', deliveryStats.failed],
-              ['Delivery Rate', `${deliveryStats.rate}%`],
-            ].map(([label, value]) => (
-              <Card key={String(label)} variant="bordered" padding="md">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{label}</p>
-                <p className="text-lg font-semibold text-text-primary mt-1">{value}</p>
-              </Card>
-            ))}
-          </div>
-
           {weddingSite?.couple_email && (
             <Card variant="bordered" padding="lg">
               <div className="flex items-center gap-3">
@@ -1339,8 +1346,12 @@ export const DashboardMessages: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <Card variant="bordered" padding="lg">
-              <h2 className="text-xl font-semibold text-text-primary mb-6">Write a message</h2>
+            <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle shadow-sm">
+              <div className="-mx-6 -mt-6 mb-6 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Composer</p>
+                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Write a message</h2>
+                <p className="mt-1 text-sm text-text-secondary">Choose the audience, draft the message, then decide whether it goes out now or on a schedule.</p>
+              </div>
               {!canCompose && <p className="text-xs text-text-tertiary mb-3">Viewer mode is on, so writing and sending are turned off.</p>}
               <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
                 <fieldset disabled={!canCompose} className="space-y-6">
