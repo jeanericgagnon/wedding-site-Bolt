@@ -511,8 +511,8 @@ export const QuickStart: React.FC = () => {
                       onClick={() => void goNext(choice.value)}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="w-full rounded-2xl px-6 py-5 text-left transition-all duration-200 hover:scale-[1.01]"
+                      transition={{ duration: 0.12 }}
+                      className="w-full rounded-2xl px-6 py-5 text-left transition-all duration-100"
                       style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT, border: '1px solid transparent' }}
                       onMouseEnter={(event) => {
                         event.currentTarget.style.backgroundColor = SOFT_HOVER;
@@ -529,7 +529,12 @@ export const QuickStart: React.FC = () => {
                 </div>
               ) : currentQuestion?.type === 'textarea' ? (
                 <div className="space-y-4">
-                  <textarea value={inputValue} onChange={(event) => setInputValue(event.target.value)} placeholder={currentQuestion.placeholder} rows={5} className="w-full rounded-2xl border-0 px-6 py-5 outline-none transition-all duration-200 resize-none" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
+                  <textarea value={inputValue} onChange={(event) => setInputValue(event.target.value)} onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey && !loading) {
+                      event.preventDefault();
+                      void goNext(inputValue);
+                    }
+                  }} placeholder={currentQuestion.placeholder} rows={5} className="w-full rounded-2xl border-0 px-6 py-5 outline-none transition-all duration-200 resize-none" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
                   <div className="flex gap-3">
                     {currentQuestion.optional && <button onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
                     <button onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
