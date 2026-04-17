@@ -23,16 +23,27 @@ export type IntakeSnapshot = {
   eventLocationGaps?: string[];
 };
 
-const buildEventLocationQuestion = (eventTitle: string, index: number): FollowUpQuestion => ({
-  key: `event-location-${index + 1}`,
-  priority: 120 - index,
-  affects: ['scheduleIntro', 'travelIntro', 'faqIntro'],
-  variants: [
-    'Walk me through the wedding weekend. What’s happening, and where are guests actually going?',
-    'What should guests know about where each part of the weekend is taking place?',
-    'If guests are moving around over the weekend, where do they actually need to be?',
-  ],
-});
+const humanizeEventTitle = (eventTitle: string) => {
+  const cleaned = eventTitle
+    .replace(/^(friday|saturday|sunday|thursday|monday|tuesday|wednesday)\s+/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || eventTitle.trim();
+};
+
+const buildEventLocationQuestion = (eventTitle: string, index: number): FollowUpQuestion => {
+  const label = humanizeEventTitle(eventTitle);
+  return {
+    key: `event-location-${index + 1}`,
+    priority: 120 - index,
+    affects: ['scheduleIntro', 'travelIntro', 'faqIntro'],
+    variants: [
+      `For ${label}, what time should guests show up and where is it happening?`,
+      `What time is ${label}, and where should guests go for it?`,
+      `For ${label}, when is it and where is it taking place?`,
+    ],
+  };
+};
 
 const FOLLOW_UP_BANK: FollowUpQuestion[] = [
   {
@@ -102,10 +113,7 @@ export const planFollowUpQuestions = (
     .filter((eventTitle) => {
       const normalized = eventTitle.trim().toLowerCase();
       if (!normalized) return false;
-      if (normalized.includes('wedding') || normalized.includes('ceremony') || normalized.includes('reception') || normalized.includes('brunch') || normalized.includes('welcome')) {
-        return false;
-      }
-      if (normalized.split(/\s+/).length > 6) return false;
+      if (normalized.length > 80) return false;
       return true;
     })
     .slice(0, Math.min(3, remainingBudget))
