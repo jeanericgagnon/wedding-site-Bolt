@@ -371,7 +371,9 @@ export const QuickStart: React.FC = () => {
     } catch (err) {
       console.error('QUICK_START_FINISH_FAILED', err);
       setError(err instanceof Error ? err.message : 'Failed to save. Please try again.');
+      setAiDebug(`finish_failed=${err instanceof Error ? err.message : String(err)}`);
       setLoading(false);
+      setIsThinking(false);
     }
   };
 
