@@ -46,6 +46,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
   }
 
   if (!user) {
+    const bypassPayment = new URLSearchParams(location.search).get('bypassPayment') === '1';
+    const allowQuickStartPreview = bypassPayment && location.pathname === '/onboarding/quick-start';
+
+    if (allowQuickStartPreview) {
+      return <>{children}</>;
+    }
+
     return <Navigate to="/login" replace />;
   }
 

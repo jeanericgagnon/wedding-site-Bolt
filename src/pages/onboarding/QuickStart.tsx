@@ -309,7 +309,18 @@ export const QuickStart: React.FC = () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) {
+        setLoading(false);
+        setIsThinking(false);
+        navigate('/signup?bypassPayment=1', {
+          replace: true,
+          state: {
+            quickStartDraft: { initialSetupAnswers, followUpAnswers, clarifyingState },
+            returnTo: '/onboarding/quick-start?bypassPayment=1',
+          },
+        });
+        return;
+      }
       const { weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
       const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
