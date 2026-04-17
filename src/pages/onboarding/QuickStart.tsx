@@ -17,7 +17,8 @@ import { buildInitialSetupSnapshot } from '../../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../../lib/initialSetupDerivedOutputs';
 import { createOnboardingSessionStateFromInitialSetup, applyOnboardingInput } from '../../lib/aiOnboarding';
 import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
-import { answerClarifyingQuestion } from '../../lib/aiClarifyingFlow';
+import { answerClarifyingQuestion, buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
+import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
 
 type ConciergeQuestion =
   | 'partnerNames'
@@ -304,9 +305,10 @@ export const QuickStart: React.FC = () => {
         .maybeSingle();
       if (siteError) throw siteError;
       if (!site?.id) throw new Error('No wedding site found for this account');
+      const clarifyingFieldPatches = clarifyingState ? buildClarifyingAnswerPatchSet(clarifyingState) : {};
       const { error: updateError } = await supabase
         .from('wedding_sites')
-        .update({ onboarding_answers: derivedProfile, planning_status: 'quick_start_complete' })
+        .update({ onboarding_answers: derivedProfile, planning_status: 'quick_start_complete', wedding_data: { clarifyingFieldPatches, draftOutputs: clarifyingState?.draftOutputs || {} } })
         .eq('id', site.id);
       if (updateError) throw updateError;
       localStorage.removeItem(STORAGE_KEY);
@@ -372,11 +374,14 @@ export const QuickStart: React.FC = () => {
 
     if (aiSession.currentIntent === 'offer-draft' || currentIndex >= questions.length - 1) {
       const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
+      const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
+      setClarifyingState(persistence);
       if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
-        setClarifyingState(createClarifyingPersistenceFromDecision(clarifyingDecision));
         setShowFollowUps(true);
         return;
       }
+      const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
+      console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
       await finishFlow();
       return;
     }
@@ -387,11 +392,14 @@ export const QuickStart: React.FC = () => {
 
     if (nextIndex >= questions.length) {
       const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
+      const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
+      setClarifyingState(persistence);
       if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
-        setClarifyingState(createClarifyingPersistenceFromDecision(clarifyingDecision));
         setShowFollowUps(true);
         return;
       }
+      const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
+      console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
       await finishFlow();
       return;
     }
