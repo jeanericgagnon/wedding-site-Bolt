@@ -298,7 +298,7 @@ export const QuickStart: React.FC = () => {
       const { weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
       const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
-        .select('id')
+        .select('id, wedding_data')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })
         .limit(1)
@@ -306,9 +306,15 @@ export const QuickStart: React.FC = () => {
       if (siteError) throw siteError;
       if (!site?.id) throw new Error('No wedding site found for this account');
       const clarifyingFieldPatches = clarifyingState ? buildClarifyingAnswerPatchSet(clarifyingState) : {};
+      const existingWeddingData = site && 'wedding_data' in site ? ((site as { wedding_data?: Record<string, unknown> }).wedding_data || {}) : {};
+      const nextWeddingData = {
+        ...(existingWeddingData || {}),
+        clarifyingFieldPatches,
+        draftOutputs: clarifyingState?.draftOutputs || {},
+      };
       const { error: updateError } = await supabase
         .from('wedding_sites')
-        .update({ onboarding_answers: derivedProfile, planning_status: 'quick_start_complete', wedding_data: { clarifyingFieldPatches, draftOutputs: clarifyingState?.draftOutputs || {} } })
+        .update({ onboarding_answers: derivedProfile, planning_status: 'quick_start_complete', wedding_data: nextWeddingData })
         .eq('id', site.id);
       if (updateError) throw updateError;
       localStorage.removeItem(STORAGE_KEY);
