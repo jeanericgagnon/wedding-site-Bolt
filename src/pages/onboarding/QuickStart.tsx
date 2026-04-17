@@ -351,10 +351,20 @@ export const QuickStart: React.FC = () => {
 
         {previousAnswers.length > 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 space-y-2">
-            {previousAnswers.map((item) => (
-              <div key={item.key} className="text-[13px]" style={{ color: TRANSCRIPT }}>
+            {previousAnswers.map((item, index) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => {
+                  setCurrentIndex(index);
+                  setShowFollowUps(false);
+                  setError('');
+                }}
+                className="block text-left text-[13px] transition-opacity duration-200 hover:opacity-70"
+                style={{ color: TRANSCRIPT }}
+              >
                 {item.prompt.replace('?', '')}: <span style={{ color: TRANSCRIPT_VALUE }}>{item.value}</span>
-              </div>
+              </button>
             ))}
           </motion.div>
         )}
