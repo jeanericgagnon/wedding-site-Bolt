@@ -408,6 +408,12 @@ export const QuickStart: React.FC = () => {
       return draft;
     })();
 
+    const fallbackIndex = answeredIndex + 1;
+    if (fallbackIndex < questions.length) {
+      setCurrentIndex(fallbackIndex);
+      setInputValue(getValueForQuestion(questions[fallbackIndex].key, initialSetupAnswersToOnboardingFormShape(nextAnswers)));
+    }
+
     try {
       const aiSession = await applyOnboardingInput(
         createOnboardingSessionStateFromInitialSetup(nextAnswers, questions.slice(0, answeredIndex + 1).map((q) => q.key)),
@@ -436,7 +442,6 @@ export const QuickStart: React.FC = () => {
       }
 
       const aiNextIndex = questions.findIndex((question) => question.key === aiSession.nextQuestionKey);
-      const fallbackIndex = answeredIndex + 1;
       const nextIndex = aiNextIndex >= 0 && aiNextIndex > answeredIndex ? aiNextIndex : fallbackIndex;
 
       if (nextIndex >= questions.length) {
