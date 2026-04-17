@@ -99,7 +99,7 @@ const clarifyingDraftOutputsSchema = z.object({
 const clarifyingQuestionDecisionSchema = z.object({
   mode: z.enum(['ask', 'draft']),
   questions: z.array(clarifyingQuestionObjectSchema).max(3).default([]),
-  draftOutputs: clarifyingDraftOutputsSchema.optional(),
+  draftOutputs: z.union([clarifyingDraftOutputsSchema, z.null()]),
   why: z.array(z.string()).default([]),
   confidence: z.enum(['low', 'medium', 'high']).default('medium'),
 });
@@ -156,12 +156,17 @@ export const buildClarifyingQuestionUserPrompt = (input: ClarifyingQuestionInput
 
 export const generateClarifyingQuestionDecision = async (input: ClarifyingQuestionInput): Promise<ClarifyingQuestionDecision> => {
   try {
-    return await runOpenAiStructuredPrompt({
+    const result = await runOpenAiStructuredPrompt({
       system: buildClarifyingQuestionSystemPrompt(),
       user: buildClarifyingQuestionUserPrompt(input),
       schemaName: 'wedding_clarifying_questions_v2',
       schema: clarifyingQuestionDecisionSchema,
     });
+
+    return {
+      ...result,
+      draftOutputs: result.draftOutputs ?? undefined,
+    };
   } catch (error) {
     if (error instanceof OpenAiNotConfiguredError) {
       throw error;
