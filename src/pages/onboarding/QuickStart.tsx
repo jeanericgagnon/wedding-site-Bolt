@@ -19,6 +19,7 @@ import { createOnboardingSessionStateFromInitialSetup, applyOnboardingInput } fr
 import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
 import { answerClarifyingQuestion, buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
 import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
+import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
 
 type ConciergeQuestion =
   | 'partnerNames'
@@ -298,7 +299,7 @@ export const QuickStart: React.FC = () => {
       const { weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
       const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
-        .select('id, wedding_data')
+        .select('id, wedding_data, active_template_id, template_id, wedding_date, venue_name, wedding_location, couple_name_1, couple_name_2')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })
         .limit(1)
@@ -307,14 +308,46 @@ export const QuickStart: React.FC = () => {
       if (!site?.id) throw new Error('No wedding site found for this account');
       const clarifyingFieldPatches = clarifyingState ? buildClarifyingAnswerPatchSet(clarifyingState) : {};
       const existingWeddingData = site && 'wedding_data' in site ? ((site as { wedding_data?: Record<string, unknown> }).wedding_data || {}) : {};
+      const templateSeed = clarifyingState ? mapClarifyingPersistenceToTemplateSeed(clarifyingState) : null;
+      const onboardingUpdate = buildOnboardingUpdateWithClarifying({
+        coupleNames: {
+          name1: site?.couple_name_1 || initialSetupAnswers.names.split('&')[0]?.trim() || 'Partner One',
+          name2: site?.couple_name_2 || initialSetupAnswers.names.split('&')[1]?.trim() || 'Partner Two',
+        },
+        planningStatus: 'quick_start_complete',
+        template: (site?.active_template_id || site?.template_id || 'generated-modern-luxe') as string,
+        weddingDate: site?.wedding_date || undefined,
+        venue: site?.venue_name || undefined,
+        city: site?.wedding_location || undefined,
+        ourStory: templateSeed?.storyIntro,
+        attire: templateSeed?.dressCode,
+        hotelRecommendations: templateSeed?.lodgingGuidance,
+        parking: templateSeed?.transportGuidance,
+        customFaqs: templateSeed?.faqGuidance?.map((line) => `Guidance::${line}`).join('\n'),
+        clarifying: clarifyingState || undefined,
+      });
       const nextWeddingData = {
         ...(existingWeddingData || {}),
+        ...(((onboardingUpdate.wedding_data as Record<string, unknown>) || {})),
         clarifyingFieldPatches,
         draftOutputs: clarifyingState?.draftOutputs || {},
       };
       const { error: updateError } = await supabase
         .from('wedding_sites')
-        .update({ onboarding_answers: derivedProfile, planning_status: 'quick_start_complete', wedding_data: nextWeddingData })
+        .update({
+          onboarding_answers: derivedProfile,
+          planning_status: 'quick_start_complete',
+          wedding_data: nextWeddingData,
+          layout_config: onboardingUpdate.layout_config,
+          active_template_id: onboardingUpdate.active_template_id,
+          template_id: onboardingUpdate.template_id,
+          site_slug: onboardingUpdate.site_slug,
+          couple_name_1: onboardingUpdate.couple_name_1,
+          couple_name_2: onboardingUpdate.couple_name_2,
+          wedding_date: onboardingUpdate.wedding_date,
+          venue_name: onboardingUpdate.venue_name,
+          wedding_location: onboardingUpdate.wedding_location,
+        })
         .eq('id', site.id);
       if (updateError) throw updateError;
       localStorage.removeItem(STORAGE_KEY);
