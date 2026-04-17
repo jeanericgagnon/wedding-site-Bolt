@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Download, Upload, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button, Card, Input, Textarea } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
-import { buildOnboardingUpdateData } from '../../lib/onboardingMapper';
+import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
 import { buildSuggestedFaqDrafts } from '../../lib/faqDraftHelper';
 import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
@@ -158,7 +158,7 @@ export const GuidedSetup: React.FC = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const updateData = buildOnboardingUpdateData({
+    const updateData = buildOnboardingUpdateWithClarifying({
       coupleNames,
       planningStatus: 'guided_setup_in_progress',
       template: formData.template,
@@ -220,7 +220,7 @@ export const GuidedSetup: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const updateData = buildOnboardingUpdateData({
+      const updateData = buildOnboardingUpdateWithClarifying({
         coupleNames,
         planningStatus: 'guided_setup_complete',
         template: formData.template,
