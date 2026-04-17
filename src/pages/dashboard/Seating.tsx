@@ -135,6 +135,7 @@ function SeatDropSlot({
   isOver,
   className,
   style,
+  onSelectSeat,
 }: {
   tableId: string;
   seatIndex: number;
@@ -142,14 +143,20 @@ function SeatDropSlot({
   isOver?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  onSelectSeat?: (tableId: string, seatIndex: number) => void;
 }) {
   const { setNodeRef, isOver: overSelf } = useDroppable({ id: `seat:${tableId}:${seatIndex}` });
   const active = isOver ?? overSelf;
   return (
-    <div
+    <button
+      type="button"
       ref={setNodeRef}
       data-no-table-drag="true"
       style={style}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelectSeat?.(tableId, seatIndex);
+      }}
       className={`h-9 sm:h-10 rounded-lg border text-[10px] sm:text-[11px] px-1 flex items-center justify-center text-center ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'} ${className ?? ''}`}
       title={`Seat ${seatIndex}`}
     >
@@ -158,7 +165,7 @@ function SeatDropSlot({
       ) : (
         <span className="text-text-tertiary">Seat {seatIndex}</span>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -179,6 +186,7 @@ function TableCard({
   isSelected,
   onSelect,
   onRotate,
+  onSelectSeat,
 }: {
   table: SeatingTable;
   guests: EligibleGuest[];
@@ -196,6 +204,7 @@ function TableCard({
   isSelected: boolean;
   onSelect: () => void;
   onRotate: (deltaDeg: number) => void;
+  onSelectSeat: (tableId: string, seatIndex: number) => void;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: table.id });
   const occupied = guests.length;
@@ -341,6 +350,7 @@ function TableCard({
                       guest={seatAssignment?.guest}
                       className="absolute w-16 sm:w-20 h-9 sm:h-10 -ml-8 sm:-ml-10 -mt-4 sm:-mt-5 shadow-sm"
                       style={{ left: '50%', top: '50%', transform: `translate(${x}px, ${y}px)` }}
+                      onSelectSeat={onSelectSeat}
                     />
                   );
                 })}
@@ -616,6 +626,7 @@ export const DashboardSeating: React.FC = () => {
   const [layoutMode, setLayoutMode] = useState<'visual' | 'list'>('visual');
   const [movingTableId, setMovingTableId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [seatPicker, setSeatPicker] = useState<{ tableId: string; seatIndex: number } | null>(null);
   const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
   const [seatingActionsOpen, setSeatingActionsOpen] = useState(false);
@@ -844,6 +855,75 @@ export const DashboardSeating: React.FC = () => {
     if (guest) setActiveGuest(guest);
   }
 
+  async function assignGuestToSeatDirect(guestId: string, targetTableId: string, targetSeatIndex?: number) {
+    if (!seatingEvent) return;
+    const targetTable = tables.find(t => t.id === targetTableId);
+    if (!targetTable) return;
+
+    const shape = targetTable.table_shape ?? 'round';
+    if (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') {
+      toast('This floor item can’t take seating assignments.', 'warning');
+      return;
+    }
+
+    const existingForGuest = assignments.find(a => a.guest_id === guestId);
+    const targetAssignments = assignments.filter(a => a.table_id === targetTable.id && a.guest_id !== guestId);
+    const currentOccupants = targetAssignments.length;
+    let occupiedAssignment: SeatingAssignment | null = null;
+    const sourceSeatValue: number | null = existingForGuest?.seat_index ?? null;
+    const sourceSeatIndex = sourceSeatValue ?? undefined;
+
+    if (targetSeatIndex != null) {
+      occupiedAssignment = assignments.find(a => a.table_id === targetTable.id && a.seat_index === targetSeatIndex && a.guest_id !== guestId) ?? null;
+    }
+
+    if (currentOccupants >= targetTable.capacity && !(targetSeatIndex != null && occupiedAssignment)) {
+      toast(`${targetTable.table_name} is full`, 'error');
+      return;
+    }
+
+    if (targetSeatIndex == null) {
+      const usedSeats = new Set(
+        targetAssignments.map(a => a.seat_index).filter((v): v is number => typeof v === 'number' && v > 0)
+      );
+      for (let i = 1; i <= targetTable.capacity; i++) {
+        if (!usedSeats.has(i)) {
+          targetSeatIndex = i;
+          break;
+        }
+      }
+    }
+
+    try {
+      const assignment = isDemoMode
+        ? {
+            id: `demo-assignment-${guestId}`,
+            seating_event_id: seatingEvent.id,
+            table_id: targetTable.id,
+            guest_id: guestId,
+            seat_index: targetSeatIndex ?? sourceSeatValue,
+            is_valid: true,
+            checked_in_at: null,
+          }
+        : await assignGuestToTable(seatingEvent.id, targetTable.id, guestId, targetSeatIndex);
+
+      if (!isDemoMode && occupiedAssignment) {
+        await assignGuestToTable(seatingEvent.id, occupiedAssignment.table_id, occupiedAssignment.guest_id, sourceSeatIndex);
+      }
+
+      setAssignments(prev => {
+        let next = prev.filter(a => a.guest_id !== guestId);
+        if (occupiedAssignment) {
+          next = next.map(a => (a.guest_id === occupiedAssignment!.guest_id ? { ...a, seat_index: sourceSeatValue } : a));
+        }
+        return [...next, assignment];
+      });
+      setSeatPicker(null);
+    } catch {
+      toast('Couldn’t assign that guest. Please try again.', 'error');
+    }
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
     setActiveGuest(null);
     const { active, over } = event;
@@ -875,99 +955,7 @@ export const DashboardSeating: React.FC = () => {
       targetTableId = dropId;
     }
 
-    const targetTable = tables.find(t => t.id === targetTableId);
-    if (!targetTable) return;
-
-    const shape = targetTable.table_shape ?? 'round';
-    if (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') {
-      toast('This floor item can’t take seating assignments.', 'warning');
-      return;
-    }
-
-    const existingForGuest = assignments.find(a => a.guest_id === guestId);
-    const targetAssignments = assignments.filter(a => a.table_id === targetTable.id && a.guest_id !== guestId);
-    const currentOccupants = targetAssignments.length;
-
-    // if dropping onto an occupied seat, do a true swap (target occupant gets source seat)
-    let occupiedAssignment: SeatingAssignment | null = null;
-    const sourceSeatValue: number | null = existingForGuest?.seat_index ?? null;
-    const sourceSeatIndex = sourceSeatValue ?? undefined;
-    if (targetSeatIndex != null) {
-      occupiedAssignment = assignments.find(a => a.table_id === targetTable.id && a.seat_index === targetSeatIndex && a.guest_id !== guestId) ?? null;
-    }
-
-    // table-full block should not prevent explicit occupied-seat swap
-    if (currentOccupants >= targetTable.capacity && !(targetSeatIndex != null && occupiedAssignment)) {
-      toast(`${targetTable.table_name} is full`, 'error');
-      return;
-    }
-
-    // If dropped on table (not seat), auto-fill first open seat
-    if (targetSeatIndex == null) {
-      if (targetTable.capacity <= 0) {
-        toast('This item has no seat slots yet.', 'warning');
-        return;
-      }
-
-      const usedSeats = new Set(
-        targetAssignments
-          .map(a => a.seat_index)
-          .filter((v): v is number => typeof v === 'number' && v > 0)
-      );
-
-      for (let i = 1; i <= targetTable.capacity; i++) {
-        if (!usedSeats.has(i)) {
-          targetSeatIndex = i;
-          break;
-        }
-      }
-
-      if (targetSeatIndex == null) {
-        // No open seat index left; keep source if moving inside same table, else fallback undefined
-        targetSeatIndex = existingForGuest?.table_id === targetTable.id ? (existingForGuest?.seat_index ?? undefined) : undefined;
-      }
-    }
-
-    try {
-      const assignment = isDemoMode
-        ? {
-            id: `demo-assignment-${guestId}`,
-            seating_event_id: seatingEvent.id,
-            table_id: targetTable.id,
-            guest_id: guestId,
-            seat_index: targetSeatIndex ?? sourceSeatValue,
-            is_valid: true,
-            checked_in_at: null,
-          }
-        : await assignGuestToTable(seatingEvent.id, targetTable.id, guestId, targetSeatIndex);
-
-      if (!isDemoMode && occupiedAssignment) {
-        await assignGuestToTable(
-          seatingEvent.id,
-          occupiedAssignment.table_id,
-          occupiedAssignment.guest_id,
-          sourceSeatIndex
-        );
-      }
-
-      setAssignments(prev => {
-        let next = prev.filter(a => a.guest_id !== guestId);
-
-        if (occupiedAssignment) {
-          next = next.map(a => {
-            if (a.guest_id === occupiedAssignment!.guest_id) {
-              return { ...a, seat_index: sourceSeatValue };
-            }
-            return a;
-          });
-        }
-
-        next = [...next, assignment];
-        return next;
-      });
-    } catch {
-      toast('Couldn’t assign that guest. Please try again.', 'error');
-    }
+    await assignGuestToSeatDirect(guestId, targetTableId, targetSeatIndex);
   }
 
   const handleRemoveGuest = useCallback(async (guestId: string) => {
@@ -1645,6 +1633,34 @@ export const DashboardSeating: React.FC = () => {
           </div>
         )}
 
+        {seatPicker && (
+          <div className="p-4 rounded-xl border border-border-subtle bg-surface-subtle/40 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-text-primary">Map a guest to seat {seatPicker.seatIndex}</h3>
+                <p className="text-xs text-text-tertiary">Choose from RSVP’d guests not already assigned somewhere else.</p>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => setSeatPicker(null)}>Close</Button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {allGuests
+                .filter((guest) => !assignments.some((assignment) => assignment.guest_id === guest.id) || assignments.some((assignment) => assignment.guest_id === guest.id && assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex))
+                .slice(0, 18)
+                .map((guest) => (
+                  <button
+                    key={guest.id}
+                    type="button"
+                    onClick={() => void assignGuestToSeatDirect(guest.id, seatPicker.tableId, seatPicker.seatIndex)}
+                    className="rounded-lg border border-border bg-white px-3 py-2 text-left hover:border-primary/40 hover:bg-primary-light/20"
+                  >
+                    <p className="text-sm font-medium text-text-primary">{guest.full_name}</p>
+                    <p className="text-xs text-text-tertiary">{guest.rsvp_status === 'attending' ? 'RSVP’d attending' : 'Guest'}</p>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+
         {loadingSeating ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -1768,7 +1784,8 @@ export const DashboardSeating: React.FC = () => {
                                 onStartMove={(e) => startMoveTable(table, idx, e)}
                                 isSelected={selectedTableId === table.id}
                                 onSelect={() => setSelectedTableId(table.id)}
-                              onRotate={(delta) => handleRotateTable(table.id, delta)}
+                                onRotate={(delta) => handleRotateTable(table.id, delta)}
+                                onSelectSeat={(tableId, seatIndex) => setSeatPicker({ tableId, seatIndex })}
                               />
                             </div>
                           );
@@ -1800,6 +1817,7 @@ export const DashboardSeating: React.FC = () => {
                             isSelected={selectedTableId === table.id}
                             onSelect={() => setSelectedTableId(table.id)}
                             onRotate={(delta) => handleRotateTable(table.id, delta)}
+                            onSelectSeat={(tableId, seatIndex) => setSeatPicker({ tableId, seatIndex })}
                           />
                         )
                       ))}
