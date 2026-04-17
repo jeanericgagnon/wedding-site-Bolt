@@ -13,7 +13,7 @@ export type StoredClarifyingQuestion = {
   answer: string;
 };
 
-export type StoredDraftOutputs = {
+export type ClarifyingDraftOutputs = {
   hero?: {
     headline?: string;
     subheadline?: string;
@@ -49,7 +49,7 @@ export type ClarifyingPersistenceEnvelope = {
     questions: StoredClarifyingQuestion[];
     history: StoredClarifyingQuestion[];
   };
-  draftOutputs: StoredDraftOutputs;
+  draftOutputs: ClarifyingDraftOutputs;
 };
 
 export const createEmptyClarifyingPersistence = (): ClarifyingPersistenceEnvelope => ({

@@ -4,6 +4,7 @@ import { isOpenAiConfigured, runOpenAiStructuredPrompt, getOpenAiRuntimeConfig }
 import { FollowUpQuestion, planFollowUpQuestions } from './aiFollowUpPlanner';
 import type { InitialSetupAnswers } from './initialSetupAnswers';
 import { buildInitialSetupSnapshot } from './initialSetupSnapshot';
+import type { ClarifyingPersistenceEnvelope } from './aiClarifyingPersistence';
 
 export type OnboardingIntent =
   | 'collect-critical-field'
@@ -31,6 +32,7 @@ export type OnboardingSessionState = {
   unresolvedConflicts: Array<{ path: string; currentValue: string; nextValue: string }>;
   suggestedPrompt: string | null;
   suggestedFollowUps: FollowUpQuestion[];
+  clarifying?: ClarifyingPersistenceEnvelope;
   confidence: number;
 };
 
@@ -333,6 +335,7 @@ export const createOnboardingSessionState = (
     unresolvedConflicts: [],
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, profile),
     suggestedFollowUps: planFollowUpQuestions(buildIntakeSnapshot(profile), askedQuestions.length).questions,
+    clarifying: undefined,
     confidence: readiness.hasEnoughToDraft ? 0.9 : 0.45,
   };
 };
@@ -364,6 +367,7 @@ export const applyOnboardingInput = async (
     unresolvedConflicts: extraction.conflicts,
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, nextProfile),
     suggestedFollowUps: planFollowUpQuestions(buildIntakeSnapshot(nextProfile), session.askedQuestions.length).questions,
+    clarifying: session.clarifying,
     confidence: extraction.conflicts.length > 0 || extraction.requiresConfirmation ? extraction.confidence : readiness.hasEnoughToDraft ? Math.max(extraction.confidence, 0.9) : Math.max(extraction.confidence, 0.6),
   };
 };
@@ -389,6 +393,7 @@ export const createOnboardingSessionStateFromInitialSetup = (
     unresolvedConflicts: [],
     suggestedPrompt: null,
     suggestedFollowUps: planFollowUpQuestions(buildInitialSetupSnapshot(answers), askedQuestions.length).questions,
+    clarifying: undefined,
     confidence: 0.45,
   };
 };
