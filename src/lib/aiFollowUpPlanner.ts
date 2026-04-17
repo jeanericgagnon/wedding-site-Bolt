@@ -114,6 +114,7 @@ export const planFollowUpQuestions = (
       const normalized = eventTitle.trim().toLowerCase();
       if (!normalized) return false;
       if (normalized.length > 80) return false;
+      if (/^something\s+(friday|saturday|sunday|thursday|monday|tuesday|wednesday)?$/i.test(normalized)) return false;
       return true;
     })
     .slice(0, Math.min(3, remainingBudget))
