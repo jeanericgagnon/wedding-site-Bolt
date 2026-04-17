@@ -216,7 +216,10 @@ export const QuickStart: React.FC = () => {
   useEffect(() => {
     if (!currentQuestion) return;
     setInputValue(getValueForQuestion(currentQuestion.key, formData));
-  }, [currentIndex, formData]);
+    // Only reset when the visible question changes, not on every keystroke.
+    // Otherwise the controlled input feels like it is deleting what the user types.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex]);
 
   const previousAnswers = useMemo(
     () => questions.slice(0, currentIndex).map((q) => ({ ...q, value: getValueForQuestion(q.key, formData) })).filter((entry) => entry.value.trim()),
