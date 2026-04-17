@@ -178,12 +178,13 @@ export const QuickStart: React.FC = () => {
       if (typeof parsed.currentIndex === 'number') setCurrentIndex(parsed.currentIndex);
       if (parsed.followUpAnswers) setFollowUpAnswers(parsed.followUpAnswers);
       if (parsed.showFollowUps) setShowFollowUps(true);
+      if (parsed.clarifyingState) setClarifyingState(parsed.clarifyingState);
     } catch {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps }));
-  }, [initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState }));
+  }, [initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState]);
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
