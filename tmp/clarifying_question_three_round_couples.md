@@ -1,0 +1,106 @@
+# Clarifying Question Three-Round Couples Pass
+
+This local-only pass applies the current refined rule to the practice bank for up to 3 rounds each.
+
+Core rule:
+Follow up on anything ambiguous, missed, or weak only if it would materially improve the final site.
+Default to 0–2 questions, max 3 when the site would clearly be weak/confusing without them.
+
+## Eric + Kara
+Round 1:
+- What time and location do you already know for welcome drinks and the wedding? Feel free to skip anything not finalized yet.
+Round 2: none
+Round 3: none
+
+## Nina + Eli
+Round 1:
+- What time and location do you already know for the ceremony and dinner? Feel free to skip anything not finalized yet.
+Round 2: none
+Round 3: none
+
+## Brooke + Emma
+Round 1:
+- What time and location do you already know for welcome dinner and the wedding? Feel free to skip anything not finalized yet.
+- What’s one thing that feels very “you two” that you’d want reflected on the site?
+Round 2: none
+Round 3: none
+
+## Maya + Jules
+Round 1:
+- What time and location do you already know for the ceremony and dinner? Feel free to skip anything not finalized yet.
+- What’s one thing that feels very “you two” that you’d want reflected on the site?
+Round 2: none
+Round 3: none
+
+## Leah + Sofia
+Round 1:
+- What time and location do you already know for welcome drinks and the wedding? Feel free to skip anything not finalized yet.
+- What should guests expect from the weekend overall?
+Round 2: none
+Round 3: none
+
+## Ava + Ben
+Round 1:
+- What time and location do you already know for the wedding and brunch? Feel free to skip anything not finalized yet.
+- What should guests expect from the weekend overall?
+Round 2:
+- Is there anything guests might be confused about or need extra guidance on?
+Round 3: none
+
+## Olivia + Harper
+Round 1:
+- What events are actually happening across the weekend, even if rough?
+- Is there anything guests might be confused about or need extra guidance on?
+Round 2:
+- What should guests expect from the weekend overall?
+Round 3: none
+
+## Zane + Luca
+Round 1:
+- What events are actually happening across the weekend, even if rough?
+- What should guests expect from the weekend overall?
+Round 2:
+- Are most guests traveling in, or are they mostly local?
+Round 3: none
+
+## Chloe + Ben
+Round 1:
+- What time and location do you already know for rehearsal dinner and the wedding? Feel free to skip anything not finalized yet.
+Round 2: none
+Round 3: none
+
+## Aaliyah + Marcus
+Round 1:
+- What time and location do you already know for welcome cocktails and the wedding? Feel free to skip anything not finalized yet.
+- What should guests expect from the weekend overall?
+Round 2: none
+Round 3: none
+
+## Hannah + Drew
+Round 1:
+- What events are actually happening around the wedding, and which ones should guests know about?
+- What should guests expect from the weekend overall?
+Round 2:
+- Is there anything guests might be confused about or need extra guidance on?
+Round 3: none
+
+## Keira + Alex
+Round 1:
+- What time and location do you already know for welcome party and the wedding? Feel free to skip anything not finalized yet.
+- Why did you pick this location?
+Round 2: none
+Round 3: none
+
+## Noah + Tyler
+Round 1:
+- What time and location do you already know for welcome drinks and the wedding? Feel free to skip anything not finalized yet.
+- What city were you in when you finally met in person?
+Round 2: none
+Round 3: none
+
+## Sophie + Daniel
+Round 1:
+- What events are actually happening around the wedding, and which ones should guests know about?
+- Do you want to guide guests at all on gifts or keep it open?
+Round 2: none
+Round 3: none
