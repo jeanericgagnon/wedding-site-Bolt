@@ -175,7 +175,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       items: [
         { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
         { id: 'coordinator', label: 'Coordinator Mode', icon: Radio, path: '/dashboard/coordinator' },
-        { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
+        { id: 'vault', label: 'Archive Vaults', icon: Image, path: '/dashboard/vault' },
         { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: '/dashboard/audit-logs' },
       ],
     },

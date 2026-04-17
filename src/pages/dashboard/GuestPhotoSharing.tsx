@@ -902,6 +902,19 @@ export const GuestPhotoSharing: React.FC = () => {
           </div>
         </div>
 
+        <Card className="border-0 bg-neutral-950 text-white shadow-sm">
+          <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/60">Memory system</p>
+              <h2 className="mt-2 text-xl font-semibold">Buckets are for collecting new uploads. Archive Vaults are for preserving what matters after the wedding.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">Use buckets to gather photos fast. Use Archive Vaults when you want to keep, curate, and revisit the memories that matter long term.</p>
+            </div>
+            <Button variant="outline" onClick={() => navigate('/dashboard/vault')} className="border-white/20 bg-white/5 text-white hover:bg-white/10">
+              Open Archive Vaults
+            </Button>
+          </div>
+        </Card>
+
         <Card className="p-6 border border-border bg-surface">
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-neutral-900">Auto-place couple photos</h2>
@@ -1252,6 +1265,7 @@ export const GuestPhotoSharing: React.FC = () => {
                             {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
                             {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
                             <span>slug: {bucket.slug}</span>
+                          {hasLink && <span className="text-emerald-700">upload dashboard ready</span>}
                           </div>
                         </div>
 
