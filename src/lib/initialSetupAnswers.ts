@@ -12,7 +12,6 @@ export type InitialSetupAnswers = {
   whenWhere: string;
   venueNameOrTbd: string;
   style: string;
-  guestFeel?: string;
   weekendEventsRaw: string;
   ceremonyArrivalTime: string;
   guestCountBand: GuestCountBand;
@@ -31,7 +30,6 @@ export const createEmptyInitialSetupAnswers = (): InitialSetupAnswers => ({
   whenWhere: '',
   venueNameOrTbd: '',
   style: '',
-  guestFeel: '',
   weekendEventsRaw: '',
   ceremonyArrivalTime: '',
   guestCountBand: '',
@@ -51,7 +49,7 @@ export const initialSetupAnswersToOnboardingFormShape = (answers: InitialSetupAn
   venueName: answers.venueNameOrTbd,
   theme: answers.style,
   story: answers.optionalStory,
-  guestExperience: answers.guestFeel,
+  guestExperience: '',
   weekendEvents: answers.weekendEventsRaw,
   ceremonyTime: answers.ceremonyArrivalTime,
   guestCount: answers.guestCountBand,

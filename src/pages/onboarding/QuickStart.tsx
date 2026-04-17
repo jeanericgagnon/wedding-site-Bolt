@@ -24,7 +24,6 @@ type ConciergeQuestion =
   | 'venueLocation'
   | 'venueName'
   | 'theme'
-  | 'guestFeel'
   | 'weekendEvents'
   | 'ceremonyTime'
   | 'guestCount'
@@ -63,7 +62,6 @@ const questions: QuestionDef[] = [
   { key: 'venueLocation', label: 'When + where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'January 17, 2027 — Sayulita, Mexico' },
   { key: 'venueName', label: 'Venue', prompt: 'What venue are you getting married at?', helper: 'Use the venue name or write TBD if you are still deciding.', placeholder: 'Amor Boutique Hotel or TBD', optional: true },
   { key: 'theme', label: 'Style', prompt: 'What style should the site lean into?', helper: 'A few words is enough. Tropical, modern, editorial, classic, relaxed.', placeholder: 'Tropical, relaxed' },
-  { key: 'guestFeel', label: 'Tone', prompt: 'If someone lands on your site, what should they feel right away?', helper: 'Think tone, not a perfect sentence. Warm, excited, relaxed, elegant, fun, emotional, welcoming, intimate — anything like that works.', placeholder: 'Warm, excited, relaxed' },
   { key: 'weekendEvents', label: 'Events', prompt: 'What events are happening over the wedding weekend?', type: 'textarea', helper: 'Use one short line or sentence. We will turn it into structured events.', placeholder: 'Friday welcome drinks, Saturday wedding, Sunday brunch' },
   { key: 'ceremonyTime', label: 'Ceremony arrival', prompt: 'What time should guests arrive for the ceremony?', helper: 'A simple arrival time is enough.', placeholder: '4:30 PM' },
   {
@@ -240,7 +238,6 @@ export const QuickStart: React.FC = () => {
       case 'venueLocation': return data.venueLocation || '';
       case 'venueName': return data.venueName || '';
       case 'theme': return data.theme || '';
-      case 'guestFeel': return data.guestExperience || '';
       case 'weekendEvents': return data.weekendEvents || '';
       case 'ceremonyTime': return data.ceremonyTime || '';
       case 'guestCount': return data.guestCount || '';
@@ -273,7 +270,6 @@ export const QuickStart: React.FC = () => {
         case 'venueLocation': next.whenWhere = value; break;
         case 'venueName': next.venueNameOrTbd = value; break;
         case 'theme': next.style = value; break;
-        case 'guestFeel': next.guestFeel = value; break;
         case 'weekendEvents': next.weekendEventsRaw = value; break;
         case 'ceremonyTime': next.ceremonyArrivalTime = value; break;
         case 'guestCount': next.guestCountBand = value as InitialSetupAnswers['guestCountBand']; break;
