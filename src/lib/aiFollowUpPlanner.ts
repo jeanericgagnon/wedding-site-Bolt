@@ -168,7 +168,8 @@ export const planFollowUpQuestions = (
     neededKeys.add('first-detail');
   }
   if (shouldAskGuestFeel && (hasVenue || hasCity) && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) neededKeys.add('guest-feel');
-  if (!snapshot.travelNotes && hasVenue && !hasUndecidedTravel && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
+  const isDestinationLike = /mexico|italy|tulum|cabo|sayulita|puerto vallarta|destination/i.test(`${snapshot.city || ''} ${snapshot.travelNotes || ''} ${snapshot.venue || ''}`);
+  if ((!snapshot.travelNotes || isDestinationLike) && hasVenue && !hasUndecidedTravel && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) neededKeys.add('location-why');
   if (!hasRegistry && eventLocationCandidates.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
   const needsEventStructure = neededKeys.has('event-structure');
@@ -194,11 +195,18 @@ export const planFollowUpQuestions = (
   }
 
   const shouldPairNonEvent = shouldUseEventCluster
-    ? (!hasVenue || missingStorySignal || hasVagueEventTitles)
+    ? (!hasVenue || missingStorySignal || hasVagueEventTitles || shouldAskGuestFeel)
     : true;
 
-  if (questions.length < remainingBudget && nonEventLaneQuestions.length > 0 && shouldPairNonEvent) {
-    questions.push(nonEventLaneQuestions[0]);
+  const preferredNonEventQuestion = nonEventLaneQuestions.find((question) => {
+    if (question.key === 'guest-feel') return shouldAskGuestFeel;
+    if (question.key === 'location-why') return isDestinationLike || (!snapshot.travelNotes && hasVenue);
+    if (question.key === 'registry-posture') return !hasRegistry && rawEventTitles.length === 0;
+    return true;
+  }) || nonEventLaneQuestions[0];
+
+  if (questions.length < remainingBudget && preferredNonEventQuestion && shouldPairNonEvent) {
+    questions.push(preferredNonEventQuestion);
   }
 
   if (questions.length === 0 && eventLaneQuestions.length > 0) {
