@@ -152,7 +152,8 @@ export const planFollowUpQuestions = (
   if (!hasRegistry && rawEventLocationQuestions.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
   const needsEventStructure = neededKeys.has('event-structure');
-  const maxEventQuestions = needsEventStructure
+  const needsMeetingCity = neededKeys.has('meeting-city');
+  const maxEventQuestions = needsEventStructure || needsMeetingCity
     ? Math.min(1, rawEventLocationQuestions.length)
     : rawEventLocationQuestions.length >= 3
       ? 2
