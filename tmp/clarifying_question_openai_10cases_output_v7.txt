@@ -1,0 +1,116 @@
+
+# 1. Strong destination baseline
+{
+  "shouldAskFollowUps": false,
+  "questions": [],
+  "whyTheseQuestions": []
+}
+
+# 2. Sparse local baseline
+{
+  "shouldAskFollowUps": true,
+  "questions": [
+    "What should guests expect from the wedding weekend overall, including any events like brunch?"
+  ],
+  "whyTheseQuestions": [
+    "Understanding the overall guest experience and event structure helps create clearer guidance and reduces confusion.",
+    "This single question addresses both missing guest expectations and the rough weekend events, improving the coherence and usefulness of the site.",
+    "It enables crafting a tone and content that feels intentional rather than generic."
+  ]
+}
+
+# 3. Messy freeform weekend
+{
+  "shouldAskFollowUps": true,
+  "questions": [
+    "Can you describe the main events planned for the wedding weekend, including any activities on Sunday if known, so guests have a clear idea of what to expect?"
+  ],
+  "whyTheseQuestions": [
+    "Having a clear picture of the weekend’s event structure will help provide guests with coherent schedule information and reduce confusion.",
+    "Clarifying the event flow before drafting improves the overall usefulness and guest understanding of the site.",
+    "Even if venue details are unsettled, knowing the planned events helps frame the weekend properly and makes the draft more credible."
+  ]
+}
+
+# 4. Ops complete emotionally thin
+{
+  "shouldAskFollowUps": true,
+  "questions": [
+    "What should guests understand right away about the kind of wedding this is and the overall vibe you want for the weekend?"
+  ],
+  "whyTheseQuestions": [
+    "The current intake is operationally complete but emotionally flat, so asking about the desired guest impression and overall vibe will help add emotional texture and make the site more engaging and welcoming to guests."
+  ]
+}
+
+# 5. Destination with place meaning gap
+{
+  "shouldAskFollowUps": true,
+  "questions": [
+    "Why did you choose Cabo as the location for your wedding?"
+  ],
+  "whyTheseQuestions": [
+    "Understanding why Cabo was chosen will add meaningful context to the site, making the location feel special and intentional for guests.",
+    "This enhances the emotional depth of the site without requiring additional event or logistical details that are still tentative.",
+    "It helps guests connect more with the celebration beyond just logistics, enriching their anticipation and experience."
+  ]
+}
+
+# 6. Registry posture unresolved
+{
+  "shouldAskFollowUps": false,
+  "questions": [],
+  "whyTheseQuestions": []
+}
+
+# 7. Multi-event confusion heavy
+{
+  "shouldAskFollowUps": true,
+  "questions": [
+    "Which events should each guest or guest group plan to attend, or how can they know what applies to them?"
+  ],
+  "whyTheseQuestions": [
+    "Clarifying which events apply to which guests will reduce confusion and improve the usefulness of the site.",
+    "This information directly impacts RSVP guidance and logistics, helping guests plan better.",
+    "It enhances guest understanding of the weekend's structure, addressing the main source of potential confusion."
+  ]
+}
+
+# 8. Venue not locked but tone strong
+{
+  "shouldAskFollowUps": true,
+  "questions": [
+    "What should guests expect from the wedding weekend overall, including any key events or activities planned?"
+  ],
+  "whyTheseQuestions": [
+    "Asking about overall guest expectations for the weekend helps clarify the event structure even if details are tentative.",
+    "This question improves guest understanding by providing a clearer picture of what the weekend entails, addressing some of the softness in operational clarity.",
+    "Understanding key events or activities supports drafting useful guidance and a more coherent site narrative despite unresolved venue and transportation details."
+  ]
+}
+
+# 9. Child policy and dress code gaps
+{
+  "shouldAskFollowUps": true,
+  "questions": [
+    "Is there a preferred dress code or attire recommendation you'd like guests to follow?",
+    "Do you have any guidance or policy regarding children attending the wedding?"
+  ],
+  "whyTheseQuestions": [
+    "Clarifying the dress code helps guests know how to dress appropriately, improving guest readiness and comfort.",
+    "Providing guidance about children attendance addresses a common source of confusion, helping guests plan accordingly and reducing potential misunderstandings."
+  ]
+}
+
+# 10. Remote origin but otherwise strong
+{
+  "shouldAskFollowUps": true,
+  "questions": [
+    "What should guests understand right away about the kind of weekend this is and what to expect during the welcome drinks and wedding events?"
+  ],
+  "whyTheseQuestions": [
+    "To clarify guest expectations and provide clear guidance on the weekend's flow, especially since welcome drinks and wedding times/locations are not yet specified.",
+    "Ensuring guests have a good understanding of the weekend enhances their experience and reduces potential confusion.",
+    "This question allows the couple to provide broader context that can compensate for unresolved schedule details and add emotional texture to the site."
+  ]
+}

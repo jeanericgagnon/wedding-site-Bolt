@@ -29,6 +29,9 @@ Core decision rule:
 - If the current intake is already coherent enough to draft a believable, useful site, ask 0 questions.
 - Missing details alone are not a reason to ask follow-ups.
 - Ask a question only when the answer would noticeably improve guest understanding, site usefulness, or the emotional believability of the draft.
+- Do not ask a question just because the site could be a little nicer. If the current intake already supports a clear, useful, believable site, ask 0.
+- Do not ask a broad guest-expectation question if the event list is already clear enough and the remaining gaps are only optional tone or minor unresolved logistics.
+- If the intake already includes a clear event list plus usable guest guidance, default to 0 instead of asking for a broader weekend summary.
 
 Rules:
 - Ask 0 to 3 questions maximum.
@@ -39,8 +42,11 @@ Rules:
 - Do not ask for details the couple likely has not finalized yet.
 - Do not ask narrow logistics cleanup when a broader framing question would do.
 - Avoid trivia, biography-mining, or questions that only improve one tiny line of copy.
+- Do not ask about registry, gifts, or gift guidance in this phase.
+- If registry or gifts are the only notable unresolved area, ask 0 instead of inventing a substitute question.
 - Ask at most one emotional/story question.
 - Only ask a story question if the site is already operationally coherent enough that emotional texture is the real missing piece.
+- Prefer guest-facing tone questions over relationship-story questions.
 - If guest clarity and event structure overlap, prefer the single broader question instead of asking both.
 - Questions should be concise, natural, easy to answer, and okay to answer partially.
 
@@ -48,15 +54,15 @@ Priority order:
 1. guest clarity
 2. event structure
 3. emotional depth
-4. decision clarity
-5. location meaning
+4. location meaning
 
 Strong question patterns:
 - What should guests expect from the weekend overall?
 - What events are actually happening across the weekend, even if rough?
 - Is there anything guests might be confused about or need extra guidance on?
-- What’s one thing that feels very “you two” that you’d want reflected on the site?
-- Do you want to guide guests at all on gifts or keep it open?
+- If a guest lands on the site, what should they understand about the kind of wedding this is right away?
+- What matters most about how this weekend should come across to guests?
+- What should guests understand right away about the kind of weekend this is?
 - Why did you pick this location?
 
 Weak question patterns:
@@ -81,11 +87,10 @@ export const simulateClarifyingQuestionDecision = (input: ClarifyingQuestionInpu
 
   const hasEventUncertainty = /event|weekend|welcome|brunch|schedule|timeline/.test(unresolved);
   const hasGuestClarityNeed = /guest|travel|local|confus|unclear|expect|guidance|faq/.test(unresolved);
-  const hasGiftDecisionGap = /registry|gifts|cash|meal|plus-one/.test(unresolved);
   const mostlyReady = /strong enough|coherent|ready|believable first draft|draftable/.test(readiness);
   const onlyMinorDetailGaps = /timing details only|location details only|minor detail|small gap/.test(readiness + ' ' + unresolved);
 
-  if (mostlyReady && onlyMinorDetailGaps && !hasGuestClarityNeed && !hasGiftDecisionGap) {
+  if (mostlyReady && onlyMinorDetailGaps && !hasGuestClarityNeed) {
     return {
       shouldAskFollowUps: false,
       questions: [],
@@ -99,11 +104,6 @@ export const simulateClarifyingQuestionDecision = (input: ClarifyingQuestionInpu
   } else if (hasEventUncertainty) {
     questions.push('What events are actually happening across the weekend, even if rough?');
     whyTheseQuestions.push('Improves schedule, FAQ, and travel clarity without over-asking for exact details.');
-  }
-
-  if (questions.length < 3 && hasGiftDecisionGap) {
-    questions.push('Do you want to guide guests at all on gifts or keep it open?');
-    whyTheseQuestions.push('Improves decision clarity in guest-facing sections.');
   }
 
   return {
