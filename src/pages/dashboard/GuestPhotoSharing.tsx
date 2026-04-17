@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail, EyeOff, Eye, Flag, Clapperboard } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -88,6 +88,9 @@ const writeStoredAlbumLinks = (value: Record<string, string>) => {
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromQuickStart = searchParams.get('fromQuickStart') === '1';
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const [loading, setLoading] = useState(true);
@@ -876,6 +879,19 @@ export const GuestPhotoSharing: React.FC = () => {
   return (
     <DashboardLayout currentPage="photos">
       <div className="space-y-6">
+        {fromQuickStart && (
+          <Card className="p-4 border border-primary/20 bg-primary/5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-text-primary">Next up: add photos, then review your draft</p>
+                <p className="text-xs text-text-secondary mt-1">Upload couple photos here. When you are ready, continue into your dashboard to review the draft and keep shaping the site.</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/overview?bypassPayment=1&fromQuickStart=1')}>
+                Continue to review
+              </Button>
+            </div>
+          </Card>
+        )}
         <div>
           <h1 className="text-3xl font-bold text-neutral-900">Guest photo sharing</h1>
           <p className="mt-2 text-neutral-600">Create albums, collect guest photos by event, and keep the upload flow organized.</p>

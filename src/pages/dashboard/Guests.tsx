@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
@@ -262,6 +263,10 @@ interface ItineraryEvent {
 }
 
 export const DashboardGuests: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromQuickStart = searchParams.get('fromQuickStart') === '1';
+  const nextStep = searchParams.get('next');
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
   const [guests, setGuests] = useState<GuestWithRSVP[]>([]);
@@ -2359,6 +2364,10 @@ Proceed with send?`)) return;
         const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
         toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
         setCsvPreview(null);
+        if (fromQuickStart && nextStep === 'photos') {
+          navigate('/dashboard/photos?bypassPayment=1&fromQuickStart=1');
+          return;
+        }
         setCsvSkipped([]);
         setCsvUnknownEvents([]);
         setCsvDuplicateNames([]);
@@ -2468,6 +2477,10 @@ Proceed with send?`)) return;
       const unknownEventsMsg = csvUnknownEvents.length > 0 ? `, ${csvUnknownEvents.length} unknown event name${csvUnknownEvents.length === 1 ? '' : 's'}` : '';
       toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${guardedMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
       setCsvPreview(null);
+      if (fromQuickStart && nextStep === 'photos') {
+        navigate('/dashboard/photos?bypassPayment=1&fromQuickStart=1');
+        return;
+      }
       setCsvSkipped([]);
       setCsvUnknownEvents([]);
       setCsvDuplicateNames([]);
@@ -3635,6 +3648,18 @@ Proceed with send?`)) return;
               <p className="mt-1 text-primary/80">{plannerHandoff.detail}</p>
               <p className="mt-2 text-primary/70">Use this surface to move guest work forward, but couple approval still matters for sensitive calls.</p>
             </div>
+
+            {fromQuickStart && nextStep === 'photos' && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Next up: import guests, then add photos</p>
+                  <p className="text-xs text-text-secondary mt-1">Import your guest list here. If you want to skip this for now, jump straight to photos and come back later.</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos?bypassPayment=1&fromQuickStart=1')}>
+                  Skip to photos
+                </Button>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
