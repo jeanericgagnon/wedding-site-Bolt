@@ -167,6 +167,18 @@ export const QuickStart: React.FC = () => {
   const activeClarifyingQuestions = clarifyingState?.clarifying.questions ?? [];
 
   useEffect(() => {
+    const shouldReset = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('resetQuickStart') === '1';
+    if (shouldReset) {
+      localStorage.removeItem(STORAGE_KEY);
+      setInitialSetupAnswers(createEmptyInitialSetupAnswers());
+      setFollowUpAnswers({});
+      setClarifyingState(null);
+      setCurrentIndex(0);
+      setShowFollowUps(false);
+      setInputValue('');
+      return;
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
     try {
@@ -586,7 +598,13 @@ export const QuickStart: React.FC = () => {
           )}
         </AnimatePresence>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16 flex items-center gap-4">
+          <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => {
+            localStorage.removeItem(STORAGE_KEY);
+            window.location.href = '/onboarding/quick-start?bypassPayment=1&resetQuickStart=1';
+          }}>
+            Start over
+          </button>
           <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => navigate('/dashboard?bypassPayment=1')}>
             Switch to manual setup
           </button>
