@@ -121,6 +121,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const blockedMessage = metadataState.blockedMessage;
   const missingSummary = metadataState.missingSummary;
   const hasBadImportTitle = metadataState.hasBadImportTitle;
+  const repairStates = metadataState.repairStates ?? [];
 
   const imageSource = (() => {
     const src = (item.image_url || '').toLowerCase();
