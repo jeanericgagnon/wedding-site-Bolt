@@ -564,7 +564,7 @@ export const QuickStart: React.FC = () => {
                       const nextValue = event.target.value;
                       setFollowUpAnswers((prev) => ({ ...prev, [question.id]: nextValue }));
                       if (clarifyingState) {
-                        setClarifyingState(answerClarifyingQuestion(clarifyingState, question.id, nextValue, nextValue.trim() ? 'answered' : 'pending'));
+                        setClarifyingState(answerClarifyingQuestion(clarifyingState, question.id, nextValue, nextValue.trim() ? 'answered' : 'unresolved'));
                       }
                     }} rows={3} className="w-full rounded-2xl border-0 px-6 py-4 outline-none resize-none" style={{ backgroundColor: SOFT, fontSize: '16px', color: TEXT }} />
                   </div>

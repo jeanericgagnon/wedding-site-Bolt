@@ -125,9 +125,8 @@ const getSuggestedFollowUps = (
   return clarifyingQuestions.map((question) => ({
     key: question.id,
     priority: 100,
-    impact: question.affectedSections.length,
-    category: question.category,
-    variants: [question.question],
+    affects: question.affectedSections,
+    variants: [question.question, question.question, question.question] as [string, string, string],
   }));
 };
 

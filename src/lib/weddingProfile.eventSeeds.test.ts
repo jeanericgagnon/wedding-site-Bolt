@@ -17,6 +17,7 @@ describe('weekend event seed pipeline', () => {
       ceremonyArrivalTime: '4:30 PM',
       guestCountBand: '50-100',
       plusOnePolicy: 'some',
+      childrenAllowed: 'unsure',
       rsvpDeadline: '2026-10-17',
       mealChoice: 'yes',
       registryIntent: 'unsure',
