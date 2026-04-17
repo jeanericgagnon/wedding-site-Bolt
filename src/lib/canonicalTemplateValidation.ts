@@ -1,4 +1,5 @@
-import type { CanonicalPageDocument, CanonicalSectionDefinition } from './canonicalPageContract';
+import type { CanonicalPageDocument } from './canonicalPageContract';
+import type { CanonicalSectionDefinition } from './canonicalSectionRegistry';
 
 export type CanonicalTemplateValidationIssue = {
   message: string;
@@ -24,7 +25,7 @@ export const validateCanonicalPageDocument = (
         continue;
       }
 
-      if (section.variant && definition.variants && !definition.variants.includes(section.variant)) {
+      if (section.variant && definition.variants && !definition.variants[section.variant]) {
         issues.push({
           message: `Unsupported variant ${section.variant} for ${section.type}`,
           pageId: page.id,
