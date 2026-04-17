@@ -97,22 +97,22 @@ const PROMPT_BY_QUESTION_KEY: Record<string, string> = {
 const onboardingExtractionSchema = z.object({
   updates: z.object({
     couple: z.object({
-      displayNames: z.string().optional(),
-      partnerOne: z.string().optional(),
-      partnerTwo: z.string().optional(),
-    }).partial().optional(),
+      displayNames: z.union([z.string(), z.null()]),
+      partnerOne: z.union([z.string(), z.null()]),
+      partnerTwo: z.union([z.string(), z.null()]),
+    }).nullable(),
     event: z.object({
-      date: z.string().optional(),
-      venueLocation: z.string().optional(),
-      venueName: z.string().optional(),
-      weekendEvents: z.string().optional(),
-      rsvpDeadline: z.string().optional(),
-    }).partial().optional(),
-    story: z.object({ summary: z.string().optional() }).partial().optional(),
-    registry: z.object({ url: z.string().optional(), status: z.string().optional() }).partial().optional(),
-    design: z.object({ theme: z.string().optional() }).partial().optional(),
-    guestExperience: z.object({ summary: z.string().optional(), faqTone: z.string().optional() }).partial().optional(),
-  }).partial(),
+      date: z.union([z.string(), z.null()]),
+      venueLocation: z.union([z.string(), z.null()]),
+      venueName: z.union([z.string(), z.null()]),
+      weekendEvents: z.union([z.string(), z.null()]),
+      rsvpDeadline: z.union([z.string(), z.null()]),
+    }).nullable(),
+    story: z.object({ summary: z.union([z.string(), z.null()]) }).nullable(),
+    registry: z.object({ url: z.union([z.string(), z.null()]), status: z.union([z.string(), z.null()]) }).nullable(),
+    design: z.object({ theme: z.union([z.string(), z.null()]) }).nullable(),
+    guestExperience: z.object({ summary: z.union([z.string(), z.null()]), faqTone: z.union([z.string(), z.null()]) }).nullable(),
+  }),
   inferred: z.array(z.string()).default([]),
   notes: z.array(z.string()).default([]),
   confidence: z.number().min(0).max(1).default(0.5),
@@ -158,17 +158,22 @@ const getProfileString = (profile: WeddingProfile, path: string): string => {
   return typeof value === 'string' ? value : '';
 };
 
+const compactObject = <T extends Record<string, unknown>>(value: T | null | undefined): Partial<T> => {
+  if (!value) return {};
+  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== null && entry !== undefined)) as Partial<T>;
+};
+
 const mergeProfile = (profile: WeddingProfile, updates: Partial<WeddingProfile>): WeddingProfile => ({
   ...profile,
   ...updates,
-  couple: { ...profile.couple, ...(updates.couple ?? {}) },
-  event: { ...profile.event, ...(updates.event ?? {}) },
-  venue: { ...profile.venue, ...(updates.venue ?? {}) },
-  story: { ...profile.story, ...(updates.story ?? {}) },
-  registry: { ...profile.registry, ...(updates.registry ?? {}) },
-  design: { ...profile.design, ...(updates.design ?? {}) },
-  guestExperience: { ...profile.guestExperience, ...(updates.guestExperience ?? {}) },
-  meta: { ...profile.meta, ...(updates.meta ?? {}) },
+  couple: { ...profile.couple, ...compactObject(updates.couple as Record<string, unknown> | null | undefined) },
+  event: { ...profile.event, ...compactObject(updates.event as Record<string, unknown> | null | undefined) },
+  venue: { ...profile.venue, ...compactObject(updates.venue as Record<string, unknown> | null | undefined) },
+  story: { ...profile.story, ...compactObject(updates.story as Record<string, unknown> | null | undefined) },
+  registry: { ...profile.registry, ...compactObject(updates.registry as Record<string, unknown> | null | undefined) },
+  design: { ...profile.design, ...compactObject(updates.design as Record<string, unknown> | null | undefined) },
+  guestExperience: { ...profile.guestExperience, ...compactObject(updates.guestExperience as Record<string, unknown> | null | undefined) },
+  meta: { ...profile.meta, ...compactObject(updates.meta as Record<string, unknown> | null | undefined) },
 });
 
 const deterministicExtractWeddingProfileUpdates = (
@@ -307,14 +312,21 @@ export const extractWeddingProfileUpdates = async (
       }
     }
 
+    const requiresConfirmation = conflicts.length > 0;
+    const normalizedConfidence = requiresConfirmation
+      ? Math.min(modelResult.confidence, deterministic.confidence, 0.49)
+      : /https?:\/\//i.test(input)
+        ? Math.max(modelResult.confidence, deterministic.confidence, 0.95)
+        : Math.max(modelResult.confidence, deterministic.confidence);
+
     console.info('[aiOnboarding] using OpenAI extraction', getOpenAiRuntimeConfig());
     return {
       updates: modelResult.updates as Partial<WeddingProfile>,
       inferred: modelResult.inferred,
       conflicts,
       notes: modelResult.notes,
-      confidence: modelResult.confidence,
-      requiresConfirmation: conflicts.length > 0,
+      confidence: normalizedConfidence,
+      requiresConfirmation,
     };
   } catch (error) {
     console.warn('[aiOnboarding] OpenAI extraction failed, falling back to deterministic extractor', error);
