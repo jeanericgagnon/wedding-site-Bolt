@@ -133,14 +133,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         setSiteJsonState(parsedSiteJson);
         const dashboard = parsedSiteJson.dashboard;
         if (dashboard && typeof dashboard === 'object' && !Array.isArray(dashboard)) {
-          const sidebarFeatures = (dashboard as Record<string, unknown>).sidebarFeatures;
-          if (Array.isArray(sidebarFeatures)) {
-            const parsed = sidebarFeatures.filter((v): v is string => typeof v === 'string');
-            if (parsed.length > 0) {
-              setEnabledFeatureIds(parsed);
-              return;
-            }
-          }
+          // legacy sidebar feature state ignored after nav rollup
         }
       }
     };
@@ -194,6 +187,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   };
 
   const siteVisibility = useMemo(() => getSiteVisibilityState({ isPublished: siteIsPublished, privacyMode: sitePrivacyMode, hideFromSearch: siteJsonState?.hide_from_search === true }), [siteIsPublished, sitePrivacyMode, siteJsonState]);
+  const currentNavLabel = navSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label || 'Dashboard';
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -319,7 +313,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 <Menu className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-lg font-semibold text-text-primary">{navItems.find((item) => item.id === currentPage)?.label || 'Dashboard'}</h1>
+                <h1 className="text-lg font-semibold text-text-primary">{currentNavLabel}</h1>
                 <p className="text-sm text-text-secondary">Manage your wedding site and guest experience.</p>
               </div>
             </div>
@@ -342,7 +336,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                   onClick={() => setShowUpgradeModal(true)}
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Heart className="w-4 h-4" />
                   Upgrade
                 </button>
               )}
