@@ -3,6 +3,7 @@ export type FollowUpQuestion = {
   priority: number;
   affects: string[];
   variants: [string, string, string];
+  kind?: 'event-cluster' | 'single';
 };
 
 export type FollowUpPlan = {
@@ -38,16 +39,18 @@ const isVagueEventTitle = (eventTitle: string) => {
 
 const isUndecidedValue = (value?: string) => /\b(tbd|not sure|still deciding|maybe|probably|if it works out|to be decided|unsure)\b/i.test((value || '').trim());
 
-const buildEventLocationQuestion = (eventTitle: string, index: number): FollowUpQuestion => {
-  const label = humanizeEventTitle(eventTitle);
+const buildEventClusterQuestion = (eventTitles: string[]): FollowUpQuestion => {
+  const labels = eventTitles.map((title) => humanizeEventTitle(title)).filter(Boolean).slice(0, 2);
+  const joined = labels.join(' and ');
   return {
-    key: `event-location-${index + 1}`,
-    priority: 120 - index,
+    key: `event-cluster-${labels.map((label) => label.toLowerCase().replace(/[^a-z0-9]+/g, '-')).join('-') || 'events'}`,
+    priority: 120,
     affects: ['scheduleIntro', 'travelIntro', 'faqIntro'],
+    kind: 'event-cluster',
     variants: [
-      `For ${label}, what time should guests show up and where is it happening?`,
-      `What time is ${label}, and where should guests go for it?`,
-      `For ${label}, when is it and where is it taking place?`,
+      `For ${joined}, what time and location do you already know? Feel free to skip anything that is not finalized yet.`,
+      `For ${joined}, what details should guests know already, and what is still TBD?`,
+      `For ${joined}, share any time or location details you have so far, and skip anything not locked yet.`,
     ],
   };
 };
@@ -136,10 +139,9 @@ export const planFollowUpQuestions = (
   const hasVagueEventTitles = rawEventTitles.some((eventTitle) => isVagueEventTitle(eventTitle));
   const hasUndecidedVenue = isUndecidedValue(snapshot.venue);
   const hasUndecidedTravel = isUndecidedValue(snapshot.travelNotes);
-  const rawEventLocationQuestions = rawEventTitles
+  const eventLocationCandidates = rawEventTitles
     .filter((eventTitle) => !isVagueEventTitle(eventTitle))
-    .filter((eventTitle) => !isUndecidedValue(eventTitle))
-    .map((eventTitle, index) => buildEventLocationQuestion(eventTitle, index));
+    .filter((eventTitle) => !isUndecidedValue(eventTitle));
   const howWeMet = (snapshot.howWeMet || '').trim();
   const storyDetail = (snapshot.storyDetail || '').trim();
   const storyWordCount = howWeMet.split(/\s+/).filter(Boolean).length;
@@ -153,19 +155,16 @@ export const planFollowUpQuestions = (
 
   if (!hasCity && howWeMet && mentionsDigitalOrigin && !shouldPrioritizeEventStructure) neededKeys.add('meeting-city');
   if (shouldPrioritizeEventStructure) neededKeys.add('event-structure');
-  if (howWeMet && isThinStory && rawEventLocationQuestions.length <= 1 && !hasVagueEventTitles) neededKeys.add('first-detail');
-  if (!snapshot.guestFeel && (hasVenue || hasCity) && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
-  if (!snapshot.travelNotes && hasVenue && !hasUndecidedTravel && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
-  if (!hasRegistry && rawEventLocationQuestions.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
+  if (howWeMet && isThinStory && eventLocationCandidates.length <= 1 && !hasVagueEventTitles) neededKeys.add('first-detail');
+  if (!snapshot.guestFeel && (hasVenue || hasCity) && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
+  if (!snapshot.travelNotes && hasVenue && !hasUndecidedTravel && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
+  if (!hasRegistry && eventLocationCandidates.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
   const needsEventStructure = neededKeys.has('event-structure');
-  const needsMeetingCity = neededKeys.has('meeting-city');
-  const maxEventQuestions = needsEventStructure || needsMeetingCity
-    ? Math.min(1, rawEventLocationQuestions.length)
-    : rawEventLocationQuestions.length >= 3
-      ? 2
-      : rawEventLocationQuestions.length;
-  const eventLocationQuestions = rawEventLocationQuestions.slice(0, Math.min(maxEventQuestions, remainingBudget));
+  const shouldUseEventCluster = eventLocationCandidates.length > 0;
+  const eventLocationQuestions = shouldUseEventCluster
+    ? [buildEventClusterQuestion(eventLocationCandidates.slice(0, Math.min(2, eventLocationCandidates.length)))].slice(0, Math.min(1, remainingBudget))
+    : [];
   const sortedNonEventQuestions = FOLLOW_UP_BANK
     .filter((q) => neededKeys.has(q.key))
     .sort((a, b) => b.priority - a.priority);
