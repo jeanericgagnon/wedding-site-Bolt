@@ -1260,25 +1260,26 @@ export const GuestPhotoSharing: React.FC = () => {
                 const hasLink = Boolean(knownUploadLink);
 
                 return (
-                  <div key={bucket.id} className="rounded-lg border border-neutral-200 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-neutral-900">{bucket.name}</p>
-                        <p className="text-xs text-neutral-500">Created {new Date(bucket.created_at).toLocaleString()}</p>
-                        <div className="mt-1 text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex rounded px-2 py-0.5 ${bucket.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>
-                            {bucket.is_active ? 'Active' : 'Paused'}
-                          </span>
-                          <span>{uploadCount} uploads</span>
-                          {!hasLink && <span className="text-rose-700">no saved link yet</span>}
-                          {!hasWindow && <span className="text-amber-700">no upload window yet</span>}
-                          {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
-                          {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
-                          <span>slug: {bucket.slug}</span>
+                  <div key={bucket.id} className="overflow-hidden rounded-[24px] border border-neutral-200 bg-white shadow-sm">
+                    <div className="border-b border-neutral-100 bg-gradient-to-r from-white via-rose-50/50 to-amber-50/60 px-5 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-neutral-900">{bucket.name}</p>
+                          <p className="text-xs text-neutral-500">Created {new Date(bucket.created_at).toLocaleString()}</p>
+                          <div className="mt-1 text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
+                            <span className={`inline-flex rounded px-2 py-0.5 ${bucket.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>
+                              {bucket.is_active ? 'Active' : 'Paused'}
+                            </span>
+                            <span>{uploadCount} uploads</span>
+                            {!hasLink && <span className="text-rose-700">no saved link yet</span>}
+                            {!hasWindow && <span className="text-amber-700">no upload window yet</span>}
+                            {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
+                            {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
+                            <span>slug: {bucket.slug}</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
                         {bucket.drive_folder_url && (
                           <Button size="sm" variant="outline" onClick={() => window.open(bucket.drive_folder_url!, '_blank')}>
                             <ExternalLink className="w-3 h-3 mr-1" /> Drive
@@ -1346,10 +1347,12 @@ export const GuestPhotoSharing: React.FC = () => {
                         >
                           <Mail className="w-3 h-3 mr-1" /> Share request
                         </Button>
+                        </div>
                       </div>
                     </div>
+                    <div className="px-5 py-4 space-y-4">
 
-                    <div className="mt-3 rounded-md border border-neutral-200 p-3 bg-neutral-50">
+                    <div className="rounded-2xl border border-neutral-200 p-3 bg-neutral-50">
                       <div className="flex items-center gap-2 mb-2 text-xs font-medium text-neutral-700">
                         <CalendarClock className="w-3.5 h-3.5" /> Upload window
                       </div>
@@ -1380,7 +1383,7 @@ export const GuestPhotoSharing: React.FC = () => {
                     </div>
 
                     {recents.length > 0 && (
-                      <div className="mt-3">
+                      <div>
                         <p className="text-xs font-medium text-neutral-700 mb-1">Recent uploads</p>
                         <ul className="space-y-2 text-xs text-neutral-600">
                           {recents.map((u) => (
@@ -1412,6 +1415,7 @@ export const GuestPhotoSharing: React.FC = () => {
                         </ul>
                       </div>
                     )}
+                    </div>
                   </div>
                 );
               })}
