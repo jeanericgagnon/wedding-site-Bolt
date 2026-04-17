@@ -160,7 +160,7 @@ export const planFollowUpQuestions = (
 
   if (!hasCity && howWeMet && mentionsDigitalOrigin && !shouldPrioritizeEventStructure) neededKeys.add('meeting-city');
   if (shouldPrioritizeEventStructure) neededKeys.add('event-structure');
-  if (missingStorySignal && eventLocationCandidates.length <= 1 && !hasVagueEventTitles) neededKeys.add('first-detail');
+  if (missingStorySignal && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) neededKeys.add('first-detail');
   if (!snapshot.guestFeel && (hasVenue || hasCity) && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
   if (!snapshot.travelNotes && hasVenue && !hasUndecidedTravel && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
   if (!hasRegistry && eventLocationCandidates.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
@@ -187,7 +187,11 @@ export const planFollowUpQuestions = (
     questions.push(eventLaneQuestions[0]);
   }
 
-  if (questions.length < remainingBudget && nonEventLaneQuestions.length > 0) {
+  const shouldPairNonEvent = shouldUseEventCluster
+    ? (!hasVenue || missingStorySignal || hasVagueEventTitles)
+    : true;
+
+  if (questions.length < remainingBudget && nonEventLaneQuestions.length > 0 && shouldPairNonEvent) {
     questions.push(nonEventLaneQuestions[0]);
   }
 
