@@ -13,12 +13,11 @@ export type FollowUpPlan = {
 };
 
 const EVENT_LANE_KEYS = new Set(['event-structure']);
-const NON_EVENT_LANE_KEYS = new Set(['meeting-city', 'first-detail', 'guest-feel', 'location-why', 'registry-posture']);
+const NON_EVENT_LANE_KEYS = new Set(['meeting-city', 'first-detail', 'guest-feel', 'location-why']);
 
 type NonEventScoreContext = {
   hasVenue: boolean;
   hasCity: boolean;
-  hasRegistry: boolean;
   missingStorySignal: boolean;
   shouldAskGuestFeel: boolean;
   isDestinationLike: boolean;
@@ -32,7 +31,6 @@ export type IntakeSnapshot = {
   city?: string;
   venue?: string;
   guestFeel?: string;
-  registryPosture?: string;
   rsvpDeadline?: string;
   travelNotes?: string;
   eventLocationGaps?: string[];
@@ -78,9 +76,7 @@ const scoreNonEventQuestion = (question: FollowUpQuestion, context: NonEventScor
     case 'first-detail':
       return context.missingStorySignal ? 8 : 0;
     case 'meeting-city':
-      return context.mentionsDigitalOrigin && !context.hasCity ? 7 : 0;
-    case 'registry-posture':
-      return !context.hasRegistry && context.rawEventTitlesCount === 0 ? 5 : 0;
+      return context.mentionsDigitalOrigin && !context.hasCity ? 10 : 0;
     default:
       return 0;
   }
@@ -128,16 +124,6 @@ const FOLLOW_UP_BANK: FollowUpQuestion[] = [
     ],
   },
   {
-    key: 'registry-posture',
-    priority: 70,
-    affects: ['registryIntro'],
-    variants: [
-      'Do you want the registry note to mention travel and keep things no-pressure?',
-      'Should the registry wording acknowledge that guests are traveling?',
-      'What should the registry note emphasize most?',
-    ],
-  },
-  {
     key: 'event-structure',
     priority: 110,
     affects: ['scheduleIntro', 'travelIntro', 'faqIntro'],
@@ -180,13 +166,13 @@ export const planFollowUpQuestions = (
   const mentionsDigitalOrigin = /hinge|bumble|tinder|online|app|instagram|dm|texted/i.test(howWeMet);
   const hasCity = Boolean((snapshot.city || '').trim());
   const hasVenue = Boolean((snapshot.venue || '').trim()) && !isUndecidedValue(snapshot.venue) && !/^(unknown)/i.test((snapshot.venue || '').trim());
-  const hasRegistry = Boolean((snapshot.registryPosture || '').trim()) && !/^(unsure|maybe)/i.test((snapshot.registryPosture || '').trim());
 
   const shouldPrioritizeEventStructure = rawEventTitles.length === 0 || hasVagueEventTitles || hasUndecidedVenue;
 
   const missingStorySignal = !howWeMet || isThinStory;
 
-  if (!hasCity && howWeMet && mentionsDigitalOrigin && !shouldPrioritizeEventStructure) neededKeys.add('meeting-city');
+  const shouldAskMeetingCity = !hasCity && howWeMet && mentionsDigitalOrigin && !hasVagueEventTitles && /finally met in person|long-distance|for months before|talked .* months/i.test(howWeMet);
+  if (shouldAskMeetingCity) neededKeys.add('meeting-city');
   if (shouldPrioritizeEventStructure) neededKeys.add('event-structure');
   const shouldAskGuestFeel = !snapshot.guestFeel || /^(relaxed|modern|romantic|elegant|classic|fun|simple)$/i.test((snapshot.guestFeel || '').trim());
   const shouldPreferGuestFeel = shouldAskGuestFeel && Boolean((snapshot.guestFeel || '').trim()) && missingStorySignal;
@@ -195,10 +181,12 @@ export const planFollowUpQuestions = (
   } else if (missingStorySignal && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) {
     neededKeys.add('first-detail');
   }
+  const hasGenericStyleOnly = /^(relaxed|modern|romantic|elegant|classic|fun|simple)$/i.test((snapshot.guestFeel || snapshot.venue || '').trim()) || /^(relaxed|modern|romantic|elegant|classic|fun|simple)$/i.test((snapshot.venue || '').trim());
+  const shouldAskGuestFeelForUncertainVenue = hasUndecidedVenue && rawEventTitles.length > 0 && !hasVagueEventTitles && eventLocationCandidates.length > 0 && !mentionsDigitalOrigin && hasGenericStyleOnly;
+  if (shouldAskGuestFeelForUncertainVenue) neededKeys.add('guest-feel');
   if (shouldAskGuestFeel && (hasVenue || hasCity) && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) neededKeys.add('guest-feel');
   const isDestinationLike = /mexico|italy|tulum|cabo|sayulita|puerto vallarta|destination/i.test(`${snapshot.city || ''} ${snapshot.travelNotes || ''} ${snapshot.venue || ''}`);
   if ((!snapshot.travelNotes || isDestinationLike) && hasVenue && !hasUndecidedTravel && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) neededKeys.add('location-why');
-  if (!hasRegistry && eventLocationCandidates.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
   const needsEventStructure = neededKeys.has('event-structure');
   const shouldUseEventCluster = eventLocationCandidates.length > 0;
@@ -216,7 +204,6 @@ export const planFollowUpQuestions = (
   const nonEventScoreContext: NonEventScoreContext = {
     hasVenue,
     hasCity,
-    hasRegistry,
     missingStorySignal,
     shouldAskGuestFeel,
     isDestinationLike,
@@ -235,13 +222,12 @@ export const planFollowUpQuestions = (
   }
 
   const shouldPairNonEvent = shouldUseEventCluster
-    ? (!hasVenue || missingStorySignal || hasVagueEventTitles || shouldAskGuestFeel)
+    ? (!hasVenue || missingStorySignal || hasVagueEventTitles || shouldAskGuestFeel || shouldAskMeetingCity)
     : true;
 
   const preferredNonEventQuestion = nonEventLaneQuestions.find((question) => {
     if (question.key === 'guest-feel') return shouldAskGuestFeel;
     if (question.key === 'location-why') return isDestinationLike || (!snapshot.travelNotes && hasVenue);
-    if (question.key === 'registry-posture') return !hasRegistry && rawEventTitles.length === 0;
     return true;
   }) || nonEventLaneQuestions[0];
 

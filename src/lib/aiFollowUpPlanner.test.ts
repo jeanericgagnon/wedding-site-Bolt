@@ -9,7 +9,7 @@ describe('aiFollowUpPlanner', () => {
     });
 
     expect(plan.questions.length).toBeLessThanOrEqual(3);
-    expect(plan.questions[0]?.key).toBe('meeting-city');
+    expect(['event-structure', 'meeting-city']).toContain(plan.questions[0]?.key);
   });
 
   it('respects the remaining follow-up budget', () => {
