@@ -7,6 +7,7 @@ type EvalCase = {
   name: string;
   answers: Partial<InitialSetupAnswers>;
   expectedOverall?: 'good' | 'bad';
+  expectedNonEventKey?: string | null;
   notes?: string;
 };
 
@@ -14,6 +15,7 @@ const cases: EvalCase[] = [
   {
     name: 'Eric + Kara rich baseline',
     expectedOverall: 'good',
+    expectedNonEventKey: null,
     notes: 'Should ask per-event logistics only, no junk phrasing.',
     answers: {
       names: 'Eric & Kara',
@@ -34,6 +36,7 @@ const cases: EvalCase[] = [
   {
     name: 'Nina + Eli courthouse + dinner',
     expectedOverall: 'good',
+    expectedNonEventKey: null,
     notes: 'Should maybe ask dinner logistics only if missing, not story nitpicks.',
     answers: {
       names: 'Nina & Eli',
@@ -54,6 +57,7 @@ const cases: EvalCase[] = [
   {
     name: 'Brooke + Emma strong anchor no story',
     expectedOverall: 'good',
+    expectedNonEventKey: 'first-detail',
     notes: 'Should ask for story texture, not operational junk.',
     answers: {
       names: 'Brooke & Emma',
@@ -123,6 +127,7 @@ const cases: EvalCase[] = [
   {
     name: 'Olivia + Harper messy freeform',
     expectedOverall: 'bad',
+    expectedNonEventKey: null,
     notes: 'This should expose parsing weakness and cleanup pressure.',
     answers: {
       names: 'Olivia + Harper',
@@ -140,6 +145,7 @@ const cases: EvalCase[] = [
   {
     name: 'Zane + Luca vague destination',
     expectedOverall: 'bad',
+    expectedNonEventKey: null,
     notes: 'Should reveal missing anchor/ops problems clearly.',
     answers: {
       names: 'Zane & Luca',
@@ -158,6 +164,7 @@ const cases: EvalCase[] = [
   {
     name: 'Chloe + Ben long story missing ops',
     expectedOverall: 'good',
+    expectedNonEventKey: null,
     notes: 'Should focus on ops gaps, not ask weak story questions.',
     answers: {
       names: 'Chloe & Ben',
@@ -174,6 +181,7 @@ const cases: EvalCase[] = [
   {
     name: 'Aaliyah + Marcus city but venue uncertain',
     expectedOverall: 'good',
+    expectedNonEventKey: 'first-detail',
     notes: 'Should ask event details or venue certainty cleanly.',
     answers: {
       names: 'Aaliyah & Marcus',
@@ -194,6 +202,7 @@ const cases: EvalCase[] = [
   {
     name: 'Hannah + Drew no weekend events',
     expectedOverall: 'good',
+    expectedNonEventKey: 'first-detail',
     notes: 'Should ask for useful event/logistics detail, not random copy polish.',
     answers: {
       names: 'Hannah & Drew',
@@ -211,6 +220,7 @@ const cases: EvalCase[] = [
   {
     name: 'Keira + Alex lots of guests',
     expectedOverall: 'good',
+    expectedNonEventKey: 'location-why',
     notes: 'Should probably ask event logistics, maybe travel tone.',
     answers: {
       names: 'Keira & Alex',
@@ -252,9 +262,12 @@ describe('aiFollowUpPlanner eval bank', () => {
     const outputs = cases.map((testCase) => {
       const snapshot = buildInitialSetupSnapshot(withDefaults(testCase.answers));
       const followUpPlan = planFollowUpQuestions(snapshot, 0);
+      const actualNonEventKey = followUpPlan.questions.find((item) => !String(item.key).startsWith('event-'))?.key ?? null;
       return {
         name: testCase.name,
         expectedOverall: testCase.expectedOverall,
+        expectedNonEventKey: testCase.expectedNonEventKey,
+        actualNonEventKey,
         notes: testCase.notes,
         followUps: followUpPlan.questions.map((item) => ({
           key: item.key,
@@ -267,6 +280,14 @@ describe('aiFollowUpPlanner eval bank', () => {
     const summary = {
       good: outputs.filter((item) => item.expectedOverall === 'good').map((item) => item.name),
       bad: outputs.filter((item) => item.expectedOverall === 'bad').map((item) => item.name),
+      nonEventMatches: outputs
+        .filter((item) => item.expectedNonEventKey !== undefined)
+        .map((item) => ({
+          name: item.name,
+          expected: item.expectedNonEventKey,
+          actual: item.actualNonEventKey,
+          match: item.expectedNonEventKey === item.actualNonEventKey,
+        })),
     };
 
     console.log(JSON.stringify({ summary, outputs }, null, 2));
