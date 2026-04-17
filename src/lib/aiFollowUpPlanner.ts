@@ -144,8 +144,10 @@ export const planFollowUpQuestions = (
   const hasVenue = Boolean((snapshot.venue || '').trim()) && !/^(tbd|unknown|not sure|maybe)/i.test((snapshot.venue || '').trim());
   const hasRegistry = Boolean((snapshot.registryPosture || '').trim()) && !/^(unsure|maybe)/i.test((snapshot.registryPosture || '').trim());
 
-  if (!hasCity && howWeMet && mentionsDigitalOrigin) neededKeys.add('meeting-city');
-  if (rawEventTitles.length === 0 || hasVagueEventTitles) neededKeys.add('event-structure');
+  const shouldPrioritizeEventStructure = rawEventTitles.length === 0 || hasVagueEventTitles;
+
+  if (!hasCity && howWeMet && mentionsDigitalOrigin && !shouldPrioritizeEventStructure) neededKeys.add('meeting-city');
+  if (shouldPrioritizeEventStructure) neededKeys.add('event-structure');
   if (howWeMet && isThinStory && rawEventLocationQuestions.length <= 1 && !hasVagueEventTitles) neededKeys.add('first-detail');
   if (!snapshot.guestFeel && (hasVenue || hasCity) && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
   if (!snapshot.travelNotes && hasVenue && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
