@@ -81,7 +81,7 @@ const FOLLOW_UP_BANK: FollowUpQuestion[] = [
   },
   {
     key: 'guest-feel',
-    priority: 90,
+    priority: 92,
     affects: ['heroSubtitle', 'faqIntro', 'travelIntro', 'scheduleIntro'],
     variants: [
       'What do you want guests to feel most over the weekend?',
@@ -160,8 +160,14 @@ export const planFollowUpQuestions = (
 
   if (!hasCity && howWeMet && mentionsDigitalOrigin && !shouldPrioritizeEventStructure) neededKeys.add('meeting-city');
   if (shouldPrioritizeEventStructure) neededKeys.add('event-structure');
-  if (missingStorySignal && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) neededKeys.add('first-detail');
-  if (!snapshot.guestFeel && (hasVenue || hasCity) && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('guest-feel');
+  const shouldAskGuestFeel = !snapshot.guestFeel || /^(relaxed|modern|romantic|elegant|classic|fun|simple)$/i.test((snapshot.guestFeel || '').trim());
+  const shouldPreferGuestFeel = shouldAskGuestFeel && Boolean((snapshot.guestFeel || '').trim()) && missingStorySignal;
+  if (shouldPreferGuestFeel) {
+    neededKeys.add('guest-feel');
+  } else if (missingStorySignal && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) {
+    neededKeys.add('first-detail');
+  }
+  if (shouldAskGuestFeel && (hasVenue || hasCity) && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) neededKeys.add('guest-feel');
   if (!snapshot.travelNotes && hasVenue && !hasUndecidedTravel && eventLocationCandidates.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
   if (!hasRegistry && eventLocationCandidates.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
