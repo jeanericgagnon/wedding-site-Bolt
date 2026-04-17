@@ -33,7 +33,7 @@ const humanizeEventTitle = (eventTitle: string) => {
 
 const isVagueEventTitle = (eventTitle: string) => {
   const normalized = eventTitle.trim().toLowerCase();
-  return /\b(thing|something|stuff|hang|party stuff|plans)\b/.test(normalized);
+  return /\b(thing|something|stuff|hang|party stuff|plans|maybe|probably)\b/.test(normalized);
 };
 
 const buildEventLocationQuestion = (eventTitle: string, index: number): FollowUpQuestion => {
@@ -151,12 +151,18 @@ export const planFollowUpQuestions = (
   if (!snapshot.travelNotes && hasVenue && rawEventLocationQuestions.length === 0 && !hasVagueEventTitles) neededKeys.add('location-why');
   if (!hasRegistry && rawEventLocationQuestions.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
-  const maxEventQuestions = rawEventLocationQuestions.length >= 3 ? 2 : rawEventLocationQuestions.length;
+  const needsEventStructure = neededKeys.has('event-structure');
+  const maxEventQuestions = needsEventStructure
+    ? Math.min(1, rawEventLocationQuestions.length)
+    : rawEventLocationQuestions.length >= 3
+      ? 2
+      : rawEventLocationQuestions.length;
   const eventLocationQuestions = rawEventLocationQuestions.slice(0, Math.min(maxEventQuestions, remainingBudget));
-  const nonEventQuestions = FOLLOW_UP_BANK
+  const sortedNonEventQuestions = FOLLOW_UP_BANK
     .filter((q) => neededKeys.has(q.key))
-    .sort((a, b) => b.priority - a.priority)
-    .slice(0, Math.max(0, remainingBudget - eventLocationQuestions.length));
+    .sort((a, b) => b.priority - a.priority);
+  const nonEventLimit = needsEventStructure ? 1 : Math.max(0, remainingBudget - eventLocationQuestions.length);
+  const nonEventQuestions = sortedNonEventQuestions.slice(0, nonEventLimit);
 
   const questions = [...eventLocationQuestions, ...nonEventQuestions].slice(0, Math.min(3, remainingBudget));
 
