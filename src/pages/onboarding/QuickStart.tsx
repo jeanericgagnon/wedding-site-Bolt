@@ -410,7 +410,7 @@ export const QuickStart: React.FC = () => {
 
     try {
       const aiSession = await applyOnboardingInput(
-        createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, questions.slice(0, answeredIndex).map((q) => q.key)),
+        createOnboardingSessionStateFromInitialSetup(nextAnswers, questions.slice(0, answeredIndex + 1).map((q) => q.key)),
         value.trim(),
       );
 
