@@ -1209,7 +1209,7 @@ export const GuestPhotoSharing: React.FC = () => {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Ops tools</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => exportBucketLinksCsv()}>Export bucket links</Button>
-                  <Button size="sm" variant="outline" onClick={() => exportSharePackCsv()}>Export sharing pack</Button>
+                  <Button size="sm" variant="outline" onClick={() => exportSharePackCsv()}>Export share kit</Button>
                   <Button size="sm" variant="outline" onClick={() => setShowFlaggedOnly((v) => !v)}>
                     {showFlaggedOnly ? 'Show all uploads' : 'Show flagged only'}
                   </Button>
@@ -1352,7 +1352,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           disabled={!knownUploadLink}
                           onClick={() => void copyText(makeShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
                         >
-                          {copied === `share-msg-${bucket.id}` ? 'Copied message' : 'Copy message'}
+                          {copied === `share-msg-${bucket.id}` ? 'Copied share prompt' : 'Copy share prompt'}
                         </Button>
                         <Button
                           size="sm"
@@ -1364,7 +1364,7 @@ export const GuestPhotoSharing: React.FC = () => {
                             window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
                           }}
                         >
-                          <Mail className="w-3 h-3 mr-1" /> Share request
+                          <Mail className="w-3 h-3 mr-1" /> Send to messaging
                         </Button>
                         </div>
                       </div>
