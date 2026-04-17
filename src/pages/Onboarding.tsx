@@ -16,7 +16,7 @@ import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutpu
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
-type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'rsvpDeadline' | 'mealChoice' | 'registryIntent' | 'story';
+type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
@@ -57,7 +57,6 @@ export const Onboarding: React.FC = () => {
     { key: 'plusOnePolicy', label: 'Plus-ones', prompt: 'What’s your plus-one policy?', helper: 'Choose the policy you want the RSVP flow to follow.', placeholder: 'some' },
     { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This drives the RSVP setup immediately.', type: 'date' },
     { key: 'mealChoice', label: 'Meals', prompt: 'Do you want to collect meal choices?', helper: 'Choose yes or no.', placeholder: 'yes' },
-    { key: 'registryIntent', label: 'Registry', prompt: 'What’s the registry plan?', helper: 'Cash, gifts, both, unsure, or no registry for now.', placeholder: 'both' },
     { key: 'story', label: 'Story', prompt: 'Want to add your story? (totally optional)', type: 'textarea', helper: 'Optional, but helpful for stronger copy.', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...' },
   ];
 
@@ -89,7 +88,6 @@ export const Onboarding: React.FC = () => {
       !formData.weekendEvents.trim(),
       !formData.plusOnePolicy?.trim(),
       !formData.rsvpDeadline,
-      !formData.registryIntent?.trim(),
     ];
 
     const firstIncomplete = checks.findIndex(Boolean);
@@ -127,7 +125,7 @@ export const Onboarding: React.FC = () => {
     {
       id: 'registry',
       label: 'Add registry link or keep moving',
-      done: Boolean(formData.registryIntent?.trim()),
+      done: true,
       actionLabel: 'Go',
       action: () => {
         goToQuestionIndex(9);
@@ -170,7 +168,7 @@ export const Onboarding: React.FC = () => {
       id: 'guest-ready',
       title: 'Guest-ready details',
       description: 'Guest experience, weekend plans, and RSVP details are enough to make the draft useful.',
-      done: Boolean(formData.guestCount?.trim() && formData.weekendEvents.trim() && formData.plusOnePolicy?.trim() && formData.rsvpDeadline && formData.registryIntent?.trim()),
+      done: Boolean(formData.guestCount?.trim() && formData.weekendEvents.trim() && formData.plusOnePolicy?.trim() && formData.rsvpDeadline),
     },
   ];
 
@@ -222,7 +220,6 @@ export const Onboarding: React.FC = () => {
           plusOnePolicy: (parsed.formData.plusOnePolicy || '') as InitialSetupAnswers['plusOnePolicy'],
           rsvpDeadline: parsed.formData.rsvpDeadline || '',
           mealChoice: (parsed.formData.mealChoice || '') as InitialSetupAnswers['mealChoice'],
-          registryIntent: (parsed.formData.registryIntent || '') as InitialSetupAnswers['registryIntent'],
           optionalStory: parsed.formData.story || '',
         };
         setInitialSetupAnswers(nextAnswers);
@@ -304,7 +301,6 @@ export const Onboarding: React.FC = () => {
       plusOnePolicy: (nextForm.plusOnePolicy || '') as InitialSetupAnswers['plusOnePolicy'],
       rsvpDeadline: nextForm.rsvpDeadline,
       mealChoice: (nextForm.mealChoice || '') as InitialSetupAnswers['mealChoice'],
-      registryIntent: (nextForm.registryIntent || '') as InitialSetupAnswers['registryIntent'],
       optionalStory: nextForm.story,
     };
     const nextProfile = applyInitialSetupAnswersToWeddingProfile(nextAnswers);
@@ -361,7 +357,6 @@ export const Onboarding: React.FC = () => {
       rsvpDeadline: prevFormData.rsvpDeadline || '2026-05-25',
       plusOnePolicy: prevFormData.plusOnePolicy || 'some',
       mealChoice: prevFormData.mealChoice || 'yes',
-      registryIntent: prevFormData.registryIntent || 'both',
     });
   }, [hydrateProfile, isDemoMode, weddingProfile]);
 
@@ -397,10 +392,6 @@ export const Onboarding: React.FC = () => {
       }
       if (key === 'plus-one-policy') {
         patches.plusOnePolicy = value;
-        continue;
-      }
-      if (key === 'registry-posture') {
-        patches.registryIntent = value;
         continue;
       }
       if (key === 'meeting-city' || key === 'first-detail') {
@@ -819,10 +810,6 @@ export const Onboarding: React.FC = () => {
         return formData.mealChoice?.trim()
           ? `RSVP meal collection is set to ${formData.mealChoice.trim()}.`
           : 'Meal collection can be switched on or off here.';
-      case 'registryIntent':
-        return formData.registryIntent?.trim()
-          ? `We’ll use a ${formData.registryIntent.trim()} registry posture in the draft.`
-          : 'Registry intent tells us whether to show gifts, cash, both, or hold off.';
       default:
         return 'Each answer tightens the draft before you ever touch the builder.';
     }

@@ -34,7 +34,6 @@ type ConciergeQuestion =
   | 'plusOnePolicy'
   | 'rsvpDeadline'
   | 'mealChoice'
-  | 'registryIntent'
   | 'story';
 
 type QuestionDef = {
@@ -105,20 +104,6 @@ const questions: QuestionDef[] = [
     choices: [
       { label: 'Yes', value: 'yes' },
       { label: 'No', value: 'no' },
-    ],
-  },
-  {
-    key: 'registryIntent',
-    label: 'Registry',
-    prompt: 'What’s the registry plan?',
-    helper: 'Cash, gifts, both, unsure, or no registry for now.',
-    type: 'choice',
-    choices: [
-      { label: 'Cash', value: 'cash' },
-      { label: 'Gifts', value: 'gifts' },
-      { label: 'Both', value: 'both' },
-      { label: 'Unsure', value: 'unsure' },
-      { label: 'No registry for now', value: 'none-for-now' },
     ],
   },
   { key: 'story', label: 'Story', prompt: 'Want to add your story? (totally optional)', type: 'textarea', helper: 'Optional, but helpful for stronger copy.', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...', optional: true },
@@ -251,7 +236,6 @@ export const QuickStart: React.FC = () => {
       case 'plusOnePolicy': return data.plusOnePolicy || '';
       case 'rsvpDeadline': return data.rsvpDeadline || '';
       case 'mealChoice': return data.mealChoice || '';
-      case 'registryIntent': return data.registryIntent || '';
       case 'story': return data.story || '';
       default: return '';
     }
@@ -284,7 +268,6 @@ export const QuickStart: React.FC = () => {
         case 'plusOnePolicy': next.plusOnePolicy = value as InitialSetupAnswers['plusOnePolicy']; break;
         case 'rsvpDeadline': next.rsvpDeadline = value; break;
         case 'mealChoice': next.mealChoice = value as InitialSetupAnswers['mealChoice']; break;
-        case 'registryIntent': next.registryIntent = value as InitialSetupAnswers['registryIntent']; break;
         case 'story': next.optionalStory = value; break;
       }
       return next;
@@ -395,7 +378,6 @@ export const QuickStart: React.FC = () => {
         case 'plusOnePolicy': draft.plusOnePolicy = value.trim() as InitialSetupAnswers['plusOnePolicy']; break;
         case 'rsvpDeadline': draft.rsvpDeadline = value.trim(); break;
         case 'mealChoice': draft.mealChoice = value.trim() as InitialSetupAnswers['mealChoice']; break;
-        case 'registryIntent': draft.registryIntent = value.trim() as InitialSetupAnswers['registryIntent']; break;
         case 'story': draft.optionalStory = value.trim(); break;
       }
       return draft;
