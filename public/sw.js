@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dayof-static-v2';
+const CACHE_NAME = 'dayof-static-v3';
 const ASSETS = ['/', '/manifest.webmanifest', '/image.png'];
 
 self.addEventListener('install', (event) => {
