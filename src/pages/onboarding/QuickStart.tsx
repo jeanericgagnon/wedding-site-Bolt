@@ -359,7 +359,10 @@ export const QuickStart: React.FC = () => {
       value.trim(),
     );
 
-    await runProcessingInterstitial();
+    const shouldRunProcessing = currentIndex >= questions.length - 1;
+    if (shouldRunProcessing) {
+      await runProcessingInterstitial();
+    }
 
     if (aiSession.currentIntent === 'offer-draft' || currentIndex >= questions.length - 1) {
       if (followUpPlan.questions.length > 0) {
