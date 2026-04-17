@@ -843,6 +843,8 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
+  const getBucketQrUrl = (uploadUrl: string) => `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(uploadUrl)}`;
+
   const createBucket = async () => {
     if (!siteId) return;
     if (!name.trim()) {
@@ -892,9 +894,31 @@ export const GuestPhotoSharing: React.FC = () => {
             </div>
           </Card>
         )}
-        <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Memories</h1>
-          <p className="mt-2 text-neutral-600">Create buckets, collect guest uploads, and keep memories organized beautifully.</p>
+        <div className="rounded-[28px] border border-neutral-200 bg-gradient-to-br from-white via-rose-50 to-amber-50 p-6 shadow-sm">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Memories</p>
+              <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">Build a beautiful bucket board for every memory you want guests to upload.</h1>
+              <p className="mt-3 text-sm leading-6 text-neutral-600">Start with a blank bucket sheet, create the moments you care about, then share one clean upload dashboard link or QR so guests can send photos without confusion.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:w-[420px]">
+              <div className="rounded-2xl border border-white/70 bg-white/80 p-4">
+                <p className="text-xs uppercase tracking-wide text-neutral-500">Buckets</p>
+                <p className="mt-2 text-2xl font-semibold text-neutral-900">{buckets.length}</p>
+                <p className="mt-1 text-xs text-neutral-500">Blank sheet first, then create what you need.</p>
+              </div>
+              <div className="rounded-2xl border border-white/70 bg-white/80 p-4">
+                <p className="text-xs uppercase tracking-wide text-neutral-500">Uploads</p>
+                <p className="mt-2 text-2xl font-semibold text-neutral-900">{totalUploads}</p>
+                <p className="mt-1 text-xs text-neutral-500">Across all live memory buckets.</p>
+              </div>
+              <div className="rounded-2xl border border-white/70 bg-white/80 p-4">
+                <p className="text-xs uppercase tracking-wide text-neutral-500">Sharing</p>
+                <p className="mt-2 text-sm font-semibold text-neutral-900">Link + QR ready</p>
+                <p className="mt-1 text-xs text-neutral-500">Give guests one obvious way to upload.</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <Card className="p-6 border border-border bg-surface">
@@ -1043,11 +1067,15 @@ export const GuestPhotoSharing: React.FC = () => {
           </div>
         )}
 
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Plus className="w-5 h-5 text-rose-600" />
-            <h2 className="text-xl font-semibold text-neutral-900">Create bucket</h2>
+        <Card className="overflow-hidden border-0 bg-white shadow-sm">
+          <div className="border-b border-neutral-100 bg-neutral-50/80 px-6 py-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Plus className="w-5 h-5 text-rose-600" />
+              <h2 className="text-xl font-semibold text-neutral-900">Bucket sheet</h2>
+            </div>
+            <p className="text-sm text-neutral-600">Create buckets for the moments you want people to upload into. Think welcome party, dance floor, disposables, table shots, brunch, or anything else worth collecting.</p>
           </div>
+          <div className="p-6">
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -1115,6 +1143,7 @@ export const GuestPhotoSharing: React.FC = () => {
               </div>
             </div>
           )}
+          </div>
         </Card>
 
         <Card className="p-6">
@@ -1234,7 +1263,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           onClick={() => void regenerateLink(bucket.id)}
                         >
                           <LinkIcon className="w-3 h-3 mr-1" />
-                          {workingBucketId === bucket.id ? 'Working...' : 'Create new link'}
+                          {workingBucketId === bucket.id ? 'Working...' : 'Refresh upload dashboard link'}
                         </Button>
                         <Button
                           size="sm"
@@ -1243,7 +1272,15 @@ export const GuestPhotoSharing: React.FC = () => {
                           onClick={() => void copyText(knownUploadLink, `uplink-${bucket.id}`)}
                         >
                           <Copy className="w-3 h-3 mr-1" />
-                          {copied === `uplink-${bucket.id}` ? 'Copied' : 'Copy link'}
+                          {copied === `uplink-${bucket.id}` ? 'Copy ready' : 'Copy link'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!knownUploadLink}
+                          onClick={() => window.open(getBucketQrUrl(knownUploadLink), '_blank')}
+                        >
+                          QR code
                         </Button>
                         <Button
                           size="sm"
