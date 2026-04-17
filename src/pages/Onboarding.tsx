@@ -13,6 +13,7 @@ import { createEmptyInitialSetupAnswers, createEmptyOnboardingFormShapeFromIniti
 import { createEmptyInitialSetupFollowUps } from '../lib/initialSetupFollowUps';
 import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
+import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdateWithClarifying';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 
 type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
@@ -530,21 +531,46 @@ export const Onboarding: React.FC = () => {
     }
 
     try {
+      const onboardingUpdate = buildOnboardingUpdateWithClarifying({
+        coupleNames: {
+          name1: String(data.couple_name_1 || ''),
+          name2: String(data.couple_name_2 || ''),
+        },
+        planningStatus: 'guided_setup_complete',
+        template: 'generated-modern-luxe',
+        weddingDate: (data.wedding_date as string | null) || undefined,
+        venue: (data.venue_name as string | null) || undefined,
+        city: (data.venue_location as string | null) || undefined,
+      });
+      const nextWeddingData = {
+        ...(((onboardingUpdate.wedding_data as Record<string, unknown>) || {})),
+        meta: {
+          ...((((onboardingUpdate.wedding_data as Record<string, unknown>) || {}).meta as Record<string, unknown>) || {}),
+          onboardingEventSeeds: itinerarySeeds,
+          rsvpEventSeeds,
+        },
+      };
+
       const { data: createdSite, error } = await supabase
         .from('wedding_sites')
         .insert({
           user_id: user.id,
-          couple_name_1: data.couple_name_1 || '',
-          couple_name_2: data.couple_name_2 || '',
+          couple_name_1: onboardingUpdate.couple_name_1 || data.couple_name_1 || '',
+          couple_name_2: onboardingUpdate.couple_name_2 || data.couple_name_2 || '',
           couple_first_name: data.couple_first_name || null,
           couple_second_name: data.couple_second_name || null,
-          wedding_date: data.wedding_date || null,
-          venue_name: data.venue_name || null,
+          wedding_date: onboardingUpdate.wedding_date || data.wedding_date || null,
+          venue_name: onboardingUpdate.venue_name || data.venue_name || null,
           venue_location: data.venue_location || null,
+          wedding_location: onboardingUpdate.wedding_location || data.venue_location || null,
+          active_template_id: onboardingUpdate.active_template_id,
+          template_id: onboardingUpdate.template_id,
+          layout_config: onboardingUpdate.layout_config,
+          site_slug: onboardingUpdate.site_slug,
           site_url: data.site_url || null,
           rsvp_deadline: data.rsvp_deadline || null,
           onboarding_answers: profile,
-          wedding_data: { meta: { onboardingEventSeeds: itinerarySeeds, rsvpEventSeeds } },
+          wedding_data: nextWeddingData,
         })
         .select('id')
         .single();
