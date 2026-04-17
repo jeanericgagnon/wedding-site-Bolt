@@ -197,6 +197,52 @@ Keep billing decisions based on:
 - active site role
 not just generic signed-in user state.
 
+## AI quick start work to go
+
+### Current verdict
+Keep the AI path. Do not remove it.
+But stop treating the live branch as finished. The remaining AI onboarding work is still active development and should be handled as a dedicated stabilization batch, not endless reactive prod poking.
+
+### What is already true
+- baseline intake is much stronger now
+- AI no longer needs to run on every single baseline question
+- clarifying contract, persistence, mapping, and save-path groundwork exist
+- event follow-ups now expand toward per-event prompts instead of one mushy weekend-outline question
+
+### Remaining AI quick start work
+
+#### 1. stabilize the post-intake handoff
+- make the transition from final intake question -> thinking -> ask-or-draft feel deterministic
+- remove any remaining flap between last question and follow-up/build state
+- prove this in browser with repeatable runs
+
+#### 2. tighten AI follow-up output shape
+- keep broad AI reasoning behind the scenes
+- but render only structured missing-field prompts in UI
+- event questions should stay per-event and ask time + where in one batch
+- avoid open-ended “tell us more” style prompts unless truly necessary
+
+#### 3. finish structured follow-up UX
+- render structured event follow-ups as grouped rows/cards, not a generic textarea stack
+- support event name + time + location clearly
+- support skip/TBD without re-asking forever
+
+#### 4. harden save/build after AI handoff
+- make final save and transition to guests/photos stable after ask path and after draft path
+- keep visible failure messages useful when something actually breaks
+- reduce save-path ambiguity between local state, onboarding answers, wedding data, and builder/template updates
+
+#### 5. browser-proof the AI path
+Run real browser checks for at least:
+- strong case -> draft immediately
+- event-clarity case -> per-event follow-up batch
+- messy case -> structured guest-guidance/event questions
+- successful save -> guests -> photos continuation
+
+#### 6. keep the scope tight
+Do not reopen giant architecture debates here.
+The goal is to stabilize the current AI quick start behavior so it feels crisp, structured, and reliable.
+
 ## Recommended next exact move
 If continuing now, the best next single task is:
 
