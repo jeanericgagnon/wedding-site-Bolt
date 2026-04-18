@@ -133,7 +133,10 @@ function UnassignedPool({ guests }: { guests: EligibleGuest[] }) {
       {guests.length === 0 ? (
         <p className="text-xs text-text-tertiary text-center py-4">All attending guests are seated</p>
       ) : filteredGuests.length === 0 ? (
-        <p className="text-xs text-text-tertiary text-center py-4">No unassigned guests match that search.</p>
+        <div className="text-center py-4 space-y-2">
+          <p className="text-xs text-text-tertiary">No unassigned guests match that search.</p>
+          <button type="button" onClick={() => setQuery('')} className="text-xs text-primary">Clear search</button>
+        </div>
       ) : (
         <div className="flex flex-wrap gap-1.5">
           {filteredGuests.map(g => (
