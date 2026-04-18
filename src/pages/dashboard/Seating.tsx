@@ -864,6 +864,20 @@ export const DashboardSeating: React.FC = () => {
     if (guest) setActiveGuest(guest);
   }
 
+  async function clearSeatAssignment(tableId: string, seatIndex: number) {
+    const assignment = assignments.find((item) => item.table_id === tableId && item.seat_index === seatIndex);
+    if (!assignment) return;
+    try {
+      if (!isDemoMode && seatingEvent) {
+        await unassignGuest(assignment.guest_id, seatingEvent.id);
+      }
+      setAssignments((prev) => prev.filter((item) => item.id !== assignment.id));
+      setSeatPicker(null);
+    } catch {
+      toast('Couldn’t clear that seat. Please try again.', 'error');
+    }
+  }
+
   async function assignGuestToSeatDirect(guestId: string, targetTableId: string, targetSeatIndex?: number) {
     if (!seatingEvent) return;
     const targetTable = tables.find(t => t.id === targetTableId);
@@ -1652,9 +1666,14 @@ export const DashboardSeating: React.FC = () => {
               <Button size="sm" variant="ghost" onClick={() => { setSeatPicker(null); setSeatPickerQuery(''); }}>Close</Button>
             </div>
             {activeSeatGuest && (
-              <div className="rounded-lg border border-primary/20 bg-primary-light/20 px-3 py-3">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">Current seat assignment</p>
-                <p className="mt-1 text-sm font-medium text-text-primary">{activeSeatGuest.full_name}</p>
+              <div className="rounded-lg border border-primary/20 bg-primary-light/20 px-3 py-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Current seat assignment</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">{activeSeatGuest.full_name}</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => void clearSeatAssignment(seatPicker.tableId, seatPicker.seatIndex)}>
+                  Clear seat
+                </Button>
               </div>
             )}
             <Input
@@ -1662,6 +1681,7 @@ export const DashboardSeating: React.FC = () => {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSeatPickerQuery(e.target.value)}
               placeholder="Search RSVP’d guests"
             />
+            <p className="text-xs text-text-tertiary">Choosing a new guest here will replace the current seat assignment.</p>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {seatPickerOptions.slice(0, 18).map((guest) => (
                 <button
