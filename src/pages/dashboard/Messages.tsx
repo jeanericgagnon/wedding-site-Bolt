@@ -1851,29 +1851,48 @@ export const DashboardMessages: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-            <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
-              <p className="text-[11px] text-text-tertiary">Delivery success</p>
-              <p className="text-sm font-semibold text-text-primary">{deliveryHealth.successRate}%</p>
-            </div>
-            <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
-              <p className="text-[11px] text-text-tertiary">Failure rate</p>
-              <p className="text-sm font-semibold text-text-primary">{deliveryHealth.failRate}%</p>
-            </div>
-            <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
-              <p className="text-[11px] text-text-tertiary">Past-due scheduled</p>
-              <p className="text-sm font-semibold text-text-primary">{deliveryHealth.overdueScheduled}</p>
-            </div>
-            <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
-              <p className="text-[11px] text-text-tertiary">Still needs retry</p>
-              <p className="text-sm font-semibold text-text-primary">{deliveryHealth.retryBacklog}</p>
-            </div>
+            {[
+              {
+                label: 'Delivery success',
+                value: `${deliveryHealth.successRate}%`,
+                tone: 'text-success',
+                detail: 'Reached guests cleanly',
+              },
+              {
+                label: 'Failure rate',
+                value: `${deliveryHealth.failRate}%`,
+                tone: deliveryHealth.failRate > 0 ? 'text-error' : 'text-text-primary',
+                detail: 'Messages that still failed',
+              },
+              {
+                label: 'Past-due scheduled',
+                value: deliveryHealth.overdueScheduled,
+                tone: deliveryHealth.overdueScheduled > 0 ? 'text-warning' : 'text-text-primary',
+                detail: 'Scheduled items needing attention',
+              },
+              {
+                label: 'Still needs retry',
+                value: deliveryHealth.retryBacklog,
+                tone: deliveryHealth.retryBacklog > 0 ? 'text-warning' : 'text-text-primary',
+                detail: 'Failed sends you may want to rerun',
+              },
+            ].map((item) => (
+              <div key={item.label} className="rounded-2xl border border-border-subtle bg-white px-3 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary">{item.label}</p>
+                <p className={`mt-2 text-lg font-semibold ${item.tone}`}>{item.value}</p>
+                <p className="mt-1 text-[11px] text-text-tertiary">{item.detail}</p>
+              </div>
+            ))}
           </div>
 
 
           {retryCandidates.length > 0 && (
-            <div className="rounded-xl border border-border/35 bg-white p-3 mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-text-primary">Needs another try</p>
+            <div className="rounded-2xl border border-warning/20 bg-warning/5 p-4 mb-4">
+              <div className="flex items-center justify-between mb-3 gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Retry queue</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">Needs another try</p>
+                </div>
                 <button onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View failed</button>
               </div>
               <div className="space-y-2">
