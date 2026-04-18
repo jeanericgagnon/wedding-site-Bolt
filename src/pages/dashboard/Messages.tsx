@@ -1259,21 +1259,20 @@ export const DashboardMessages: React.FC = () => {
           </div>
         )}
 
-        <div className="rounded-xl border border-border/35 bg-surface-subtle/30 p-4">
-          <div className="flex items-center justify-between gap-3">
+        <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-medium text-text-primary">Guest communication flow</p>
-              <p className="mt-1 text-xs text-text-secondary">Treat this as a communication lifecycle, not a pile of unrelated sends.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Communication flow</p>
+              <h2 className="mt-2 text-2xl font-semibold text-text-primary">Keep the lifecycle obvious from first nudge to final follow-up.</h2>
+              <p className="mt-2 text-sm text-text-secondary">Presets pull from your real wedding details and audience context first, then hand the message back to you before anything sends.</p>
             </div>
           </div>
-          <div className="mt-3 rounded-lg border border-border bg-white px-3 py-2 text-xs text-text-secondary">
-            Grounded draft help lives here too: presets use your real wedding details and audience context, then hand control back to you for edits before anything sends.
-          </div>
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
-            {GUEST_COMMUNICATION_FLOW.map((stage) => (
-              <div key={stage.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">{stage.label}</p>
-                <p className="mt-1 text-xs text-text-secondary">{stage.detail}</p>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+            {GUEST_COMMUNICATION_FLOW.map((stage, index) => (
+              <div key={stage.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">0{index + 1}</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{stage.label}</p>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{stage.detail}</p>
               </div>
             ))}
           </div>
@@ -1316,10 +1315,15 @@ export const DashboardMessages: React.FC = () => {
               </div>
             </Card>
 
-            <Card variant="bordered" padding="lg">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-text-primary">Recent credit activity</h3>
-                <span className="text-xs text-text-tertiary">Recent {smsTransactions.length}</span>
+            <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+              <div className="-mx-6 -mt-6 mb-4 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Credits</p>
+                    <h3 className="mt-2 text-xl font-semibold text-text-primary">Recent credit activity</h3>
+                  </div>
+                  <span className="text-xs text-text-tertiary">Recent {smsTransactions.length}</span>
+                </div>
               </div>
               {smsTransactions.length === 0 ? (
                 <p className="text-xs text-text-tertiary">No credit activity yet. Buy credits when you’re ready to send texts.</p>
