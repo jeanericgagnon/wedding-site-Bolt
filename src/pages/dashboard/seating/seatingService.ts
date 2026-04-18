@@ -1,6 +1,8 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 
+let hasEventRsvpsTable: boolean | null = null;
+
 export interface ItineraryEvent {
   id: string;
   event_name: string;
@@ -241,12 +243,35 @@ export async function getEligibleGuests(
 
   const { data: invitations } = await supabase
     .from('event_invitations')
-    .select('guest_id')
+    .select('id, guest_id')
     .eq('event_id', itineraryEventId);
 
-  const inviteMap = new Map<string, string | null>(
-    (invitations ?? []).map(inv => [inv.guest_id, null])
+  const invitationRows = (invitations ?? []) as Array<{ id: string; guest_id: string }>;
+  const inviteMap = new Map<string, string>(
+    invitationRows.map(inv => [inv.guest_id, inv.id])
   );
+
+  const eventRsvpByInvitationId = new Map<string, boolean | null>();
+  if (invitationRows.length > 0 && hasEventRsvpsTable !== false) {
+    const { data: eventRsvps, error: eventRsvpError } = await supabase
+      .from('event_rsvps')
+      .select('event_invitation_id, attending')
+      .in('event_invitation_id', invitationRows.map((inv) => inv.id));
+
+    if (eventRsvpError) {
+      const msg = (eventRsvpError.message || '').toLowerCase();
+      if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
+        hasEventRsvpsTable = false;
+      } else {
+        throw eventRsvpError;
+      }
+    } else {
+      hasEventRsvpsTable = true;
+      (eventRsvps ?? []).forEach((row: { event_invitation_id: string; attending: boolean | null }) => {
+        eventRsvpByInvitationId.set(row.event_invitation_id, row.attending ?? null);
+      });
+    }
+  }
 
   const hasEventInvitations = (invitations ?? []).length > 0;
 
@@ -254,14 +279,14 @@ export async function getEligibleGuests(
     const fullName = (g.name as string | null)
       || `${(g.first_name as string | null) ?? ''} ${(g.last_name as string | null) ?? ''}`.trim()
       || 'Guest';
-    const eventRsvp = inviteMap.get(g.id);
-    const isInvitedToEvent = inviteMap.has(g.id);
+    const invitationId = inviteMap.get(g.id);
+    const eventRsvp = invitationId ? eventRsvpByInvitationId.get(invitationId) : undefined;
+    const isInvitedToEvent = !!invitationId;
 
     let isAttending: boolean;
     if (hasEventInvitations) {
       const baseAccepted = g.rsvp_status === 'attending' || g.rsvp_status === 'accepted';
-      const eventAccepted = eventRsvp === 'attending' || eventRsvp === 'accepted';
-      isAttending = isInvitedToEvent && (eventAccepted || (eventRsvp == null && baseAccepted));
+      isAttending = isInvitedToEvent && (typeof eventRsvp === 'boolean' ? eventRsvp : baseAccepted);
     } else {
       isAttending = g.rsvp_status === 'attending' || g.rsvp_status === 'accepted';
     }

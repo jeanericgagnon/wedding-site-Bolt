@@ -2008,8 +2008,17 @@ Proceed with send?`)) return;
 
       // Best-effort dependency cleanup for environments without full FK cascades.
       if (guestIds.length > 0) {
+        const { data: invitationRows } = await supabase
+          .from('event_invitations')
+          .select('id')
+          .in('guest_id', guestIds);
+
+        const invitationIds = (invitationRows ?? []).map((row) => row.id as string);
+
         await supabase.from('event_invitations').delete().in('guest_id', guestIds);
-        await supabase.from('event_rsvps').delete().in('guest_id', guestIds);
+        if (invitationIds.length > 0) {
+          await supabase.from('event_rsvps').delete().in('event_invitation_id', invitationIds);
+        }
         await supabase.from('rsvps').delete().in('guest_id', guestIds);
       }
 
