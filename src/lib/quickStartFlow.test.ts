@@ -1,0 +1,38 @@
+import { describe, expect, it } from 'vitest';
+import { createEmptyInitialSetupAnswers } from './initialSetupAnswers';
+import { createEmptyClarifyingPersistence } from './aiClarifyingPersistence';
+import { applyQuickStartAnswer, mergeClarifyingAnswer } from './quickStartFlow';
+
+describe('quickStartFlow', () => {
+  it('applies guest feel answers without dropping them from the final quick start snapshot', () => {
+    const base = createEmptyInitialSetupAnswers();
+    const next = applyQuickStartAnswer(base, 'guestFeel', 'Warm, relaxed, intimate');
+
+    expect(next.guestFeel).toBe('Warm, relaxed, intimate');
+  });
+
+  it('builds a fresh clarifying envelope from the latest typed follow-up answer', () => {
+    const base = createEmptyClarifyingPersistence();
+    base.clarifying.questions = [
+      {
+        id: 'event-1-time',
+        category: 'event_structure',
+        question: 'Friday welcome drinks: what time is it?',
+        expectedAnswerType: 'short_text',
+        targetFields: ['events.0.time'],
+        affectedSections: ['schedule'],
+        skippable: true,
+        round: 1,
+        status: 'pending',
+        answer: '',
+      },
+    ];
+
+    const updated = mergeClarifyingAnswer(base, 'event-1-time', '6:30 PM');
+
+    expect(updated).not.toBeNull();
+    expect(updated?.clarifying.questions[0].answer).toBe('6:30 PM');
+    expect(updated?.clarifying.questions[0].status).toBe('answered');
+    expect(updated?.clarifying.history[updated.clarifying.history.length - 1]?.answer).toBe('6:30 PM');
+  });
+});

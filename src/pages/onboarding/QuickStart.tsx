@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -17,25 +17,10 @@ import { buildInitialSetupSnapshot } from '../../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../../lib/initialSetupDerivedOutputs';
 import { createOnboardingSessionStateFromInitialSetup } from '../../lib/aiOnboarding';
 import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
-import { answerClarifyingQuestion, buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
+import { buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
 import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
 import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
-
-type ConciergeQuestion =
-  | 'partnerNames'
-  | 'partnerLabels'
-  | 'venueLocation'
-  | 'venueName'
-  | 'theme'
-  | 'guestFeel'
-  | 'weekendEvents'
-  | 'ceremonyTime'
-  | 'guestCount'
-  | 'plusOnePolicy'
-  | 'childrenAllowed'
-  | 'rsvpDeadline'
-  | 'mealChoice'
-  | 'story';
+import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -157,6 +142,8 @@ export const QuickStart: React.FC = () => {
   const [processingStep, setProcessingStep] = useState(0);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
   const [clarifyingState, setClarifyingState] = useState<ReturnType<typeof createClarifyingPersistenceFromDecision> | null>(null);
+  const followUpAnswersRef = useRef<Record<string, string>>({});
+  const clarifyingStateRef = useRef<ReturnType<typeof createClarifyingPersistenceFromDecision> | null>(null);
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
@@ -202,6 +189,14 @@ export const QuickStart: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }));
   }, [initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState]);
+
+  useEffect(() => {
+    followUpAnswersRef.current = followUpAnswers;
+  }, [followUpAnswers]);
+
+  useEffect(() => {
+    clarifyingStateRef.current = clarifyingState;
+  }, [clarifyingState]);
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
@@ -282,35 +277,13 @@ export const QuickStart: React.FC = () => {
   );
 
   const applyAnswer = (questionKey: ConciergeQuestion, rawValue: string) => {
-    const value = rawValue.trim();
-    setInitialSetupAnswers((prev) => {
-      const next = { ...prev };
-      switch (questionKey) {
-        case 'partnerNames': next.names = value; break;
-        case 'partnerLabels':
-          if (value === 'bride|groom') next.labelPreference = 'bride-groom';
-          else if (value === 'bride|bride') next.labelPreference = 'bride-bride';
-          else if (value === 'groom|groom') next.labelPreference = 'groom-groom';
-          else next.labelPreference = 'names-only';
-          break;
-        case 'venueLocation': next.whenWhere = value; break;
-        case 'venueName': next.venueNameOrTbd = value; break;
-        case 'theme': next.style = value; break;
-        case 'guestFeel': next.guestFeel = value; break;
-        case 'weekendEvents': next.weekendEventsRaw = value; break;
-        case 'ceremonyTime': next.ceremonyArrivalTime = value; break;
-        case 'guestCount': next.guestCountBand = value as InitialSetupAnswers['guestCountBand']; break;
-        case 'plusOnePolicy': next.plusOnePolicy = value as InitialSetupAnswers['plusOnePolicy']; break;
-        case 'childrenAllowed': next.childrenAllowed = value as InitialSetupAnswers['childrenAllowed']; break;
-        case 'rsvpDeadline': next.rsvpDeadline = value; break;
-        case 'mealChoice': next.mealChoice = value as InitialSetupAnswers['mealChoice']; break;
-        case 'story': next.optionalStory = value; break;
-      }
-      return next;
-    });
+    setInitialSetupAnswers((prev) => applyQuickStartAnswer(prev, questionKey, rawValue));
   };
 
-  const finishFlow = async () => {
+  const finishFlow = async (
+    answersOverride: InitialSetupAnswers = initialSetupAnswers,
+    clarifyingOverride: ReturnType<typeof createClarifyingPersistenceFromDecision> | null = clarifyingStateRef.current,
+  ) => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -320,13 +293,13 @@ export const QuickStart: React.FC = () => {
         navigate('/signup?bypassPayment=1', {
           replace: true,
           state: {
-            quickStartDraft: { initialSetupAnswers, followUpAnswers, clarifyingState },
+            quickStartDraft: { initialSetupAnswers: answersOverride, followUpAnswers: followUpAnswersRef.current, clarifyingState: clarifyingOverride },
             returnTo: '/onboarding/quick-start?bypassPayment=1',
           },
         });
         return;
       }
-      const { weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
+      const { weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(answersOverride, initialSetupFollowUps);
       const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
         .select('id, wedding_data, active_template_id, template_id, wedding_date, venue_name, wedding_location, couple_name_1, couple_name_2')
@@ -336,13 +309,13 @@ export const QuickStart: React.FC = () => {
         .maybeSingle();
       if (siteError) throw siteError;
       if (!site?.id) throw new Error('No wedding site found for this account');
-      const clarifyingFieldPatches = clarifyingState ? buildClarifyingAnswerPatchSet(clarifyingState) : {};
+      const clarifyingFieldPatches = clarifyingOverride ? buildClarifyingAnswerPatchSet(clarifyingOverride) : {};
       const existingWeddingData = site && 'wedding_data' in site ? ((site as { wedding_data?: Record<string, unknown> }).wedding_data || {}) : {};
-      const templateSeed = clarifyingState ? mapClarifyingPersistenceToTemplateSeed(clarifyingState) : null;
+      const templateSeed = clarifyingOverride ? mapClarifyingPersistenceToTemplateSeed(clarifyingOverride) : null;
       const onboardingUpdate = buildOnboardingUpdateWithClarifying({
         coupleNames: {
-          name1: site?.couple_name_1 || initialSetupAnswers.names.split('&')[0]?.trim() || 'Partner One',
-          name2: site?.couple_name_2 || initialSetupAnswers.names.split('&')[1]?.trim() || 'Partner Two',
+          name1: site?.couple_name_1 || answersOverride.names.split('&')[0]?.trim() || 'Partner One',
+          name2: site?.couple_name_2 || answersOverride.names.split('&')[1]?.trim() || 'Partner Two',
         },
         planningStatus: 'quick_start_complete',
         template: (site?.active_template_id || site?.template_id || 'generated-modern-luxe') as string,
@@ -354,13 +327,13 @@ export const QuickStart: React.FC = () => {
         hotelRecommendations: templateSeed?.lodgingGuidance,
         parking: templateSeed?.transportGuidance,
         customFaqs: templateSeed?.faqGuidance?.map((line) => `Guidance::${line}`).join('\n'),
-        clarifying: clarifyingState || undefined,
+        clarifying: clarifyingOverride || undefined,
       });
       const nextWeddingData = {
         ...(existingWeddingData || {}),
         ...(((onboardingUpdate.wedding_data as Record<string, unknown>) || {})),
         clarifyingFieldPatches,
-        draftOutputs: clarifyingState?.draftOutputs || {},
+        draftOutputs: clarifyingOverride?.draftOutputs || {},
       };
       const { error: updateError } = await supabase
         .from('wedding_sites')
@@ -415,30 +388,7 @@ export const QuickStart: React.FC = () => {
     setError('');
     setAiDebug('');
 
-    const nextAnswers = (() => {
-      const draft = { ...initialSetupAnswers };
-      switch (answeredQuestion.key) {
-        case 'partnerNames': draft.names = value.trim(); break;
-        case 'partnerLabels':
-          if (value.trim() === 'bride|groom') draft.labelPreference = 'bride-groom';
-          else if (value.trim() === 'bride|bride') draft.labelPreference = 'bride-bride';
-          else if (value.trim() === 'groom|groom') draft.labelPreference = 'groom-groom';
-          else draft.labelPreference = 'names-only';
-          break;
-        case 'venueLocation': draft.whenWhere = value.trim(); break;
-        case 'venueName': draft.venueNameOrTbd = value.trim(); break;
-        case 'theme': draft.style = value.trim(); break;
-        case 'weekendEvents': draft.weekendEventsRaw = value.trim(); break;
-        case 'ceremonyTime': draft.ceremonyArrivalTime = value.trim(); break;
-        case 'guestCount': draft.guestCountBand = value.trim() as InitialSetupAnswers['guestCountBand']; break;
-        case 'plusOnePolicy': draft.plusOnePolicy = value.trim() as InitialSetupAnswers['plusOnePolicy']; break;
-        case 'childrenAllowed': draft.childrenAllowed = value.trim() as InitialSetupAnswers['childrenAllowed']; break;
-        case 'rsvpDeadline': draft.rsvpDeadline = value.trim(); break;
-        case 'mealChoice': draft.mealChoice = value.trim() as InitialSetupAnswers['mealChoice']; break;
-        case 'story': draft.optionalStory = value.trim(); break;
-      }
-      return draft;
-    })();
+    const nextAnswers = applyQuickStartAnswer(initialSetupAnswers, answeredQuestion.key, value);
 
     const fallbackIndex = answeredIndex + 1;
     if (fallbackIndex < questions.length) {
@@ -455,6 +405,7 @@ export const QuickStart: React.FC = () => {
       const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
       setAiDebug(`mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
       const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
+      clarifyingStateRef.current = persistence;
       setClarifyingState(persistence);
       if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
         setLoading(false);
@@ -464,7 +415,7 @@ export const QuickStart: React.FC = () => {
       }
       const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
       console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
-      await finishFlow();
+      await finishFlow(nextAnswers, persistence);
       return;
     } catch (err) {
       console.error('QUICK_START_AI_STEP_FAILED', err);
@@ -598,16 +549,20 @@ export const QuickStart: React.FC = () => {
                     <p className="mb-2 text-[14px]" style={{ color: TEXT }}>{question.question}</p>
                     <textarea value={followUpAnswers[question.id] || ''} onChange={(event) => {
                       const nextValue = event.target.value;
-                      setFollowUpAnswers((prev) => ({ ...prev, [question.id]: nextValue }));
-                      if (clarifyingState) {
-                        setClarifyingState(answerClarifyingQuestion(clarifyingState, question.id, nextValue, nextValue.trim() ? 'answered' : 'unresolved'));
+                      const nextFollowUps = { ...followUpAnswersRef.current, [question.id]: nextValue };
+                      followUpAnswersRef.current = nextFollowUps;
+                      setFollowUpAnswers(nextFollowUps);
+                      const nextClarifying = mergeClarifyingAnswer(clarifyingStateRef.current, question.id, nextValue);
+                      clarifyingStateRef.current = nextClarifying;
+                      if (nextClarifying) {
+                        setClarifyingState(nextClarifying);
                       }
                     }} rows={3} className="w-full rounded-2xl border-0 px-6 py-4 outline-none resize-none" style={{ backgroundColor: SOFT, fontSize: '16px', color: TEXT }} />
                   </div>
                 ))}
               </div>
               <div className="mt-6 flex gap-3">
-                <button type="button" onClick={() => void finishFlow()} disabled={loading} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                <button type="button" onClick={() => void finishFlow(initialSetupAnswers, clarifyingStateRef.current)} disabled={loading} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                   {loading ? 'Building...' : 'Build my draft'}
                 </button>
                 <button type="button" onClick={() => setShowFollowUps(false)} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
