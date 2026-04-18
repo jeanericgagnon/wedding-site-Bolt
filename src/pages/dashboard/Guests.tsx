@@ -1674,16 +1674,34 @@ Proceed with send?`)) return;
     setTogglingEventId(eventId);
     try {
       if (currentlyInvited) {
-        await supabase
+        const { data: invitationRow, error: invitationLookupError } = await supabase
+          .from('event_invitations')
+          .select('id')
+          .eq('event_id', eventId)
+          .eq('guest_id', itineraryDrawerGuest.id)
+          .maybeSingle();
+        if (invitationLookupError) throw invitationLookupError;
+
+        if (invitationRow?.id) {
+          const { error: eventRsvpDeleteError } = await supabase
+            .from('event_rsvps')
+            .delete()
+            .eq('event_invitation_id', invitationRow.id);
+          if (eventRsvpDeleteError) throw eventRsvpDeleteError;
+        }
+
+        const { error: inviteDeleteError } = await supabase
           .from('event_invitations')
           .delete()
           .eq('event_id', eventId)
           .eq('guest_id', itineraryDrawerGuest.id);
+        if (inviteDeleteError) throw inviteDeleteError;
         setGuestEventIds(prev => { const n = new Set(prev); n.delete(eventId); return n; });
       } else {
-        await supabase
+        const { error: inviteInsertError } = await supabase
           .from('event_invitations')
           .insert({ event_id: eventId, guest_id: itineraryDrawerGuest.id });
+        if (inviteInsertError) throw inviteInsertError;
         setGuestEventIds(prev => new Set([...prev, eventId]));
       }
     } catch {
