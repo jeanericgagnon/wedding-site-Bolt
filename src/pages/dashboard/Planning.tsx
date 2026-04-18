@@ -4,8 +4,8 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
-import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors } from '../../lib/demoData';
-import { PLANNER_ROLE_OPTIONS, canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields } from '../../lib/demoData';
+import { PLANNER_ROLE_OPTIONS, canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import {
   PlanningTask, PlanningBudgetItem, PlanningVendor,
   getWeddingSiteId, getWeddingDate,
@@ -14,18 +14,23 @@ import {
   loadVendors, createVendor, updateVendor, deleteVendor,
   generateMilestoneTasks,
 } from './planning/planningService';
+import { buildNameChangePlan } from '../../lib/nameChange/engine';
+import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan } from '../../lib/nameChange/types';
+import { loadNameChangeWorkspace, defaultNameChangeCaseInput, saveNameChangeWorkspace } from './planning/nameChangeService';
 import { PlanningOverviewTab } from './planning/PlanningOverviewTab';
 import { TasksTab } from './planning/TasksTab';
 import { BudgetTab } from './planning/BudgetTab';
 import { VendorsTab } from './planning/VendorsTab';
+import { NameChangePlannerTab } from './planning/NameChangePlannerTab';
 
-type Tab = 'overview' | 'tasks' | 'budget' | 'vendors';
+type Tab = 'overview' | 'tasks' | 'budget' | 'vendors' | 'nameChange';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'budget', label: 'Budget' },
   { id: 'vendors', label: 'Vendors' },
+  { id: 'nameChange', label: 'Name change' },
 ];
 
 export const DashboardPlanning: React.FC = () => {
@@ -41,6 +46,11 @@ export const DashboardPlanning: React.FC = () => {
   const [seatingReadiness, setSeatingReadiness] = useState({ attending: 0, seated: 0, unassigned: 0 });
   const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
   const [planningRole, setPlanningRole] = useState<PlannerAccessRole>('owner');
+  const [nameChangeDraft, setNameChangeDraft] = useState<NameChangeCaseInput>(defaultNameChangeCaseInput);
+  const [nameChangeDocuments, setNameChangeDocuments] = useState<NameChangeDocumentInput[]>([]);
+  const [nameChangeExtractedFields, setNameChangeExtractedFields] = useState<NameChangeExtractedFieldInput[]>([]);
+  const [nameChangePlan, setNameChangePlan] = useState<NameChangePlan>(() => buildNameChangePlan({ profile: defaultNameChangeCaseInput, documents: [], extractedFields: [] }));
+  const [nameChangeSaving, setNameChangeSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -62,6 +72,18 @@ export const DashboardPlanning: React.FC = () => {
         setVendors(demoVendors as unknown as PlanningVendor[]);
         setTotalBudget(30000);
         setSeatingReadiness({ attending: 68, seated: 52, unassigned: 16 });
+        const demoCase: NameChangeCaseInput = {
+          ...defaultNameChangeCaseInput,
+          ...demoNameChangeCase,
+          change_reasons: [...demoNameChangeCase.change_reasons],
+          structured_intake: { ...demoNameChangeCase.structured_intake },
+        };
+        const demoDocuments = [...demoNameChangeDocuments] as unknown as NameChangeDocumentInput[];
+        const demoFields = [...demoNameChangeExtractedFields] as unknown as NameChangeExtractedFieldInput[];
+        setNameChangeDraft(demoCase);
+        setNameChangeDocuments(demoDocuments);
+        setNameChangeExtractedFields(demoFields);
+        setNameChangePlan(buildNameChangePlan({ profile: demoCase, documents: demoDocuments, extractedFields: demoFields }));
         return;
       }
 
@@ -90,6 +112,59 @@ export const DashboardPlanning: React.FC = () => {
       setTotalBudget(Number(planningMeta.totalBudget) || 0);
 
       await loadSeatingReadiness(id);
+
+      const workspace = await loadNameChangeWorkspace(id);
+      if (workspace.caseRecord) {
+        const nextDraft: NameChangeCaseInput = {
+          workflow_status: workspace.caseRecord.workflow_status,
+          launch_state: workspace.caseRecord.launch_state,
+          legal_basis: workspace.caseRecord.legal_basis,
+          current_first_name: workspace.caseRecord.current_first_name,
+          current_middle_name: workspace.caseRecord.current_middle_name ?? '',
+          current_last_name: workspace.caseRecord.current_last_name,
+          target_first_name: workspace.caseRecord.target_first_name,
+          target_middle_name: workspace.caseRecord.target_middle_name ?? '',
+          target_last_name: workspace.caseRecord.target_last_name,
+          email: workspace.caseRecord.email ?? '',
+          phone_last4: workspace.caseRecord.phone_last4 ?? '',
+          county_residence: workspace.caseRecord.county_residence ?? '',
+          marriage_state: workspace.caseRecord.marriage_state ?? 'California',
+          marriage_date: workspace.caseRecord.marriage_date ?? '',
+          urgency_level: workspace.caseRecord.urgency_level,
+          has_us_passport: workspace.caseRecord.has_us_passport,
+          passport_needs_update: workspace.caseRecord.passport_needs_update,
+          has_real_id_license: workspace.caseRecord.has_real_id_license,
+          is_us_citizen: workspace.caseRecord.is_us_citizen,
+          employment_status: workspace.caseRecord.employment_status,
+          change_reasons: workspace.caseRecord.change_reasons,
+          structured_intake: workspace.caseRecord.structured_intake ?? {},
+          latest_plan_summary: workspace.caseRecord.latest_plan_summary,
+        };
+        const documentInputs: NameChangeDocumentInput[] = workspace.documents.map((document) => ({
+          document_kind: document.document_kind,
+          display_name: document.display_name,
+          storage_mode: document.storage_mode,
+          intake_status: document.intake_status,
+          file_name_masked: document.file_name_masked,
+          issuing_authority: document.issuing_authority,
+          issued_on: document.issued_on,
+          expires_on: document.expires_on,
+          extraction_confidence: document.extraction_confidence,
+          extracted_snapshot: document.extracted_snapshot,
+        }));
+        const extractedFieldInputs: NameChangeExtractedFieldInput[] = workspace.extractedFields.map((field) => ({
+          document_id: field.document_id,
+          field_key: field.field_key,
+          field_label: field.field_label,
+          field_value_masked: field.field_value_masked,
+          source_type: field.source_type,
+          is_verified: field.is_verified,
+        }));
+        setNameChangeDraft(nextDraft);
+        setNameChangeDocuments(documentInputs);
+        setNameChangeExtractedFields(extractedFieldInputs);
+        setNameChangePlan(workspace.latestSnapshot?.plan_payload ?? buildNameChangePlan({ profile: nextDraft, documents: documentInputs, extractedFields: extractedFieldInputs }));
+      }
     } catch (err) {
       console.error(err);
       toast('Couldn’t load planning data right now. Please try again.', 'error');
@@ -352,6 +427,61 @@ export const DashboardPlanning: React.FC = () => {
     }
   }, [toast, isDemoMode]);
 
+  const handleNameChangeDraft = useCallback((updates: Partial<NameChangeCaseInput>) => {
+    setNameChangeDraft((prev) => {
+      const next = { ...prev, ...updates };
+      setNameChangePlan(buildNameChangePlan({ profile: next, documents: nameChangeDocuments, extractedFields: nameChangeExtractedFields }));
+      return next;
+    });
+  }, [nameChangeDocuments, nameChangeExtractedFields]);
+
+  const handleStructuredIntake = useCallback((key: string, value: unknown) => {
+    setNameChangeDraft((prev) => {
+      const next = {
+        ...prev,
+        structured_intake: {
+          ...prev.structured_intake,
+          [key]: value,
+        },
+      };
+      setNameChangePlan(buildNameChangePlan({ profile: next, documents: nameChangeDocuments, extractedFields: nameChangeExtractedFields }));
+      return next;
+    });
+  }, [nameChangeDocuments, nameChangeExtractedFields]);
+
+  const handleNameChangeDocuments = useCallback((nextDocuments: NameChangeDocumentInput[]) => {
+    setNameChangeDocuments(nextDocuments);
+    setNameChangePlan(buildNameChangePlan({ profile: nameChangeDraft, documents: nextDocuments, extractedFields: nameChangeExtractedFields }));
+  }, [nameChangeDraft, nameChangeExtractedFields]);
+
+  const handleNameChangeExtractedFields = useCallback((nextFields: NameChangeExtractedFieldInput[]) => {
+    setNameChangeExtractedFields(nextFields);
+    setNameChangePlan(buildNameChangePlan({ profile: nameChangeDraft, documents: nameChangeDocuments, extractedFields: nextFields }));
+  }, [nameChangeDraft, nameChangeDocuments]);
+
+  const handleSaveNameChange = useCallback(async () => {
+    if (isDemoMode) {
+      toast('Demo mode saved the planner state locally.', 'success');
+      return;
+    }
+    if (!siteId) {
+      toast('Missing site context for name change planner.', 'error');
+      return;
+    }
+
+    try {
+      setNameChangeSaving(true);
+      const result = await saveNameChangeWorkspace(siteId, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields);
+      setNameChangeDraft((prev) => ({ ...prev, workflow_status: result.caseRecord.workflow_status, latest_plan_summary: result.plan.summary as unknown as Record<string, unknown> }));
+      setNameChangePlan(result.plan);
+      toast('Name change planner saved.', 'success');
+    } catch {
+      toast('Couldn’t save the name change planner right now.', 'error');
+    } finally {
+      setNameChangeSaving(false);
+    }
+  }, [isDemoMode, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, siteId, toast]);
+
   return (
     <DashboardLayout currentPage="planning">
       <div className="max-w-5xl mx-auto space-y-6">
@@ -457,6 +587,20 @@ export const DashboardPlanning: React.FC = () => {
                 onUpdate={handleUpdateVendor}
                 onDelete={handleDeleteVendor}
                 canEdit={canEditPlanningVendors(planningRole)}
+              />
+            )}
+            {activeTab === 'nameChange' && (
+              <NameChangePlannerTab
+                draft={nameChangeDraft}
+                documents={nameChangeDocuments}
+                extractedFields={nameChangeExtractedFields}
+                plan={nameChangePlan}
+                saving={nameChangeSaving}
+                onDraftChange={handleNameChangeDraft}
+                onStructuredIntakeChange={handleStructuredIntake}
+                onDocumentsChange={handleNameChangeDocuments}
+                onExtractedFieldsChange={handleNameChangeExtractedFields}
+                onSave={handleSaveNameChange}
               />
             )}
           </>

@@ -189,4 +189,68 @@ export const demoVendors = [
   { id: 'demo-vendor-1', wedding_site_id: 'demo-site-id', vendor_type: 'Venue', name: 'Sunset Gardens Estate', contact_name: 'Maya Chen', email: 'maya@sunsetgardens.demo', phone: '(555) 210-4498', website: 'https://venue.dayof.demo', contract_total: 12000, amount_paid: 9000, balance_due: 3000, next_payment_due: '2026-05-30', notes: 'Includes ceremony chairs + basic lighting.', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   { id: 'demo-vendor-2', wedding_site_id: 'demo-site-id', vendor_type: 'Photography', name: 'Everlight Studio', contact_name: 'Renee Torres', email: 'renee@everlight.demo', phone: '(555) 018-3321', website: 'https://photo.dayof.demo', contract_total: 3900, amount_paid: 2000, balance_due: 1900, next_payment_due: '2026-06-01', notes: 'Second shooter + 4 week gallery delivery.', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
 ] as const;
+
+export const demoNameChangeCase = {
+  workflow_status: 'ready',
+  launch_state: 'california',
+  legal_basis: 'marriage',
+  current_first_name: 'Alex',
+  current_middle_name: 'Marie',
+  current_last_name: 'Rivera',
+  target_first_name: 'Alex',
+  target_middle_name: 'Marie',
+  target_last_name: 'Jordan',
+  email: 'alex@example.com',
+  phone_last4: '2481',
+  county_residence: 'San Diego',
+  marriage_state: 'California',
+  marriage_date: '2026-04-05',
+  urgency_level: 'expedited',
+  has_us_passport: true,
+  passport_needs_update: true,
+  has_real_id_license: true,
+  is_us_citizen: true,
+  employment_status: 'employed',
+  change_reasons: ['marriage'],
+  structured_intake: {
+    spouseLastName: 'Jordan',
+    travelBookedSoon: true,
+    wantsDocumentIntakeHelp: true,
+  },
+  latest_plan_summary: null,
+} as const;
+
+export const demoNameChangeDocuments = [
+  {
+    document_kind: 'marriage_certificate',
+    display_name: 'Certified marriage certificate',
+    storage_mode: 'metadata_only',
+    intake_status: 'reviewed',
+    file_name_masked: 'marriage-cert-•••.pdf',
+    issuing_authority: 'San Diego County',
+    issued_on: '2026-04-10',
+    expires_on: null,
+    extraction_confidence: 0.98,
+    extracted_snapshot: null,
+  },
+  {
+    document_kind: 'current_passport',
+    display_name: 'Current passport',
+    storage_mode: 'metadata_only',
+    intake_status: 'uploaded',
+    file_name_masked: 'passport-•••.pdf',
+    issuing_authority: 'U.S. Department of State',
+    issued_on: '2024-09-08',
+    expires_on: '2034-09-08',
+    extraction_confidence: 0.93,
+    extracted_snapshot: null,
+  },
+] as const;
+
+export const demoNameChangeExtractedFields = [
+  { field_key: 'first_name', field_label: 'Current first name', field_value_masked: 'Alex', source_type: 'manual', is_verified: true },
+  { field_key: 'last_name', field_label: 'Current last name', field_value_masked: 'Rivera', source_type: 'manual', is_verified: true },
+  { field_key: 'spouse_last_name', field_label: 'Spouse last name', field_value_masked: 'Jordan', source_type: 'manual', is_verified: true },
+  { field_key: 'county', field_label: 'County', field_value_masked: 'San Diego', source_type: 'manual', is_verified: true },
+] as const;
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus } from './rsvpStatus';

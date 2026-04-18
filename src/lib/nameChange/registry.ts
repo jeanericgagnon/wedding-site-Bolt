@@ -1,0 +1,111 @@
+import type { NameChangeFormRegistryEntry, NameChangeInstitutionEntry } from './types';
+
+export const NAME_CHANGE_ENGINE_VERSION = '2026-04-18.1';
+
+export const NAME_CHANGE_FORM_REGISTRY: NameChangeFormRegistryEntry[] = [
+  {
+    code: 'SSA-SS5',
+    title: 'Application for a Social Security Card',
+    authority: 'Social Security Administration',
+    jurisdiction: 'federal',
+    url: 'https://www.ssa.gov/forms/ss-5.pdf',
+    appliesWhen: ['marriage', 'court_order'],
+    description: 'Primary federal identity update for your Social Security record after a legal name change.',
+  },
+  {
+    code: 'CA-DMV-DL44',
+    title: 'Driver License / Identification Card Application',
+    authority: 'California DMV',
+    jurisdiction: 'state',
+    url: 'https://www.dmv.ca.gov/portal/driver-licenses-identification-cards/',
+    appliesWhen: ['california_resident', 'marriage', 'court_order'],
+    description: 'Used when updating your California driver license or state ID after the SSA record changes.',
+  },
+  {
+    code: 'DS-82',
+    title: 'U.S. Passport Renewal Application',
+    authority: 'U.S. Department of State',
+    jurisdiction: 'federal',
+    url: 'https://travel.state.gov/content/travel/en/passports/how-apply/forms.html',
+    appliesWhen: ['passport', 'marriage', 'court_order', 'citizen'],
+    description: 'Typical mail renewal path when your passport is eligible for renewal and needs the new name.',
+  },
+  {
+    code: 'DS-11',
+    title: 'Application for a U.S. Passport',
+    authority: 'U.S. Department of State',
+    jurisdiction: 'federal',
+    url: 'https://travel.state.gov/content/travel/en/passports/how-apply/forms.html',
+    appliesWhen: ['passport', 'marriage', 'court_order', 'citizen'],
+    description: 'Use when a brand-new passport application is required rather than a renewal flow.',
+  },
+  {
+    code: 'DS-5504',
+    title: 'Passport Re-Application / Data Correction',
+    authority: 'U.S. Department of State',
+    jurisdiction: 'federal',
+    url: 'https://travel.state.gov/content/travel/en/passports/how-apply/forms.html',
+    appliesWhen: ['passport', 'marriage', 'court_order', 'citizen'],
+    description: 'Used when a recent passport issuance qualifies for a low-friction name change or correction path.',
+  },
+  {
+    code: 'CA-SUPERIOR-COURT-NC',
+    title: 'California Civil Name Change Petition Packet',
+    authority: 'California Superior Court',
+    jurisdiction: 'state',
+    url: 'https://selfhelp.courts.ca.gov/name-change',
+    appliesWhen: ['court_order', 'california_resident'],
+    description: 'Court petition path when the requested name is outside a marriage-based CA shortcut.',
+  },
+];
+
+export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
+  {
+    key: 'irs-employer',
+    label: 'Employer payroll / HR',
+    category: 'employment',
+    launchPriority: 10,
+    triggers: ['employment'],
+    notes: 'Update payroll and benefits after SSA so tax reporting lines up cleanly.',
+  },
+  {
+    key: 'banks',
+    label: 'Banks and credit cards',
+    category: 'financial',
+    launchPriority: 20,
+    triggers: ['all'],
+    notes: 'Usually easiest after your main photo ID reflects the new name.',
+  },
+  {
+    key: 'insurance',
+    label: 'Health, auto, renters, and life insurance',
+    category: 'insurance',
+    launchPriority: 30,
+    triggers: ['all'],
+    notes: 'Update policyholder names so claims and cards stay consistent.',
+  },
+  {
+    key: 'voter-registration',
+    label: 'California voter registration',
+    category: 'government',
+    launchPriority: 40,
+    triggers: ['california_resident'],
+    notes: 'California can be updated after your DMV record is settled.',
+  },
+  {
+    key: 'tsa-precheck',
+    label: 'TSA PreCheck / frequent flyer profiles',
+    category: 'personal',
+    launchPriority: 50,
+    triggers: ['passport'],
+    notes: 'Do this after passport or Real ID updates so future travel bookings match.',
+  },
+  {
+    key: 'professional-licenses',
+    label: 'Professional licenses and certifications',
+    category: 'personal',
+    launchPriority: 60,
+    triggers: ['employment'],
+    notes: 'This matters for healthcare, legal, education, and other licensed work.',
+  },
+];
