@@ -16,6 +16,7 @@ import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutpu
 import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdateWithClarifying';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 import { normalizeOnboardingDraftSnapshot, type OnboardingStep } from '../lib/onboardingDraftPersistence';
+import { mergeOnboardingFollowUpAnswers } from '../lib/onboardingFollowUpMerge';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
@@ -371,49 +372,17 @@ export const Onboarding: React.FC = () => {
   };
 
   const applyFollowUpAnswers = () => {
-    const answeredEntries = Object.entries(followUpAnswers).filter(([, value]) => value.trim());
-    if (answeredEntries.length === 0) return;
+    const merged = mergeOnboardingFollowUpAnswers({
+      initialSetupAnswers,
+      initialSetupFollowUps,
+      followUpAnswers,
+      formData,
+    });
 
-    const append = (current: string, next: string) => [current, next].filter(Boolean).join(current && next ? '\n\n' : '');
-    const patches: Record<string, string> = {};
-    const nextStructuredEvents = [...(weddingProfile.event.structuredWeekendEvents || [])];
-
-    for (const [key, rawValue] of answeredEntries) {
-      const value = rawValue.trim();
-      if (key === 'guest-count') {
-        patches.guestCount = value;
-        continue;
-      }
-      if (key === 'plus-one-policy') {
-        patches.plusOnePolicy = value;
-        continue;
-      }
-      if (key === 'meeting-city' || key === 'first-detail') {
-        patches.story = append(patches.story ?? formData.story, value);
-        continue;
-      }
-      if (key === 'location-why') {
-        patches.extraGuestNotes = append((patches.extraGuestNotes ?? formData.extraGuestNotes) || '', `Why this location matters: ${value}`);
-        continue;
-      }
-      if (key.startsWith('event-location-')) {
-        const index = Number.parseInt(key.replace('event-location-', ''), 10) - 1;
-        if (nextStructuredEvents[index]) nextStructuredEvents[index] = { ...nextStructuredEvents[index], locationName: value };
-        continue;
-      }
-      patches.extraGuestNotes = append((patches.extraGuestNotes ?? formData.extraGuestNotes) || '', `${key}: ${value}`);
-    }
-
-    if (Object.keys(patches).length > 0) hydrateProfile(patches);
-    if (nextStructuredEvents.length > 0) {
-      setWeddingProfile((prev) => ({
-        ...prev,
-        event: {
-          ...prev.event,
-          structuredWeekendEvents: nextStructuredEvents,
-        },
-      }));
-    }
+    setInitialSetupAnswers(merged.initialSetupAnswers);
+    setInitialSetupFollowUps(merged.initialSetupFollowUps);
+    setWeddingProfile(merged.weddingProfile);
+    return merged;
   };
 
   const handleQuickSetup = useCallback(() => {
@@ -477,13 +446,16 @@ export const Onboarding: React.FC = () => {
     if (insertError) throw insertError;
   };
 
-  const saveWeddingProfileToExistingSite = async () => {
+  const saveWeddingProfileToExistingSite = async (
+    answersOverride: InitialSetupAnswers = initialSetupAnswers,
+    followUpsOverride = initialSetupFollowUps,
+  ) => {
     if (!user || isDemoMode) return false;
 
     const existingSite = await fetchExistingSite();
     if (!existingSite?.id) return false;
 
-    const { itinerarySeeds, rsvpEventSeeds, weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
+    const { itinerarySeeds, rsvpEventSeeds, weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(answersOverride, followUpsOverride);
     const existingWeddingData = (existingSite as { wedding_data?: Record<string, unknown> }).wedding_data || {};
     const nextWeddingData = {
       ...existingWeddingData,
@@ -511,7 +483,9 @@ export const Onboarding: React.FC = () => {
   };
 
   const createWeddingSite = async (data: Record<string, unknown>) => {
-    const { weddingProfile: profile, itinerarySeeds, rsvpEventSeeds } = buildInitialSetupDerivedOutputs(initialSetupAnswers, initialSetupFollowUps);
+    const answersOverride = (data.initialSetupAnswersOverride as InitialSetupAnswers | undefined) || initialSetupAnswers;
+    const followUpsOverride = (data.initialSetupFollowUpsOverride as typeof initialSetupFollowUps | undefined) || initialSetupFollowUps;
+    const { weddingProfile: profile, itinerarySeeds, rsvpEventSeeds } = buildInitialSetupDerivedOutputs(answersOverride, followUpsOverride);
 
     if (!user) return false;
 
@@ -623,13 +597,13 @@ export const Onboarding: React.FC = () => {
       return;
     }
 
-    applyFollowUpAnswers();
+    const merged = applyFollowUpAnswers();
 
     setLoading(true);
     try {
       const existingSite = await fetchExistingSite();
       if (existingSite?.id) {
-        const updated = await saveWeddingProfileToExistingSite();
+        const updated = await saveWeddingProfileToExistingSite(merged.initialSetupAnswers, merged.initialSetupFollowUps);
         if (updated) {
           setStep('complete');
           return;
@@ -641,6 +615,8 @@ export const Onboarding: React.FC = () => {
       const secondName = names[1] || names[0] || '';
 
       const ok = await createWeddingSite({
+        initialSetupAnswersOverride: merged.initialSetupAnswers,
+        initialSetupFollowUpsOverride: merged.initialSetupFollowUps,
         couple_name_1: firstName,
         couple_name_2: secondName,
         couple_first_name: firstName,
