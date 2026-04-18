@@ -2477,7 +2477,11 @@ Proceed with send?`)) return;
           continue;
         }
         const householdId = ids[0];
-        await supabase.from('guests').update({ household_id: householdId }).in('id', ids);
+        const { error: householdUpdateError } = await supabase
+          .from('guests')
+          .update({ household_id: householdId })
+          .in('id', ids);
+        if (householdUpdateError) throw householdUpdateError;
       }
 
       const eventInviteRows: Array<{ event_id: string; guest_id: string }> = [];
