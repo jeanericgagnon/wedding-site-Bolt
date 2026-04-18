@@ -1359,9 +1359,9 @@ export const DashboardMessages: React.FC = () => {
               {!canCompose && <p className="text-xs text-text-tertiary mb-3">Viewer mode is on, so writing and sending are turned off.</p>}
               <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
                 <fieldset disabled={!canCompose} className="space-y-6">
-                <div>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">Channel</label>
-                  <div className="inline-flex rounded-lg border border-border overflow-hidden">
+                  <div className="inline-flex rounded-lg border border-border overflow-hidden bg-white">
                     <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'email' })}>Email</button>
                     <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>SMS</button>
                   </div>
@@ -1370,7 +1370,7 @@ export const DashboardMessages: React.FC = () => {
                   )}
                 </div>
 
-                <div>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">Who should get this?</label>
                   {audienceOptions.some((a) => a.value.startsWith('event:')) && (
                     <p className="text-xs text-text-tertiary mb-1">You can also send to itinerary groups from the dropdown.</p>
@@ -1398,7 +1398,7 @@ export const DashboardMessages: React.FC = () => {
                     </p>
                   )}
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center px-2 py-1 text-xs rounded-full border border-border bg-surface-subtle text-text-secondary">
+                    <span className="inline-flex items-center px-2 py-1 text-xs rounded-full border border-border bg-white text-text-secondary">
                       Reaches {activeRecipients} guest{activeRecipients !== 1 ? 's' : ''}
                     </span>
                     {formData.channel === 'sms' && (
@@ -1439,7 +1439,7 @@ export const DashboardMessages: React.FC = () => {
                   </p>
                 </div>
 
-                <div>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">When should it send?</label>
                   <div className="flex gap-4 mb-4">
                     <button
