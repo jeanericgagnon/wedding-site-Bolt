@@ -22,7 +22,6 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
-import { ActionsMenu } from '../../components/ui/ActionsMenu';
 import {
   ItineraryEvent, SeatingEvent, SeatingTable, SeatingAssignment, EligibleGuest,
   EventCounters, getWeddingSiteId, loadItineraryEvents, getOrCreateSeatingEvent,
@@ -638,24 +637,6 @@ export const DashboardSeating: React.FC = () => {
     : [];
   const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
-  const [seatingActionsOpen, setSeatingActionsOpen] = useState(false);
-  const seatingActionsRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const onPointerDown = (event: MouseEvent) => {
-      if (!seatingActionsOpen) return;
-      if (!seatingActionsRef.current?.contains(event.target as Node)) setSeatingActionsOpen(false);
-    };
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSeatingActionsOpen(false);
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onEscape);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onEscape);
-    };
-  }, [seatingActionsOpen]);
   const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
 
@@ -1546,30 +1527,44 @@ export const DashboardSeating: React.FC = () => {
           </div>
         </details>
 
-        <div className="flex flex-wrap gap-2 items-center p-2 rounded-xl border border-border-subtle bg-surface-subtle/40">
-          <Button size="sm" onClick={() => setAddingTable(true)}>
-            <Plus className="w-4 h-4 mr-1" /> Add Table
-          </Button>
-          <ActionsMenu
-            open={seatingActionsOpen}
-            onToggle={() => setSeatingActionsOpen((v) => !v)}
-            align="right"
-            menuRef={seatingActionsRef}
-          >
-            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setShowAutoTablesModal(true); setSeatingActionsOpen(false); }}>
-              <Wand2 className="w-4 h-4 mr-1" /> Auto-Create Tables
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Table actions</p>
+              <p className="mt-1 text-sm text-text-secondary">Create tables fast, auto-seat where it helps, or reset the room when plans changed.</p>
+            </div>
+            <Button size="sm" onClick={() => setAddingTable(true)}>
+              <Plus className="w-4 h-4 mr-1" /> Add Table
             </Button>
-            {tables.length > 0 && unassignedGuests.length > 0 && (
-              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoSeat(); setSeatingActionsOpen(false); }}>
-                <Wand2 className="w-4 h-4 mr-1" /> Auto-Seat Guests
-              </Button>
-            )}
-            {assignments.length > 0 && (
-              <Button variant="ghost" size="sm" className="w-full justify-start text-error hover:text-error hover:bg-error/5" onClick={() => { setShowResetConfirm(true); setSeatingActionsOpen(false); }}>
-                <RotateCcw className="w-4 h-4 mr-1" /> Reset All
-              </Button>
-            )}
-          </ActionsMenu>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => setShowAutoTablesModal(true)}
+              className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/30 hover:bg-primary-light/10"
+            >
+              <p className="text-sm font-semibold text-text-primary">Auto-create tables</p>
+              <p className="mt-1 text-xs leading-5 text-text-secondary">Build enough tables for the current attending count.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => { void handleAutoSeat(); }}
+              disabled={tables.length === 0 || unassignedGuests.length === 0}
+              className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/30 hover:bg-primary-light/10 disabled:opacity-50"
+            >
+              <p className="text-sm font-semibold text-text-primary">Auto-seat guests</p>
+              <p className="mt-1 text-xs leading-5 text-text-secondary">Fill open seats for the {unassignedGuests.length} guests still waiting.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowResetConfirm(true)}
+              disabled={assignments.length === 0}
+              className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-error/30 hover:bg-error/5 disabled:opacity-50"
+            >
+              <p className="text-sm font-semibold text-text-primary">Reset seating</p>
+              <p className="mt-1 text-xs leading-5 text-text-secondary">Clear every seat assignment for this event and start fresh.</p>
+            </button>
+          </div>
         </div>
 
         {checkInMode && (
@@ -1711,10 +1706,17 @@ export const DashboardSeating: React.FC = () => {
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="flex flex-col lg:flex-row gap-5">
               <div className="lg:w-64 xl:w-72 flex-shrink-0">
-                <div className="sticky top-24 p-3 rounded-xl border border-border-subtle bg-surface-subtle/40">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-sm font-semibold text-text-primary">Unassigned</h2>
+                <div className="sticky top-24 p-3 rounded-xl border border-border-subtle bg-surface-subtle/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-semibold text-text-primary">Unassigned</h2>
+                      <p className="text-xs text-text-tertiary mt-0.5">Drag guests into seats or use auto-seat to place them faster.</p>
+                    </div>
                     <span className="text-xs text-text-tertiary">{unassignedGuests.length} guests</span>
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-white px-3 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary">Open work</p>
+                    <p className="mt-1 text-sm font-medium text-text-primary">{unassignedGuests.length} guest{unassignedGuests.length !== 1 ? 's' : ''} still need seats</p>
                   </div>
                   <UnassignedPool guests={unassignedGuests} />
                 </div>
