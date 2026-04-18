@@ -188,6 +188,15 @@ export interface NameChangePlan {
   steps: NameChangePlanStep[];
 }
 
+export interface NameChangeReminderSuggestion {
+  id: string;
+  label: string;
+  suggestedOffsetDays: number;
+  reason: string;
+  dependsOnStepId: string;
+  urgency: 'high' | 'medium' | 'low';
+}
+
 export interface NameChangeFormRegistryEntry {
   code: string;
   title: string;
