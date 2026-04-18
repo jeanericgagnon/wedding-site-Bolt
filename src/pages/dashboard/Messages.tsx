@@ -473,6 +473,7 @@ export const DashboardMessages: React.FC = () => {
   const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
+  const [historySearch, setHistorySearch] = useState('');
 
   const [formData, setFormData] = useState({
     subject: '',
@@ -1097,12 +1098,15 @@ export const DashboardMessages: React.FC = () => {
   const filteredHistory = useMemo(() => messages.filter((m) => {
     if (historyStatusFilter !== 'all' && m.status !== historyStatusFilter) return false;
     if (historyChannelFilter !== 'all' && m.channel !== historyChannelFilter) return false;
-    if (historyAudienceFilter !== 'all') {
-      const aud = m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all';
-      if (aud !== historyAudienceFilter) return false;
+    const aud = m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all';
+    if (historyAudienceFilter !== 'all' && aud !== historyAudienceFilter) return false;
+    const query = historySearch.trim().toLowerCase();
+    if (query) {
+      const haystack = [m.subject, m.body, aud, m.channel, m.status].filter(Boolean).join(' ').toLowerCase();
+      if (!haystack.includes(query)) return false;
     }
     return true;
-  }), [messages, historyStatusFilter, historyChannelFilter, historyAudienceFilter]);
+  }), [messages, historyStatusFilter, historyChannelFilter, historyAudienceFilter, historySearch]);
 
   const audienceBreakdown = useMemo(() => {
     const map = new Map<string, number>();
@@ -1764,6 +1768,12 @@ export const DashboardMessages: React.FC = () => {
               <p className="text-xs text-text-tertiary mt-1">Filter by status, channel, or group to quickly find what you need.</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <Input
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="Search messages"
+                className="w-[180px]"
+              />
               <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value as typeof historyStatusFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
                 <option value="all">All status</option>
                 <option value="sent">Sent</option>
@@ -1792,7 +1802,7 @@ export const DashboardMessages: React.FC = () => {
             <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); setHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">

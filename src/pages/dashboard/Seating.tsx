@@ -110,16 +110,33 @@ function DraggableGuestChip({ guest, isInvalid, onRemove }: {
 
 function UnassignedPool({ guests }: { guests: EligibleGuest[] }) {
   const { isOver, setNodeRef } = useDroppable({ id: UNASSIGNED_DROPPABLE });
+  const [query, setQuery] = useState('');
+  const filteredGuests = guests.filter((guest) => guest.full_name.toLowerCase().includes(query.trim().toLowerCase()));
+
   return (
     <div
       ref={setNodeRef}
       className={`min-h-[120px] p-3 rounded-xl border-2 border-dashed transition-colors ${isOver ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
     >
+      {guests.length > 0 && (
+        <div className="mb-3 space-y-2">
+          <Input
+            value={query}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+            placeholder="Search unassigned guests"
+          />
+          <p className="text-[11px] text-text-tertiary">
+            {filteredGuests.length === guests.length ? `${guests.length} guest${guests.length !== 1 ? 's' : ''} ready to seat` : `${filteredGuests.length} of ${guests.length} guests shown`}
+          </p>
+        </div>
+      )}
       {guests.length === 0 ? (
         <p className="text-xs text-text-tertiary text-center py-4">All attending guests are seated</p>
+      ) : filteredGuests.length === 0 ? (
+        <p className="text-xs text-text-tertiary text-center py-4">No unassigned guests match that search.</p>
       ) : (
         <div className="flex flex-wrap gap-1.5">
-          {guests.map(g => (
+          {filteredGuests.map(g => (
             <DraggableGuestChip key={g.id} guest={g} />
           ))}
         </div>
