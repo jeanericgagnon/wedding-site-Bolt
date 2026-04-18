@@ -585,12 +585,19 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('wedding_sites')
       .select('id, couple_first_name, couple_second_name, couple_email, sms_credits_balance')
       .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
       .maybeSingle();
+    if (error) {
+      toast('Couldn’t load your messaging workspace right now. Please try again.', 'error');
+      setWeddingSite(null);
+      setLoading(false);
+      return;
+    }
     if (data) setWeddingSite(data);
+    else setWeddingSite(null);
   }, [user, isDemoMode]);
 
   const fetchMessages = useCallback(async () => {
@@ -629,10 +636,15 @@ export const DashboardMessages: React.FC = () => {
       })));
       return;
     }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('guests')
       .select('id, email, phone, rsvp_status, first_name, last_name, name')
       .eq('wedding_site_id', weddingSite.id);
+    if (error) {
+      toast('Couldn’t load guest recipients right now. Please try again.', 'error');
+      setGuests([]);
+      return;
+    }
     setGuests(data || []);
   }, [weddingSite, isDemoMode]);
 
