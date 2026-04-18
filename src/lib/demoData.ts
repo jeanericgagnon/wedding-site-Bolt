@@ -40,7 +40,7 @@ const makeDemoGuest = (idx: number, status: 'confirmed' | 'declined' | 'pending'
     household_id: `demo-household-${householdIndex}`,
     relationship_to_couple: idx % 3 === 0 ? 'Family' : idx % 3 === 1 ? 'Friends' : 'Coworkers',
     rsvp_status: status,
-    meal_preference: status === 'confirmed' ? ['Beef', 'Chicken', 'Fish', 'Vegetarian'][idx % 4] : null,
+    meal_preference: isAttendingRsvpStatus(status) ? ['Beef', 'Chicken', 'Fish', 'Vegetarian'][idx % 4] : null,
     invite_token: `token-${status[0]}-${idx + 1}`,
     invited_to_ceremony: true,
     invited_to_reception: true,
@@ -105,7 +105,7 @@ export const demoRSVPs: Array<{
   notes: string | null;
 }> = [
   ...demoGuests
-    .filter((g) => g.rsvp_status === 'confirmed')
+    .filter((g) => isAttendingRsvpStatus(g.rsvp_status))
     .map((g) => ({
       id: `rsvp-${g.id}`,
       guest_id: g.id,
@@ -115,7 +115,7 @@ export const demoRSVPs: Array<{
       notes: null,
     })),
   ...demoGuests
-    .filter((g) => g.rsvp_status === 'declined')
+    .filter((g) => isDeclinedRsvpStatus(g.rsvp_status))
     .map((g) => ({
       id: `rsvp-${g.id}`,
       guest_id: g.id,
@@ -189,3 +189,4 @@ export const demoVendors = [
   { id: 'demo-vendor-1', wedding_site_id: 'demo-site-id', vendor_type: 'Venue', name: 'Sunset Gardens Estate', contact_name: 'Maya Chen', email: 'maya@sunsetgardens.demo', phone: '(555) 210-4498', website: 'https://venue.dayof.demo', contract_total: 12000, amount_paid: 9000, balance_due: 3000, next_payment_due: '2026-05-30', notes: 'Includes ceremony chairs + basic lighting.', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   { id: 'demo-vendor-2', wedding_site_id: 'demo-site-id', vendor_type: 'Photography', name: 'Everlight Studio', contact_name: 'Renee Torres', email: 'renee@everlight.demo', phone: '(555) 018-3321', website: 'https://photo.dayof.demo', contract_total: 3900, amount_paid: 2000, balance_due: 1900, next_payment_due: '2026-06-01', notes: 'Second shooter + 4 week gallery delivery.', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
 ] as const;
+import { isAttendingRsvpStatus, isDeclinedRsvpStatus } from './rsvpStatus';

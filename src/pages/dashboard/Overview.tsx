@@ -1093,10 +1093,10 @@ export const DashboardOverview: React.FC = () => {
                     <div className="space-y-4">
                       {stats.recentRsvps.map((rsvp) => (
                         <div key={rsvp.id} className="flex gap-4">
-                          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${rsvp.status === 'confirmed' ? 'bg-success' : 'bg-error'}`} />
+                          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${isAttendingRsvpStatus(rsvp.status) ? 'bg-success' : 'bg-error'}`} />
                           <div className="flex-1">
                             <p className="text-sm text-text-primary font-medium">{rsvp.guestName}</p>
-                            <p className="text-xs text-text-secondary">{rsvp.status === 'confirmed' ? 'Confirmed attendance' : 'Declined'}</p>
+                            <p className="text-xs text-text-secondary">{isAttendingRsvpStatus(rsvp.status) ? 'Confirmed attendance' : 'Declined'}</p>
                             <p className="text-xs text-text-tertiary mt-1">{formatRelativeTime(rsvp.receivedAt)}</p>
                           </div>
                         </div>
