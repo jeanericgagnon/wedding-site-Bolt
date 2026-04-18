@@ -1080,6 +1080,8 @@ export const DashboardMessages: React.FC = () => {
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => g.email).length;
   const recipientsWithPhone = getRecipients(formData.audience).filter(g => g.phone).length;
   const activeRecipients = formData.channel === 'sms' ? recipientsWithPhone : recipientsWithEmail;
+  const previewRecipients = getRecipients(formData.audience).filter((guest) => formData.channel === 'sms' ? !!guest.phone : !!guest.email);
+  const unreachableRecipients = (selectedAudience?.count ?? 0) - activeRecipients;
   const smsCredits = weddingSite?.sms_credits_balance ?? 0;
   const smsCreditsNeeded = recipientsWithPhone;
   const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
@@ -1411,6 +1413,9 @@ export const DashboardMessages: React.FC = () => {
                     <span className="inline-flex items-center px-2 py-1 text-xs rounded-full border border-border bg-white text-text-secondary">
                       Reaches {activeRecipients} guest{activeRecipients !== 1 ? 's' : ''}
                     </span>
+                    <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full border ${unreachableRecipients > 0 ? 'border-warning/30 bg-warning-light text-warning' : 'border-success/30 bg-success-light text-success'}`}>
+                      {unreachableRecipients > 0 ? `${unreachableRecipients} missing ${formData.channel === 'sms' ? 'phone numbers' : 'email addresses'}` : `Everyone in this group is reachable by ${formData.channel === 'sms' ? 'text' : 'email'}`}
+                    </span>
                     {formData.channel === 'sms' && (
                       <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full border ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
                         {smsCreditsSufficient ? 'Enough credits' : `Need ${smsCreditsNeeded - smsCredits} more credits`}
@@ -1539,14 +1544,14 @@ export const DashboardMessages: React.FC = () => {
                   </button>
                   {showRecipientPreview && (
                     <div className="border-t border-border max-h-48 overflow-y-auto">
-                      {getRecipients(formData.audience).filter(g => g.email).length === 0 ? (
-                        <div className="p-4 text-sm text-text-secondary text-center">No guests in this group have email addresses yet.</div>
+                      {previewRecipients.length === 0 ? (
+                        <div className="p-4 text-sm text-text-secondary text-center">No guests in this group have {formData.channel === 'sms' ? 'phone numbers' : 'email addresses'} yet.</div>
                       ) : (
                         <ul className="divide-y divide-border">
-                          {getRecipients(formData.audience).filter(g => g.email).map(g => (
+                          {previewRecipients.map(g => (
                             <li key={g.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
                               <span className="text-text-primary font-medium">{g.first_name ?? ''} {g.last_name ?? ''}</span>
-                              <span className="text-text-tertiary text-xs">{g.email}</span>
+                              <span className="text-text-tertiary text-xs">{formData.channel === 'sms' ? g.phone : g.email}</span>
                             </li>
                           ))}
                         </ul>

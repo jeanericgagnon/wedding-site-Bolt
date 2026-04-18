@@ -644,6 +644,7 @@ export const DashboardSeating: React.FC = () => {
   const [invalidCount, setInvalidCount] = useState(0);
   const [checkInMode, setCheckInMode] = useState(false);
   const [checkInQuery, setCheckInQuery] = useState('');
+  const [checkInFilter, setCheckInFilter] = useState<'all' | 'not_arrived' | 'arrived' | 'seated' | 'unseated'>('not_arrived');
   const [layoutMode, setLayoutMode] = useState<'visual' | 'list'>('visual');
   const [movingTableId, setMovingTableId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
@@ -871,7 +872,7 @@ export const DashboardSeating: React.FC = () => {
     if (!assignment) return;
     try {
       if (!isDemoMode && seatingEvent) {
-        await unassignGuest(assignment.guest_id, seatingEvent.id);
+        await unassignGuest(seatingEvent.id, assignment.guest_id);
       }
       setAssignments((prev) => prev.filter((item) => item.id !== assignment.id));
       setSeatPicker(null);
@@ -1265,6 +1266,67 @@ export const DashboardSeating: React.FC = () => {
     }
   }
 
+  async function handleBulkCheckIn(guestIds: string[], checkedIn: boolean) {
+    if (!seatingEvent || guestIds.length === 0) return;
+    try {
+      if (isDemoMode) {
+        const stamp = checkedIn ? new Date().toISOString() : null;
+        const guestIdSet = new Set(guestIds);
+        setAssignments(prev => prev.map((assignment) => (
+          guestIdSet.has(assignment.guest_id)
+            ? { ...assignment, checked_in_at: stamp }
+            : assignment
+        )));
+      } else {
+        await Promise.all(guestIds.map((guestId) => setGuestCheckedIn(seatingEvent.id, guestId, checkedIn)));
+        await loadSeatingData();
+      }
+      toast(
+        checkedIn
+          ? `Marked ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''} arrived`
+          : `Cleared arrival for ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''}`,
+        'success',
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.toLowerCase() : '';
+      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
+      if (!isDemoMode && authish) {
+        try {
+          await supabase.auth.refreshSession();
+          await Promise.all(guestIds.map((guestId) => setGuestCheckedIn(seatingEvent.id, guestId, checkedIn)));
+          await loadSeatingData();
+          toast(
+            checkedIn
+              ? `Marked ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''} arrived`
+              : `Cleared arrival for ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''}`,
+            'success',
+          );
+          return;
+        } catch {
+          // fall through
+        }
+      }
+      toast('Couldn’t update those arrivals right now. Please try again.', 'error');
+    }
+  }
+
+  function matchesCheckInFilter(guest: EligibleGuest, arrivedIds: Set<string>, assignedIds: Set<string>) {
+    const hasArrived = arrivedIds.has(guest.id);
+    const isAssigned = assignedIds.has(guest.id);
+    switch (checkInFilter) {
+      case 'arrived':
+        return hasArrived;
+      case 'not_arrived':
+        return !hasArrived;
+      case 'seated':
+        return isAssigned;
+      case 'unseated':
+        return !isAssigned;
+      default:
+        return true;
+    }
+  }
+
   function handleCanvasWheelZoom(e: React.WheelEvent<HTMLDivElement>) {
     // Trackpad pinch on desktop browsers commonly reports wheel + ctrlKey
     if (layoutMode !== 'visual') return;
@@ -1390,11 +1452,13 @@ export const DashboardSeating: React.FC = () => {
 
   const selectedItineraryEvent = itineraryEvents.find(e => e.id === selectedEventId);
   const arrivedGuestIds = new Set(assignments.filter(a => !!a.checked_in_at).map(a => a.guest_id));
+  const assignedGuestIdSet = new Set(assignments.map(a => a.guest_id));
   const arrivedCount = allGuests.filter(g => g.is_attending && arrivedGuestIds.has(g.id)).length;
   const checkInCandidates = allGuests
     .filter(g => g.is_attending)
+    .filter(g => matchesCheckInFilter(g, arrivedGuestIds, assignedGuestIdSet))
     .filter(g => g.full_name.toLowerCase().includes(checkInQuery.toLowerCase().trim()))
-    .slice(0, 8);
+    .slice(0, 12);
 
   const mealHeadcountByTable = tables
     .map((table) => {
@@ -1620,21 +1684,54 @@ export const DashboardSeating: React.FC = () => {
                 placeholder="Search attendee for quick check-in"
                 className="flex-1 min-w-[220px] px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
+              <select
+                value={checkInFilter}
+                onChange={(e) => setCheckInFilter(e.target.value as typeof checkInFilter)}
+                className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="not_arrived">Not arrived</option>
+                <option value="arrived">Arrived</option>
+                <option value="seated">Seated only</option>
+                <option value="unseated">Unseated only</option>
+                <option value="all">All attendees</option>
+              </select>
               <span className="text-xs text-text-tertiary">Live check-in updates</span>
             </div>
-            {checkInQuery.trim().length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-xs text-text-tertiary">
+              <span>{checkInCandidates.length} match{checkInCandidates.length !== 1 ? 'es' : ''} shown</span>
+              {checkInCandidates.some((guest) => !arrivedGuestIds.has(guest.id)) && (
+                <button
+                  type="button"
+                  onClick={() => void handleBulkCheckIn(checkInCandidates.filter((guest) => !arrivedGuestIds.has(guest.id)).map((guest) => guest.id), true)}
+                  className="rounded-full border border-success/30 bg-success/10 px-3 py-1 text-success hover:bg-success/15"
+                >
+                  Mark visible arrived
+                </button>
+              )}
+              {checkInCandidates.some((guest) => arrivedGuestIds.has(guest.id)) && (
+                <button
+                  type="button"
+                  onClick={() => void handleBulkCheckIn(checkInCandidates.filter((guest) => arrivedGuestIds.has(guest.id)).map((guest) => guest.id), false)}
+                  className="rounded-full border border-border-subtle bg-white px-3 py-1 text-text-secondary hover:border-primary/30 hover:text-primary"
+                >
+                  Clear visible arrivals
+                </button>
+              )}
+            </div>
+            {(checkInQuery.trim().length > 0 || checkInFilter !== 'not_arrived') && (
               <div className="flex flex-wrap gap-2">
                 {checkInCandidates.length === 0 ? (
                   <p className="text-xs text-text-tertiary">No attendees match that search.</p>
                 ) : checkInCandidates.map((guest) => {
                   const checked = arrivedGuestIds.has(guest.id);
+                  const isAssigned = assignedGuestIdSet.has(guest.id);
                   return (
                     <button
                       key={guest.id}
                       onClick={() => handleToggleCheckIn(guest.id, !checked)}
                       className={`px-2.5 py-1.5 rounded-lg border text-xs transition-colors ${checked ? 'bg-success/10 border-success/40 text-success' : 'bg-surface border-border-subtle text-text-secondary hover:border-success/40 hover:text-success'}`}
                     >
-                      {guest.full_name} {checked ? '• Arrived' : '• Mark arrived'}
+                      {guest.full_name} {isAssigned ? '• Seated' : '• Unseated'} {checked ? '• Arrived' : '• Mark arrived'}
                     </button>
                   );
                 })}
