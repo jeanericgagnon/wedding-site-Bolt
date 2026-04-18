@@ -2201,7 +2201,7 @@ Proceed with send?`)) return;
         group_name: householdNameRaw || null,
         plus_one_allowed: plusOneAllowed,
         rsvp_status: normalizedStatus,
-        rsvp_received_at: normalizedStatus !== 'pending'
+        rsvp_received_at: hasRespondedRsvpStatus(normalizedStatus)
           ? (parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : new Date().toISOString())
           : null,
         invite_token: inviteTokenRaw || null,
@@ -2478,8 +2478,8 @@ Proceed with send?`)) return;
         eventIds.forEach((eventId) => eventInviteRows.push({ event_id: eventId, guest_id: guestId }));
 
         const status = String(row.rsvp_status || 'pending').toLowerCase();
-        const attending = status === 'confirmed' || status === 'attending' || status === 'accepted';
-        const declined = status === 'declined' || status === 'no';
+        const attending = isAttendingRsvpStatus(status);
+        const declined = isDeclinedRsvpStatus(status) || status === 'no';
         if (attending || declined) {
           rsvpRows.push({
             guest_id: guestId,
