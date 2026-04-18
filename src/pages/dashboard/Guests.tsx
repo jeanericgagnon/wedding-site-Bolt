@@ -1002,6 +1002,21 @@ export const DashboardGuests: React.FC = () => {
 
       if (error) throw error;
 
+      const { data: existingInvitationRows, error: existingInvitesError } = await supabase
+        .from('event_invitations')
+        .select('id')
+        .eq('guest_id', editingGuest.id);
+      if (existingInvitesError) throw existingInvitesError;
+
+      const existingInvitationIds = (existingInvitationRows ?? []).map((row) => row.id as string);
+      if (existingInvitationIds.length > 0) {
+        const { error: clearEventRsvpsError } = await supabase
+          .from('event_rsvps')
+          .delete()
+          .in('event_invitation_id', existingInvitationIds);
+        if (clearEventRsvpsError) throw clearEventRsvpsError;
+      }
+
       const { error: clearInvitesError } = await supabase
         .from('event_invitations')
         .delete()
@@ -2034,10 +2049,10 @@ Proceed with send?`)) return;
 
         const invitationIds = (invitationRows ?? []).map((row) => row.id as string);
 
-        await supabase.from('event_invitations').delete().in('guest_id', guestIds);
         if (invitationIds.length > 0) {
           await supabase.from('event_rsvps').delete().in('event_invitation_id', invitationIds);
         }
+        await supabase.from('event_invitations').delete().in('guest_id', guestIds);
         await supabase.from('rsvps').delete().in('guest_id', guestIds);
       }
 
