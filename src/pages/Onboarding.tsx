@@ -15,8 +15,8 @@ import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
 import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdateWithClarifying';
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
+import { normalizeOnboardingDraftSnapshot, type OnboardingStep } from '../lib/onboardingDraftPersistence';
 
-type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
@@ -206,28 +206,13 @@ export const Onboarding: React.FC = () => {
     }
 
     try {
-      const parsed = JSON.parse(saved) as { step?: OnboardingStep; conversationIndex?: number; formData?: typeof formData; weddingProfile?: typeof weddingProfile };
-      if (parsed.weddingProfile && isWeddingProfile(parsed.weddingProfile)) {
-        setWeddingProfile(parsed.weddingProfile);
-      } else if (parsed.formData) {
-        const nextAnswers = {
-          ...createEmptyInitialSetupAnswers(),
-          names: parsed.formData.partnerNames || '',
-          whenWhere: parsed.formData.weddingDate && parsed.formData.venueLocation ? `${parsed.formData.weddingDate} — ${parsed.formData.venueLocation}` : parsed.formData.venueLocation || '',
-          venueNameOrTbd: parsed.formData.venueName || '',
-          style: parsed.formData.theme || '',
-          weekendEventsRaw: parsed.formData.weekendEvents || '',
-          ceremonyArrivalTime: parsed.formData.ceremonyTime || '',
-          guestCountBand: (parsed.formData.guestCount || '') as InitialSetupAnswers['guestCountBand'],
-          plusOnePolicy: (parsed.formData.plusOnePolicy || '') as InitialSetupAnswers['plusOnePolicy'],
-          childrenAllowed: (parsed.formData.childrenAllowed || '') as InitialSetupAnswers['childrenAllowed'],
-          rsvpDeadline: parsed.formData.rsvpDeadline || '',
-          mealChoice: (parsed.formData.mealChoice || '') as InitialSetupAnswers['mealChoice'],
-          optionalStory: parsed.formData.story || '',
-        };
-        setInitialSetupAnswers(nextAnswers);
-        setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(nextAnswers));
-      }
+      const parsed = normalizeOnboardingDraftSnapshot(JSON.parse(saved));
+      const hydratedAnswers = parsed.initialSetupAnswers;
+      setInitialSetupAnswers(hydratedAnswers);
+      setInitialSetupFollowUps(parsed.initialSetupFollowUps);
+      setFollowUpAnswers(parsed.followUpAnswers);
+      setShowFollowUpReview(parsed.showFollowUpReview);
+      setWeddingProfile(isWeddingProfile(parsed.weddingProfile) ? parsed.weddingProfile : applyInitialSetupAnswersToWeddingProfile(hydratedAnswers));
       const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
       const resumeIndexValue = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_KEY);
       if (forceShowChooser) {
@@ -250,7 +235,7 @@ export const Onboarding: React.FC = () => {
         window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
       } else if (typeof parsed.conversationIndex === 'number') {
         setConversationIndex(parsed.conversationIndex);
-        setStep(getStepForIndex(parsed.conversationIndex));
+        setStep(parsed.showFollowUpReview ? 'quick-3' : getStepForIndex(parsed.conversationIndex));
       } else if (parsed.step && parsed.step !== 'complete') {
         setStep(parsed.step);
       }
@@ -277,9 +262,13 @@ export const Onboarding: React.FC = () => {
         step,
         conversationIndex,
         weddingProfile,
+        initialSetupAnswers,
+        initialSetupFollowUps,
+        followUpAnswers,
+        showFollowUpReview,
       })
     );
-  }, [conversationIndex, hasHydratedDraft, isDemoMode, step, weddingProfile]);
+  }, [conversationIndex, followUpAnswers, hasHydratedDraft, initialSetupAnswers, initialSetupFollowUps, isDemoMode, showFollowUpReview, step, weddingProfile]);
 
   const clearSavedOnboardingDraft = () => {
     if (typeof window === 'undefined') return;
