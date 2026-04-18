@@ -1897,10 +1897,10 @@ export const DashboardMessages: React.FC = () => {
               </div>
               <div className="space-y-2">
                 {retryCandidates.map((m) => (
-                  <div key={m.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/35 px-2.5 py-2 bg-surface-subtle/40">
+                  <div key={m.id} className="flex items-center justify-between gap-2 rounded-xl border border-warning/20 px-3 py-3 bg-white">
                     <div className="min-w-0">
-                      <p className="text-sm text-text-primary truncate">{m.subject}</p>
-                      <p className="text-[11px] text-text-tertiary">{m.status} · {m.channel}</p>
+                      <p className="text-sm font-medium text-text-primary truncate">{m.subject}</p>
+                      <p className="text-[11px] text-text-tertiary">{m.status} · {m.channel} · {getRecipientCount(m)} recipients</p>
                     </div>
                     <button
                       onClick={() => void handleRetry(m)}
