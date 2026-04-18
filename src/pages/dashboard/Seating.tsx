@@ -1185,9 +1185,33 @@ export const DashboardSeating: React.FC = () => {
     try {
       const newAssignments = isDemoMode
         ? (() => {
-            const attendees = allGuests.filter(g => g.is_attending);
-            const occupancy = new Map<string, number>(tables.map(t => [t.id, 0]));
+            const existingAssignments = assignments;
+            const assignedGuestIds = new Set(existingAssignments.map((assignment) => assignment.guest_id));
+            const attendees = allGuests.filter(g => g.is_attending && !assignedGuestIds.has(g.id));
+            const occupancy = new Map<string, number>(tables.map(t => [t.id, existingAssignments.filter((assignment) => assignment.table_id === t.id).length]));
+            const seatUsage = new Map<string, Set<number>>(
+              tables.map((table) => [
+                table.id,
+                new Set(
+                  existingAssignments
+                    .filter((assignment) => assignment.table_id === table.id)
+                    .map((assignment) => assignment.seat_index)
+                    .filter((seat): seat is number => typeof seat === 'number' && seat > 0),
+                ),
+              ]),
+            );
             const generated: SeatingAssignment[] = [];
+            const nextSeat = (tableId: string, capacity: number) => {
+              const usedSeats = seatUsage.get(tableId) ?? new Set<number>();
+              for (let i = 1; i <= capacity; i++) {
+                if (!usedSeats.has(i)) {
+                  usedSeats.add(i);
+                  seatUsage.set(tableId, usedSeats);
+                  return i;
+                }
+              }
+              return null;
+            };
             for (const guest of attendees) {
               const table = tables.find(t => (occupancy.get(t.id) ?? 0) < t.capacity);
               if (!table) break;
@@ -1197,7 +1221,7 @@ export const DashboardSeating: React.FC = () => {
                 seating_event_id: seatingEvent.id,
                 table_id: table.id,
                 guest_id: guest.id,
-                seat_index: null,
+                seat_index: nextSeat(table.id, table.capacity),
                 is_valid: true,
               });
             }
@@ -1209,7 +1233,11 @@ export const DashboardSeating: React.FC = () => {
         newAssignments.forEach(a => existingMap.set(a.guest_id, a));
         return Array.from(existingMap.values());
       });
-      toast(`Seated ${newAssignments.length} guests`, 'success');
+      if (newAssignments.length === 0) {
+        toast('No unassigned attending guests were available to auto-seat.', 'info');
+      } else {
+        toast(`Seated ${newAssignments.length} guest${newAssignments.length !== 1 ? 's' : ''}`, 'success');
+      }
     } catch {
       toast('Couldn’t auto-seat guests right now. Please try again.', 'error');
     } finally {

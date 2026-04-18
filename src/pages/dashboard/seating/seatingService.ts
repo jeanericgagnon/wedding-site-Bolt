@@ -331,9 +331,14 @@ export async function autoSeatGuests(
   guests: EligibleGuest[]
 ): Promise<SeatingAssignment[]> {
   const eligibleGuests = guests.filter(g => g.is_attending);
+  const existingAssignments = await loadAssignments(seatingEventId);
+  const assignedGuestIds = new Set(existingAssignments.map((assignment) => assignment.guest_id));
+  const eligibleUnassignedGuests = eligibleGuests.filter((guest) => !assignedGuestIds.has(guest.id));
+
+  if (eligibleUnassignedGuests.length === 0) return [];
 
   const grouped = new Map<string, EligibleGuest[]>();
-  eligibleGuests.forEach(g => {
+  eligibleUnassignedGuests.forEach(g => {
     const key = g.household_id ?? g.group_name ?? g.id;
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key)!.push(g);
@@ -341,8 +346,31 @@ export async function autoSeatGuests(
 
   const groups = Array.from(grouped.values()).sort((a, b) => b.length - a.length);
 
-  const tableFill = new Map<string, number>(tables.map(t => [t.id, 0]));
-  const assignments: Array<{ seating_event_id: string; table_id: string; guest_id: string }> = [];
+  const tableFill = new Map<string, number>(tables.map(t => [t.id, existingAssignments.filter((assignment) => assignment.table_id === t.id).length]));
+  const seatUsage = new Map<string, Set<number>>(
+    tables.map((table) => [
+      table.id,
+      new Set(
+        existingAssignments
+          .filter((assignment) => assignment.table_id === table.id)
+          .map((assignment) => assignment.seat_index)
+          .filter((seat): seat is number => typeof seat === 'number' && seat > 0),
+      ),
+    ]),
+  );
+  const assignments: Array<{ seating_event_id: string; table_id: string; guest_id: string; seat_index: number | null }> = [];
+
+  function nextOpenSeat(tableId: string, capacity: number): number | null {
+    const usedSeats = seatUsage.get(tableId) ?? new Set<number>();
+    for (let i = 1; i <= capacity; i++) {
+      if (!usedSeats.has(i)) {
+        usedSeats.add(i);
+        seatUsage.set(tableId, usedSeats);
+        return i;
+      }
+    }
+    return null;
+  }
 
   for (const group of groups) {
     let bestTable: SeatingTable | null = null;
@@ -361,13 +389,23 @@ export async function autoSeatGuests(
       for (const member of group) {
         const t = tables.find(t => (tableFill.get(t.id) ?? 0) < t.capacity);
         if (t) {
-          assignments.push({ seating_event_id: seatingEventId, table_id: t.id, guest_id: member.id });
+          assignments.push({
+            seating_event_id: seatingEventId,
+            table_id: t.id,
+            guest_id: member.id,
+            seat_index: nextOpenSeat(t.id, t.capacity),
+          });
           tableFill.set(t.id, (tableFill.get(t.id) ?? 0) + 1);
         }
       }
     } else {
       for (const member of group) {
-        assignments.push({ seating_event_id: seatingEventId, table_id: bestTable.id, guest_id: member.id });
+        assignments.push({
+          seating_event_id: seatingEventId,
+          table_id: bestTable.id,
+          guest_id: member.id,
+          seat_index: nextOpenSeat(bestTable.id, bestTable.capacity),
+        });
         tableFill.set(bestTable.id, (tableFill.get(bestTable.id) ?? 0) + 1);
       }
     }

@@ -284,9 +284,10 @@ interface MessageDetailModalProps {
   deliveries: DeliveryRow[];
   onClose: () => void;
   onRetry: (message: Message) => Promise<void>;
+  onLoadIntoComposer: (message: Message, mode: 'edit' | 'duplicate') => void;
 }
 
-const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, onClose, onRetry }) => {
+const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, onClose, onRetry, onLoadIntoComposer }) => {
   const [retrying, setRetrying] = React.useState(false);
   const recipientCount = getRecipientCount(message);
   const audienceLabel = getAudienceLabel(message);
@@ -432,29 +433,51 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
           </div>
         )}
         <div className="flex items-center justify-between px-6 py-4 border-t border-border flex-shrink-0">
-          {(message.status === 'failed' || message.status === 'partial') ? (
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={retrying}
-              onClick={async () => {
-                setRetrying(true);
-                try {
-                  await onRetry(message);
-                } finally {
-                  setRetrying(false);
+          <div className="flex flex-wrap gap-2">
+            {(message.status === 'draft' || message.status === 'scheduled') && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onLoadIntoComposer(message, 'edit');
                   onClose();
-                }
+                }}
+              >
+                Edit in composer
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onLoadIntoComposer(message, 'duplicate');
+                onClose();
               }}
             >
-              {retrying
-                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Retrying…</>
-                : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />{message.status === 'partial' ? 'Retry failed recipients' : 'Retry send'}</>
-              }
+              Duplicate to composer
             </Button>
-          ) : (
-            <span />
-          )}
+            {(message.status === 'failed' || message.status === 'partial') && (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={retrying}
+                onClick={async () => {
+                  setRetrying(true);
+                  try {
+                    await onRetry(message);
+                  } finally {
+                    setRetrying(false);
+                    onClose();
+                  }
+                }}
+              >
+                {retrying
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Retrying…</>
+                  : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />{message.status === 'partial' ? 'Retry failed recipients' : 'Retry send'}</>
+                }
+              </Button>
+            )}
+          </div>
           <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
         </div>
       </div>
@@ -938,6 +961,25 @@ export const DashboardMessages: React.FC = () => {
       setSending(false);
     }
   };
+
+  function loadMessageIntoComposer(message: Message, mode: 'edit' | 'duplicate') {
+    const scheduledAt = message.scheduled_for ? new Date(message.scheduled_for) : null;
+    const scheduleDate = scheduledAt ? `${scheduledAt.getFullYear()}-${String(scheduledAt.getMonth() + 1).padStart(2, '0')}-${String(scheduledAt.getDate()).padStart(2, '0')}` : '';
+    const scheduleTime = scheduledAt ? `${String(scheduledAt.getHours()).padStart(2, '0')}:${String(scheduledAt.getMinutes()).padStart(2, '0')}` : '';
+
+    setFormData({
+      subject: mode === 'duplicate' && message.status !== 'draft' ? `Copy of ${message.subject}` : message.subject,
+      body: message.body,
+      audience: message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all',
+      channel: message.channel === 'sms' ? 'sms' : 'email',
+      scheduleType: message.status === 'scheduled' && scheduleDate && scheduleTime ? 'later' : 'now',
+      scheduleDate,
+      scheduleTime,
+    });
+    setShowRecipientPreview(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast(mode === 'edit' ? 'Loaded into composer for editing.' : 'Copied into composer as a new message.', 'info');
+  }
 
   async function handleRetry(message: Message) {
     setRetryingMessageId(message.id);
@@ -2013,6 +2055,7 @@ export const DashboardMessages: React.FC = () => {
           deliveries={deliveries}
           onClose={() => setViewingMessage(null)}
           onRetry={handleRetry}
+          onLoadIntoComposer={loadMessageIntoComposer}
         />
       )}
 
