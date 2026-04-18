@@ -183,6 +183,7 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const handleBucketRemoveClick = async (bucket: PhotoBucketKind, itemId: string) => {
+    const previousBuckets = photoBuckets;
     try {
       setSubmitting(true);
       const nextBuckets = {
@@ -193,6 +194,7 @@ export const GuestPhotoSharing: React.FC = () => {
       await persistPhotoBuckets(nextBuckets);
       setSuccess('Photo removed from bucket.');
     } catch (err) {
+      setPhotoBuckets(previousBuckets);
       setError((err as Error)?.message || 'Failed to remove photo bucket item.');
     } finally {
       setSubmitting(false);
@@ -202,6 +204,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || !pendingBucket || !siteId) return;
+    const previousBuckets = photoBuckets;
     try {
       setSubmitting(true);
       const nextBuckets = { ...photoBuckets };
@@ -229,6 +232,7 @@ export const GuestPhotoSharing: React.FC = () => {
       ].filter(Boolean).join(', ');
       setSuccess(placementSummary ? `Photo bucket updated. Current auto-placement: ${placementSummary}.` : 'Photo bucket updated.');
     } catch (err) {
+      setPhotoBuckets(previousBuckets);
       setError((err as Error)?.message || 'Failed to upload photo bucket items.');
     } finally {
       setSubmitting(false);
