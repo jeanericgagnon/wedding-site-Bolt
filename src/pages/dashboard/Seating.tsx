@@ -1596,7 +1596,17 @@ export const DashboardSeating: React.FC = () => {
         </div>
 
         {checkInMode && (
-          <div className="p-3 bg-surface-subtle border border-border-subtle rounded-xl space-y-2">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Check-in mode</p>
+                <p className="mt-1 text-sm text-text-secondary">Search an attendee, then mark them arrived without leaving the seating board.</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-right">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary">Arrivals</p>
+                <p className="mt-1 text-sm font-semibold text-text-primary">{arrivedCount}/{counters?.attending ?? 0}</p>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <input
                 value={checkInQuery}
@@ -1604,7 +1614,7 @@ export const DashboardSeating: React.FC = () => {
                 placeholder="Search attendee for quick check-in"
                 className="flex-1 min-w-[220px] px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
-              <span className="text-xs text-text-tertiary">{arrivedCount}/{counters?.attending ?? 0} arrived</span>
+              <span className="text-xs text-text-tertiary">Live check-in updates</span>
             </div>
             {checkInQuery.trim().length > 0 && (
               <div className="flex flex-wrap gap-2">
