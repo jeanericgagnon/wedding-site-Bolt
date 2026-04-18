@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
+import { useToast } from '../../components/ui/Toast';
 
 type GuestLite = {
   id: string;
@@ -45,6 +46,7 @@ type QnaItem = {
 
 export const DashboardCoordinatorMode: React.FC = () => {
   const { user, isDemoMode } = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [guests, setGuests] = useState<GuestLite[]>([]);
   const [events, setEvents] = useState<EventLite[]>([]);
@@ -283,7 +285,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setAlertBusy(true);
     try {
       if (!isDemoMode) {
-        await supabase.from('messages').insert({
+        const { error } = await supabase.from('messages').insert({
           wedding_site_id: siteId,
           subject: alertForm.subject.trim(),
           body: alertForm.body.trim(),
@@ -294,6 +296,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
           sent_at: scheduledFor ? null : new Date().toISOString(),
           scheduled_for: scheduledFor,
         });
+        if (error) throw error;
       }
 
       setAlertLog((prev) => [{
@@ -304,6 +307,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
         queuedAt: new Date().toISOString(),
         sendAt: scheduledFor,
       }, ...prev].slice(0, 8));
+      toast(scheduledFor ? 'Coordinator alert scheduled.' : 'Coordinator alert queued.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not queue that alert right now.', 'error');
     } finally {
       setAlertBusy(false);
     }
@@ -319,7 +325,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
         .insert({ wedding_site_id: siteId, question: q, status: 'new', source: 'manual' })
         .select('id, question, answer, status')
         .single();
-      if (!error && data) {
+      if (error) {
+        toast(error.message || 'Could not save that question.', 'error');
+        return;
+      }
+      if (data) {
         setQnaItems((prev) => [data as QnaItem, ...prev].slice(0, 30));
       }
     } else {
@@ -332,7 +342,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const nextStatus = qnaItems.find((i) => i.id === id)?.status === 'new' ? 'answered' : 'new';
 
     if (!isDemoMode) {
-      await supabase.from('guest_qna_items').update({ status: nextStatus }).eq('id', id);
+      const { error } = await supabase.from('guest_qna_items').update({ status: nextStatus }).eq('id', id);
+      if (error) {
+        toast(error.message || 'Could not update that question.', 'error');
+        return;
+      }
     }
     setQnaItems((prev) => prev.map((item) => item.id === id ? { ...item, status: nextStatus } : item));
   };
