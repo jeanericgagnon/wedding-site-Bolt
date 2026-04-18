@@ -41,6 +41,88 @@ export const defaultNameChangeCaseInput: NameChangeCaseInput = {
   },
 };
 
+function normalizeText(value: string | null | undefined) {
+  return (value ?? '').trim();
+}
+
+function normalizeNullableText(value: string | null | undefined) {
+  const normalized = normalizeText(value);
+  return normalized || null;
+}
+
+function normalizePhoneLast4(value: string | null | undefined) {
+  const digits = (value ?? '').replace(/\D/g, '');
+  return digits ? digits.slice(-4) : null;
+}
+
+function uniqueStrings(values: string[]) {
+  return [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))];
+}
+
+export function normalizeNameChangeCaseInput(input: NameChangeCaseInput): NameChangeCaseInput {
+  const spouseLastName = normalizeText(String(input.structured_intake.spouseLastName ?? ''));
+
+  return {
+    ...input,
+    current_first_name: normalizeText(input.current_first_name),
+    current_middle_name: normalizeNullableText(input.current_middle_name),
+    current_last_name: normalizeText(input.current_last_name),
+    target_first_name: normalizeText(input.target_first_name),
+    target_middle_name: normalizeNullableText(input.target_middle_name),
+    target_last_name: normalizeText(input.target_last_name),
+    email: normalizeNullableText(input.email)?.toLowerCase() ?? null,
+    phone_last4: normalizePhoneLast4(input.phone_last4),
+    county_residence: normalizeNullableText(input.county_residence),
+    marriage_state: normalizeNullableText(input.marriage_state),
+    marriage_date: normalizeNullableText(input.marriage_date),
+    change_reasons: uniqueStrings(input.change_reasons),
+    structured_intake: {
+      ...input.structured_intake,
+      spouseLastName,
+      travelBookedSoon: Boolean(input.structured_intake.travelBookedSoon),
+      wantsDocumentIntakeHelp: input.structured_intake.wantsDocumentIntakeHelp !== false,
+    },
+  };
+}
+
+export function normalizeNameChangeDocuments(documents: NameChangeDocumentInput[]): NameChangeDocumentInput[] {
+  const deduped = new Map<NameChangeDocumentInput['document_kind'], NameChangeDocumentInput>();
+
+  documents.forEach((document) => {
+    deduped.set(document.document_kind, {
+      ...document,
+      display_name: normalizeText(document.display_name) || document.document_kind.replace(/_/g, ' '),
+      file_name_masked: normalizeNullableText(document.file_name_masked),
+      issuing_authority: normalizeNullableText(document.issuing_authority),
+      issued_on: normalizeNullableText(document.issued_on),
+      expires_on: normalizeNullableText(document.expires_on),
+      extracted_snapshot: document.extracted_snapshot ?? null,
+    });
+  });
+
+  return [...deduped.values()];
+}
+
+export function normalizeNameChangeExtractedFields(fields: NameChangeExtractedFieldInput[]): NameChangeExtractedFieldInput[] {
+  const deduped = new Map<string, NameChangeExtractedFieldInput>();
+
+  fields.forEach((field) => {
+    const normalizedValue = normalizeText(field.field_value_masked);
+    if (!normalizedValue) return;
+
+    const key = `${field.document_id ?? 'manual'}:${field.field_key}`;
+    deduped.set(key, {
+      ...field,
+      document_id: field.document_id ?? null,
+      field_label: normalizeText(field.field_label) || field.field_key.replace(/_/g, ' '),
+      field_value_masked: normalizedValue,
+      is_verified: Boolean(field.is_verified),
+    });
+  });
+
+  return [...deduped.values()];
+}
+
 export async function loadNameChangeWorkspace(weddingSiteId: string): Promise<{
   caseRecord: NameChangeCaseRecord | null;
   documents: NameChangeDocumentRecord[];
@@ -74,17 +156,18 @@ export async function loadNameChangeWorkspace(weddingSiteId: string): Promise<{
 }
 
 export async function upsertNameChangeCase(weddingSiteId: string, input: NameChangeCaseInput): Promise<NameChangeCaseRecord> {
+  const normalizedInput = normalizeNameChangeCaseInput(input);
   const payload = {
     wedding_site_id: weddingSiteId,
-    ...input,
-    current_middle_name: input.current_middle_name || null,
-    target_middle_name: input.target_middle_name || null,
-    email: input.email || null,
-    phone_last4: input.phone_last4 || null,
-    county_residence: input.county_residence || null,
-    marriage_state: input.marriage_state || null,
-    marriage_date: input.marriage_date || null,
-    latest_plan_summary: input.latest_plan_summary ?? null,
+    ...normalizedInput,
+    current_middle_name: normalizedInput.current_middle_name || null,
+    target_middle_name: normalizedInput.target_middle_name || null,
+    email: normalizedInput.email || null,
+    phone_last4: normalizedInput.phone_last4 || null,
+    county_residence: normalizedInput.county_residence || null,
+    marriage_state: normalizedInput.marriage_state || null,
+    marriage_date: normalizedInput.marriage_date || null,
+    latest_plan_summary: normalizedInput.latest_plan_summary ?? null,
     updated_at: new Date().toISOString(),
   };
 
@@ -99,13 +182,14 @@ export async function upsertNameChangeCase(weddingSiteId: string, input: NameCha
 }
 
 export async function replaceNameChangeDocuments(caseId: string, documents: NameChangeDocumentInput[]): Promise<NameChangeDocumentRecord[]> {
+  const normalizedDocuments = normalizeNameChangeDocuments(documents);
   const { error: deleteError } = await supabase.from('name_change_documents').delete().eq('name_change_case_id', caseId);
   if (deleteError) throw deleteError;
-  if (documents.length === 0) return [];
+  if (normalizedDocuments.length === 0) return [];
 
   const { data, error } = await supabase
     .from('name_change_documents')
-    .insert(documents.map((document) => ({ ...document, name_change_case_id: caseId })))
+    .insert(normalizedDocuments.map((document) => ({ ...document, name_change_case_id: caseId })))
     .select();
 
   if (error) throw error;
@@ -113,13 +197,14 @@ export async function replaceNameChangeDocuments(caseId: string, documents: Name
 }
 
 export async function replaceNameChangeExtractedFields(caseId: string, fields: NameChangeExtractedFieldInput[]): Promise<NameChangeExtractedFieldRecord[]> {
+  const normalizedFields = normalizeNameChangeExtractedFields(fields);
   const { error: deleteError } = await supabase.from('name_change_extracted_fields').delete().eq('name_change_case_id', caseId);
   if (deleteError) throw deleteError;
-  if (fields.length === 0) return [];
+  if (normalizedFields.length === 0) return [];
 
   const { data, error } = await supabase
     .from('name_change_extracted_fields')
-    .insert(fields.map((field) => ({ ...field, name_change_case_id: caseId, document_id: field.document_id ?? null })))
+    .insert(normalizedFields.map((field) => ({ ...field, name_change_case_id: caseId, document_id: field.document_id ?? null })))
     .select();
 
   if (error) throw error;
@@ -147,15 +232,18 @@ export async function saveNameChangeWorkspace(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): Promise<{ caseRecord: NameChangeCaseRecord; plan: NameChangePlan }> {
-  const plan = buildNameChangePlan({ profile: caseInput, documents, extractedFields });
+  const normalizedCaseInput = normalizeNameChangeCaseInput(caseInput);
+  const normalizedDocuments = normalizeNameChangeDocuments(documents);
+  const normalizedExtractedFields = normalizeNameChangeExtractedFields(extractedFields);
+  const plan = buildNameChangePlan({ profile: normalizedCaseInput, documents: normalizedDocuments, extractedFields: normalizedExtractedFields });
   const caseRecord = await upsertNameChangeCase(weddingSiteId, {
-    ...caseInput,
+    ...normalizedCaseInput,
     workflow_status: plan.summary.blockers.length > 0 ? 'draft' : 'ready',
     latest_plan_summary: plan.summary as unknown as Record<string, unknown>,
   });
 
-  await replaceNameChangeDocuments(caseRecord.id, documents);
-  await replaceNameChangeExtractedFields(caseRecord.id, extractedFields);
+  await replaceNameChangeDocuments(caseRecord.id, normalizedDocuments);
+  await replaceNameChangeExtractedFields(caseRecord.id, normalizedExtractedFields);
   await createNameChangePlanSnapshot(caseRecord.id, plan);
 
   return { caseRecord, plan };
