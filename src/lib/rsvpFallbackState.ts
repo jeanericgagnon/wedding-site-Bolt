@@ -1,3 +1,5 @@
+import { isPendingRsvpStatus } from './rsvpStatus';
+
 export type RsvpFallbackState = 'healthy' | 'manual-follow-up' | 'manual-handled' | 'unreachable';
 
 export interface RsvpFallbackInput {
@@ -25,7 +27,7 @@ export function getRsvpFallbackState(input: RsvpFallbackInput): RsvpFallbackDesc
   }
 
   const hasContact = Boolean(input.hasEmail || input.hasPhone);
-  const pending = input.rsvpStatus === 'pending' || !input.rsvpStatus;
+  const pending = isPendingRsvpStatus(input.rsvpStatus);
 
   if (pending && !hasContact) {
     return {

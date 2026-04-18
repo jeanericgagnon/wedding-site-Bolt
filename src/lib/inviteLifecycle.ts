@@ -1,3 +1,5 @@
+import { isPendingRsvpStatus } from './rsvpStatus';
+
 export type InviteLifecycleState = 'not-invited' | 'invited' | 'reminded' | 'manual-handled' | 'no-response';
 
 export interface InviteLifecycleInput {
@@ -17,7 +19,7 @@ export function getInviteLifecycleState(input: InviteLifecycleInput): InviteLife
   if (input.manualHandled) {
     return { state: 'manual-handled', label: 'Handled manually', detail: 'This guest is being carried through the invite/RSVP flow manually.' };
   }
-  if (input.rsvpStatus === 'pending') {
+  if (isPendingRsvpStatus(input.rsvpStatus)) {
     if (input.reminderLastSentAt) {
       return { state: 'reminded', label: 'Reminder sent', detail: 'A reminder already went out and the guest still has not replied.' };
     }

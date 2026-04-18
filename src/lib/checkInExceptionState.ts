@@ -1,3 +1,5 @@
+import { isPendingRsvpStatus } from './rsvpStatus';
+
 export type CheckInExceptionState = 'unassigned-seat' | 'rsvp-unresolved' | 'already-checked-in';
 
 export function getCheckInExceptionStates(input: {
@@ -8,6 +10,6 @@ export function getCheckInExceptionStates(input: {
   const states: CheckInExceptionState[] = [];
   if (input.checkedInAt) states.push('already-checked-in');
   if (!input.tableName || input.tableName === 'Unassigned') states.push('unassigned-seat');
-  if (!input.rsvpStatus || input.rsvpStatus === 'pending') states.push('rsvp-unresolved');
+  if (isPendingRsvpStatus(input.rsvpStatus)) states.push('rsvp-unresolved');
   return states;
 }
