@@ -155,6 +155,88 @@ export async function loadNameChangeWorkspace(weddingSiteId: string): Promise<{
   };
 }
 
+export function mapCaseRecordToNameChangeInput(caseRecord: NameChangeCaseRecord): NameChangeCaseInput {
+  return normalizeNameChangeCaseInput({
+    workflow_status: caseRecord.workflow_status,
+    launch_state: caseRecord.launch_state,
+    legal_basis: caseRecord.legal_basis,
+    current_first_name: caseRecord.current_first_name,
+    current_middle_name: caseRecord.current_middle_name ?? '',
+    current_last_name: caseRecord.current_last_name,
+    target_first_name: caseRecord.target_first_name,
+    target_middle_name: caseRecord.target_middle_name ?? '',
+    target_last_name: caseRecord.target_last_name,
+    email: caseRecord.email ?? '',
+    phone_last4: caseRecord.phone_last4 ?? '',
+    county_residence: caseRecord.county_residence ?? '',
+    marriage_state: caseRecord.marriage_state ?? 'California',
+    marriage_date: caseRecord.marriage_date ?? '',
+    urgency_level: caseRecord.urgency_level,
+    has_us_passport: caseRecord.has_us_passport,
+    passport_needs_update: caseRecord.passport_needs_update,
+    has_real_id_license: caseRecord.has_real_id_license,
+    is_us_citizen: caseRecord.is_us_citizen,
+    employment_status: caseRecord.employment_status,
+    change_reasons: caseRecord.change_reasons,
+    structured_intake: caseRecord.structured_intake ?? {},
+    latest_plan_summary: caseRecord.latest_plan_summary,
+  });
+}
+
+export function mapDocumentRecordToInput(document: NameChangeDocumentRecord): NameChangeDocumentInput {
+  return {
+    document_kind: document.document_kind,
+    display_name: document.display_name,
+    storage_mode: document.storage_mode,
+    intake_status: document.intake_status,
+    file_name_masked: document.file_name_masked,
+    issuing_authority: document.issuing_authority,
+    issued_on: document.issued_on,
+    expires_on: document.expires_on,
+    extraction_confidence: document.extraction_confidence,
+    extracted_snapshot: document.extracted_snapshot,
+  };
+}
+
+export function mapExtractedFieldRecordToInput(field: NameChangeExtractedFieldRecord): NameChangeExtractedFieldInput {
+  return {
+    document_id: field.document_id,
+    field_key: field.field_key,
+    field_label: field.field_label,
+    field_value_masked: field.field_value_masked,
+    source_type: field.source_type,
+    is_verified: field.is_verified,
+  };
+}
+
+export function hydrateNameChangeWorkspace(workspace: {
+  caseRecord: NameChangeCaseRecord | null;
+  documents: NameChangeDocumentRecord[];
+  extractedFields: NameChangeExtractedFieldRecord[];
+  latestSnapshot: NameChangePlanSnapshotRecord | null;
+}) {
+  if (!workspace.caseRecord) {
+    return {
+      draft: defaultNameChangeCaseInput,
+      documents: [] as NameChangeDocumentInput[],
+      extractedFields: [] as NameChangeExtractedFieldInput[],
+      plan: buildNameChangePlan({ profile: defaultNameChangeCaseInput, documents: [], extractedFields: [] }),
+    };
+  }
+
+  const draft = mapCaseRecordToNameChangeInput(workspace.caseRecord);
+  const documents = normalizeNameChangeDocuments(workspace.documents.map(mapDocumentRecordToInput));
+  const extractedFields = normalizeNameChangeExtractedFields(workspace.extractedFields.map(mapExtractedFieldRecordToInput));
+  const fallbackPlan = buildNameChangePlan({ profile: draft, documents, extractedFields });
+
+  return {
+    draft,
+    documents,
+    extractedFields,
+    plan: workspace.latestSnapshot?.plan_payload ?? fallbackPlan,
+  };
+}
+
 export async function upsertNameChangeCase(weddingSiteId: string, input: NameChangeCaseInput): Promise<NameChangeCaseRecord> {
   const normalizedInput = normalizeNameChangeCaseInput(input);
   const payload = {

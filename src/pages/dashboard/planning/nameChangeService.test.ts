@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
+import type { NameChangeCaseInput, NameChangeCaseRecord, NameChangeDocumentInput, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
 import {
   defaultNameChangeCaseInput,
+  hydrateNameChangeWorkspace,
+  mapCaseRecordToNameChangeInput,
   normalizeNameChangeCaseInput,
   normalizeNameChangeDocuments,
   normalizeNameChangeExtractedFields,
@@ -113,5 +115,64 @@ describe('nameChangeService normalization', () => {
         is_verified: true,
       },
     ]);
+  });
+
+  it('hydrates loaded workspace through the same normalization path used for saves', () => {
+    const caseRecord: NameChangeCaseRecord = {
+      id: 'case-1',
+      wedding_site_id: 'site-1',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ...makeCase(),
+      current_middle_name: '  Marie ',
+      target_middle_name: null,
+      email: ' Alex@Example.COM ',
+      phone_last4: '(555) 991-2481',
+      county_residence: ' San Diego ',
+      marriage_state: 'California',
+      marriage_date: ' 2026-04-05 ',
+      latest_plan_summary: null,
+    };
+    const hydrated = hydrateNameChangeWorkspace({
+      caseRecord,
+      documents: [
+        {
+          id: 'doc-1',
+          name_change_case_id: 'case-1',
+          document_kind: 'marriage_certificate',
+          display_name: '  Marriage cert  ',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: ' cert.pdf ',
+          issuing_authority: ' San Diego County ',
+          issued_on: null,
+          expires_on: null,
+          extraction_confidence: null,
+          extracted_snapshot: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      extractedFields: [
+        {
+          id: 'field-1',
+          name_change_case_id: 'case-1',
+          document_id: null,
+          field_key: 'spouse_last_name',
+          field_label: ' Spouse surname ',
+          field_value_masked: ' Jordan ',
+          source_type: 'manual',
+          is_verified: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      latestSnapshot: null,
+    });
+
+    expect(hydrated.draft).toEqual(mapCaseRecordToNameChangeInput(caseRecord));
+    expect(hydrated.documents[0]).toMatchObject({ display_name: 'Marriage cert', file_name_masked: 'cert.pdf' });
+    expect(hydrated.extractedFields[0]).toMatchObject({ field_value_masked: 'Jordan' });
+    expect(hydrated.plan.summary.readinessPercent).toBeGreaterThan(0);
   });
 });
