@@ -1284,33 +1284,38 @@ export const DashboardMessages: React.FC = () => {
         )}
 
         <div className="space-y-4">
-          {weddingSite?.couple_email && (
-            <Card variant="bordered" padding="lg">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-primary-light rounded-lg">
-                  <AtSign className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">Your wedding email</p>
-                  <p className="text-lg font-semibold text-text-primary">{weddingSite.couple_email}</p>
-                  <p className="text-xs text-text-tertiary mt-1">Guest emails will appear to come from this address</p>
-                </div>
-              </div>
-            </Card>
-          )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card variant="bordered" padding="lg">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm text-text-secondary">Text message credits</p>
-                  <p className="text-2xl font-semibold text-text-primary">{smsCredits}</p>
-                  <p className="text-xs text-text-tertiary mt-1">About 1 credit per guest for each text</p>
-                  <p className="text-xs text-text-tertiary">Credits expire 12 months after purchase{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}</p>
+            <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+              <div className="-mx-6 -mt-6 mb-4 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Channel setup</p>
+                <h3 className="mt-2 text-xl font-semibold text-text-primary">Email and SMS readiness</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-xl bg-primary-light p-3">
+                      <AtSign className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Wedding email</p>
+                      <p className="mt-2 text-base font-semibold text-text-primary">{weddingSite?.couple_email ?? 'Not set yet'}</p>
+                      <p className="mt-1 text-xs text-text-secondary">Guest emails appear from this address when email is used.</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">SMS credits</p>
+                      <p className="mt-2 text-2xl font-semibold text-text-primary">{smsCredits}</p>
+                      <p className="mt-1 text-xs text-text-secondary">About 1 credit per guest for each text.</p>
+                      <p className="text-xs text-text-tertiary">Credits expire 12 months after purchase{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Card>
