@@ -62,6 +62,7 @@ describe('name change engine', () => {
     expect(plan.summary.legalPathLabel).toContain('marriage');
     expect(plan.summary.recommendedOrder[0]).toContain('Confirm certified marriage proof');
     expect(plan.summary.recommendedOrder[1]).toContain('Update Social Security first');
+    expect(plan.summary.readinessPercent).toBeGreaterThan(0);
     expect(plan.steps.some((step) => step.title.includes('passport'))).toBe(true);
     const institutionsStep = plan.steps.find((step) => step.phase === 'institutional');
     expect(institutionsStep?.institutions).toContain('Employer payroll / HR');
@@ -70,6 +71,13 @@ describe('name change engine', () => {
   it('surfaces blockers when the legal proof doc is missing', () => {
     const plan = buildNameChangePlan({ ...makeInput(), documents: [] });
     expect(plan.summary.blockers[0]).toContain('Certified marriage certificate');
+    expect(plan.summary.missingInputs).toContain('Certified marriage certificate metadata');
+    expect(plan.summary.nextBestAction).toContain('Fill:');
     expect(plan.steps.find((step) => step.id === 'federal-ssa')?.status).toBe('blocked');
+  });
+
+  it('pushes travel-sensitive caution notes when upcoming travel is flagged', () => {
+    const plan = buildNameChangePlan(makeInput({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true } }));
+    expect(plan.summary.cautionNotes.some((note) => note.includes('Upcoming travel'))).toBe(true);
   });
 });

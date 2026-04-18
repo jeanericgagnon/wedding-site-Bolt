@@ -68,6 +68,37 @@ function hasDocument(input: NameChangeEngineInput, kind: string) {
   return input.documents.some((document) => document.document_kind === kind && document.intake_status !== 'not_started');
 }
 
+function hasMeaningfulValue(value: string | null | undefined) {
+  return Boolean((value ?? '').trim());
+}
+
+function collectMissingInputs(input: NameChangeEngineInput, legalBasis: 'marriage' | 'court_order', legalProofReady: boolean) {
+  const missing: string[] = [];
+  const profile = input.profile;
+
+  if (!hasMeaningfulValue(profile.current_first_name)) missing.push('Current first name');
+  if (!hasMeaningfulValue(profile.current_last_name)) missing.push('Current last name');
+  if (!hasMeaningfulValue(profile.target_first_name)) missing.push('Target first name');
+  if (!hasMeaningfulValue(profile.target_last_name)) missing.push('Target last name');
+  if (!hasMeaningfulValue(profile.county_residence)) missing.push('California county');
+
+  if (legalBasis === 'marriage') {
+    if (!hasMeaningfulValue(profile.marriage_date)) missing.push('Marriage date');
+    if (!hasMeaningfulValue(String(profile.structured_intake.spouseLastName ?? ''))) missing.push('Spouse last name');
+    if (!legalProofReady) missing.push('Certified marriage certificate metadata');
+  }
+
+  if (legalBasis === 'court_order' && !legalProofReady) {
+    missing.push('Court order packet or signed order metadata');
+  }
+
+  if (profile.passport_needs_update && !profile.is_us_citizen) {
+    missing.push('Citizenship review for passport guidance');
+  }
+
+  return missing;
+}
+
 function formsFor(...conditions: Array<NameChangeFormRegistryEntry['appliesWhen'][number]>): NameChangePlanFormRef[] {
   return NAME_CHANGE_FORM_REGISTRY
     .filter((entry) => conditions.every((condition) => entry.appliesWhen.includes(condition)))
@@ -103,11 +134,14 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const hasCourtOrder = hasDocument(input, 'court_order');
   const legalProofReady = legalBasis === 'marriage' ? hasMarriageCertificate : hasCourtOrder;
   const institutionalTargets = institutionsFor(input);
+  const travelBookedSoon = Boolean(input.profile.structured_intake.travelBookedSoon);
+  const wantsDocumentIntakeHelp = input.profile.structured_intake.wantsDocumentIntakeHelp !== false;
 
   const blockers = [
     ...(legalProofReady ? [] : [legalBasis === 'marriage' ? 'Certified marriage certificate still missing from intake.' : 'Court order packet or signed order still missing from intake.']),
     ...eligibility.reasons.filter((reason) => eligibility.decision === 'court_order_required' && !reason.includes('selected')),
   ];
+  const missingInputs = collectMissingInputs(input, legalBasis, legalProofReady);
 
   const steps: NameChangePlanStep[] = [];
 
@@ -187,8 +221,18 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const cautionNotes = [
     'This planner generates guidance and sequencing. It is not filing paperwork on your behalf.',
     'Use structured extracted fields as your source of truth; raw uploads are only an intake accelerator.',
+    ...(wantsDocumentIntakeHelp ? ['Document intake help is turned on, so capturing certificate / ID metadata early will make the rest of the workflow less manual.'] : []),
+    ...(travelBookedSoon ? ['Upcoming travel means passport, TSA, and booking-name consistency should be watched closely once SSA is moving.'] : []),
     ...(input.profile.urgency_level === 'expedited' ? ['Expedited travel or hiring timelines may justify moving passport and employer updates higher once SSA is in motion.'] : []),
   ];
+  const readinessDenominator = Math.max(1, steps.length + missingInputs.length);
+  const readinessNumerator = steps.filter((step) => step.status !== 'blocked').length + (missingInputs.length === 0 ? 1 : 0);
+  const readinessPercent = Math.max(0, Math.min(100, Math.round((readinessNumerator / readinessDenominator) * 100)));
+  const nextBestAction = missingInputs[0]
+    ? `Fill: ${missingInputs[0]}`
+    : travelBookedSoon && input.profile.passport_needs_update
+      ? 'Line up your passport update timing'
+      : steps.find((step) => step.status === 'ready')?.title ?? steps[0]?.title ?? 'Complete intake';
 
   return {
     engineVersion: NAME_CHANGE_ENGINE_VERSION,
@@ -210,7 +254,9 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       recommendedOrder,
       blockers,
       cautionNotes,
-      nextBestAction: steps.find((step) => step.status === 'ready')?.title ?? steps[0]?.title ?? 'Complete intake',
+      missingInputs,
+      readinessPercent,
+      nextBestAction,
     },
     steps,
   };

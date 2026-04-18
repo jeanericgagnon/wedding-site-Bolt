@@ -90,6 +90,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <Card padding="sm">
           <p className="text-xs uppercase tracking-wide text-text-tertiary">Workflow health</p>
           <p className="mt-2 text-sm text-text-primary">{stepCounts.ready} ready · {stepCounts.blocked} blocked · {stepCounts.later} later</p>
+          <p className="mt-2 text-sm font-semibold text-text-primary">{plan.summary.readinessPercent}% intake-ready</p>
           <p className="mt-2 text-xs text-text-secondary">Federal-first, California-second, institutions after primary ID.</p>
         </Card>
         <Card padding="sm" className="border-primary/20 bg-primary/5">
@@ -134,6 +135,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <input className="w-full rounded-lg border border-border px-3 py-2" value={String(draft.structured_intake.spouseLastName ?? '')} onChange={(e) => onStructuredIntakeChange('spouseLastName', e.target.value)} />
           </label>
           <label className="text-sm">
+            <span className="mb-1 block text-xs font-medium text-text-secondary">Marriage date</span>
+            <input type="date" className="w-full rounded-lg border border-border px-3 py-2" value={draft.marriage_date ?? ''} onChange={(e) => onDraftChange({ marriage_date: e.target.value })} />
+          </label>
+          <label className="text-sm">
             <span className="mb-1 block text-xs font-medium text-text-secondary">California county</span>
             <input className="w-full rounded-lg border border-border px-3 py-2" value={draft.county_residence ?? ''} onChange={(e) => onDraftChange({ county_residence: e.target.value })} />
           </label>
@@ -167,14 +172,45 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             { label: 'Has passport', checked: draft.has_us_passport, key: 'has_us_passport' },
             { label: 'Passport needs update', checked: draft.passport_needs_update, key: 'passport_needs_update' },
             { label: 'Has CA Real ID / license', checked: draft.has_real_id_license, key: 'has_real_id_license' },
+            { label: 'Travel booked soon', checked: Boolean(draft.structured_intake.travelBookedSoon), key: 'travelBookedSoon', source: 'structured' },
+            { label: 'Wants doc intake help', checked: draft.structured_intake.wantsDocumentIntakeHelp !== false, key: 'wantsDocumentIntakeHelp', source: 'structured' },
           ].map((item) => (
             <label key={item.key} className="flex items-center gap-2 rounded-lg border border-border-subtle px-3 py-2 text-sm text-text-primary">
-              <input type="checkbox" checked={item.checked} onChange={(e) => onDraftChange({ [item.key]: e.target.checked } as Partial<NameChangeCaseInput>)} />
+              <input
+                type="checkbox"
+                checked={item.checked}
+                onChange={(e) => item.source === 'structured'
+                  ? onStructuredIntakeChange(item.key, e.target.checked)
+                  : onDraftChange({ [item.key]: e.target.checked } as Partial<NameChangeCaseInput>)}
+              />
               <span>{item.label}</span>
             </label>
           ))}
         </div>
       </Card>
+
+      {(plan.summary.missingInputs.length > 0 || plan.summary.cautionNotes.length > 0) && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {plan.summary.missingInputs.length > 0 && (
+            <Card className="border-warning/30 bg-warning/5">
+              <h3 className="text-lg font-semibold text-text-primary">Intake gaps to close</h3>
+              <p className="mt-1 text-sm text-text-secondary">These are the missing pieces keeping the planner from being cleanly actionable.</p>
+              <ul className="mt-3 space-y-2 text-sm text-text-primary">
+                {plan.summary.missingInputs.map((item) => <li key={item}>• {item}</li>)}
+              </ul>
+            </Card>
+          )}
+
+          {plan.summary.cautionNotes.length > 0 && (
+            <Card>
+              <h3 className="text-lg font-semibold text-text-primary">Planner notes</h3>
+              <ul className="mt-3 space-y-2 text-sm text-text-secondary">
+                {plan.summary.cautionNotes.map((note) => <li key={note}>• {note}</li>)}
+              </ul>
+            </Card>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <Card>

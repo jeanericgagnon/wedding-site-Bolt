@@ -164,6 +164,8 @@ export interface NameChangePlanSummary {
   recommendedOrder: string[];
   blockers: string[];
   cautionNotes: string[];
+  missingInputs: string[];
+  readinessPercent: number;
   nextBestAction: string;
 }
 
