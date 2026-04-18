@@ -412,8 +412,15 @@ export const DashboardSettings: React.FC = () => {
     }
 
     const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${inviteToken}`;
-    await navigator.clipboard.writeText(inviteUrl);
-    setPlannerInviteSuccess('Invite link copied.');
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setPlannerInviteSuccess('Invite link copied.');
+      setPlannerInviteError(null);
+    } catch {
+      window.prompt('Copy collaborator invite link:', inviteUrl);
+      setPlannerInviteSuccess('Invite link ready to copy.');
+      setPlannerInviteError(null);
+    }
   };
 
   const handleResendCollaboratorInvite = async (inviteToken: string | undefined) => {
@@ -546,9 +553,14 @@ export const DashboardSettings: React.FC = () => {
   const copyInviteLink = async () => {
     if (!guestAccessToken || !siteSlug) return;
     const url = `${window.location.origin}/site/${siteSlug}?token=${guestAccessToken}`;
-    await navigator.clipboard.writeText(url);
-    setPrivacyCopied(true);
-    setTimeout(() => setPrivacyCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(url);
+      setPrivacyCopied(true);
+      setTimeout(() => setPrivacyCopied(false), 2000);
+    } catch {
+      window.prompt('Copy guest access link:', url);
+      toast('Guest access link ready to copy.', 'success');
+    }
   };
 
   const publicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
@@ -1131,9 +1143,15 @@ export const DashboardSettings: React.FC = () => {
                                 variant="outline"
                                 onClick={async () => {
                                   if (!publicSiteQrUrl) return;
-                                  await navigator.clipboard.writeText(publicSiteQrUrl);
-                                  setSlugSuccess('QR image link copied.');
-                                  setSlugError(null);
+                                  try {
+                                    await navigator.clipboard.writeText(publicSiteQrUrl);
+                                    setSlugSuccess('QR image link copied.');
+                                    setSlugError(null);
+                                  } catch {
+                                    window.prompt('Copy QR image link:', publicSiteQrUrl);
+                                    setSlugSuccess('QR image link ready to copy.');
+                                    setSlugError(null);
+                                  }
                                 }}
                               >
                                 Copy QR link
