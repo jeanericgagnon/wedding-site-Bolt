@@ -21,6 +21,7 @@ import { buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
 import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
 import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
 import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
+import { writeSignupReturnPath } from '../../lib/signupContinuation';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -202,6 +203,7 @@ export const QuickStart: React.FC = () => {
     const fetchWeddingSite = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      writeSignupReturnPath(null);
       const { data } = await supabase
         .from('wedding_sites')
         .select('couple_name_1, couple_name_2, wedding_date, venue_name, venue_location, onboarding_answers')
@@ -288,6 +290,7 @@ export const QuickStart: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
         setLoading(false);
         setIsThinking(false);
         navigate('/signup?bypassPayment=1', {
@@ -354,6 +357,7 @@ export const QuickStart: React.FC = () => {
         .eq('id', site.id);
       if (updateError) throw updateError;
       localStorage.removeItem(STORAGE_KEY);
+      writeSignupReturnPath(null);
       navigate('/dashboard/guests?bypassPayment=1&fromQuickStart=1&next=photos', {
         state: { showWelcome: true, nextStep: 'guest-import' },
       });

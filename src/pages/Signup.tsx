@@ -4,6 +4,7 @@ import { Chrome, Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
+import { consumeSignupReturnPath, resolvePostSignupPath } from '../lib/signupContinuation';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -84,9 +85,10 @@ export const Signup: React.FC = () => {
     setLoading(true);
     setError('');
     try {
+      const fallbackRedirectPath = paymentGateEnabled ? '/payment-required?oauth=google' : '/onboarding?oauth=google';
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
-        : (paymentGateEnabled ? '/payment-required?oauth=google' : '/onboarding?oauth=google');
+        : resolvePostSignupPath(fallbackRedirectPath);
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -155,7 +157,7 @@ export const Signup: React.FC = () => {
       }
 
       await ensureMinimalWeddingSite(userId, formData.email);
-      navigate(paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1');
+      navigate(consumeSignupReturnPath() || (paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1'));
     } catch (err: unknown) {
       setError((err as Error).message || 'Couldn’t create your account right now. Please try again.');
     } finally {
