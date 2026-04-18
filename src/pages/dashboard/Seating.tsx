@@ -20,6 +20,7 @@ import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
 import { supabase } from '../../lib/supabase';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { ActionsMenu } from '../../components/ui/ActionsMenu';
 import {
@@ -627,6 +628,14 @@ export const DashboardSeating: React.FC = () => {
   const [movingTableId, setMovingTableId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [seatPicker, setSeatPicker] = useState<{ tableId: string; seatIndex: number } | null>(null);
+  const [seatPickerQuery, setSeatPickerQuery] = useState('');
+  const activeSeatAssignment = seatPicker ? assignments.find((assignment) => assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex) ?? null : null;
+  const activeSeatGuest = activeSeatAssignment ? allGuests.find((guest) => guest.id === activeSeatAssignment.guest_id) ?? null : null;
+  const seatPickerOptions = seatPicker
+    ? allGuests
+        .filter((guest) => !assignments.some((assignment) => assignment.guest_id === guest.id) || assignments.some((assignment) => assignment.guest_id === guest.id && assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex))
+        .filter((guest) => guest.full_name.toLowerCase().includes(seatPickerQuery.toLowerCase()))
+    : [];
   const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
   const [seatingActionsOpen, setSeatingActionsOpen] = useState(false);
@@ -1634,30 +1643,43 @@ export const DashboardSeating: React.FC = () => {
         )}
 
         {seatPicker && (
-          <div className="p-4 rounded-xl border border-border-subtle bg-surface-subtle/40 space-y-3">
+          <div className="p-4 rounded-xl border border-border-subtle bg-surface-subtle/40 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-text-primary">Map a guest to seat {seatPicker.seatIndex}</h3>
                 <p className="text-xs text-text-tertiary">Choose from RSVP’d guests not already assigned somewhere else.</p>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => setSeatPicker(null)}>Close</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setSeatPicker(null); setSeatPickerQuery(''); }}>Close</Button>
             </div>
+            {activeSeatGuest && (
+              <div className="rounded-lg border border-primary/20 bg-primary-light/20 px-3 py-3">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">Current seat assignment</p>
+                <p className="mt-1 text-sm font-medium text-text-primary">{activeSeatGuest.full_name}</p>
+              </div>
+            )}
+            <Input
+              value={seatPickerQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSeatPickerQuery(e.target.value)}
+              placeholder="Search RSVP’d guests"
+            />
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {allGuests
-                .filter((guest) => !assignments.some((assignment) => assignment.guest_id === guest.id) || assignments.some((assignment) => assignment.guest_id === guest.id && assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex))
-                .slice(0, 18)
-                .map((guest) => (
-                  <button
-                    key={guest.id}
-                    type="button"
-                    onClick={() => void assignGuestToSeatDirect(guest.id, seatPicker.tableId, seatPicker.seatIndex)}
-                    className="rounded-lg border border-border bg-white px-3 py-2 text-left hover:border-primary/40 hover:bg-primary-light/20"
-                  >
-                    <p className="text-sm font-medium text-text-primary">{guest.full_name}</p>
-                    <p className="text-xs text-text-tertiary">{guest.rsvp_status === 'attending' ? 'RSVP’d attending' : 'Guest'}</p>
-                  </button>
-                ))}
+              {seatPickerOptions.slice(0, 18).map((guest) => (
+                <button
+                  key={guest.id}
+                  type="button"
+                  onClick={() => void assignGuestToSeatDirect(guest.id, seatPicker.tableId, seatPicker.seatIndex)}
+                  className="rounded-lg border border-border bg-white px-3 py-2 text-left hover:border-primary/40 hover:bg-primary-light/20"
+                >
+                  <p className="text-sm font-medium text-text-primary">{guest.full_name}</p>
+                  <p className="text-xs text-text-tertiary">{guest.rsvp_status === 'attending' ? 'RSVP’d attending' : 'Guest'}</p>
+                </button>
+              ))}
             </div>
+            {seatPickerOptions.length === 0 && (
+              <div className="rounded-lg border border-border bg-white px-3 py-4 text-sm text-text-tertiary">
+                No RSVP’d guests match that search.
+              </div>
+            )}
           </div>
         )}
 
@@ -1785,7 +1807,7 @@ export const DashboardSeating: React.FC = () => {
                                 isSelected={selectedTableId === table.id}
                                 onSelect={() => setSelectedTableId(table.id)}
                                 onRotate={(delta) => handleRotateTable(table.id, delta)}
-                                onSelectSeat={(tableId, seatIndex) => setSeatPicker({ tableId, seatIndex })}
+                                onSelectSeat={(tableId, seatIndex) => { setSeatPicker({ tableId, seatIndex }); setSeatPickerQuery(''); }}
                               />
                             </div>
                           );
@@ -1817,7 +1839,7 @@ export const DashboardSeating: React.FC = () => {
                             isSelected={selectedTableId === table.id}
                             onSelect={() => setSelectedTableId(table.id)}
                             onRotate={(delta) => handleRotateTable(table.id, delta)}
-                            onSelectSeat={(tableId, seatIndex) => setSeatPicker({ tableId, seatIndex })}
+                            onSelectSeat={(tableId, seatIndex) => { setSeatPicker({ tableId, seatIndex }); setSeatPickerQuery(''); }}
                           />
                         )
                       ))}
