@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangePlan } from './engine';
-import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs } from './reminders';
+import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs, summarizeNameChangeReminders, updateNameChangeReminderStatus } from './reminders';
 import type { NameChangeEngineInput } from './types';
 
 function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): NameChangeEngineInput {
@@ -83,5 +83,62 @@ describe('name change reminder suggestions', () => {
       status: 'pending',
       depends_on_step_id: 'institution-banks',
     });
+  });
+
+  it('summarizes reminder status counts', () => {
+    const summary = summarizeNameChangeReminders([
+      {
+        reminder_key: 'a',
+        label: 'A',
+        reason: 'A',
+        depends_on_step_id: 'step-a',
+        suggested_offset_days: 1,
+        urgency: 'high',
+        status: 'pending',
+      },
+      {
+        reminder_key: 'b',
+        label: 'B',
+        reason: 'B',
+        depends_on_step_id: 'step-b',
+        suggested_offset_days: 3,
+        urgency: 'high',
+        status: 'scheduled',
+      },
+      {
+        reminder_key: 'c',
+        label: 'C',
+        reason: 'C',
+        depends_on_step_id: 'step-c',
+        suggested_offset_days: 8,
+        urgency: 'low',
+        status: 'dismissed',
+      },
+    ]);
+
+    expect(summary).toEqual({
+      total: 3,
+      pending: 1,
+      scheduled: 1,
+      sent: 0,
+      dismissed: 1,
+      highUrgencyOpen: 2,
+    });
+  });
+
+  it('updates reminder status by key', () => {
+    expect(updateNameChangeReminderStatus([
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium',
+        status: 'pending',
+      },
+    ], 'reminder-banks', 'scheduled')).toEqual([
+      expect.objectContaining({ reminder_key: 'reminder-banks', status: 'scheduled' }),
+    ]);
   });
 });

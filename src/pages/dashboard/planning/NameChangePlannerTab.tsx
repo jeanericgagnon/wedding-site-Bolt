@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sp
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
-import { buildNameChangeReminderSuggestions } from '../../../lib/nameChange/reminders';
+import { buildNameChangeReminderSuggestions, summarizeNameChangeReminders } from '../../../lib/nameChange/reminders';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -80,6 +80,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     later: plan.steps.filter((step) => step.status === 'later').length,
   }), [plan.steps]);
   const reminderSuggestions = useMemo(() => buildNameChangeReminderSuggestions(plan), [plan]);
+  const reminderSummary = useMemo(() => summarizeNameChangeReminders(reminderSuggestions.map((reminder) => ({
+    reminder_key: reminder.id,
+    label: reminder.label,
+    reason: reminder.reason,
+    depends_on_step_id: reminder.dependsOnStepId,
+    suggested_offset_days: reminder.suggestedOffsetDays,
+    urgency: reminder.urgency,
+    status: 'pending',
+  }))), [reminderSuggestions]);
 
   return (
     <div className="space-y-6">
@@ -364,6 +373,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Suggested follow-up reminders</h3>
               <p className="text-sm text-text-secondary">Scaffolding for planner/admin follow-up timing based on the generated workflow.</p>
+              <p className="mt-2 text-xs text-text-secondary">{reminderSummary.pending} pending · {reminderSummary.highUrgencyOpen} high-urgency open</p>
             </div>
             <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{reminderSuggestions.length} suggestions</span>
           </div>

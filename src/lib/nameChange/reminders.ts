@@ -1,5 +1,5 @@
 import { NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
-import type { NameChangePlan, NameChangeReminderInput, NameChangeReminderSuggestion } from './types';
+import type { NameChangePlan, NameChangeReminderInput, NameChangeReminderSuggestion, NameChangeReminderSummary } from './types';
 
 function urgencyFromOffset(days: number): NameChangeReminderSuggestion['urgency'] {
   if (days <= 2) return 'high';
@@ -48,4 +48,30 @@ export function mapReminderSuggestionsToInputs(suggestions: NameChangeReminderSu
     urgency: suggestion.urgency,
     status: 'pending',
   }));
+}
+
+export function summarizeNameChangeReminders(reminders: NameChangeReminderInput[]): NameChangeReminderSummary {
+  return reminders.reduce<NameChangeReminderSummary>((summary, reminder) => {
+    summary.total += 1;
+    summary[reminder.status] += 1;
+    if (reminder.urgency === 'high' && (reminder.status === 'pending' || reminder.status === 'scheduled')) {
+      summary.highUrgencyOpen += 1;
+    }
+    return summary;
+  }, {
+    total: 0,
+    pending: 0,
+    scheduled: 0,
+    sent: 0,
+    dismissed: 0,
+    highUrgencyOpen: 0,
+  });
+}
+
+export function updateNameChangeReminderStatus(
+  reminders: NameChangeReminderInput[],
+  reminderKey: string,
+  status: NameChangeReminderInput['status'],
+): NameChangeReminderInput[] {
+  return reminders.map((reminder) => reminder.reminder_key === reminderKey ? { ...reminder, status } : reminder);
 }

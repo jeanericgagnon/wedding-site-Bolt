@@ -229,6 +229,15 @@ export interface HydratedNameChangeWorkspace {
   reminders: NameChangeReminderInput[];
 }
 
+export interface NameChangeReminderSummary {
+  total: number;
+  pending: number;
+  scheduled: number;
+  sent: number;
+  dismissed: number;
+  highUrgencyOpen: number;
+}
+
 export interface NameChangeFormRegistryEntry {
   code: string;
   title: string;
