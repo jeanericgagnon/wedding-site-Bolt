@@ -1611,9 +1611,12 @@ export const DashboardMessages: React.FC = () => {
             </Card>
           </div>
 
-          <div className="lg:col-span-1">
-            <Card variant="bordered" padding="lg">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">Quick Stats</h2>
+          <div className="lg:col-span-1 space-y-6">
+            <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+              <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Snapshot</p>
+                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Communication health at a glance</h2>
+              </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary-light rounded-lg">
@@ -1700,8 +1703,11 @@ export const DashboardMessages: React.FC = () => {
               </div>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="mt-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">Starting points</h2>
+            <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+              <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Starting points</p>
+                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Draft from something useful, not from a blank page.</h2>
+              </div>
               <div className="space-y-2">
                 {[
                   { label: 'Save the Date', subject: 'Save the Date!', body: 'We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.' },
@@ -1727,8 +1733,9 @@ export const DashboardMessages: React.FC = () => {
           </div>
         </div>
 
-        <Card variant="bordered" padding="lg">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+        <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+          <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-text-primary">Message history</h2>
               <p className="text-xs text-text-tertiary mt-0.5">Filter by status, channel, or group to quickly find what you need.</p>
@@ -1753,6 +1760,7 @@ export const DashboardMessages: React.FC = () => {
                   <option key={aud} value={aud}>{aud}</option>
                 ))}
               </select>
+            </div>
             </div>
           </div>
 
