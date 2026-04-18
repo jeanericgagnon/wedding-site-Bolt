@@ -415,7 +415,9 @@ export const GuestPhotoSharing: React.FC = () => {
       setCopied(key);
       setTimeout(() => setCopied(''), 1400);
     } catch {
-      // ignore
+      window.prompt('Copy this link:', value);
+      setCopied(key);
+      setTimeout(() => setCopied(''), 1400);
     }
   };
 
