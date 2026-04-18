@@ -1429,6 +1429,12 @@ setWeddingSiteId('demo-site-id');
       toast('Vault removed');
       return;
     }
+    const { error: entryDeleteError } = await supabase
+      .from('vault_entries')
+      .delete()
+      .eq('vault_config_id', configId);
+    if (entryDeleteError) { toast('Couldn’t remove entries from this vault. Please try again.', 'error'); return; }
+
     const { error } = await supabase.from('vault_configs').delete().eq('id', configId);
     if (error) { toast('Couldn’t remove this vault. Please try again.', 'error'); return; }
     setVaultConfigs(prev => {
