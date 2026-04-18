@@ -1662,48 +1662,59 @@ export const DashboardMessages: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-2 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => navigate('/dashboard/photos')}>
-                    Open Photos
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={applySaveTheDatePreset}
-                    disabled={!canCompose}
-                  >
-                    Save-the-date draft
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => { void quickCreateSaveTheDateCampaign(); }}
-                    disabled={!canCompose}
-                  >
-                    Schedule save-the-date
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={applyDayOfAlertPreset}
-                    disabled={!canCompose}
-                  >
-                    Day-of update draft
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        subject: applyTemplateVariables('Share your photos with us 📸'),
-                        body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
-                      }));
-                    }}
-                    disabled={!canCompose}
-                  >
-                    Insert Photo Template
-                  </Button>
+                <div className="pt-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary mb-2">Launchpad</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                  {[
+                    {
+                      label: 'Open Photos',
+                      detail: 'Jump into the upload flow you are messaging about',
+                      action: () => navigate('/dashboard/photos'),
+                      disabled: false,
+                    },
+                    {
+                      label: 'Save-the-date draft',
+                      detail: 'Preload a clean announcement draft',
+                      action: applySaveTheDatePreset,
+                      disabled: !canCompose,
+                    },
+                    {
+                      label: 'Schedule save-the-date',
+                      detail: 'Create the campaign without manually building it first',
+                      action: () => { void quickCreateSaveTheDateCampaign(); },
+                      disabled: !canCompose,
+                    },
+                    {
+                      label: 'Day-of update draft',
+                      detail: 'Start with a time-sensitive guest update',
+                      action: applyDayOfAlertPreset,
+                      disabled: !canCompose,
+                    },
+                    {
+                      label: 'Insert photo template',
+                      detail: 'Drop in an upload request tied to your memories flow',
+                      action: () => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          subject: applyTemplateVariables('Share your photos with us 📸'),
+                          body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
+                        }));
+                      },
+                      disabled: !canCompose,
+                    },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={item.action}
+                      disabled={item.disabled}
+                      className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
+                    >
+                      <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                      <p className="mt-1 text-xs leading-5 text-text-secondary">{item.detail}</p>
+                    </button>
+                  ))}
+                  </div>
                 </div>
               </div>
             </Card>
