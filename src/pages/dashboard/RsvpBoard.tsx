@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
+import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 
 type GuestRow = {
   id: string;
@@ -86,9 +87,9 @@ export const DashboardRsvpBoard: React.FC = () => {
 
   const stats = useMemo(() => {
     const total = rows.length;
-    const confirmed = rows.filter((r) => r.rsvp_status === 'confirmed').length;
-    const declined = rows.filter((r) => r.rsvp_status === 'declined').length;
-    const pending = rows.filter((r) => r.rsvp_status === 'pending').length;
+    const confirmed = rows.filter((r) => isAttendingRsvpStatus(r.rsvp_status)).length;
+    const declined = rows.filter((r) => isDeclinedRsvpStatus(r.rsvp_status)).length;
+    const pending = rows.filter((r) => isPendingRsvpStatus(r.rsvp_status)).length;
     const checkedIn = rows.filter((r) => !!r.checked_in_at).length;
     const fallback = rows.map((row) => getRsvpFallbackState({
       rsvpStatus: row.rsvp_status,

@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 
 type GuestLite = {
   id: string;
@@ -175,8 +176,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const stats = useMemo(() => {
     const total = guests.length;
-    const confirmed = guests.filter((g) => g.rsvp_status === 'confirmed').length;
-    const pending = guests.filter((g) => g.rsvp_status === 'pending').length;
+    const confirmed = guests.filter((g) => isAttendingRsvpStatus(g.rsvp_status)).length;
+    const pending = guests.filter((g) => isPendingRsvpStatus(g.rsvp_status)).length;
     const checkedIn = guests.filter((g) => !!g.checked_in_at).length;
     return { total, confirmed, pending, checkedIn };
   }, [guests]);
@@ -215,7 +216,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       return eventGuestIds[eventId]?.size ?? 0;
     }
     if (alertForm.audience === 'checked-in') return guests.filter((g) => !!g.checked_in_at).length;
-    if (alertForm.audience === 'pending') return guests.filter((g) => g.rsvp_status === 'pending').length;
+    if (alertForm.audience === 'pending') return guests.filter((g) => isPendingRsvpStatus(g.rsvp_status)).length;
     return guests.length;
   })();
 

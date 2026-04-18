@@ -26,6 +26,7 @@ import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getPublishStateDescriptor } from '../../lib/publishState';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
+import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 
 interface OverviewStats {
   siteId: string | null;
@@ -57,7 +58,7 @@ interface OverviewStats {
 interface RecentRsvp {
   id: string;
   guestName: string;
-  status: 'confirmed' | 'declined';
+  status: 'confirmed' | 'declined' | 'accepted' | 'attending' | 'not_attending';
   receivedAt: string;
 }
 
@@ -273,16 +274,16 @@ export const DashboardOverview: React.FC = () => {
 
     try {
       if (isDemoMode) {
-        const confirmed = demoGuests.filter((g) => g.rsvp_status === 'confirmed');
-        const declined = demoGuests.filter((g) => g.rsvp_status === 'declined');
-        const pending = demoGuests.filter((g) => g.rsvp_status === 'pending');
+        const confirmed = demoGuests.filter((g) => isAttendingRsvpStatus(g.rsvp_status));
+        const declined = demoGuests.filter((g) => isDeclinedRsvpStatus(g.rsvp_status));
+        const pending = demoGuests.filter((g) => isPendingRsvpStatus(g.rsvp_status));
 
         const recentRsvps: RecentRsvp[] = [...confirmed, ...declined]
           .slice(0, 5)
           .map((g, i) => ({
             id: g.id,
             guestName: g.name || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || 'Guest',
-            status: g.rsvp_status as 'confirmed' | 'declined',
+            status: g.rsvp_status as RecentRsvp['status'],
             receivedAt: new Date(Date.now() - i * 60 * 60 * 1000).toISOString(),
           }));
 
@@ -404,18 +405,18 @@ export const DashboardOverview: React.FC = () => {
         .eq('is_active', true);
 
       const allGuests = guests ?? [];
-      const confirmed = allGuests.filter((g) => g.rsvp_status === 'confirmed');
-      const declined = allGuests.filter((g) => g.rsvp_status === 'declined');
-      const pending = allGuests.filter((g) => g.rsvp_status === 'pending');
+      const confirmed = allGuests.filter((g) => isAttendingRsvpStatus(g.rsvp_status));
+      const declined = allGuests.filter((g) => isDeclinedRsvpStatus(g.rsvp_status));
+      const pending = allGuests.filter((g) => isPendingRsvpStatus(g.rsvp_status));
       const contactableGuestCount = allGuests.filter((g) => Boolean(g.email || g.phone)).length;
 
       const recentRsvps: RecentRsvp[] = allGuests
-        .filter((g) => g.rsvp_status !== 'pending' && g.rsvp_received_at)
+        .filter((g) => hasRespondedRsvpStatus(g.rsvp_status) && g.rsvp_received_at)
         .slice(0, 5)
         .map((g) => ({
           id: g.id,
           guestName: g.name || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || 'Guest',
-          status: g.rsvp_status as 'confirmed' | 'declined',
+          status: g.rsvp_status as RecentRsvp['status'],
           receivedAt: g.rsvp_received_at!,
         }));
 

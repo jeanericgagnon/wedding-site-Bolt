@@ -9,6 +9,7 @@ import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
 import { getPlusOneState } from '../../lib/plusOneState';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
+import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
@@ -1279,7 +1280,7 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleCopyMissingMealChecklist = async () => {
-    const guestsNeedingMeals = filteredGuests.filter((guest) => guest.rsvp_status === 'confirmed' && !guest.rsvp?.meal_choice);
+    const guestsNeedingMeals = filteredGuests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status) && !guest.rsvp?.meal_choice);
     if (guestsNeedingMeals.length === 0) {
       toast('No missing meal choices in this segment.', 'error');
       return;
@@ -1848,12 +1849,12 @@ Proceed with send?`)) return;
   };
 
   const exportRsvpRespondersCSV = () => {
-    const responders = guests.filter((g) => g.rsvp_status !== 'pending');
+    const responders = guests.filter((g) => hasRespondedRsvpStatus(g.rsvp_status));
     exportCSV(responders, 'guests-rsvp-responders');
   };
 
   const exportPendingGuestsCSV = () => {
-    exportCSV(guests.filter((g) => g.rsvp_status === 'pending'), 'guests-pending-rsvp');
+    exportCSV(guests.filter((g) => isPendingRsvpStatus(g.rsvp_status)), 'guests-pending-rsvp');
   };
 
   const exportMissingMealCSV = () => {
@@ -1861,11 +1862,11 @@ Proceed with send?`)) return;
   };
 
   const exportAttendingGuestsCSV = () => {
-    exportCSV(guests.filter((g) => g.rsvp_status === 'confirmed'), 'guests-attending');
+    exportCSV(guests.filter((g) => isAttendingRsvpStatus(g.rsvp_status)), 'guests-attending');
   };
 
   const exportDeclinedGuestsCSV = () => {
-    exportCSV(guests.filter((g) => g.rsvp_status === 'declined'), 'guests-declined');
+    exportCSV(guests.filter((g) => isDeclinedRsvpStatus(g.rsvp_status)), 'guests-declined');
   };
 
   const exportThankYouDueCSV = () => {
@@ -2646,10 +2647,10 @@ Proceed with send?`)) return;
 
   const stats = {
     total: guests.length,
-    confirmed: guests.filter(g => g.rsvp_status === 'confirmed').length,
-    declined: guests.filter(g => g.rsvp_status === 'declined').length,
-    pending: guests.filter(g => g.rsvp_status === 'pending').length,
-    rsvpRate: guests.length > 0 ? Math.round(((guests.filter(g => g.rsvp_status !== 'pending').length) / guests.length) * 100) : 0,
+    confirmed: guests.filter(g => isAttendingRsvpStatus(g.rsvp_status)).length,
+    declined: guests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length,
+    pending: guests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length,
+    rsvpRate: guests.length > 0 ? Math.round(((guests.filter(g => hasRespondedRsvpStatus(g.rsvp_status)).length) / guests.length) * 100) : 0,
   };
 
   const plannerHandoff = {
@@ -2773,7 +2774,7 @@ Proceed with send?`)) return;
 
   const mealSummary = {
     withMealChoice: filteredGuests.filter((guest) => Boolean(guest.rsvp?.meal_choice)).length,
-    missingMealChoice: filteredGuests.filter((guest) => guest.rsvp_status === 'confirmed' && !guest.rsvp?.meal_choice).length,
+    missingMealChoice: filteredGuests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status) && !guest.rsvp?.meal_choice).length,
     withDietaryNote: filteredGuests.filter((guest) => Boolean(extractDietaryNote(guest.rsvp?.custom_answers as Record<string, unknown> | null | undefined, guest.notes))).length,
   };
 
@@ -2796,8 +2797,8 @@ Proceed with send?`)) return;
     plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
     ceremonyNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.ceremony === false).length,
     receptionNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.reception === false).length,
-    noResponse: guests.filter(g => g.rsvp_status === 'pending').length,
-    pendingNoEmail: guests.filter(g => g.rsvp_status === 'pending' && !g.email).length,
+    noResponse: guests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length,
+    pendingNoEmail: guests.filter(g => isPendingRsvpStatus(g.rsvp_status) && !g.email).length,
   };
 
 
@@ -3065,7 +3066,7 @@ Proceed with send?`)) return;
     guests
       .filter((g) => {
         const guest = g as GuestWithRSVP & { thank_you_sent_at?: string | null };
-        return g.rsvp_status === 'confirmed' && !guest.thank_you_sent_at;
+        return isAttendingRsvpStatus(g.rsvp_status) && !guest.thank_you_sent_at;
       })
       .map((g) => g.id)
   );
