@@ -534,7 +534,7 @@ export const DashboardGuests: React.FC = () => {
           phone: null,
           plus_one_allowed: false,
           plus_one_name: null,
-          rsvp_received_at: guest.rsvp_status !== 'pending' ? new Date().toISOString() : null,
+          rsvp_received_at: hasRespondedRsvpStatus(guest.rsvp_status) ? new Date().toISOString() : null,
           rsvp: demoRSVPs.find(r => r.guest_id === guest.id),
         }));
         setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
@@ -1724,7 +1724,7 @@ Proceed with send?`)) return;
 
   const openAssistedRsvpModal = (guest: GuestWithRSVP) => {
     setAssistedRsvpGuest(guest);
-    setAssistedRsvpStatus(guest.rsvp_status === 'declined' ? 'declined' : 'confirmed');
+    setAssistedRsvpStatus(isDeclinedRsvpStatus(guest.rsvp_status) ? 'declined' : 'confirmed');
     setAssistedRsvpSource('phone');
     setAssistedRsvpNotes('');
   };
@@ -2537,7 +2537,7 @@ Proceed with send?`)) return;
         (filter === 'reception-no' && eventSelections?.reception === false) ||
         (filter === 'missing-meal' && !!guest.rsvp?.attending && !guest.rsvp?.meal_choice) ||
         (filter === 'plusone-missing' && !!guest.plus_one_allowed && !!guest.rsvp?.attending && !guest.rsvp?.plus_one_name) ||
-        (filter === 'pending-no-email' && guest.rsvp_status === 'pending' && !guest.email) ||
+        (filter === 'pending-no-email' && isPendingRsvpStatus(guest.rsvp_status) && !guest.email) ||
         (filter === 'no-contact' && !guest.email && !guest.phone) ||
         (filter === 'missing-address' && !(guest as GuestWithRSVP & { mailing_address_line1?: string | null }).mailing_address_line1) ||
         (filter === 'due-reminder' && isDueReminder(guest)) ||
@@ -2563,10 +2563,10 @@ Proceed with send?`)) return;
   const issueCountForGuest = (guest: GuestWithRSVP) => {
     let issues = 0;
     const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
-    if (guest.rsvp_status === 'pending') issues += 1;
+    if (isPendingRsvpStatus(guest.rsvp_status)) issues += 1;
     if (guest.rsvp?.attending && !guest.rsvp?.meal_choice) issues += 1;
     if (guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name) issues += 1;
-    if (guest.rsvp_status === 'pending' && !guest.email && !guest.phone) issues += 1;
+    if (isPendingRsvpStatus(guest.rsvp_status) && !guest.email && !guest.phone) issues += 1;
     if (ev?.ceremony === false || ev?.reception === false) issues += 1;
     return issues;
   };
@@ -2574,11 +2574,11 @@ Proceed with send?`)) return;
   const priorityScore = (guest: GuestWithRSVP) => {
     let score = 0;
     const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
-    if (guest.rsvp_status === 'pending') score += 100;
+    if (isPendingRsvpStatus(guest.rsvp_status)) score += 100;
     if (guest.rsvp?.attending && !guest.rsvp?.meal_choice) score += 60;
     if (guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name) score += 40;
     if (ev?.ceremony === false || ev?.reception === false) score += 15;
-    if (guest.rsvp_status === 'pending' && !guest.email) score += 20;
+    if (isPendingRsvpStatus(guest.rsvp_status) && !guest.email) score += 20;
     if (daysToWedding !== null && daysToWedding <= 30) score += 15;
     return score;
   };
@@ -2861,7 +2861,7 @@ Proceed with send?`)) return;
     const guestName = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
     const eventSelections = parseRsvpEventSelections(g.rsvp?.notes ?? null);
 
-    if (g.rsvp_status === 'pending') {
+    if (isPendingRsvpStatus(g.rsvp_status)) {
       items.push({ guestId: g.id, guestName, issue: 'No RSVP response yet', filter: 'pending' });
     }
     if (g.rsvp?.attending && !g.rsvp?.meal_choice) {
@@ -3053,7 +3053,7 @@ Proceed with send?`)) return;
   const reminderCadenceMs = reminderCadenceDays * 24 * 60 * 60 * 1000;
   const isDueReminder = (g: GuestWithRSVP) => {
     const guest = g as GuestWithRSVP & { reminder_last_sent_at?: string | null; invitation_sent_at?: string | null };
-    if (!guest.email || guest.rsvp_status !== 'pending') return false;
+    if (!guest.email || !isPendingRsvpStatus(guest.rsvp_status)) return false;
     const lastSentRaw = guest.reminder_last_sent_at || guest.invitation_sent_at;
     const lastSent = lastSentRaw ? new Date(lastSentRaw) : null;
     if (!lastSent || Number.isNaN(lastSent.getTime())) return true;
@@ -4111,7 +4111,7 @@ Proceed with send?`)) return;
                           <td className="px-4 py-2.5">
                             <div className="flex flex-col gap-1">
                               {getStatusBadge(guest.rsvp_status)}
-                              {guest.rsvp_received_at && guest.rsvp_status !== 'pending' && (
+                              {guest.rsvp_received_at && hasRespondedRsvpStatus(guest.rsvp_status) && (
                                 <span className="text-xs text-text-tertiary break-words">
                                   {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </span>

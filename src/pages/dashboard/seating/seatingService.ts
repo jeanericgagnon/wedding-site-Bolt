@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../../lib/rsvpStatus';
 
 let hasEventRsvpsTable: boolean | null = null;
 
@@ -285,10 +286,10 @@ export async function getEligibleGuests(
 
     let isAttending: boolean;
     if (hasEventInvitations) {
-      const baseAccepted = g.rsvp_status === 'attending' || g.rsvp_status === 'accepted';
+      const baseAccepted = isAttendingRsvpStatus(g.rsvp_status);
       isAttending = isInvitedToEvent && (typeof eventRsvp === 'boolean' ? eventRsvp : baseAccepted);
     } else {
-      isAttending = g.rsvp_status === 'attending' || g.rsvp_status === 'accepted';
+      isAttending = isAttendingRsvpStatus(g.rsvp_status);
     }
 
     return {
@@ -318,8 +319,8 @@ export async function getEventCounters(
 
   const invited = guests.filter(g => g.is_invited_to_event).length;
   const attending = guests.filter(g => g.is_attending).length;
-  const declined = guests.filter(g => g.rsvp_status === 'declined' || g.rsvp_status === 'not_attending').length;
-  const pending = guests.filter(g => !g.rsvp_status || g.rsvp_status === 'pending').length;
+  const declined = guests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
+  const pending = guests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
   const seated = guests.filter(g => g.is_attending && validAssignmentGuestIds.has(g.id)).length;
   const unassigned = attending - seated;
 

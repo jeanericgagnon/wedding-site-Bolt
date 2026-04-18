@@ -18,6 +18,7 @@ import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
 import { supabase } from '../../lib/supabase';
+import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -815,7 +816,7 @@ export const DashboardSeating: React.FC = () => {
             rsvp_status: g.rsvp_status,
             household_id: null,
             group_name: null,
-            is_attending: g.rsvp_status === 'confirmed',
+            is_attending: isAttendingRsvpStatus(g.rsvp_status),
             is_invited_to_event: true,
           };
         });
@@ -825,8 +826,8 @@ export const DashboardSeating: React.FC = () => {
         setAssignments(saved.assignments);
         setAllGuests(guestsData);
         const attending = guestsData.filter(g => g.is_attending).length;
-        const declined = guestsData.filter(g => g.rsvp_status === 'declined' || g.rsvp_status === 'not_attending').length;
-        const pending = guestsData.filter(g => !g.rsvp_status || g.rsvp_status === 'pending').length;
+        const declined = guestsData.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
+        const pending = guestsData.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
         const seated = new Set(saved.assignments.map(a => a.guest_id)).size;
         setCounters({ invited: guestsData.length, attending, declined, pending, seated, unassigned: Math.max(attending - seated, 0) });
         setInvalidCount(0);
