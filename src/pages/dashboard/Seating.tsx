@@ -11,7 +11,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2 } from 'lucide-react';
+import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2, RefreshCw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
@@ -1455,6 +1455,9 @@ export const DashboardSeating: React.FC = () => {
             </Button>
             <Button variant={checkInMode ? 'primary' : 'outline'} size="sm" onClick={() => setCheckInMode(v => !v)}>
               <CheckCircle2 className="w-4 h-4 mr-1" /> {checkInMode ? 'Check-in: On' : 'Check-in Mode'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => void handleCheckDrift()}>
+              <RefreshCw className="w-4 h-4 mr-1" /> Check assignments
             </Button>
             <div className="inline-flex rounded-xl border border-border bg-surface-subtle p-0.5">
               <button
