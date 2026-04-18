@@ -488,6 +488,7 @@ export const DashboardSettings: React.FC = () => {
     setVisibilitySaving(true);
     setVisibilityError(null);
     setVisibilitySuccess(null);
+    let nextGuestAccessToken: string | null = null;
     try {
       const updates: Record<string, unknown> = {
         privacy_mode: privacyMode,
@@ -507,7 +508,7 @@ export const DashboardSettings: React.FC = () => {
         const { data: tokenData, error: tokenErr } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
         if (tokenErr) throw tokenErr;
         updates.guest_access_token = tokenData as string;
-        setGuestAccessToken(tokenData as string);
+        nextGuestAccessToken = tokenData as string;
       }
 
       const { error } = await supabase
@@ -515,6 +516,7 @@ export const DashboardSettings: React.FC = () => {
         .update(updates)
         .eq('id', weddingSiteId);
       if (error) throw error;
+      if (nextGuestAccessToken) setGuestAccessToken(nextGuestAccessToken);
       setSitePassword('');
       setVisibilitySuccess('Privacy settings saved.');
     } catch (err) {
