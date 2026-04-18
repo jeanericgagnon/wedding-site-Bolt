@@ -1,6 +1,6 @@
 import type { NameChangeFormRegistryEntry, NameChangeInstitutionEntry } from './types';
 
-export const NAME_CHANGE_ENGINE_VERSION = '2026-04-18.1';
+export const NAME_CHANGE_ENGINE_VERSION = '2026-04-18.2';
 
 export const NAME_CHANGE_FORM_REGISTRY: NameChangeFormRegistryEntry[] = [
   {
@@ -67,6 +67,9 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     launchPriority: 10,
     triggers: ['employment'],
     notes: 'Update payroll and benefits after SSA so tax reporting lines up cleanly.',
+    suggestedTiming: 'Within 1-3 business days after SSA confirmation',
+    evidenceNeeded: ['Updated Social Security record', 'Updated photo ID when available', 'Payroll or benefits account details'],
+    reminderDaysAfterPrimaryId: 2,
   },
   {
     key: 'banks',
@@ -75,6 +78,9 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     launchPriority: 20,
     triggers: ['all'],
     notes: 'Usually easiest after your main photo ID reflects the new name.',
+    suggestedTiming: 'Within the first week after DMV or passport reflects the new name',
+    evidenceNeeded: ['Updated photo ID', 'Legal proof document', 'Debit / credit or account details'],
+    reminderDaysAfterPrimaryId: 5,
   },
   {
     key: 'insurance',
@@ -83,6 +89,9 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     launchPriority: 30,
     triggers: ['all'],
     notes: 'Update policyholder names so claims and cards stay consistent.',
+    suggestedTiming: 'During the first 1-2 weeks after primary ID changes',
+    evidenceNeeded: ['Updated photo ID', 'Policy numbers', 'Legal proof document'],
+    reminderDaysAfterPrimaryId: 7,
   },
   {
     key: 'voter-registration',
@@ -91,6 +100,9 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     launchPriority: 40,
     triggers: ['california_resident'],
     notes: 'California can be updated after your DMV record is settled.',
+    suggestedTiming: 'After California DMV reflects the new name',
+    evidenceNeeded: ['Updated California DMV record'],
+    reminderDaysAfterPrimaryId: 10,
   },
   {
     key: 'tsa-precheck',
@@ -99,6 +111,9 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     launchPriority: 50,
     triggers: ['passport'],
     notes: 'Do this after passport or Real ID updates so future travel bookings match.',
+    suggestedTiming: 'Immediately after passport or Real ID details match travel bookings',
+    evidenceNeeded: ['Updated passport or Real ID', 'Known traveler / loyalty account details'],
+    reminderDaysAfterPrimaryId: 1,
   },
   {
     key: 'professional-licenses',
@@ -107,5 +122,8 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     launchPriority: 60,
     triggers: ['employment'],
     notes: 'This matters for healthcare, legal, education, and other licensed work.',
+    suggestedTiming: 'Within 1-2 weeks unless your employer or regulator needs it sooner',
+    evidenceNeeded: ['Updated ID', 'License numbers', 'Legal proof document'],
+    reminderDaysAfterPrimaryId: 10,
   },
 ];

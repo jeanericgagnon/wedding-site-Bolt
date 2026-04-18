@@ -66,6 +66,7 @@ describe('name change engine', () => {
     expect(plan.steps.some((step) => step.title.includes('passport'))).toBe(true);
     const institutionsStep = plan.steps.find((step) => step.phase === 'institutional');
     expect(institutionsStep?.institutions).toContain('Employer payroll / HR');
+    expect(plan.steps.find((step) => step.id === 'institution-irs-employer')?.timing).toContain('SSA');
   });
 
   it('surfaces blockers when the legal proof doc is missing', () => {
@@ -79,5 +80,12 @@ describe('name change engine', () => {
   it('pushes travel-sensitive caution notes when upcoming travel is flagged', () => {
     const plan = buildNameChangePlan(makeInput({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true } }));
     expect(plan.summary.cautionNotes.some((note) => note.includes('Upcoming travel'))).toBe(true);
+    expect(plan.steps.find((step) => step.id === 'institution-tsa-precheck')?.description).toContain('travel bookings');
+  });
+
+  it('omits employment rollout institutions when the user is not employed', () => {
+    const plan = buildNameChangePlan(makeInput({ employment_status: 'not_employed' }));
+    expect(plan.steps.some((step) => step.id === 'institution-irs-employer')).toBe(false);
+    expect(plan.steps.some((step) => step.id === 'institution-professional-licenses')).toBe(false);
   });
 });

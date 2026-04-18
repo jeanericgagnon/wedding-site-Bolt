@@ -127,6 +127,21 @@ function buildStep(step: Omit<NameChangePlanStep, 'owner'>): NameChangePlanStep 
   };
 }
 
+function buildInstitutionRolloutSteps(institutions: NameChangeInstitutionEntry[], legalProofReady: boolean): NameChangePlanStep[] {
+  return institutions.map((institution) => buildStep({
+    id: `institution-${institution.key}`,
+    phase: 'institutional',
+    title: `Update ${institution.label}`,
+    description: institution.notes,
+    timing: institution.suggestedTiming,
+    status: legalProofReady ? 'later' : 'blocked',
+    blockers: legalProofReady ? [] : ['Primary identity records should move first.'],
+    forms: [],
+    institutions: [institution.label],
+    evidenceNeeded: institution.evidenceNeeded,
+  }));
+}
+
 export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePlan {
   const eligibility = evaluateCaliforniaNameChangeEligibility(input);
   const legalBasis = eligibility.decision === 'court_order_required' ? 'court_order' : eligibility.legalBasis;
@@ -204,11 +219,13 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     }));
   }
 
+  const institutionRolloutSteps = buildInstitutionRolloutSteps(institutionalTargets, legalProofReady);
+
   steps.push(buildStep({
     id: 'institutions-rollout',
     phase: 'institutional',
     title: 'Roll the new name through the rest of your accounts',
-    description: 'This is where the guidance engine shifts from government records to the institutions that rely on those records.',
+    description: 'This is where the guidance engine shifts from government records to the institutions that rely on those records, in priority order.',
     timing: 'After at least one primary government ID reflects the new name',
     status: legalProofReady ? 'later' : 'blocked',
     blockers: legalProofReady ? [] : ['Primary identity records should move first.'],
@@ -216,6 +233,8 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     institutions: institutionalTargets.map((institution) => institution.label),
     evidenceNeeded: ['Updated photo ID', 'Legal proof document', 'Account-specific supporting info'],
   }));
+
+  steps.push(...institutionRolloutSteps);
 
   const recommendedOrder = steps.map((step) => step.title);
   const cautionNotes = [

@@ -205,6 +205,9 @@ export interface NameChangeInstitutionEntry {
   launchPriority: number;
   triggers: Array<'all' | 'employment' | 'passport' | 'california_resident'>;
   notes: string;
+  suggestedTiming: string;
+  evidenceNeeded: string[];
+  reminderDaysAfterPrimaryId: number;
 }
 
 export interface NameChangeEligibilityDecision {
