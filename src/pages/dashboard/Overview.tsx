@@ -27,6 +27,7 @@ import { getPublishStateDescriptor } from '../../lib/publishState';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
+import { useToast } from '../../components/ui/Toast';
 
 interface OverviewStats {
   siteId: string | null;
@@ -110,6 +111,7 @@ function resolveWeddingDateFromData(
 }
 
 export const DashboardOverview: React.FC = () => {
+  const { toast } = useToast();
 
 
   async function markBuilderFieldAsUserEdited(fieldPath: string) {
@@ -488,7 +490,11 @@ export const DashboardOverview: React.FC = () => {
   });
 
   const hideSuggestion = async (id: string) => {
-    await supabase.from('interactive_suggestions').update({ is_hidden: true }).eq('id', id);
+    const { error } = await supabase.from('interactive_suggestions').update({ is_hidden: true }).eq('id', id);
+    if (error) {
+      toast(error.message || 'Could not hide that suggestion.', 'error');
+      return;
+    }
     setInteractiveSuggestions((prev) => prev.filter((s) => s.id !== id));
   };
 

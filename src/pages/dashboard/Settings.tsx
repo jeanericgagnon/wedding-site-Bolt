@@ -15,6 +15,7 @@ import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type Bill
 import { useAuth } from '../../hooks/useAuth';
 import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { useToast } from '../../components/ui/Toast';
 
 
 interface RSVPQuestionSetting {
@@ -39,6 +40,7 @@ const LOCAL_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 
 export const DashboardSettings: React.FC = () => {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const { user, isDemoMode, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'account' | 'team' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
@@ -527,9 +529,15 @@ export const DashboardSettings: React.FC = () => {
     try {
       const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
       if (error) throw error;
-      await supabase.from('wedding_sites').update({ guest_access_token: data as string }).eq('id', weddingSiteId);
+      const { error: updateError } = await supabase
+        .from('wedding_sites')
+        .update({ guest_access_token: data as string })
+        .eq('id', weddingSiteId);
+      if (updateError) throw updateError;
       setGuestAccessToken(data as string);
-    } catch {
+      toast('Guest access token regenerated.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not regenerate guest access token.', 'error');
     }
   };
 
