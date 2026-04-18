@@ -1281,11 +1281,6 @@ export const DashboardMessages: React.FC = () => {
             ))}
           </div>
         </div>
-        {messagesRole === 'viewer' && (
-          <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
-            Viewer mode is on — writing and sending are turned off here.
-          </div>
-        )}
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1337,7 +1332,12 @@ export const DashboardMessages: React.FC = () => {
               {smsTransactions.length === 0 ? (
                 <p className="text-xs text-text-tertiary">No credit activity yet. Buy credits when you’re ready to send texts.</p>
               ) : (
-                <div className="space-y-2 max-h-56 overflow-auto pr-1">
+                <>
+                  <div className="mb-3 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Balance snapshot</p>
+                    <p className="mt-1 text-sm font-medium text-text-primary">{smsCredits} credits available{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring soon` : ''}</p>
+                  </div>
+                  <div className="space-y-2 max-h-56 overflow-auto pr-1">
                   {smsTransactions.map((tx) => (
                     <div key={tx.id} className="flex items-center justify-between gap-3 text-xs border border-border rounded-lg px-3 py-2 bg-surface-subtle">
                       <div>
@@ -1350,7 +1350,8 @@ export const DashboardMessages: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                </>
               )}
             </Card>
           </div>

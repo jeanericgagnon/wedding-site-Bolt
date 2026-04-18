@@ -1126,6 +1126,7 @@ export const DashboardSeating: React.FC = () => {
 
   async function handleReset() {
     if (!seatingEvent) return;
+    setSeatingBusyAction('reset');
     try {
       if (!isDemoMode) {
         await resetSeating(seatingEvent.id);
@@ -1135,6 +1136,8 @@ export const DashboardSeating: React.FC = () => {
       toast('Seating reset', 'success');
     } catch {
       toast('Couldn’t reset seating right now. Please try again.', 'error');
+    } finally {
+      setSeatingBusyAction(null);
     }
   }
 
@@ -1670,8 +1673,8 @@ export const DashboardSeating: React.FC = () => {
           <div className="p-4 bg-error/5 border border-error/20 rounded-xl flex items-start justify-between gap-4">
             <p className="text-sm text-text-primary">Reset all seating assignments for this event? This cannot be undone.</p>
             <div className="flex gap-2 flex-shrink-0">
-              <Button size="sm" variant="outline" onClick={handleReset} className="border-error text-error hover:bg-error/5">Reset</Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowResetConfirm(false)}>Cancel</Button>
+              <Button size="sm" variant="outline" onClick={handleReset} disabled={seatingBusyAction !== null} className="border-error text-error hover:bg-error/5">{seatingBusyAction === 'reset' ? 'Resetting…' : 'Reset'}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowResetConfirm(false)} disabled={seatingBusyAction !== null}>Cancel</Button>
             </div>
           </div>
         )}
