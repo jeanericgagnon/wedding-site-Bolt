@@ -1415,11 +1415,19 @@ export const DashboardGuests: React.FC = () => {
             siteUrl: weddingSiteInfo?.site_url ?? null,
             inviteToken: guest.invite_token ?? null,
           });
-          await supabase.from('guests').update({ invitation_sent_at: new Date().toISOString(), reminder_last_sent_at: new Date().toISOString() }).eq('id', guest.id);
+          const sentAtIso = new Date().toISOString();
+          const { error: guestUpdateError } = await supabase
+            .from('guests')
+            .update({ invitation_sent_at: sentAtIso, reminder_last_sent_at: sentAtIso })
+            .eq('id', guest.id);
+          if (guestUpdateError) throw guestUpdateError;
           successCount += 1;
         } catch {
           // continue
         }
+      }
+      if (successCount > 0) {
+        await fetchGuests();
       }
       toast(successCount > 0 ? `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}` : 'No selected reminders were sent.', successCount > 0 ? 'success' : 'error');
     } finally {
@@ -1473,10 +1481,12 @@ Proceed with send?`)) return;
             inviteToken: guest.invite_token ?? null,
           });
 
-          await supabase
+          const sentAtIso = new Date().toISOString();
+          const { error: guestUpdateError } = await supabase
             .from('guests')
-            .update({ invitation_sent_at: new Date().toISOString(), reminder_last_sent_at: new Date().toISOString() })
+            .update({ invitation_sent_at: sentAtIso, reminder_last_sent_at: sentAtIso })
             .eq('id', guest.id);
+          if (guestUpdateError) throw guestUpdateError;
 
           successCount += 1;
         } catch {
@@ -1488,6 +1498,7 @@ Proceed with send?`)) return;
         const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(`Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`, 'success');
+        await fetchGuests();
       } else {
         toast('No reminders were sent. Please try again.', 'error');
       }
@@ -1529,10 +1540,11 @@ Proceed with send?`)) return;
             siteUrl: weddingSiteInfo?.site_url ?? null,
             inviteToken: guest.invite_token ?? null,
           });
-          await supabase
+          const { error: guestUpdateError } = await supabase
             .from('guests')
             .update({ reminder_last_sent_at: new Date().toISOString() })
             .eq('id', guest.id);
+          if (guestUpdateError) throw guestUpdateError;
           successCount += 1;
         } catch {
           // continue
@@ -1544,7 +1556,6 @@ Proceed with send?`)) return;
         setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(`Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}`, 'success');
         await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       } else {
         toast('No due reminders were sent. Please try again.', 'error');
       }
