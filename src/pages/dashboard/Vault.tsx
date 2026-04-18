@@ -336,6 +336,9 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [photosOnlyRecap, setPhotosOnlyRecap] = useState(true);
   const [resolvedEntryLinks, setResolvedEntryLinks] = useState<Record<string, string>>({});
   const [resolvingEntryId, setResolvingEntryId] = useState<string | null>(null);
+  const [entryOverrides, setEntryOverrides] = useState<Record<string, Partial<VaultEntry>>>({});
+
+  const displayEntries = entries.map((entry) => ({ ...entry, ...(entryOverrides[entry.id] ?? {}) }));
 
   const unlockDate = weddingDate
     ? new Date(new Date(weddingDate).setFullYear(weddingDate.getFullYear() + config.duration_years))
@@ -413,14 +416,14 @@ const VaultCard: React.FC<VaultCardProps> = ({
   }
 
   async function handleGenerateRecap() {
-    if (entries.length === 0 || generatingRecap) return;
+    if (displayEntries.length === 0 || generatingRecap) return;
     setGeneratingRecap(true);
     try {
       await onSaveEntry({
         vault_config_id: config.id,
         vault_year: config.duration_years,
         title: `${config.duration_years}-Year AI Recap`,
-        content: buildAnniversaryRecap(entries, config.duration_years, recapStyle, recapLength, photosOnlyRecap),
+        content: buildAnniversaryRecap(displayEntries, config.duration_years, recapStyle, recapLength, photosOnlyRecap),
         author_name: 'DayOf AI Recap',
         attachment_url: null,
         attachment_name: null,
@@ -432,7 +435,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
   async function handleRegenerateLatestRecap() {
     if (generatingRecap) return;
-    const latestRecap = [...entries]
+    const latestRecap = [...displayEntries]
       .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
@@ -443,21 +446,34 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
     setGeneratingRecap(true);
     try {
-      const nextContent = buildAnniversaryRecap(entries, config.duration_years, recapStyle, recapLength, photosOnlyRecap);
-      await supabase
+      const nextContent = buildAnniversaryRecap(displayEntries, config.duration_years, recapStyle, recapLength, photosOnlyRecap);
+      const nextTitle = `${config.duration_years}-Year AI Recap (${recapStyle[0].toUpperCase()}${recapStyle.slice(1)})`;
+      const { error } = await supabase
         .from('vault_entries')
         .update({
-          title: `${config.duration_years}-Year AI Recap (${recapStyle[0].toUpperCase()}${recapStyle.slice(1)})`,
+          title: nextTitle,
           content: nextContent,
           author_name: 'DayOf AI Recap',
         })
         .eq('id', latestRecap.id);
+      if (error) throw error;
+      setEntryOverrides((prev) => ({
+        ...prev,
+        [latestRecap.id]: {
+          ...prev[latestRecap.id],
+          title: nextTitle,
+          content: nextContent,
+          author_name: 'DayOf AI Recap',
+        },
+      }));
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Could not refresh the AI recap.');
     } finally {
       setGeneratingRecap(false);
     }
   }
 
-  const latestRecap = [...entries]
+  const latestRecap = [...displayEntries]
     .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
   const hasRecap = !!latestRecap;
@@ -504,7 +520,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap self-start sm:self-auto">
-          <span className="text-xs text-text-tertiary px-2 py-1 rounded-md bg-surface-subtle border border-border">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
+          <span className="text-xs text-text-tertiary px-2 py-1 rounded-md bg-surface-subtle border border-border">{displayEntries.length} {displayEntries.length === 1 ? 'entry' : 'entries'}</span>
 
           {siteSlug && config.is_enabled && (
             <button
@@ -555,14 +571,14 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
       {expanded && (
         <div className="mt-4 space-y-3">
-          {entries.length === 0 && !showForm && (
+          {displayEntries.length === 0 && !showForm && (
             <div className="text-center py-6 border border-dashed border-border rounded-xl">
               <p className="text-sm text-text-secondary mb-1">No entries yet</p>
               <p className="text-xs text-text-tertiary">Add a note, photo, video, voice note, or link for this anniversary.</p>
             </div>
           )}
 
-          {entries.map(entry => {
+          {displayEntries.map(entry => {
             const unlocked = isEntryUnlocked(entry);
             const entryUnlockDate = getEntryUnlockDate(entry);
             const entryUnlockLabel = entryUnlockDate
@@ -659,11 +675,11 @@ const VaultCard: React.FC<VaultCardProps> = ({
             );
           })}
 
-          {entries.length > 0 && entries.every((entry) => !isEntryUnlocked(entry)) && (
+          {displayEntries.length > 0 && displayEntries.every((entry) => !isEntryUnlocked(entry)) && (
             <div className="p-4 bg-surface-subtle rounded-xl border border-dashed border-border text-center space-y-1">
               <Lock className="w-5 h-5 text-text-tertiary mx-auto mb-1" />
               <p className="text-sm font-medium text-text-secondary">
-                {entries.length} {entries.length === 1 ? 'entry' : 'entries'} sealed
+                {displayEntries.length} {displayEntries.length === 1 ? 'entry' : 'entries'} sealed
               </p>
               <p className="text-xs text-text-tertiary">
                 {config.is_enabled
