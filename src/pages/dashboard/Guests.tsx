@@ -12,6 +12,7 @@ import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
+import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds } from '../../lib/eventRsvpCleanup';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -1010,11 +1011,7 @@ export const DashboardGuests: React.FC = () => {
 
       const existingInvitationIds = (existingInvitationRows ?? []).map((row) => row.id as string);
       if (existingInvitationIds.length > 0) {
-        const { error: clearEventRsvpsError } = await supabase
-          .from('event_rsvps')
-          .delete()
-          .in('event_invitation_id', existingInvitationIds);
-        if (clearEventRsvpsError) throw clearEventRsvpsError;
+        await deleteEventRsvpsByInvitationIds(existingInvitationIds);
       }
 
       const { error: clearInvitesError } = await supabase
@@ -1698,11 +1695,7 @@ Proceed with send?`)) return;
         if (invitationLookupError) throw invitationLookupError;
 
         if (invitationRow?.id) {
-          const { error: eventRsvpDeleteError } = await supabase
-            .from('event_rsvps')
-            .delete()
-            .eq('event_invitation_id', invitationRow.id);
-          if (eventRsvpDeleteError) throw eventRsvpDeleteError;
+          await deleteEventRsvpByInvitationId(invitationRow.id);
         }
 
         const { error: inviteDeleteError } = await supabase
@@ -2050,11 +2043,7 @@ Proceed with send?`)) return;
         const invitationIds = (invitationRows ?? []).map((row) => row.id as string);
 
         if (invitationIds.length > 0) {
-          const { error: eventRsvpDeleteError } = await supabase
-            .from('event_rsvps')
-            .delete()
-            .in('event_invitation_id', invitationIds);
-          if (eventRsvpDeleteError) throw eventRsvpDeleteError;
+          await deleteEventRsvpsByInvitationIds(invitationIds);
         }
         const { error: eventInvitationDeleteError } = await supabase.from('event_invitations').delete().in('guest_id', guestIds);
         if (eventInvitationDeleteError) throw eventInvitationDeleteError;

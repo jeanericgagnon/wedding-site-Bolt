@@ -10,6 +10,7 @@ import { demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
+import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds } from '../../lib/eventRsvpCleanup';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
 interface ItineraryEvent {
@@ -992,12 +993,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
         if (invitationLookupError) throw invitationLookupError;
 
         if (invitationRow?.id) {
-          const { error: eventRsvpDeleteError } = await supabase
-            .from('event_rsvps')
-            .delete()
-            .eq('event_invitation_id', invitationRow.id);
-
-          if (eventRsvpDeleteError) throw eventRsvpDeleteError;
+          await deleteEventRsvpByInvitationId(invitationRow.id);
         }
 
         const { error } = await supabase
@@ -1063,12 +1059,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
       const invitationIds = (invitationRows ?? []).map((row: { id: string }) => row.id);
       if (invitationIds.length > 0) {
-        const { error: eventRsvpDeleteError } = await supabase
-          .from('event_rsvps')
-          .delete()
-          .in('event_invitation_id', invitationIds);
-
-        if (eventRsvpDeleteError) throw eventRsvpDeleteError;
+        await deleteEventRsvpsByInvitationIds(invitationIds);
       }
 
       const { error } = await supabase
