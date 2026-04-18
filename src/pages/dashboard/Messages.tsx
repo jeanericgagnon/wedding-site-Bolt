@@ -1913,13 +1913,13 @@ export const DashboardMessages: React.FC = () => {
           )}
 
           {filteredHistory.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="rounded-[24px] border border-border-subtle bg-surface-subtle/30 py-14 text-center">
               <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
               <p className="text-text-secondary">No messages match these filters</p>
               <p className="text-sm text-text-tertiary mt-1">Try a different status, channel, or group.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {filteredHistory.map((message) => {
                 const recipientCount = getRecipientCount(message);
                 return (
@@ -1927,24 +1927,24 @@ export const DashboardMessages: React.FC = () => {
                     key={message.id}
                     type="button"
                     onClick={() => setViewingMessage(message)}
-                    className="w-full text-left border border-border rounded-xl p-4 hover:bg-surface-subtle hover:border-primary/30 transition-all group"
+                    className="w-full text-left rounded-[24px] border border-border-subtle bg-white p-5 shadow-[0_6px_24px_rgba(15,23,42,0.05)] hover:border-primary/30 hover:shadow-[0_10px_32px_rgba(15,23,42,0.08)] transition-all group"
                   >
-                    <div className="mb-2">
-                      <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors break-words leading-snug">
-                        {message.subject}
-                      </h3>
+                    <div className="mb-3 flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors break-words leading-snug">
+                          {message.subject}
+                        </h3>
+                        <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-text-tertiary">{message.channel} · {getAudienceLabel(message)}</p>
+                      </div>
+                      <span>{getStatusBadge(message)}</span>
                     </div>
-                    <p className="text-sm text-text-secondary mb-3 line-clamp-2">{message.body}</p>
+                    <p className="text-sm text-text-secondary mb-4 line-clamp-2">{message.body}</p>
                     <div className="flex items-center justify-between gap-4 text-xs text-text-tertiary">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {recipientCount} {recipientCount === 1 ? 'recipient' : 'recipients'}
                         </span>
-                        <span className="px-2 py-0.5 bg-primary-light text-primary rounded border border-primary/20 capitalize">
-                          {message.channel}
-                        </span>
-                        <span className="text-text-tertiary">{getAudienceLabel(message)}</span>
                         {getCampaignTypeLabel(message) && (
                           <span className="px-2 py-0.5 bg-accent-light text-accent rounded border border-accent/20">
                             {getCampaignTypeLabel(message)}
