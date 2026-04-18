@@ -1054,6 +1054,23 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
     if (!confirm('Remove all guests from this event?')) return;
     setBulkLoading(true);
     try {
+      const { data: invitationRows, error: invitationLookupError } = await supabase
+        .from('event_invitations')
+        .select('id')
+        .eq('event_id', eventId);
+
+      if (invitationLookupError) throw invitationLookupError;
+
+      const invitationIds = (invitationRows ?? []).map((row: { id: string }) => row.id);
+      if (invitationIds.length > 0) {
+        const { error: eventRsvpDeleteError } = await supabase
+          .from('event_rsvps')
+          .delete()
+          .in('event_invitation_id', invitationIds);
+
+        if (eventRsvpDeleteError) throw eventRsvpDeleteError;
+      }
+
       const { error } = await supabase
         .from('event_invitations')
         .delete()

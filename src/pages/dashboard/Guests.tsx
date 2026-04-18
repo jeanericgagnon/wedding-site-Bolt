@@ -2050,10 +2050,16 @@ Proceed with send?`)) return;
         const invitationIds = (invitationRows ?? []).map((row) => row.id as string);
 
         if (invitationIds.length > 0) {
-          await supabase.from('event_rsvps').delete().in('event_invitation_id', invitationIds);
+          const { error: eventRsvpDeleteError } = await supabase
+            .from('event_rsvps')
+            .delete()
+            .in('event_invitation_id', invitationIds);
+          if (eventRsvpDeleteError) throw eventRsvpDeleteError;
         }
-        await supabase.from('event_invitations').delete().in('guest_id', guestIds);
-        await supabase.from('rsvps').delete().in('guest_id', guestIds);
+        const { error: eventInvitationDeleteError } = await supabase.from('event_invitations').delete().in('guest_id', guestIds);
+        if (eventInvitationDeleteError) throw eventInvitationDeleteError;
+        const { error: rsvpDeleteError } = await supabase.from('rsvps').delete().in('guest_id', guestIds);
+        if (rsvpDeleteError) throw rsvpDeleteError;
       }
 
       const { error } = await supabase
