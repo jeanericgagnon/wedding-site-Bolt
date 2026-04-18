@@ -1615,7 +1615,7 @@ export const DashboardMessages: React.FC = () => {
             </Card>
           </div>
 
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 self-start">
             <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
               <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Snapshot</p>
@@ -1712,24 +1712,25 @@ export const DashboardMessages: React.FC = () => {
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Starting points</p>
                 <h2 className="mt-2 text-2xl font-semibold text-text-primary">Draft from something useful, not from a blank page.</h2>
               </div>
-              <div className="space-y-2">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {[
-                  { label: 'Save the Date', subject: 'Save the Date!', body: 'We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.' },
-                  { label: 'RSVP Reminder', subject: 'RSVP Reminder', body: 'We hope you can join us for our special day! Please RSVP by [DATE] so we can finalize our guest count. Visit [RSVP LINK] to respond.' },
-                  { label: 'Week-Of Details', subject: 'Wedding Week Details', body: 'The big day is almost here! Here are some important details for the wedding week: [ADD DETAILS]' },
-                  { label: 'Photo Upload Request', subject: 'Share your photos with us 📸', body: 'We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]' },
-                  { label: 'Photo Upload Reminder', subject: 'Last call for wedding photos', body: 'If you snapped any photos, we would love to see them. Add yours here: [PHOTO LINK]' },
-                  { label: 'Photo + RSVP Combo', subject: 'Quick wedding update', body: 'Hi! RSVP here: [RSVP LINK]\n\nAnd if you have photos from our events, upload here: [PHOTO LINK]' },
-                  { label: 'Thank You', subject: 'Thank You!', body: 'Thank you so much for celebrating our special day with us! Your presence meant the world to us. We are grateful for your love and support.' },
+                  { label: 'Save the Date', detail: 'Early excitement and initial heads-up', subject: 'Save the Date!', body: 'We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.' },
+                  { label: 'RSVP Reminder', detail: 'Nudge people who still have not replied', subject: 'RSVP Reminder', body: 'We hope you can join us for our special day! Please RSVP by [DATE] so we can finalize our guest count. Visit [RSVP LINK] to respond.' },
+                  { label: 'Week-Of Details', detail: 'Useful logistics right before the event', subject: 'Wedding Week Details', body: 'The big day is almost here! Here are some important details for the wedding week: [ADD DETAILS]' },
+                  { label: 'Photo Upload Request', detail: 'Drive guests into your upload flow', subject: 'Share your photos with us 📸', body: 'We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]' },
+                  { label: 'Photo Upload Reminder', detail: 'One more ask for missing photos', subject: 'Last call for wedding photos', body: 'If you snapped any photos, we would love to see them. Add yours here: [PHOTO LINK]' },
+                  { label: 'Photo + RSVP Combo', detail: 'Handle both asks in one touchpoint', subject: 'Quick wedding update', body: 'Hi! RSVP here: [RSVP LINK]\n\nAnd if you have photos from our events, upload here: [PHOTO LINK]' },
+                  { label: 'Thank You', detail: 'Close the loop after the celebration', subject: 'Thank You!', body: 'Thank you so much for celebrating our special day with us! Your presence meant the world to us. We are grateful for your love and support.' },
                 ].map(tpl => (
                   <button
                     key={tpl.label}
                     type="button"
                     onClick={() => setFormData({ ...formData, subject: applyTemplateVariables(tpl.subject), body: applyTemplateVariables(tpl.body) })}
                     disabled={!canCompose}
-                    className="w-full text-left px-3 py-2 text-sm bg-surface-subtle hover:bg-surface-raised rounded-lg transition-colors text-text-primary border border-transparent hover:border-border disabled:opacity-50"
+                    className="w-full rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
                   >
-                    {tpl.label}
+                    <p className="text-sm font-semibold text-text-primary">{tpl.label}</p>
+                    <p className="mt-1 text-xs leading-5 text-text-secondary">{tpl.detail}</p>
                   </button>
                 ))}
               </div>
