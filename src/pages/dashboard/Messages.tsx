@@ -260,6 +260,18 @@ function getRecipientCount(message: Message): number {
   return message.recipient_count ?? (message.recipient_filter?.recipient_count as number) ?? 0;
 }
 
+function isAttendingStatus(status: string | null | undefined): boolean {
+  return status === 'confirmed' || status === 'attending' || status === 'accepted';
+}
+
+function isDeclinedStatus(status: string | null | undefined): boolean {
+  return status === 'declined' || status === 'not_attending';
+}
+
+function isPendingStatus(status: string | null | undefined): boolean {
+  return !status || status === 'pending';
+}
+
 function getCampaignTypeLabel(message: Message): string | null {
   const raw = message.recipient_filter?.campaignType as string | undefined;
   if (!raw) return null;
@@ -755,9 +767,9 @@ export const DashboardMessages: React.FC = () => {
       return guests.filter((g) => ids.has(g.id));
     }
     switch (audience) {
-      case 'attending': return guests.filter(g => g.rsvp_status === 'confirmed');
-      case 'not_responded': return guests.filter(g => g.rsvp_status === 'pending');
-      case 'declined': return guests.filter(g => g.rsvp_status === 'declined');
+      case 'attending': return guests.filter(g => isAttendingStatus(g.rsvp_status));
+      case 'not_responded': return guests.filter(g => isPendingStatus(g.rsvp_status));
+      case 'declined': return guests.filter(g => isDeclinedStatus(g.rsvp_status));
       default: return guests;
     }
   };
@@ -957,9 +969,9 @@ export const DashboardMessages: React.FC = () => {
 
   const audienceOptions = [
     { value: 'all', label: 'All Guests', count: guests.length },
-    { value: 'attending', label: 'Attending Only', count: guests.filter(g => g.rsvp_status === 'confirmed').length },
-    { value: 'not_responded', label: 'Not Responded', count: guests.filter(g => g.rsvp_status === 'pending').length },
-    { value: 'declined', label: 'Declined', count: guests.filter(g => g.rsvp_status === 'declined').length },
+    { value: 'attending', label: 'Attending Only', count: guests.filter(g => isAttendingStatus(g.rsvp_status)).length },
+    { value: 'not_responded', label: 'Not Responded', count: guests.filter(g => isPendingStatus(g.rsvp_status)).length },
+    { value: 'declined', label: 'Declined', count: guests.filter(g => isDeclinedStatus(g.rsvp_status)).length },
     ...itineraryAudienceOptions,
   ];
 
