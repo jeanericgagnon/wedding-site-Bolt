@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { NameChangeCaseInput, NameChangeCaseRecord, NameChangeDocumentInput, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
 import {
+  buildNameChangeWorkspaceBundle,
   defaultNameChangeCaseInput,
   hydrateNameChangeWorkspace,
   mapCaseRecordToNameChangeInput,
+  normalizeNameChangeReminders,
   normalizeNameChangeCaseInput,
   normalizeNameChangeDocuments,
   normalizeNameChangeExtractedFields,
@@ -168,11 +170,60 @@ describe('nameChangeService normalization', () => {
         },
       ],
       latestSnapshot: null,
+      reminders: [],
     });
 
     expect(hydrated.draft).toEqual(mapCaseRecordToNameChangeInput(caseRecord));
     expect(hydrated.documents[0]).toMatchObject({ display_name: 'Marriage cert', file_name_masked: 'cert.pdf' });
     expect(hydrated.extractedFields[0]).toMatchObject({ field_value_masked: 'Jordan' });
     expect(hydrated.plan.summary.readinessPercent).toBeGreaterThan(0);
+    expect(hydrated.reminders.length).toBeGreaterThan(0);
+  });
+
+  it('normalizes reminder inputs and dedupes by reminder key', () => {
+    expect(normalizeNameChangeReminders([
+      {
+        reminder_key: ' reminder-banks ',
+        label: '  Follow up on banks ',
+        reason: '  Make sure account names match. ',
+        depends_on_step_id: ' institution-banks ',
+        suggested_offset_days: 4.6,
+        urgency: 'medium',
+        status: 'pending',
+      },
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks follow-up',
+        reason: 'Use the better copy',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 2,
+        urgency: 'high',
+        status: 'scheduled',
+      },
+    ])).toEqual([
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks follow-up',
+        reason: 'Use the better copy',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 2,
+        urgency: 'high',
+        status: 'scheduled',
+      },
+    ]);
+  });
+
+  it('builds a workspace bundle with generated reminders', () => {
+    const bundle = buildNameChangeWorkspaceBundle(makeCase(), [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ], []);
+
+    expect(bundle.plan.steps.some((step) => step.id === 'institution-banks')).toBe(true);
+    expect(bundle.reminders.some((reminder) => reminder.reminder_key === 'reminder-banks')).toBe(true);
   });
 });

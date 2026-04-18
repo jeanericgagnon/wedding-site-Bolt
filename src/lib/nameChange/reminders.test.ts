@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangePlan } from './engine';
-import { buildNameChangeReminderSuggestions } from './reminders';
+import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs } from './reminders';
 import type { NameChangeEngineInput } from './types';
 
 function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): NameChangeEngineInput {
@@ -74,5 +74,14 @@ describe('name change reminder suggestions', () => {
     const plan = buildNameChangePlan(makeInput({ passport_needs_update: false }));
     const reminders = buildNameChangeReminderSuggestions(plan);
     expect(reminders.some((reminder) => reminder.id === 'reminder-passport-followup')).toBe(false);
+  });
+
+  it('maps reminder suggestions into persistence-ready inputs', () => {
+    const plan = buildNameChangePlan(makeInput());
+    const inputs = mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan));
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-banks')).toMatchObject({
+      status: 'pending',
+      depends_on_step_id: 'institution-banks',
+    });
   });
 });

@@ -132,7 +132,7 @@ function buildInstitutionRolloutSteps(institutions: NameChangeInstitutionEntry[]
     id: `institution-${institution.key}`,
     phase: 'institutional',
     title: `Update ${institution.label}`,
-    description: institution.notes,
+    description: `${institution.notes} Best timing: ${institution.suggestedTiming}`,
     timing: institution.suggestedTiming,
     status: legalProofReady ? 'later' : 'blocked',
     blockers: legalProofReady ? [] : ['Primary identity records should move first.'],

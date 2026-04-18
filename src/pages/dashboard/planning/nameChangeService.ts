@@ -1,7 +1,9 @@
 import { supabase } from '../../../lib/supabase';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
 import { NAME_CHANGE_ENGINE_VERSION } from '../../../lib/nameChange/registry';
+import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs } from '../../../lib/nameChange/reminders';
 import type {
+  HydratedNameChangeWorkspace,
   NameChangeCaseInput,
   NameChangeCaseRecord,
   NameChangeDocumentInput,
@@ -10,6 +12,8 @@ import type {
   NameChangeExtractedFieldRecord,
   NameChangePlan,
   NameChangePlanSnapshotRecord,
+  NameChangeReminderInput,
+  NameChangeReminderRecord,
 } from '../../../lib/nameChange/types';
 
 export const defaultNameChangeCaseInput: NameChangeCaseInput = {
@@ -128,6 +132,7 @@ export async function loadNameChangeWorkspace(weddingSiteId: string): Promise<{
   documents: NameChangeDocumentRecord[];
   extractedFields: NameChangeExtractedFieldRecord[];
   latestSnapshot: NameChangePlanSnapshotRecord | null;
+  reminders: NameChangeReminderRecord[];
 }> {
   const { data: caseRecord } = await supabase.from('name_change_cases').select('*').eq('wedding_site_id', weddingSiteId).maybeSingle();
   const caseId = (caseRecord as NameChangeCaseRecord | null)?.id;
@@ -138,21 +143,59 @@ export async function loadNameChangeWorkspace(weddingSiteId: string): Promise<{
       documents: [],
       extractedFields: [],
       latestSnapshot: null,
+      reminders: [],
     };
   }
 
-  const [{ data: documents }, { data: extractedFields }, { data: snapshots }] = await Promise.all([
+  const [{ data: documents }, { data: extractedFields }, { data: snapshots }, remindersResult] = await Promise.all([
     supabase.from('name_change_documents').select('*').eq('name_change_case_id', caseId).order('created_at', { ascending: true }),
     supabase.from('name_change_extracted_fields').select('*').eq('name_change_case_id', caseId).order('created_at', { ascending: true }),
     supabase.from('name_change_plan_snapshots').select('*').eq('name_change_case_id', caseId).order('created_at', { ascending: false }).limit(1),
+    supabase.from('name_change_reminders').select('*').eq('name_change_case_id', caseId).order('suggested_offset_days', { ascending: true }),
   ]);
+
+  const reminders = remindersResult.error ? [] : ((remindersResult.data as NameChangeReminderRecord[] | null) ?? []);
 
   return {
     caseRecord: (caseRecord as NameChangeCaseRecord | null) ?? null,
     documents: (documents as NameChangeDocumentRecord[] | null) ?? [],
     extractedFields: (extractedFields as NameChangeExtractedFieldRecord[] | null) ?? [],
     latestSnapshot: ((snapshots as NameChangePlanSnapshotRecord[] | null) ?? [])[0] ?? null,
+    reminders,
   };
+}
+
+export function mapReminderRecordToInput(reminder: NameChangeReminderRecord): NameChangeReminderInput {
+  return {
+    reminder_key: reminder.reminder_key,
+    label: reminder.label,
+    reason: reminder.reason,
+    depends_on_step_id: reminder.depends_on_step_id,
+    suggested_offset_days: reminder.suggested_offset_days,
+    urgency: reminder.urgency,
+    status: reminder.status,
+  };
+}
+
+export function normalizeNameChangeReminders(reminders: NameChangeReminderInput[]): NameChangeReminderInput[] {
+  const deduped = new Map<string, NameChangeReminderInput>();
+
+  reminders.forEach((reminder) => {
+    const reminderKey = normalizeText(reminder.reminder_key);
+    if (!reminderKey) return;
+
+    deduped.set(reminderKey, {
+      reminder_key: reminderKey,
+      label: normalizeText(reminder.label) || reminderKey,
+      reason: normalizeText(reminder.reason),
+      depends_on_step_id: normalizeText(reminder.depends_on_step_id),
+      suggested_offset_days: Math.max(0, Math.round(reminder.suggested_offset_days)),
+      urgency: reminder.urgency,
+      status: reminder.status,
+    });
+  });
+
+  return [...deduped.values()].sort((a, b) => a.suggested_offset_days - b.suggested_offset_days || a.label.localeCompare(b.label));
 }
 
 export function mapCaseRecordToNameChangeInput(caseRecord: NameChangeCaseRecord): NameChangeCaseInput {
@@ -214,13 +257,16 @@ export function hydrateNameChangeWorkspace(workspace: {
   documents: NameChangeDocumentRecord[];
   extractedFields: NameChangeExtractedFieldRecord[];
   latestSnapshot: NameChangePlanSnapshotRecord | null;
-}) {
+  reminders: NameChangeReminderRecord[];
+}): HydratedNameChangeWorkspace {
   if (!workspace.caseRecord) {
+    const plan = buildNameChangePlan({ profile: defaultNameChangeCaseInput, documents: [], extractedFields: [] });
     return {
       draft: defaultNameChangeCaseInput,
       documents: [] as NameChangeDocumentInput[],
       extractedFields: [] as NameChangeExtractedFieldInput[],
-      plan: buildNameChangePlan({ profile: defaultNameChangeCaseInput, documents: [], extractedFields: [] }),
+      plan,
+      reminders: mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan)),
     };
   }
 
@@ -228,12 +274,18 @@ export function hydrateNameChangeWorkspace(workspace: {
   const documents = normalizeNameChangeDocuments(workspace.documents.map(mapDocumentRecordToInput));
   const extractedFields = normalizeNameChangeExtractedFields(workspace.extractedFields.map(mapExtractedFieldRecordToInput));
   const fallbackPlan = buildNameChangePlan({ profile: draft, documents, extractedFields });
+  const reminders = normalizeNameChangeReminders(
+    workspace.reminders.length > 0
+      ? workspace.reminders.map(mapReminderRecordToInput)
+      : mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(fallbackPlan)),
+  );
 
   return {
     draft,
     documents,
     extractedFields,
     plan: workspace.latestSnapshot?.plan_payload ?? fallbackPlan,
+    reminders,
   };
 }
 
@@ -308,16 +360,54 @@ export async function createNameChangePlanSnapshot(caseId: string, plan: NameCha
   return data as NameChangePlanSnapshotRecord;
 }
 
+export async function replaceNameChangeReminders(caseId: string, reminders: NameChangeReminderInput[]): Promise<NameChangeReminderRecord[]> {
+  const normalizedReminders = normalizeNameChangeReminders(reminders);
+  const { error: deleteError } = await supabase.from('name_change_reminders').delete().eq('name_change_case_id', caseId);
+  if (deleteError) throw deleteError;
+  if (normalizedReminders.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('name_change_reminders')
+    .insert(normalizedReminders.map((reminder) => ({ ...reminder, name_change_case_id: caseId })))
+    .select();
+
+  if (error) throw error;
+  return (data as NameChangeReminderRecord[] | null) ?? [];
+}
+
+export function buildNameChangeWorkspaceBundle(
+  caseInput: NameChangeCaseInput,
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  reminders: NameChangeReminderInput[] | null = null,
+): HydratedNameChangeWorkspace {
+  const draft = normalizeNameChangeCaseInput(caseInput);
+  const normalizedDocuments = normalizeNameChangeDocuments(documents);
+  const normalizedExtractedFields = normalizeNameChangeExtractedFields(extractedFields);
+  const plan = buildNameChangePlan({ profile: draft, documents: normalizedDocuments, extractedFields: normalizedExtractedFields });
+
+  return {
+    draft,
+    documents: normalizedDocuments,
+    extractedFields: normalizedExtractedFields,
+    plan,
+    reminders: normalizeNameChangeReminders(
+      reminders ?? mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan)),
+    ),
+  };
+}
+
 export async function saveNameChangeWorkspace(
   weddingSiteId: string,
   caseInput: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): Promise<{ caseRecord: NameChangeCaseRecord; plan: NameChangePlan }> {
-  const normalizedCaseInput = normalizeNameChangeCaseInput(caseInput);
-  const normalizedDocuments = normalizeNameChangeDocuments(documents);
-  const normalizedExtractedFields = normalizeNameChangeExtractedFields(extractedFields);
-  const plan = buildNameChangePlan({ profile: normalizedCaseInput, documents: normalizedDocuments, extractedFields: normalizedExtractedFields });
+  const workspace = buildNameChangeWorkspaceBundle(caseInput, documents, extractedFields);
+  const normalizedCaseInput = workspace.draft;
+  const normalizedDocuments = workspace.documents;
+  const normalizedExtractedFields = workspace.extractedFields;
+  const plan = workspace.plan;
   const caseRecord = await upsertNameChangeCase(weddingSiteId, {
     ...normalizedCaseInput,
     workflow_status: plan.summary.blockers.length > 0 ? 'draft' : 'ready',
@@ -326,6 +416,7 @@ export async function saveNameChangeWorkspace(
 
   await replaceNameChangeDocuments(caseRecord.id, normalizedDocuments);
   await replaceNameChangeExtractedFields(caseRecord.id, normalizedExtractedFields);
+  await replaceNameChangeReminders(caseRecord.id, workspace.reminders);
   await createNameChangePlanSnapshot(caseRecord.id, plan);
 
   return { caseRecord, plan };

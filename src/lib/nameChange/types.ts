@@ -197,6 +197,38 @@ export interface NameChangeReminderSuggestion {
   urgency: 'high' | 'medium' | 'low';
 }
 
+export interface NameChangeReminderRecord {
+  id: string;
+  name_change_case_id: string;
+  reminder_key: string;
+  label: string;
+  reason: string;
+  depends_on_step_id: string;
+  suggested_offset_days: number;
+  urgency: 'high' | 'medium' | 'low';
+  status: 'pending' | 'scheduled' | 'sent' | 'dismissed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NameChangeReminderInput {
+  reminder_key: string;
+  label: string;
+  reason: string;
+  depends_on_step_id: string;
+  suggested_offset_days: number;
+  urgency: 'high' | 'medium' | 'low';
+  status: 'pending' | 'scheduled' | 'sent' | 'dismissed';
+}
+
+export interface HydratedNameChangeWorkspace {
+  draft: NameChangeCaseInput;
+  documents: NameChangeDocumentInput[];
+  extractedFields: NameChangeExtractedFieldInput[];
+  plan: NameChangePlan;
+  reminders: NameChangeReminderInput[];
+}
+
 export interface NameChangeFormRegistryEntry {
   code: string;
   title: string;

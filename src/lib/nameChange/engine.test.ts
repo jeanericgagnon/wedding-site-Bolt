@@ -80,7 +80,7 @@ describe('name change engine', () => {
   it('pushes travel-sensitive caution notes when upcoming travel is flagged', () => {
     const plan = buildNameChangePlan(makeInput({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true } }));
     expect(plan.summary.cautionNotes.some((note) => note.includes('Upcoming travel'))).toBe(true);
-    expect(plan.steps.find((step) => step.id === 'institution-tsa-precheck')?.description).toContain('travel bookings');
+    expect(plan.steps.find((step) => step.id === 'institution-tsa-precheck')?.description).toContain('Best timing');
   });
 
   it('omits employment rollout institutions when the user is not employed', () => {

@@ -1,5 +1,5 @@
 import { NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
-import type { NameChangePlan, NameChangeReminderSuggestion } from './types';
+import type { NameChangePlan, NameChangeReminderInput, NameChangeReminderSuggestion } from './types';
 
 function urgencyFromOffset(days: number): NameChangeReminderSuggestion['urgency'] {
   if (days <= 2) return 'high';
@@ -36,4 +36,16 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
   });
 
   return suggestions.sort((a, b) => a.suggestedOffsetDays - b.suggestedOffsetDays || a.label.localeCompare(b.label));
+}
+
+export function mapReminderSuggestionsToInputs(suggestions: NameChangeReminderSuggestion[]): NameChangeReminderInput[] {
+  return suggestions.map((suggestion) => ({
+    reminder_key: suggestion.id,
+    label: suggestion.label,
+    reason: suggestion.reason,
+    depends_on_step_id: suggestion.dependsOnStepId,
+    suggested_offset_days: suggestion.suggestedOffsetDays,
+    urgency: suggestion.urgency,
+    status: 'pending',
+  }));
 }
