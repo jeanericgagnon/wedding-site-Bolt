@@ -22,6 +22,8 @@ import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMa
 import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
 import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
+import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
+import { buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -160,7 +162,9 @@ export const QuickStart: React.FC = () => {
     if (shouldReset) {
       localStorage.removeItem(STORAGE_KEY);
       setInitialSetupAnswers(createEmptyInitialSetupAnswers());
+      followUpAnswersRef.current = {};
       setFollowUpAnswers({});
+      clarifyingStateRef.current = null;
       setClarifyingState(null);
       setCurrentIndex(0);
       setShowFollowUps(false);
@@ -172,18 +176,16 @@ export const QuickStart: React.FC = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
     try {
-      const parsed = JSON.parse(saved);
-      if (parsed.initialSetupAnswers) {
-        setInitialSetupAnswers(parsed.initialSetupAnswers);
-        setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(parsed.initialSetupAnswers));
-      }
-      if (typeof parsed.currentIndex === 'number') setCurrentIndex(parsed.currentIndex);
-      if (parsed.followUpAnswers) setFollowUpAnswers(parsed.followUpAnswers);
-      if (parsed.showFollowUps) {
-        setShowFollowUps(true);
-        setViewState('followups');
-      }
-      if (parsed.clarifyingState) setClarifyingState(parsed.clarifyingState);
+      const parsed = normalizeQuickStartDraftSnapshot(JSON.parse(saved));
+      setInitialSetupAnswers(parsed.initialSetupAnswers);
+      setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(parsed.initialSetupAnswers));
+      setCurrentIndex(parsed.currentIndex);
+      followUpAnswersRef.current = parsed.followUpAnswers;
+      setFollowUpAnswers(parsed.followUpAnswers);
+      clarifyingStateRef.current = parsed.clarifyingState;
+      setClarifyingState(parsed.clarifyingState);
+      setShowFollowUps(parsed.showFollowUps);
+      setViewState(parsed.showFollowUps ? 'followups' : parsed.viewState);
     } catch {}
   }, []);
 
@@ -358,7 +360,7 @@ export const QuickStart: React.FC = () => {
       if (updateError) throw updateError;
       localStorage.removeItem(STORAGE_KEY);
       writeSignupReturnPath(null);
-      navigate('/dashboard/guests?bypassPayment=1&fromQuickStart=1&next=photos', {
+      navigate(buildQuickStartGuestsPath(), {
         state: { showWelcome: true, nextStep: 'guest-import' },
       });
     } catch (err) {

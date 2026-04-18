@@ -14,6 +14,7 @@ import { mediaRepository } from '../../builder/services/mediaRepository';
 import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
+import { buildQuickStartOverviewPath } from '../../lib/quickStartContinuation';
 
 type ItineraryEvent = {
   id: string;
@@ -90,6 +91,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fromQuickStart = searchParams.get('fromQuickStart') === '1';
+  const nextStep = searchParams.get('next');
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const [loading, setLoading] = useState(true);
@@ -877,14 +879,14 @@ export const GuestPhotoSharing: React.FC = () => {
   return (
     <DashboardLayout currentPage="photos">
       <div className="space-y-6">
-        {fromQuickStart && (
+        {fromQuickStart && nextStep === 'review' && (
           <Card className="p-4 border border-primary/20 bg-primary/5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">Next up: add photos, then review your draft</p>
                 <p className="text-xs text-text-secondary mt-1">Upload couple photos here. When you are ready, continue into your dashboard to review the draft and keep shaping the site.</p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/overview?bypassPayment=1&fromQuickStart=1')}>
+              <Button variant="outline" size="sm" onClick={() => navigate(buildQuickStartOverviewPath())}>
                 Continue to review
               </Button>
             </div>

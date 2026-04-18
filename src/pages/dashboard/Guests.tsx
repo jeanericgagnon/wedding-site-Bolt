@@ -21,6 +21,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
+import { buildQuickStartPhotosPath } from '../../lib/quickStartContinuation';
 import { sendWeddingInvitation } from '../../lib/emailService';
 import * as XLSX from 'xlsx';
 
@@ -2414,7 +2415,7 @@ Proceed with send?`)) return;
         toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
         setCsvPreview(null);
         if (fromQuickStart && nextStep === 'photos') {
-          navigate('/dashboard/photos?bypassPayment=1&fromQuickStart=1');
+          navigate(buildQuickStartPhotosPath());
           return;
         }
         setCsvSkipped([]);
@@ -2531,7 +2532,7 @@ Proceed with send?`)) return;
       toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${guardedMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
       setCsvPreview(null);
       if (fromQuickStart && nextStep === 'photos') {
-        navigate('/dashboard/photos?bypassPayment=1&fromQuickStart=1');
+        navigate(buildQuickStartPhotosPath());
         return;
       }
       setCsvSkipped([]);
@@ -3678,7 +3679,7 @@ Proceed with send?`)) return;
                   <p className="text-sm font-semibold text-text-primary">Next up: import guests, then add photos</p>
                   <p className="text-xs text-text-secondary mt-1">Import your guest list here. If you want to skip this for now, jump straight to photos and come back later.</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos?bypassPayment=1&fromQuickStart=1')}>
+                <Button variant="outline" size="sm" onClick={() => navigate(buildQuickStartPhotosPath())}>
                   Skip to photos
                 </Button>
               </div>
