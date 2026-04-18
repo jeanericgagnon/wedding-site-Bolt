@@ -1513,11 +1513,11 @@ export const DashboardMessages: React.FC = () => {
                   )}
                 </div>
 
-                <div className="border border-border rounded-xl overflow-hidden">
+                <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
                   <button
                     type="button"
                     onClick={() => setShowRecipientPreview(!showRecipientPreview)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-surface-subtle hover:bg-surface transition-colors text-sm"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-surface-subtle/30 hover:bg-surface transition-colors text-sm"
                   >
                     <div className="flex items-center gap-2">
                       <Eye className="w-4 h-4 text-text-secondary" />
@@ -1545,11 +1545,12 @@ export const DashboardMessages: React.FC = () => {
                   )}
                 </div>
 
-                <div className="p-4 bg-primary-light border border-primary/20 rounded-lg">
+                <div className="rounded-2xl border border-primary/20 bg-primary-light/40 p-4">
                   <div className="flex items-start gap-3">
                     <Mail className="w-5 h-5 text-primary mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-medium text-text-primary">What happens next</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Delivery summary</p>
+                      <p className="mt-2 font-medium text-text-primary">What happens next</p>
                       <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
                           ? isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`)
