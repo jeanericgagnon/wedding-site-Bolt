@@ -1900,7 +1900,7 @@ export const DashboardMessages: React.FC = () => {
             <div className="rounded-[24px] border border-border-subtle bg-surface-subtle/30 py-14 text-center">
               <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
               <p className="text-text-secondary">No messages match these filters</p>
-              <p className="text-sm text-text-tertiary mt-1">Try a different status, channel, or group.</p>
+              <p className="text-sm text-text-tertiary mt-1">Try a different status, channel, audience, or search term.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -1929,12 +1929,14 @@ export const DashboardMessages: React.FC = () => {
                           <Users className="w-3 h-3" />
                           {recipientCount} {recipientCount === 1 ? 'recipient' : 'recipients'}
                         </span>
+                        {typeof message.delivered_count === 'number' && typeof message.failed_count === 'number' && (
+                          <span>{message.delivered_count} delivered · {message.failed_count} failed</span>
+                        )}
                         {getCampaignTypeLabel(message) && (
                           <span className="px-2 py-0.5 bg-accent-light text-accent rounded border border-accent/20">
                             {getCampaignTypeLabel(message)}
                           </span>
                         )}
-                        <span>{getStatusBadge(message)}</span>
                         <span className="flex items-center gap-1 text-text-tertiary">
                           <Clock className="w-3 h-3" />
                           {message.status === 'scheduled' && message.scheduled_for

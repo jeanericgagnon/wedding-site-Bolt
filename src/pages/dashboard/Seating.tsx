@@ -637,6 +637,7 @@ export const DashboardSeating: React.FC = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showAutoTablesModal, setShowAutoTablesModal] = useState(false);
   const [autoCapacity, setAutoCapacity] = useState(8);
+  const [seatingBusyAction, setSeatingBusyAction] = useState<'auto-create' | 'auto-seat' | 'reset' | null>(null);
   const [invalidCount, setInvalidCount] = useState(0);
   const [checkInMode, setCheckInMode] = useState(false);
   const [checkInQuery, setCheckInQuery] = useState('');
@@ -1139,6 +1140,7 @@ export const DashboardSeating: React.FC = () => {
 
   async function handleAutoCreateTables() {
     if (!seatingEvent || !counters) return;
+    setSeatingBusyAction('auto-create');
     try {
       const created = isDemoMode
         ? Array.from({ length: Math.ceil(counters.attending / autoCapacity) }).map((_, idx) => ({
@@ -1161,6 +1163,8 @@ export const DashboardSeating: React.FC = () => {
       toast(`Created ${created.length} tables`, 'success');
     } catch {
       toast('Couldn’t auto-create tables right now. Please try again.', 'error');
+    } finally {
+      setSeatingBusyAction(null);
     }
   }
 
@@ -1170,6 +1174,7 @@ export const DashboardSeating: React.FC = () => {
       toast('Add tables first before auto-seating', 'error');
       return;
     }
+    setSeatingBusyAction('auto-seat');
     try {
       const newAssignments = isDemoMode
         ? (() => {
@@ -1200,6 +1205,8 @@ export const DashboardSeating: React.FC = () => {
       toast(`Seated ${newAssignments.length} guests`, 'success');
     } catch {
       toast('Couldn’t auto-seat guests right now. Please try again.', 'error');
+    } finally {
+      setSeatingBusyAction(null);
     }
   }
 
@@ -1558,7 +1565,8 @@ export const DashboardSeating: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowAutoTablesModal(true)}
-              className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/30 hover:bg-primary-light/10"
+              disabled={seatingBusyAction !== null}
+              className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/30 hover:bg-primary-light/10 disabled:opacity-50"
             >
               <p className="text-sm font-semibold text-text-primary">Auto-create tables</p>
               <p className="mt-1 text-xs leading-5 text-text-secondary">Build enough tables for the current attending count.</p>
@@ -1566,16 +1574,16 @@ export const DashboardSeating: React.FC = () => {
             <button
               type="button"
               onClick={() => { void handleAutoSeat(); }}
-              disabled={tables.length === 0 || unassignedGuests.length === 0}
+              disabled={tables.length === 0 || unassignedGuests.length === 0 || seatingBusyAction !== null}
               className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/30 hover:bg-primary-light/10 disabled:opacity-50"
             >
-              <p className="text-sm font-semibold text-text-primary">Auto-seat guests</p>
+              <p className="text-sm font-semibold text-text-primary">{seatingBusyAction === 'auto-seat' ? 'Auto-seating guests…' : 'Auto-seat guests'}</p>
               <p className="mt-1 text-xs leading-5 text-text-secondary">Fill open seats for the {unassignedGuests.length} guests still waiting.</p>
             </button>
             <button
               type="button"
               onClick={() => setShowResetConfirm(true)}
-              disabled={assignments.length === 0}
+              disabled={assignments.length === 0 || seatingBusyAction !== null}
               className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-error/30 hover:bg-error/5 disabled:opacity-50"
             >
               <p className="text-sm font-semibold text-text-primary">Reset seating</p>
@@ -1652,7 +1660,7 @@ export const DashboardSeating: React.FC = () => {
               </span>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAutoCreateTables}>Create Tables</Button>
+              <Button size="sm" onClick={handleAutoCreateTables} disabled={seatingBusyAction !== null}>{seatingBusyAction === 'auto-create' ? 'Creating…' : 'Create Tables'}</Button>
               <Button size="sm" variant="ghost" onClick={() => setShowAutoTablesModal(false)}>Cancel</Button>
             </div>
           </div>
