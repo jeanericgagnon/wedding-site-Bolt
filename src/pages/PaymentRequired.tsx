@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
+import { writeSignupReturnPath } from '../lib/signupContinuation';
 
 const FEATURES = [
   'Your own wedding website with custom URL',
@@ -99,6 +100,7 @@ export const PaymentRequired: React.FC = () => {
   const handleBypassForNow = () => {
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('dayoflove:onboarding-draft');
+      writeSignupReturnPath(null);
       window.localStorage.removeItem('dayoflove:onboarding-resume-hint');
       window.localStorage.removeItem('dayoflove:onboarding-resume-index');
       window.location.assign('/onboarding/celebration?bypassPayment=1');
@@ -114,6 +116,7 @@ export const PaymentRequired: React.FC = () => {
     try {
       const status = await fetchPaymentStatus(user.id);
       if (status === 'active') {
+        writeSignupReturnPath(null);
         navigate('/onboarding/celebration?from=payment', { replace: true });
       } else {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
