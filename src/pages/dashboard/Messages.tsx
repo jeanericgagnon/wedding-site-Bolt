@@ -1754,8 +1754,9 @@ export const DashboardMessages: React.FC = () => {
           <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-text-primary">Message history</h2>
-              <p className="text-xs text-text-tertiary mt-0.5">Filter by status, channel, or group to quickly find what you need.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">History</p>
+              <h2 className="mt-2 text-2xl font-semibold text-text-primary">Message history</h2>
+              <p className="text-xs text-text-tertiary mt-1">Filter by status, channel, or group to quickly find what you need.</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value as typeof historyStatusFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
@@ -1781,12 +1782,12 @@ export const DashboardMessages: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Show failed</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show failed</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
