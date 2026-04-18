@@ -982,6 +982,24 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
   async function toggleGuestInvitation(guestId: string) {
     try {
       if (invitedGuestIds.has(guestId)) {
+        const { data: invitationRow, error: invitationLookupError } = await supabase
+          .from('event_invitations')
+          .select('id')
+          .eq('event_id', eventId)
+          .eq('guest_id', guestId)
+          .maybeSingle();
+
+        if (invitationLookupError) throw invitationLookupError;
+
+        if (invitationRow?.id) {
+          const { error: eventRsvpDeleteError } = await supabase
+            .from('event_rsvps')
+            .delete()
+            .eq('event_invitation_id', invitationRow.id);
+
+          if (eventRsvpDeleteError) throw eventRsvpDeleteError;
+        }
+
         const { error } = await supabase
           .from('event_invitations')
           .delete()
