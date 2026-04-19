@@ -898,9 +898,10 @@ export const DashboardVault: React.FC = () => {
       const result = data as { healthy?: boolean; needsReconnect?: boolean; message?: string } | null;
       setDriveHealthMessage(result?.message ?? null);
       setDriveNeedsReconnect(!!result?.needsReconnect);
-      if (result?.healthy) setGoogleDriveConnected(true);
+      setGoogleDriveConnected(!!result?.healthy && !result?.needsReconnect);
     } catch (err) {
       setDriveHealthMessage(err instanceof Error ? err.message : 'Drive health check failed.');
+      setGoogleDriveConnected(false);
       setDriveNeedsReconnect(true);
     } finally {
       setDriveHealthChecking(false);
