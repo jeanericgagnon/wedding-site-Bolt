@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
 import { Heart, Chrome, ArrowLeft, Mail, AlertCircle } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
+import { persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -16,6 +17,7 @@ const getPostLoginRoute = (email: string | null | undefined): string =>
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { signIn } = useAuth();
   const [view, setView] = useState<AuthView>('login');
@@ -25,6 +27,9 @@ export const Login: React.FC = () => {
   const [notice, setNotice] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [formData, setFormData] = useState({ email: '', password: '' });
+
+  const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
+  const quickStartDraft = (location.state as { quickStartDraft?: unknown } | null)?.quickStartDraft;
 
   const inviteToken = searchParams.get('inviteToken');
   const inviteEmail = searchParams.get('inviteEmail');
@@ -43,6 +48,9 @@ export const Login: React.FC = () => {
   }, [inviteToken, inviteEmail]);
 
   useEffect(() => {
+    if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
+    if (quickStartDraft) persistQuickStartDraftSnapshot(quickStartDraft);
+
     if (searchParams.get('reason') === 'session_expired') {
       setNotice('Your session expired. Please sign in again.');
     }
@@ -82,7 +90,7 @@ export const Login: React.FC = () => {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [searchParams, navigate, inviteEmail]);
+  }, [searchParams, navigate, inviteEmail, explicitReturnPath, quickStartDraft]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -135,6 +143,9 @@ export const Login: React.FC = () => {
       const savedReturnPath = resolveLoginReturnPath(getPostLoginRoute(formData.email));
       if (!hasInviteContext && savedReturnPath) {
         writeSignupReturnPath(savedReturnPath);
+      }
+      if (quickStartDraft) {
+        persistQuickStartDraftSnapshot(quickStartDraft);
       }
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
