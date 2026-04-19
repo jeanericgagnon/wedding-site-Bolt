@@ -566,7 +566,7 @@ export const DashboardGuests: React.FC = () => {
       if (guestsData) {
         const guestIds = guestsData.map(g => g.id);
         const windowStartIso = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
-        const [{ data: rsvpsData }, { data: conflictsData }, { data: conflictHistoryData }] = await Promise.all([
+        const [{ data: rsvpsData, error: rsvpsError }, { data: conflictsData, error: conflictsError }, { data: conflictHistoryData, error: conflictHistoryError }] = await Promise.all([
           supabase.from('rsvps').select('*').in('guest_id', guestIds),
           supabase
             .from('rsvp_conflicts')
@@ -584,6 +584,10 @@ export const DashboardGuests: React.FC = () => {
             .limit(500),
         ]);
 
+        if (rsvpsError) throw rsvpsError;
+        if (conflictsError) throw conflictsError;
+        if (conflictHistoryError) throw conflictHistoryError;
+
         const guestsWithRsvps = guestsData.map(guest => ({
           ...guest,
           rsvp: rsvpsData?.find(r => r.guest_id === guest.id),
@@ -594,6 +598,10 @@ export const DashboardGuests: React.FC = () => {
         setRsvpConflictHistory((conflictHistoryData ?? []) as RsvpConflict[]);
       }
     } catch {
+      setGuests([]);
+      setRsvpConflicts([]);
+      setRsvpConflictHistory([]);
+      toast('Couldn’t load guest records right now. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -653,6 +661,7 @@ export const DashboardGuests: React.FC = () => {
         setEventInviteGuestMap(next);
       } catch {
         if (!cancelled) {
+          toast('Couldn’t load itinerary filters right now. Please try again.', 'error');
           setItineraryFilterEvents([]);
           setEventInviteGuestMap(new Map());
         }
