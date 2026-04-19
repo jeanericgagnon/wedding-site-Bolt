@@ -104,7 +104,7 @@ export const PaymentSuccess: React.FC = () => {
               <Button variant="primary" size="md" onClick={() => window.location.reload()}>
                 Check again
               </Button>
-              <Button variant="ghost" size="md" onClick={() => navigate('/payment-required')}>
+              <Button variant="ghost" size="md" onClick={() => { clearAllOnboardingDraftStorage(); navigate('/payment-required'); }}>
                 Back to payment page
               </Button>
             </div>
