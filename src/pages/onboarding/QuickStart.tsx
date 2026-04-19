@@ -29,6 +29,7 @@ import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '..
 import { deriveFollowUpAnswersFromClarifyingState } from '../../lib/quickStartClarifyingRestore';
 import { resolveQuickStartResumeViewState } from '../../lib/quickStartResumeState';
 import { clampQuickStartQuestionIndex } from '../../lib/quickStartQuestionBounds';
+import { canResumeQuickStartFollowUps } from '../../lib/quickStartFollowUpGate';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -194,6 +195,7 @@ export const QuickStart: React.FC = () => {
       const parsed = normalizeQuickStartDraftSnapshot(JSON.parse(saved));
       const restoredFollowUps = deriveFollowUpAnswersFromClarifyingState(parsed.clarifyingState, parsed.followUpAnswers);
       const restoredIndex = clampQuickStartQuestionIndex(parsed.currentIndex, questions.length);
+      const canResumeFollowUps = canResumeQuickStartFollowUps(parsed.showFollowUps, parsed.clarifyingState);
       setInitialSetupAnswers(parsed.initialSetupAnswers);
       setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(parsed.initialSetupAnswers));
       setCurrentIndex(restoredIndex);
@@ -201,8 +203,8 @@ export const QuickStart: React.FC = () => {
       setFollowUpAnswers(restoredFollowUps);
       clarifyingStateRef.current = parsed.clarifyingState;
       setClarifyingState(parsed.clarifyingState);
-      setShowFollowUps(parsed.showFollowUps);
-      setViewState(resolveQuickStartResumeViewState(parsed));
+      setShowFollowUps(canResumeFollowUps);
+      setViewState(resolveQuickStartResumeViewState({ ...parsed, showFollowUps: canResumeFollowUps }));
       setHasLocalDraftHydration(hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(restoredFollowUps).length > 0 || Boolean(parsed.clarifyingState));
     } catch {}
     finally {
