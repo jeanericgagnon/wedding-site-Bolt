@@ -431,6 +431,10 @@ function getUnreachedCount(message: Message): number {
   return Math.max(total - delivered - failed, 0);
 }
 
+function getCampaignThreadKey(message: Message): string {
+  return getCampaignName(message) ?? message.subject ?? message.id;
+}
+
 function isAttendingStatus(status: string | null | undefined): boolean {
   return status === 'confirmed' || status === 'attending' || status === 'accepted';
 }
@@ -1756,6 +1760,17 @@ export const DashboardMessages: React.FC = () => {
   const emailCapacityAfterSend = Math.max(remainingEmailRecipients - recipientsWithEmail, 0);
   const emailCapacityEnough = recipientsWithEmail <= remainingEmailRecipients;
 
+  const audienceReachability = useMemo(() => {
+    const allRecipients = getRecipients(formData.audience);
+    const withEmail = allRecipients.filter((guest) => !!guest.email).length;
+    const withPhone = allRecipients.filter((guest) => !!guest.phone).length;
+    return {
+      total: allRecipients.length,
+      missingEmail: Math.max(allRecipients.length - withEmail, 0),
+      missingPhone: Math.max(allRecipients.length - withPhone, 0),
+    };
+  }, [formData.audience, guests, eventGuestIds]);
+
   const deliveryStats = useMemo(() => {
     const sentish = messages.filter((m) => ['sent', 'partial', 'failed'].includes(m.status));
     const delivered = sentish.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
@@ -1850,6 +1865,48 @@ export const DashboardMessages: React.FC = () => {
     const overdueScheduled = messages.filter((m) => m.status === 'scheduled' && isPastScheduledTime(m.scheduled_for)).length;
     const retryBacklog = messages.filter((m) => m.status === 'failed' || m.status === 'partial').length;
     return { successRate, failRate, overdueScheduled, retryBacklog };
+  }, [messages]);
+
+  const campaignThreads = useMemo(() => {
+    const map = new Map<string, {
+      key: string;
+      name: string;
+      count: number;
+      delivered: number;
+      failed: number;
+      unreached: number;
+      latestStatus: string;
+      latestAt: number;
+    }>();
+
+    messages.forEach((message) => {
+      const key = getCampaignThreadKey(message);
+      const latestAt = new Date(message.sent_at ?? message.scheduled_for ?? 0).getTime();
+      const prev = map.get(key) ?? {
+        key,
+        name: key,
+        count: 0,
+        delivered: 0,
+        failed: 0,
+        unreached: 0,
+        latestStatus: message.status,
+        latestAt,
+      };
+
+      prev.count += 1;
+      prev.delivered += Number(message.delivered_count ?? 0);
+      prev.failed += Number(message.failed_count ?? 0);
+      prev.unreached += getUnreachedCount(message);
+      if (latestAt >= prev.latestAt) {
+        prev.latestAt = latestAt;
+        prev.latestStatus = message.status;
+      }
+      map.set(key, prev);
+    });
+
+    return Array.from(map.values())
+      .sort((a, b) => b.latestAt - a.latestAt)
+      .slice(0, 5);
   }, [messages]);
 
   const providerTelemetry = useMemo(() => {
@@ -2305,6 +2362,17 @@ export const DashboardMessages: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Email reachability</p>
+                    <p className="mt-2 text-text-primary">{audienceReachability.total - audienceReachability.missingEmail} reachable · {audienceReachability.missingEmail} missing email</p>
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">SMS reachability</p>
+                    <p className="mt-2 text-text-primary">{audienceReachability.total - audienceReachability.missingPhone} reachable · {audienceReachability.missingPhone} missing phone</p>
+                  </div>
+                </div>
+
                 {activeRecipients > 0 && (
                   <div className="text-xs text-text-tertiary bg-surface-subtle border border-border rounded-lg px-3 py-2">
                     {formData.scheduleType === 'now'
@@ -2664,6 +2732,32 @@ export const DashboardMessages: React.FC = () => {
             <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Partial {campaignStatusSummary.partial}</span>
             <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Failed {campaignStatusSummary.failed}</span>
           </div>
+
+          {campaignThreads.length > 0 && (
+            <div className="mb-4 rounded-2xl border border-border-subtle bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Campaign rollups</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">Recent campaign threads</p>
+                </div>
+                <span className="text-[11px] text-text-tertiary">Grouped by campaign name or subject</span>
+              </div>
+              <div className="space-y-2">
+                {campaignThreads.map((thread) => (
+                  <div key={thread.key} className="flex items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3 text-sm">
+                    <div className="min-w-0">
+                      <p className="font-medium text-text-primary truncate">{thread.name}</p>
+                      <p className="text-[11px] text-text-tertiary">{thread.count} send{thread.count !== 1 ? 's' : ''} · latest {thread.latestStatus}</p>
+                    </div>
+                    <div className="text-right text-[11px] text-text-tertiary">
+                      <p>{thread.delivered} delivered · {thread.failed} failed</p>
+                      {thread.unreached > 0 && <p className="text-warning">{thread.unreached} unreached</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
 
           {retryCandidates.length > 0 && (
