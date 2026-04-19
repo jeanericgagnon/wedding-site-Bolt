@@ -173,7 +173,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   useEffect(() => {
     if (!siteId) return;
-    writePlannerAccessRole('coordinator', siteId, coordinatorRole);
+    try {
+      writePlannerAccessRole('coordinator', siteId, coordinatorRole);
+    } catch {
+      // noop
+    }
   }, [siteId, coordinatorRole]);
 
   const stats = useMemo(() => {

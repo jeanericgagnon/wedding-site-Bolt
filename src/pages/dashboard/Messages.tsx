@@ -543,7 +543,11 @@ export const DashboardMessages: React.FC = () => {
 
   useEffect(() => {
     if (!weddingSite?.id) return;
-    writePlannerAccessRole('messages', weddingSite?.id ?? null, messagesRole);
+    try {
+      writePlannerAccessRole('messages', weddingSite?.id ?? null, messagesRole);
+    } catch {
+      // noop
+    }
   }, [weddingSite?.id, messagesRole]);
 
   function toast(message: string, type: Toast['type'] = 'success') {
