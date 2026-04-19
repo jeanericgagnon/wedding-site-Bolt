@@ -169,6 +169,10 @@ export const QuickStart: React.FC = () => {
   const activeClarifyingQuestions = clarifyingState?.clarifying.questions ?? [];
 
   useEffect(() => {
+    writeSignupReturnPath(null);
+  }, []);
+
+  useEffect(() => {
     const shouldReset = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('resetQuickStart') === '1';
     if (shouldReset) {
       setIsResettingDraft(true);
