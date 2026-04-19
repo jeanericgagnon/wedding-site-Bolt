@@ -450,6 +450,8 @@ export const GuestPhotoSharing: React.FC = () => {
       setTimeout(() => setCopied(''), 1400);
     } catch {
       window.prompt('Copy slideshow plan JSON:', text);
+      setCopied('slideshow-plan');
+      setTimeout(() => setCopied(''), 1400);
     }
   };
 
