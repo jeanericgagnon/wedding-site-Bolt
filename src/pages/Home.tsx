@@ -457,7 +457,7 @@ export const Home: React.FC = () => {
 
               <ul className="space-y-3 mb-7">
                 {[
-                  'Unlimited guests',
+                  'Guest list built for real weddings',
                   'Email included (fair-use)',
                   'SMS credits optional',
                   'Multi-event RSVP',

@@ -23,7 +23,7 @@ const STEPS: Step[] = [
   { id: 'rsvp', title: 'Collect RSVPs cleanly', kicker: 'Step 3', outcome: 'Get responses without confusion.', detail: 'Event-level RSVP and meal tracking without hacks.' },
   { id: 'message', title: 'Message everyone', kicker: 'Step 4', outcome: 'Send the right update to the right group.', detail: 'Stop copy/pasting from spreadsheets to email tools.' },
   { id: 'seating', title: 'Run seating + timeline', kicker: 'Step 5', outcome: 'Plan execution without doc chaos.', detail: 'Keep tables and event flow aligned in one view.' },
-  { id: 'dayof', title: 'Execute day-of', kicker: 'Step 6', outcome: 'Fewer surprises on event day.', detail: 'Use one planner command center instead of six tabs.' },
+  { id: 'dayof', title: 'Execute day-of', kicker: 'Step 6', outcome: 'Fewer surprises on event day.', detail: 'Use one calmer coordination view instead of juggling a pile of tabs.' },
 ];
 
 const FEATURE_AUDIT_GROUPS = [
@@ -152,7 +152,7 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-7xl">
           <SlideReveal from="left" className="mb-8">
             <h2 className="text-[2rem] md:text-[2.6rem] font-serif font-bold mb-2">See how the website leads everything else.</h2>
-            <p className="text-ink/70">Start with a beautiful site, then move naturally into guests, RSVPs, messaging, seating, and day-of details.</p>
+            <p className="text-ink/70">Start with a beautiful site, then move into guests, RSVPs, messaging, seating, and day-of details without switching tools constantly.</p>
           </SlideReveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr,260px] gap-4 lg:gap-5">
@@ -227,7 +227,7 @@ export const Product: React.FC = () => {
           <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
             <p className="text-xs uppercase tracking-wide text-brand font-semibold">Archive + anniversary layer</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">The wedding site should not become disposable the moment the event is over.</h2>
-            <p className="mt-3 max-w-3xl text-ink/75">DayOf should be able to shift from planning and live coordination into archive mode: public story still worth revisiting, guest photos still gathered cleanly, and anniversary vaults turning the site into something that lasts.</p>
+            <p className="mt-3 max-w-3xl text-ink/75">DayOf should be able to shift from planning and live coordination into archive mode: public story still worth revisiting, guest photos still gathered cleanly, and anniversary memories preserved without pretending the post-wedding layer is already a giant platform.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border-subtle bg-white p-4">
                 <p className="text-sm font-medium text-ink">Archive mode</p>
@@ -260,7 +260,7 @@ export const Product: React.FC = () => {
             </div>
             <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Planner workspace is real</p>
-              <p className="mt-1 text-sm text-ink/70">Guests, planning, messages, and coordinator mode now carry planner-specific framing instead of pretending every user is the couple.</p>
+              <p className="mt-1 text-sm text-ink/70">Guests, planning, messages, and coordinator mode now carry planner-specific framing instead of forcing every collaborator through a couple-only view.</p>
             </div>
             <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Permissions actually differ</p>
@@ -292,7 +292,7 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-6xl">
           <SlideReveal from="left" className="mb-6">
             <h2 className="section-title mb-2">Everything you get</h2>
-            <p className="text-ink/70">Everything here works together today.</p>
+            <p className="text-ink/70">Everything here is part of the current DayOf product shape, with the v1 line centered on what couples can actually rely on today.</p>
           </SlideReveal>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {FEATURE_AUDIT_GROUPS.map((group) => (

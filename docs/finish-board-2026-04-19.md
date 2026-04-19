@@ -247,6 +247,7 @@ Things that do **not** count as done:
 **Missing / partial**
 - still needs one hard smoke over the canonical couple/guest path
 - any remaining misleading launch/privacy wording is a v1 blocker
+- top-level Home/Product promise surfaces had still been slightly stronger than the earned v1 bar around guest scale, coordination shape, and archive ambition
 
 **Proof needed**
 - brutal end-to-end smoke over real couple and guest path
@@ -322,6 +323,7 @@ Things that do **not** count as done:
 - Tightened the Guests feature page so it no longer overclaims automatic household resolution, zero event leakage, fuzzy duplicate certainty, broad export-format guarantees, or generic "real-time" confidence that is not the real value bar.
 - Tightened the RSVP feature page so it no longer overclaims household certainty, automatic reminder maturity, fake analytics precision, or broad export certainty beyond the current live product bar.
 - Tightened the Seating feature page so it no longer overclaims real-time confidence, check-in certainty, perfect drift awareness, caterer-format polish, or automatic seating speed beyond what the product has actually earned.
+- Tightened top-level Home/Product promise copy so the main marketing surfaces no longer overclaim unlimited guest scale, a too-magical planner command center, or oversized post-wedding platform maturity beyond the current v1 line.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
