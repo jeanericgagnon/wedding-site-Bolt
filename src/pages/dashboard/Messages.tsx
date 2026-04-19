@@ -861,6 +861,7 @@ export const DashboardMessages: React.FC = () => {
   const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
+  const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<'all' | 'delivered' | 'failed' | 'skipped' | 'unreached'>('all');
   const [historySearch, setHistorySearch] = useState('');
 
   const [formData, setFormData] = useState({
@@ -1844,13 +1845,21 @@ export const DashboardMessages: React.FC = () => {
     if (historyChannelFilter !== 'all' && m.channel !== historyChannelFilter) return false;
     const aud = m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all';
     if (historyAudienceFilter !== 'all' && aud !== historyAudienceFilter) return false;
+    const skippedCount = deliveries.filter((delivery) => delivery.message_id === m.id && delivery.status === 'skipped').length;
+    const failedCount = Number(m.failed_count ?? 0);
+    const deliveredCount = Number(m.delivered_count ?? 0);
+    const unreachedCount = getUnreachedCount(m);
+    if (historyDeliveryFilter === 'delivered' && deliveredCount <= 0) return false;
+    if (historyDeliveryFilter === 'failed' && failedCount <= 0) return false;
+    if (historyDeliveryFilter === 'skipped' && skippedCount <= 0) return false;
+    if (historyDeliveryFilter === 'unreached' && unreachedCount <= 0) return false;
     const query = historySearch.trim().toLowerCase();
     if (query) {
       const haystack = [m.subject, m.body, aud, m.channel, m.status, getCampaignName(m), getCampaignTypeLabel(m)].filter(Boolean).join(' ').toLowerCase();
       if (!haystack.includes(query)) return false;
     }
     return true;
-  }), [messages, historyStatusFilter, historyChannelFilter, historyAudienceFilter, historySearch]);
+  }), [messages, deliveries, historyStatusFilter, historyChannelFilter, historyAudienceFilter, historyDeliveryFilter, historySearch]);
 
   const audienceBreakdown = useMemo(() => {
     const map = new Map<string, number>();
@@ -1970,6 +1979,12 @@ export const DashboardMessages: React.FC = () => {
       .sort((a, b) => b.latestAt - a.latestAt)
       .slice(0, 5);
   }, [messages, deliveries]);
+
+  const activeCampaignThread = useMemo(() => {
+    const query = historySearch.trim().toLowerCase();
+    if (!query) return null;
+    return campaignThreads.find((thread) => thread.name.toLowerCase() === query) ?? null;
+  }, [campaignThreads, historySearch]);
 
   const providerTelemetry = useMemo(() => {
     const attempted = deliveries.filter((d) => d.status === 'sent' || d.status === 'failed');
@@ -2697,17 +2712,25 @@ export const DashboardMessages: React.FC = () => {
                   <option key={aud} value={aud}>{aud}</option>
                 ))}
               </select>
+              <select value={historyDeliveryFilter} onChange={(e) => setHistoryDeliveryFilter(e.target.value as typeof historyDeliveryFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
+                <option value="all">All delivery states</option>
+                <option value="delivered">Has delivered</option>
+                <option value="failed">Has failed</option>
+                <option value="skipped">Has skipped</option>
+                <option value="unreached">Has unreached</option>
+              </select>
             </div>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show failed</button>
-            <button type="button" onClick={() => { setHistorySearch('Skipped:'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show skipped</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); setHistoryDeliveryFilter('failed'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show failed</button>
+            <button type="button" onClick={() => { setHistoryDeliveryFilter('skipped'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show skipped</button>
+            <button type="button" onClick={() => { setHistoryDeliveryFilter('unreached'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show unreached</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); setHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); setHistoryDeliveryFilter('all'); setHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
@@ -2856,6 +2879,25 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeCampaignThread && (
+            <div className="mb-4 rounded-2xl border border-primary/20 bg-primary-light/30 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Active campaign thread</p>
+                  <h3 className="mt-1 text-sm font-semibold text-text-primary">{activeCampaignThread.name}</h3>
+                  <p className="mt-1 text-xs text-text-secondary">{activeCampaignThread.count} sends · latest {activeCampaignThread.latestStatus}</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setHistorySearch('')}>Clear thread filter</Button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
+                <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
+                <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Failed {activeCampaignThread.failed}</span>
+                <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Skipped {activeCampaignThread.skipped}</span>
+                <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Unreached {activeCampaignThread.unreached}</span>
               </div>
             </div>
           )}
