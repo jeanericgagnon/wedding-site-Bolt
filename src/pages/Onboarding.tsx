@@ -17,6 +17,7 @@ import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdat
 import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 import { normalizeOnboardingDraftSnapshot, type OnboardingStep } from '../lib/onboardingDraftPersistence';
 import { mergeOnboardingFollowUpAnswers } from '../lib/onboardingFollowUpMerge';
+import { resolveOnboardingResumeIndex } from '../lib/onboardingResumeIndex';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
@@ -235,8 +236,13 @@ export const Onboarding: React.FC = () => {
         setStep(getStepForIndex(resumeIndex));
         window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
       } else if (typeof parsed.conversationIndex === 'number') {
-        setConversationIndex(parsed.conversationIndex);
-        setStep(parsed.showFollowUpReview ? 'quick-3' : getStepForIndex(parsed.conversationIndex));
+        const resumeIndex = resolveOnboardingResumeIndex({
+          savedIndex: parsed.conversationIndex,
+          firstIncompleteIndex: getFirstIncompleteQuestionIndex(),
+          questionCount: conciergeQuestions.length,
+        });
+        setConversationIndex(resumeIndex);
+        setStep(parsed.showFollowUpReview ? 'quick-3' : getStepForIndex(resumeIndex));
       } else if (parsed.step && parsed.step !== 'complete') {
         setStep(parsed.step);
       }
