@@ -19,6 +19,7 @@ import { normalizeOnboardingDraftSnapshot, type OnboardingStep } from '../lib/on
 import { mergeOnboardingFollowUpAnswers } from '../lib/onboardingFollowUpMerge';
 import { resolveOnboardingResumeIndex } from '../lib/onboardingResumeIndex';
 import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY as ONBOARDING_RESUME_HINT_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY as ONBOARDING_RESUME_INDEX_KEY } from '../lib/onboardingResumeStorage';
+import { writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARDING_STORAGE_KEY } from '../lib/onboardingDraftCleanup';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
