@@ -25,6 +25,7 @@ import { getCoordinatorPrimaryTimelineAction } from '../../lib/coordinatorTimeli
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
+import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -71,6 +72,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
   const [qnaInput, setQnaInput] = useState('');
   const [qnaDraftAnswers, setQnaDraftAnswers] = useState<Record<string, string>>({});
+  const [activeQnaId, setActiveQnaId] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -379,6 +381,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const escalateDoorReview = (guest: GuestLiteForCoordinator) => {
     setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));
     setPanelFocus('qna');
+    setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
     toast('Door issue moved into guest Q&A triage.', 'success');
   };
 
@@ -408,6 +411,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
     setQnaItems(nextItems);
     setQnaDraftAnswers((prev) => ({ ...prev, [id]: nextItem.answer || '' }));
+    setActiveQnaId(nextItem.status === 'answered' ? getNextCoordinatorQnaFocusId(nextItems, id) : id);
     toast(nextItem.status === 'answered' ? 'Guest question answered.' : 'Guest question reopened.', 'success');
   };
 
@@ -461,6 +465,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     const focus = resolveCoordinatorQueueFocus(item.key);
                     const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
                     const timelineTarget = resolveCoordinatorEscalationTimelineTarget({ escalationKey: item.key, upNextEvent });
+                    if (item.key === 'open-qna') setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
                     setCheckInFilter(focus.filter);
                     setCheckInReviewOnly(focus.reviewOnly);
                     setPanelFocus(nextPanelFocus);
@@ -796,7 +801,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-xs text-text-tertiary">No guest questions yet.</p>
                 ) : (
                   qnaItems.slice(0, 8).map((item) => (
-                    <div key={item.id} className="text-xs border border-border/50 rounded-md px-2.5 py-2 space-y-2">
+                    <div key={item.id} className={`text-xs border rounded-md px-2.5 py-2 space-y-2 ${activeQnaId === item.id ? 'border-primary/40 ring-2 ring-primary/10 bg-primary/5' : 'border-border/50'}`}>
                       <div className="flex items-start justify-between gap-2">
                         <span className="text-text-secondary">{item.question}</span>
                         <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${item.status === 'answered' ? 'text-success border-success/35 bg-success/5' : 'text-warning border-warning/35 bg-warning/5'}`}>
@@ -805,13 +810,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       </div>
                       <Textarea
                         value={qnaDraftAnswers[item.id] ?? item.answer ?? ''}
-                        onChange={(e) => setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        onChange={(e) => { setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value })); setActiveQnaId(item.id); }}
                         rows={2}
                         placeholder="Add the answer the coordinator should use"
                       />
                       <div className="flex justify-end">
                         <button
-                          onClick={() => void saveQnaAnswer(item.id)}
+                          onClick={() => { setActiveQnaId(item.id); void saveQnaAnswer(item.id); }}
                           className="px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
                         >
                           {(qnaDraftAnswers[item.id] ?? item.answer ?? '').trim() ? 'Save answer' : 'Mark unresolved'}
