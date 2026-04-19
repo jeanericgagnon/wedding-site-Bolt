@@ -16,6 +16,7 @@ import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../
 import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinatorEscalationAction';
 import { normalizeCoordinatorModeSessionState } from '../../lib/coordinatorModeSessionState';
 import { normalizeCoordinatorDraftState } from '../../lib/coordinatorDraftState';
+import { normalizeCoordinatorActiveWorkState } from '../../lib/coordinatorActiveWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
