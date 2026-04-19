@@ -695,6 +695,8 @@ export const DashboardMessages: React.FC = () => {
       const msg = (error.message || '').toLowerCase();
       if (msg.includes('message_deliveries') || msg.includes('does not exist') || msg.includes('404')) {
         hasMessageDeliveriesTable = false;
+      } else {
+        toast('Couldn’t load delivery history right now. Please try again.', 'error');
       }
       setDeliveries([]);
       return;
