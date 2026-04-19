@@ -66,11 +66,11 @@ export const RegistryFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Link Any Registry</h3>
               <p className="text-ink/70 mb-4">
-                Link to your existing registries at Amazon, Target, Crate & Barrel, or anywhere else. We support all major retailers.
+                Link to your existing registries from the major stores couples already use, or add a direct registry or gift link manually when a merchant needs a simpler path.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Any retailer or website</li>
-                <li>• Auto-fetch preview images</li>
+                <li>• Major-registry-friendly linking</li>
+                <li>• Auto-fetch when metadata cooperates</li>
                 <li>• Multiple registries supported</li>
               </ul>
             </div>
@@ -81,12 +81,12 @@ export const RegistryFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Use your own affiliate links</h3>
               <p className="text-ink/70 mb-4">
-                Bring Your Own Affiliate Links. Use your own affiliate codes and keep the earnings instead of us taking a cut.
+                If you already have your own affiliate or tracked links, DayOf can point guests there instead of inserting its own sponsored layer.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Use your Amazon Associates</li>
-                <li>• Any affiliate program</li>
-                <li>• You keep 100% of earnings</li>
+                <li>• Bring your own tracked links</li>
+                <li>• No forced DayOf affiliate layer</li>
+                <li>• Cleaner control over where guests land</li>
               </ul>
             </div>
 
@@ -126,11 +126,11 @@ export const RegistryFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Auto-Fetch Details</h3>
               <p className="text-ink/70 mb-4">
-                Paste a registry URL and we fetch the title, description, and preview image automatically. Quick setup.
+                Paste a registry URL and DayOf can often pull in the title, description, and preview image to speed up setup, with manual cleanup when merchants are messy.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Automatic metadata extraction</li>
-                <li>• Preview images</li>
+                <li>• Metadata fetch when available</li>
+                <li>• Preview images when available</li>
                 <li>• Manual override available</li>
               </ul>
             </div>
@@ -185,7 +185,7 @@ export const RegistryFeature: React.FC = () => {
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Healthier links over time</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      We regularly check your registry links and notify you if any break. No surprise dead links when guests try to shop.
+                      DayOf now has a practical repair workflow for weak or messy registry links, including refresh, re-import, and manual cleanup when metadata comes back badly.
                     </p>
                   </div>
                 </div>
@@ -222,14 +222,14 @@ export const RegistryFeature: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[
                 'Link any registry',
-                'Auto-fetch details',
+                'Guided import + cleanup',
                 'Multiple registries',
                 'Cash funds',
                 'Honeymoon fund',
                 'Charity donations',
                 'BYOAL affiliate option',
                 'Custom messaging',
-                'Link maintenance',
+                'Repair workflow',
                 'No sponsored items',
                 'No rigged order',
                 'Clean presentation',

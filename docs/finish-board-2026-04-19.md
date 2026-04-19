@@ -195,6 +195,7 @@ Things that do **not** count as done:
 **Missing / partial**
 - public purchased-state nuance still not fully proven
 - multi-merchant save reliability still not proven as universal
+- registry marketing copy had been stronger than the currently earned proof around merchant breadth and link maintenance
 
 **Proof needed**
 - smoke showing add/import/edit and internal purchased tracking in a way that would survive real usage
@@ -312,6 +313,7 @@ Things that do **not** count as done:
   - removed fake billing promises like custom domains / advanced analytics / scheduled messaging from the upgrade surface
 - Tightened Settings privacy language so invite-only access is framed as a guest access link instead of a fake “private preview” product, and clarified search visibility text accordingly.
 - Tightened the Messaging feature page so it no longer overclaims unlimited email certainty, overstates tracking confidence, or sells fully automatic RSVP reminders as already-solid reality.
+- Tightened the Registry feature page so it no longer overclaims universal retailer support or proactive link-health guarantees, and instead frames registry strength as guided import, cleanup, repair, and clean presentation.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
