@@ -482,6 +482,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     <p className="mt-1 text-xs text-text-secondary">Depends on {item.dependentStepTitle}</p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {item.priorityTier && <span className={`rounded-full px-2 py-1 text-xs ${item.priorityTier === 'critical' ? 'bg-danger/10 text-danger' : item.priorityTier === 'elevated' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{item.priorityTier}</span>}
                     {item.isStale && <span className="rounded-full bg-warning/10 px-2 py-1 text-xs text-warning">stale</span>}
                     <span className={`rounded-full px-2 py-1 text-xs ${item.urgency === 'high' ? 'bg-warning/10 text-warning' : item.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>{item.urgency}</span>
                   </div>

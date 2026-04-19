@@ -263,6 +263,7 @@ describe('name change reminder suggestions', () => {
         reminderKey: 'reminder-banks',
         dependentStepExecutionStatus: 'in_progress',
         reminderStatus: 'scheduled',
+        priorityTier: 'normal',
         isStale: false,
         lastTouchedAt: '2026-04-18T10:00:00.000Z',
       }),
@@ -299,8 +300,25 @@ describe('name change reminder suggestions', () => {
         : step),
     }, '2026-04-18T12:00:00.000Z');
 
-    expect(attention[0]).toMatchObject({ reminderKey: 'reminder-banks', isStale: true });
+    expect(attention[0]).toMatchObject({ reminderKey: 'reminder-banks', isStale: true, priorityTier: 'elevated' });
     expect(attention.some((item) => item.reminderKey === 'reminder-insurance' && item.isStale)).toBe(true);
+  });
+
+  it('marks untouched stale high-urgency attention as critical', () => {
+    const plan = buildNameChangePlan(makeInput());
+    const attention = deriveNameChangeReminderAttention([
+      {
+        reminder_key: 'reminder-passport-followup',
+        label: 'Passport',
+        reason: 'Reason',
+        depends_on_step_id: 'federal-passport',
+        suggested_offset_days: 1,
+        urgency: 'high',
+        status: 'pending',
+      },
+    ], plan, '2026-04-18T12:00:00.000Z');
+
+    expect(attention[0]).toMatchObject({ priorityTier: 'critical', dependentStepExecutionStatus: 'todo' });
   });
 
   it('summarizes reminder attention counts for stale and high urgency items', () => {

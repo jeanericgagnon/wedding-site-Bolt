@@ -270,6 +270,7 @@ export interface NameChangeReminderAttentionItem {
   dependentStepExecutionStatus: 'todo' | 'in_progress' | 'complete';
   reminderStatus: 'pending' | 'scheduled' | 'sent' | 'dismissed';
   urgency: 'high' | 'medium' | 'low';
+  priorityTier?: 'critical' | 'elevated' | 'normal';
   suggestedOffsetDays: number;
   lastTouchedAt: string | null;
   isStale: boolean;

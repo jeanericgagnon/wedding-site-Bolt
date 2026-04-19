@@ -144,6 +144,11 @@ export function deriveNameChangeReminderAttention(
 
       const lastTouchedAt = dependentStep.executionUpdatedAt ?? null;
       const isStale = lastTouchedAt ? (nowMs - new Date(lastTouchedAt).getTime()) >= REMINDER_STALE_AFTER_MS : true;
+      const priorityTier = isStale && reminder.urgency === 'high' && (dependentStep.executionStatus ?? 'todo') === 'todo'
+        ? 'critical'
+        : isStale || reminder.urgency === 'high'
+          ? 'elevated'
+          : 'normal';
 
       attentionItems.push({
         reminderKey: reminder.reminder_key,
@@ -153,6 +158,7 @@ export function deriveNameChangeReminderAttention(
         dependentStepExecutionStatus: dependentStep.executionStatus ?? 'todo',
         reminderStatus: reminder.status,
         urgency: reminder.urgency,
+        priorityTier,
         suggestedOffsetDays: reminder.suggested_offset_days,
         lastTouchedAt,
         isStale,
@@ -160,8 +166,10 @@ export function deriveNameChangeReminderAttention(
     });
 
   return attentionItems.sort((a, b) => {
+      const priorityRank = { critical: 0, elevated: 1, normal: 2 };
       const urgencyRank = { high: 0, medium: 1, low: 2 };
-      return Number(b.isStale) - Number(a.isStale)
+      return priorityRank[a.priorityTier ?? 'normal'] - priorityRank[b.priorityTier ?? 'normal']
+        || Number(b.isStale) - Number(a.isStale)
         || urgencyRank[a.urgency] - urgencyRank[b.urgency]
         || a.suggestedOffsetDays - b.suggestedOffsetDays
         || a.label.localeCompare(b.label);
