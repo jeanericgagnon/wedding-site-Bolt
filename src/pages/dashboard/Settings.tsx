@@ -173,11 +173,12 @@ export const DashboardSettings: React.FC = () => {
     }
 
     try {
-      const { data: queryData } = await supabase
+      const { data: queryData, error: siteLoadError } = await supabase
         .from('wedding_sites')
         .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
         .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .maybeSingle();
+      if (siteLoadError) throw siteLoadError;
 
       const data = (queryData as Record<string, unknown> | null) ?? null;
 
@@ -224,18 +225,20 @@ export const DashboardSettings: React.FC = () => {
         setRsvpMealOptions(Array.isArray(mealCfg?.options) ? mealCfg!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
 
         if ((data.id as string | undefined)) {
-          const { data: inviteRows } = await supabase
+          const { data: inviteRows, error: inviteLoadError } = await supabase
             .from('wedding_site_collaborator_invites')
             .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
             .eq('wedding_site_id', data.id as string)
             .order('invited_at', { ascending: false });
+          if (inviteLoadError) throw inviteLoadError;
           setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }> | null) ?? []);
         }
 
       } else {
         setAccountEmail(user.email ?? '');
       }
-    } catch {
+    } catch (err) {
+      setAccountError(err instanceof Error ? err.message : 'Could not load settings right now.');
     }
   };
 
