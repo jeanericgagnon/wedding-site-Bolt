@@ -662,16 +662,21 @@ export const DashboardMessages: React.FC = () => {
       })));
       return;
     }
-    const { data, error } = await supabase
-      .from('guests')
-      .select('id, email, phone, rsvp_status, first_name, last_name, name')
-      .eq('wedding_site_id', weddingSite.id);
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('guests')
+        .select('id, email, phone, rsvp_status, first_name, last_name, name')
+        .eq('wedding_site_id', weddingSite.id);
+      if (error) {
+        toast('Couldn’t load guest recipients right now. Please try again.', 'error');
+        setGuests([]);
+        return;
+      }
+      setGuests(data || []);
+    } catch {
       toast('Couldn’t load guest recipients right now. Please try again.', 'error');
       setGuests([]);
-      return;
     }
-    setGuests(data || []);
   }, [weddingSite, isDemoMode]);
 
   const fetchDeliveries = useCallback(async () => {
@@ -687,24 +692,29 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('message_deliveries')
-      .select('id, message_id, status, provider_message_id, error_message, attempted_at, delivered_at, recipient_email')
-      .in('message_id', messageIds);
+    try {
+      const { data, error } = await supabase
+        .from('message_deliveries')
+        .select('id, message_id, status, provider_message_id, error_message, attempted_at, delivered_at, recipient_email')
+        .in('message_id', messageIds);
 
-    if (error) {
-      const msg = (error.message || '').toLowerCase();
-      if (msg.includes('message_deliveries') || msg.includes('does not exist') || msg.includes('404')) {
-        hasMessageDeliveriesTable = false;
-      } else {
-        toast('Couldn’t load delivery history right now. Please try again.', 'error');
+      if (error) {
+        const msg = (error.message || '').toLowerCase();
+        if (msg.includes('message_deliveries') || msg.includes('does not exist') || msg.includes('404')) {
+          hasMessageDeliveriesTable = false;
+        } else {
+          toast('Couldn’t load delivery history right now. Please try again.', 'error');
+        }
+        setDeliveries([]);
+        return;
       }
-      setDeliveries([]);
-      return;
-    }
 
-    hasMessageDeliveriesTable = true;
-    setDeliveries((data as DeliveryRow[]) || []);
+      hasMessageDeliveriesTable = true;
+      setDeliveries((data as DeliveryRow[]) || []);
+    } catch {
+      toast('Couldn’t load delivery history right now. Please try again.', 'error');
+      setDeliveries([]);
+    }
   }, [weddingSite, isDemoMode, messages]);
 
   const fetchItinerarySegments = useCallback(async () => {
