@@ -30,6 +30,7 @@ import { deriveFollowUpAnswersFromClarifyingState } from '../../lib/quickStartCl
 import { resolveQuickStartResumeViewState } from '../../lib/quickStartResumeState';
 import { clampQuickStartQuestionIndex } from '../../lib/quickStartQuestionBounds';
 import { canResumeQuickStartFollowUps } from '../../lib/quickStartFollowUpGate';
+import { normalizeQuickStartClarifyingState } from '../../lib/quickStartClarifyingNormalize';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -193,19 +194,20 @@ export const QuickStart: React.FC = () => {
     }
     try {
       const parsed = normalizeQuickStartDraftSnapshot(JSON.parse(saved));
-      const restoredFollowUps = deriveFollowUpAnswersFromClarifyingState(parsed.clarifyingState, parsed.followUpAnswers);
+      const normalizedClarifyingState = normalizeQuickStartClarifyingState(parsed.clarifyingState);
+      const restoredFollowUps = deriveFollowUpAnswersFromClarifyingState(normalizedClarifyingState, parsed.followUpAnswers);
       const restoredIndex = clampQuickStartQuestionIndex(parsed.currentIndex, questions.length);
-      const canResumeFollowUps = canResumeQuickStartFollowUps(parsed.showFollowUps, parsed.clarifyingState);
+      const canResumeFollowUps = canResumeQuickStartFollowUps(parsed.showFollowUps, normalizedClarifyingState);
       setInitialSetupAnswers(parsed.initialSetupAnswers);
       setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(parsed.initialSetupAnswers));
       setCurrentIndex(restoredIndex);
       followUpAnswersRef.current = restoredFollowUps;
       setFollowUpAnswers(restoredFollowUps);
-      clarifyingStateRef.current = parsed.clarifyingState;
-      setClarifyingState(parsed.clarifyingState);
+      clarifyingStateRef.current = normalizedClarifyingState;
+      setClarifyingState(normalizedClarifyingState);
       setShowFollowUps(canResumeFollowUps);
       setViewState(resolveQuickStartResumeViewState({ ...parsed, showFollowUps: canResumeFollowUps }));
-      setHasLocalDraftHydration(hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(restoredFollowUps).length > 0 || Boolean(parsed.clarifyingState));
+      setHasLocalDraftHydration(hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(restoredFollowUps).length > 0 || Boolean(normalizedClarifyingState));
     } catch {}
     finally {
       setHasHydratedDraft(true);
