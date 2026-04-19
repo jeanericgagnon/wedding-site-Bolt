@@ -28,6 +28,7 @@ import { buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
 import { deriveFollowUpAnswersFromClarifyingState } from '../../lib/quickStartClarifyingRestore';
 import { resolveQuickStartResumeViewState } from '../../lib/quickStartResumeState';
+import { clampQuickStartQuestionIndex } from '../../lib/quickStartQuestionBounds';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -192,9 +193,10 @@ export const QuickStart: React.FC = () => {
     try {
       const parsed = normalizeQuickStartDraftSnapshot(JSON.parse(saved));
       const restoredFollowUps = deriveFollowUpAnswersFromClarifyingState(parsed.clarifyingState, parsed.followUpAnswers);
+      const restoredIndex = clampQuickStartQuestionIndex(parsed.currentIndex, questions.length);
       setInitialSetupAnswers(parsed.initialSetupAnswers);
       setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(parsed.initialSetupAnswers));
-      setCurrentIndex(parsed.currentIndex);
+      setCurrentIndex(restoredIndex);
       followUpAnswersRef.current = restoredFollowUps;
       setFollowUpAnswers(restoredFollowUps);
       clarifyingStateRef.current = parsed.clarifyingState;
