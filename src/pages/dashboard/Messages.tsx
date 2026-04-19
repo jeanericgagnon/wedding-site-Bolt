@@ -231,6 +231,38 @@ interface ComposerTemplate {
   }) => { subject: string; body: string };
 }
 
+interface SavedComposerTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  channel: ChannelType;
+  audience: string;
+  campaignName: string;
+  createdAt: string;
+}
+
+const SAVED_COMPOSER_TEMPLATES_STORAGE_KEY = 'dayof.savedComposerTemplates.v1';
+
+function readSavedComposerTemplates(): SavedComposerTemplate[] {
+  try {
+    const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
+  try {
+    localStorage.setItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY, JSON.stringify(items.slice(0, 12)));
+  } catch {
+    // ignore local persistence errors
+  }
+}
+
 const COMPOSER_TEMPLATES: ComposerTemplate[] = [
   {
     key: 'blank',
@@ -754,6 +786,7 @@ export const DashboardMessages: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [processingScheduled, setProcessingScheduled] = useState(false);
+  const [savedTemplates, setSavedTemplates] = useState<SavedComposerTemplate[]>([]);
   const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -794,6 +827,10 @@ export const DashboardMessages: React.FC = () => {
       body: prefillBody ?? prev.body,
     }));
   }, [location.search]);
+
+  useEffect(() => {
+    setSavedTemplates(readSavedComposerTemplates());
+  }, []);
 
   useEffect(() => {
     if (!weddingSite?.id) return;
@@ -1560,6 +1597,53 @@ export const DashboardMessages: React.FC = () => {
     }));
   }
 
+  function applySavedTemplate(template: SavedComposerTemplate) {
+    setFormData((prev) => ({
+      ...prev,
+      campaignName: template.campaignName || template.name,
+      templateKey: 'blank',
+      subject: template.subject,
+      body: template.body,
+      audience: template.audience,
+      channel: template.channel,
+    }));
+    toast(`Loaded template “${template.name}”.`, 'info');
+  }
+
+  function saveCurrentComposerAsTemplate() {
+    const subject = formData.subject.trim();
+    const body = formData.body.trim();
+    const name = formData.campaignName.trim() || subject || selectedTemplate.label;
+
+    if (!subject && !body) {
+      toast('Add a subject or message body before saving a reusable template.', 'error');
+      return;
+    }
+
+    const next: SavedComposerTemplate = {
+      id: `saved-template-${Date.now()}`,
+      name,
+      subject: formData.subject,
+      body: formData.body,
+      channel: formData.channel,
+      audience: formData.audience,
+      campaignName: formData.campaignName,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updated = [next, ...savedTemplates.filter((item) => item.name !== next.name)].slice(0, 12);
+    setSavedTemplates(updated);
+    writeSavedComposerTemplates(updated);
+    toast(`Saved reusable template “${name}”.`, 'success');
+  }
+
+  function deleteSavedTemplate(templateId: string) {
+    const updated = savedTemplates.filter((item) => item.id !== templateId);
+    setSavedTemplates(updated);
+    writeSavedComposerTemplates(updated);
+    toast('Removed saved template.', 'info');
+  }
+
   const applySaveTheDatePreset = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -2007,6 +2091,12 @@ export const DashboardMessages: React.FC = () => {
                       <p className="text-xs text-text-tertiary mt-1">{selectedTemplate.detail}</p>
                     </div>
                   </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button type="button" size="sm" variant="outline" onClick={saveCurrentComposerAsTemplate} disabled={!canCompose}>
+                      <Save className="w-3.5 h-3.5 mr-1.5" />Save as reusable template
+                    </Button>
+                    <span className="text-xs text-text-tertiary self-center">Keeps a lightweight reusable version in this browser for fast repeat campaigns.</span>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
@@ -2276,6 +2366,42 @@ export const DashboardMessages: React.FC = () => {
                 </div>
                 </fieldset>
               </form>
+            </Card>
+
+            <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle shadow-sm mt-6">
+              <div className="-mx-6 -mt-6 mb-6 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Reusable templates</p>
+                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Saved from your real campaigns</h2>
+                <p className="mt-1 text-sm text-text-secondary">Keep a lightweight library of messages you actually reuse without bloating the backend model.</p>
+              </div>
+              {savedTemplates.length === 0 ? (
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-6 text-sm text-text-secondary">
+                  No saved reusable templates yet. Save one from the composer when you have a message worth reusing.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {savedTemplates.map((template) => (
+                    <div key={template.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">{template.channel.toUpperCase()} · {audienceOptions.find((option) => option.value === template.audience)?.label ?? 'Saved audience'}</p>
+                          <h3 className="mt-1 text-sm font-semibold text-text-primary">{template.name}</h3>
+                          <p className="mt-1 text-xs text-text-secondary line-clamp-2">{template.subject || '(No subject)'}{template.body ? ` — ${template.body}` : ''}</p>
+                          <p className="mt-2 text-[11px] text-text-tertiary">Saved {new Date(template.createdAt).toLocaleString()}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" onClick={() => applySavedTemplate(template)}>
+                            Use template
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => deleteSavedTemplate(template.id)}>
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
 
