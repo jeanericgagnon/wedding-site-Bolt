@@ -108,6 +108,7 @@ export const PaymentRequired: React.FC = () => {
       window.location.assign('/onboarding/celebration?bypassPayment=1');
       return;
     }
+    clearAllOnboardingDraftStorage();
     navigate('/onboarding/celebration?bypassPayment=1', { replace: true });
   };
 
@@ -118,6 +119,7 @@ export const PaymentRequired: React.FC = () => {
     try {
       const status = await fetchPaymentStatus(user.id);
       if (status === 'active') {
+        clearAllOnboardingDraftStorage();
         writeSignupReturnPath(null);
         navigate('/onboarding/celebration?from=payment', { replace: true });
       } else {
