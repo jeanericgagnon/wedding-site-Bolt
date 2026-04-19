@@ -11,6 +11,7 @@ import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '..
 import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
+import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
@@ -68,6 +69,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
+  const [panelFocus, setPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
     body: 'Quick update from the couple: ',
@@ -438,8 +440,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   type="button"
                   onClick={() => {
                     const focus = resolveCoordinatorQueueFocus(item.key);
+                    const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
                     setCheckInFilter(focus.filter);
                     setCheckInReviewOnly(focus.reviewOnly);
+                    setPanelFocus(nextPanelFocus);
                   }}
                   className={`w-full text-left rounded-lg border px-3 py-2 ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-border/50 bg-surface-subtle/40'}`}
                 >
@@ -484,7 +488,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] overflow-hidden">
+          <div className={`lg:col-span-2 rounded-2xl border bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] overflow-hidden ${panelFocus === 'check-in' ? 'border-primary/40 ring-2 ring-primary/10' : 'border-border/35'}`}>
             <div className="px-4 py-3 border-b border-border/60 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -501,7 +505,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 />
                 <select
                   value={checkInFilter}
-                  onChange={(e) => { setCheckInFilter(e.target.value as CoordinatorCheckInFilter); setCheckInReviewOnly(false); }}
+                  onChange={(e) => { setCheckInFilter(e.target.value as CoordinatorCheckInFilter); setCheckInReviewOnly(false); setPanelFocus('check-in'); }}
                   className="sm:w-40 text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                 >
                   <option value="arrivals">Arrivals</option>
@@ -539,7 +543,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4 space-y-4">
             <div>
-              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline</p>
+              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}</p>
               <div className="space-y-2">
                 {events.length === 0 ? (
                   <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
@@ -726,7 +730,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
             <div className="border-t border-border/60 pt-3">
               <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-text-primary">Guest questions</p>
+                <p className="text-sm font-medium text-text-primary">Guest questions{panelFocus === 'qna' ? ' · focus' : ''}</p>
                 <p className="text-[11px] text-text-tertiary">{qnaCounts.open} open · {qnaCounts.answered} answered</p>
               </div>
               <fieldset disabled={!canEditQna}>
