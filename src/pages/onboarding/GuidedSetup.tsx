@@ -151,7 +151,7 @@ export const GuidedSetup: React.FC = () => {
     } finally {
       setHasHydratedDraft(true);
     }
-  }, [hasHydratedDraft]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !hasHydratedDraft || currentStep === 'complete') return;
@@ -165,6 +165,8 @@ export const GuidedSetup: React.FC = () => {
 
       const resolvedSiteId = await resolvePrimaryWeddingSiteId(user.id);
       setSiteId(resolvedSiteId);
+      if (!resolvedSiteId) return;
+
       const { data } = await supabase
         .from('wedding_sites')
         .select('id, couple_name_1, couple_name_2, wedding_date, venue_date, venue_name, venue_address, wedding_location')
