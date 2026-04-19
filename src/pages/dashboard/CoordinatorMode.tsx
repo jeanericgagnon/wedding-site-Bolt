@@ -10,6 +10,7 @@ import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
 import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
+import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
@@ -66,6 +67,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [qnaDraftAnswers, setQnaDraftAnswers] = useState<Record<string, string>>({});
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
+  const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
     body: 'Quick update from the couple: ',
@@ -279,7 +281,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const nextArrivals = useMemo(() => sortedGuests.filter((g) => !g.checked_in_at).slice(0, 5), [sortedGuests]);
   const checkInWatchCount = useMemo(() => guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch').length, [guests]);
 
-  const checkInQueue = useMemo(() => filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter), [sortedGuests, checkInQuery, checkInFilter]);
+  const checkInQueue = useMemo(() => {
+    const base = filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter);
+    return checkInReviewOnly ? base.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch') : base;
+  }, [sortedGuests, checkInQuery, checkInFilter, checkInReviewOnly]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -428,10 +433,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <p className="text-[11px] text-text-tertiary mb-2">This pulls together the live exceptions the coordinator should resolve first.</p>
             <div className="space-y-2">
               {liveIssues.map((item) => (
-                <div key={item.title} className={`rounded-lg border px-3 py-2 ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-border/50 bg-surface-subtle/40'}`}>
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    const focus = resolveCoordinatorQueueFocus(item.key);
+                    setCheckInFilter(focus.filter);
+                    setCheckInReviewOnly(focus.reviewOnly);
+                  }}
+                  className={`w-full text-left rounded-lg border px-3 py-2 ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-border/50 bg-surface-subtle/40'}`}
+                >
                   <p className="text-sm font-medium text-text-primary">{item.title}</p>
                   <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
-                </div>
+                </button>
               ))}
             </div>
             <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
@@ -477,7 +491,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-sm font-medium text-text-primary">Check-in queue</p>
                   <p className="text-[11px] text-text-tertiary">Search arrivals fast and keep the live line moving.</p>
                 </div>
-                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review</p>
+                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review{checkInReviewOnly ? ' · review mode' : ''}</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
@@ -487,7 +501,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 />
                 <select
                   value={checkInFilter}
-                  onChange={(e) => setCheckInFilter(e.target.value as CoordinatorCheckInFilter)}
+                  onChange={(e) => { setCheckInFilter(e.target.value as CoordinatorCheckInFilter); setCheckInReviewOnly(false); }}
                   className="sm:w-40 text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                 >
                   <option value="arrivals">Arrivals</option>
