@@ -18,12 +18,11 @@ import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 import { normalizeOnboardingDraftSnapshot, type OnboardingStep } from '../lib/onboardingDraftPersistence';
 import { mergeOnboardingFollowUpAnswers } from '../lib/onboardingFollowUpMerge';
 import { resolveOnboardingResumeIndex } from '../lib/onboardingResumeIndex';
+import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY as ONBOARDING_RESUME_HINT_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY as ONBOARDING_RESUME_INDEX_KEY } from '../lib/onboardingResumeStorage';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
 const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
-const ONBOARDING_RESUME_HINT_KEY = 'dayoflove:onboarding-resume-hint';
-const ONBOARDING_RESUME_INDEX_KEY = 'dayoflove:onboarding-resume-index';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -220,9 +219,7 @@ export const Onboarding: React.FC = () => {
       if (forceShowChooser) {
         setConversationIndex(0);
         setStep('choice');
-        window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
-        window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
-        window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
+        clearOnboardingResumeStorage();
       } else if (resumeHint === 'question' && resumeIndexValue) {
         const hintedIndex = Number(resumeIndexValue);
         if (!Number.isNaN(hintedIndex)) {
@@ -234,8 +231,7 @@ export const Onboarding: React.FC = () => {
           setConversationIndex(resumeIndex);
           setStep(getStepForIndex(resumeIndex));
         }
-        window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
-        window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
+        clearOnboardingResumeStorage();
       } else if (resumeHint === 'first-incomplete') {
         const firstIncompleteIndex = getFirstIncompleteQuestionIndex();
         const resumeIndex = resolveOnboardingResumeIndex({
@@ -245,7 +241,7 @@ export const Onboarding: React.FC = () => {
         });
         setConversationIndex(resumeIndex);
         setStep(getStepForIndex(resumeIndex));
-        window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
+        clearOnboardingResumeStorage();
       } else if (typeof parsed.conversationIndex === 'number') {
         const resumeIndex = resolveOnboardingResumeIndex({
           savedIndex: parsed.conversationIndex,

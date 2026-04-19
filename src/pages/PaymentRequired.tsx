@@ -7,6 +7,8 @@ import { supabase } from '../lib/supabase';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { writeSignupReturnPath } from '../lib/signupContinuation';
+import { clearOnboardingResumeStorage } from '../lib/onboardingResumeStorage';
+import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 
 const FEATURES = [
   'Your own wedding website with custom URL',
@@ -101,8 +103,7 @@ export const PaymentRequired: React.FC = () => {
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('dayoflove:onboarding-draft');
       writeSignupReturnPath(null);
-      window.localStorage.removeItem('dayoflove:onboarding-resume-hint');
-      window.localStorage.removeItem('dayoflove:onboarding-resume-index');
+      clearOnboardingResumeStorage();
       window.location.assign('/onboarding/celebration?bypassPayment=1');
       return;
     }
