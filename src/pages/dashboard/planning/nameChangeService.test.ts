@@ -550,6 +550,18 @@ describe('nameChangeService normalization', () => {
     expect(todoWindowPlan.summary.dominantMovementLane).toBe('step-progress');
   });
 
+  it('marks recent activity as completion-led when completions dominate the latest window', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const completionPlan = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step, index) => index < 2
+        ? { ...step, executionStatus: 'complete' as const, executionUpdatedAt: `2026-04-18T19:0${index}:00.000Z`, completedAt: `2026-04-18T19:0${index}:00.000Z` }
+        : step),
+    }, basePlan);
+
+    expect(completionPlan.summary.dominantMovementLane).toBe('completion-led');
+  });
+
   it('appends bulk reminder activity into recent execution activity', () => {
     const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
     const updatedPlan = appendNameChangeExecutionActivity(basePlan, {

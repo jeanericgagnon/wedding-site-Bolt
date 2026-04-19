@@ -266,7 +266,9 @@ export function mergeNameChangePlanExecutionState(
     : activitySourceCounts.step > activitySourceCounts.reminder
       ? 'step-led'
       : 'reminder-led';
-  const dominantMovementLane = !mergedRecentExecutionActivity.some((item) => item.source === 'step')
+  const dominantMovementLane = mergedRecentExecutionActivity.filter((item) => item.executionStatus === 'complete').length >= 2
+    ? 'completion-led'
+    : !mergedRecentExecutionActivity.some((item) => item.source === 'step')
     ? 'no-step-movement'
     : activitySourceCounts.step > activitySourceCounts.reminder
       ? 'step-progress'
@@ -390,6 +392,7 @@ export function appendNameChangeExecutionActivity(
           return result;
         }, { step: 0, reminder: 0 });
 
+        if (items.filter((item) => item.executionStatus === 'complete').length >= 2) return 'completion-led';
         if (!items.some((item) => item.source === 'step')) return 'no-step-movement';
         if (counts.step === counts.reminder) return 'mixed';
         return counts.step > counts.reminder ? 'step-progress' : 'reminder-churn';
