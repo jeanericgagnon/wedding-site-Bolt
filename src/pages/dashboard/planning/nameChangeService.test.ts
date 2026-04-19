@@ -5,6 +5,7 @@ import {
   defaultNameChangeCaseInput,
   hydrateNameChangeWorkspace,
   mapCaseRecordToNameChangeInput,
+  mergeNameChangeReminders,
   normalizeNameChangeReminders,
   normalizeNameChangeCaseInput,
   normalizeNameChangeDocuments,
@@ -240,8 +241,80 @@ describe('nameChangeService normalization', () => {
       },
     ]);
 
-    expect(bundle.reminders).toEqual([
-      expect.objectContaining({ reminder_key: 'reminder-banks', status: 'scheduled' }),
+    expect(bundle.reminders.find((reminder) => reminder.reminder_key === 'reminder-banks')).toMatchObject({
+      reminder_key: 'reminder-banks',
+      status: 'scheduled',
+    });
+    expect(bundle.reminders.length).toBeGreaterThan(1);
+  });
+
+  it('merges generated reminders with existing statuses instead of wiping them', () => {
+    expect(mergeNameChangeReminders([
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Generated banks follow-up',
+        reason: 'New generated guidance',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium',
+        status: 'pending',
+      },
+      {
+        reminder_key: 'reminder-insurance',
+        label: 'Generated insurance follow-up',
+        reason: 'Generated guidance',
+        depends_on_step_id: 'institution-insurance',
+        suggested_offset_days: 7,
+        urgency: 'medium',
+        status: 'pending',
+      },
+    ], [
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Old banks follow-up',
+        reason: 'Keep my status',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 4,
+        urgency: 'high',
+        status: 'dismissed',
+      },
+      {
+        reminder_key: 'reminder-passport-followup',
+        label: 'Old passport follow-up',
+        reason: 'Should drop if no longer generated',
+        depends_on_step_id: 'federal-passport',
+        suggested_offset_days: 1,
+        urgency: 'high',
+        status: 'scheduled',
+      },
+    ])).toEqual([
+      expect.objectContaining({ reminder_key: 'reminder-banks', status: 'dismissed', label: 'Generated banks follow-up' }),
+      expect.objectContaining({ reminder_key: 'reminder-insurance', status: 'pending' }),
     ]);
+  });
+
+  it('keeps reminder statuses stable when planner data changes but reminder keys remain', () => {
+    const initialBundle = buildNameChangeWorkspaceBundle(makeCase(), [], [], [
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Follow up on Banks and credit cards',
+        reason: 'Persist this status',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium',
+        status: 'scheduled',
+      },
+    ]);
+
+    const updatedBundle = buildNameChangeWorkspaceBundle(
+      makeCase({ county_residence: 'Orange County' }),
+      [],
+      [],
+      initialBundle.reminders,
+    );
+
+    expect(updatedBundle.reminders.find((reminder) => reminder.reminder_key === 'reminder-banks')).toMatchObject({
+      status: 'scheduled',
+    });
   });
 });

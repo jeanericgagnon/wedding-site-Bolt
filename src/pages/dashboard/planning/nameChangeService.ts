@@ -198,6 +198,28 @@ export function normalizeNameChangeReminders(reminders: NameChangeReminderInput[
   return [...deduped.values()].sort((a, b) => a.suggested_offset_days - b.suggested_offset_days || a.label.localeCompare(b.label));
 }
 
+export function mergeNameChangeReminders(
+  generatedReminders: NameChangeReminderInput[],
+  existingReminders: NameChangeReminderInput[] | null,
+): NameChangeReminderInput[] {
+  const normalizedGenerated = normalizeNameChangeReminders(generatedReminders);
+  if (!existingReminders || existingReminders.length === 0) return normalizedGenerated;
+
+  const existingByKey = new Map(
+    normalizeNameChangeReminders(existingReminders).map((reminder) => [reminder.reminder_key, reminder]),
+  );
+
+  return normalizedGenerated.map((generatedReminder) => {
+    const existingReminder = existingByKey.get(generatedReminder.reminder_key);
+    if (!existingReminder) return generatedReminder;
+
+    return {
+      ...generatedReminder,
+      status: existingReminder.status,
+    };
+  });
+}
+
 export function mapCaseRecordToNameChangeInput(caseRecord: NameChangeCaseRecord): NameChangeCaseInput {
   return normalizeNameChangeCaseInput({
     workflow_status: caseRecord.workflow_status,
@@ -386,14 +408,14 @@ export function buildNameChangeWorkspaceBundle(
   const normalizedExtractedFields = normalizeNameChangeExtractedFields(extractedFields);
   const plan = buildNameChangePlan({ profile: draft, documents: normalizedDocuments, extractedFields: normalizedExtractedFields });
 
+  const generatedReminders = mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan));
+
   return {
     draft,
     documents: normalizedDocuments,
     extractedFields: normalizedExtractedFields,
     plan,
-    reminders: normalizeNameChangeReminders(
-      reminders ?? mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan)),
-    ),
+    reminders: mergeNameChangeReminders(generatedReminders, reminders),
   };
 }
 
