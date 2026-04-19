@@ -1049,6 +1049,15 @@ export const DashboardMessages: React.FC = () => {
           toast(`Sent: ${result.delivered}, failed: ${result.failed}`, result.delivered === 0 ? 'error' : 'info');
         }
       } catch (sendErr) {
+        await supabase
+          .from('messages')
+          .update({
+            status: message.status,
+            sent_at: message.sent_at,
+            failed_count: message.failed_count,
+            delivered_count: message.delivered_count,
+          })
+          .eq('id', message.id);
         toast(sendErr instanceof Error ? sendErr.message : 'Delivery failed. Try again later.', 'error');
       }
       await fetchMessages();
