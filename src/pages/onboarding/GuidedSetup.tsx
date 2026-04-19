@@ -8,6 +8,7 @@ import { buildSuggestedFaqDrafts } from '../../lib/faqDraftHelper';
 import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
+import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import * as XLSX from 'xlsx';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
@@ -338,7 +339,7 @@ export const GuidedSetup: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      clearGuidedSetupDraft();
+      clearAllOnboardingContinuationState();
       navigate('/dashboard', {
         state: {
           showWelcome: true,
