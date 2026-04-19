@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
 import { Chrome, Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
-import { consumeSignupReturnPath, resolvePostSignupPath } from '../lib/signupContinuation';
+import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
+import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -49,6 +50,7 @@ async function ensureMinimalWeddingSite(userId: string, email: string): Promise<
 
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -64,6 +66,13 @@ export const Signup: React.FC = () => {
   const inviteRole = searchParams.get('inviteRole');
   const inviteSite = searchParams.get('inviteSite');
   const hasInviteContext = Boolean(inviteToken && inviteEmail);
+
+
+  const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
+
+  useEffect(() => {
+    if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
+  }, [explicitReturnPath]);
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken) return '';
@@ -88,7 +97,7 @@ export const Signup: React.FC = () => {
       const fallbackRedirectPath = paymentGateEnabled ? '/payment-required?oauth=google' : '/onboarding?oauth=google';
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
-        : resolvePostSignupPath(fallbackRedirectPath);
+        : resolveSignupReturnPath(explicitReturnPath, fallbackRedirectPath);
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -157,7 +166,7 @@ export const Signup: React.FC = () => {
       }
 
       await ensureMinimalWeddingSite(userId, formData.email);
-      navigate(consumeSignupReturnPath() || (paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1'));
+      navigate(consumeSignupReturnPath() || resolveSignupReturnPath(explicitReturnPath, paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1'));
     } catch (err: unknown) {
       setError((err as Error).message || 'Couldn’t create your account right now. Please try again.');
     } finally {
