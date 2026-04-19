@@ -229,7 +229,9 @@ export function mergeNameChangePlanExecutionState(
   const existingSteps = new Map(existingPlan.steps.map((step) => [step.id, step]));
   const steps = generatedPlan.steps.map((step) => ({
     ...step,
-    executionStatus: existingSteps.get(step.id)?.executionStatus ?? step.executionStatus ?? 'todo',
+    executionStatus: (step.executionStatus && step.executionStatus !== 'todo')
+      ? step.executionStatus
+      : existingSteps.get(step.id)?.executionStatus ?? step.executionStatus ?? 'todo',
   }));
   const executionCounts = steps.reduce((counts, step) => {
     const key = step.executionStatus ?? 'todo';
@@ -245,6 +247,19 @@ export function mergeNameChangePlanExecutionState(
       executionCounts,
     },
   };
+}
+
+export function deriveNameChangeWorkflowStatus(plan: NameChangePlan): NameChangeCaseInput['workflow_status'] {
+  if (plan.summary.blockers.length > 0) return 'draft';
+
+  const executionCounts = plan.summary.executionCounts ?? { todo: plan.steps.length, in_progress: 0, complete: 0 };
+  const actionableSteps = plan.steps.filter((step) => step.status !== 'blocked');
+  const actionableCount = actionableSteps.length;
+  const completedActionableCount = actionableSteps.filter((step) => step.executionStatus === 'complete').length;
+
+  if (actionableCount > 0 && completedActionableCount === actionableCount) return 'complete';
+  if (executionCounts.in_progress > 0 || executionCounts.complete > 0) return 'in_progress';
+  return 'ready';
 }
 
 export function mapCaseRecordToNameChangeInput(caseRecord: NameChangeCaseRecord): NameChangeCaseInput {
@@ -470,7 +485,7 @@ export async function saveNameChangeWorkspace(
   const plan = mergeNameChangePlanExecutionState(workspace.plan, existingPlan);
   const caseRecord = await upsertNameChangeCase(weddingSiteId, {
     ...normalizedCaseInput,
-    workflow_status: plan.summary.blockers.length > 0 ? 'draft' : 'ready',
+    workflow_status: deriveNameChangeWorkflowStatus(plan),
     latest_plan_summary: plan.summary as unknown as Record<string, unknown>,
   });
 

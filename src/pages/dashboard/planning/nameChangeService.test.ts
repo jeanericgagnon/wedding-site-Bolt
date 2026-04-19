@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { NameChangeCaseInput, NameChangeCaseRecord, NameChangeDocumentInput, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
 import {
   buildNameChangeWorkspaceBundle,
+  deriveNameChangeWorkflowStatus,
   defaultNameChangeCaseInput,
   hydrateNameChangeWorkspace,
   mapCaseRecordToNameChangeInput,
@@ -364,5 +365,33 @@ describe('nameChangeService normalization', () => {
     });
 
     expect(hydrated.plan.steps.find((step) => step.id === 'state-dmv')).toMatchObject({ executionStatus: 'in_progress' });
+  });
+
+  it('derives draft workflow status when blockers remain', () => {
+    const plan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    expect(deriveNameChangeWorkflowStatus(plan)).toBe('draft');
+  });
+
+  it('derives in-progress and complete workflow states from execution progress', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ], []).plan;
+
+    const inProgressPlan = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? { ...step, executionStatus: 'in_progress' as const } : step),
+    }, basePlan);
+    expect(deriveNameChangeWorkflowStatus(inProgressPlan)).toBe('in_progress');
+
+    const completePlan = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.status === 'blocked' ? step : { ...step, executionStatus: 'complete' as const }),
+    }, basePlan);
+    expect(deriveNameChangeWorkflowStatus(completePlan)).toBe('complete');
   });
 });

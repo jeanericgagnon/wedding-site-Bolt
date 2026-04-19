@@ -95,6 +95,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <Card padding="sm">
           <p className="text-xs uppercase tracking-wide text-text-tertiary">Path</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{plan.summary.legalPathLabel}</p>
+          <p className="mt-2 text-xs text-text-secondary">Case status: {draft.workflow_status.replace('_', ' ')}</p>
           <p className="mt-2 text-xs text-text-secondary">Next best action: {plan.summary.nextBestAction}</p>
         </Card>
         <Card padding="sm">

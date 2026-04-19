@@ -17,7 +17,7 @@ import {
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
-import { buildNameChangeWorkspaceBundle, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
+import { buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
 import { PlanningOverviewTab } from './planning/PlanningOverviewTab';
 import { TasksTab } from './planning/TasksTab';
 import { BudgetTab } from './planning/BudgetTab';
@@ -429,12 +429,14 @@ export const DashboardPlanning: React.FC = () => {
   }, [nameChangeDraft, nameChangeDocuments, nameChangePlan, nameChangeReminders]);
 
   const handleNameChangeStepExecutionStatus = useCallback((stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => {
-    setNameChangePlan((prev) => mergeNameChangePlanExecutionState({
-      ...prev,
-      steps: prev.steps.map((step) => step.id === stepId ? { ...step, executionStatus } : step),
-    }, prev));
+    const nextPlan = mergeNameChangePlanExecutionState({
+      ...nameChangePlan,
+      steps: nameChangePlan.steps.map((step) => step.id === stepId ? { ...step, executionStatus } : step),
+    }, nameChangePlan);
+    setNameChangePlan(nextPlan);
     setNameChangeReminders((prev) => syncNameChangeRemindersWithStepExecution(prev, stepId, executionStatus));
-  }, []);
+    setNameChangeDraft((prev) => ({ ...prev, workflow_status: deriveNameChangeWorkflowStatus(nextPlan) }));
+  }, [nameChangePlan]);
 
   const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[]) => {
     setNameChangeReminders(nextReminders);
