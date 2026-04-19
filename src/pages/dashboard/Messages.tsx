@@ -1405,6 +1405,12 @@ export const DashboardMessages: React.FC = () => {
       }
       await fetchMessages();
     } catch (err) {
+      if (!isDemoMode) {
+        await supabase
+          .from('messages')
+          .update({ scheduled_for: message.scheduled_for })
+          .eq('id', message.id);
+      }
       toast(err instanceof Error ? err.message : 'Couldn’t send that scheduled message right now.', 'error');
     }
   }
