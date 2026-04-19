@@ -347,9 +347,13 @@ export const DashboardSettings: React.FC = () => {
       invitedAtISO: plannerInvite?.invitedAtISO ?? new Date().toISOString(),
     };
 
-    writePlannerInvite(siteSlug || user?.id || null, invite);
-    setPlannerInvite(invite);
-    setPlannerInviteSuccess(plannerInvite ? 'Planner access updated.' : 'Planner invite saved.');
+    try {
+      writePlannerInvite(siteSlug || user?.id || null, invite);
+      setPlannerInvite(invite);
+      setPlannerInviteSuccess(plannerInvite ? 'Planner access updated.' : 'Planner invite saved.');
+    } catch (err) {
+      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to save planner invite.');
+    }
   };
 
   const handleCreateCollaboratorInvite = async () => {
