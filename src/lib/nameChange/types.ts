@@ -275,6 +275,7 @@ export interface NameChangeReminderAttentionItem {
   reminderStatus: 'pending' | 'scheduled' | 'sent' | 'dismissed';
   urgency: 'high' | 'medium' | 'low';
   priorityTier?: 'critical' | 'elevated' | 'normal';
+  actionability?: 'actionable_now' | 'blocked_by_untouched_step';
   suggestedOffsetDays: number;
   lastTouchedAt: string | null;
   isStale: boolean;

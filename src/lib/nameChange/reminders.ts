@@ -77,6 +77,8 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
   const critical = attentionItems.filter((item) => item.priorityTier === 'critical').length;
   const elevated = attentionItems.filter((item) => item.priorityTier === 'elevated').length;
   const normal = attentionItems.filter((item) => (item.priorityTier ?? 'normal') === 'normal').length;
+  const actionableNow = attentionItems.filter((item) => item.actionability === 'actionable_now').length;
+  const blockedByUntouchedStep = attentionItems.filter((item) => item.actionability === 'blocked_by_untouched_step').length;
 
   return {
     total: attentionItems.length,
@@ -87,6 +89,8 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     critical,
     elevated,
     normal,
+    actionableNow,
+    blockedByUntouchedStep,
     stalePriority: staleTodo === staleInProgress ? 'mixed' : staleTodo > staleInProgress ? 'untouched' : 'moving',
   };
 }
@@ -155,6 +159,9 @@ export function deriveNameChangeReminderAttention(
         : isStale || reminder.urgency === 'high'
           ? 'elevated'
           : 'normal';
+      const actionability = (dependentStep.executionStatus ?? 'todo') === 'todo'
+        ? 'blocked_by_untouched_step'
+        : 'actionable_now';
 
       attentionItems.push({
         reminderKey: reminder.reminder_key,
@@ -165,6 +172,7 @@ export function deriveNameChangeReminderAttention(
         reminderStatus: reminder.status,
         urgency: reminder.urgency,
         priorityTier,
+        actionability,
         suggestedOffsetDays: reminder.suggested_offset_days,
         lastTouchedAt,
         isStale,

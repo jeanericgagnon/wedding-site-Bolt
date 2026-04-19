@@ -264,6 +264,7 @@ describe('name change reminder suggestions', () => {
         dependentStepExecutionStatus: 'in_progress',
         reminderStatus: 'scheduled',
         priorityTier: 'normal',
+        actionability: 'actionable_now',
         isStale: false,
         lastTouchedAt: '2026-04-18T10:00:00.000Z',
       }),
@@ -300,7 +301,7 @@ describe('name change reminder suggestions', () => {
         : step),
     }, '2026-04-18T12:00:00.000Z');
 
-    expect(attention[0]).toMatchObject({ reminderKey: 'reminder-banks', isStale: true, priorityTier: 'elevated' });
+    expect(attention[0]).toMatchObject({ reminderKey: 'reminder-banks', isStale: true, priorityTier: 'elevated', actionability: 'blocked_by_untouched_step' });
     expect(attention.some((item) => item.reminderKey === 'reminder-insurance' && item.isStale)).toBe(true);
   });
 
@@ -356,6 +357,8 @@ describe('name change reminder suggestions', () => {
       critical: 0,
       elevated: 0,
       normal: 2,
+      actionableNow: 0,
+      blockedByUntouchedStep: 0,
       stalePriority: 'mixed',
     });
   });

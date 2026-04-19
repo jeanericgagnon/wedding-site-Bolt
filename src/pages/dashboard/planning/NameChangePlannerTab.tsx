@@ -448,6 +448,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.stale} stale · {reminderAttentionSummary.highUrgency} high urgency</p>
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.staleTodo} untouched stale · {reminderAttentionSummary.staleInProgress} stale but moving</p>
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.critical} critical · {reminderAttentionSummary.elevated} elevated · {reminderAttentionSummary.normal} normal</p>
+              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.actionableNow} actionable now · {reminderAttentionSummary.blockedByUntouchedStep} blocked by untouched step</p>
               <p className="mt-1 text-xs text-text-secondary">Stale priority: {reminderAttentionSummary.stalePriority}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -488,6 +489,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     {item.priorityTier && <span className={`rounded-full px-2 py-1 text-xs ${item.priorityTier === 'critical' ? 'bg-danger/10 text-danger' : item.priorityTier === 'elevated' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{item.priorityTier}</span>}
+                    {item.actionability && <span className={`rounded-full px-2 py-1 text-xs ${item.actionability === 'blocked_by_untouched_step' ? 'bg-surface-subtle text-text-secondary' : 'bg-primary/10 text-primary'}`}>{item.actionability === 'blocked_by_untouched_step' ? 'blocked' : 'actionable'}</span>}
                     {item.isStale && <span className="rounded-full bg-warning/10 px-2 py-1 text-xs text-warning">stale</span>}
                     <span className={`rounded-full px-2 py-1 text-xs ${item.urgency === 'high' ? 'bg-warning/10 text-warning' : item.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>{item.urgency}</span>
                   </div>
