@@ -252,15 +252,53 @@ describe('name change reminder suggestions', () => {
 
     const attention = deriveNameChangeReminderAttention(reminders, {
       ...plan,
-      steps: plan.steps.map((step) => step.id === 'institution-banks' ? { ...step, executionStatus: 'in_progress' as const } : step),
-    });
+      steps: plan.steps.map((step) => step.id === 'institution-banks'
+        ? { ...step, executionStatus: 'in_progress' as const, executionUpdatedAt: '2026-04-18T10:00:00.000Z' }
+        : step),
+    }, '2026-04-18T12:00:00.000Z');
 
     expect(attention).toEqual([
       expect.objectContaining({
         reminderKey: 'reminder-banks',
         dependentStepExecutionStatus: 'in_progress',
         reminderStatus: 'scheduled',
+        isStale: false,
+        lastTouchedAt: '2026-04-18T10:00:00.000Z',
       }),
     ]);
+  });
+
+  it('flags reminder attention as stale when workflow touch is missing or old', () => {
+    const plan = buildNameChangePlan(makeInput());
+    const reminders = [
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium' as const,
+        status: 'pending' as const,
+      },
+      {
+        reminder_key: 'reminder-insurance',
+        label: 'Insurance',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-insurance',
+        suggested_offset_days: 7,
+        urgency: 'low' as const,
+        status: 'pending' as const,
+      },
+    ];
+
+    const attention = deriveNameChangeReminderAttention(reminders, {
+      ...plan,
+      steps: plan.steps.map((step) => step.id === 'institution-banks'
+        ? { ...step, executionStatus: 'todo' as const, executionUpdatedAt: '2026-04-14T12:00:00.000Z' }
+        : step),
+    }, '2026-04-18T12:00:00.000Z');
+
+    expect(attention[0]).toMatchObject({ reminderKey: 'reminder-banks', isStale: true });
+    expect(attention.some((item) => item.reminderKey === 'reminder-insurance' && item.isStale)).toBe(true);
   });
 });

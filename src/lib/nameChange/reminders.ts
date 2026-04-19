@@ -1,6 +1,8 @@
 import { NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
 import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminderInput, NameChangeReminderSuggestion, NameChangeReminderSummary } from './types';
 
+const REMINDER_STALE_AFTER_MS = 1000 * 60 * 60 * 72;
+
 function urgencyFromOffset(days: number): NameChangeReminderSuggestion['urgency'] {
   if (days <= 2) return 'high';
   if (days <= 7) return 'medium';
@@ -114,14 +116,19 @@ export function syncNameChangeRemindersWithStepExecution(
 export function deriveNameChangeReminderAttention(
   reminders: NameChangeReminderInput[],
   plan: NameChangePlan,
+  nowIso: string = new Date().toISOString(),
 ): NameChangeReminderAttentionItem[] {
   const attentionItems: NameChangeReminderAttentionItem[] = [];
+  const nowMs = new Date(nowIso).getTime();
 
   reminders
     .filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled')
     .forEach((reminder) => {
       const dependentStep = plan.steps.find((step) => step.id === reminder.depends_on_step_id);
       if (!dependentStep || dependentStep.executionStatus === 'complete') return;
+
+      const lastTouchedAt = dependentStep.executionUpdatedAt ?? null;
+      const isStale = lastTouchedAt ? (nowMs - new Date(lastTouchedAt).getTime()) >= REMINDER_STALE_AFTER_MS : true;
 
       attentionItems.push({
         reminderKey: reminder.reminder_key,
@@ -132,12 +139,15 @@ export function deriveNameChangeReminderAttention(
         reminderStatus: reminder.status,
         urgency: reminder.urgency,
         suggestedOffsetDays: reminder.suggested_offset_days,
+        lastTouchedAt,
+        isStale,
       });
     });
 
   return attentionItems.sort((a, b) => {
       const urgencyRank = { high: 0, medium: 1, low: 2 };
-      return urgencyRank[a.urgency] - urgencyRank[b.urgency]
+      return Number(b.isStale) - Number(a.isStale)
+        || urgencyRank[a.urgency] - urgencyRank[b.urgency]
         || a.suggestedOffsetDays - b.suggestedOffsetDays
         || a.label.localeCompare(b.label);
     });

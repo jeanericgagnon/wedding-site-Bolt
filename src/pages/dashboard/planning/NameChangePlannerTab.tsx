@@ -462,10 +462,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     <p className="text-sm font-semibold text-text-primary">{item.label}</p>
                     <p className="mt-1 text-xs text-text-secondary">Depends on {item.dependentStepTitle}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${item.urgency === 'high' ? 'bg-warning/10 text-warning' : item.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>{item.urgency}</span>
+                  <div className="flex items-center gap-2">
+                    {item.isStale && <span className="rounded-full bg-warning/10 px-2 py-1 text-xs text-warning">stale</span>}
+                    <span className={`rounded-full px-2 py-1 text-xs ${item.urgency === 'high' ? 'bg-warning/10 text-warning' : item.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>{item.urgency}</span>
+                  </div>
                 </div>
                 <p className="mt-3 text-sm text-text-secondary">Step is still {item.dependentStepExecutionStatus.replace('_', ' ')} · reminder is {item.reminderStatus}</p>
                 <p className="mt-2 text-xs font-medium text-text-primary">Follow-up target: {item.suggestedOffsetDays} day{item.suggestedOffsetDays === 1 ? '' : 's'} after the triggering step</p>
+                <p className="mt-2 text-xs text-text-secondary">Last workflow touch: {item.lastTouchedAt ? new Date(item.lastTouchedAt).toLocaleString() : 'No execution updates yet'}</p>
                 <div className="mt-3 flex gap-2">
                   {item.reminderStatus !== 'scheduled' && (
                     <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, item.reminderKey, 'scheduled'))}>Schedule</Button>

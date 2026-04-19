@@ -263,6 +263,8 @@ export interface NameChangeReminderAttentionItem {
   reminderStatus: 'pending' | 'scheduled' | 'sent' | 'dismissed';
   urgency: 'high' | 'medium' | 'low';
   suggestedOffsetDays: number;
+  lastTouchedAt: string | null;
+  isStale: boolean;
 }
 
 export interface NameChangeFormRegistryEntry {
