@@ -236,7 +236,12 @@ export const Onboarding: React.FC = () => {
         window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
         window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
       } else if (resumeHint === 'first-incomplete') {
-        const resumeIndex = getFirstIncompleteQuestionIndex();
+        const firstIncompleteIndex = getFirstIncompleteQuestionIndex();
+        const resumeIndex = resolveOnboardingResumeIndex({
+          savedIndex: firstIncompleteIndex,
+          firstIncompleteIndex,
+          questionCount: conciergeQuestions.length,
+        });
         setConversationIndex(resumeIndex);
         setStep(getStepForIndex(resumeIndex));
         window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
