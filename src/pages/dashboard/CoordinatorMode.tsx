@@ -7,19 +7,13 @@ import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermi
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
+import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
+import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 
-type GuestLite = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  name: string;
-  rsvp_status: string;
-  checked_in_at?: string | null;
-};
 
 type AudienceOption = { value: string; label: string; count: number };
 
@@ -52,7 +46,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [guests, setGuests] = useState<GuestLite[]>([]);
+  const [guests, setGuests] = useState<GuestLiteForCoordinator[]>([]);
   const [events, setEvents] = useState<EventLite[]>([]);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
@@ -65,6 +59,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
   const [qnaInput, setQnaInput] = useState('');
   const [qnaDraftAnswers, setQnaDraftAnswers] = useState<Record<string, string>>({});
+  const [checkInQuery, setCheckInQuery] = useState('');
+  const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
     body: 'Quick update from the couple: ',
@@ -126,7 +122,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
           .limit(30);
 
         if (!mounted) return;
-        setGuests((guestsData as GuestLite[]) || []);
+        setGuests((guestsData as GuestLiteForCoordinator[]) || []);
         setEvents((eventsData as EventLite[]) || []);
         setEventGuestIds(inviteMap);
         if (qnaData && qnaData.length > 0) {
@@ -193,7 +189,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     return { total, confirmed, pending, checkedIn };
   }, [guests]);
 
-  const toggleCheckIn = async (guest: GuestLite) => {
+  const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {
     if (!siteId || isDemoMode) return;
     const next = guest.checked_in_at ? null : new Date().toISOString();
     const { error } = await supabase
@@ -265,6 +261,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
 
   const nextArrivals = useMemo(() => sortedGuests.filter((g) => !g.checked_in_at).slice(0, 5), [sortedGuests]);
+
+  const checkInQueue = useMemo(() => filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter), [sortedGuests, checkInQuery, checkInFilter]);
 
   const liveIssues = useMemo(() => {
     const items: Array<{ title: string; detail: string; tone: 'warning' | 'success' | 'neutral' }> = [];
@@ -393,6 +391,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               {PLANNER_ROLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
+              {checkInQueue.length === 0 && <div className="px-4 py-6 text-sm text-text-tertiary">No guests match this live queue view.</div>}
             </select>
           </div>
         </div>
@@ -460,9 +459,33 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] overflow-hidden">
-            <div className="px-4 py-3 border-b border-border/60 text-sm font-medium text-text-primary">Check-in queue</div>
+            <div className="px-4 py-3 border-b border-border/60 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-text-primary">Check-in queue</p>
+                  <p className="text-[11px] text-text-tertiary">Search arrivals fast and keep the live line moving.</p>
+                </div>
+                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  value={checkInQuery}
+                  onChange={(e) => setCheckInQuery(e.target.value)}
+                  placeholder="Search guest name or RSVP status"
+                />
+                <select
+                  value={checkInFilter}
+                  onChange={(e) => setCheckInFilter(e.target.value as CoordinatorCheckInFilter)}
+                  className="sm:w-40 text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
+                >
+                  <option value="arrivals">Arrivals</option>
+                  <option value="checked-in">Checked in</option>
+                  <option value="all">All guests</option>
+                </select>
+              </div>
+            </div>
             <div className="max-h-[60vh] overflow-auto divide-y divide-border-subtle/70">
-              {sortedGuests.map((g) => (
+              {checkInQueue.map((g) => (
                 <div key={g.id} className="flex items-center justify-between px-4 py-2.5">
                   <div>
                     <p className="text-sm font-medium text-text-primary">{g.name}</p>
