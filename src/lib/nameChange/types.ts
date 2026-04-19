@@ -179,6 +179,7 @@ export interface NameChangePlanSummary {
     step: number;
     reminder: number;
   };
+  latestMovementPosture?: 'step-led' | 'reminder-led' | 'mixed';
   recentExecutionActivity?: Array<{
     stepId: string | null;
     source: 'step' | 'reminder';

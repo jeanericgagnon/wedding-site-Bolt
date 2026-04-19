@@ -261,6 +261,11 @@ export function mergeNameChangePlanExecutionState(
     counts[item.source] += 1;
     return counts;
   }, { step: 0, reminder: 0 });
+  const latestMovementPosture = activitySourceCounts.step === activitySourceCounts.reminder
+    ? 'mixed'
+    : activitySourceCounts.step > activitySourceCounts.reminder
+      ? 'step-led'
+      : 'reminder-led';
 
   return {
     ...generatedPlan,
@@ -269,6 +274,7 @@ export function mergeNameChangePlanExecutionState(
       ...generatedPlan.summary,
       executionCounts,
       activitySourceCounts,
+      latestMovementPosture,
       recentExecutionActivity: mergedRecentExecutionActivity,
     },
   };
@@ -321,6 +327,28 @@ export function appendNameChangeExecutionActivity(
           counts[item.source] += 1;
           return counts;
         }, { step: 0, reminder: 0 }),
+      latestMovementPosture: (() => {
+        const counts = [
+          {
+            stepId: null,
+            source: activity.source ?? 'reminder',
+            title: activity.title,
+            executionStatus: activity.executionStatus,
+            note: activity.note,
+            timestamp,
+          },
+          ...existing,
+        ]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          .slice(0, 5)
+          .reduce((result, item) => {
+            result[item.source] += 1;
+            return result;
+          }, { step: 0, reminder: 0 });
+
+        if (counts.step === counts.reminder) return 'mixed';
+        return counts.step > counts.reminder ? 'step-led' : 'reminder-led';
+      })(),
     },
   };
 }

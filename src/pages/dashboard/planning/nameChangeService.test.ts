@@ -456,6 +456,7 @@ describe('nameChangeService normalization', () => {
       expect.objectContaining({ stepId: merged.steps[0].id, source: 'step', executionStatus: 'complete', note: 'note-0', timestamp: '2026-04-18T19:00:00.000Z' }),
     ]);
     expect(merged.summary.activitySourceCounts).toEqual({ step: 2, reminder: 0 });
+    expect(merged.summary.latestMovementPosture).toBe('step-led');
   });
 
   it('appends manual reminder activity into recent execution activity', () => {
@@ -476,6 +477,26 @@ describe('nameChangeService normalization', () => {
       timestamp: '2026-04-18T20:00:00.000Z',
     });
     expect(updatedPlan.summary.activitySourceCounts).toEqual({ step: 0, reminder: 1 });
+    expect(updatedPlan.summary.latestMovementPosture).toBe('reminder-led');
+  });
+
+  it('marks latest movement posture as mixed when recent activity is balanced', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const planWithStep = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'in_progress' as const, executionUpdatedAt: '2026-04-18T19:00:00.000Z' }
+        : step),
+    }, basePlan);
+    const mixedPlan = appendNameChangeExecutionActivity(planWithStep, {
+      title: 'Reminder updated: Follow up on Banks and credit cards',
+      executionStatus: 'in_progress',
+      note: 'Reminder status changed to scheduled',
+      timestamp: '2026-04-18T20:00:00.000Z',
+    });
+
+    expect(mixedPlan.summary.activitySourceCounts).toEqual({ step: 1, reminder: 1 });
+    expect(mixedPlan.summary.latestMovementPosture).toBe('mixed');
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {

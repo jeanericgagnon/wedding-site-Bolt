@@ -407,6 +407,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <h3 className="text-lg font-semibold text-text-primary">Recent execution activity</h3>
               <p className="text-sm text-text-secondary">Latest name-change workflow updates captured from step execution notes and status changes.</p>
               <p className="mt-2 text-xs text-text-secondary">{plan.summary.activitySourceCounts?.step ?? 0} step updates · {plan.summary.activitySourceCounts?.reminder ?? 0} reminder actions</p>
+              <p className="mt-1 text-xs text-text-secondary">Latest movement posture: {plan.summary.latestMovementPosture ?? 'mixed'}</p>
             </div>
             <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
               {plan.summary.recentExecutionActivity?.length ?? 0} recent updates
