@@ -318,6 +318,16 @@ export function annotateNameChangePlanStepsFromReminderChanges(
     reminderChangesByStep.set(reminder.depends_on_step_id, list);
   });
 
+  function mergeReminderAnnotation(existingNote: string | null | undefined, reminderNote: string) {
+    const existingParts = (existingNote ?? '')
+      .split(' · ')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .filter((part) => !part.includes(' reminder → '));
+
+    return [...existingParts, reminderNote].join(' · ');
+  }
+
   return mergeNameChangePlanExecutionState({
     ...plan,
     steps: plan.steps.map((step) => {
@@ -331,9 +341,7 @@ export function annotateNameChangePlanStepsFromReminderChanges(
 
       return {
         ...step,
-        executionNote: step.executionNote
-          ? `${step.executionNote} · ${note}`
-          : note,
+        executionNote: mergeReminderAnnotation(step.executionNote, note),
         executionUpdatedAt: now,
       };
     }),

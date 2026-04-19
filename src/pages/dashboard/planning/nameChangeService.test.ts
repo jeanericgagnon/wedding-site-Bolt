@@ -522,4 +522,25 @@ describe('nameChangeService normalization', () => {
       executionUpdatedAt: '2026-04-18T20:10:00.000Z',
     });
   });
+
+  it('replaces prior reminder annotation fragments instead of endlessly appending them', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const firstPass = annotateNameChangePlanStepsFromReminderChanges({
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'institution-banks'
+        ? { ...step, executionNote: 'Called SSA already · Follow up on Banks and credit cards reminder → pending' }
+        : step),
+    }, [
+      {
+        label: 'Follow up on Banks and credit cards',
+        depends_on_step_id: 'institution-banks',
+        status: 'scheduled',
+      },
+    ], '2026-04-18T20:15:00.000Z');
+
+    expect(firstPass.steps.find((step) => step.id === 'institution-banks')).toMatchObject({
+      executionNote: 'Called SSA already · Follow up on Banks and credit cards reminder → scheduled',
+      executionUpdatedAt: '2026-04-18T20:15:00.000Z',
+    });
+  });
 });
