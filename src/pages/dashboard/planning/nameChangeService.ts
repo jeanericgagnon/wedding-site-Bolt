@@ -271,6 +271,7 @@ export function mergeNameChangePlanExecutionState(
     : activitySourceCounts.reminder > activitySourceCounts.step
       ? 'medium'
       : 'low';
+  const hasRecentCompletion = mergedRecentExecutionActivity.some((item) => item.executionStatus === 'complete');
 
   return {
     ...generatedPlan,
@@ -281,6 +282,7 @@ export function mergeNameChangePlanExecutionState(
       activitySourceCounts,
       latestMovementPosture,
       reminderChurnRisk,
+      hasRecentCompletion,
       recentExecutionActivity: mergedRecentExecutionActivity,
     },
   };
@@ -378,6 +380,20 @@ export function appendNameChangeExecutionActivity(
         if (counts.reminder > counts.step) return 'medium';
         return 'low';
       })(),
+      hasRecentCompletion: [
+        {
+          stepId: null,
+          source: activity.source ?? 'reminder',
+          title: activity.title,
+          executionStatus: activity.executionStatus,
+          note: activity.note,
+          timestamp,
+        },
+        ...existing,
+      ]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 5)
+        .some((item) => item.executionStatus === 'complete'),
     },
   };
 }

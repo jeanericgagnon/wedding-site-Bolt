@@ -181,6 +181,7 @@ export interface NameChangePlanSummary {
   };
   latestMovementPosture?: 'step-led' | 'reminder-led' | 'mixed';
   reminderChurnRisk?: 'low' | 'medium' | 'high';
+  hasRecentCompletion?: boolean;
   recentExecutionActivity?: Array<{
     stepId: string | null;
     source: 'step' | 'reminder';
