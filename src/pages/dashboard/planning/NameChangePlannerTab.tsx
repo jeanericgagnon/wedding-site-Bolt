@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sp
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
-import { summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
+import { deriveNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -90,6 +90,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   }), [plan.steps]);
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
+  const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
 
   return (
     <div className="space-y-6">
@@ -421,6 +422,34 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{item.executionStatus}</span>
                 </div>
                 {item.note && <p className="mt-3 text-sm text-text-secondary">{item.note}</p>}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {reminderAttention.length > 0 && (
+        <Card className="border-warning/30 bg-warning/5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Reminder attention needed</h3>
+              <p className="text-sm text-text-secondary">Open reminders still tied to incomplete workflow steps.</p>
+            </div>
+            <span className="rounded-full bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} attention item{reminderAttention.length === 1 ? '' : 's'}</span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {reminderAttention.map((item) => (
+              <div key={item.reminderKey} className="rounded-xl border border-warning/20 bg-white/60 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                    <p className="mt-1 text-xs text-text-secondary">Depends on {item.dependentStepTitle}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs ${item.urgency === 'high' ? 'bg-warning/10 text-warning' : item.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>{item.urgency}</span>
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">Step is still {item.dependentStepExecutionStatus.replace('_', ' ')} · reminder is {item.reminderStatus}</p>
+                <p className="mt-2 text-xs font-medium text-text-primary">Follow-up target: {item.suggestedOffsetDays} day{item.suggestedOffsetDays === 1 ? '' : 's'} after the triggering step</p>
               </div>
             ))}
           </div>

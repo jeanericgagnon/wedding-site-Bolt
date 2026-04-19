@@ -254,6 +254,17 @@ export interface NameChangeReminderSummary {
   highUrgencyOpen: number;
 }
 
+export interface NameChangeReminderAttentionItem {
+  reminderKey: string;
+  label: string;
+  dependsOnStepId: string;
+  dependentStepTitle: string;
+  dependentStepExecutionStatus: 'todo' | 'in_progress' | 'complete';
+  reminderStatus: 'pending' | 'scheduled' | 'sent' | 'dismissed';
+  urgency: 'high' | 'medium' | 'low';
+  suggestedOffsetDays: number;
+}
+
 export interface NameChangeFormRegistryEntry {
   code: string;
   title: string;

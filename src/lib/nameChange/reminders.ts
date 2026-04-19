@@ -1,5 +1,5 @@
 import { NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
-import type { NameChangePlan, NameChangeReminderInput, NameChangeReminderSuggestion, NameChangeReminderSummary } from './types';
+import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminderInput, NameChangeReminderSuggestion, NameChangeReminderSummary } from './types';
 
 function urgencyFromOffset(days: number): NameChangeReminderSuggestion['urgency'] {
   if (days <= 2) return 'high';
@@ -100,4 +100,36 @@ export function syncNameChangeRemindersWithStepExecution(
       status: reminder.status === 'dismissed' ? 'dismissed' : 'pending',
     };
   });
+}
+
+export function deriveNameChangeReminderAttention(
+  reminders: NameChangeReminderInput[],
+  plan: NameChangePlan,
+): NameChangeReminderAttentionItem[] {
+  const attentionItems: NameChangeReminderAttentionItem[] = [];
+
+  reminders
+    .filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled')
+    .forEach((reminder) => {
+      const dependentStep = plan.steps.find((step) => step.id === reminder.depends_on_step_id);
+      if (!dependentStep || dependentStep.executionStatus === 'complete') return;
+
+      attentionItems.push({
+        reminderKey: reminder.reminder_key,
+        label: reminder.label,
+        dependsOnStepId: reminder.depends_on_step_id,
+        dependentStepTitle: dependentStep.title,
+        dependentStepExecutionStatus: dependentStep.executionStatus ?? 'todo',
+        reminderStatus: reminder.status,
+        urgency: reminder.urgency,
+        suggestedOffsetDays: reminder.suggested_offset_days,
+      });
+    });
+
+  return attentionItems.sort((a, b) => {
+      const urgencyRank = { high: 0, medium: 1, low: 2 };
+      return urgencyRank[a.urgency] - urgencyRank[b.urgency]
+        || a.suggestedOffsetDays - b.suggestedOffsetDays
+        || a.label.localeCompare(b.label);
+    });
 }
