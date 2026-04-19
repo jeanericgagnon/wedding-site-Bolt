@@ -1,0 +1,114 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Footer, Header } from '../components/layout';
+
+const TRUST_PILLARS = [
+  {
+    title: 'Clear pricing',
+    body: 'The main product offer is a flat $49 payment for two years. Auto-renew is off by default. No fake low entry tier that collapses once the real work starts.',
+  },
+  {
+    title: 'Beautiful site plus real operations',
+    body: 'DayOf is not just a brochure page. The product is meant to carry the wedding website, RSVPs, guest management, messaging, seating, travel details, and day-of coordination together.',
+  },
+  {
+    title: 'Guest access handled carefully',
+    body: 'Search visibility and guest access are not the same thing. Couples can keep a site out of search and use live access controls without us pretending that means a whole separate unpublished product exists when it does not.',
+  },
+  {
+    title: 'AI helps draft, not secretly operate',
+    body: 'AI-backed features can help shape drafts and setup outputs using known wedding data, but couples still review, edit, and decide what gets published or sent.',
+  },
+];
+
+const SAFETY_NOTES = [
+  'Custom DayOf URLs are real. External custom-domain mapping is not something we claim unless it is actually live.',
+  'Message history should reflect real states like draft, scheduled, sent, partial, or failed instead of vague fake success language.',
+  'Registry repair and cleanup are guided workflows with human review, not a guaranteed one-click fix for every merchant.',
+  'Planner collaboration is intentionally couple-led, with clearer boundaries instead of pretending this is enterprise workflow software.',
+];
+
+export const Trust: React.FC = () => {
+  return (
+    <div className="min-h-screen flex flex-col bg-background text-text-primary">
+      <Header />
+
+      <main className="flex-1">
+        <section className="border-b border-border-subtle bg-white px-6 py-16 md:py-20">
+          <div className="mx-auto max-w-5xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Trust</p>
+            <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-text-primary md:text-5xl">
+              Built to make wedding planning feel calmer, not more manipulative.
+            </h1>
+            <p className="mt-4 max-w-3xl text-base leading-7 text-text-secondary md:text-lg">
+              The bar here is simple: say what is real, ship the parts couples actually need, and stop doing the wedding-tech bullshit where basic functionality turns into upsells and surprise gotchas.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3 text-sm text-text-secondary">
+              <span className="rounded-full border border-border bg-surface px-3 py-1.5">No surprise renewals</span>
+              <span className="rounded-full border border-border bg-surface px-3 py-1.5">Truth over marketing fluff</span>
+              <span className="rounded-full border border-border bg-surface px-3 py-1.5">Review-before-send AI</span>
+              <span className="rounded-full border border-border bg-surface px-3 py-1.5">Guest ops that actually matter</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-6 py-14 md:py-16">
+          <div className="mx-auto max-w-5xl">
+            <div className="grid gap-4 md:grid-cols-2">
+              {TRUST_PILLARS.map((item) => (
+                <div key={item.title} className="rounded-3xl border border-border-subtle bg-white p-6 shadow-sm">
+                  <h2 className="text-xl font-semibold text-text-primary">{item.title}</h2>
+                  <p className="mt-3 text-sm leading-6 text-text-secondary">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-y border-border-subtle bg-surface-subtle/30 px-6 py-14 md:py-16">
+          <div className="mx-auto max-w-5xl">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">How we keep claims honest</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary">If the product is partial, we say it is partial.</h2>
+              <p className="mt-3 text-sm leading-6 text-text-secondary">
+                This is the practical rule: do not overclaim. If something is guided, we call it guided. If something still depends on real delivery logs or human review, we say that too.
+              </p>
+            </div>
+
+            <div className="mt-8 rounded-3xl border border-border-subtle bg-white p-6 shadow-sm">
+              <ul className="space-y-3 text-sm leading-6 text-text-secondary">
+                {SAFETY_NOTES.map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-2 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-6 py-14 md:py-16">
+          <div className="mx-auto max-w-4xl rounded-3xl border border-border-subtle bg-white p-7 shadow-sm md:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Need the legal docs?</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary">Cool. Those should not be hidden behind fake placeholders either.</h2>
+            <p className="mt-3 text-sm leading-6 text-text-secondary">
+              Privacy and terms are live and reachable now. If you need product or support help, email{' '}
+              <a className="text-primary underline" href="mailto:support@dayof.love">support@dayof.love</a>.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link to="/privacy" className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
+                Privacy policy
+              </Link>
+              <Link to="/terms" className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
+                Terms of service
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  );
+};

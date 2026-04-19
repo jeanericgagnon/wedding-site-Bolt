@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
-              <span className="text-[1.25rem] font-serif font-semibold text-ink leading-snug tracking-tight">WeddingSite</span>
+              <span className="text-[1.25rem] font-serif font-semibold text-ink leading-snug tracking-tight">DayOf</span>
             </div>
             <p className="text-[0.875rem] text-ink/70 leading-normal">
               Your wedding site, done without the stress.
@@ -47,12 +47,12 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <span className="text-[0.875rem] text-ink/40 leading-normal">
-                  Trust (coming soon)
-                </span>
+                <Link to="/trust" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
+                  Trust
+                </Link>
               </li>
               <li>
-                <a href="mailto:hello@weddingsite.example" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
+                <a href="mailto:support@dayof.love" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Contact
                 </a>
               </li>
@@ -63,14 +63,14 @@ export const Footer: React.FC = () => {
             <h4 className="text-[0.875rem] font-semibold text-ink mb-4 leading-normal">Legal</h4>
             <ul className="space-y-3">
               <li>
-                <span className="text-[0.875rem] text-ink/40 leading-normal">
-                  Privacy Policy (coming soon)
-                </span>
+                <Link to="/privacy" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
+                  Privacy Policy
+                </Link>
               </li>
               <li>
-                <span className="text-[0.875rem] text-ink/40 leading-normal">
-                  Terms of Service (coming soon)
-                </span>
+                <Link to="/terms" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
+                  Terms of Service
+                </Link>
               </li>
             </ul>
           </div>
@@ -78,7 +78,7 @@ export const Footer: React.FC = () => {
 
         <div className="mt-12 pt-8 border-t border-brand/20">
           <p className="text-[0.875rem] text-ink/70 text-center leading-normal">
-            &copy; {new Date().getFullYear()} WeddingSite. Built for trust, not tricks.
+            &copy; {new Date().getFullYear()} DayOf. Built for trust, not tricks.
           </p>
         </div>
       </div>

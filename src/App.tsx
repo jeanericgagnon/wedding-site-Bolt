@@ -17,6 +17,7 @@ const QuickStart = lazy(() => import('./pages/onboarding/QuickStart').then(m => 
 const GuidedSetup = lazy(() => import('./pages/onboarding/GuidedSetup').then(m => ({ default: m.GuidedSetup })));
 const Privacy = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })));
 const Terms = lazy(() => import('./pages/Terms').then(m => ({ default: m.Terms })));
+const Trust = lazy(() => import('./pages/Trust').then(m => ({ default: m.Trust })));
 const SetupShell = lazy(() => import('./pages/setup/SetupShell').then(m => ({ default: m.SetupShell })));
 const RSVP = lazy(() => import('./pages/RSVP'));
 const EventRSVP = lazy(() => import('./pages/EventRSVP'));
@@ -99,6 +100,7 @@ const AppContent = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/trust" element={<Trust />} />
         <Route
           path="/payment-required"
           element={
