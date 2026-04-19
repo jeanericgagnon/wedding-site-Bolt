@@ -457,6 +457,7 @@ describe('nameChangeService normalization', () => {
     ]);
     expect(merged.summary.activitySourceCounts).toEqual({ step: 2, reminder: 0 });
     expect(merged.summary.latestMovementPosture).toBe('step-led');
+    expect(merged.summary.reminderChurnRisk).toBe('low');
   });
 
   it('appends manual reminder activity into recent execution activity', () => {
@@ -478,6 +479,7 @@ describe('nameChangeService normalization', () => {
     });
     expect(updatedPlan.summary.activitySourceCounts).toEqual({ step: 0, reminder: 1 });
     expect(updatedPlan.summary.latestMovementPosture).toBe('reminder-led');
+    expect(updatedPlan.summary.reminderChurnRisk).toBe('medium');
   });
 
   it('marks latest movement posture as mixed when recent activity is balanced', () => {
@@ -497,6 +499,21 @@ describe('nameChangeService normalization', () => {
 
     expect(mixedPlan.summary.activitySourceCounts).toEqual({ step: 1, reminder: 1 });
     expect(mixedPlan.summary.latestMovementPosture).toBe('mixed');
+    expect(mixedPlan.summary.reminderChurnRisk).toBe('low');
+  });
+
+  it('flags high reminder churn when recent activity is dominated by reminder actions', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const churnPlan = [1, 2, 3, 4].reduce((plan, index) => appendNameChangeExecutionActivity(plan, {
+      title: `Reminder updated ${index}`,
+      executionStatus: 'in_progress',
+      note: `Reminder status changed ${index}`,
+      timestamp: `2026-04-18T20:0${index}:00.000Z`,
+    }), basePlan);
+
+    expect(churnPlan.summary.activitySourceCounts).toEqual({ step: 0, reminder: 4 });
+    expect(churnPlan.summary.latestMovementPosture).toBe('reminder-led');
+    expect(churnPlan.summary.reminderChurnRisk).toBe('high');
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {

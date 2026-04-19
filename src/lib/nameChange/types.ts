@@ -180,6 +180,7 @@ export interface NameChangePlanSummary {
     reminder: number;
   };
   latestMovementPosture?: 'step-led' | 'reminder-led' | 'mixed';
+  reminderChurnRisk?: 'low' | 'medium' | 'high';
   recentExecutionActivity?: Array<{
     stepId: string | null;
     source: 'step' | 'reminder';

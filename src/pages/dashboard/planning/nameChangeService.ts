@@ -266,6 +266,11 @@ export function mergeNameChangePlanExecutionState(
     : activitySourceCounts.step > activitySourceCounts.reminder
       ? 'step-led'
       : 'reminder-led';
+  const reminderChurnRisk = activitySourceCounts.reminder >= 4
+    ? 'high'
+    : activitySourceCounts.reminder > activitySourceCounts.step
+      ? 'medium'
+      : 'low';
 
   return {
     ...generatedPlan,
@@ -275,6 +280,7 @@ export function mergeNameChangePlanExecutionState(
       executionCounts,
       activitySourceCounts,
       latestMovementPosture,
+      reminderChurnRisk,
       recentExecutionActivity: mergedRecentExecutionActivity,
     },
   };
@@ -348,6 +354,29 @@ export function appendNameChangeExecutionActivity(
 
         if (counts.step === counts.reminder) return 'mixed';
         return counts.step > counts.reminder ? 'step-led' : 'reminder-led';
+      })(),
+      reminderChurnRisk: (() => {
+        const counts = [
+          {
+            stepId: null,
+            source: activity.source ?? 'reminder',
+            title: activity.title,
+            executionStatus: activity.executionStatus,
+            note: activity.note,
+            timestamp,
+          },
+          ...existing,
+        ]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          .slice(0, 5)
+          .reduce((result, item) => {
+            result[item.source] += 1;
+            return result;
+          }, { step: 0, reminder: 0 });
+
+        if (counts.reminder >= 4) return 'high';
+        if (counts.reminder > counts.step) return 'medium';
+        return 'low';
       })(),
     },
   };
