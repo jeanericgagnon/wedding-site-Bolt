@@ -958,7 +958,11 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
-      if (!user) return;
+      if (!user) {
+        setAllGuests([]);
+        setInvitedGuestIds(new Set());
+        return;
+      }
 
       const activeSite = await resolveActiveSiteForUser(user.id);
       const { data: site, error: siteError } = await supabase
@@ -968,7 +972,11 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
         .single();
       if (siteError) throw siteError;
 
-      if (!site) return;
+      if (!site) {
+        setAllGuests([]);
+        setInvitedGuestIds(new Set());
+        return;
+      }
 
       const { data: guests, error: guestsError } = await supabase
         .from('guests')
