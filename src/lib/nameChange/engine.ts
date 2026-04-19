@@ -124,6 +124,7 @@ function buildStep(step: Omit<NameChangePlanStep, 'owner'>): NameChangePlanStep 
   return {
     ...step,
     owner: 'user',
+    executionStatus: step.executionStatus ?? 'todo',
   };
 }
 
@@ -247,6 +248,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const readinessDenominator = Math.max(1, steps.length + missingInputs.length);
   const readinessNumerator = steps.filter((step) => step.status !== 'blocked').length + (missingInputs.length === 0 ? 1 : 0);
   const readinessPercent = Math.max(0, Math.min(100, Math.round((readinessNumerator / readinessDenominator) * 100)));
+  const executionCounts = steps.reduce((counts, step) => {
+    const key = step.executionStatus ?? 'todo';
+    counts[key] += 1;
+    return counts;
+  }, { todo: 0, in_progress: 0, complete: 0 });
   const nextBestAction = missingInputs[0]
     ? `Fill: ${missingInputs[0]}`
     : travelBookedSoon && input.profile.passport_needs_update
@@ -275,6 +281,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       cautionNotes,
       missingInputs,
       readinessPercent,
+      executionCounts,
       nextBestAction,
     },
     steps,

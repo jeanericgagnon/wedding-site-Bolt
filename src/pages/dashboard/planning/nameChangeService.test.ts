@@ -6,6 +6,7 @@ import {
   hydrateNameChangeWorkspace,
   mapCaseRecordToNameChangeInput,
   mergeNameChangeReminders,
+  mergeNameChangePlanExecutionState,
   normalizeNameChangeReminders,
   normalizeNameChangeCaseInput,
   normalizeNameChangeDocuments,
@@ -316,5 +317,52 @@ describe('nameChangeService normalization', () => {
     expect(updatedBundle.reminders.find((reminder) => reminder.reminder_key === 'reminder-banks')).toMatchObject({
       status: 'scheduled',
     });
+  });
+
+  it('merges existing plan execution state onto regenerated plan steps', () => {
+    const initialBundle = buildNameChangeWorkspaceBundle(makeCase(), [], [], []);
+    const existingPlan = {
+      ...initialBundle.plan,
+      steps: initialBundle.plan.steps.map((step) => step.id === 'federal-ssa' ? { ...step, executionStatus: 'complete' as const } : step),
+    };
+
+    const mergedPlan = mergeNameChangePlanExecutionState(initialBundle.plan, existingPlan);
+    expect(mergedPlan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({ executionStatus: 'complete' });
+    expect(mergedPlan.summary.executionCounts).toMatchObject({ complete: 1 });
+  });
+
+  it('hydrates execution status from the latest snapshot when present', () => {
+    const hydrated = hydrateNameChangeWorkspace({
+      caseRecord: {
+        id: 'case-2',
+        wedding_site_id: 'site-2',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ...makeCase(),
+        current_middle_name: '  Marie ',
+        target_middle_name: null,
+        email: ' Alex@Example.COM ',
+        phone_last4: '(555) 991-2481',
+        county_residence: ' San Diego ',
+        marriage_state: 'California',
+        marriage_date: ' 2026-04-05 ',
+        latest_plan_summary: null,
+      },
+      documents: [],
+      extractedFields: [],
+      latestSnapshot: {
+        id: 'snapshot-1',
+        name_change_case_id: 'case-2',
+        engine_version: 'test',
+        created_at: new Date().toISOString(),
+        plan_payload: {
+          ...buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan,
+          steps: buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan.steps.map((step) => step.id === 'state-dmv' ? { ...step, executionStatus: 'in_progress' as const } : step),
+        },
+      },
+      reminders: [],
+    });
+
+    expect(hydrated.plan.steps.find((step) => step.id === 'state-dmv')).toMatchObject({ executionStatus: 'in_progress' });
   });
 });

@@ -220,6 +220,33 @@ export function mergeNameChangeReminders(
   });
 }
 
+export function mergeNameChangePlanExecutionState(
+  generatedPlan: NameChangePlan,
+  existingPlan: NameChangePlan | null | undefined,
+): NameChangePlan {
+  if (!existingPlan) return generatedPlan;
+
+  const existingSteps = new Map(existingPlan.steps.map((step) => [step.id, step]));
+  const steps = generatedPlan.steps.map((step) => ({
+    ...step,
+    executionStatus: existingSteps.get(step.id)?.executionStatus ?? step.executionStatus ?? 'todo',
+  }));
+  const executionCounts = steps.reduce((counts, step) => {
+    const key = step.executionStatus ?? 'todo';
+    counts[key] += 1;
+    return counts;
+  }, { todo: 0, in_progress: 0, complete: 0 });
+
+  return {
+    ...generatedPlan,
+    steps,
+    summary: {
+      ...generatedPlan.summary,
+      executionCounts,
+    },
+  };
+}
+
 export function mapCaseRecordToNameChangeInput(caseRecord: NameChangeCaseRecord): NameChangeCaseInput {
   return normalizeNameChangeCaseInput({
     workflow_status: caseRecord.workflow_status,
@@ -282,7 +309,10 @@ export function hydrateNameChangeWorkspace(workspace: {
   reminders: NameChangeReminderRecord[];
 }): HydratedNameChangeWorkspace {
   if (!workspace.caseRecord) {
-    const plan = buildNameChangePlan({ profile: defaultNameChangeCaseInput, documents: [], extractedFields: [] });
+    const plan = mergeNameChangePlanExecutionState(
+      buildNameChangePlan({ profile: defaultNameChangeCaseInput, documents: [], extractedFields: [] }),
+      null,
+    );
     return {
       draft: defaultNameChangeCaseInput,
       documents: [] as NameChangeDocumentInput[],
@@ -295,7 +325,10 @@ export function hydrateNameChangeWorkspace(workspace: {
   const draft = mapCaseRecordToNameChangeInput(workspace.caseRecord);
   const documents = normalizeNameChangeDocuments(workspace.documents.map(mapDocumentRecordToInput));
   const extractedFields = normalizeNameChangeExtractedFields(workspace.extractedFields.map(mapExtractedFieldRecordToInput));
-  const fallbackPlan = buildNameChangePlan({ profile: draft, documents, extractedFields });
+  const fallbackPlan = mergeNameChangePlanExecutionState(
+    buildNameChangePlan({ profile: draft, documents, extractedFields }),
+    workspace.latestSnapshot?.plan_payload ?? null,
+  );
   const reminders = normalizeNameChangeReminders(
     workspace.reminders.length > 0
       ? workspace.reminders.map(mapReminderRecordToInput)
@@ -306,7 +339,7 @@ export function hydrateNameChangeWorkspace(workspace: {
     draft,
     documents,
     extractedFields,
-    plan: workspace.latestSnapshot?.plan_payload ?? fallbackPlan,
+    plan: fallbackPlan,
     reminders,
   };
 }
@@ -406,7 +439,10 @@ export function buildNameChangeWorkspaceBundle(
   const draft = normalizeNameChangeCaseInput(caseInput);
   const normalizedDocuments = normalizeNameChangeDocuments(documents);
   const normalizedExtractedFields = normalizeNameChangeExtractedFields(extractedFields);
-  const plan = buildNameChangePlan({ profile: draft, documents: normalizedDocuments, extractedFields: normalizedExtractedFields });
+  const plan = mergeNameChangePlanExecutionState(
+    buildNameChangePlan({ profile: draft, documents: normalizedDocuments, extractedFields: normalizedExtractedFields }),
+    null,
+  );
 
   const generatedReminders = mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan));
 
@@ -425,12 +461,13 @@ export async function saveNameChangeWorkspace(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
   reminders: NameChangeReminderInput[] | null = null,
+  existingPlan: NameChangePlan | null = null,
 ): Promise<{ caseRecord: NameChangeCaseRecord; plan: NameChangePlan; reminders: NameChangeReminderInput[] }> {
   const workspace = buildNameChangeWorkspaceBundle(caseInput, documents, extractedFields, reminders);
   const normalizedCaseInput = workspace.draft;
   const normalizedDocuments = workspace.documents;
   const normalizedExtractedFields = workspace.extractedFields;
-  const plan = workspace.plan;
+  const plan = mergeNameChangePlanExecutionState(workspace.plan, existingPlan);
   const caseRecord = await upsertNameChangeCase(weddingSiteId, {
     ...normalizedCaseInput,
     workflow_status: plan.summary.blockers.length > 0 ? 'draft' : 'ready',

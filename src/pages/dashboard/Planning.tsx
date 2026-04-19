@@ -16,7 +16,7 @@ import {
 } from './planning/planningService';
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
-import { buildNameChangeWorkspaceBundle, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, saveNameChangeWorkspace } from './planning/nameChangeService';
+import { buildNameChangeWorkspaceBundle, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
 import { PlanningOverviewTab } from './planning/PlanningOverviewTab';
 import { TasksTab } from './planning/TasksTab';
 import { BudgetTab } from './planning/BudgetTab';
@@ -85,7 +85,7 @@ export const DashboardPlanning: React.FC = () => {
         setNameChangeDocuments(demoDocuments);
         setNameChangeExtractedFields(demoFields);
         const demoWorkspace = buildNameChangeWorkspaceBundle(demoCase, demoDocuments, demoFields);
-        setNameChangePlan(demoWorkspace.plan);
+        setNameChangePlan(mergeNameChangePlanExecutionState(demoWorkspace.plan, null));
         setNameChangeReminders(demoWorkspace.reminders);
         return;
       }
@@ -391,11 +391,11 @@ export const DashboardPlanning: React.FC = () => {
     setNameChangeDraft((prev) => {
       const next = { ...prev, ...updates }; 
       const nextWorkspace = buildNameChangeWorkspaceBundle(next, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders);
-      setNameChangePlan(nextWorkspace.plan);
+      setNameChangePlan(mergeNameChangePlanExecutionState(nextWorkspace.plan, nameChangePlan));
       setNameChangeReminders(nextWorkspace.reminders);
       return next;
     });
-  }, [nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders]);
+  }, [nameChangeDocuments, nameChangeExtractedFields, nameChangePlan, nameChangeReminders]);
 
   const handleStructuredIntake = useCallback((key: string, value: unknown) => {
     setNameChangeDraft((prev) => {
@@ -407,25 +407,32 @@ export const DashboardPlanning: React.FC = () => {
         },
       };
       const nextWorkspace = buildNameChangeWorkspaceBundle(next, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders);
-      setNameChangePlan(nextWorkspace.plan);
+      setNameChangePlan(mergeNameChangePlanExecutionState(nextWorkspace.plan, nameChangePlan));
       setNameChangeReminders(nextWorkspace.reminders);
       return next;
     });
-  }, [nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders]);
+  }, [nameChangeDocuments, nameChangeExtractedFields, nameChangePlan, nameChangeReminders]);
 
   const handleNameChangeDocuments = useCallback((nextDocuments: NameChangeDocumentInput[]) => {
     setNameChangeDocuments(nextDocuments);
     const nextWorkspace = buildNameChangeWorkspaceBundle(nameChangeDraft, nextDocuments, nameChangeExtractedFields, nameChangeReminders);
-    setNameChangePlan(nextWorkspace.plan);
+    setNameChangePlan(mergeNameChangePlanExecutionState(nextWorkspace.plan, nameChangePlan));
     setNameChangeReminders(nextWorkspace.reminders);
-  }, [nameChangeDraft, nameChangeExtractedFields, nameChangeReminders]);
+  }, [nameChangeDraft, nameChangeExtractedFields, nameChangePlan, nameChangeReminders]);
 
   const handleNameChangeExtractedFields = useCallback((nextFields: NameChangeExtractedFieldInput[]) => {
     setNameChangeExtractedFields(nextFields);
     const nextWorkspace = buildNameChangeWorkspaceBundle(nameChangeDraft, nameChangeDocuments, nextFields, nameChangeReminders);
-    setNameChangePlan(nextWorkspace.plan);
+    setNameChangePlan(mergeNameChangePlanExecutionState(nextWorkspace.plan, nameChangePlan));
     setNameChangeReminders(nextWorkspace.reminders);
-  }, [nameChangeDraft, nameChangeDocuments, nameChangeReminders]);
+  }, [nameChangeDraft, nameChangeDocuments, nameChangePlan, nameChangeReminders]);
+
+  const handleNameChangeStepExecutionStatus = useCallback((stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => {
+    setNameChangePlan((prev) => mergeNameChangePlanExecutionState({
+      ...prev,
+      steps: prev.steps.map((step) => step.id === stepId ? { ...step, executionStatus } : step),
+    }, prev));
+  }, []);
 
   const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[]) => {
     setNameChangeReminders(nextReminders);
@@ -443,7 +450,7 @@ export const DashboardPlanning: React.FC = () => {
 
     try {
       setNameChangeSaving(true);
-      const result = await saveNameChangeWorkspace(siteId, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders);
+      const result = await saveNameChangeWorkspace(siteId, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders, nameChangePlan);
       setNameChangeDraft((prev) => ({ ...prev, workflow_status: result.caseRecord.workflow_status, latest_plan_summary: result.plan.summary as unknown as Record<string, unknown> }));
       setNameChangePlan(result.plan);
       setNameChangeReminders(result.reminders);
@@ -575,6 +582,7 @@ export const DashboardPlanning: React.FC = () => {
                 onDocumentsChange={handleNameChangeDocuments}
                 onExtractedFieldsChange={handleNameChangeExtractedFields}
                 onRemindersChange={handleNameChangeReminders}
+                onStepExecutionStatusChange={handleNameChangeStepExecutionStatus}
                 onSave={handleSaveNameChange}
               />
             )}

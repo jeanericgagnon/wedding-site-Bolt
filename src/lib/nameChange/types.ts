@@ -153,6 +153,7 @@ export interface NameChangePlanStep {
   owner: 'user';
   timing: string;
   status: 'ready' | 'blocked' | 'later';
+  executionStatus?: 'todo' | 'in_progress' | 'complete';
   blockers: string[];
   forms: NameChangePlanFormRef[];
   institutions: string[];
@@ -166,6 +167,11 @@ export interface NameChangePlanSummary {
   cautionNotes: string[];
   missingInputs: string[];
   readinessPercent: number;
+  executionCounts?: {
+    todo: number;
+    in_progress: number;
+    complete: number;
+  };
   nextBestAction: string;
 }
 

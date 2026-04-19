@@ -24,6 +24,7 @@ interface Props {
   onDocumentsChange: (documents: NameChangeDocumentInput[]) => void;
   onExtractedFieldsChange: (fields: NameChangeExtractedFieldInput[]) => void;
   onRemindersChange: (reminders: NameChangeReminderInput[]) => void;
+  onStepExecutionStatusChange: (stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => void;
   onSave: () => Promise<void>;
 }
 
@@ -76,6 +77,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   onDocumentsChange,
   onExtractedFieldsChange,
   onRemindersChange,
+  onStepExecutionStatusChange,
   onSave,
 }) => {
   const [showAdmin, setShowAdmin] = useState(false);
@@ -98,6 +100,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <Card padding="sm">
           <p className="text-xs uppercase tracking-wide text-text-tertiary">Workflow health</p>
           <p className="mt-2 text-sm text-text-primary">{stepCounts.ready} ready · {stepCounts.blocked} blocked · {stepCounts.later} later</p>
+          <p className="mt-2 text-xs text-text-secondary">Execution: {plan.summary.executionCounts?.todo ?? 0} todo · {plan.summary.executionCounts?.in_progress ?? 0} in progress · {plan.summary.executionCounts?.complete ?? 0} complete</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{plan.summary.readinessPercent}% intake-ready</p>
           <p className="mt-2 text-xs text-text-secondary">Federal-first, California-second, institutions after primary ID.</p>
         </Card>
@@ -357,6 +360,18 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     {step.institutions.map((institution) => <li key={institution}>• {institution}</li>)}
                   </ul>
                 </div>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Execution: {step.executionStatus ?? 'todo'}</span>
+                {step.executionStatus !== 'in_progress' && step.status !== 'blocked' && (
+                  <Button variant="ghost" size="sm" onClick={() => onStepExecutionStatusChange(step.id, 'in_progress')}>Mark in progress</Button>
+                )}
+                {step.executionStatus !== 'complete' && step.status !== 'blocked' && (
+                  <Button variant="ghost" size="sm" onClick={() => onStepExecutionStatusChange(step.id, 'complete')}>Mark complete</Button>
+                )}
+                {step.executionStatus !== 'todo' && (
+                  <Button variant="ghost" size="sm" onClick={() => onStepExecutionStatusChange(step.id, 'todo')}>Reset</Button>
+                )}
               </div>
               {step.blockers.length > 0 && <p className="mt-3 text-xs text-warning">Blocked by: {step.blockers.join(' · ')}</p>}
             </div>

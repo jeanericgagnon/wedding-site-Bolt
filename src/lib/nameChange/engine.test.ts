@@ -63,6 +63,7 @@ describe('name change engine', () => {
     expect(plan.summary.recommendedOrder[0]).toContain('Confirm certified marriage proof');
     expect(plan.summary.recommendedOrder[1]).toContain('Update Social Security first');
     expect(plan.summary.readinessPercent).toBeGreaterThan(0);
+    expect(plan.summary.executionCounts).toMatchObject({ todo: plan.steps.length, in_progress: 0, complete: 0 });
     expect(plan.steps.some((step) => step.title.includes('passport'))).toBe(true);
     const institutionsStep = plan.steps.find((step) => step.phase === 'institutional');
     expect(institutionsStep?.institutions).toContain('Employer payroll / HR');
