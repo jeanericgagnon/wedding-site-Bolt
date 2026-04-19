@@ -23,7 +23,7 @@ import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUp
 import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
-import { QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
+import { persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
 import { buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
 
@@ -316,6 +316,14 @@ export const QuickStart: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        persistQuickStartDraftSnapshot({
+          initialSetupAnswers: answersOverride,
+          currentIndex,
+          followUpAnswers: followUpAnswersRef.current,
+          showFollowUps,
+          clarifyingState: clarifyingOverride,
+          viewState,
+        });
         writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
         setLoading(false);
         setIsThinking(false);

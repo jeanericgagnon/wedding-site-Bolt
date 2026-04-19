@@ -97,6 +97,8 @@ export const Signup: React.FC = () => {
     setLoading(true);
     setError('');
     try {
+      if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
+      if (quickStartDraft) persistQuickStartDraftSnapshot(quickStartDraft);
       const fallbackRedirectPath = paymentGateEnabled ? '/payment-required?oauth=google' : '/onboarding?oauth=google';
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
