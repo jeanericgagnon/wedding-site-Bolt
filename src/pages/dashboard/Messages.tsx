@@ -1601,6 +1601,7 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
+    let deliveryTriggered = false;
     try {
       const { error } = await supabase
         .from('messages')
@@ -1617,9 +1618,10 @@ export const DashboardMessages: React.FC = () => {
       } else {
         toast(`Sent to ${result.delivered}, failed for ${result.failed}.`, 'info');
       }
+      deliveryTriggered = true;
       await fetchMessages();
     } catch (err) {
-      if (!isDemoMode) {
+      if (!isDemoMode && !deliveryTriggered) {
         await supabase
           .from('messages')
           .update({ scheduled_for: message.scheduled_for })
