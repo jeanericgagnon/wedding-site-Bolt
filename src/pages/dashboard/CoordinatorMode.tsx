@@ -12,6 +12,7 @@ import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../l
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
+import { normalizeCoordinatorModeSessionState } from '../../lib/coordinatorModeSessionState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
