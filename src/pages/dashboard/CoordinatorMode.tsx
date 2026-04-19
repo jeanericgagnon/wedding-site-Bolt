@@ -9,6 +9,7 @@ import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus
 import { useToast } from '../../components/ui/Toast';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
+import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 
 type GuestLite = {
   id: string;
@@ -229,6 +230,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
   })();
 
   const canEdit = canEditPlannerSurface(coordinatorRole);
+
+  const alertValidationError = useMemo(() => validateCoordinatorAlertForm(alertForm, alertAudienceCount), [alertForm, alertAudienceCount]);
   const handoffCopy = {
     title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
     detail: coordinatorRole === 'viewer'
@@ -282,10 +285,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
   );
 
   const sendDayOfAlert = async () => {
-    if (!siteId || !alertForm.subject.trim() || !alertForm.body.trim()) return;
-    const scheduledFor = alertForm.scheduleType === 'later' && alertForm.scheduleDate && alertForm.scheduleTime
-      ? `${alertForm.scheduleDate}T${alertForm.scheduleTime}:00`
-      : null;
+    if (!siteId) return;
+    if (alertValidationError) {
+      toast(alertValidationError, 'error');
+      return;
+    }
+    const scheduledFor = resolveCoordinatorScheduledFor(alertForm);
     const status = scheduledFor ? 'scheduled' : 'queued';
 
     setAlertBusy(true);
@@ -305,14 +310,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
         if (error) throw error;
       }
 
-      setAlertLog((prev) => [{
+      setAlertLog((prev) => appendCoordinatorAlertLogItem(prev, {
         id: `${Date.now()}`,
         subject: alertForm.subject.trim(),
         audience: alertForm.audience,
         channel: alertForm.channel,
         queuedAt: new Date().toISOString(),
         sendAt: scheduledFor,
-      }, ...prev].slice(0, 8));
+      }));
       toast(scheduledFor ? 'Coordinator alert scheduled.' : 'Coordinator alert queued.', 'success');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Could not queue that alert right now.', 'error');
@@ -609,9 +614,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   ) : <div />}
                 </div>
                 <p className="text-[11px] text-text-tertiary">This will go to {alertAudienceCount} recipient{alertAudienceCount === 1 ? '' : 's'}{alertForm.scheduleType === 'later' ? ' at the scheduled time' : ''}.</p>
+                {alertValidationError && <p className="text-[11px] text-error">{alertValidationError}</p>}
                 <button
                   onClick={() => void sendDayOfAlert()}
-                  disabled={alertBusy || !alertForm.subject.trim() || !alertForm.body.trim() || alertAudienceCount === 0}
+                  disabled={alertBusy || !!alertValidationError}
                   className="w-full px-3 py-2 text-sm rounded-md border border-primary/30 bg-primary/10 text-primary disabled:opacity-50"
                 >
                   {alertBusy ? 'Saving...' : alertForm.scheduleType === 'later' ? 'Schedule message' : 'Send message'}
