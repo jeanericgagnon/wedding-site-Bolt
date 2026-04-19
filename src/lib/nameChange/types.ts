@@ -219,6 +219,69 @@ export interface NameChangePlan {
   steps: NameChangePlanStep[];
 }
 
+export interface NameChangeCanonicalPersonName {
+  first: string;
+  middle: string | null;
+  last: string;
+  full: string;
+}
+
+export interface NameChangeCanonicalCase {
+  legalBasis: NameChangeLegalBasis;
+  workflowStatus: NameChangeWorkflowStatus;
+  launchState: NameChangeLaunchState;
+  countyResidence: string | null;
+  currentName: NameChangeCanonicalPersonName;
+  targetName: NameChangeCanonicalPersonName;
+  identity: {
+    isUsCitizen: boolean;
+    hasUsPassport: boolean;
+    passportNeedsUpdate: boolean;
+    hasRealIdLicense: boolean;
+  };
+  lifeContext: {
+    urgencyLevel: NameChangeCaseInput['urgency_level'];
+    employmentStatus: NameChangeCaseInput['employment_status'];
+    travelBookedSoon: boolean;
+  };
+  legalContext: {
+    marriageDate: string | null;
+    marriageState: string | null;
+    spouseLastName: string | null;
+  };
+  documents: Record<NameChangeDocumentKind, {
+    intakeStatus: NameChangeDocumentInput['intake_status'];
+    storageMode: NameChangeDocumentInput['storage_mode'];
+    extractionFieldCount: number;
+    extractedFieldKeys: NameChangeExtractionFieldKey[];
+  }>;
+}
+
+export interface NameChangeRequirementDefinition {
+  key: string;
+  label: string;
+  stage: 'identity' | 'proof' | 'government' | 'institutional';
+  description: string;
+}
+
+export interface NameChangeRequirementResult {
+  key: string;
+  label: string;
+  stage: 'identity' | 'proof' | 'government' | 'institutional';
+  status: 'satisfied' | 'missing' | 'attention';
+  reason: string;
+}
+
+export interface NameChangeRequirementSnapshot {
+  canonicalCase: NameChangeCanonicalCase;
+  results: NameChangeRequirementResult[];
+  summary: {
+    satisfied: number;
+    missing: number;
+    attention: number;
+  };
+}
+
 export interface NameChangeReminderSuggestion {
   id: string;
   label: string;

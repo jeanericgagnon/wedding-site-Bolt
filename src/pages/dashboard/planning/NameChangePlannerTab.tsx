@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sp
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
+import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
 import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
 import type {
   NameChangeCaseInput,
@@ -89,6 +90,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     later: plan.steps.filter((step) => step.status === 'later').length,
   }), [plan.steps]);
   const effectiveReminders = useMemo(() => reminders, [reminders]);
+  const requirementSnapshot = useMemo(() => evaluateNameChangeRequirements(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
@@ -230,6 +232,35 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           )}
         </div>
       )}
+
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Canonical case requirements</h3>
+            <p className="text-sm text-text-secondary">Early skeleton for the real name-change system contract: canonical case truth plus requirement evaluation.</p>
+          </div>
+          <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            {requirementSnapshot.summary.satisfied} satisfied · {requirementSnapshot.summary.attention} attention · {requirementSnapshot.summary.missing} missing
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {requirementSnapshot.results.map((result) => (
+            <div key={result.key} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{result.label}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{result.stage}</p>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-xs ${result.status === 'satisfied' ? 'bg-success/10 text-success' : result.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                  {result.status}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{result.reason}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <Card>
