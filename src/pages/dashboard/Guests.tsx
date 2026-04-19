@@ -977,7 +977,6 @@ export const DashboardGuests: React.FC = () => {
       }
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setShowAddModal(false);
       resetForm();
       toast(`${formData.first_name} ${formData.last_name} added`, 'success');
@@ -1083,7 +1082,6 @@ export const DashboardGuests: React.FC = () => {
       }
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setEditingGuest(null);
       resetForm();
       toast('Guest updated', 'success');
@@ -1912,7 +1910,6 @@ Proceed with send?`)) return;
       }
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setAssistedRsvpGuest(null);
       toast('RSVP recorded for guest', 'success');
     } catch (error) {
@@ -2185,7 +2182,6 @@ Proceed with send?`)) return;
       if (error) throw error;
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setSelectedGuestIds(new Set());
       setShowNuclearDeleteModal(false);
       setNuclearConfirmInput('');
