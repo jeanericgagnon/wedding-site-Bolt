@@ -427,11 +427,13 @@ interface MessageDetailModalProps {
   deliveries: DeliveryRow[];
   onClose: () => void;
   onRetry: (message: Message) => Promise<void>;
+  onSendScheduledNow: (message: Message) => Promise<void>;
   onLoadIntoComposer: (message: Message, mode: 'edit' | 'duplicate') => void;
 }
 
-const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, onClose, onRetry, onLoadIntoComposer }) => {
+const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, onClose, onRetry, onSendScheduledNow, onLoadIntoComposer }) => {
   const [retrying, setRetrying] = React.useState(false);
+  const [sendingScheduledNow, setSendingScheduledNow] = React.useState(false);
   const recipientCount = getRecipientCount(message);
   const audienceLabel = getAudienceLabel(message);
   const campaignName = getCampaignName(message);
@@ -622,6 +624,26 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                   ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Retrying…</>
                   : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />{message.status === 'partial' ? 'Retry failed recipients' : 'Retry send'}</>
                 }
+              </Button>
+            )}
+            {message.status === 'scheduled' && (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={sendingScheduledNow}
+                onClick={async () => {
+                  setSendingScheduledNow(true);
+                  try {
+                    await onSendScheduledNow(message);
+                  } finally {
+                    setSendingScheduledNow(false);
+                    onClose();
+                  }
+                }}
+              >
+                {sendingScheduledNow
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Sending…</>
+                  : <><Send className="w-3.5 h-3.5 mr-1.5" />Send scheduled now</>}
               </Button>
             )}
           </div>
@@ -1259,6 +1281,45 @@ export const DashboardMessages: React.FC = () => {
     }
   }
 
+  async function handleSendScheduledNow(message: Message) {
+    if (isDemoMode) {
+      setMessages((prev) => prev.map((item) => (
+        item.id === message.id
+          ? {
+              ...item,
+              status: 'sent',
+              sent_at: new Date().toISOString(),
+              delivered_count: getRecipientCount(item),
+              failed_count: 0,
+            }
+          : item
+      )));
+      toast('Scheduled message sent now (demo).', 'success');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ scheduled_for: new Date().toISOString() })
+        .eq('id', message.id);
+      if (error) throw error;
+
+      toast('Sending scheduled message now…', 'info');
+      const result = await triggerBulkSend(message.id);
+      if (result.failed === 0) {
+        toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
+      } else if (result.delivered === 0) {
+        toast(`Delivery failed for all ${result.failed} recipient${result.failed !== 1 ? 's' : ''}.`, 'error');
+      } else {
+        toast(`Sent to ${result.delivered}, failed for ${result.failed}.`, 'info');
+      }
+      await fetchMessages();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Couldn’t send that scheduled message right now.', 'error');
+    }
+  }
+
   async function handleRunDueScheduledMessages() {
     if (isDemoMode) {
       const dueIds = messages
@@ -1444,6 +1505,13 @@ export const DashboardMessages: React.FC = () => {
   const smsCredits = weddingSite?.sms_credits_balance ?? 0;
   const smsCreditsNeeded = recipientsWithPhone;
   const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
+  const HARD_EMAIL_CAP = 1000;
+  const usedEmailRecipients = messages
+    .filter((m) => m.channel === 'email' && ['sent', 'partial', 'queued'].includes(m.status))
+    .reduce((sum, m) => sum + getRecipientCount(m), 0);
+  const remainingEmailRecipients = Math.max(HARD_EMAIL_CAP - usedEmailRecipients, 0);
+  const emailCapacityAfterSend = Math.max(remainingEmailRecipients - recipientsWithEmail, 0);
+  const emailCapacityEnough = recipientsWithEmail <= remainingEmailRecipients;
 
   const deliveryStats = useMemo(() => {
     const sentish = messages.filter((m) => ['sent', 'partial', 'failed'].includes(m.status));
@@ -1672,6 +1740,19 @@ export const DashboardMessages: React.FC = () => {
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Wedding email</p>
                       <p className="mt-2 text-base font-semibold text-text-primary">{weddingSite?.couple_email ?? 'Not set yet'}</p>
                       <p className="mt-1 text-xs text-text-secondary">Guest emails appear from this address when email is used.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Email usage cap</p>
+                      <p className="mt-2 text-2xl font-semibold text-text-primary">{remainingEmailRecipients}</p>
+                      <p className="mt-1 text-xs text-text-secondary">Recipient slots left before the current email send cap of {HARD_EMAIL_CAP}.</p>
+                      <p className="text-xs text-text-tertiary">Used {usedEmailRecipients} total email recipients so far.</p>
+                    </div>
+                    <div className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${emailCapacityEnough ? 'border-success/20 bg-success-light text-success' : 'border-error/20 bg-error-light text-error'}`}>
+                      {emailCapacityEnough ? 'Within cap' : 'Cap risk'}
                     </div>
                   </div>
                 </div>
@@ -1999,12 +2080,22 @@ export const DashboardMessages: React.FC = () => {
                   </div>
                 )}
 
+                {formData.channel === 'email' && activeRecipients > 0 && (
+                  <div className={`flex items-center justify-between gap-3 p-3 rounded-lg text-sm border ${emailCapacityEnough ? 'bg-success-light border-success/20 text-success' : 'bg-error-light border-error/20 text-error'}`}>
+                    <span>
+                      {emailCapacityEnough
+                        ? `Email cap check: ${remainingEmailRecipients} recipient slots left before send • ${emailCapacityAfterSend} left after this campaign.`
+                        : `Email cap check: this campaign needs ${recipientsWithEmail}, but only ${remainingEmailRecipients} recipient slots remain.`}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <Button
                     type="submit"
                     variant="primary"
                     fullWidth
-                    disabled={sending || activeRecipients === 0}
+                    disabled={sending || activeRecipients === 0 || (formData.channel === 'email' && !emailCapacityEnough)}
                   >
                     {sending ? 'Processing...' : (
                       formData.scheduleType === 'later' ? (
@@ -2355,6 +2446,11 @@ export const DashboardMessages: React.FC = () => {
                             {getCampaignTypeLabel(message)}
                           </span>
                         )}
+                        {message.status === 'scheduled' && isPastScheduledTime(message.scheduled_for) && (
+                          <span className="px-2 py-0.5 bg-warning-light text-warning rounded border border-warning/20">
+                            Due now
+                          </span>
+                        )}
                         <span className="flex items-center gap-1 text-text-tertiary">
                           <Clock className="w-3 h-3" />
                           {message.status === 'scheduled' && message.scheduled_for
@@ -2394,6 +2490,7 @@ export const DashboardMessages: React.FC = () => {
           deliveries={deliveries}
           onClose={() => setViewingMessage(null)}
           onRetry={handleRetry}
+          onSendScheduledNow={handleSendScheduledNow}
           onLoadIntoComposer={loadMessageIntoComposer}
         />
       )}
