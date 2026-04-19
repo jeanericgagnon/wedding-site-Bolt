@@ -17,7 +17,7 @@ import {
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
-import { buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
+import { appendNameChangeExecutionActivity, buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
 import { PlanningOverviewTab } from './planning/PlanningOverviewTab';
 import { TasksTab } from './planning/TasksTab';
 import { BudgetTab } from './planning/BudgetTab';
@@ -458,8 +458,17 @@ export const DashboardPlanning: React.FC = () => {
   }, [nameChangePlan]);
 
   const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[]) => {
+    const previousReminders = new Map(nameChangeReminders.map((reminder) => [reminder.reminder_key, reminder]));
+    const changedReminder = nextReminders.find((reminder) => previousReminders.get(reminder.reminder_key)?.status !== reminder.status);
     setNameChangeReminders(nextReminders);
-  }, []);
+    if (!changedReminder) return;
+
+    setNameChangePlan((prev) => appendNameChangeExecutionActivity(prev, {
+      title: `Reminder updated: ${changedReminder.label}`,
+      executionStatus: changedReminder.status === 'dismissed' ? 'todo' : changedReminder.status === 'sent' ? 'complete' : 'in_progress',
+      note: `Reminder status changed to ${changedReminder.status}`,
+    }));
+  }, [nameChangeReminders]);
 
   const handleSaveNameChange = useCallback(async () => {
     if (isDemoMode) {

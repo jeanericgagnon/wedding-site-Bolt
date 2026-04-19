@@ -252,6 +252,10 @@ export function mergeNameChangePlanExecutionState(
     }))
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 5);
+  const carriedActivity = (existingPlan.summary.recentExecutionActivity ?? []).filter((item) => item.stepId === null);
+  const mergedRecentExecutionActivity = [...recentExecutionActivity, ...carriedActivity]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 5);
 
   return {
     ...generatedPlan,
@@ -259,7 +263,39 @@ export function mergeNameChangePlanExecutionState(
     summary: {
       ...generatedPlan.summary,
       executionCounts,
-      recentExecutionActivity,
+      recentExecutionActivity: mergedRecentExecutionActivity,
+    },
+  };
+}
+
+export function appendNameChangeExecutionActivity(
+  plan: NameChangePlan,
+  activity: {
+    title: string;
+    executionStatus: 'todo' | 'in_progress' | 'complete';
+    note: string | null;
+    timestamp?: string;
+  },
+): NameChangePlan {
+  const timestamp = activity.timestamp ?? new Date().toISOString();
+  const existing = plan.summary.recentExecutionActivity ?? [];
+
+  return {
+    ...plan,
+    summary: {
+      ...plan.summary,
+      recentExecutionActivity: [
+        {
+          stepId: null,
+          title: activity.title,
+          executionStatus: activity.executionStatus,
+          note: activity.note,
+          timestamp,
+        },
+        ...existing,
+      ]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 5),
     },
   };
 }

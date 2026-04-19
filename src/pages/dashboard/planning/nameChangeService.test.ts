@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { NameChangeCaseInput, NameChangeCaseRecord, NameChangeDocumentInput, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
 import {
+  appendNameChangeExecutionActivity,
   buildNameChangeWorkspaceBundle,
   deriveNameChangeWorkflowStatus,
   defaultNameChangeCaseInput,
@@ -453,5 +454,23 @@ describe('nameChangeService normalization', () => {
       expect.objectContaining({ stepId: merged.steps[1].id, executionStatus: 'in_progress', note: 'note-1', timestamp: '2026-04-18T19:01:00.000Z' }),
       expect.objectContaining({ stepId: merged.steps[0].id, executionStatus: 'complete', note: 'note-0', timestamp: '2026-04-18T19:00:00.000Z' }),
     ]);
+  });
+
+  it('appends manual reminder activity into recent execution activity', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const updatedPlan = appendNameChangeExecutionActivity(basePlan, {
+      title: 'Reminder updated: Follow up on Banks and credit cards',
+      executionStatus: 'in_progress',
+      note: 'Reminder status changed to scheduled',
+      timestamp: '2026-04-18T20:00:00.000Z',
+    });
+
+    expect(updatedPlan.summary.recentExecutionActivity?.[0]).toMatchObject({
+      stepId: null,
+      title: 'Reminder updated: Follow up on Banks and credit cards',
+      executionStatus: 'in_progress',
+      note: 'Reminder status changed to scheduled',
+      timestamp: '2026-04-18T20:00:00.000Z',
+    });
   });
 });
