@@ -1482,6 +1482,71 @@ export const DashboardMessages: React.FC = () => {
     toast('Loaded thread thank-you into composer.', 'info');
   }
 
+  function startScheduledFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
+    if (!activeCampaignLatestMessage) return;
+
+    const now = new Date();
+    const scheduledAt = new Date(now);
+
+    if (mode === 'day-of') {
+      scheduledAt.setHours(now.getHours() + 2);
+    } else {
+      scheduledAt.setDate(now.getDate() + 1);
+      scheduledAt.setHours(10, 0, 0, 0);
+    }
+
+    const yyyy = scheduledAt.getFullYear();
+    const mm = String(scheduledAt.getMonth() + 1).padStart(2, '0');
+    const dd = String(scheduledAt.getDate()).padStart(2, '0');
+    const hh = String(scheduledAt.getHours()).padStart(2, '0');
+    const min = String(scheduledAt.getMinutes()).padStart(2, '0');
+
+    const audience = activeCampaignLatestMessage.audience_filter ?? (activeCampaignLatestMessage.recipient_filter?.audience as string) ?? 'all';
+    const campaignBase = getCampaignName(activeCampaignLatestMessage) ?? activeCampaignThread?.name ?? activeCampaignLatestMessage.subject;
+
+    if (mode === 'reminder') {
+      applyComposerTemplate('rsvp-reminder', {
+        audience,
+        channel: 'email',
+        scheduleType: 'later',
+        scheduleDate: `${yyyy}-${mm}-${dd}`,
+        scheduleTime: `${hh}:${min}`,
+        campaignName: `${campaignBase} scheduled follow-up`,
+      });
+      setShowRecipientPreview(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast(`Loaded scheduled reminder for ${new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`).toLocaleString()}.`, 'info');
+      return;
+    }
+
+    if (mode === 'day-of') {
+      applyComposerTemplate('day-of-update', {
+        audience,
+        channel: 'sms',
+        scheduleType: 'later',
+        scheduleDate: `${yyyy}-${mm}-${dd}`,
+        scheduleTime: `${hh}:${min}`,
+        campaignName: `${campaignBase} scheduled day-of update`,
+      });
+      setShowRecipientPreview(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast(`Loaded scheduled day-of update for ${new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`).toLocaleString()}.`, 'info');
+      return;
+    }
+
+    applyComposerTemplate('thank-you', {
+      audience,
+      channel: 'email',
+      scheduleType: 'later',
+      scheduleDate: `${yyyy}-${mm}-${dd}`,
+      scheduleTime: `${hh}:${min}`,
+      campaignName: `${campaignBase} scheduled thank you`,
+    });
+    setShowRecipientPreview(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast(`Loaded scheduled thank-you for ${new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`).toLocaleString()}.`, 'info');
+  }
+
   async function handleRetry(message: Message) {
     setRetryingMessageId(message.id);
     try {
@@ -3019,6 +3084,13 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      onClick={() => startScheduledFollowUpFromCampaignThread('reminder')}
+                    >
+                      Schedule reminder
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => startFollowUpFromCampaignThread('day-of')}
                     >
                       Next: day-of update
@@ -3026,9 +3098,23 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      onClick={() => startScheduledFollowUpFromCampaignThread('day-of')}
+                    >
+                      Schedule day-of
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => startFollowUpFromCampaignThread('thank-you')}
                     >
                       Next: thank you
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startScheduledFollowUpFromCampaignThread('thank-you')}
+                    >
+                      Schedule thank you
                     </Button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
