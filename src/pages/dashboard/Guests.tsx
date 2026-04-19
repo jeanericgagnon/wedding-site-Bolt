@@ -1693,7 +1693,6 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setSelectedGuestIds(new Set());
       toast(`${ids.length} guests merged into one household`, 'success');
     } catch {
@@ -1714,7 +1713,6 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast('Guest removed from household', 'success');
     } catch {
       toast('Failed to remove from household', 'error');
@@ -1733,7 +1731,6 @@ Proceed with send?`)) return;
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast('Guest reassigned', 'success');
     } catch {
       toast('Failed to reassign guest', 'error');
