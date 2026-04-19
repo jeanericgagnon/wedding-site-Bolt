@@ -324,11 +324,21 @@ describe('nameChangeService normalization', () => {
     const initialBundle = buildNameChangeWorkspaceBundle(makeCase(), [], [], []);
     const existingPlan = {
       ...initialBundle.plan,
-      steps: initialBundle.plan.steps.map((step) => step.id === 'federal-ssa' ? { ...step, executionStatus: 'complete' as const } : step),
+      steps: initialBundle.plan.steps.map((step) => step.id === 'federal-ssa' ? {
+        ...step,
+        executionStatus: 'complete' as const,
+        executionNote: 'SSA update confirmed by mail',
+        executionUpdatedAt: '2026-04-18T18:00:00.000Z',
+        completedAt: '2026-04-18T18:00:00.000Z',
+      } : step),
     };
 
     const mergedPlan = mergeNameChangePlanExecutionState(initialBundle.plan, existingPlan);
-    expect(mergedPlan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({ executionStatus: 'complete' });
+    expect(mergedPlan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({
+      executionStatus: 'complete',
+      executionNote: 'SSA update confirmed by mail',
+      completedAt: '2026-04-18T18:00:00.000Z',
+    });
     expect(mergedPlan.summary.executionCounts).toMatchObject({ complete: 1 });
   });
 
@@ -393,5 +403,36 @@ describe('nameChangeService normalization', () => {
       steps: basePlan.steps.map((step) => step.status === 'blocked' ? step : { ...step, executionStatus: 'complete' as const }),
     }, basePlan);
     expect(deriveNameChangeWorkflowStatus(completePlan)).toBe('complete');
+  });
+
+  it('prefers explicit new execution note metadata over stale snapshot values', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const existingPlan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? {
+        ...step,
+        executionStatus: 'in_progress' as const,
+        executionNote: 'Old note',
+        executionUpdatedAt: '2026-04-18T18:00:00.000Z',
+      } : step),
+    };
+    const generatedPlan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? {
+        ...step,
+        executionStatus: 'complete' as const,
+        executionNote: 'New completion note',
+        executionUpdatedAt: '2026-04-18T19:00:00.000Z',
+        completedAt: '2026-04-18T19:00:00.000Z',
+      } : step),
+    };
+
+    const merged = mergeNameChangePlanExecutionState(generatedPlan, existingPlan);
+    expect(merged.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({
+      executionStatus: 'complete',
+      executionNote: 'New completion note',
+      executionUpdatedAt: '2026-04-18T19:00:00.000Z',
+      completedAt: '2026-04-18T19:00:00.000Z',
+    });
   });
 });

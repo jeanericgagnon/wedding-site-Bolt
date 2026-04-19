@@ -232,6 +232,9 @@ export function mergeNameChangePlanExecutionState(
     executionStatus: (step.executionStatus && step.executionStatus !== 'todo')
       ? step.executionStatus
       : existingSteps.get(step.id)?.executionStatus ?? step.executionStatus ?? 'todo',
+    executionNote: step.executionNote ?? existingSteps.get(step.id)?.executionNote ?? null,
+    executionUpdatedAt: step.executionUpdatedAt ?? existingSteps.get(step.id)?.executionUpdatedAt ?? null,
+    completedAt: step.completedAt ?? existingSteps.get(step.id)?.completedAt ?? null,
   }));
   const executionCounts = steps.reduce((counts, step) => {
     const key = step.executionStatus ?? 'todo';

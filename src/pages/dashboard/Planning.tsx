@@ -429,13 +429,32 @@ export const DashboardPlanning: React.FC = () => {
   }, [nameChangeDraft, nameChangeDocuments, nameChangePlan, nameChangeReminders]);
 
   const handleNameChangeStepExecutionStatus = useCallback((stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => {
+    const now = new Date().toISOString();
     const nextPlan = mergeNameChangePlanExecutionState({
       ...nameChangePlan,
-      steps: nameChangePlan.steps.map((step) => step.id === stepId ? { ...step, executionStatus } : step),
+      steps: nameChangePlan.steps.map((step) => step.id === stepId ? {
+        ...step,
+        executionStatus,
+        executionUpdatedAt: now,
+        completedAt: executionStatus === 'complete' ? now : null,
+      } : step),
     }, nameChangePlan);
     setNameChangePlan(nextPlan);
     setNameChangeReminders((prev) => syncNameChangeRemindersWithStepExecution(prev, stepId, executionStatus));
     setNameChangeDraft((prev) => ({ ...prev, workflow_status: deriveNameChangeWorkflowStatus(nextPlan) }));
+  }, [nameChangePlan]);
+
+  const handleNameChangeStepExecutionNote = useCallback((stepId: string, note: string) => {
+    const now = new Date().toISOString();
+    const nextPlan = mergeNameChangePlanExecutionState({
+      ...nameChangePlan,
+      steps: nameChangePlan.steps.map((step) => step.id === stepId ? {
+        ...step,
+        executionNote: note,
+        executionUpdatedAt: now,
+      } : step),
+    }, nameChangePlan);
+    setNameChangePlan(nextPlan);
   }, [nameChangePlan]);
 
   const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[]) => {
@@ -587,6 +606,7 @@ export const DashboardPlanning: React.FC = () => {
                 onExtractedFieldsChange={handleNameChangeExtractedFields}
                 onRemindersChange={handleNameChangeReminders}
                 onStepExecutionStatusChange={handleNameChangeStepExecutionStatus}
+                onStepExecutionNoteChange={handleNameChangeStepExecutionNote}
                 onSave={handleSaveNameChange}
               />
             )}

@@ -125,6 +125,9 @@ function buildStep(step: Omit<NameChangePlanStep, 'owner'>): NameChangePlanStep 
     ...step,
     owner: 'user',
     executionStatus: step.executionStatus ?? 'todo',
+    executionNote: step.executionNote ?? null,
+    executionUpdatedAt: step.executionUpdatedAt ?? null,
+    completedAt: step.completedAt ?? null,
   };
 }
 

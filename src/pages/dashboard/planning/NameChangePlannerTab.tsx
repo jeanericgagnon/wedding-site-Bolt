@@ -25,6 +25,7 @@ interface Props {
   onExtractedFieldsChange: (fields: NameChangeExtractedFieldInput[]) => void;
   onRemindersChange: (reminders: NameChangeReminderInput[]) => void;
   onStepExecutionStatusChange: (stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => void;
+  onStepExecutionNoteChange: (stepId: string, note: string) => void;
   onSave: () => Promise<void>;
 }
 
@@ -78,6 +79,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   onExtractedFieldsChange,
   onRemindersChange,
   onStepExecutionStatusChange,
+  onStepExecutionNoteChange,
   onSave,
 }) => {
   const [showAdmin, setShowAdmin] = useState(false);
@@ -372,6 +374,22 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 )}
                 {step.executionStatus !== 'todo' && (
                   <Button variant="ghost" size="sm" onClick={() => onStepExecutionStatusChange(step.id, 'todo')}>Reset</Button>
+                )}
+              </div>
+              <div className="mt-3 grid gap-2">
+                <label className="text-xs font-medium text-text-secondary">Execution note</label>
+                <textarea
+                  className="min-h-[84px] w-full rounded-lg border border-border px-3 py-2 text-sm"
+                  value={step.executionNote ?? ''}
+                  onChange={(e) => onStepExecutionNoteChange(step.id, e.target.value)}
+                  placeholder="Add what was submitted, confirmed, or still blocked here"
+                />
+                {(step.executionUpdatedAt || step.completedAt) && (
+                  <p className="text-xs text-text-secondary">
+                    {step.executionUpdatedAt ? `Updated ${new Date(step.executionUpdatedAt).toLocaleString()}` : ''}
+                    {step.executionUpdatedAt && step.completedAt ? ' · ' : ''}
+                    {step.completedAt ? `Completed ${new Date(step.completedAt).toLocaleString()}` : ''}
+                  </p>
                 )}
               </div>
               {step.blockers.length > 0 && <p className="mt-3 text-xs text-warning">Blocked by: {step.blockers.join(' · ')}</p>}

@@ -154,6 +154,9 @@ export interface NameChangePlanStep {
   timing: string;
   status: 'ready' | 'blocked' | 'later';
   executionStatus?: 'todo' | 'in_progress' | 'complete';
+  executionNote?: string | null;
+  executionUpdatedAt?: string | null;
+  completedAt?: string | null;
   blockers: string[];
   forms: NameChangePlanFormRef[];
   institutions: string[];
