@@ -15,6 +15,7 @@ import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCo
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId } from '../../lib/coordinatorTimelineFocus';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
+import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 
 
@@ -255,6 +256,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const live = events.find((e) => e.id === liveEventId);
     return live ? `event:${live.id}` : null;
   }, [events, liveEventId]);
+
+  const liveEvent = useMemo(() => events.find((event) => event.id === liveEventId) ?? null, [events, liveEventId]);
+  const upNextEvent = useMemo(() => events.find((event) => event.id === upNextEventId) ?? null, [events, upNextEventId]);
+  const alertSuggestions = useMemo(() => buildCoordinatorAlertSuggestions({ liveEvent, upNextEvent }), [liveEvent, upNextEvent]);
 
   const alertStats = useMemo(() => {
     const total = alertLog.length;
@@ -578,15 +583,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 ))}
               </div>
               <div className="flex flex-wrap gap-1.5 mb-3">
-                {liveEventAudience && (
+                {alertSuggestions.map((suggestion) => (
                   <button
+                    key={suggestion.key}
                     type="button"
-                    onClick={() => setAlertForm((prev) => ({ ...prev, audience: liveEventAudience }))}
-                    className="text-[11px] px-2 py-1 rounded-full border border-primary/25 bg-primary/5 text-primary hover:bg-primary/10"
+                    onClick={() => setAlertForm((prev) => ({
+                      ...prev,
+                      subject: suggestion.subject,
+                      body: suggestion.body,
+                      audience: suggestion.audience,
+                    }))}
+                    className={`text-[11px] px-2 py-1 rounded-full border ${suggestion.key.startsWith('live:') ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
                   >
-                    Message live event
+                    {suggestion.label}
                   </button>
-                )}
+                ))}
                 <button
                   type="button"
                   onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' }))}
