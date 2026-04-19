@@ -19,10 +19,10 @@ import { normalizeOnboardingDraftSnapshot, type OnboardingStep } from '../lib/on
 import { mergeOnboardingFollowUpAnswers } from '../lib/onboardingFollowUpMerge';
 import { resolveOnboardingResumeIndex } from '../lib/onboardingResumeIndex';
 import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY as ONBOARDING_RESUME_HINT_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY as ONBOARDING_RESUME_INDEX_KEY } from '../lib/onboardingResumeStorage';
+import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARDING_STORAGE_KEY } from '../lib/onboardingDraftCleanup';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
-const ONBOARDING_STORAGE_KEY = 'dayoflove:onboarding-draft';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -254,7 +254,7 @@ export const Onboarding: React.FC = () => {
         setStep(parsed.step);
       }
     } catch {
-      window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+      clearAllOnboardingDraftStorage();
     } finally {
       setHasHydratedDraft(true);
     }

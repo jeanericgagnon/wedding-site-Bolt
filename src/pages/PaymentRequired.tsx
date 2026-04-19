@@ -8,6 +8,7 @@ import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionE
 import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearOnboardingResumeStorage } from '../lib/onboardingResumeStorage';
+import { clearAllOnboardingDraftStorage } from '../lib/onboardingDraftCleanup';
 import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 
 const FEATURES = [
@@ -101,7 +102,7 @@ export const PaymentRequired: React.FC = () => {
 
   const handleBypassForNow = () => {
     if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('dayoflove:onboarding-draft');
+      clearAllOnboardingDraftStorage();
       writeSignupReturnPath(null);
       clearOnboardingResumeStorage();
       window.location.assign('/onboarding/celebration?bypassPayment=1');
