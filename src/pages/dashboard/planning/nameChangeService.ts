@@ -257,6 +257,10 @@ export function mergeNameChangePlanExecutionState(
   const mergedRecentExecutionActivity = [...recentExecutionActivity, ...carriedActivity]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 5);
+  const activitySourceCounts = mergedRecentExecutionActivity.reduce((counts, item) => {
+    counts[item.source] += 1;
+    return counts;
+  }, { step: 0, reminder: 0 });
 
   return {
     ...generatedPlan,
@@ -264,6 +268,7 @@ export function mergeNameChangePlanExecutionState(
     summary: {
       ...generatedPlan.summary,
       executionCounts,
+      activitySourceCounts,
       recentExecutionActivity: mergedRecentExecutionActivity,
     },
   };
@@ -299,6 +304,23 @@ export function appendNameChangeExecutionActivity(
       ]
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 5),
+      activitySourceCounts: [
+        {
+          stepId: null,
+          source: activity.source ?? 'reminder',
+          title: activity.title,
+          executionStatus: activity.executionStatus,
+          note: activity.note,
+          timestamp,
+        },
+        ...existing,
+      ]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 5)
+        .reduce((counts, item) => {
+          counts[item.source] += 1;
+          return counts;
+        }, { step: 0, reminder: 0 }),
     },
   };
 }

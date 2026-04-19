@@ -455,6 +455,7 @@ describe('nameChangeService normalization', () => {
       expect.objectContaining({ stepId: merged.steps[1].id, source: 'step', executionStatus: 'in_progress', note: 'note-1', timestamp: '2026-04-18T19:01:00.000Z' }),
       expect.objectContaining({ stepId: merged.steps[0].id, source: 'step', executionStatus: 'complete', note: 'note-0', timestamp: '2026-04-18T19:00:00.000Z' }),
     ]);
+    expect(merged.summary.activitySourceCounts).toEqual({ step: 2, reminder: 0 });
   });
 
   it('appends manual reminder activity into recent execution activity', () => {
@@ -474,6 +475,7 @@ describe('nameChangeService normalization', () => {
       note: 'Reminder status changed to scheduled',
       timestamp: '2026-04-18T20:00:00.000Z',
     });
+    expect(updatedPlan.summary.activitySourceCounts).toEqual({ step: 0, reminder: 1 });
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {

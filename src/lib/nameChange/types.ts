@@ -175,6 +175,10 @@ export interface NameChangePlanSummary {
     in_progress: number;
     complete: number;
   };
+  activitySourceCounts?: {
+    step: number;
+    reminder: number;
+  };
   recentExecutionActivity?: Array<{
     stepId: string | null;
     source: 'step' | 'reminder';
