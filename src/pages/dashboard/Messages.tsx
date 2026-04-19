@@ -640,6 +640,7 @@ export const DashboardMessages: React.FC = () => {
       if (error) throw error;
       setMessages(data || []);
     } catch {
+      setMessages([]);
       toast('Couldn’t load message history right now. Please try again.', 'error');
     } finally {
       setLoading(false);
