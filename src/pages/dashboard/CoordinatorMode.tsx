@@ -9,6 +9,7 @@ import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus
 import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
 import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
+import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
@@ -280,17 +281,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const checkInQueue = useMemo(() => filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter), [sortedGuests, checkInQuery, checkInFilter]);
 
-  const liveIssues = useMemo(() => {
-    const items: Array<{ title: string; detail: string; tone: 'warning' | 'success' | 'neutral' }> = [];
-    if (stats.pending > 0) items.push({ title: 'Pending RSVPs still open', detail: `${stats.pending} guest${stats.pending === 1 ? '' : 's'} still have not replied.`, tone: 'warning' });
-    if (events.length > 0 && !events.some((e) => (timelineState[e.id] || 'up-next') === 'live')) items.push({ title: 'No event marked live', detail: 'Pick the event currently happening so updates and focus stay aligned.', tone: 'warning' });
-    if (qnaItems.some((item) => item.status === 'new')) {
-      const open = qnaItems.filter((item) => item.status === 'new').length;
-      items.push({ title: 'Guest questions waiting', detail: `${open} question${open === 1 ? '' : 's'} still need an answer.`, tone: 'warning' });
-    }
-    if (items.length === 0) items.push({ title: 'Ops board looks calm', detail: 'No urgent coordinator flags right now.', tone: 'success' });
-    return items.slice(0, 3);
-  }, [stats.pending, events, timelineState, qnaItems]);
+  const liveIssues = useMemo(() => buildCoordinatorEscalations({
+    guests,
+    qnaItems,
+    events,
+    timelineState,
+  }), [guests, qnaItems, events, timelineState]);
 
   const filteredAlertLog = useMemo(
     () => alertLog.filter((a) => {
@@ -428,8 +424,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
           </div>
 
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
-            <p className="text-sm font-medium text-text-primary mb-2">Live priorities</p>
-            <p className="text-[11px] text-text-tertiary mb-2">This is the planner's at-a-glance board for what needs attention right now.</p>
+            <p className="text-sm font-medium text-text-primary mb-2">Attention now</p>
+            <p className="text-[11px] text-text-tertiary mb-2">This pulls together the live exceptions the coordinator should resolve first.</p>
             <div className="space-y-2">
               {liveIssues.map((item) => (
                 <div key={item.title} className={`rounded-lg border px-3 py-2 ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-border/50 bg-surface-subtle/40'}`}>
