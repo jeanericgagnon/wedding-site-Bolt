@@ -351,6 +351,11 @@ async function deliverMessage(opts: {
     delivered_at?: string;
   }> = [];
 
+  await adminClient
+    .from("message_deliveries")
+    .delete()
+    .eq("message_id", messageId);
+
   for (const guest of skippedGuests) {
     const guestName = guest.first_name && guest.last_name
       ? `${guest.first_name} ${guest.last_name}`
