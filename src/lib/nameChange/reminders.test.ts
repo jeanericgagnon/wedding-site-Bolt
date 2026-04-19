@@ -375,6 +375,7 @@ describe('name change reminder suggestions', () => {
       agingWithoutExecution: true,
       agingWithoutExecutionLane: 'mixed',
       agingWithoutExecutionPosture: 'mixed',
+      actionableFreshPosture: 'none',
     });
   });
 
@@ -449,6 +450,7 @@ describe('name change reminder suggestions', () => {
     expect(summary.actionableStalePriority).toBe(0);
     expect(summary.actionableStaleNormal).toBe(0);
     expect(summary.agingWithoutExecution).toBe(false);
+    expect(summary.actionableFreshPosture).toBe('fresh-heavy');
   });
 
   it('counts actionable-and-stale attention separately', () => {
@@ -476,6 +478,7 @@ describe('name change reminder suggestions', () => {
     expect(summary.blockedStalePriority).toBe(0);
     expect(summary.blockedStaleNormal).toBe(0);
     expect(summary.agingWithoutExecution).toBe(true);
+    expect(summary.actionableFreshPosture).toBe('stale-heavy');
   });
 
   it('classifies blocked stale posture from blocked stale priority vs normal items', () => {
@@ -576,8 +579,10 @@ describe('name change reminder suggestions', () => {
 
     expect(blockedSummary.agingWithoutExecutionLane).toBe('blocked-stale');
     expect(blockedSummary.agingWithoutExecutionPosture).toBe('blocked-heavy');
+    expect(blockedSummary.actionableFreshPosture).toBe('none');
     expect(actionableSummary.agingWithoutExecutionLane).toBe('stale-actionable');
     expect(actionableSummary.agingWithoutExecutionPosture).toBe('actionable-heavy');
+    expect(actionableSummary.actionableFreshPosture).toBe('stale-heavy');
   });
 
   it('classifies dominant risk lane across blocked stale, stale actionable, and routine actionable', () => {

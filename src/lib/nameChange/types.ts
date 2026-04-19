@@ -312,6 +312,7 @@ export interface NameChangeReminderAttentionSummary {
   agingWithoutExecution: boolean;
   agingWithoutExecutionLane: 'blocked-stale' | 'stale-actionable' | 'mixed' | 'none';
   agingWithoutExecutionPosture: 'blocked-heavy' | 'actionable-heavy' | 'mixed' | 'none';
+  actionableFreshPosture: 'stale-heavy' | 'fresh-heavy' | 'mixed' | 'none';
 }
 
 export interface NameChangeFormRegistryEntry {

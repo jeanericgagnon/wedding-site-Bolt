@@ -460,6 +460,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.actionableAndStale} actionable + stale</p>
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.actionableStalePriority} stale actionable priority · {reminderAttentionSummary.actionableStaleNormal} stale actionable normal</p>
               <p className="mt-1 text-xs text-text-secondary">Stale actionable posture: {reminderAttentionSummary.staleActionablePosture}</p>
+              <p className="mt-1 text-xs text-text-secondary">Actionable fresh posture: {reminderAttentionSummary.actionableFreshPosture}</p>
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.blockedAndStale} blocked + stale</p>
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.blockedStalePriority} blocked stale priority · {reminderAttentionSummary.blockedStaleNormal} blocked stale normal</p>
               <p className="mt-1 text-xs text-text-secondary">Blocked stale posture: {reminderAttentionSummary.blockedStalePosture}</p>

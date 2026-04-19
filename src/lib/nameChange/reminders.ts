@@ -154,6 +154,12 @@ export function summarizeNameChangeReminderAttention(
       if (blockedAndStale === actionableAndStale) return 'mixed';
       return blockedAndStale > actionableAndStale ? 'blocked-heavy' : 'actionable-heavy';
     })(),
+    actionableFreshPosture: (() => {
+      if (actionableNow === 0) return 'none';
+      const freshActionable = actionableNow - actionableAndStale;
+      if (actionableAndStale === freshActionable) return 'mixed';
+      return actionableAndStale > freshActionable ? 'stale-heavy' : 'fresh-heavy';
+    })(),
   };
 }
 
