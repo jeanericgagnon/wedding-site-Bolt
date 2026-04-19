@@ -139,6 +139,16 @@ export const DashboardSettings: React.FC = () => {
     navigate('/', { replace: true });
   };
 
+  const loadCollaboratorInvites = async (siteId: string) => {
+    const { data: inviteRows, error: inviteLoadError } = await supabase
+      .from('wedding_site_collaborator_invites')
+      .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
+      .eq('wedding_site_id', siteId)
+      .order('invited_at', { ascending: false });
+    if (inviteLoadError) throw inviteLoadError;
+    setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }> | null) ?? []);
+  };
+
   const loadSiteData = async () => {
     if (!user) {
       setWeddingSiteId(null);
@@ -233,13 +243,7 @@ export const DashboardSettings: React.FC = () => {
         setRsvpMealOptions(Array.isArray(mealCfg?.options) ? mealCfg!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
 
         if ((data.id as string | undefined)) {
-          const { data: inviteRows, error: inviteLoadError } = await supabase
-            .from('wedding_site_collaborator_invites')
-            .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
-            .eq('wedding_site_id', data.id as string)
-            .order('invited_at', { ascending: false });
-          if (inviteLoadError) throw inviteLoadError;
-          setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }> | null) ?? []);
+          await loadCollaboratorInvites(data.id as string);
         }
 
       } else {
@@ -390,7 +394,7 @@ export const DashboardSettings: React.FC = () => {
 
       if (error) throw error;
 
-      setCollaboratorInvites((prev) => [data as { id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }, ...prev]);
+      await loadCollaboratorInvites(weddingSiteId);
       setPlannerInviteSuccess('Collaborator invite created in the database.');
     } catch (err) {
       setPlannerInviteError(err instanceof Error ? err.message : 'Failed to create collaborator invite.');
@@ -411,7 +415,9 @@ export const DashboardSettings: React.FC = () => {
 
       if (error) throw error;
 
-      setCollaboratorInvites((prev) => prev.map((invite) => invite.id === inviteId ? { ...invite, status: 'revoked' } : invite));
+      if (weddingSiteId) {
+        await loadCollaboratorInvites(weddingSiteId);
+      }
       setPlannerInviteSuccess('Collaborator invite revoked.');
     } catch (err) {
       setPlannerInviteError(err instanceof Error ? err.message : 'Failed to revoke collaborator invite.');
