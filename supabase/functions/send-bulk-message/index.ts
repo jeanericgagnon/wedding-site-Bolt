@@ -8,7 +8,9 @@ const corsHeaders = {
 };
 
 interface SendBulkPayload {
-  messageId: string;
+  messageId?: string;
+  processScheduled?: boolean;
+  limit?: number;
 }
 
 async function sendViaTwilio(opts: {
@@ -109,6 +111,362 @@ async function sendViaResend(opts: {
   }
 }
 
+function jsonResponse(status: number, body: Record<string, unknown>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function deliverMessage(opts: {
+  adminClient: ReturnType<typeof createClient>;
+  userId: string;
+  messageId: string;
+  resendApiKey?: string | null;
+  twilioSid?: string | null;
+  twilioToken?: string | null;
+  twilioFrom?: string | null;
+}): Promise<{ ok: boolean; status: number; body: Record<string, unknown> }> {
+  const { adminClient, userId, messageId, resendApiKey, twilioSid, twilioToken, twilioFrom } = opts;
+
+  const { data: message, error: msgErr } = await adminClient
+    .from("messages")
+    .select("*, wedding_sites(id, couple_name_1, couple_name_2, site_slug, user_id)")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (msgErr || !message) {
+    return { ok: false, status: 404, body: { error: "Message not found" } };
+  }
+
+  if (message.wedding_sites?.user_id !== userId) {
+    return { ok: false, status: 403, body: { error: "Forbidden" } };
+  }
+
+  if (!["queued", "scheduled", "failed"].includes(message.status)) {
+    return { ok: false, status: 400, body: { error: `Cannot send message with status '${message.status}'` } };
+  }
+
+  if (message.status === "scheduled" && message.scheduled_for) {
+    const scheduledAt = new Date(message.scheduled_for).getTime();
+    if (scheduledAt > Date.now()) {
+      return { ok: false, status: 400, body: { error: "Message is scheduled for a future time" } };
+    }
+  }
+
+  const audience: string = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? "all";
+  const channel: string = message.channel ?? "email";
+  let guestQuery = adminClient
+    .from("guests")
+    .select("id, first_name, last_name, name, email, phone, rsvp_status")
+    .eq("wedding_site_id", message.wedding_sites.id);
+
+  if (channel === "sms") {
+    guestQuery = guestQuery.not("phone", "is", null);
+  } else {
+    guestQuery = guestQuery.not("email", "is", null);
+  }
+
+  if (audience.startsWith("event:")) {
+    const eventId = audience.replace("event:", "").trim();
+    if (!eventId) {
+      return { ok: false, status: 400, body: { error: "Invalid event audience" } };
+    }
+
+    const { data: eventInvites, error: eventInvitesError } = await adminClient
+      .from("event_invitations")
+      .select("guest_id")
+      .eq("event_id", eventId);
+
+    if (eventInvitesError) {
+      return { ok: false, status: 500, body: { error: "Failed to load event audience" } };
+    }
+
+    const guestIds = Array.from(new Set((eventInvites ?? []).map((row: { guest_id: string | null }) => row.guest_id).filter(Boolean))) as string[];
+    guestQuery = guestIds.length === 0
+      ? guestQuery.in("id", ["00000000-0000-0000-0000-000000000000"])
+      : guestQuery.in("id", guestIds);
+  } else if (audience === "attending") {
+    guestQuery = guestQuery.eq("rsvp_status", "confirmed");
+  } else if (audience === "not_responded") {
+    guestQuery = guestQuery.eq("rsvp_status", "pending");
+  } else if (audience === "declined") {
+    guestQuery = guestQuery.eq("rsvp_status", "declined");
+  }
+
+  const { data: guests, error: guestErr } = await guestQuery;
+  if (guestErr) {
+    return { ok: false, status: 500, body: { error: "Failed to load guest list" } };
+  }
+
+  const eligibleGuests = (guests ?? []).filter((g) => {
+    if (channel === "sms") return !!g.phone;
+    return g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email);
+  });
+
+  await adminClient
+    .from("messages")
+    .update({ status: "sending", sending_started_at: new Date().toISOString() })
+    .eq("id", messageId);
+
+  const coupleName1: string = message.wedding_sites?.couple_name_1 ?? "Partner";
+  const coupleName2: string = message.wedding_sites?.couple_name_2 ?? "Partner";
+
+  const fromDomain = Deno.env.get("FROM_EMAIL_DOMAIN");
+  const fromEmail = Deno.env.get("FROM_EMAIL");
+  const fromName = Deno.env.get("FROM_EMAIL_NAME") || `${coupleName1} & ${coupleName2}`;
+
+  const slugSource = (message.wedding_sites?.site_slug as string | undefined)
+    || `${coupleName1}-${coupleName2}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+    || "wedding";
+  const derivedFrom = fromDomain ? `noreply+${slugSource}@${fromDomain}` : "onboarding@resend.dev";
+  const sender = fromEmail || derivedFrom;
+  const fromAddress = `${fromName} <${sender}>`;
+
+  if (channel === "email") {
+    const { data: sentRows, error: sentErr } = await adminClient
+      .from("messages")
+      .select("recipient_count,status")
+      .eq("wedding_site_id", message.wedding_sites.id)
+      .eq("channel", "email");
+
+    if (sentErr) {
+      return { ok: false, status: 500, body: { error: sentErr.message } };
+    }
+
+    const used = (sentRows ?? [])
+      .filter((r: any) => ["sent", "partial", "queued"].includes(String(r.status ?? "")))
+      .reduce((sum: number, r: any) => sum + Number(r.recipient_count ?? 0), 0);
+
+    const HARD_EMAIL_CAP = 1000;
+    if (used + eligibleGuests.length > HARD_EMAIL_CAP) {
+      return {
+        ok: false,
+        status: 400,
+        body: {
+          error: `Email send cap reached. This account allows up to ${HARD_EMAIL_CAP} total recipients. Used ${used}, attempted ${eligibleGuests.length}.`,
+        },
+      };
+    }
+  }
+
+  let deliveredCount = 0;
+  let failedCount = 0;
+
+  if (channel === "sms") {
+    if (!twilioSid || !twilioToken || !twilioFrom) {
+      return { ok: false, status: 500, body: { error: "SMS provider not configured (Twilio env missing)" } };
+    }
+
+    const nowIso = new Date().toISOString();
+    const { data: purchaseLots, error: lotsError } = await adminClient
+      .from("sms_credit_transactions")
+      .select("id, remaining_credits, expires_at, created_at")
+      .eq("wedding_site_id", message.wedding_sites.id)
+      .eq("reason", "purchase")
+      .order("created_at", { ascending: true });
+
+    if (lotsError) {
+      return { ok: false, status: 500, body: { error: lotsError.message } };
+    }
+
+    const lots = (purchaseLots ?? []).map((l: any) => ({
+      id: l.id as string,
+      remaining: Number(l.remaining_credits ?? 0),
+      expiresAt: l.expires_at as string | null,
+    }));
+
+    let expiredCredits = 0;
+    for (const lot of lots) {
+      if (lot.remaining <= 0) continue;
+      if (lot.expiresAt && lot.expiresAt < nowIso) {
+        expiredCredits += lot.remaining;
+        await adminClient.from("sms_credit_transactions").update({ remaining_credits: 0 }).eq("id", lot.id);
+      }
+    }
+
+    const usableLots = lots
+      .filter((l) => l.remaining > 0 && (!l.expiresAt || l.expiresAt >= nowIso))
+      .sort((a, b) => (a.expiresAt || "").localeCompare(b.expiresAt || ""));
+    const availableCredits = usableLots.reduce((sum, l) => sum + l.remaining, 0);
+
+    if (availableCredits < eligibleGuests.length) {
+      return { ok: false, status: 400, body: { error: `Insufficient SMS credits: need ${eligibleGuests.length}, have ${availableCredits}` } };
+    }
+
+    let remainingToConsume = eligibleGuests.length;
+    for (const lot of usableLots) {
+      if (remainingToConsume <= 0) break;
+      const take = Math.min(lot.remaining, remainingToConsume);
+      if (take > 0) {
+        await adminClient.from("sms_credit_transactions").update({ remaining_credits: lot.remaining - take }).eq("id", lot.id);
+        remainingToConsume -= take;
+      }
+    }
+
+    const { data: siteWallet } = await adminClient
+      .from("wedding_sites")
+      .select("sms_credits_balance")
+      .eq("id", message.wedding_sites.id)
+      .maybeSingle();
+    const currentCredits = Number(siteWallet?.sms_credits_balance ?? 0);
+    const nextCredits = Math.max(currentCredits - eligibleGuests.length - expiredCredits, 0);
+
+    await adminClient
+      .from("wedding_sites")
+      .update({ sms_credits_balance: nextCredits })
+      .eq("id", message.wedding_sites.id);
+
+    await adminClient.from("sms_credit_transactions").insert({
+      wedding_site_id: message.wedding_sites.id,
+      credits_delta: -eligibleGuests.length,
+      reason: "usage",
+      metadata: { message_id: messageId, audience, channel },
+    });
+
+    if (expiredCredits > 0) {
+      await adminClient.from("sms_credit_transactions").insert({
+        wedding_site_id: message.wedding_sites.id,
+        credits_delta: -expiredCredits,
+        reason: "expiry",
+        metadata: { swept_at: nowIso },
+      });
+    }
+  }
+
+  const deliveryInserts: Array<{
+    message_id: string;
+    guest_id: string;
+    recipient_email: string;
+    recipient_name: string;
+    status: string;
+    provider_message_id?: string;
+    error_message?: string;
+    attempted_at: string;
+    delivered_at?: string;
+  }> = [];
+
+  for (const guest of eligibleGuests) {
+    const guestName = guest.first_name && guest.last_name
+      ? `${guest.first_name} ${guest.last_name}`
+      : guest.name;
+
+    const attemptedAt = new Date().toISOString();
+    let result: { id?: string; error?: string };
+    const recipient = channel === "sms" ? guest.phone : guest.email;
+
+    if (channel === "sms") {
+      result = await sendViaTwilio({
+        accountSid: twilioSid!,
+        authToken: twilioToken!,
+        from: twilioFrom!,
+        to: guest.phone,
+        body: message.body,
+      });
+    } else {
+      if (!resendApiKey) {
+        deliveryInserts.push({
+          message_id: messageId,
+          guest_id: guest.id,
+          recipient_email: guest.email,
+          recipient_name: guestName,
+          status: "failed",
+          error_message: "Email provider not configured (RESEND_API_KEY missing)",
+          attempted_at: attemptedAt,
+        });
+        failedCount++;
+        continue;
+      }
+
+      const html = buildEmailHtml({
+        subject: message.subject,
+        body: message.body,
+        coupleName1,
+        coupleName2,
+        guestName,
+      });
+
+      result = await sendViaResend({
+        apiKey: resendApiKey,
+        from: fromAddress,
+        to: guest.email,
+        subject: message.subject,
+        html,
+      });
+    }
+
+    if (result.error) {
+      deliveryInserts.push({
+        message_id: messageId,
+        guest_id: guest.id,
+        recipient_email: recipient,
+        recipient_name: guestName,
+        status: "failed",
+        error_message: result.error,
+        attempted_at: attemptedAt,
+      });
+      failedCount++;
+    } else {
+      deliveryInserts.push({
+        message_id: messageId,
+        guest_id: guest.id,
+        recipient_email: recipient,
+        recipient_name: guestName,
+        status: "sent",
+        provider_message_id: result.id,
+        attempted_at: attemptedAt,
+        delivered_at: new Date().toISOString(),
+      });
+      deliveredCount++;
+    }
+
+    await new Promise((r) => setTimeout(r, 50));
+  }
+
+  if (deliveryInserts.length > 0) {
+    await adminClient.from("message_deliveries").insert(deliveryInserts);
+  }
+
+  const finalStatus = failedCount === 0 ? "sent" : deliveredCount === 0 ? "failed" : "partial";
+  const sentAt = new Date().toISOString();
+
+  const fullUpdate = await adminClient
+    .from("messages")
+    .update({
+      status: finalStatus,
+      sent_at: sentAt,
+      sending_finished_at: sentAt,
+      delivered_count: deliveredCount,
+      failed_count: failedCount,
+      recipient_count: eligibleGuests.length,
+    })
+    .eq("id", messageId);
+
+  if (fullUpdate.error) {
+    await adminClient
+      .from("messages")
+      .update({
+        status: finalStatus,
+        sent_at: sentAt,
+        recipient_count: eligibleGuests.length,
+      })
+      .eq("id", messageId);
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    body: {
+      success: true,
+      delivered: deliveredCount,
+      failed: failedCount,
+      total: eligibleGuests.length,
+      status: finalStatus,
+      messageId,
+    },
+  };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -117,10 +475,7 @@ Deno.serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse(401, { error: "Unauthorized" });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -136,407 +491,106 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse(401, { error: "Unauthorized" });
     }
 
     let payload: SendBulkPayload;
     try {
       payload = await req.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { messageId } = payload;
-    if (!messageId) {
-      return new Response(JSON.stringify({ error: "messageId is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse(400, { error: "Invalid JSON" });
     }
 
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    const { data: message, error: msgErr } = await adminClient
-      .from("messages")
-      .select("*, wedding_sites(id, couple_name_1, couple_name_2, site_slug, user_id)")
-      .eq("id", messageId)
-      .maybeSingle();
+    if (payload.processScheduled) {
+      const limit = Math.max(1, Math.min(Number(payload.limit ?? 10) || 10, 25));
+      const nowIso = new Date().toISOString();
+      const { data: dueMessages, error: dueMessagesError } = await adminClient
+        .from("messages")
+        .select("id, scheduled_for, wedding_sites!inner(user_id)")
+        .eq("status", "scheduled")
+        .lte("scheduled_for", nowIso)
+        .eq("wedding_sites.user_id", user.id)
+        .order("scheduled_for", { ascending: true })
+        .limit(limit);
 
-    if (msgErr || !message) {
-      return new Response(JSON.stringify({ error: "Message not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (message.wedding_sites?.user_id !== user.id) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!["queued", "scheduled", "failed"].includes(message.status)) {
-      return new Response(JSON.stringify({ error: `Cannot send message with status '${message.status}'` }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (message.status === "scheduled" && message.scheduled_for) {
-      const scheduledAt = new Date(message.scheduled_for).getTime();
-      if (scheduledAt > Date.now()) {
-        return new Response(JSON.stringify({ error: "Message is scheduled for a future time" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (dueMessagesError) {
+        return jsonResponse(500, { error: dueMessagesError.message });
       }
-    }
 
-    const audience: string = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? "all";
-    const channel: string = message.channel ?? "email";
-    let guestQuery = adminClient
-      .from("guests")
-      .select("id, first_name, last_name, name, email, phone, rsvp_status")
-      .eq("wedding_site_id", message.wedding_sites.id);
-
-    if (channel === "sms") {
-      guestQuery = guestQuery.not("phone", "is", null);
-    } else {
-      guestQuery = guestQuery.not("email", "is", null);
-    }
-
-    if (audience.startsWith("event:")) {
-      const eventId = audience.replace("event:", "").trim();
-      if (!eventId) {
-        return new Response(JSON.stringify({ error: "Invalid event audience" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const messageIds = (dueMessages ?? []).map((row: any) => row.id as string).filter(Boolean);
+      if (messageIds.length === 0) {
+        return jsonResponse(200, {
+          success: true,
+          processed: 0,
+          sent: 0,
+          failed: 0,
+          partial: 0,
+          skipped: 0,
+          messages: [],
         });
       }
 
-      const { data: eventInvites, error: eventInvitesError } = await adminClient
-        .from("event_invitations")
-        .select("guest_id")
-        .eq("event_id", eventId);
+      const results = [] as Array<Record<string, unknown>>;
+      let sent = 0;
+      let failed = 0;
+      let partial = 0;
+      let skipped = 0;
 
-      if (eventInvitesError) {
-        return new Response(JSON.stringify({ error: "Failed to load event audience" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      for (const id of messageIds) {
+        const result = await deliverMessage({
+          adminClient,
+          userId: user.id,
+          messageId: id,
+          resendApiKey,
+          twilioSid,
+          twilioToken,
+          twilioFrom,
         });
+
+        if (result.ok) {
+          const status = String(result.body.status ?? "");
+          if (status === "sent") sent += 1;
+          else if (status === "partial") partial += 1;
+          else if (status === "failed") failed += 1;
+        } else if (result.status === 400 && String(result.body.error ?? "").includes("future time")) {
+          skipped += 1;
+        } else {
+          failed += 1;
+        }
+
+        results.push({ messageId: id, ok: result.ok, ...result.body });
       }
 
-      const guestIds = Array.from(new Set((eventInvites ?? []).map((row: { guest_id: string | null }) => row.guest_id).filter(Boolean))) as string[];
-      if (guestIds.length === 0) {
-        guestQuery = guestQuery.in("id", ["00000000-0000-0000-0000-000000000000"]);
-      } else {
-        guestQuery = guestQuery.in("id", guestIds);
-      }
-    } else if (audience === "attending") {
-      guestQuery = guestQuery.eq("rsvp_status", "confirmed");
-    } else if (audience === "not_responded") {
-      guestQuery = guestQuery.eq("rsvp_status", "pending");
-    } else if (audience === "declined") {
-      guestQuery = guestQuery.eq("rsvp_status", "declined");
-    }
-
-    const { data: guests, error: guestErr } = await guestQuery;
-    if (guestErr) {
-      return new Response(JSON.stringify({ error: "Failed to load guest list" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return jsonResponse(200, {
+        success: true,
+        processed: messageIds.length,
+        sent,
+        failed,
+        partial,
+        skipped,
+        messages: results,
       });
     }
 
-    const eligibleGuests = (guests ?? []).filter((g) => {
-      if (channel === "sms") return !!g.phone;
-      return g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email);
+    if (!payload.messageId) {
+      return jsonResponse(400, { error: "messageId is required" });
+    }
+
+    const result = await deliverMessage({
+      adminClient,
+      userId: user.id,
+      messageId: payload.messageId,
+      resendApiKey,
+      twilioSid,
+      twilioToken,
+      twilioFrom,
     });
 
-    await adminClient
-      .from("messages")
-      .update({ status: "sending", sending_started_at: new Date().toISOString() })
-      .eq("id", messageId);
-
-    const coupleName1: string = message.wedding_sites?.couple_name_1 ?? "Partner";
-    const coupleName2: string = message.wedding_sites?.couple_name_2 ?? "Partner";
-
-    const fromDomain = Deno.env.get("FROM_EMAIL_DOMAIN");
-    const fromEmail = Deno.env.get("FROM_EMAIL");
-    const fromName = Deno.env.get("FROM_EMAIL_NAME") || `${coupleName1} & ${coupleName2}`;
-
-    const slugSource = (message.wedding_sites?.site_slug as string | undefined)
-      || `${coupleName1}-${coupleName2}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
-      || "wedding";
-    const derivedFrom = fromDomain ? `noreply+${slugSource}@${fromDomain}` : "onboarding@resend.dev";
-    const sender = fromEmail || derivedFrom;
-    const fromAddress = `${fromName} <${sender}>`;
-
-    if (channel === "email") {
-      const { data: sentRows, error: sentErr } = await adminClient
-        .from("messages")
-        .select("recipient_count,status")
-        .eq("wedding_site_id", message.wedding_sites.id)
-        .eq("channel", "email");
-
-      if (sentErr) {
-        return new Response(JSON.stringify({ error: sentErr.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const used = (sentRows ?? [])
-        .filter((r: any) => ["sent", "partial", "queued"].includes(String(r.status ?? "")))
-        .reduce((sum: number, r: any) => sum + Number(r.recipient_count ?? 0), 0);
-
-      const HARD_EMAIL_CAP = 1000;
-      if (used + eligibleGuests.length > HARD_EMAIL_CAP) {
-        return new Response(JSON.stringify({
-          error: `Email send cap reached. This account allows up to ${HARD_EMAIL_CAP} total recipients. Used ${used}, attempted ${eligibleGuests.length}.`,
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
-
-    let deliveredCount = 0;
-    let failedCount = 0;
-
-    if (channel === "sms") {
-      if (!twilioSid || !twilioToken || !twilioFrom) {
-        return new Response(JSON.stringify({ error: "SMS provider not configured (Twilio env missing)" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const nowIso = new Date().toISOString();
-      const { data: purchaseLots, error: lotsError } = await adminClient
-        .from("sms_credit_transactions")
-        .select("id, remaining_credits, expires_at, created_at")
-        .eq("wedding_site_id", message.wedding_sites.id)
-        .eq("reason", "purchase")
-        .order("created_at", { ascending: true });
-
-      if (lotsError) {
-        return new Response(JSON.stringify({ error: lotsError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const lots = (purchaseLots ?? []).map((l: any) => ({
-        id: l.id as string,
-        remaining: Number(l.remaining_credits ?? 0),
-        expiresAt: l.expires_at as string | null,
-      }));
-
-      let expiredCredits = 0;
-      for (const lot of lots) {
-        if (lot.remaining <= 0) continue;
-        if (lot.expiresAt && lot.expiresAt < nowIso) {
-          expiredCredits += lot.remaining;
-          await adminClient.from("sms_credit_transactions").update({ remaining_credits: 0 }).eq("id", lot.id);
-        }
-      }
-
-      const usableLots = lots
-        .filter((l) => l.remaining > 0 && (!l.expiresAt || l.expiresAt >= nowIso))
-        .sort((a, b) => (a.expiresAt || "").localeCompare(b.expiresAt || ""));
-      const availableCredits = usableLots.reduce((sum, l) => sum + l.remaining, 0);
-
-      if (availableCredits < eligibleGuests.length) {
-        return new Response(JSON.stringify({ error: `Insufficient SMS credits: need ${eligibleGuests.length}, have ${availableCredits}` }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      let remainingToConsume = eligibleGuests.length;
-      for (const lot of usableLots) {
-        if (remainingToConsume <= 0) break;
-        const take = Math.min(lot.remaining, remainingToConsume);
-        if (take > 0) {
-          await adminClient.from("sms_credit_transactions").update({ remaining_credits: lot.remaining - take }).eq("id", lot.id);
-          remainingToConsume -= take;
-        }
-      }
-
-      const { data: siteWallet } = await adminClient
-        .from("wedding_sites")
-        .select("sms_credits_balance")
-        .eq("id", message.wedding_sites.id)
-        .maybeSingle();
-      const currentCredits = Number(siteWallet?.sms_credits_balance ?? 0);
-      const nextCredits = Math.max(currentCredits - eligibleGuests.length - expiredCredits, 0);
-
-      await adminClient
-        .from("wedding_sites")
-        .update({ sms_credits_balance: nextCredits })
-        .eq("id", message.wedding_sites.id);
-
-      await adminClient.from("sms_credit_transactions").insert({
-        wedding_site_id: message.wedding_sites.id,
-        credits_delta: -eligibleGuests.length,
-        reason: "usage",
-        metadata: { message_id: messageId, audience, channel },
-      });
-
-      if (expiredCredits > 0) {
-        await adminClient.from("sms_credit_transactions").insert({
-          wedding_site_id: message.wedding_sites.id,
-          credits_delta: -expiredCredits,
-          reason: "expiry",
-          metadata: { swept_at: nowIso },
-        });
-      }
-    }
-
-    const deliveryInserts: Array<{
-      message_id: string;
-      guest_id: string;
-      recipient_email: string;
-      recipient_name: string;
-      status: string;
-      provider_message_id?: string;
-      error_message?: string;
-      attempted_at: string;
-      delivered_at?: string;
-    }> = [];
-
-    for (const guest of eligibleGuests) {
-      const guestName = guest.first_name && guest.last_name
-        ? `${guest.first_name} ${guest.last_name}`
-        : guest.name;
-
-      const attemptedAt = new Date().toISOString();
-
-      let result: { id?: string; error?: string };
-      const recipient = channel === "sms" ? guest.phone : guest.email;
-
-      if (channel === "sms") {
-        result = await sendViaTwilio({
-          accountSid: twilioSid!,
-          authToken: twilioToken!,
-          from: twilioFrom!,
-          to: guest.phone,
-          body: message.body,
-        });
-      } else {
-        if (!resendApiKey) {
-          deliveryInserts.push({
-            message_id: messageId,
-            guest_id: guest.id,
-            recipient_email: guest.email,
-            recipient_name: guestName,
-            status: "failed",
-            error_message: "Email provider not configured (RESEND_API_KEY missing)",
-            attempted_at: attemptedAt,
-          });
-          failedCount++;
-          continue;
-        }
-
-        const html = buildEmailHtml({
-          subject: message.subject,
-          body: message.body,
-          coupleName1,
-          coupleName2,
-          guestName,
-        });
-
-        result = await sendViaResend({
-          apiKey: resendApiKey,
-          from: fromAddress,
-          to: guest.email,
-          subject: message.subject,
-          html,
-        });
-      }
-
-      if (result.error) {
-        deliveryInserts.push({
-          message_id: messageId,
-          guest_id: guest.id,
-          recipient_email: recipient,
-          recipient_name: guestName,
-          status: "failed",
-          error_message: result.error,
-          attempted_at: attemptedAt,
-        });
-        failedCount++;
-      } else {
-        deliveryInserts.push({
-          message_id: messageId,
-          guest_id: guest.id,
-          recipient_email: recipient,
-          recipient_name: guestName,
-          status: "sent",
-          provider_message_id: result.id,
-          attempted_at: attemptedAt,
-          delivered_at: new Date().toISOString(),
-        });
-        deliveredCount++;
-      }
-
-      await new Promise((r) => setTimeout(r, 50));
-    }
-
-    if (deliveryInserts.length > 0) {
-      await adminClient.from("message_deliveries").insert(deliveryInserts);
-    }
-
-    const finalStatus = failedCount === 0 ? "sent" : deliveredCount === 0 ? "failed" : "partial";
-    const sentAt = new Date().toISOString();
-
-    const fullUpdate = await adminClient
-      .from("messages")
-      .update({
-        status: finalStatus,
-        sent_at: sentAt,
-        sending_finished_at: sentAt,
-        delivered_count: deliveredCount,
-        failed_count: failedCount,
-        recipient_count: eligibleGuests.length,
-      })
-      .eq("id", messageId);
-
-    if (fullUpdate.error) {
-      // Fallback for schema-cache drift: persist minimal final status fields.
-      await adminClient
-        .from("messages")
-        .update({
-          status: finalStatus,
-          sent_at: sentAt,
-          recipient_count: eligibleGuests.length,
-        })
-        .eq("id", messageId);
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        delivered: deliveredCount,
-        failed: failedCount,
-        total: eligibleGuests.length,
-        status: finalStatus,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse(result.status, result.body);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Internal server error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(500, { error: message });
   }
 });

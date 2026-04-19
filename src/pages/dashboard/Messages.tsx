@@ -121,6 +121,24 @@ async function triggerBulkSend(messageId: string): Promise<{ delivered: number; 
   return res.json();
 }
 
+async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number; sent: number; failed: number; partial: number; skipped: number }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const res = await fetch(BULK_SEND_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ processScheduled: true, limit }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(body?.error ?? `Scheduled send run failed (${res.status})`);
+  }
+  return res.json();
+}
+
 interface Message {
   id: string;
   subject: string;
@@ -624,6 +642,7 @@ export const DashboardMessages: React.FC = () => {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [processingScheduled, setProcessingScheduled] = useState(false);
   const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -1240,6 +1259,55 @@ export const DashboardMessages: React.FC = () => {
     }
   }
 
+  async function handleRunDueScheduledMessages() {
+    if (isDemoMode) {
+      const dueIds = messages
+        .filter((m) => m.status === 'scheduled' && isPastScheduledTime(m.scheduled_for))
+        .map((m) => m.id);
+
+      if (dueIds.length === 0) {
+        toast('No scheduled messages are due right now.', 'info');
+        return;
+      }
+
+      setProcessingScheduled(true);
+      try {
+        setMessages((prev) => prev.map((message) => (
+          dueIds.includes(message.id)
+            ? {
+                ...message,
+                status: 'sent',
+                sent_at: new Date().toISOString(),
+                delivered_count: getRecipientCount(message),
+                failed_count: 0,
+              }
+            : message
+        )));
+        toast(`Processed ${dueIds.length} scheduled message${dueIds.length !== 1 ? 's' : ''} (demo).`, 'success');
+      } finally {
+        setProcessingScheduled(false);
+      }
+      return;
+    }
+
+    setProcessingScheduled(true);
+    try {
+      const result = await triggerScheduledDispatch(10);
+      if (result.processed === 0) {
+        toast('No scheduled messages are due right now.', 'info');
+      } else if (result.failed === 0 && result.partial === 0) {
+        toast(`Processed ${result.processed} scheduled message${result.processed !== 1 ? 's' : ''}.`, 'success');
+      } else {
+        toast(`Processed ${result.processed}: sent ${result.sent}, partial ${result.partial}, failed ${result.failed}.`, result.failed > 0 ? 'error' : 'info');
+      }
+      await fetchMessages();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Couldn’t process scheduled messages right now.', 'error');
+    } finally {
+      setProcessingScheduled(false);
+    }
+  }
+
   const audienceOptions = [
     { value: 'all', label: 'All Guests', count: guests.length },
     { value: 'attending', label: 'Attending Only', count: guests.filter(g => isAttendingStatus(g.rsvp_status)).length },
@@ -1534,18 +1602,30 @@ export const DashboardMessages: React.FC = () => {
               <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Audience-aware drafts</span>
               <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Live delivery history</span>
             </div>
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1">Access view</label>
-              <select
-                value={messagesRole}
-                onChange={(e) => setMessagesRole(e.target.value as PlannerAccessRole)}
-                className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
+            <div className="flex flex-col gap-3 md:items-end">
+              <Button
+                variant={deliveryHealth.overdueScheduled > 0 ? 'primary' : 'outline'}
+                size="sm"
+                onClick={handleRunDueScheduledMessages}
+                disabled={processingScheduled}
               >
-                <option value="owner">Couple owner</option>
-                <option value="planner">Planner</option>
-                <option value="coordinator">Coordinator</option>
-                <option value="viewer">Read only</option>
-              </select>
+                {processingScheduled
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running due sends…</>
+                  : <><Clock className="w-4 h-4 mr-2" />{deliveryHealth.overdueScheduled > 0 ? `Run ${deliveryHealth.overdueScheduled} due scheduled send${deliveryHealth.overdueScheduled !== 1 ? 's' : ''}` : 'Run due scheduled sends'}</>}
+              </Button>
+              <div>
+                <label className="block text-xs text-text-tertiary mb-1">Access view</label>
+                <select
+                  value={messagesRole}
+                  onChange={(e) => setMessagesRole(e.target.value as PlannerAccessRole)}
+                  className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
+                >
+                  <option value="owner">Couple owner</option>
+                  <option value="planner">Planner</option>
+                  <option value="coordinator">Coordinator</option>
+                  <option value="viewer">Read only</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
