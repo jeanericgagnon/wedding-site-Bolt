@@ -392,6 +392,13 @@ function getRecipientCount(message: Message): number {
   return message.recipient_count ?? (message.recipient_filter?.recipient_count as number) ?? 0;
 }
 
+function getUnreachedCount(message: Message): number {
+  const total = getRecipientCount(message);
+  const delivered = Number(message.delivered_count ?? 0);
+  const failed = Number(message.failed_count ?? 0);
+  return Math.max(total - delivered - failed, 0);
+}
+
 function isAttendingStatus(status: string | null | undefined): boolean {
   return status === 'confirmed' || status === 'attending' || status === 'accepted';
 }
@@ -439,6 +446,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const [rescheduling, setRescheduling] = React.useState(false);
   const [cancellingSchedule, setCancellingSchedule] = React.useState(false);
   const recipientCount = getRecipientCount(message);
+  const unreachedCount = getUnreachedCount(message);
   const audienceLabel = getAudienceLabel(message);
   const campaignName = getCampaignName(message);
   const campaignType = getCampaignTypeLabel(message);
@@ -516,6 +524,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             <div>
               <p className="text-text-tertiary text-xs mb-1">Recipients</p>
               <p className="font-medium text-text-primary">{recipientCount} {recipientCount === 1 ? 'person' : 'people'}</p>
+              {unreachedCount > 0 && <p className="text-[11px] text-warning mt-1">{unreachedCount} unreachable or not attempted</p>}
             </div>
             <div>
               <p className="text-text-tertiary text-xs mb-1">Channel</p>
@@ -650,6 +659,12 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                 <span className="flex items-center gap-1.5 text-error">
                   <AlertCircle size={13} />
                   {message.failed_count} failed
+                </span>
+              )}
+              {unreachedCount > 0 && (
+                <span className="flex items-center gap-1.5 text-warning">
+                  <AlertCircle size={13} />
+                  {unreachedCount} unreached
                 </span>
               )}
             </div>
@@ -1441,6 +1456,22 @@ export const DashboardMessages: React.FC = () => {
       toast(err instanceof Error ? err.message : 'Couldn’t unschedule that campaign right now.', 'error');
     }
   }
+
+  const campaignStatusSummary = useMemo(() => {
+    const buckets = {
+      draft: 0,
+      scheduled: 0,
+      sent: 0,
+      partial: 0,
+      failed: 0,
+    };
+    messages.forEach((message) => {
+      if (message.status in buckets) {
+        buckets[message.status as keyof typeof buckets] += 1;
+      }
+    });
+    return buckets;
+  }, [messages]);
 
   async function handleRunDueScheduledMessages() {
     if (isDemoMode) {
@@ -2494,6 +2525,14 @@ export const DashboardMessages: React.FC = () => {
             ))}
           </div>
 
+          <div className="mb-4 flex flex-wrap gap-2 text-xs text-text-tertiary">
+            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Drafts {campaignStatusSummary.draft}</span>
+            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Scheduled {campaignStatusSummary.scheduled}</span>
+            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Sent {campaignStatusSummary.sent}</span>
+            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Partial {campaignStatusSummary.partial}</span>
+            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Failed {campaignStatusSummary.failed}</span>
+          </div>
+
 
           {retryCandidates.length > 0 && (
             <div className="rounded-2xl border border-warning/20 bg-warning/5 p-4 mb-4">
@@ -2505,9 +2544,9 @@ export const DashboardMessages: React.FC = () => {
                 <button onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View failed</button>
               </div>
               <div className="space-y-2">
-                {retryCandidates.map((m) => (
-                  <div key={m.id} className="flex items-center justify-between gap-2 rounded-xl border border-warning/20 px-3 py-3 bg-white">
-                    <div className="min-w-0">
+              {retryCandidates.map((m) => (
+                <div key={m.id} className="flex items-center justify-between gap-2 rounded-xl border border-warning/20 px-3 py-3 bg-white">
+                  <div className="min-w-0">
                       <p className="text-sm font-medium text-text-primary truncate">{m.subject}</p>
                       <p className="text-[11px] text-text-tertiary">{m.status} · {m.channel} · {getRecipientCount(m)} recipients</p>
                     </div>
@@ -2535,14 +2574,18 @@ export const DashboardMessages: React.FC = () => {
             <div className="space-y-4">
               {filteredHistory.map((message) => {
                 const recipientCount = getRecipientCount(message);
+                const unreachedCount = getUnreachedCount(message);
                 const campaignName = getCampaignName(message);
                 return (
-                  <button
+                  <div
                     key={message.id}
-                    type="button"
-                    onClick={() => setViewingMessage(message)}
-                    className="w-full text-left rounded-[24px] border border-border-subtle bg-white p-5 shadow-[0_6px_24px_rgba(15,23,42,0.05)] hover:border-primary/30 hover:shadow-[0_10px_32px_rgba(15,23,42,0.08)] transition-all group"
+                    className="w-full rounded-[24px] border border-border-subtle bg-white p-5 shadow-[0_6px_24px_rgba(15,23,42,0.05)] hover:border-primary/30 hover:shadow-[0_10px_32px_rgba(15,23,42,0.08)] transition-all group"
                   >
+                    <button
+                      type="button"
+                      onClick={() => setViewingMessage(message)}
+                      className="w-full text-left"
+                    >
                     <div className="mb-3 flex items-start justify-between gap-4">
                       <div>
                         {campaignName && <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">{campaignName}</p>}
@@ -2562,6 +2605,9 @@ export const DashboardMessages: React.FC = () => {
                         </span>
                         {typeof message.delivered_count === 'number' && typeof message.failed_count === 'number' && (
                           <span>{message.delivered_count} delivered · {message.failed_count} failed</span>
+                        )}
+                        {unreachedCount > 0 && (
+                          <span>{unreachedCount} unreached</span>
                         )}
                         {getCampaignTypeLabel(message) && (
                           <span className="px-2 py-0.5 bg-accent-light text-accent rounded border border-accent/20">
@@ -2598,7 +2644,34 @@ export const DashboardMessages: React.FC = () => {
                         View →
                       </span>
                     </div>
-                  </button>
+                    </button>
+
+                    {(message.status === 'scheduled' || message.status === 'failed' || message.status === 'partial') && (
+                      <div className="mt-4 flex flex-wrap gap-2 border-t border-border-subtle pt-3">
+                        {message.status === 'scheduled' && (
+                          <>
+                            <Button size="sm" variant="primary" onClick={() => void handleSendScheduledNow(message)}>
+                              <Send className="w-3.5 h-3.5 mr-1.5" />Send now
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => {
+                              loadMessageIntoComposer(message, 'edit');
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}>
+                              <Calendar className="w-3.5 h-3.5 mr-1.5" />Reschedule
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => void handleCancelSchedule(message)}>
+                              Move to draft
+                            </Button>
+                          </>
+                        )}
+                        {(message.status === 'failed' || message.status === 'partial') && (
+                          <Button size="sm" variant="outline" onClick={() => void handleRetry(message)} disabled={retryingMessageId === message.id}>
+                            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />{retryingMessageId === message.id ? 'Retrying…' : 'Retry'}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
