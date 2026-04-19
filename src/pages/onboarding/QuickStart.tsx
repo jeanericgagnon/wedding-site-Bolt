@@ -24,6 +24,7 @@ import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } 
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
 import { buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
+import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -150,6 +151,7 @@ export const QuickStart: React.FC = () => {
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
+  const [hasLocalDraftHydration, setHasLocalDraftHydration] = useState(false);
 
   const currentQuestion = questions[currentIndex];
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
@@ -186,8 +188,9 @@ export const QuickStart: React.FC = () => {
       setClarifyingState(parsed.clarifyingState);
       setShowFollowUps(parsed.showFollowUps);
       setViewState(parsed.showFollowUps ? 'followups' : parsed.viewState);
+      setHasLocalDraftHydration(hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(parsed.followUpAnswers).length > 0 || Boolean(parsed.clarifyingState));
     } catch {}
-  }, []);
+  }, [hasLocalDraftHydration]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }));
@@ -215,8 +218,11 @@ export const QuickStart: React.FC = () => {
         .maybeSingle();
       if (data?.onboarding_answers && typeof data.onboarding_answers === 'object') {
         const restored = data.onboarding_answers as InitialSetupAnswers;
-        setInitialSetupAnswers((prev) => ({ ...prev, ...restored }));
-        setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(restored));
+        setInitialSetupAnswers((prev) => {
+          const next = hasLocalDraftHydration ? mergeQuickStartSeedIntoDraft(prev, restored) : { ...prev, ...restored };
+          setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(next));
+          return next;
+        });
         return;
       }
       const seededNames = [data?.couple_name_1, data?.couple_name_2].filter(Boolean).join(' & ');
@@ -227,7 +233,10 @@ export const QuickStart: React.FC = () => {
           whenWhere: data?.wedding_date && data?.venue_location ? `${data.wedding_date} — ${data.venue_location}` : (data?.venue_location || ''),
           venueNameOrTbd: data?.venue_name || '',
         } as InitialSetupAnswers;
-        setInitialSetupAnswers((prev) => ({ ...prev, ...seededAnswers }));
+        setInitialSetupAnswers((prev) => {
+          const next = hasLocalDraftHydration ? mergeQuickStartSeedIntoDraft(prev, seededAnswers) : { ...prev, ...seededAnswers };
+          return next;
+        });
       }
     };
     void fetchWeddingSite();
