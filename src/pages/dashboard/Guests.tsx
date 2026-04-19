@@ -1158,7 +1158,6 @@ export const DashboardGuests: React.FC = () => {
       if (error) throw error;
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast('Guest removed', 'success');
     } catch {
       toast('Failed to remove guest. Please try again.', 'error');
@@ -1177,7 +1176,6 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
       setLastCheckIn(null);
     } catch {
@@ -1197,7 +1195,6 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
     } catch {
       toast('Failed to update thank-you status', 'error');
@@ -1220,7 +1217,6 @@ export const DashboardGuests: React.FC = () => {
         .eq('wedding_site_id', weddingSiteId);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       toast(`Marked ${ids.length} thank-you sent`, 'success');
     } catch {
       toast('Failed to mark thank-you statuses', 'error');
@@ -1243,7 +1239,6 @@ export const DashboardGuests: React.FC = () => {
         .not('checked_in_at', 'is', null);
       if (error) throw error;
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       setLastCheckIn(null);
       toast('Cleared all check-ins', 'success');
     } catch {
@@ -1272,7 +1267,6 @@ export const DashboardGuests: React.FC = () => {
     try {
       await updateCheckin();
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
       if (nextValue) {
         const guestName = (guest.first_name || guest.last_name)
           ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
@@ -1288,7 +1282,6 @@ export const DashboardGuests: React.FC = () => {
           await supabase.auth.refreshSession();
           await updateCheckin();
           await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
           toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
           return;
         } catch {
