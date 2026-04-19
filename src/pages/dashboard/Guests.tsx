@@ -1893,6 +1893,7 @@ Proceed with send?`)) return;
 
   const handleSaveAssistedRsvp = async () => {
     if (!assistedRsvpGuest) return;
+    let persisted = false;
     try {
       setAssistedRsvpSaving(true);
       const recordedAt = new Date().toISOString();
@@ -1936,11 +1937,13 @@ Proceed with send?`)) return;
         if (rsvpInsertError) throw rsvpInsertError;
       }
 
+      persisted = true;
+
       await fetchGuests();
       setAssistedRsvpGuest(null);
       toast('RSVP recorded for guest', 'success');
     } catch (error) {
-      if (!isDemoMode && assistedRsvpGuest) {
+      if (!isDemoMode && assistedRsvpGuest && !persisted) {
         await supabase
           .from('guests')
           .update({
