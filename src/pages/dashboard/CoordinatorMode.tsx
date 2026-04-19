@@ -13,6 +13,7 @@ import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorE
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
+import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinatorEscalationAction';
 import { normalizeCoordinatorModeSessionState } from '../../lib/coordinatorModeSessionState';
 import { normalizeCoordinatorDraftState } from '../../lib/coordinatorDraftState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
@@ -459,9 +460,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   onClick={() => {
                     const focus = resolveCoordinatorQueueFocus(item.key);
                     const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
+                    const timelineTarget = resolveCoordinatorEscalationTimelineTarget({ escalationKey: item.key, upNextEvent });
                     setCheckInFilter(focus.filter);
                     setCheckInReviewOnly(focus.reviewOnly);
                     setPanelFocus(nextPanelFocus);
+                    if (timelineTarget && canEditTimeline) {
+                      setTimelineState((prev) => setCoordinatorEventTimelineState(prev, timelineTarget, 'live'));
+                    }
                   }}
                   className={`w-full text-left rounded-lg border px-3 py-2 ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-border/50 bg-surface-subtle/40'}`}
                 >
