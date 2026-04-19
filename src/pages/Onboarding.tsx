@@ -21,6 +21,7 @@ import { resolveOnboardingResumeIndex } from '../lib/onboardingResumeIndex';
 import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY as ONBOARDING_RESUME_HINT_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY as ONBOARDING_RESUME_INDEX_KEY } from '../lib/onboardingResumeStorage';
 import { writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARDING_STORAGE_KEY } from '../lib/onboardingDraftCleanup';
+import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
@@ -286,8 +287,7 @@ export const Onboarding: React.FC = () => {
   }, [conversationIndex, followUpAnswers, hasHydratedDraft, initialSetupAnswers, initialSetupFollowUps, isDemoMode, showFollowUpReview, step, weddingProfile]);
 
   const clearSavedOnboardingDraft = () => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+    clearAllOnboardingContinuationState();
   };
 
   const hydrateProfile = useCallback((partial: Partial<ReturnType<typeof initialSetupAnswersToOnboardingFormShape>>) => {
