@@ -595,6 +595,7 @@ export const DashboardSettings: React.FC = () => {
     : '';
 
   const handleDefaultLanguageChange = async (next: 'en' | 'es') => {
+    const previous = defaultLanguage;
     setDefaultLanguage(next);
     setVisibilityError(null);
     setVisibilitySuccess(null);
@@ -607,6 +608,7 @@ export const DashboardSettings: React.FC = () => {
       if (error) throw error;
       setVisibilitySuccess(`Default language set to ${next === 'es' ? 'Español' : 'English'}.`);
     } catch (err) {
+      setDefaultLanguage(previous);
       setVisibilityError(err instanceof Error ? err.message : 'Failed to save default language.');
     }
   };
