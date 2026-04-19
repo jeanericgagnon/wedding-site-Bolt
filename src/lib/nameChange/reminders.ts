@@ -103,6 +103,11 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     actionableAndStale,
     actionableStalePriority,
     actionableStaleNormal,
+    staleActionablePosture: actionableStalePriority === actionableStaleNormal
+      ? 'mixed'
+      : actionableStalePriority > actionableStaleNormal
+        ? 'priority-heavy'
+        : 'normal-heavy',
     attentionPosture: actionableNow === blockedByUntouchedStep
       ? 'mixed'
       : actionableNow > blockedByUntouchedStep

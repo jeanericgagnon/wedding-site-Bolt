@@ -365,6 +365,7 @@ describe('name change reminder suggestions', () => {
       actionableAndStale: 0,
       actionableStalePriority: 0,
       actionableStaleNormal: 0,
+      staleActionablePosture: 'mixed',
       attentionPosture: 'mixed',
       stalePriority: 'mixed',
     });
@@ -463,6 +464,7 @@ describe('name change reminder suggestions', () => {
     expect(summary.actionableAndStale).toBe(1);
     expect(summary.actionableStalePriority).toBe(1);
     expect(summary.actionableStaleNormal).toBe(0);
+    expect(summary.staleActionablePosture).toBe('priority-heavy');
   });
 
   it('classifies attention posture as blocked-heavy or actionable-heavy', () => {
