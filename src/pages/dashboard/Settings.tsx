@@ -140,7 +140,15 @@ export const DashboardSettings: React.FC = () => {
   };
 
   const loadSiteData = async () => {
-    if (!user) return;
+    if (!user) {
+      setWeddingSiteId(null);
+      setCoupleNames('');
+      setAccountEmail('');
+      setSiteSlug('');
+      setGuestAccessToken(null);
+      setCollaboratorInvites([]);
+      return;
+    }
 
     if (isDemoMode) {
       try {
@@ -235,7 +243,11 @@ export const DashboardSettings: React.FC = () => {
         }
 
       } else {
+        setWeddingSiteId(null);
         setAccountEmail(user.email ?? '');
+        setSiteSlug('');
+        setGuestAccessToken(null);
+        setCollaboratorInvites([]);
       }
     } catch (err) {
       setAccountError(err instanceof Error ? err.message : 'Could not load settings right now.');
