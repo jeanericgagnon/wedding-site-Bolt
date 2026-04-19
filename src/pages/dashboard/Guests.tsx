@@ -1095,6 +1095,28 @@ export const DashboardGuests: React.FC = () => {
         return;
       }
 
+      const { data: invitationRows, error: invitationLookupError } = await supabase
+        .from('event_invitations')
+        .select('id')
+        .eq('guest_id', guestId);
+      if (invitationLookupError) throw invitationLookupError;
+
+      const invitationIds = (invitationRows ?? []).map((row) => row.id as string);
+      if (invitationIds.length > 0) {
+        await deleteEventRsvpsByInvitationIds(invitationIds);
+        const { error: inviteDeleteError } = await supabase
+          .from('event_invitations')
+          .delete()
+          .eq('guest_id', guestId);
+        if (inviteDeleteError) throw inviteDeleteError;
+      }
+
+      const { error: rsvpDeleteError } = await supabase
+        .from('rsvps')
+        .delete()
+        .eq('guest_id', guestId);
+      if (rsvpDeleteError) throw rsvpDeleteError;
+
       const { error } = await supabase
         .from('guests')
         .delete()
