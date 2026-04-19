@@ -10,6 +10,7 @@ import { useToast } from '../../components/ui/Toast';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
+import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 
 type GuestLite = {
   id: string;
@@ -63,6 +64,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertChannelFilter, setAlertChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
   const [qnaInput, setQnaInput] = useState('');
+  const [qnaDraftAnswers, setQnaDraftAnswers] = useState<Record<string, string>>({});
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
     body: 'Quick update from the couple: ',
@@ -231,6 +233,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const canEdit = canEditPlannerSurface(coordinatorRole);
 
+  const qnaCounts = useMemo(() => getCoordinatorQnaCounts(qnaItems), [qnaItems]);
+
   const alertValidationError = useMemo(() => validateCoordinatorAlertForm(alertForm, alertAudienceCount), [alertForm, alertAudienceCount]);
   const handoffCopy = {
     title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
@@ -349,17 +353,26 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setQnaInput('');
   };
 
-  const toggleQnaStatus = async (id: string) => {
-    const nextStatus = qnaItems.find((i) => i.id === id)?.status === 'new' ? 'answered' : 'new';
+  const saveQnaAnswer = async (id: string) => {
+    const draftAnswer = qnaDraftAnswers[id] ?? qnaItems.find((item) => item.id === id)?.answer ?? '';
+    const nextItems = updateCoordinatorQnaItem(qnaItems, id, draftAnswer);
+    const nextItem = nextItems.find((item) => item.id === id);
+    if (!nextItem) return;
 
     if (!isDemoMode) {
-      const { error } = await supabase.from('guest_qna_items').update({ status: nextStatus }).eq('id', id);
+      const { error } = await supabase.from('guest_qna_items').update({
+        answer: nextItem.answer ?? null,
+        status: nextItem.status,
+      }).eq('id', id);
       if (error) {
-        toast(error.message || 'Could not update that question.', 'error');
+        toast(error.message || 'Could not save that answer.', 'error');
         return;
       }
     }
-    setQnaItems((prev) => prev.map((item) => item.id === id ? { ...item, status: nextStatus } : item));
+
+    setQnaItems(nextItems);
+    setQnaDraftAnswers((prev) => ({ ...prev, [id]: nextItem.answer || '' }));
+    toast(nextItem.status === 'answered' ? 'Guest question answered.' : 'Guest question reopened.', 'success');
   };
 
   return (
@@ -643,7 +656,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
             </div>
 
             <div className="border-t border-border/60 pt-3">
-              <p className="text-sm font-medium text-text-primary mb-2">Guest questions</p>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-text-primary">Guest questions</p>
+                <p className="text-[11px] text-text-tertiary">{qnaCounts.open} open · {qnaCounts.answered} answered</p>
+              </div>
               <fieldset disabled={!canEdit}>
               <div className="flex gap-2 mb-2">
                 <Input
@@ -658,14 +674,27 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-xs text-text-tertiary">No guest questions yet.</p>
                 ) : (
                   qnaItems.slice(0, 8).map((item) => (
-                    <div key={item.id} className="text-xs border border-border/50 rounded-md px-2 py-1.5 flex items-center justify-between gap-2">
-                      <span className="text-text-secondary truncate">{item.question}</span>
-                      <button
-                        onClick={() => toggleQnaStatus(item.id)}
-                        className={`px-2 py-0.5 rounded border ${item.status === 'answered' ? 'text-success border-success/35 bg-success/5' : 'text-warning border-warning/35 bg-warning/5'}`}
-                      >
-                        {item.status === 'answered' ? 'Answered' : 'New'}
-                      </button>
+                    <div key={item.id} className="text-xs border border-border/50 rounded-md px-2.5 py-2 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-text-secondary">{item.question}</span>
+                        <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${item.status === 'answered' ? 'text-success border-success/35 bg-success/5' : 'text-warning border-warning/35 bg-warning/5'}`}>
+                          {item.status === 'answered' ? 'Answered' : 'New'}
+                        </span>
+                      </div>
+                      <Textarea
+                        value={qnaDraftAnswers[item.id] ?? item.answer ?? ''}
+                        onChange={(e) => setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        rows={2}
+                        placeholder="Add the answer the coordinator should use"
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => void saveQnaAnswer(item.id)}
+                          className="px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
+                        >
+                          {(qnaDraftAnswers[item.id] ?? item.answer ?? '').trim() ? 'Save answer' : 'Mark unresolved'}
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
