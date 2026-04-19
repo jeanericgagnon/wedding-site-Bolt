@@ -1101,7 +1101,6 @@ export const GuidedSetup: React.FC = () => {
               onClick={() => {
                 if (currentStep === 'complete') {
                   clearGuidedSetupDraft();
-                  clearGuidedSetupDraft();
                   navigate('/onboarding/celebration');
                   return;
                 }
