@@ -4,93 +4,282 @@
 A credible v1 / done-enough claim is:
 - couples can create and launch a polished wedding site
 - guests can use the public site and RSVP flows reliably
-- couples can run the core ops layer: guests, itinerary/travel, registry, messages, seating, settings
+- couples can run the core ops layer: guests, RSVP, messages, seating, registry, itinerary, settings
 - planner/collaborator support exists in a real usable form
-- public-facing marketing and billing surfaces describe the product honestly
-- known partials are either clearly framed or cut from the v1 promise
+- marketing, settings, and billing surfaces describe the product honestly
+- partial features are framed honestly instead of padded into fake completeness
 
 Not part of the v1 line:
 - external custom domains
-- enterprise-grade analytics
+- advanced analytics as a major product promise
 - fully automated migration
-- perfect multi-event rules everywhere
-- full event-day control software
+- full event-day operations software beyond practical coordination support
+- enterprise-grade planner workflow governance
+- perfect public/dashboard purchased-state parity everywhere
 
-## Where we are
-### Actually done
-- canonical builder + public site routes are in place
-- RSVP + event RSVP flows exist
-- dashboard surfaces exist for guests, itinerary, registry, vault, settings, messages, seating, planning
-- trust/legal baseline now exists with live trust/privacy/terms pages
-- product has passed typecheck/build and prior hardening docs claim stable core architecture
+## Per-feature v1 bars
 
-### Fake-done or partial
-- some public and billing copy still drifted past actual product truth
-- messaging maturity is practical but not a full communications CRM
-- migration story is guided/partial, not automated
-- registry public purchased-state nuance is still not proven everywhere
-- planner collaboration is real but not full workflow governance
-- release readiness proof is fragmented across docs instead of one hard v1 map
+### 1) Comms center
+**V1 bar**
+- couples can draft, segment, schedule, and send guest messages with visible lifecycle states
+- email-first is enough; SMS can stay credit-based / partial if framed clearly
+- delivery history must distinguish draft, scheduled, sent, partial, failed
 
-### Blocks on a credible v1 claim
-- any remaining public overclaim or misleading trust copy
-- lack of one hard v1 finish map with must-ship vs cut decisions
-- missing brutal smoke proof on the launch path and guest path
-- unresolved cross-product gaps that make the product feel fake-finished instead of done-enough
+**Done**
+- messages dashboard exists
+- lifecycle states exist in UI
+- draft helpers for RSVP/day-of/event reminders exist
+- scheduled dispatch + bulk send paths exist in code
 
-## Must ship for v1
+**Missing / partial**
+- not a full communications CRM
+- provider completeness and telemetry are only as good as delivery logs captured
+- any copy implying fully mature automation should be treated carefully
 
-### 1) Trust / marketing / billing truth alignment
-- Why it matters: if the product says false or sloppy things, v1 credibility dies immediately
-- Done enough: no misleading claims around privacy, launch state, custom domain, messaging maturity, or included paid features
-- Proof needed: direct copy audit + build passing
-- Ownership: finish lane
-- Reassign?: no
+**Proof needed**
+- one smoke showing draft -> scheduled or sent -> history state update
+- no vague fake-success wording in the UI
 
-### 2) Canonical launch-path smoke proof
-- Why it matters: the product does not count as done if the main couple path or guest path breaks
-- Done enough: homepage/demo/signup -> onboarding/builder -> public site -> RSVP -> dashboard core routes all open and behave credibly
-- Proof needed: one hard smoke run log with pass/fail notes
-- Ownership: shared / likely QA-heavy
-- Reassign?: maybe to QA lane, but finish lane should define and pressure it
+**Priority**
+- must ship
 
-### 3) Core guest-ops credibility
-- Why it matters: the value is not just the website, it is RSVP + guests + messaging + seating working together
-- Done enough: these surfaces are usable, named honestly, and not hiding fake states or obvious dead ends
-- Proof needed: targeted manual or scripted checks on guests, RSVP board, messages, seating lookup
-- Ownership: mixed
-- Reassign?: only if an active lane already owns a slice deeply
+**Ownership**
+- likely active lane elsewhere for depth; finish lane should enforce truth/proof bar
 
-### 4) Release-readiness blocker list
-- Why it matters: a v1 claim needs a known no-go list, not vibes
-- Done enough: clear blockers called out for launch credibility, not every possible bug
-- Proof needed: live finish board + resolved/cut/deferred statuses
-- Ownership: finish lane
-- Reassign?: no
+### 2) Coordinator / day-of
+**V1 bar**
+- coordinator mode must help staff answer basic live questions, track check-ins, view timeline focus, and send/queue simple updates
+- should feel practically useful on event day, not like full arrival-control software
+
+**Done**
+- dedicated coordinator dashboard exists
+- check-in, timeline, alert log, role-based coordination framing, and Q&A flows exist
+
+**Missing / partial**
+- some persistence is still local/browser-scoped
+- not a complete event-day operations system
+
+**Proof needed**
+- role-aware smoke showing coordinator opens mode, sees guests/events, can toggle check-in, and use live queue credibly
+- copy must avoid claiming comprehensive event control
+
+**Priority**
+- must ship
+
+**Ownership**
+- mixed/shared
+
+### 3) Name-change planner
+**V1 bar**
+- product can support a structured post-wedding name-change workspace with case setup, document awareness, reminder flow, and actionable plan output
+- should be clearly framed as a structured helper/workspace, not a guaranteed legal automation engine
+
+**Done**
+- dedicated name-change planner tab exists in planning
+- structured intake, plan engine, reminders, execution status, and document metadata support exist
+
+**Missing / partial**
+- niche slice relative to wedding-core v1
+- proof of real end-to-end persistence/usefulness is weaker than wedding-core slices
+- should not distort the core product claim if still partial
+
+**Proof needed**
+- manual smoke showing save/load of a case, reminders, and plan status
+- copy should frame it as planning support, not legal completion automation
+
+**Priority**
+- should ship if stable; cut from top-level v1 promise if it creates launch drag
+
+**Ownership**
+- likely separate planning lane
+
+### 4) Guests / RSVP ops
+**V1 bar**
+- guest list, householding, plus-one handling, RSVP status, event-level invites, meal/dietary capture, and exception visibility must be usable enough for a real wedding
+- manual admin override/support is acceptable; full rules engine is not required
+
+**Done**
+- substantial guests dashboard exists
+- public RSVP and event RSVP flows exist
+- household, plus-one, RSVP exception, meal/dietary, invite lifecycle helpers exist
+- settings allow meal and custom RSVP question config
+
+**Missing / partial**
+- not every edge-case rule is automated everywhere
+- reminder automation is phased / partial
+
+**Proof needed**
+- smoke covering guest import/edit, RSVP submit/update, event-aware status visibility, and exception surfacing
+- no copy implying perfect automation
+
+**Priority**
+- must ship
+
+**Ownership**
+- core lane / shared
+
+### 5) Seating
+**V1 bar**
+- couples can create tables, assign guests, detect unassigned/drifted seats, and export a usable seating view
+- day-of lookup and simple check-in tie-in should be practical
+
+**Done**
+- seating planner exists
+- drag/drop, auto-seat, exports, drift handling, and seating lookup exist
+
+**Missing / partial**
+- advanced optimization is not required
+- no need to overclaim perfect auto-assignment intelligence
+
+**Proof needed**
+- smoke showing event selection, table creation, guest assignment, and export or lookup
+
+**Priority**
+- must ship
+
+**Ownership**
+- likely active owned lane
+
+### 6) Memories / guest photo sharing
+**V1 bar**
+- couples can create guest photo buckets, collect uploads, moderate visibility, and keep a credible post-wedding memory path alive
+- archive/anniversary layer can be meaningful without being overpromised as a giant platform
+
+**Done**
+- guest photo sharing dashboard exists
+- bucket management, moderation toggles, upload-link handling, and archive-mode framing exist
+- vault/memory surfaces exist elsewhere
+
+**Missing / partial**
+- some flows depend on provider/storage setup
+- anniversary/storytelling layer is more product direction than fully hardened proof everywhere
+
+**Proof needed**
+- one smoke showing bucket create/manage + upload/moderation path
+- avoid overclaiming fully magical archive intelligence
+
+**Priority**
+- should ship if stable; memories layer can be narrower in v1 promise than in vision copy
+
+**Ownership**
+- shared
+
+### 7) Registry
+**V1 bar**
+- couples can add/edit/import registry items, repair weak imports, manage purchased state internally, and present a clean guest-facing registry
+- guided cleanup is enough; perfect merchant automation is not required
+
+**Done**
+- registry dashboard exists
+- add/edit/delete, import preview fetch, duplicate and repair helpers, refresh policy controls, and internal purchased tracking exist
+
+**Missing / partial**
+- public purchased-state nuance still not fully proven
+- multi-merchant save reliability still not proven as universal
+
+**Proof needed**
+- smoke showing add/import/edit and internal purchased tracking
+- public claims must stay narrower than internal capability where parity is unproven
+
+**Priority**
+- must ship
+
+**Ownership**
+- active lane likely
+
+### 8) Planner / collaborator access
+**V1 bar**
+- couple can invite planner/coordinator/viewer access from settings, role framing appears in major operational surfaces, and permissions differ in a visible useful way
+- does not need full enterprise approvals system
+
+**Done**
+- collaborator invite acceptance exists
+- settings include planner invite flow and role preset
+- planning/messages/coordinator surfaces reference planner roles
+
+**Missing / partial**
+- collaborator persistence and full boundaries are still being tightened
+- some trust depends on role-aware smoke rather than clear consolidated proof
+
+**Proof needed**
+- smoke showing invite flow and role-specific dashboard behavior
+- copy must say structured collaboration, not full workflow governance
+
+**Priority**
+- must ship
+
+**Ownership**
+- shared / likely active lane
+
+### 9) Public site / launch path / trust surface
+**V1 bar**
+- marketing -> auth/onboarding -> builder -> publish/live site -> RSVP should feel real, honest, and coherent
+- trust/legal surfaces and launch/privacy wording must match actual runtime behavior
+
+**Done**
+- public pages, builder, site view, trust page, privacy page, and terms page exist
+- major public trust placeholders and several overclaims already cleaned up
+
+**Missing / partial**
+- still needs one hard smoke over the canonical couple/guest path
+- any remaining misleading launch/privacy wording is a v1 blocker
+
+**Proof needed**
+- brutal end-to-end smoke over real couple and guest path
+- no misleading copy about private preview, private by default, custom domains, or fake billing promises
+
+**Priority**
+- must ship
+
+**Ownership**
+- finish lane owns truth/bar enforcement
+
+### 10) Onboarding (only as it affects product truth)
+**V1 bar**
+- onboarding gets couples into a real starting point fast, without pretending setup completion equals full launch readiness
+- migration/setup guidance must stay honest about guided vs automated behavior
+
+**Done**
+- onboarding flow exists with setup paths and continuation helpers
+- onboarding trust-copy placeholder leak already fixed
+
+**Missing / partial**
+- not every onboarding promise is equal to runtime proof downstream
+- migration/setup rhetoric still needs to stay disciplined
+
+**Proof needed**
+- smoke showing onboarding reaches usable builder/dashboard state
+- copy must not overclaim private preview or automated migration
+
+**Priority**
+- must ship only insofar as it affects launch truth and first-run completion
+
+**Ownership**
+- shared
+
+## Must ship summary
+- public site / launch path / trust surface
+- guests / RSVP ops
+- comms center
+- seating
+- registry
+- planner / collaborator access
+- coordinator / day-of
+- onboarding truth / first-run continuity
 
 ## Should ship if time
+- memories / guest photo sharing as a stronger v1 slice
+- name-change planner if stable and honestly framed
+- cleaner empty/thin states and tighter release checklisting
 
-### 5) Better empty / thin-state messaging on public and dashboard surfaces
-- Why it matters: weak states make the product feel unfinished even when core paths work
-- Done enough: key empty states feel intentional instead of placeholder-ish
-- Proof needed: targeted UI review
-- Ownership: mixed
-- Reassign?: maybe
-
-### 6) Cleaner internal release checklist
-- Why it matters: helps final verification without pretending checklist work is product work
-- Done enough: one concise smoke checklist tied to the v1 line
-- Proof needed: checked run log
-- Ownership: finish lane or QA
-- Reassign?: no
-
-## Cut / after v1
-- external custom domain support
-- advanced analytics storytelling
-- broad aesthetic cleanup
-- fully automated migration engine
-- full dashboard/public registry purchased-state parity claims
-- deeper enterprise planner workflow systems
+## Cut / defer summary
+- external custom domains
+- advanced analytics as a launch promise
+- full automated migration
+- enterprise planner workflow governance
+- full event-day control suite claims
+- perfect rules-engine automation everywhere
+- overblown archive/anniversary promises beyond current proof
 
 ## Batch landed
 - Added a real `/trust` page.
@@ -102,10 +291,12 @@ Not part of the v1 line:
   - corrected Home FAQ privacy wording to match real search-vs-access behavior
   - removed Product copy implying a separate private-preview product shape
   - removed fake billing promises like custom domains / advanced analytics / scheduled messaging from the upgrade surface
+- Tightened Settings privacy language so invite-only access is framed as a guest access link instead of a fake “private preview” product, and clarified search visibility text accordingly.
 
 ## Why this batch mattered
-This is cross-product finish work, not random polish. If the public site and billing modal overpromise, the repo cannot honestly claim v1-done-enough even if the underlying product is decent.
+This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
 
 ## Most urgent next
 - Run and log one brutal smoke pass on the real v1 line: marketing entry -> auth/demo -> onboarding/builder -> public site -> RSVP -> guests/messages/seating/settings.
-- Then fix whichever route, state, or trust mismatch fails first.
+- Then fix the first failing route, state, or proof gap.
+- Push role-aware proof on planner/collaborator + coordinator because those slices are real enough to sell, but still easiest to overclaim.

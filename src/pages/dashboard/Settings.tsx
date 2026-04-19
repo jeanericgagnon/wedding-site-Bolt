@@ -1312,8 +1312,8 @@ export const DashboardSettings: React.FC = () => {
 
                       {privacyMode === 'invite_only' && (
                         <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-3">
-                          <p className="text-sm font-medium text-text-primary">Private preview link</p>
-                          <p className="text-xs text-text-secondary">Share this link with guests you want to preview the site before a broader go-live. This is separate from search visibility and separate from a fully published guest-facing launch.</p>
+                          <p className="text-sm font-medium text-text-primary">Invite-only guest access link</p>
+                          <p className="text-xs text-text-secondary">Share this link with guests you want to allow through your invite-only access setting. This is a guest access control, not a separate unpublished preview product, and it is separate from search visibility.</p>
                           {guestAccessToken && siteSlug ? (
                             <div className="flex items-center gap-2">
                               <code className="flex-1 text-xs bg-background border border-border rounded-lg px-3 py-2 text-text-secondary truncate">
@@ -1332,7 +1332,7 @@ export const DashboardSettings: React.FC = () => {
                               onClick={handleRegenerateToken}
                               className="text-xs text-text-tertiary hover:text-text-secondary hover:underline"
                             >
-                              Regenerate preview link (old link stops working)
+                              Regenerate access link (old link stops working)
                             </button>
                           )}
                         </div>
@@ -1347,7 +1347,7 @@ export const DashboardSettings: React.FC = () => {
                         />
                         <div>
                           <p className="text-sm font-medium text-text-primary">Hide from search engines</p>
-                          <p className="text-xs text-text-secondary">Adds a noindex tag so search engines should not list your site. Search visibility is separate from private preview links and separate from whether you have fully gone live for guests.</p>
+                          <p className="text-xs text-text-secondary">Adds a noindex tag so search engines should not list your site. Search visibility is separate from invite-only access links and separate from whether you have fully gone live for guests.</p>
                         </div>
                       </label>
 
