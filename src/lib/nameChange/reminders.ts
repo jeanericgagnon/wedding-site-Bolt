@@ -75,6 +75,8 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
   return {
     total: attentionItems.length,
     stale: attentionItems.filter((item) => item.isStale).length,
+    staleTodo: attentionItems.filter((item) => item.isStale && item.dependentStepExecutionStatus === 'todo').length,
+    staleInProgress: attentionItems.filter((item) => item.isStale && item.dependentStepExecutionStatus === 'in_progress').length,
     highUrgency: attentionItems.filter((item) => item.urgency === 'high').length,
   };
 }

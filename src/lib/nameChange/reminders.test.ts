@@ -327,8 +327,8 @@ describe('name change reminder suggestions', () => {
         urgency: 'low',
         suggestedOffsetDays: 5,
         lastTouchedAt: '2026-04-18T12:00:00.000Z',
-        isStale: false,
+        isStale: true,
       },
-    ])).toEqual({ total: 2, stale: 1, highUrgency: 1 });
+    ])).toEqual({ total: 2, stale: 2, staleTodo: 1, staleInProgress: 1, highUrgency: 1 });
   });
 });
