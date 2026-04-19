@@ -83,6 +83,8 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
   const actionablePriority = attentionItems.filter((item) => item.actionability === 'actionable_now' && (item.priorityTier === 'critical' || item.priorityTier === 'elevated')).length;
   const actionableNormal = attentionItems.filter((item) => item.actionability === 'actionable_now' && (item.priorityTier ?? 'normal') === 'normal').length;
   const actionableAndStale = attentionItems.filter((item) => item.actionability === 'actionable_now' && item.isStale).length;
+  const actionableStalePriority = attentionItems.filter((item) => item.actionability === 'actionable_now' && item.isStale && (item.priorityTier === 'critical' || item.priorityTier === 'elevated')).length;
+  const actionableStaleNormal = attentionItems.filter((item) => item.actionability === 'actionable_now' && item.isStale && (item.priorityTier ?? 'normal') === 'normal').length;
 
   return {
     total: attentionItems.length,
@@ -99,6 +101,8 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     actionablePriority,
     actionableNormal,
     actionableAndStale,
+    actionableStalePriority,
+    actionableStaleNormal,
     attentionPosture: actionableNow === blockedByUntouchedStep
       ? 'mixed'
       : actionableNow > blockedByUntouchedStep
