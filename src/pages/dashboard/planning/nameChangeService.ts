@@ -342,11 +342,16 @@ export function annotateNameChangePlanStepsFromReminderChanges(
 
       return {
         ...step,
-        executionStatus: step.executionStatus === 'todo' && changes.some((change) => change.status === 'scheduled')
-          ? 'in_progress'
-          : step.executionStatus,
+        executionStatus: changes.some((change) => change.status === 'sent')
+          ? 'complete'
+          : step.executionStatus === 'todo' && changes.some((change) => change.status === 'scheduled')
+            ? 'in_progress'
+            : step.executionStatus,
         executionNote: mergeReminderAnnotation(step.executionNote, note),
         executionUpdatedAt: hasNonDismissedChange ? now : step.executionUpdatedAt,
+        completedAt: changes.some((change) => change.status === 'sent')
+          ? now
+          : step.completedAt,
       };
     }),
   }, plan);
