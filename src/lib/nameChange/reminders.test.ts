@@ -374,6 +374,7 @@ describe('name change reminder suggestions', () => {
       stalePriority: 'mixed',
       agingWithoutExecution: true,
       agingWithoutExecutionLane: 'mixed',
+      agingWithoutExecutionPosture: 'mixed',
     });
   });
 
@@ -535,6 +536,7 @@ describe('name change reminder suggestions', () => {
 
     expect(summary.agingWithoutExecution).toBe(false);
     expect(summary.agingWithoutExecutionLane).toBe('none');
+    expect(summary.agingWithoutExecutionPosture).toBe('none');
   });
 
   it('classifies aging-without-execution lane toward blocked stale or stale actionable', () => {
@@ -573,7 +575,9 @@ describe('name change reminder suggestions', () => {
     ]);
 
     expect(blockedSummary.agingWithoutExecutionLane).toBe('blocked-stale');
+    expect(blockedSummary.agingWithoutExecutionPosture).toBe('blocked-heavy');
     expect(actionableSummary.agingWithoutExecutionLane).toBe('stale-actionable');
+    expect(actionableSummary.agingWithoutExecutionPosture).toBe('actionable-heavy');
   });
 
   it('classifies dominant risk lane across blocked stale, stale actionable, and routine actionable', () => {

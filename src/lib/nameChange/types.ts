@@ -311,6 +311,7 @@ export interface NameChangeReminderAttentionSummary {
   stalePriority: 'untouched' | 'moving' | 'mixed';
   agingWithoutExecution: boolean;
   agingWithoutExecutionLane: 'blocked-stale' | 'stale-actionable' | 'mixed' | 'none';
+  agingWithoutExecutionPosture: 'blocked-heavy' | 'actionable-heavy' | 'mixed' | 'none';
 }
 
 export interface NameChangeFormRegistryEntry {

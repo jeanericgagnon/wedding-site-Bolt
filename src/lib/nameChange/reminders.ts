@@ -148,6 +148,12 @@ export function summarizeNameChangeReminderAttention(
       if (blockedAndStale === actionableAndStale) return 'mixed';
       return blockedAndStale > actionableAndStale ? 'blocked-stale' : 'stale-actionable';
     })(),
+    agingWithoutExecutionPosture: (() => {
+      const aging = (staleTodo + staleInProgress) > 0 && !options?.hasRecentStart && !options?.hasRecentCompletion;
+      if (!aging) return 'none';
+      if (blockedAndStale === actionableAndStale) return 'mixed';
+      return blockedAndStale > actionableAndStale ? 'blocked-heavy' : 'actionable-heavy';
+    })(),
   };
 }
 
