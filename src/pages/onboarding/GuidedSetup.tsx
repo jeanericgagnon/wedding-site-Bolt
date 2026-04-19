@@ -9,6 +9,7 @@ import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
 import * as XLSX from 'xlsx';
+import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
 
 type Step =
   | 'welcome'
@@ -75,6 +76,7 @@ export const GuidedSetup: React.FC = () => {
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvError, setCsvError] = useState('');
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
+  const [siteId, setSiteId] = useState<string | null>(null);
 
   const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
 
@@ -161,12 +163,12 @@ export const GuidedSetup: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const resolvedSiteId = await resolvePrimaryWeddingSiteId(user.id);
+      setSiteId(resolvedSiteId);
       const { data } = await supabase
         .from('wedding_sites')
         .select('id, couple_name_1, couple_name_2, wedding_date, venue_date, venue_name, venue_address, wedding_location')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
+        .eq('id', resolvedSiteId)
         .maybeSingle();
 
       if (data) {
@@ -232,9 +234,13 @@ export const GuidedSetup: React.FC = () => {
       customFaqs: formData.customFaqs,
     });
 
+    const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
+    if (!resolvedSiteId) throw new Error('Wedding site not found');
+
     const { error: updateError } = await supabase
       .from('wedding_sites')
       .update(updateData)
+      .eq('id', resolvedSiteId)
       .eq('user_id', user.id);
 
     if (updateError) throw updateError;
@@ -294,9 +300,13 @@ export const GuidedSetup: React.FC = () => {
         customFaqs: formData.customFaqs,
       });
 
+      const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
+      if (!resolvedSiteId) throw new Error('Wedding site not found');
+
       const { error: updateError } = await supabase
         .from('wedding_sites')
         .update(updateData)
+        .eq('id', resolvedSiteId)
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
@@ -361,14 +371,8 @@ export const GuidedSetup: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: site } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (!site) throw new Error('Wedding site not found');
+      const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
+      if (!resolvedSiteId) throw new Error('Wedding site not found');
 
       const cols = (rows[0] || []).map((h) => normalizeCsvHeader(String(h ?? '')));
 
@@ -432,7 +436,7 @@ export const GuidedSetup: React.FC = () => {
           const { data: existing } = await supabase
             .from('guests')
             .select('id')
-            .eq('wedding_site_id', site.id)
+            .eq('wedding_site_id', resolvedSiteId)
             .eq('email', email)
             .maybeSingle();
 
@@ -452,7 +456,7 @@ export const GuidedSetup: React.FC = () => {
         }
 
         await supabase.from('guests').insert({
-          wedding_site_id: site.id,
+          wedding_site_id: resolvedSiteId,
           name,
           first_name: firstName || null,
           last_name: lastName || null,
