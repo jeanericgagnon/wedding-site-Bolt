@@ -373,6 +373,7 @@ describe('name change reminder suggestions', () => {
       attentionPosture: 'mixed',
       stalePriority: 'mixed',
       agingWithoutExecution: true,
+      agingWithoutExecutionLane: 'mixed',
     });
   });
 
@@ -533,6 +534,46 @@ describe('name change reminder suggestions', () => {
     ], { hasRecentStart: true, hasRecentCompletion: false });
 
     expect(summary.agingWithoutExecution).toBe(false);
+    expect(summary.agingWithoutExecutionLane).toBe('none');
+  });
+
+  it('classifies aging-without-execution lane toward blocked stale or stale actionable', () => {
+    const blockedSummary = summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'a',
+        label: 'A',
+        dependsOnStepId: 'step-a',
+        dependentStepTitle: 'Step A',
+        dependentStepExecutionStatus: 'todo',
+        reminderStatus: 'pending',
+        urgency: 'medium',
+        priorityTier: 'elevated',
+        actionability: 'blocked_by_untouched_step',
+        suggestedOffsetDays: 2,
+        lastTouchedAt: null,
+        isStale: true,
+      },
+    ]);
+
+    const actionableSummary = summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'b',
+        label: 'B',
+        dependsOnStepId: 'step-b',
+        dependentStepTitle: 'Step B',
+        dependentStepExecutionStatus: 'in_progress',
+        reminderStatus: 'scheduled',
+        urgency: 'medium',
+        priorityTier: 'elevated',
+        actionability: 'actionable_now',
+        suggestedOffsetDays: 2,
+        lastTouchedAt: '2026-04-14T12:00:00.000Z',
+        isStale: true,
+      },
+    ]);
+
+    expect(blockedSummary.agingWithoutExecutionLane).toBe('blocked-stale');
+    expect(actionableSummary.agingWithoutExecutionLane).toBe('stale-actionable');
   });
 
   it('classifies dominant risk lane across blocked stale, stale actionable, and routine actionable', () => {

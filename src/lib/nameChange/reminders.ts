@@ -142,6 +142,12 @@ export function summarizeNameChangeReminderAttention(
         : 'blocked-heavy',
     stalePriority: staleTodo === staleInProgress ? 'mixed' : staleTodo > staleInProgress ? 'untouched' : 'moving',
     agingWithoutExecution: (staleTodo + staleInProgress) > 0 && !options?.hasRecentStart && !options?.hasRecentCompletion,
+    agingWithoutExecutionLane: (() => {
+      const aging = (staleTodo + staleInProgress) > 0 && !options?.hasRecentStart && !options?.hasRecentCompletion;
+      if (!aging) return 'none';
+      if (blockedAndStale === actionableAndStale) return 'mixed';
+      return blockedAndStale > actionableAndStale ? 'blocked-stale' : 'stale-actionable';
+    })(),
   };
 }
 

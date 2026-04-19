@@ -467,6 +467,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-1 text-xs text-text-secondary">Attention posture: {reminderAttentionSummary.attentionPosture}</p>
               <p className="mt-1 text-xs text-text-secondary">Stale priority: {reminderAttentionSummary.stalePriority}</p>
               <p className="mt-1 text-xs text-text-secondary">Aging without execution: {reminderAttentionSummary.agingWithoutExecution ? 'yes' : 'no'}</p>
+              <p className="mt-1 text-xs text-text-secondary">Aging without execution lane: {reminderAttentionSummary.agingWithoutExecutionLane}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} attention item{reminderAttention.length === 1 ? '' : 's'}</span>
