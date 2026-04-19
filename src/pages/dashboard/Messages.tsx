@@ -863,6 +863,7 @@ export const DashboardMessages: React.FC = () => {
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
   const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<'all' | 'delivered' | 'failed' | 'skipped' | 'unreached'>('all');
+  const [historyCampaignFilter, setHistoryCampaignFilter] = useState<string>('');
   const [historySearch, setHistorySearch] = useState('');
 
   const [formData, setFormData] = useState({
@@ -1970,6 +1971,7 @@ export const DashboardMessages: React.FC = () => {
     if (historyChannelFilter !== 'all' && m.channel !== historyChannelFilter) return false;
     const aud = m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all';
     if (historyAudienceFilter !== 'all' && aud !== historyAudienceFilter) return false;
+    if (historyCampaignFilter && getCampaignThreadKey(m) !== historyCampaignFilter) return false;
     const skippedCount = deliveries.filter((delivery) => delivery.message_id === m.id && delivery.status === 'skipped').length;
     const failedCount = Number(m.failed_count ?? 0);
     const deliveredCount = Number(m.delivered_count ?? 0);
@@ -1984,7 +1986,7 @@ export const DashboardMessages: React.FC = () => {
       if (!haystack.includes(query)) return false;
     }
     return true;
-  }), [messages, deliveries, historyStatusFilter, historyChannelFilter, historyAudienceFilter, historyDeliveryFilter, historySearch]);
+  }), [messages, deliveries, historyStatusFilter, historyChannelFilter, historyAudienceFilter, historyCampaignFilter, historyDeliveryFilter, historySearch]);
 
   const audienceBreakdown = useMemo(() => {
     const map = new Map<string, number>();
@@ -2106,10 +2108,13 @@ export const DashboardMessages: React.FC = () => {
   }, [messages, deliveries]);
 
   const activeCampaignThread = useMemo(() => {
+    if (historyCampaignFilter) {
+      return campaignThreads.find((thread) => thread.name === historyCampaignFilter) ?? null;
+    }
     const query = historySearch.trim().toLowerCase();
     if (!query) return null;
     return campaignThreads.find((thread) => thread.name.toLowerCase() === query) ?? null;
-  }, [campaignThreads, historySearch]);
+  }, [campaignThreads, historyCampaignFilter, historySearch]);
 
   const activeCampaignMessages = useMemo(() => {
     if (!activeCampaignThread) return [] as Message[];
@@ -2868,8 +2873,15 @@ export const DashboardMessages: React.FC = () => {
             <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); setHistoryDeliveryFilter('all'); setHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); setHistoryDeliveryFilter('all'); setHistoryCampaignFilter(''); setHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
           </div>
+
+          {historyCampaignFilter && (
+            <div className="mb-4 flex items-center gap-2 text-xs text-text-tertiary">
+              <span className="rounded-full border border-primary/20 bg-primary-light/40 px-3 py-1 text-primary">Campaign thread: {historyCampaignFilter}</span>
+              <button type="button" onClick={() => setHistoryCampaignFilter('')} className="text-primary hover:underline">Clear</button>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
             {[
@@ -3003,7 +3015,10 @@ export const DashboardMessages: React.FC = () => {
                   <button
                     key={thread.key}
                     type="button"
-                    onClick={() => setHistorySearch(thread.name)}
+                    onClick={() => {
+                      setHistoryCampaignFilter(thread.name);
+                      setHistorySearch('');
+                    }}
                     className="w-full flex items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3 text-sm text-left hover:border-primary/30 hover:bg-white transition-colors"
                   >
                     <div className="min-w-0">
@@ -3039,7 +3054,7 @@ export const DashboardMessages: React.FC = () => {
                       <Copy className="w-3.5 h-3.5 mr-1.5" />Duplicate thread to composer
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => setHistorySearch('')}>Clear thread filter</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setHistoryCampaignFilter(''); setHistorySearch(''); }}>Clear thread filter</Button>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
