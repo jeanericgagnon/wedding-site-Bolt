@@ -5,6 +5,7 @@ import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { fetchPaymentStatus, verifyCheckoutSession } from '../lib/stripeService';
 import { clearAllOnboardingDraftStorage } from '../lib/onboardingDraftCleanup';
+import { clearOnboardingResumeStorage } from '../lib/onboardingResumeStorage';
 import { writeSignupReturnPath } from '../lib/signupContinuation';
 
 const POLL_INTERVAL_MS = 2000;
@@ -104,7 +105,7 @@ export const PaymentSuccess: React.FC = () => {
               <Button variant="primary" size="md" onClick={() => window.location.reload()}>
                 Check again
               </Button>
-              <Button variant="ghost" size="md" onClick={() => { clearAllOnboardingDraftStorage(); navigate('/payment-required'); }}>
+              <Button variant="ghost" size="md" onClick={() => { clearAllOnboardingDraftStorage(); clearOnboardingResumeStorage(); writeSignupReturnPath(null); navigate('/payment-required'); }}>
                 Back to payment page
               </Button>
             </div>
