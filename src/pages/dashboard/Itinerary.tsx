@@ -1047,7 +1047,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       } else {
         const { error } = await supabase
           .from('event_invitations')
-          .insert([{ event_id: eventId, guest_id: guestId }]);
+          .upsert([{ event_id: eventId, guest_id: guestId }], { onConflict: 'event_id,guest_id' });
 
         if (error) throw error;
 
@@ -1068,7 +1068,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
       const { error } = await supabase
         .from('event_invitations')
-        .insert(uninvited.map(g => ({ event_id: eventId, guest_id: g.id })));
+        .upsert(uninvited.map(g => ({ event_id: eventId, guest_id: g.id })), { onConflict: 'event_id,guest_id' });
 
       if (error) throw error;
 
