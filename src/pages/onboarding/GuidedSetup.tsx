@@ -263,7 +263,11 @@ export const GuidedSetup: React.FC = () => {
 
       const nextIndex = currentStepIndex + 1;
       if (nextIndex < steps.length) {
-        setCurrentStep(steps[nextIndex]);
+        const nextStep = steps[nextIndex];
+        if (nextStep === 'complete') {
+          clearGuidedSetupDraft();
+        }
+        setCurrentStep(nextStep);
       }
     } catch (err: unknown) {
         setError((err as Error).message || 'Could not save this step right now. Please try again.');
