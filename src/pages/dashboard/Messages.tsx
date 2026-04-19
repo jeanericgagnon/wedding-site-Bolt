@@ -103,7 +103,7 @@ function writeDemoMessages(items: Message[]) {
   } catch {}
 }
 
-async function triggerBulkSend(messageId: string): Promise<{ delivered: number; failed: number; total: number; status: string }> {
+async function triggerBulkSend(messageId: string): Promise<{ delivered: number; failed: number; skipped?: number; total: number; status: string }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
   const res = await fetch(BULK_SEND_URL, {
@@ -1391,12 +1391,15 @@ export const DashboardMessages: React.FC = () => {
         await fetchMessages();
         try {
           const result = await triggerBulkSend(inserted.id);
-          if (result.failed === 0) {
+          const skipped = result.skipped ?? 0;
+          if (result.failed === 0 && skipped === 0) {
             toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
+          } else if (result.delivered === 0 && result.failed === 0 && skipped > 0) {
+            toast(`No messages sent: ${skipped} recipient${skipped !== 1 ? 's were' : ' was'} skipped.`, 'info');
           } else if (result.delivered === 0) {
-            toast(`Delivery failed for all ${result.failed} recipient${result.failed !== 1 ? 's' : ''}. Check message history.`, 'error');
+            toast(`Delivery failed for all ${result.failed} recipient${result.failed !== 1 ? 's' : ''}${skipped > 0 ? ` • ${skipped} skipped` : ''}. Check message history.`, 'error');
           } else {
-            toast(`Sent to ${result.delivered}, failed for ${result.failed}. Check message history.`, 'info');
+            toast(`Sent ${result.delivered}${result.failed > 0 ? ` • failed ${result.failed}` : ''}${skipped > 0 ? ` • skipped ${skipped}` : ''}. Check message history.`, 'info');
           }
         } catch (sendErr) {
           toast(sendErr instanceof Error ? sendErr.message : 'Delivery failed. Check message history.', 'error');
@@ -1560,10 +1563,13 @@ export const DashboardMessages: React.FC = () => {
       await fetchMessages();
       try {
         const result = await triggerBulkSend(message.id);
-        if (result.failed === 0) {
+        const skipped = result.skipped ?? 0;
+        if (result.failed === 0 && skipped === 0) {
           toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
+        } else if (result.delivered === 0 && result.failed === 0 && skipped > 0) {
+          toast(`Retry finished with ${skipped} skipped recipient${skipped !== 1 ? 's' : ''}.`, 'info');
         } else {
-          toast(`Sent: ${result.delivered}, failed: ${result.failed}`, result.delivered === 0 ? 'error' : 'info');
+          toast(`Sent ${result.delivered}${result.failed > 0 ? ` • failed ${result.failed}` : ''}${skipped > 0 ? ` • skipped ${skipped}` : ''}`, result.delivered === 0 && result.failed > 0 ? 'error' : 'info');
         }
       } catch (sendErr) {
         await supabase
@@ -1612,12 +1618,15 @@ export const DashboardMessages: React.FC = () => {
 
       toast('Sending scheduled message now…', 'info');
       const result = await triggerBulkSend(message.id);
-      if (result.failed === 0) {
+      const skipped = result.skipped ?? 0;
+      if (result.failed === 0 && skipped === 0) {
         toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
+      } else if (result.delivered === 0 && result.failed === 0 && skipped > 0) {
+        toast(`No messages sent: ${skipped} recipient${skipped !== 1 ? 's were' : ' was'} skipped.`, 'info');
       } else if (result.delivered === 0) {
-        toast(`Delivery failed for all ${result.failed} recipient${result.failed !== 1 ? 's' : ''}.`, 'error');
+        toast(`Delivery failed for all ${result.failed} recipient${result.failed !== 1 ? 's' : ''}${skipped > 0 ? ` • ${skipped} skipped` : ''}.`, 'error');
       } else {
-        toast(`Sent to ${result.delivered}, failed for ${result.failed}.`, 'info');
+        toast(`Sent ${result.delivered}${result.failed > 0 ? ` • failed ${result.failed}` : ''}${skipped > 0 ? ` • skipped ${skipped}` : ''}.`, 'info');
       }
       deliveryTriggered = true;
       await fetchMessages();
@@ -1735,7 +1744,7 @@ export const DashboardMessages: React.FC = () => {
       } else if (result.failed === 0 && result.partial === 0) {
         toast(`Processed ${result.processed} scheduled message${result.processed !== 1 ? 's' : ''}.`, 'success');
       } else {
-        toast(`Processed ${result.processed}: sent ${result.sent}, partial ${result.partial}, failed ${result.failed}.`, result.failed > 0 ? 'error' : 'info');
+        toast(`Processed ${result.processed}: sent ${result.sent}, partial ${result.partial}, failed ${result.failed}${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}.`, result.failed > 0 ? 'error' : 'info');
       }
       await fetchMessages();
     } catch (err) {
