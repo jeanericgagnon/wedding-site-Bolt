@@ -220,7 +220,10 @@ export const DashboardItinerary: React.FC = () => {
 
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
-      if (!user) return;
+      if (!user) {
+        setEvents([]);
+        return;
+      }
 
       const activeSite = await resolveActiveSiteForUser(user.id);
       const { data: sites, error: siteError } = await supabase
@@ -230,7 +233,10 @@ export const DashboardItinerary: React.FC = () => {
         .maybeSingle();
       if (siteError) throw siteError;
 
-      if (!sites) return;
+      if (!sites) {
+        setEvents([]);
+        return;
+      }
 
       const { data: eventsData, error } = await supabase
         .from('itinerary_events')
