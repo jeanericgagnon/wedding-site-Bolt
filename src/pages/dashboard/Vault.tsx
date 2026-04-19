@@ -1072,7 +1072,14 @@ setWeddingSiteId('demo-site-id');
         return;
       }
 
-      if (!user) return;
+      if (!user) {
+        setWeddingSiteId(null);
+        setVaultConfigs([]);
+        setEntries([]);
+        setGoogleDriveConnected(false);
+        setDriveNeedsReconnect(false);
+        return;
+      }
       const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
         .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected, couple_name_1, couple_name_2')
@@ -1080,7 +1087,14 @@ setWeddingSiteId('demo-site-id');
         .maybeSingle();
       if (siteError) throw siteError;
 
-      if (!site) return;
+      if (!site) {
+        setWeddingSiteId(null);
+        setVaultConfigs([]);
+        setEntries([]);
+        setGoogleDriveConnected(false);
+        setDriveNeedsReconnect(false);
+        return;
+      }
       setWeddingSiteId(site.id);
       setVaultStorageProvider('google_drive');
       setGoogleDriveConnected(!!(site as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
