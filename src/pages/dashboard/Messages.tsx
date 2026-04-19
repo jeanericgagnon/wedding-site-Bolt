@@ -506,9 +506,17 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const [scheduleInput, setScheduleInput] = React.useState(initialScheduleInput);
   const messageDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id);
   const failedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'failed');
+  const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
   const topFailureReasons = Array.from(
     failedDeliveries.reduce((map, delivery) => {
       const key = (delivery.error_message || 'Unknown provider error').trim();
+      map.set(key, (map.get(key) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>()).entries(),
+  ).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const topSkipReasons = Array.from(
+    skippedDeliveries.reduce((map, delivery) => {
+      const key = (delivery.error_message || 'Skipped before send').trim();
       map.set(key, (map.get(key) ?? 0) + 1);
       return map;
     }, new Map<string, number>()).entries(),
@@ -680,6 +688,49 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               </div>
             </div>
           )}
+
+          {skippedDeliveries.length > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">Skipped before send</p>
+                  <p className="mt-1 text-xs text-amber-700">These recipients were part of the audience but were skipped because contact info was missing or invalid.</p>
+                </div>
+                <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700">{skippedDeliveries.length} skipped</span>
+              </div>
+
+              {topSkipReasons.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {topSkipReasons.map(([reason, count]) => (
+                    <div key={reason} className="flex items-start justify-between gap-3 rounded-lg border border-amber-100 bg-white/80 px-3 py-2 text-xs">
+                      <span className="text-amber-800">{reason}</span>
+                      <span className="shrink-0 text-amber-600">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-3 rounded-lg border border-amber-100 bg-white/80">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-amber-100">
+                  <p className="text-xs font-medium text-amber-900">Skipped recipients</p>
+                  <p className="text-[11px] text-amber-600">Most recent first</p>
+                </div>
+                <div className="max-h-48 overflow-y-auto divide-y divide-amber-100">
+                  {skippedDeliveries.slice(0, 8).map((delivery) => (
+                    <div key={delivery.id} className="px-3 py-2.5 text-xs">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-amber-900">{delivery.recipient_email || 'Unknown recipient'}</p>
+                          <p className="mt-0.5 text-amber-700">{delivery.error_message || 'Skipped before the provider was called.'}</p>
+                        </div>
+                        <span className="shrink-0 text-[11px] text-amber-600">{delivery.attempted_at ? new Date(delivery.attempted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Skipped'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {(message.delivered_count != null || message.failed_count != null) && (
@@ -701,6 +752,12 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                 <span className="flex items-center gap-1.5 text-warning">
                   <AlertCircle size={13} />
                   {unreachedCount} unreached
+                </span>
+              )}
+              {skippedDeliveries.length > 0 && (
+                <span className="flex items-center gap-1.5 text-warning">
+                  <AlertCircle size={13} />
+                  {skippedDeliveries.length} skipped
                 </span>
               )}
             </div>
@@ -1913,6 +1970,7 @@ export const DashboardMessages: React.FC = () => {
     const attempted = deliveries.filter((d) => d.status === 'sent' || d.status === 'failed');
     const sent = deliveries.filter((d) => d.status === 'sent').length;
     const failed = deliveries.filter((d) => d.status === 'failed').length;
+    const skipped = deliveries.filter((d) => d.status === 'skipped').length;
     const withProviderId = deliveries.filter((d) => !!d.provider_message_id).length;
     const errorTop = Array.from(
       deliveries
@@ -1925,7 +1983,7 @@ export const DashboardMessages: React.FC = () => {
         .entries(),
     ).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const sentRate = attempted.length > 0 ? Math.round((sent / attempted.length) * 100) : 0;
-    return { attempted: attempted.length, sent, failed, withProviderId, sentRate, errorTop };
+    return { attempted: attempted.length, sent, failed, skipped, withProviderId, sentRate, errorTop };
   }, [deliveries]);
 
   if (loading) {
@@ -2663,6 +2721,37 @@ export const DashboardMessages: React.FC = () => {
 
           <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary mb-4">
             Delivery health is based on message and delivery logs available in this workspace. Use it to spot what needs attention quickly, not as a full provider-grade reporting screen.
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            {[
+              {
+                label: 'Provider attempts',
+                value: providerTelemetry.attempted,
+                detail: `${providerTelemetry.sentRate}% sent rate across attempted deliveries`,
+              },
+              {
+                label: 'Skipped before send',
+                value: providerTelemetry.skipped,
+                detail: 'Missing or invalid contact info',
+              },
+              {
+                label: 'Provider IDs',
+                value: providerTelemetry.withProviderId,
+                detail: 'Rows tied to provider message ids',
+              },
+              {
+                label: 'Top provider errors',
+                value: providerTelemetry.errorTop.length,
+                detail: providerTelemetry.errorTop[0]?.[0] ?? 'No provider failures logged',
+              },
+            ].map((item) => (
+              <div key={item.label} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-3 py-2.5">
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{item.label}</p>
+                <p className="mt-1 text-sm font-semibold text-text-primary">{item.value}</p>
+                <p className="mt-1 text-[11px] text-text-tertiary line-clamp-2">{item.detail}</p>
+              </div>
+            ))}
           </div>
 
           {audienceBreakdown.length > 0 && (
