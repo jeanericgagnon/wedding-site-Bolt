@@ -2529,12 +2529,8 @@ Proceed with send?`)) return;
     try {
       let resolvedSiteId = weddingSiteId;
       if (!resolvedSiteId && !isDemoMode) {
-        const { data: site } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('user_id', user?.id)
-          .maybeSingle();
-        resolvedSiteId = (site?.id as string | null) ?? null;
+        const activeSite = user?.id ? await resolveActiveSiteForUser(user.id) : null;
+        resolvedSiteId = activeSite?.id ?? null;
         if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
       }
       if (!resolvedSiteId && !isDemoMode) {
