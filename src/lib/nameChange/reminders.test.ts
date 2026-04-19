@@ -329,6 +329,38 @@ describe('name change reminder suggestions', () => {
         lastTouchedAt: '2026-04-18T12:00:00.000Z',
         isStale: true,
       },
-    ])).toEqual({ total: 2, stale: 2, staleTodo: 1, staleInProgress: 1, highUrgency: 1 });
+    ])).toEqual({ total: 2, stale: 2, staleTodo: 1, staleInProgress: 1, highUrgency: 1, stalePriority: 'mixed' });
+  });
+
+  it('classifies stale priority toward untouched or moving work', () => {
+    expect(summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'a',
+        label: 'A',
+        dependsOnStepId: 'step-a',
+        dependentStepTitle: 'Step A',
+        dependentStepExecutionStatus: 'todo',
+        reminderStatus: 'pending',
+        urgency: 'medium',
+        suggestedOffsetDays: 2,
+        lastTouchedAt: null,
+        isStale: true,
+      },
+    ]).stalePriority).toBe('untouched');
+
+    expect(summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'b',
+        label: 'B',
+        dependsOnStepId: 'step-b',
+        dependentStepTitle: 'Step B',
+        dependentStepExecutionStatus: 'in_progress',
+        reminderStatus: 'scheduled',
+        urgency: 'medium',
+        suggestedOffsetDays: 5,
+        lastTouchedAt: '2026-04-18T12:00:00.000Z',
+        isStale: true,
+      },
+    ]).stalePriority).toBe('moving');
   });
 });
