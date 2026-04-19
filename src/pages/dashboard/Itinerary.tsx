@@ -950,31 +950,39 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
   async function loadGuests() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
       if (!user) return;
 
-      const { data: site } = await supabase
+      const activeSite = await resolveActiveSiteForUser(user.id);
+      const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
+        .eq('id', activeSite?.id ?? '')
         .single();
+      if (siteError) throw siteError;
 
       if (!site) return;
 
-      const { data: guests } = await supabase
+      const { data: guests, error: guestsError } = await supabase
         .from('guests')
         .select('*')
         .eq('wedding_site_id', site.id)
         .order('name');
+      if (guestsError) throw guestsError;
 
-      const { data: invitations } = await supabase
+      const { data: invitations, error: invitationsError } = await supabase
         .from('event_invitations')
         .select('guest_id')
         .eq('event_id', eventId);
+      if (invitationsError) throw invitationsError;
 
       setAllGuests(guests || []);
       setInvitedGuestIds(new Set(invitations?.map((i) => i.guest_id) || []));
     } catch {
+      setAllGuests([]);
+      setInvitedGuestIds(new Set());
+      alert('Failed to load event guest list. Please try again.');
     } finally {
       setLoading(false);
     }
