@@ -1433,6 +1433,55 @@ export const DashboardMessages: React.FC = () => {
     toast(mode === 'edit' ? 'Loaded into composer for editing.' : 'Copied into composer as a new message.', 'info');
   }
 
+  function startFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
+    if (!activeCampaignLatestMessage) return;
+
+    const audience = activeCampaignLatestMessage.audience_filter ?? (activeCampaignLatestMessage.recipient_filter?.audience as string) ?? 'all';
+    const campaignBase = getCampaignName(activeCampaignLatestMessage) ?? activeCampaignThread?.name ?? activeCampaignLatestMessage.subject;
+
+    if (mode === 'reminder') {
+      applyComposerTemplate('rsvp-reminder', {
+        audience,
+        channel: 'email',
+        scheduleType: 'now',
+        scheduleDate: '',
+        scheduleTime: '',
+        campaignName: `${campaignBase} follow-up`,
+      });
+      setShowRecipientPreview(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('Loaded thread follow-up reminder into composer.', 'info');
+      return;
+    }
+
+    if (mode === 'day-of') {
+      applyComposerTemplate('day-of-update', {
+        audience,
+        channel: 'sms',
+        scheduleType: 'now',
+        scheduleDate: '',
+        scheduleTime: '',
+        campaignName: `${campaignBase} day-of update`,
+      });
+      setShowRecipientPreview(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('Loaded thread day-of update into composer.', 'info');
+      return;
+    }
+
+    applyComposerTemplate('thank-you', {
+      audience,
+      channel: 'email',
+      scheduleType: 'now',
+      scheduleDate: '',
+      scheduleTime: '',
+      campaignName: `${campaignBase} thank you`,
+    });
+    setShowRecipientPreview(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast('Loaded thread thank-you into composer.', 'info');
+  }
+
   async function handleRetry(message: Message) {
     setRetryingMessageId(message.id);
     try {
@@ -2958,6 +3007,29 @@ export const DashboardMessages: React.FC = () => {
                         Edit in composer
                       </Button>
                     </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startFollowUpFromCampaignThread('reminder')}
+                    >
+                      Next: reminder
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startFollowUpFromCampaignThread('day-of')}
+                    >
+                      Next: day-of update
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startFollowUpFromCampaignThread('thank-you')}
+                    >
+                      Next: thank you
+                    </Button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
                     <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Recipients {getRecipientCount(activeCampaignLatestMessage)}</span>
