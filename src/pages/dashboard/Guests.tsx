@@ -1455,6 +1455,7 @@ export const DashboardGuests: React.FC = () => {
 
     setBulkSending(true);
     let successCount = 0;
+    let failedCount = 0;
     try {
       for (const guest of selectedRecipients) {
         if (!guest.email) continue;
@@ -1481,13 +1482,23 @@ export const DashboardGuests: React.FC = () => {
           if (guestUpdateError) throw guestUpdateError;
           successCount += 1;
         } catch {
+          failedCount += 1;
           // continue
         }
       }
       if (successCount > 0) {
         await fetchGuests();
       }
-      toast(successCount > 0 ? `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}` : 'No selected reminders were sent.', successCount > 0 ? 'success' : 'error');
+      toast(
+        successCount > 0
+          ? (failedCount > 0
+              ? `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}, failed ${failedCount}`
+              : `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}`)
+          : (failedCount > 0
+              ? `All ${failedCount} selected reminder${failedCount === 1 ? '' : 's'} failed.`
+              : 'No selected reminders were sent.'),
+        successCount > 0 ? (failedCount > 0 ? 'info' : 'success') : 'error',
+      );
     } finally {
       setBulkSending(false);
     }
@@ -1518,6 +1529,7 @@ Proceed with send?`)) return;
 
     setBulkSending(true);
     let successCount = 0;
+    let failedCount = 0;
 
     try {
       for (const guest of reminderCandidates) {
@@ -1548,6 +1560,7 @@ Proceed with send?`)) return;
 
           successCount += 1;
         } catch {
+          failedCount += 1;
           // continue sending others
         }
       }
@@ -1555,10 +1568,15 @@ Proceed with send?`)) return;
       if (successCount > 0) {
         const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: successCount, sentAt }, ...prev].slice(0, 6));
-        toast(`Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`, 'success');
+        toast(
+          failedCount > 0
+            ? `Sent ${successCount} reminder${successCount === 1 ? '' : 's'}, failed ${failedCount}`
+            : `Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`,
+          failedCount > 0 ? 'info' : 'success',
+        );
         await fetchGuests();
       } else {
-        toast('No reminders were sent. Please try again.', 'error');
+        toast(failedCount > 0 ? `All ${failedCount} reminder${failedCount === 1 ? '' : 's'} failed.` : 'No reminders were sent. Please try again.', 'error');
       }
     } finally {
       setBulkSending(false);
@@ -1582,6 +1600,7 @@ Proceed with send?`)) return;
 
     setBulkSending(true);
     let successCount = 0;
+    let failedCount = 0;
     try {
       for (const guest of dueReminderCandidatesGlobal) {
         if (!guest.email) continue;
@@ -1605,6 +1624,7 @@ Proceed with send?`)) return;
           if (guestUpdateError) throw guestUpdateError;
           successCount += 1;
         } catch {
+          failedCount += 1;
           // continue
         }
       }
@@ -1612,10 +1632,15 @@ Proceed with send?`)) return;
       if (successCount > 0) {
         const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: successCount, sentAt }, ...prev].slice(0, 6));
-        toast(`Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}`, 'success');
+        toast(
+          failedCount > 0
+            ? `Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}, failed ${failedCount}`
+            : `Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}`,
+          failedCount > 0 ? 'info' : 'success',
+        );
         await fetchGuests();
       } else {
-        toast('No due reminders were sent. Please try again.', 'error');
+        toast(failedCount > 0 ? `All ${failedCount} due reminder${failedCount === 1 ? '' : 's'} failed.` : 'No due reminders were sent. Please try again.', 'error');
       }
     } finally {
       setBulkSending(false);
