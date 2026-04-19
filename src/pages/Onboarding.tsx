@@ -222,6 +222,7 @@ export const Onboarding: React.FC = () => {
         setStep('choice');
         window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
         window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
+        window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
       } else if (resumeHint === 'question' && resumeIndexValue) {
         const hintedIndex = Number(resumeIndexValue);
         if (!Number.isNaN(hintedIndex)) {
