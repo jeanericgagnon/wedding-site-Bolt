@@ -9,6 +9,7 @@ import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus
 import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
 import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
+import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
@@ -372,6 +373,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setQnaInput('');
   };
 
+
+  const escalateDoorReview = (guest: GuestLiteForCoordinator) => {
+    setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));
+    setPanelFocus('qna');
+    toast('Door issue moved into guest Q&A triage.', 'success');
+  };
+
   const saveQnaAnswer = async (id: string) => {
     const draftAnswer = qnaDraftAnswers[id] ?? qnaItems.find((item) => item.id === id)?.answer ?? '';
     const nextItems = updateCoordinatorQnaItem(qnaItems, id, draftAnswer);
@@ -530,13 +538,23 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       </div>
                       <p className="text-xs text-text-tertiary">{g.rsvp_status}{doorStatus === 'watch' ? ' · Flag before check-in' : ''}</p>
                     </div>
-                    <button
-                      onClick={() => canCheckIn && void toggleCheckIn(g)}
-                      disabled={!canCheckIn || doorStatus === 'watch'}
-                      className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
-                    >
-                      {g.checked_in_at ? 'Checked in' : doorStatus === 'watch' ? 'Review first' : 'Check in'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {doorStatus === 'watch' && canEditQna && (
+                        <button
+                          onClick={() => escalateDoorReview(g)}
+                          className="px-3 py-1.5 text-xs rounded-md border border-amber-200 text-amber-700 bg-amber-50"
+                        >
+                          Escalate
+                        </button>
+                      )}
+                      <button
+                        onClick={() => canCheckIn && void toggleCheckIn(g)}
+                        disabled={!canCheckIn || doorStatus === 'watch'}
+                        className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
+                      >
+                        {g.checked_in_at ? 'Checked in' : doorStatus === 'watch' ? 'Review first' : 'Check in'}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
