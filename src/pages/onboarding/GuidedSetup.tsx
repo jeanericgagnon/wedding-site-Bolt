@@ -10,6 +10,7 @@ import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatch
 import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
 import * as XLSX from 'xlsx';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
+import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
 
 type Step =
   | 'welcome'
@@ -193,7 +194,7 @@ export const GuidedSetup: React.FC = () => {
         }
       } catch (err: unknown) {
         if (!hasLocalDraft) {
-          setError((err as Error).message || 'Could not preload your wedding details right now. You can keep going and save manually.');
+          setError(buildGuidedSetupHydrationErrorMessage((err as Error).message));
         }
       }
     };
@@ -279,7 +280,7 @@ export const GuidedSetup: React.FC = () => {
         setCurrentStep(nextStep);
       }
     } catch (err: unknown) {
-        setError((err as Error).message || 'Could not save this step right now. Please try again.');
+        setError(buildGuidedSetupSaveErrorMessage((err as Error).message));
     }
   };
 
@@ -339,7 +340,7 @@ export const GuidedSetup: React.FC = () => {
         }
       });
     } catch (err: unknown) {
-        setError((err as Error).message || 'Could not finish setup right now. Please try again.');
+        setError(buildGuidedSetupSaveErrorMessage((err as Error).message || 'Could not finish setup right now.'));
     } finally {
       setLoading(false);
     }
