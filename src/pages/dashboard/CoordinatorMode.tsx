@@ -3,11 +3,12 @@ import { Input, Textarea } from '../../components/ui';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
+import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
@@ -227,7 +228,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     return guests.length;
   })();
 
-  const canEdit = canEditPlannerSurface(coordinatorRole);
+  const canCheckIn = canManageCoordinatorCheckIn(coordinatorRole);
+  const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole);
+  const canEditQna = canManageCoordinatorQna(coordinatorRole);
+  const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole);
+  const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole);
 
   const qnaCounts = useMemo(() => getCoordinatorQnaCounts(qnaItems), [qnaItems]);
 
@@ -492,8 +497,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <p className="text-xs text-text-tertiary">{g.rsvp_status}</p>
                   </div>
                   <button
-                    onClick={() => canEdit && void toggleCheckIn(g)}
-                    disabled={!canEdit}
+                    onClick={() => canCheckIn && void toggleCheckIn(g)}
+                    disabled={!canCheckIn}
                     className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : 'border-border text-text-secondary bg-white'}`}
                   >
                     {g.checked_in_at ? 'Checked in' : 'Check in'}
@@ -518,8 +523,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           <p className="text-sm text-text-primary">{e.event_name}</p>
                           <select
                             value={state}
-                            onChange={(ev) => canEdit && setTimelineState((prev) => setCoordinatorEventTimelineState(prev, e.id, ev.target.value as TimelineState))}
-                            disabled={!canEdit}
+                            onChange={(ev) => canEditTimeline && setTimelineState((prev) => setCoordinatorEventTimelineState(prev, e.id, ev.target.value as TimelineState))}
+                            disabled={!canEditTimeline}
                             className="text-[11px] rounded-md border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
                           >
                             <option value="up-next">Up next</option>
@@ -589,7 +594,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 ))}
               </div>
 
-              <fieldset disabled={!canEdit} className="space-y-2.5">
+              <fieldset disabled={!canSendAlerts} className="space-y-2.5">
                 <Input
                   value={alertForm.subject}
                   onChange={(e) => setAlertForm((prev) => ({ ...prev, subject: e.target.value }))}
@@ -626,13 +631,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={alertForm.scheduleType}
-                    onChange={(e) => setAlertForm((prev) => ({ ...prev, scheduleType: e.target.value as 'now' | 'later' }))}
+                    onChange={(e) => setAlertForm((prev) => ({ ...prev, scheduleType: (canScheduleAlerts ? e.target.value : 'now') as 'now' | 'later' }))}
                     className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                   >
                     <option value="now">Send now</option>
-                    <option value="later">Schedule</option>
+                    <option value="later" disabled={!canScheduleAlerts}>Schedule</option>
                   </select>
-                  {alertForm.scheduleType === 'later' ? (
+                  {alertForm.scheduleType === 'later' && canScheduleAlerts ? (
                     <div className="grid grid-cols-2 gap-2">
                       <input
                         type="date"
@@ -649,7 +654,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     </div>
                   ) : <div />}
                 </div>
-                <p className="text-[11px] text-text-tertiary">This will go to {alertAudienceCount} recipient{alertAudienceCount === 1 ? '' : 's'}{alertForm.scheduleType === 'later' ? ' at the scheduled time' : ''}.</p>
+                <p className="text-[11px] text-text-tertiary">This will go to {alertAudienceCount} recipient{alertAudienceCount === 1 ? '' : 's'}{alertForm.scheduleType === 'later' && canScheduleAlerts ? ' at the scheduled time' : ''}.</p>
+                {!canScheduleAlerts && canSendAlerts && <p className="text-[11px] text-text-tertiary">Coordinators can send updates now; scheduled sends stay with planners and the couple.</p>}
                 {alertValidationError && <p className="text-[11px] text-error">{alertValidationError}</p>}
                 <button
                   onClick={() => void sendDayOfAlert()}
@@ -683,7 +689,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <p className="text-sm font-medium text-text-primary">Guest questions</p>
                 <p className="text-[11px] text-text-tertiary">{qnaCounts.open} open · {qnaCounts.answered} answered</p>
               </div>
-              <fieldset disabled={!canEdit}>
+              <fieldset disabled={!canEditQna}>
               <div className="flex gap-2 mb-2">
                 <Input
                   value={qnaInput}
