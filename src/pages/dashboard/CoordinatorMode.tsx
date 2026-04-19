@@ -12,6 +12,7 @@ import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordina
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
+import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId } from '../../lib/coordinatorTimelineFocus';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 
@@ -246,10 +247,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
         : 'Run the room, keep communications aligned, and escalate only the decisions that need the couple.'
   };
 
+  const liveEventId = useMemo(() => getCoordinatorLiveEventId(events, timelineState), [events, timelineState]);
+  const upNextEventId = useMemo(() => getCoordinatorUpNextEventId(events, timelineState), [events, timelineState]);
+
   const liveEventAudience = useMemo(() => {
-    const live = events.find((e) => (timelineState[e.id] || 'up-next') === 'live');
+    const live = events.find((e) => e.id === liveEventId);
     return live ? `event:${live.id}` : null;
-  }, [events, timelineState]);
+  }, [events, liveEventId]);
 
   const alertStats = useMemo(() => {
     const total = alertLog.length;
@@ -517,10 +521,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 ) : (
                   events.map((e) => {
                     const state = timelineState[e.id] || 'up-next';
+                    const isLive = e.id === liveEventId;
+                    const isUpNext = e.id === upNextEventId;
                     return (
-                      <div key={e.id} className="rounded-lg border border-border/50 bg-surface-subtle/40 px-3 py-2">
+                      <div key={e.id} className={`rounded-lg border px-3 py-2 ${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}>
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm text-text-primary">{e.event_name}</p>
+                          <div>
+                            <p className="text-sm text-text-primary">{e.event_name}</p>
+                            <p className="text-[11px] text-text-tertiary">{isLive ? 'Live now' : isUpNext ? 'Up next' : state === 'done' ? 'Completed' : 'Queued'}</p>
+                          </div>
                           <select
                             value={state}
                             onChange={(ev) => canEditTimeline && setTimelineState((prev) => setCoordinatorEventTimelineState(prev, e.id, ev.target.value as TimelineState))}
