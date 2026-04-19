@@ -7,6 +7,7 @@ import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermi
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
+import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
 
 type GuestLite = {
   id: string;
@@ -140,12 +141,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (!siteId) return;
     try {
       const rawTimeline = localStorage.getItem(`dayof.timeline.${siteId}`);
-      if (rawTimeline) setTimelineState(JSON.parse(rawTimeline) as Record<string, TimelineState>);
+      if (rawTimeline) setTimelineState(normalizeCoordinatorTimelineState(JSON.parse(rawTimeline)) as Record<string, TimelineState>);
       const rawAlerts = localStorage.getItem(`dayof.alertlog.${siteId}`);
-      if (rawAlerts) setAlertLog(JSON.parse(rawAlerts) as AlertLog[]);
+      if (rawAlerts) setAlertLog(normalizeCoordinatorAlertLog(JSON.parse(rawAlerts)) as AlertLog[]);
       if (isDemoMode) {
         const rawQna = localStorage.getItem(`dayof.qna.${siteId}`);
-        if (rawQna) setQnaItems(JSON.parse(rawQna) as QnaItem[]);
+        if (rawQna) setQnaItems(normalizeCoordinatorQnaItems(JSON.parse(rawQna)) as QnaItem[]);
         else setQnaItems([
           { id: 'q1', question: 'What time should we arrive?', status: 'new' },
           { id: 'q2', question: 'Is parking available at the venue?', status: 'answered' },
