@@ -1683,11 +1683,16 @@ Proceed with send?`)) return;
               .order('changed_at', { ascending: false })
               .limit(12),
       ]);
+      if (eventsResult.error) throw eventsResult.error;
+      if (invitesResult.error) throw invitesResult.error;
+      if (!isDemoMode && auditResult.error) throw auditResult.error;
       setItineraryEvents((eventsResult.data ?? []) as ItineraryEvent[]);
       setGuestEventIds(new Set((invitesResult.data ?? []).map((r: { event_id: string }) => r.event_id)));
       if (!isDemoMode) {
         setGuestAuditEntries((auditResult.data ?? []) as GuestAuditEntry[]);
       }
+    } catch {
+      toast('Couldn’t load guest itinerary details right now. Please try again.', 'error');
     } finally {
       setLoadingDrawer(false);
     }
