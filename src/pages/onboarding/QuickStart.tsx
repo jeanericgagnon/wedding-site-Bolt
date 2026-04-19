@@ -31,6 +31,7 @@ import { resolveQuickStartResumeViewState } from '../../lib/quickStartResumeStat
 import { clampQuickStartQuestionIndex } from '../../lib/quickStartQuestionBounds';
 import { canResumeQuickStartFollowUps } from '../../lib/quickStartFollowUpGate';
 import { normalizeQuickStartClarifyingState } from '../../lib/quickStartClarifyingNormalize';
+import { normalizeQuickStartClarifyingMode } from '../../lib/quickStartClarifyingMode';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -194,7 +195,7 @@ export const QuickStart: React.FC = () => {
     }
     try {
       const parsed = normalizeQuickStartDraftSnapshot(JSON.parse(saved));
-      const normalizedClarifyingState = normalizeQuickStartClarifyingState(parsed.clarifyingState);
+      const normalizedClarifyingState = normalizeQuickStartClarifyingMode(normalizeQuickStartClarifyingState(parsed.clarifyingState));
       const restoredFollowUps = deriveFollowUpAnswersFromClarifyingState(normalizedClarifyingState, parsed.followUpAnswers);
       const restoredIndex = clampQuickStartQuestionIndex(parsed.currentIndex, questions.length);
       const canResumeFollowUps = canResumeQuickStartFollowUps(parsed.showFollowUps, normalizedClarifyingState);
