@@ -12,7 +12,7 @@ import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
-import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds } from '../../lib/eventRsvpCleanup';
+import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -1823,6 +1823,10 @@ Proceed with send?`)) return;
           .maybeSingle();
         if (invitationLookupError) throw invitationLookupError;
 
+        const eventRsvpSnapshots = invitationRow?.id
+          ? await getEventRsvpSnapshotsByInvitationIds([invitationRow.id])
+          : [];
+
         if (invitationRow?.id) {
           await deleteEventRsvpByInvitationId(invitationRow.id);
         }
@@ -1832,7 +1836,10 @@ Proceed with send?`)) return;
           .delete()
           .eq('event_id', eventId)
           .eq('guest_id', itineraryDrawerGuest.id);
-        if (inviteDeleteError) throw inviteDeleteError;
+        if (inviteDeleteError) {
+          await restoreEventRsvpSnapshots(eventRsvpSnapshots);
+          throw inviteDeleteError;
+        }
         setGuestEventIds(prev => { const n = new Set(prev); n.delete(eventId); return n; });
       } else {
         const { error: inviteInsertError } = await supabase

@@ -10,7 +10,7 @@ import { demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
-import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds } from '../../lib/eventRsvpCleanup';
+import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
 interface ItineraryEvent {
@@ -992,6 +992,10 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
         if (invitationLookupError) throw invitationLookupError;
 
+        const eventRsvpSnapshots = invitationRow?.id
+          ? await getEventRsvpSnapshotsByInvitationIds([invitationRow.id])
+          : [];
+
         if (invitationRow?.id) {
           await deleteEventRsvpByInvitationId(invitationRow.id);
         }
@@ -1002,7 +1006,10 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
           .eq('event_id', eventId)
           .eq('guest_id', guestId);
 
-        if (error) throw error;
+        if (error) {
+          await restoreEventRsvpSnapshots(eventRsvpSnapshots);
+          throw error;
+        }
 
         setInvitedGuestIds((prev) => {
           const next = new Set(prev);
@@ -1058,6 +1065,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       if (invitationLookupError) throw invitationLookupError;
 
       const invitationIds = (invitationRows ?? []).map((row: { id: string }) => row.id);
+      const eventRsvpSnapshots = await getEventRsvpSnapshotsByInvitationIds(invitationIds);
       if (invitationIds.length > 0) {
         await deleteEventRsvpsByInvitationIds(invitationIds);
       }
@@ -1067,7 +1075,10 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
         .delete()
         .eq('event_id', eventId);
 
-      if (error) throw error;
+      if (error) {
+        await restoreEventRsvpSnapshots(eventRsvpSnapshots);
+        throw error;
+      }
 
       setInvitedGuestIds(new Set());
       onUpdate();
