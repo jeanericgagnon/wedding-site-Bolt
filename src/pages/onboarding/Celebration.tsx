@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Heart, Sparkles, Calendar, ArrowRight } from 'lucide-react';
 import { Button, Card } from '../../components/ui';
-import { writeSignupReturnPath } from '../../lib/signupContinuation';
-import { clearAllOnboardingDraftStorage } from '../../lib/onboardingDraftCleanup';
+import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { buildQuickStartEntryPath } from '../../lib/quickStartContinuation';
 
 interface LocationState {
@@ -30,8 +29,7 @@ export const Celebration: React.FC = () => {
   const daysUntilWedding = state?.weddingDate ? calculateDaysUntil(state.weddingDate) : null;
 
   useEffect(() => {
-    clearAllOnboardingDraftStorage();
-    writeSignupReturnPath(null);
+    clearAllOnboardingContinuationState();
     const timer = setTimeout(() => {
       setShowConfetti(false);
     }, 5000);

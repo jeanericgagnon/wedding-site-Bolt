@@ -6,9 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
-import { writeSignupReturnPath } from '../lib/signupContinuation';
-import { clearOnboardingResumeStorage } from '../lib/onboardingResumeStorage';
-import { clearAllOnboardingDraftStorage } from '../lib/onboardingDraftCleanup';
+import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 
 const FEATURES = [
@@ -102,15 +100,11 @@ export const PaymentRequired: React.FC = () => {
 
   const handleBypassForNow = () => {
     if (typeof window !== 'undefined') {
-      clearAllOnboardingDraftStorage();
-      writeSignupReturnPath(null);
-      clearOnboardingResumeStorage();
+      clearAllOnboardingContinuationState();
       window.location.assign('/onboarding/celebration?bypassPayment=1');
       return;
     }
-    clearAllOnboardingDraftStorage();
-    writeSignupReturnPath(null);
-    clearOnboardingResumeStorage();
+    clearAllOnboardingContinuationState();
     navigate('/onboarding/celebration?bypassPayment=1', { replace: true });
   };
 
@@ -121,8 +115,7 @@ export const PaymentRequired: React.FC = () => {
     try {
       const status = await fetchPaymentStatus(user.id);
       if (status === 'active') {
-        clearAllOnboardingDraftStorage();
-        writeSignupReturnPath(null);
+        clearAllOnboardingContinuationState();
         navigate('/onboarding/celebration?from=payment', { replace: true });
       } else {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');

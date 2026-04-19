@@ -4,9 +4,7 @@ import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { fetchPaymentStatus, verifyCheckoutSession } from '../lib/stripeService';
-import { clearAllOnboardingDraftStorage } from '../lib/onboardingDraftCleanup';
-import { clearOnboardingResumeStorage } from '../lib/onboardingResumeStorage';
-import { writeSignupReturnPath } from '../lib/signupContinuation';
+import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_ATTEMPTS = 15;
@@ -29,8 +27,7 @@ export const PaymentSuccess: React.FC = () => {
         try {
           const verified = await verifyCheckoutSession(sessionId);
           if (verified.paid) {
-            clearAllOnboardingDraftStorage();
-            writeSignupReturnPath(null);
+            clearAllOnboardingContinuationState();
             setStatus('confirmed');
             setTimeout(() => navigate('/onboarding/celebration?from=checkout', { replace: true }), 1200);
             return;
@@ -44,8 +41,7 @@ export const PaymentSuccess: React.FC = () => {
         try {
           const paymentStatus = await fetchPaymentStatus(user.id);
           if (paymentStatus === 'active') {
-            clearAllOnboardingDraftStorage();
-            writeSignupReturnPath(null);
+            clearAllOnboardingContinuationState();
             setStatus('confirmed');
             setTimeout(() => navigate('/onboarding/celebration?from=checkout', { replace: true }), 1500);
             return;
@@ -105,7 +101,7 @@ export const PaymentSuccess: React.FC = () => {
               <Button variant="primary" size="md" onClick={() => window.location.reload()}>
                 Check again
               </Button>
-              <Button variant="ghost" size="md" onClick={() => { clearAllOnboardingDraftStorage(); clearOnboardingResumeStorage(); writeSignupReturnPath(null); navigate('/payment-required'); }}>
+              <Button variant="ghost" size="md" onClick={() => { clearAllOnboardingContinuationState(); navigate('/payment-required'); }}>
                 Back to payment page
               </Button>
             </div>
