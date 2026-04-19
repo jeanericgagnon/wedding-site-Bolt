@@ -274,7 +274,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const savedBuckets = ((((site.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.photoBuckets as ReturnType<typeof createEmptyPhotoBuckets> | undefined) ?? null);
       if (savedBuckets) setPhotoBuckets(savedBuckets);
 
-      const [{ data: eventsData }, { data: bucketData }, { data: uploadsData }] = await Promise.all([
+      const [{ data: eventsData, error: eventsError }, { data: bucketData, error: bucketError }, { data: uploadsData, error: uploadsError }] = await Promise.all([
         supabase
           .from('itinerary_events')
           .select('id,event_name,event_date')
@@ -293,6 +293,10 @@ export const GuestPhotoSharing: React.FC = () => {
           .order('uploaded_at', { ascending: false })
           .limit(200),
       ]);
+
+      if (eventsError) throw eventsError;
+      if (bucketError) throw bucketError;
+      if (uploadsError) throw uploadsError;
 
       const nextBuckets = (bucketData as PhotoBucketRow[] | null) ?? [];
       setEvents((eventsData as ItineraryEvent[] | null) ?? []);
