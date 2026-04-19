@@ -8,6 +8,7 @@ import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
+import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 
 type GuestLite = {
   id: string;
@@ -476,7 +477,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           <p className="text-sm text-text-primary">{e.event_name}</p>
                           <select
                             value={state}
-                            onChange={(ev) => canEdit && setTimelineState((prev) => ({ ...prev, [e.id]: ev.target.value as TimelineState }))}
+                            onChange={(ev) => canEdit && setTimelineState((prev) => setCoordinatorEventTimelineState(prev, e.id, ev.target.value as TimelineState))}
                             disabled={!canEdit}
                             className="text-[11px] rounded-md border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
                           >
