@@ -723,7 +723,10 @@ export const DashboardGuests: React.FC = () => {
         if (error) throw error;
         if (!cancelled) setRsvpAuditFeed((data ?? []) as GuestAuditEntry[]);
       } catch {
-        if (!cancelled) setRsvpAuditFeed([]);
+        if (!cancelled) {
+          setRsvpAuditFeed([]);
+          toast('Couldn’t load RSVP audit history right now. Please try again.', 'error');
+        }
       } finally {
         if (!cancelled) setRsvpAuditLoading(false);
       }
