@@ -319,6 +319,12 @@ export const GuestPhotoSharing: React.FC = () => {
         await load(true);
         return;
       }
+      setSiteId(null);
+      setSiteSlug(null);
+      setEvents([]);
+      setBuckets([]);
+      setUploads([]);
+      setWindowDrafts({});
       setError((err as Error)?.message || 'Failed to load photo sharing.');
     } finally {
       setLoading(false);
