@@ -20,6 +20,7 @@ import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId } from '../../lib/coordinatorTimelineFocus';
+import { getCoordinatorPrimaryTimelineAction } from '../../lib/coordinatorTimelineActions';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
@@ -380,6 +381,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
     toast('Door issue moved into guest Q&A triage.', 'success');
   };
 
+
+  const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {
+    if (!nextState || !canEditTimeline) return;
+    setTimelineState((prev) => setCoordinatorEventTimelineState(prev, eventId, nextState));
+    setPanelFocus('timeline');
+  };
+
   const saveQnaAnswer = async (id: string) => {
     const draftAnswer = qnaDraftAnswers[id] ?? qnaItems.find((item) => item.id === id)?.answer ?? '';
     const nextItems = updateCoordinatorQnaItem(qnaItems, id, draftAnswer);
@@ -572,6 +580,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     const state = timelineState[e.id] || 'up-next';
                     const isLive = e.id === liveEventId;
                     const isUpNext = e.id === upNextEventId;
+                    const primaryAction = getCoordinatorPrimaryTimelineAction({
+                      event: e,
+                      liveEventId,
+                      upNextEventId,
+                      timelineState,
+                    });
                     return (
                       <div key={e.id} className={`rounded-lg border px-3 py-2 ${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}>
                         <div className="flex items-center justify-between gap-2">
@@ -590,7 +604,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
                             <option value="done">Done</option>
                           </select>
                         </div>
-                        <p className="text-xs text-text-tertiary">{e.start_time ? new Date(e.start_time).toLocaleString() : 'Time TBD'}</p>
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <p className="text-xs text-text-tertiary">{e.start_time ? new Date(e.start_time).toLocaleString() : 'Time TBD'}</p>
+                          <button
+                            type="button"
+                            disabled={!canEditTimeline || !primaryAction.nextState}
+                            onClick={() => runTimelineAction(e.id, primaryAction.nextState)}
+                            className="text-[11px] px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
+                          >
+                            {primaryAction.label}
+                          </button>
+                        </div>
                       </div>
                     );
                   })
