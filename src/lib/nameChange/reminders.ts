@@ -79,6 +79,7 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
   const normal = attentionItems.filter((item) => (item.priorityTier ?? 'normal') === 'normal').length;
   const actionableNow = attentionItems.filter((item) => item.actionability === 'actionable_now').length;
   const blockedByUntouchedStep = attentionItems.filter((item) => item.actionability === 'blocked_by_untouched_step').length;
+  const blockedAndStale = attentionItems.filter((item) => item.actionability === 'blocked_by_untouched_step' && item.isStale).length;
 
   return {
     total: attentionItems.length,
@@ -91,6 +92,7 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     normal,
     actionableNow,
     blockedByUntouchedStep,
+    blockedAndStale,
     stalePriority: staleTodo === staleInProgress ? 'mixed' : staleTodo > staleInProgress ? 'untouched' : 'moving',
   };
 }
