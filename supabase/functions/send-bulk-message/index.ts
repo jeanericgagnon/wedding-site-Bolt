@@ -199,9 +199,14 @@ async function deliverMessage(opts: {
     return { ok: false, status: 500, body: { error: "Failed to load guest list" } };
   }
 
-  const eligibleGuests = (guests ?? []).filter((g) => {
+  const allGuests = guests ?? [];
+  const eligibleGuests = allGuests.filter((g) => {
     if (channel === "sms") return !!g.phone;
     return g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email);
+  });
+  const skippedGuests = allGuests.filter((g) => {
+    if (channel === "sms") return !g.phone;
+    return !(g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email));
   });
 
   await adminClient
@@ -346,6 +351,24 @@ async function deliverMessage(opts: {
     delivered_at?: string;
   }> = [];
 
+  for (const guest of skippedGuests) {
+    const guestName = guest.first_name && guest.last_name
+      ? `${guest.first_name} ${guest.last_name}`
+      : guest.name;
+
+    deliveryInserts.push({
+      message_id: messageId,
+      guest_id: guest.id,
+      recipient_email: channel === "sms" ? (guest.phone ?? "") : (guest.email ?? ""),
+      recipient_name: guestName,
+      status: "skipped",
+      error_message: channel === "sms"
+        ? "Skipped: guest is missing a phone number"
+        : "Skipped: guest is missing a valid email address",
+      attempted_at: new Date().toISOString(),
+    });
+  }
+
   for (const guest of eligibleGuests) {
     const guestName = guest.first_name && guest.last_name
       ? `${guest.first_name} ${guest.last_name}`
@@ -427,7 +450,12 @@ async function deliverMessage(opts: {
     await adminClient.from("message_deliveries").insert(deliveryInserts);
   }
 
-  const finalStatus = failedCount === 0 ? "sent" : deliveredCount === 0 ? "failed" : "partial";
+  const skippedCount = skippedGuests.length;
+  const finalStatus = failedCount === 0 && skippedCount === 0
+    ? "sent"
+    : deliveredCount === 0 && failedCount > 0
+    ? "failed"
+    : "partial";
   const sentAt = new Date().toISOString();
 
   const fullUpdate = await adminClient
@@ -438,7 +466,7 @@ async function deliverMessage(opts: {
       sending_finished_at: sentAt,
       delivered_count: deliveredCount,
       failed_count: failedCount,
-      recipient_count: eligibleGuests.length,
+      recipient_count: allGuests.length,
     })
     .eq("id", messageId);
 
@@ -448,7 +476,7 @@ async function deliverMessage(opts: {
       .update({
         status: finalStatus,
         sent_at: sentAt,
-        recipient_count: eligibleGuests.length,
+        recipient_count: allGuests.length,
       })
       .eq("id", messageId);
   }
@@ -460,7 +488,8 @@ async function deliverMessage(opts: {
       success: true,
       delivered: deliveredCount,
       failed: failedCount,
-      total: eligibleGuests.length,
+      total: allGuests.length,
+      skipped: skippedCount,
       status: finalStatus,
       messageId,
     },
