@@ -459,6 +459,7 @@ describe('nameChangeService normalization', () => {
     expect(merged.summary.latestMovementPosture).toBe('step-led');
     expect(merged.summary.reminderChurnRisk).toBe('low');
     expect(merged.summary.hasRecentCompletion).toBe(true);
+    expect(merged.summary.hasRecentStart).toBe(true);
   });
 
   it('appends manual reminder activity into recent execution activity', () => {
@@ -482,6 +483,7 @@ describe('nameChangeService normalization', () => {
     expect(updatedPlan.summary.latestMovementPosture).toBe('reminder-led');
     expect(updatedPlan.summary.reminderChurnRisk).toBe('medium');
     expect(updatedPlan.summary.hasRecentCompletion).toBe(false);
+    expect(updatedPlan.summary.hasRecentStart).toBe(false);
   });
 
   it('marks latest movement posture as mixed when recent activity is balanced', () => {
@@ -503,6 +505,7 @@ describe('nameChangeService normalization', () => {
     expect(mixedPlan.summary.latestMovementPosture).toBe('mixed');
     expect(mixedPlan.summary.reminderChurnRisk).toBe('low');
     expect(mixedPlan.summary.hasRecentCompletion).toBe(false);
+    expect(mixedPlan.summary.hasRecentStart).toBe(true);
   });
 
   it('flags high reminder churn when recent activity is dominated by reminder actions', () => {
@@ -518,6 +521,7 @@ describe('nameChangeService normalization', () => {
     expect(churnPlan.summary.latestMovementPosture).toBe('reminder-led');
     expect(churnPlan.summary.reminderChurnRisk).toBe('high');
     expect(churnPlan.summary.hasRecentCompletion).toBe(false);
+    expect(churnPlan.summary.hasRecentStart).toBe(false);
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {
