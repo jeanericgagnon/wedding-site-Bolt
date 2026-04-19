@@ -360,6 +360,8 @@ describe('name change reminder suggestions', () => {
       actionableNow: 0,
       blockedByUntouchedStep: 0,
       blockedAndStale: 0,
+      actionablePriority: 0,
+      actionableNormal: 0,
       stalePriority: 'mixed',
     });
   });
@@ -395,6 +397,42 @@ describe('name change reminder suggestions', () => {
         isStale: true,
       },
     ]).blockedAndStale).toBe(1);
+  });
+
+  it('counts actionable priority vs normal items separately', () => {
+    const summary = summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'a',
+        label: 'A',
+        dependsOnStepId: 'step-a',
+        dependentStepTitle: 'Step A',
+        dependentStepExecutionStatus: 'in_progress',
+        reminderStatus: 'scheduled',
+        urgency: 'high',
+        priorityTier: 'elevated',
+        actionability: 'actionable_now',
+        suggestedOffsetDays: 1,
+        lastTouchedAt: '2026-04-18T12:00:00.000Z',
+        isStale: false,
+      },
+      {
+        reminderKey: 'b',
+        label: 'B',
+        dependsOnStepId: 'step-b',
+        dependentStepTitle: 'Step B',
+        dependentStepExecutionStatus: 'in_progress',
+        reminderStatus: 'scheduled',
+        urgency: 'low',
+        priorityTier: 'normal',
+        actionability: 'actionable_now',
+        suggestedOffsetDays: 5,
+        lastTouchedAt: '2026-04-18T12:00:00.000Z',
+        isStale: false,
+      },
+    ]);
+
+    expect(summary.actionablePriority).toBe(1);
+    expect(summary.actionableNormal).toBe(1);
   });
 
   it('classifies stale priority toward untouched or moving work', () => {

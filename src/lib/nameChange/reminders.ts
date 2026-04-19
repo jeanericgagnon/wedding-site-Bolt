@@ -80,6 +80,8 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
   const actionableNow = attentionItems.filter((item) => item.actionability === 'actionable_now').length;
   const blockedByUntouchedStep = attentionItems.filter((item) => item.actionability === 'blocked_by_untouched_step').length;
   const blockedAndStale = attentionItems.filter((item) => item.actionability === 'blocked_by_untouched_step' && item.isStale).length;
+  const actionablePriority = attentionItems.filter((item) => item.actionability === 'actionable_now' && (item.priorityTier === 'critical' || item.priorityTier === 'elevated')).length;
+  const actionableNormal = attentionItems.filter((item) => item.actionability === 'actionable_now' && (item.priorityTier ?? 'normal') === 'normal').length;
 
   return {
     total: attentionItems.length,
@@ -93,6 +95,8 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     actionableNow,
     blockedByUntouchedStep,
     blockedAndStale,
+    actionablePriority,
+    actionableNormal,
     stalePriority: staleTodo === staleInProgress ? 'mixed' : staleTodo > staleInProgress ? 'untouched' : 'moving',
   };
 }
