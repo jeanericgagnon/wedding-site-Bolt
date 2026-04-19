@@ -27,6 +27,7 @@ import { persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../l
 import { buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
 import { deriveFollowUpAnswersFromClarifyingState } from '../../lib/quickStartClarifyingRestore';
+import { resolveQuickStartResumeViewState } from '../../lib/quickStartResumeState';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -199,7 +200,7 @@ export const QuickStart: React.FC = () => {
       clarifyingStateRef.current = parsed.clarifyingState;
       setClarifyingState(parsed.clarifyingState);
       setShowFollowUps(parsed.showFollowUps);
-      setViewState(parsed.showFollowUps ? 'followups' : parsed.viewState);
+      setViewState(resolveQuickStartResumeViewState(parsed));
       setHasLocalDraftHydration(hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(restoredFollowUps).length > 0 || Boolean(parsed.clarifyingState));
     } catch {}
     finally {
