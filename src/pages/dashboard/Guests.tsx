@@ -489,48 +489,57 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
 
-    const activeSite = await resolveActiveSiteForUser(user.id);
-    const activeSiteId = activeSite?.id ?? null;
-    const { data } = activeSiteId ? await supabase
-      .from('wedding_sites')
-      .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, rsvp_custom_questions, rsvp_meal_config')
-      .eq('id', activeSiteId)
-      .maybeSingle() : { data: null };
+    try {
+      const activeSite = await resolveActiveSiteForUser(user.id);
+      const activeSiteId = activeSite?.id ?? null;
+      const { data, error } = activeSiteId ? await supabase
+        .from('wedding_sites')
+        .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, rsvp_custom_questions, rsvp_meal_config')
+        .eq('id', activeSiteId)
+        .maybeSingle() : { data: null, error: null };
 
-    if (data) {
-      setWeddingSiteId(data.id);
-      setWeddingSiteInfo({
-        couple_name_1: data.couple_name_1 ?? '',
-        couple_name_2: data.couple_name_2 ?? '',
-        wedding_date: data.wedding_date ?? null,
-        venue_name: data.venue_name ?? null,
-        venue_address: data.venue_address ?? null,
-        site_url: data.site_url ?? null,
-      });
-      const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions) ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || []) : [];
-      const normalized = loadedQuestions
-        .map((q) => q as Partial<RSVPQuestionSetting>)
-        .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
-        .map((q) => ({
-          id: q.id as string,
-          label: (q.label as string) || '',
-          type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
-          required: !!q.required,
-          appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
-          options: Array.isArray(q.options) ? q.options.filter((x): x is string => typeof x === 'string') : [],
-        }));
-      setRsvpQuestions(normalized);
-      const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
-      setRsvpMealEnabled(typeof mealCfg?.enabled === 'boolean' ? mealCfg.enabled : true);
-      setRsvpMealOptions(Array.isArray(mealCfg?.options) ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
-      const cadence = Number((data as { reminder_cadence_days?: unknown }).reminder_cadence_days);
-      if ([1, 3, 7].includes(cadence)) setReminderCadenceDays(cadence as 1 | 3 | 7);
-      setAutoRemindersEnabled(Boolean((data as { auto_reminders_enabled?: unknown }).auto_reminders_enabled));
-      rsvpConfigLoadedRef.current = true;
-    } else {
+      if (error) throw error;
+
+      if (data) {
+        setWeddingSiteId(data.id);
+        setWeddingSiteInfo({
+          couple_name_1: data.couple_name_1 ?? '',
+          couple_name_2: data.couple_name_2 ?? '',
+          wedding_date: data.wedding_date ?? null,
+          venue_name: data.venue_name ?? null,
+          venue_address: data.venue_address ?? null,
+          site_url: data.site_url ?? null,
+        });
+        const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions) ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || []) : [];
+        const normalized = loadedQuestions
+          .map((q) => q as Partial<RSVPQuestionSetting>)
+          .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
+          .map((q) => ({
+            id: q.id as string,
+            label: (q.label as string) || '',
+            type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
+            required: !!q.required,
+            appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+            options: Array.isArray(q.options) ? q.options.filter((x): x is string => typeof x === 'string') : [],
+          }));
+        setRsvpQuestions(normalized);
+        const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
+        setRsvpMealEnabled(typeof mealCfg?.enabled === 'boolean' ? mealCfg.enabled : true);
+        setRsvpMealOptions(Array.isArray(mealCfg?.options) ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+        const cadence = Number((data as { reminder_cadence_days?: unknown }).reminder_cadence_days);
+        if ([1, 3, 7].includes(cadence)) setReminderCadenceDays(cadence as 1 | 3 | 7);
+        setAutoRemindersEnabled(Boolean((data as { auto_reminders_enabled?: unknown }).auto_reminders_enabled));
+        rsvpConfigLoadedRef.current = true;
+      } else {
+        setWeddingSiteId(null);
+        setWeddingSiteInfo(null);
+        setGuests([]);
+      }
+    } catch {
       setWeddingSiteId(null);
       setWeddingSiteInfo(null);
       setGuests([]);
+      toast('Couldn’t load guest site settings right now. Please try again.', 'error');
     }
   }, [user, isDemoMode]);
 
