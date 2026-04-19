@@ -457,7 +457,7 @@ export const DashboardPlanning: React.FC = () => {
     setNameChangePlan(nextPlan);
   }, [nameChangePlan]);
 
-  const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[]) => {
+  const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[], context?: { action: 'single-update' | 'bulk-update' | 'schedule-stale' }) => {
     const previousReminders = new Map(nameChangeReminders.map((reminder) => [reminder.reminder_key, reminder]));
     const changedReminders = nextReminders.filter((reminder) => previousReminders.get(reminder.reminder_key)?.status !== reminder.status);
     setNameChangeReminders(nextReminders);
@@ -480,9 +480,12 @@ export const DashboardPlanning: React.FC = () => {
         return counts;
       }, {});
       const dominantStatus = (Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'scheduled') as NameChangeReminderInput['status'];
+      const title = context?.action === 'schedule-stale'
+        ? `Scheduled stale reminders (${changedReminders.length})`
+        : `Bulk reminder update (${changedReminders.length})`;
 
       return appendNameChangeExecutionActivity(annotated, {
-        title: `Bulk reminder update (${changedReminders.length})`,
+        title,
         executionStatus: dominantStatus === 'dismissed' ? 'todo' : dominantStatus === 'sent' ? 'complete' : 'in_progress',
         note: changedReminders
           .map((reminder) => `${reminder.label} → ${reminder.status}`)

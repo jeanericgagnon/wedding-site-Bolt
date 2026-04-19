@@ -23,7 +23,7 @@ interface Props {
   onStructuredIntakeChange: (key: string, value: unknown) => void;
   onDocumentsChange: (documents: NameChangeDocumentInput[]) => void;
   onExtractedFieldsChange: (fields: NameChangeExtractedFieldInput[]) => void;
-  onRemindersChange: (reminders: NameChangeReminderInput[]) => void;
+  onRemindersChange: (reminders: NameChangeReminderInput[], context?: { action: 'single-update' | 'bulk-update' | 'schedule-stale' }) => void;
   onStepExecutionStatusChange: (stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => void;
   onStepExecutionNoteChange: (stepId: string, note: string) => void;
   onSave: () => Promise<void>;
@@ -442,14 +442,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.map((item) => item.reminderKey), 'scheduled'))}
+                onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.map((item) => item.reminderKey), 'scheduled'), { action: 'bulk-update' })}
               >
                 Schedule all
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.map((item) => item.reminderKey), 'dismissed'))}
+                onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.map((item) => item.reminderKey), 'dismissed'), { action: 'bulk-update' })}
               >
                 Dismiss all
               </Button>
@@ -457,7 +457,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.filter((item) => item.isStale).map((item) => item.reminderKey), 'scheduled'))}
+                  onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.filter((item) => item.isStale).map((item) => item.reminderKey), 'scheduled'), { action: 'schedule-stale' })}
                 >
                   Schedule stale
                 </Button>
@@ -483,10 +483,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-2 text-xs text-text-secondary">Last workflow touch: {item.lastTouchedAt ? new Date(item.lastTouchedAt).toLocaleString() : 'No execution updates yet'}</p>
                 <div className="mt-3 flex gap-2">
                   {item.reminderStatus !== 'scheduled' && (
-                    <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, item.reminderKey, 'scheduled'))}>Schedule</Button>
+                    <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, item.reminderKey, 'scheduled'), { action: 'single-update' })}>Schedule</Button>
                   )}
                   {item.reminderStatus !== 'dismissed' && (
-                    <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, item.reminderKey, 'dismissed'))}>Dismiss</Button>
+                    <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, item.reminderKey, 'dismissed'), { action: 'single-update' })}>Dismiss</Button>
                   )}
                 </div>
               </div>
@@ -524,10 +524,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{reminder.status}</span>
                   <div className="flex gap-2">
                     {reminder.status !== 'scheduled' && (
-                      <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, reminder.reminder_key, 'scheduled'))}>Schedule</Button>
+                      <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, reminder.reminder_key, 'scheduled'), { action: 'single-update' })}>Schedule</Button>
                     )}
                     {reminder.status !== 'dismissed' && (
-                      <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, reminder.reminder_key, 'dismissed'))}>Dismiss</Button>
+                      <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, reminder.reminder_key, 'dismissed'), { action: 'single-update' })}>Dismiss</Button>
                     )}
                   </div>
                 </div>

@@ -492,6 +492,21 @@ describe('nameChangeService normalization', () => {
     });
   });
 
+  it('can append a stale-reminder scheduling activity label distinctly', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const updatedPlan = appendNameChangeExecutionActivity(basePlan, {
+      title: 'Scheduled stale reminders (2)',
+      executionStatus: 'in_progress',
+      note: 'Follow up on Banks and credit cards → scheduled · Follow up on Health, auto, renters, and life insurance → scheduled',
+      timestamp: '2026-04-18T20:06:00.000Z',
+    });
+
+    expect(updatedPlan.summary.recentExecutionActivity?.[0]).toMatchObject({
+      title: 'Scheduled stale reminders (2)',
+      timestamp: '2026-04-18T20:06:00.000Z',
+    });
+  });
+
   it('annotates dependent plan steps when reminder statuses change', () => {
     const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
     const updatedPlan = annotateNameChangePlanStepsFromReminderChanges(basePlan, [
