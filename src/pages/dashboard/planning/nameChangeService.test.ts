@@ -461,6 +461,7 @@ describe('nameChangeService normalization', () => {
     expect(merged.summary.hasRecentCompletion).toBe(true);
     expect(merged.summary.hasRecentStart).toBe(true);
     expect(merged.summary.hasRecentUntouchedRisk).toBe(false);
+    expect(merged.summary.hasZeroRecentStepMovement).toBe(false);
   });
 
   it('appends manual reminder activity into recent execution activity', () => {
@@ -486,6 +487,7 @@ describe('nameChangeService normalization', () => {
     expect(updatedPlan.summary.hasRecentCompletion).toBe(false);
     expect(updatedPlan.summary.hasRecentStart).toBe(false);
     expect(updatedPlan.summary.hasRecentUntouchedRisk).toBe(false);
+    expect(updatedPlan.summary.hasZeroRecentStepMovement).toBe(true);
   });
 
   it('marks latest movement posture as mixed when recent activity is balanced', () => {
@@ -509,6 +511,7 @@ describe('nameChangeService normalization', () => {
     expect(mixedPlan.summary.hasRecentCompletion).toBe(false);
     expect(mixedPlan.summary.hasRecentStart).toBe(true);
     expect(mixedPlan.summary.hasRecentUntouchedRisk).toBe(false);
+    expect(mixedPlan.summary.hasZeroRecentStepMovement).toBe(false);
   });
 
   it('flags high reminder churn when recent activity is dominated by reminder actions', () => {
@@ -526,6 +529,7 @@ describe('nameChangeService normalization', () => {
     expect(churnPlan.summary.hasRecentCompletion).toBe(false);
     expect(churnPlan.summary.hasRecentStart).toBe(false);
     expect(churnPlan.summary.hasRecentUntouchedRisk).toBe(false);
+    expect(churnPlan.summary.hasZeroRecentStepMovement).toBe(true);
   });
 
   it('flags untouched risk when recent activity still contains todo step entries', () => {
@@ -538,6 +542,7 @@ describe('nameChangeService normalization', () => {
     }, basePlan);
 
     expect(todoWindowPlan.summary.hasRecentUntouchedRisk).toBe(true);
+    expect(todoWindowPlan.summary.hasZeroRecentStepMovement).toBe(false);
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {

@@ -274,6 +274,7 @@ export function mergeNameChangePlanExecutionState(
   const hasRecentCompletion = mergedRecentExecutionActivity.some((item) => item.executionStatus === 'complete');
   const hasRecentStart = mergedRecentExecutionActivity.some((item) => item.source === 'step' && item.executionStatus === 'in_progress');
   const hasRecentUntouchedRisk = mergedRecentExecutionActivity.some((item) => item.source === 'step' && item.executionStatus === 'todo');
+  const hasZeroRecentStepMovement = !mergedRecentExecutionActivity.some((item) => item.source === 'step');
 
   return {
     ...generatedPlan,
@@ -287,6 +288,7 @@ export function mergeNameChangePlanExecutionState(
       hasRecentCompletion,
       hasRecentStart,
       hasRecentUntouchedRisk,
+      hasZeroRecentStepMovement,
       recentExecutionActivity: mergedRecentExecutionActivity,
     },
   };
@@ -426,6 +428,20 @@ export function appendNameChangeExecutionActivity(
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 5)
         .some((item) => item.source === 'step' && item.executionStatus === 'todo'),
+      hasZeroRecentStepMovement: ![
+        {
+          stepId: null,
+          source: activity.source ?? 'reminder',
+          title: activity.title,
+          executionStatus: activity.executionStatus,
+          note: activity.note,
+          timestamp,
+        },
+        ...existing,
+      ]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 5)
+        .some((item) => item.source === 'step'),
     },
   };
 }

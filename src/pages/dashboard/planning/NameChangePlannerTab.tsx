@@ -412,6 +412,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-1 text-xs text-text-secondary">Recent completion: {plan.summary.hasRecentCompletion ? 'yes' : 'no'}</p>
               <p className="mt-1 text-xs text-text-secondary">Recent start: {plan.summary.hasRecentStart ? 'yes' : 'no'}</p>
               <p className="mt-1 text-xs text-text-secondary">Untouched risk still visible: {plan.summary.hasRecentUntouchedRisk ? 'yes' : 'no'}</p>
+              <p className="mt-1 text-xs text-text-secondary">Zero recent step movement: {plan.summary.hasZeroRecentStepMovement ? 'yes' : 'no'}</p>
             </div>
             <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
               {plan.summary.recentExecutionActivity?.length ?? 0} recent updates

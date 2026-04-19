@@ -184,6 +184,7 @@ export interface NameChangePlanSummary {
   hasRecentCompletion?: boolean;
   hasRecentStart?: boolean;
   hasRecentUntouchedRisk?: boolean;
+  hasZeroRecentStepMovement?: boolean;
   recentExecutionActivity?: Array<{
     stepId: string | null;
     source: 'step' | 'reminder';
