@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sp
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
-import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
+import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -91,6 +91,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
+  const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention), [reminderAttention]);
 
   return (
     <div className="space-y-6">
@@ -434,6 +435,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Reminder attention needed</h3>
               <p className="text-sm text-text-secondary">Open reminders still tied to incomplete workflow steps.</p>
+              <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.stale} stale · {reminderAttentionSummary.highUrgency} high urgency</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} attention item{reminderAttention.length === 1 ? '' : 's'}</span>
@@ -451,6 +453,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               >
                 Dismiss all
               </Button>
+              {reminderAttentionSummary.stale > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.filter((item) => item.isStale).map((item) => item.reminderKey), 'scheduled'))}
+                >
+                  Schedule stale
+                </Button>
+              )}
             </div>
           </div>
 

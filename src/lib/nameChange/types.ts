@@ -252,6 +252,7 @@ export interface NameChangeReminderSummary {
   sent: number;
   dismissed: number;
   highUrgencyOpen: number;
+  staleAttentionOpen: number;
 }
 
 export interface NameChangeReminderAttentionItem {

@@ -67,7 +67,16 @@ export function summarizeNameChangeReminders(reminders: NameChangeReminderInput[
     sent: 0,
     dismissed: 0,
     highUrgencyOpen: 0,
+    staleAttentionOpen: 0,
   });
+}
+
+export function summarizeNameChangeReminderAttention(attentionItems: NameChangeReminderAttentionItem[]) {
+  return {
+    total: attentionItems.length,
+    stale: attentionItems.filter((item) => item.isStale).length,
+    highUrgency: attentionItems.filter((item) => item.urgency === 'high').length,
+  };
 }
 
 export function updateNameChangeReminderStatus(

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangePlan } from './engine';
-import { buildNameChangeReminderSuggestions, bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, mapReminderSuggestionsToInputs, summarizeNameChangeReminders, syncNameChangeRemindersWithStepExecution, updateNameChangeReminderStatus } from './reminders';
+import { buildNameChangeReminderSuggestions, bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, mapReminderSuggestionsToInputs, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, syncNameChangeRemindersWithStepExecution, updateNameChangeReminderStatus } from './reminders';
 import type { NameChangeEngineInput } from './types';
 
 function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): NameChangeEngineInput {
@@ -123,6 +123,7 @@ describe('name change reminder suggestions', () => {
       sent: 0,
       dismissed: 1,
       highUrgencyOpen: 2,
+      staleAttentionOpen: 0,
     });
   });
 
@@ -300,5 +301,34 @@ describe('name change reminder suggestions', () => {
 
     expect(attention[0]).toMatchObject({ reminderKey: 'reminder-banks', isStale: true });
     expect(attention.some((item) => item.reminderKey === 'reminder-insurance' && item.isStale)).toBe(true);
+  });
+
+  it('summarizes reminder attention counts for stale and high urgency items', () => {
+    expect(summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'a',
+        label: 'A',
+        dependsOnStepId: 'step-a',
+        dependentStepTitle: 'Step A',
+        dependentStepExecutionStatus: 'todo',
+        reminderStatus: 'pending',
+        urgency: 'high',
+        suggestedOffsetDays: 1,
+        lastTouchedAt: null,
+        isStale: true,
+      },
+      {
+        reminderKey: 'b',
+        label: 'B',
+        dependsOnStepId: 'step-b',
+        dependentStepTitle: 'Step B',
+        dependentStepExecutionStatus: 'in_progress',
+        reminderStatus: 'scheduled',
+        urgency: 'low',
+        suggestedOffsetDays: 5,
+        lastTouchedAt: '2026-04-18T12:00:00.000Z',
+        isStale: false,
+      },
+    ])).toEqual({ total: 2, stale: 1, highUrgency: 1 });
   });
 });
