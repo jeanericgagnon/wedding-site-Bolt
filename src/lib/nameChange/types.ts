@@ -180,6 +180,7 @@ export interface NameChangePlanSummary {
     reminder: number;
   };
   latestMovementPosture?: 'step-led' | 'reminder-led' | 'mixed';
+  dominantMovementLane?: 'step-progress' | 'reminder-churn' | 'no-step-movement' | 'mixed';
   reminderChurnRisk?: 'low' | 'medium' | 'high';
   hasRecentCompletion?: boolean;
   hasRecentStart?: boolean;

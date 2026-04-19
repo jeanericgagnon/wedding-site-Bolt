@@ -266,6 +266,13 @@ export function mergeNameChangePlanExecutionState(
     : activitySourceCounts.step > activitySourceCounts.reminder
       ? 'step-led'
       : 'reminder-led';
+  const dominantMovementLane = !mergedRecentExecutionActivity.some((item) => item.source === 'step')
+    ? 'no-step-movement'
+    : activitySourceCounts.step > activitySourceCounts.reminder
+      ? 'step-progress'
+      : activitySourceCounts.reminder > activitySourceCounts.step
+        ? 'reminder-churn'
+        : 'mixed';
   const reminderChurnRisk = activitySourceCounts.reminder >= 4
     ? 'high'
     : activitySourceCounts.reminder > activitySourceCounts.step
@@ -284,6 +291,7 @@ export function mergeNameChangePlanExecutionState(
       executionCounts,
       activitySourceCounts,
       latestMovementPosture,
+      dominantMovementLane,
       reminderChurnRisk,
       hasRecentCompletion,
       hasRecentStart,
@@ -362,6 +370,29 @@ export function appendNameChangeExecutionActivity(
 
         if (counts.step === counts.reminder) return 'mixed';
         return counts.step > counts.reminder ? 'step-led' : 'reminder-led';
+      })(),
+      dominantMovementLane: (() => {
+        const items = [
+          {
+            stepId: null,
+            source: activity.source ?? 'reminder',
+            title: activity.title,
+            executionStatus: activity.executionStatus,
+            note: activity.note,
+            timestamp,
+          },
+          ...existing,
+        ]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          .slice(0, 5);
+        const counts = items.reduce((result, item) => {
+          result[item.source] += 1;
+          return result;
+        }, { step: 0, reminder: 0 });
+
+        if (!items.some((item) => item.source === 'step')) return 'no-step-movement';
+        if (counts.step === counts.reminder) return 'mixed';
+        return counts.step > counts.reminder ? 'step-progress' : 'reminder-churn';
       })(),
       reminderChurnRisk: (() => {
         const counts = [

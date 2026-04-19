@@ -457,6 +457,7 @@ describe('nameChangeService normalization', () => {
     ]);
     expect(merged.summary.activitySourceCounts).toEqual({ step: 2, reminder: 0 });
     expect(merged.summary.latestMovementPosture).toBe('step-led');
+    expect(merged.summary.dominantMovementLane).toBe('step-progress');
     expect(merged.summary.reminderChurnRisk).toBe('low');
     expect(merged.summary.hasRecentCompletion).toBe(true);
     expect(merged.summary.hasRecentStart).toBe(true);
@@ -483,6 +484,7 @@ describe('nameChangeService normalization', () => {
     });
     expect(updatedPlan.summary.activitySourceCounts).toEqual({ step: 0, reminder: 1 });
     expect(updatedPlan.summary.latestMovementPosture).toBe('reminder-led');
+    expect(updatedPlan.summary.dominantMovementLane).toBe('no-step-movement');
     expect(updatedPlan.summary.reminderChurnRisk).toBe('medium');
     expect(updatedPlan.summary.hasRecentCompletion).toBe(false);
     expect(updatedPlan.summary.hasRecentStart).toBe(false);
@@ -507,6 +509,7 @@ describe('nameChangeService normalization', () => {
 
     expect(mixedPlan.summary.activitySourceCounts).toEqual({ step: 1, reminder: 1 });
     expect(mixedPlan.summary.latestMovementPosture).toBe('mixed');
+    expect(mixedPlan.summary.dominantMovementLane).toBe('mixed');
     expect(mixedPlan.summary.reminderChurnRisk).toBe('low');
     expect(mixedPlan.summary.hasRecentCompletion).toBe(false);
     expect(mixedPlan.summary.hasRecentStart).toBe(true);
@@ -525,6 +528,7 @@ describe('nameChangeService normalization', () => {
 
     expect(churnPlan.summary.activitySourceCounts).toEqual({ step: 0, reminder: 4 });
     expect(churnPlan.summary.latestMovementPosture).toBe('reminder-led');
+    expect(churnPlan.summary.dominantMovementLane).toBe('no-step-movement');
     expect(churnPlan.summary.reminderChurnRisk).toBe('high');
     expect(churnPlan.summary.hasRecentCompletion).toBe(false);
     expect(churnPlan.summary.hasRecentStart).toBe(false);
@@ -543,6 +547,7 @@ describe('nameChangeService normalization', () => {
 
     expect(todoWindowPlan.summary.hasRecentUntouchedRisk).toBe(true);
     expect(todoWindowPlan.summary.hasZeroRecentStepMovement).toBe(false);
+    expect(todoWindowPlan.summary.dominantMovementLane).toBe('step-progress');
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {
