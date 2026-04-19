@@ -91,7 +91,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
-  const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention), [reminderAttention]);
+  const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
+    hasRecentStart: plan.summary.hasRecentStart,
+    hasRecentCompletion: plan.summary.hasRecentCompletion,
+  }), [reminderAttention, plan.summary.hasRecentCompletion, plan.summary.hasRecentStart]);
 
   return (
     <div className="space-y-6">
@@ -463,6 +466,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-1 text-xs text-text-secondary">Dominant risk lane: {reminderAttentionSummary.dominantRiskLane}</p>
               <p className="mt-1 text-xs text-text-secondary">Attention posture: {reminderAttentionSummary.attentionPosture}</p>
               <p className="mt-1 text-xs text-text-secondary">Stale priority: {reminderAttentionSummary.stalePriority}</p>
+              <p className="mt-1 text-xs text-text-secondary">Aging without execution: {reminderAttentionSummary.agingWithoutExecution ? 'yes' : 'no'}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} attention item{reminderAttention.length === 1 ? '' : 's'}</span>

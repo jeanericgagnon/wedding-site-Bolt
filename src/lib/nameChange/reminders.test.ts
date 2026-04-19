@@ -372,6 +372,7 @@ describe('name change reminder suggestions', () => {
       blockedStalePosture: 'mixed',
       attentionPosture: 'mixed',
       stalePriority: 'mixed',
+      agingWithoutExecution: true,
     });
   });
 
@@ -445,6 +446,7 @@ describe('name change reminder suggestions', () => {
     expect(summary.actionableAndStale).toBe(0);
     expect(summary.actionableStalePriority).toBe(0);
     expect(summary.actionableStaleNormal).toBe(0);
+    expect(summary.agingWithoutExecution).toBe(false);
   });
 
   it('counts actionable-and-stale attention separately', () => {
@@ -471,6 +473,7 @@ describe('name change reminder suggestions', () => {
     expect(summary.staleActionablePosture).toBe('priority-heavy');
     expect(summary.blockedStalePriority).toBe(0);
     expect(summary.blockedStaleNormal).toBe(0);
+    expect(summary.agingWithoutExecution).toBe(true);
   });
 
   it('classifies blocked stale posture from blocked stale priority vs normal items', () => {
@@ -508,6 +511,28 @@ describe('name change reminder suggestions', () => {
     expect(summary.blockedStalePriority).toBe(1);
     expect(summary.blockedStaleNormal).toBe(1);
     expect(summary.blockedStalePosture).toBe('mixed');
+    expect(summary.agingWithoutExecution).toBe(true);
+  });
+
+  it('does not mark aging-without-execution when recent starts or completions exist', () => {
+    const summary = summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'a',
+        label: 'A',
+        dependsOnStepId: 'step-a',
+        dependentStepTitle: 'Step A',
+        dependentStepExecutionStatus: 'todo',
+        reminderStatus: 'pending',
+        urgency: 'medium',
+        priorityTier: 'elevated',
+        actionability: 'blocked_by_untouched_step',
+        suggestedOffsetDays: 2,
+        lastTouchedAt: null,
+        isStale: true,
+      },
+    ], { hasRecentStart: true, hasRecentCompletion: false });
+
+    expect(summary.agingWithoutExecution).toBe(false);
   });
 
   it('classifies dominant risk lane across blocked stale, stale actionable, and routine actionable', () => {

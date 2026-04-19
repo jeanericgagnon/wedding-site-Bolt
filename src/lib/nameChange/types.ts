@@ -285,6 +285,33 @@ export interface NameChangeReminderAttentionItem {
   isStale: boolean;
 }
 
+export interface NameChangeReminderAttentionSummary {
+  total: number;
+  stale: number;
+  staleTodo: number;
+  staleInProgress: number;
+  highUrgency: number;
+  critical: number;
+  elevated: number;
+  normal: number;
+  actionableNow: number;
+  blockedByUntouchedStep: number;
+  blockedAndStale: number;
+  actionablePriority: number;
+  actionableNormal: number;
+  actionableAndStale: number;
+  actionableStalePriority: number;
+  actionableStaleNormal: number;
+  blockedStalePriority: number;
+  blockedStaleNormal: number;
+  dominantRiskLane: 'blocked-stale' | 'stale-actionable' | 'routine-actionable' | 'mixed';
+  staleActionablePosture: 'priority-heavy' | 'normal-heavy' | 'mixed';
+  blockedStalePosture: 'priority-heavy' | 'normal-heavy' | 'mixed';
+  attentionPosture: 'blocked-heavy' | 'actionable-heavy' | 'mixed';
+  stalePriority: 'untouched' | 'moving' | 'mixed';
+  agingWithoutExecution: boolean;
+}
+
 export interface NameChangeFormRegistryEntry {
   code: string;
   title: string;

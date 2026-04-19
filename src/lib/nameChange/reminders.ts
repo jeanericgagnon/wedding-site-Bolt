@@ -1,5 +1,5 @@
 import { NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
-import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminderInput, NameChangeReminderSuggestion, NameChangeReminderSummary } from './types';
+import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminderAttentionSummary, NameChangeReminderInput, NameChangeReminderSuggestion, NameChangeReminderSummary } from './types';
 
 const REMINDER_STALE_AFTER_MS = 1000 * 60 * 60 * 72;
 
@@ -71,7 +71,10 @@ export function summarizeNameChangeReminders(reminders: NameChangeReminderInput[
   });
 }
 
-export function summarizeNameChangeReminderAttention(attentionItems: NameChangeReminderAttentionItem[]) {
+export function summarizeNameChangeReminderAttention(
+  attentionItems: NameChangeReminderAttentionItem[],
+  options?: { hasRecentStart?: boolean; hasRecentCompletion?: boolean },
+): NameChangeReminderAttentionSummary {
   const staleTodo = attentionItems.filter((item) => item.isStale && item.dependentStepExecutionStatus === 'todo').length;
   const staleInProgress = attentionItems.filter((item) => item.isStale && item.dependentStepExecutionStatus === 'in_progress').length;
   const critical = attentionItems.filter((item) => item.priorityTier === 'critical').length;
@@ -138,6 +141,7 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
         ? 'actionable-heavy'
         : 'blocked-heavy',
     stalePriority: staleTodo === staleInProgress ? 'mixed' : staleTodo > staleInProgress ? 'untouched' : 'moving',
+    agingWithoutExecution: (staleTodo + staleInProgress) > 0 && !options?.hasRecentStart && !options?.hasRecentCompletion,
   };
 }
 
