@@ -365,7 +365,10 @@ describe('name change reminder suggestions', () => {
       actionableAndStale: 0,
       actionableStalePriority: 0,
       actionableStaleNormal: 0,
+      blockedStalePriority: 0,
+      blockedStaleNormal: 0,
       staleActionablePosture: 'mixed',
+      blockedStalePosture: 'mixed',
       attentionPosture: 'mixed',
       stalePriority: 'mixed',
     });
@@ -465,6 +468,45 @@ describe('name change reminder suggestions', () => {
     expect(summary.actionableStalePriority).toBe(1);
     expect(summary.actionableStaleNormal).toBe(0);
     expect(summary.staleActionablePosture).toBe('priority-heavy');
+    expect(summary.blockedStalePriority).toBe(0);
+    expect(summary.blockedStaleNormal).toBe(0);
+  });
+
+  it('classifies blocked stale posture from blocked stale priority vs normal items', () => {
+    const summary = summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'a',
+        label: 'A',
+        dependsOnStepId: 'step-a',
+        dependentStepTitle: 'Step A',
+        dependentStepExecutionStatus: 'todo',
+        reminderStatus: 'pending',
+        urgency: 'high',
+        priorityTier: 'critical',
+        actionability: 'blocked_by_untouched_step',
+        suggestedOffsetDays: 1,
+        lastTouchedAt: null,
+        isStale: true,
+      },
+      {
+        reminderKey: 'b',
+        label: 'B',
+        dependsOnStepId: 'step-b',
+        dependentStepTitle: 'Step B',
+        dependentStepExecutionStatus: 'todo',
+        reminderStatus: 'pending',
+        urgency: 'low',
+        priorityTier: 'normal',
+        actionability: 'blocked_by_untouched_step',
+        suggestedOffsetDays: 5,
+        lastTouchedAt: null,
+        isStale: true,
+      },
+    ]);
+
+    expect(summary.blockedStalePriority).toBe(1);
+    expect(summary.blockedStaleNormal).toBe(1);
+    expect(summary.blockedStalePosture).toBe('mixed');
   });
 
   it('classifies attention posture as blocked-heavy or actionable-heavy', () => {

@@ -85,6 +85,8 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
   const actionableAndStale = attentionItems.filter((item) => item.actionability === 'actionable_now' && item.isStale).length;
   const actionableStalePriority = attentionItems.filter((item) => item.actionability === 'actionable_now' && item.isStale && (item.priorityTier === 'critical' || item.priorityTier === 'elevated')).length;
   const actionableStaleNormal = attentionItems.filter((item) => item.actionability === 'actionable_now' && item.isStale && (item.priorityTier ?? 'normal') === 'normal').length;
+  const blockedStalePriority = attentionItems.filter((item) => item.actionability === 'blocked_by_untouched_step' && item.isStale && (item.priorityTier === 'critical' || item.priorityTier === 'elevated')).length;
+  const blockedStaleNormal = attentionItems.filter((item) => item.actionability === 'blocked_by_untouched_step' && item.isStale && (item.priorityTier ?? 'normal') === 'normal').length;
 
   return {
     total: attentionItems.length,
@@ -103,9 +105,16 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     actionableAndStale,
     actionableStalePriority,
     actionableStaleNormal,
+    blockedStalePriority,
+    blockedStaleNormal,
     staleActionablePosture: actionableStalePriority === actionableStaleNormal
       ? 'mixed'
       : actionableStalePriority > actionableStaleNormal
+        ? 'priority-heavy'
+        : 'normal-heavy',
+    blockedStalePosture: blockedStalePriority === blockedStaleNormal
+      ? 'mixed'
+      : blockedStalePriority > blockedStaleNormal
         ? 'priority-heavy'
         : 'normal-heavy',
     attentionPosture: actionableNow === blockedByUntouchedStep
