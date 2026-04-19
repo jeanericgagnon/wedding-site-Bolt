@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Input, Textarea } from '../../components/ui';
-import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2, Link2 } from 'lucide-react';
+import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2, Link2, Copy } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
@@ -1986,6 +1986,19 @@ export const DashboardMessages: React.FC = () => {
     return campaignThreads.find((thread) => thread.name.toLowerCase() === query) ?? null;
   }, [campaignThreads, historySearch]);
 
+  const activeCampaignMessages = useMemo(() => {
+    if (!activeCampaignThread) return [] as Message[];
+    return messages
+      .filter((message) => getCampaignThreadKey(message) === activeCampaignThread.name)
+      .sort((a, b) => {
+        const aTime = new Date(a.sent_at ?? a.scheduled_for ?? 0).getTime();
+        const bTime = new Date(b.sent_at ?? b.scheduled_for ?? 0).getTime();
+        return bTime - aTime;
+      });
+  }, [messages, activeCampaignThread]);
+
+  const activeCampaignLatestMessage = activeCampaignMessages[0] ?? null;
+
   const providerTelemetry = useMemo(() => {
     const attempted = deliveries.filter((d) => d.status === 'sent' || d.status === 'failed');
     const sent = deliveries.filter((d) => d.status === 'sent').length;
@@ -2891,7 +2904,18 @@ export const DashboardMessages: React.FC = () => {
                   <h3 className="mt-1 text-sm font-semibold text-text-primary">{activeCampaignThread.name}</h3>
                   <p className="mt-1 text-xs text-text-secondary">{activeCampaignThread.count} sends · latest {activeCampaignThread.latestStatus}</p>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setHistorySearch('')}>Clear thread filter</Button>
+                <div className="flex flex-wrap gap-2">
+                  {activeCampaignLatestMessage && (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => loadMessageIntoComposer(activeCampaignLatestMessage, 'duplicate')}
+                    >
+                      <Copy className="w-3.5 h-3.5 mr-1.5" />Duplicate thread to composer
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => setHistorySearch('')}>Clear thread filter</Button>
+                </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
                 <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
@@ -2899,6 +2923,41 @@ export const DashboardMessages: React.FC = () => {
                 <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Skipped {activeCampaignThread.skipped}</span>
                 <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Unreached {activeCampaignThread.unreached}</span>
               </div>
+              {activeCampaignLatestMessage && (
+                <div className="mt-4 rounded-xl border border-border-subtle bg-white px-4 py-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">Latest campaign message</p>
+                      <h4 className="mt-1 text-sm font-semibold text-text-primary">{activeCampaignLatestMessage.subject}</h4>
+                      <p className="mt-1 text-xs text-text-secondary">
+                        {activeCampaignLatestMessage.channel.toUpperCase()} · {getAudienceLabel(activeCampaignLatestMessage)} · {activeCampaignLatestMessage.status}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setViewingMessage(activeCampaignLatestMessage)}
+                      >
+                        View latest
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => loadMessageIntoComposer(activeCampaignLatestMessage, 'edit')}
+                      >
+                        Edit in composer
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
+                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Recipients {getRecipientCount(activeCampaignLatestMessage)}</span>
+                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Delivered {activeCampaignLatestMessage.delivered_count ?? 0}</span>
+                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Failed {activeCampaignLatestMessage.failed_count ?? 0}</span>
+                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Skipped {deliveries.filter((delivery) => delivery.message_id === activeCampaignLatestMessage.id && delivery.status === 'skipped').length}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
