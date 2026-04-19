@@ -150,6 +150,7 @@ Things that do **not** count as done:
 **Missing / partial**
 - advanced optimization is not required
 - no need to overclaim perfect auto-assignment intelligence
+- seating marketing copy had been overstating real-time confidence, day-of check-in certainty, caterer-export polish, and auto-fill speed/automation beyond the proof bar
 
 **Proof needed**
 - smoke showing event selection, table creation, guest assignment, and export or lookup
@@ -320,6 +321,7 @@ Things that do **not** count as done:
 - Fixed collaborator invite flow branding from legacy `WeddingSite` to `DayOf` so the planner/coordinator join path now matches the product users think they were invited into.
 - Tightened the Guests feature page so it no longer overclaims automatic household resolution, zero event leakage, fuzzy duplicate certainty, broad export-format guarantees, or generic "real-time" confidence that is not the real value bar.
 - Tightened the RSVP feature page so it no longer overclaims household certainty, automatic reminder maturity, fake analytics precision, or broad export certainty beyond the current live product bar.
+- Tightened the Seating feature page so it no longer overclaims real-time confidence, check-in certainty, perfect drift awareness, caterer-format polish, or automatic seating speed beyond what the product has actually earned.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

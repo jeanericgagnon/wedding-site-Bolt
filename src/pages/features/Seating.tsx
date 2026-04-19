@@ -82,11 +82,11 @@ export const SeatingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Drag-and-Drop Assign</h3>
               <p className="text-ink/70 mb-4">
-                Assign guests to tables by dragging names. See headcounts update in real-time as you plan.
+                Assign guests to tables by dragging names and keep table counts visible while you work through the room.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Drag guests to tables</li>
-                <li>• Live capacity updates</li>
+                <li>• Capacity tracking while planning</li>
                 <li>• Color-coded by status</li>
               </ul>
             </div>
@@ -112,7 +112,7 @@ export const SeatingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Day-of Check-in</h3>
               <p className="text-ink/70 mb-4">
-                Switch to check-in mode on wedding day. Track guest arrivals and mark who attended in real-time.
+                Use seating and lookup surfaces to support arrivals on wedding day, with a practical check-in flow instead of extra paper chaos.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Quick check-in interface</li>
@@ -132,7 +132,7 @@ export const SeatingFeature: React.FC = () => {
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Highlights invalidated seats</li>
                 <li>• Reassign in one click</li>
-                <li>• Never miss a late change</li>
+                <li>• Clearer visibility on late changes</li>
               </ul>
             </div>
 
@@ -142,7 +142,7 @@ export const SeatingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Caterer Export</h3>
               <p className="text-ink/70 mb-4">
-                Export your seating chart and meal choices as a CSV formatted for your caterer or venue coordinator.
+                Export seating and meal data cleanly so your caterer or venue team has something usable without manual rework.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Seating CSV export</li>
@@ -200,7 +200,7 @@ export const SeatingFeature: React.FC = () => {
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Auto-fill from confirmed guests</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Let Dayof fill your tables automatically based on confirmed attendees. Adjust manually, then export — the bulk of the work is done in seconds.
+                      Start from confirmed guests with an auto-assignment pass, then adjust manually where household, social, or venue realities need a human call.
                     </p>
                   </div>
                 </div>
@@ -225,7 +225,7 @@ export const SeatingFeature: React.FC = () => {
                 'Drag-and-drop seating board',
                 'Per-event seating',
                 'Table capacity updates',
-                'Auto-assign from RSVPs',
+                'Auto-assign starting point',
                 'Household-aware grouping',
                 'RSVP drift detection',
                 'Seating CSV export',
@@ -233,7 +233,7 @@ export const SeatingFeature: React.FC = () => {
                 'Meal preference display',
                 'Reset with confirmation',
                 'Unassigned guest pool',
-                'Attendance counters',
+                'Arrival support tools',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
