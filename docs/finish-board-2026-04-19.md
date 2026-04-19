@@ -220,6 +220,7 @@ Things that do **not** count as done:
 **Missing / partial**
 - collaborator persistence and full boundaries are still being tightened
 - some trust depends on role-aware smoke rather than clear consolidated proof
+- collaborator invite/join flow had lingering brand inconsistency that made the trust surface feel half-migrated
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -314,6 +315,7 @@ Things that do **not** count as done:
 - Tightened Settings privacy language so invite-only access is framed as a guest access link instead of a fake “private preview” product, and clarified search visibility text accordingly.
 - Tightened the Messaging feature page so it no longer overclaims unlimited email certainty, overstates tracking confidence, or sells fully automatic RSVP reminders as already-solid reality.
 - Tightened the Registry feature page so it no longer overclaims universal retailer support or proactive link-health guarantees, and instead frames registry strength as guided import, cleanup, repair, and clean presentation.
+- Fixed collaborator invite flow branding from legacy `WeddingSite` to `DayOf` so the planner/coordinator join path now matches the product users think they were invited into.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

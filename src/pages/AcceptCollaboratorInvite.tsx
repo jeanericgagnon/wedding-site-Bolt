@@ -335,7 +335,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         <div className="mb-8 flex items-center justify-between gap-4">
           <Link to="/" className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-            <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
+            <span className="text-2xl font-semibold text-text-primary">DayOf</span>
           </Link>
           <div className="rounded-full border border-border-subtle bg-white/70 px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-text-tertiary">
             Collaborator access
