@@ -223,8 +223,13 @@ export const Onboarding: React.FC = () => {
         window.localStorage.removeItem(ONBOARDING_RESUME_HINT_KEY);
         window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_KEY);
       } else if (resumeHint === 'question' && resumeIndexValue) {
-        const resumeIndex = Number(resumeIndexValue);
-        if (!Number.isNaN(resumeIndex)) {
+        const hintedIndex = Number(resumeIndexValue);
+        if (!Number.isNaN(hintedIndex)) {
+          const resumeIndex = resolveOnboardingResumeIndex({
+            savedIndex: hintedIndex,
+            firstIncompleteIndex: getFirstIncompleteQuestionIndex(),
+            questionCount: conciergeQuestions.length,
+          });
           setConversationIndex(resumeIndex);
           setStep(getStepForIndex(resumeIndex));
         }
