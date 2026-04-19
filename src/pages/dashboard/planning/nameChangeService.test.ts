@@ -452,8 +452,8 @@ describe('nameChangeService normalization', () => {
     }, basePlan);
 
     expect(merged.summary.recentExecutionActivity).toEqual([
-      expect.objectContaining({ stepId: merged.steps[1].id, executionStatus: 'in_progress', note: 'note-1', timestamp: '2026-04-18T19:01:00.000Z' }),
-      expect.objectContaining({ stepId: merged.steps[0].id, executionStatus: 'complete', note: 'note-0', timestamp: '2026-04-18T19:00:00.000Z' }),
+      expect.objectContaining({ stepId: merged.steps[1].id, source: 'step', executionStatus: 'in_progress', note: 'note-1', timestamp: '2026-04-18T19:01:00.000Z' }),
+      expect.objectContaining({ stepId: merged.steps[0].id, source: 'step', executionStatus: 'complete', note: 'note-0', timestamp: '2026-04-18T19:00:00.000Z' }),
     ]);
   });
 
@@ -468,6 +468,7 @@ describe('nameChangeService normalization', () => {
 
     expect(updatedPlan.summary.recentExecutionActivity?.[0]).toMatchObject({
       stepId: null,
+      source: 'reminder',
       title: 'Reminder updated: Follow up on Banks and credit cards',
       executionStatus: 'in_progress',
       note: 'Reminder status changed to scheduled',
@@ -486,6 +487,7 @@ describe('nameChangeService normalization', () => {
 
     expect(updatedPlan.summary.recentExecutionActivity?.[0]).toMatchObject({
       stepId: null,
+      source: 'reminder',
       title: 'Bulk reminder update (2)',
       executionStatus: 'in_progress',
       timestamp: '2026-04-18T20:05:00.000Z',
@@ -502,6 +504,7 @@ describe('nameChangeService normalization', () => {
     });
 
     expect(updatedPlan.summary.recentExecutionActivity?.[0]).toMatchObject({
+      source: 'reminder',
       title: 'Scheduled stale reminders (2)',
       timestamp: '2026-04-18T20:06:00.000Z',
     });

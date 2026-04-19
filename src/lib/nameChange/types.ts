@@ -177,6 +177,7 @@ export interface NameChangePlanSummary {
   };
   recentExecutionActivity?: Array<{
     stepId: string | null;
+    source: 'step' | 'reminder';
     title: string;
     executionStatus: 'todo' | 'in_progress' | 'complete';
     note: string | null;

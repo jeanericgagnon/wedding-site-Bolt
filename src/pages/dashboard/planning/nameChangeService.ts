@@ -245,6 +245,7 @@ export function mergeNameChangePlanExecutionState(
     .filter((step) => step.executionUpdatedAt)
     .map((step) => ({
       stepId: step.id,
+      source: 'step' as const,
       title: step.title,
       executionStatus: step.executionStatus ?? 'todo',
       note: step.executionNote ?? null,
@@ -271,6 +272,7 @@ export function mergeNameChangePlanExecutionState(
 export function appendNameChangeExecutionActivity(
   plan: NameChangePlan,
   activity: {
+    source?: 'step' | 'reminder';
     title: string;
     executionStatus: 'todo' | 'in_progress' | 'complete';
     note: string | null;
@@ -287,6 +289,7 @@ export function appendNameChangeExecutionActivity(
       recentExecutionActivity: [
         {
           stepId: null,
+          source: activity.source ?? 'reminder',
           title: activity.title,
           executionStatus: activity.executionStatus,
           note: activity.note,

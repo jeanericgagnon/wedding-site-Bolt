@@ -420,7 +420,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     <p className="text-sm font-semibold text-text-primary">{item.title}</p>
                     <p className="mt-1 text-xs text-text-secondary">{new Date(item.timestamp).toLocaleString()}</p>
                   </div>
-                  <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{item.executionStatus}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{item.source}</span>
+                    <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{item.executionStatus}</span>
+                  </div>
                 </div>
                 {item.note && <p className="mt-3 text-sm text-text-secondary">{item.note}</p>}
               </div>
