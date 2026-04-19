@@ -517,6 +517,18 @@ describe('nameChangeService normalization', () => {
     expect(mixedPlan.summary.hasZeroRecentStepMovement).toBe(false);
   });
 
+  it('marks recent activity as start-led when starts dominate the latest window', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const startPlan = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step, index) => index < 2
+        ? { ...step, executionStatus: 'in_progress' as const, executionUpdatedAt: `2026-04-18T19:0${index}:00.000Z` }
+        : step),
+    }, basePlan);
+
+    expect(startPlan.summary.dominantMovementLane).toBe('start-led');
+  });
+
   it('flags high reminder churn when recent activity is dominated by reminder actions', () => {
     const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
     const churnPlan = [1, 2, 3, 4].reduce((plan, index) => appendNameChangeExecutionActivity(plan, {
