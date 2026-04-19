@@ -581,6 +581,14 @@ export const DashboardMessages: React.FC = () => {
     }
 
     if (!user) {
+      setWeddingSite(null);
+      setMessages([]);
+      setDeliveries([]);
+      setGuests([]);
+      setSmsTransactions([]);
+      setSmsExpiringSoon(0);
+      setItineraryAudienceOptions([]);
+      setEventGuestIds({});
       setLoading(false);
       return;
     }
@@ -593,11 +601,27 @@ export const DashboardMessages: React.FC = () => {
     if (error) {
       toast('Couldn’t load your messaging workspace right now. Please try again.', 'error');
       setWeddingSite(null);
+      setMessages([]);
+      setDeliveries([]);
+      setGuests([]);
+      setSmsTransactions([]);
+      setSmsExpiringSoon(0);
+      setItineraryAudienceOptions([]);
+      setEventGuestIds({});
       setLoading(false);
       return;
     }
     if (data) setWeddingSite(data);
-    else setWeddingSite(null);
+    else {
+      setWeddingSite(null);
+      setMessages([]);
+      setDeliveries([]);
+      setGuests([]);
+      setSmsTransactions([]);
+      setSmsExpiringSoon(0);
+      setItineraryAudienceOptions([]);
+      setEventGuestIds({});
+    }
   }, [user, isDemoMode]);
 
   const fetchMessages = useCallback(async () => {
