@@ -192,6 +192,12 @@ export const GuidedSetup: React.FC = () => {
     fetchWeddingSite();
   }, []);
 
+
+  const clearGuidedSetupDraft = () => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
@@ -313,9 +319,7 @@ export const GuidedSetup: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      if (typeof window !== 'undefined') {
-        window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
-      }
+      clearGuidedSetupDraft();
       navigate('/dashboard', {
         state: {
           showWelcome: true,
@@ -1082,10 +1086,13 @@ export const GuidedSetup: React.FC = () => {
               type="button"
               onClick={() => {
                 if (currentStep === 'complete') {
+                  clearGuidedSetupDraft();
+                  clearGuidedSetupDraft();
                   navigate('/onboarding/celebration');
                   return;
                 }
                 if (currentStepIndex <= 1) {
+                  clearGuidedSetupDraft();
                   navigate('/onboarding/celebration');
                   return;
                 }
@@ -1155,7 +1162,7 @@ export const GuidedSetup: React.FC = () => {
         {(currentStep === 'welcome' || currentStep === 'complete') && (
           <button
             type="button"
-            onClick={() => navigate('/onboarding/celebration')}
+            onClick={() => { clearGuidedSetupDraft(); navigate('/onboarding/celebration'); }}
             className="w-full text-center text-sm text-text-secondary hover:text-text-primary transition-colors mt-4"
           >
             ← Back to options
