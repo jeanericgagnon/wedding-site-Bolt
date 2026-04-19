@@ -67,11 +67,11 @@ Built to keep things clear
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Household-Aware Flow</h3>
               <p className="text-ink/70 mb-4">
-                One RSVP per household, not per person. Guests see their entire household and respond for everyone at once.
+                Keep household replies together so guest responses stay easier to read and manage. DayOf helps structure the household flow without pretending every family edge case is magic.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Clear household member selection</li>
-                <li>• No duplicate responses</li>
+                <li>• Fewer duplicate-response messes</li>
                 <li>• Plus-one acceptance built in</li>
               </ul>
             </div>
@@ -142,11 +142,11 @@ Built to keep things clear
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Real-Time Analytics</h3>
               <p className="text-ink/70 mb-4">
-                Track reply paces, headcounts, meal choices, and dietary needs in real-time. Export anytime.
+                Keep a live read on replies, headcounts, meal choices, and dietary needs so planning decisions stay grounded in the latest responses.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Live headcount by event</li>
-                <li>• Response rate updates</li>
+                <li>• Current headcount by event</li>
+                <li>• Response progress visibility</li>
                 <li>• Meal choice breakdown</li>
               </ul>
             </div>
@@ -186,7 +186,7 @@ Built to keep things clear
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Simple guest access</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Guests access their RSVP with email or unique link. Can edit their response anytime before deadline. No account required.
+                      Guests access their RSVP with email or a unique link, without forcing them into a full account flow. Response updates stay simple up to the deadline rules you set.
                     </p>
                   </div>
                 </div>
@@ -242,11 +242,11 @@ Built to keep things clear
                 'Dietary updates',
                 'Custom questions',
                 'Deadline enforcement',
-                'Automatic reminders',
+                'Reminder scheduling in rollout',
                 'Plus-one acceptance',
                 'Response editing',
-                'Real-time analytics',
-                'Export to any format',
+                'Live RSVP visibility',
+                'Export-friendly reporting',
                 'Mobile-friendly',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
