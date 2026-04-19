@@ -7,6 +7,7 @@ import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUp
 import { buildSuggestedFaqDrafts } from '../../lib/faqDraftHelper';
 import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
+import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
 import * as XLSX from 'xlsx';
 
 type Step =
@@ -73,6 +74,7 @@ export const GuidedSetup: React.FC = () => {
   const [csvImportResult, setCsvImportResult] = useState<{ created: number; updated: number; invalid: number } | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvError, setCsvError] = useState('');
+  const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
 
   const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
 
@@ -103,6 +105,57 @@ export const GuidedSetup: React.FC = () => {
   const currentStepIndex = steps.indexOf(currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
+  const guidedSetupDefaults: GuidedSetupDraftSnapshot = {
+    currentStep: 'welcome',
+    coupleNames: { name1: '', name2: '' },
+    formData: {
+      weddingDate: '',
+      venue: '',
+      city: '',
+      ourStory: '',
+      ceremonyTime: '',
+      receptionTime: '',
+      attire: '',
+      hotelRecommendations: '',
+      parking: '',
+      rsvpDeadline: '',
+      mealOptions: '',
+      registryLinks: '',
+      customFaqs: '',
+      template: 'modern',
+      colorScheme: 'romantic',
+    },
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setHasHydratedDraft(true);
+      return;
+    }
+
+    const saved = window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY);
+    if (!saved) {
+      setHasHydratedDraft(true);
+      return;
+    }
+
+    try {
+      const parsed = normalizeGuidedSetupDraftSnapshot(JSON.parse(saved), guidedSetupDefaults);
+      setCurrentStep(parsed.currentStep);
+      setCoupleNames(parsed.coupleNames);
+      setFormData(parsed.formData);
+    } catch {
+      window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
+    } finally {
+      setHasHydratedDraft(true);
+    }
+  }, [hasHydratedDraft]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !hasHydratedDraft || currentStep === 'complete') return;
+    window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, JSON.stringify({ currentStep, coupleNames, formData }));
+  }, [currentStep, coupleNames, formData, hasHydratedDraft]);
+
   useEffect(() => {
     const fetchWeddingSite = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -110,22 +163,24 @@ export const GuidedSetup: React.FC = () => {
 
       const { data } = await supabase
         .from('wedding_sites')
-        .select('couple_name_1, couple_name_2, wedding_date, venue_date, venue_name, venue_address, wedding_location')
+        .select('id, couple_name_1, couple_name_2, wedding_date, venue_date, venue_name, venue_address, wedding_location')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
         .maybeSingle();
 
       if (data) {
-        setCoupleNames({
-          name1: data.couple_name_1 || '',
-          name2: data.couple_name_2 || '',
-        });
+        setCoupleNames((prev) => ({
+          name1: prev.name1 || data.couple_name_1 || '',
+          name2: prev.name2 || data.couple_name_2 || '',
+        }));
         const hydratedCity = data.wedding_location || deriveCityFromAddress(data.venue_address);
 
         setFormData(prev => ({
           ...prev,
-          weddingDate: data.wedding_date || data.venue_date || '',
-          venue: data.venue_name || '',
-          city: hydratedCity || '',
+          weddingDate: prev.weddingDate || data.wedding_date || data.venue_date || '',
+          venue: prev.venue || data.venue_name || '',
+          city: prev.city || hydratedCity || '',
         }));
       }
     };
@@ -246,6 +301,9 @@ export const GuidedSetup: React.FC = () => {
 
       if (updateError) throw updateError;
 
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
+      }
       navigate('/dashboard', {
         state: {
           showWelcome: true,
@@ -307,6 +365,8 @@ export const GuidedSetup: React.FC = () => {
         .from('wedding_sites')
         .select('id')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
         .maybeSingle();
       if (!site) throw new Error('Wedding site not found');
 
