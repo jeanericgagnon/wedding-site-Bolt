@@ -77,6 +77,7 @@ export const GuidedSetup: React.FC = () => {
   const [csvError, setCsvError] = useState('');
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
   const [siteId, setSiteId] = useState<string | null>(null);
+  const [hasLocalDraft, setHasLocalDraft] = useState(false);
 
   const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
 
@@ -137,12 +138,14 @@ export const GuidedSetup: React.FC = () => {
 
     const saved = window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY);
     if (!saved) {
+      setHasLocalDraft(false);
       setHasHydratedDraft(true);
       return;
     }
 
     try {
       const parsed = normalizeGuidedSetupDraftSnapshot(JSON.parse(saved), guidedSetupDefaults);
+      setHasLocalDraft(true);
       setCurrentStep(parsed.currentStep);
       setCoupleNames(parsed.coupleNames);
       setFormData(parsed.formData);
@@ -160,37 +163,43 @@ export const GuidedSetup: React.FC = () => {
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-      const resolvedSiteId = await resolvePrimaryWeddingSiteId(user.id);
-      setSiteId(resolvedSiteId);
-      if (!resolvedSiteId) return;
+        const resolvedSiteId = await resolvePrimaryWeddingSiteId(user.id);
+        setSiteId(resolvedSiteId);
+        if (!resolvedSiteId) return;
 
-      const { data } = await supabase
+        const { data } = await supabase
         .from('wedding_sites')
         .select('id, couple_name_1, couple_name_2, wedding_date, venue_date, venue_name, venue_address, wedding_location')
         .eq('id', resolvedSiteId)
         .maybeSingle();
 
-      if (data) {
-        setCoupleNames((prev) => ({
+        if (data) {
+          setCoupleNames((prev) => ({
           name1: prev.name1 || data.couple_name_1 || '',
           name2: prev.name2 || data.couple_name_2 || '',
         }));
         const hydratedCity = data.wedding_location || deriveCityFromAddress(data.venue_address);
 
-        setFormData(prev => ({
-          ...prev,
-          weddingDate: prev.weddingDate || data.wedding_date || data.venue_date || '',
-          venue: prev.venue || data.venue_name || '',
-          city: prev.city || hydratedCity || '',
-        }));
+          setFormData(prev => ({
+            ...prev,
+            weddingDate: prev.weddingDate || data.wedding_date || data.venue_date || '',
+            venue: prev.venue || data.venue_name || '',
+            city: prev.city || hydratedCity || '',
+          }));
+        }
+      } catch (err: unknown) {
+        if (!hasLocalDraft) {
+          setError((err as Error).message || 'Could not preload your wedding details right now. You can keep going and save manually.');
+        }
       }
     };
 
-    fetchWeddingSite();
-  }, []);
+    void fetchWeddingSite();
+  }, [hasLocalDraft]);
 
 
   const clearGuidedSetupDraft = () => {
