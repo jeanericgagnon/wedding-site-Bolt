@@ -15,6 +15,7 @@ import {
   generateMilestoneTasks,
 } from './planning/planningService';
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
+import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
 import { buildNameChangeWorkspaceBundle, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
 import { PlanningOverviewTab } from './planning/PlanningOverviewTab';
@@ -432,6 +433,7 @@ export const DashboardPlanning: React.FC = () => {
       ...prev,
       steps: prev.steps.map((step) => step.id === stepId ? { ...step, executionStatus } : step),
     }, prev));
+    setNameChangeReminders((prev) => syncNameChangeRemindersWithStepExecution(prev, stepId, executionStatus));
   }, []);
 
   const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[]) => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangePlan } from './engine';
-import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs, summarizeNameChangeReminders, updateNameChangeReminderStatus } from './reminders';
+import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs, summarizeNameChangeReminders, syncNameChangeRemindersWithStepExecution, updateNameChangeReminderStatus } from './reminders';
 import type { NameChangeEngineInput } from './types';
 
 function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): NameChangeEngineInput {
@@ -139,6 +139,65 @@ describe('name change reminder suggestions', () => {
       },
     ], 'reminder-banks', 'scheduled')).toEqual([
       expect.objectContaining({ reminder_key: 'reminder-banks', status: 'scheduled' }),
+    ]);
+  });
+
+  it('syncs dependent reminder status when a step moves in progress or complete', () => {
+    const reminders = [
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium' as const,
+        status: 'pending' as const,
+      },
+      {
+        reminder_key: 'reminder-passport-followup',
+        label: 'Passport',
+        reason: 'Reason',
+        depends_on_step_id: 'federal-passport',
+        suggested_offset_days: 1,
+        urgency: 'high' as const,
+        status: 'dismissed' as const,
+      },
+    ];
+
+    expect(syncNameChangeRemindersWithStepExecution(reminders, 'institution-banks', 'in_progress')).toEqual([
+      expect.objectContaining({ reminder_key: 'reminder-banks', status: 'scheduled' }),
+      expect.objectContaining({ reminder_key: 'reminder-passport-followup', status: 'dismissed' }),
+    ]);
+
+    expect(syncNameChangeRemindersWithStepExecution(reminders, 'institution-banks', 'complete')).toEqual([
+      expect.objectContaining({ reminder_key: 'reminder-banks', status: 'sent' }),
+      expect.objectContaining({ reminder_key: 'reminder-passport-followup', status: 'dismissed' }),
+    ]);
+  });
+
+  it('reopens non-dismissed reminders when a step resets to todo', () => {
+    expect(syncNameChangeRemindersWithStepExecution([
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium',
+        status: 'scheduled',
+      },
+      {
+        reminder_key: 'reminder-insurance',
+        label: 'Insurance',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-insurance',
+        suggested_offset_days: 7,
+        urgency: 'medium',
+        status: 'dismissed',
+      },
+    ], 'institution-banks', 'todo')).toEqual([
+      expect.objectContaining({ reminder_key: 'reminder-banks', status: 'pending' }),
+      expect.objectContaining({ reminder_key: 'reminder-insurance', status: 'dismissed' }),
     ]);
   });
 });

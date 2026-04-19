@@ -75,3 +75,29 @@ export function updateNameChangeReminderStatus(
 ): NameChangeReminderInput[] {
   return reminders.map((reminder) => reminder.reminder_key === reminderKey ? { ...reminder, status } : reminder);
 }
+
+export function syncNameChangeRemindersWithStepExecution(
+  reminders: NameChangeReminderInput[],
+  stepId: string,
+  executionStatus: 'todo' | 'in_progress' | 'complete',
+): NameChangeReminderInput[] {
+  return reminders.map((reminder) => {
+    if (reminder.depends_on_step_id !== stepId) return reminder;
+
+    if (executionStatus === 'complete') {
+      return { ...reminder, status: 'sent' };
+    }
+
+    if (executionStatus === 'in_progress') {
+      return {
+        ...reminder,
+        status: reminder.status === 'dismissed' ? 'dismissed' : 'scheduled',
+      };
+    }
+
+    return {
+      ...reminder,
+      status: reminder.status === 'dismissed' ? 'dismissed' : 'pending',
+    };
+  });
+}
