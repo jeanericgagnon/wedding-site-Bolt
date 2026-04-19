@@ -410,6 +410,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-1 text-xs text-text-secondary">Latest movement posture: {plan.summary.latestMovementPosture ?? 'mixed'}</p>
               <p className="mt-1 text-xs text-text-secondary">Dominant movement lane: {plan.summary.dominantMovementLane ?? 'mixed'}</p>
               {plan.summary.mixedMovementReason && <p className="mt-1 text-xs text-text-secondary">Mixed movement reason: {plan.summary.mixedMovementReason}</p>}
+              {plan.summary.mixedMovementReason && <p className="mt-1 text-xs text-text-secondary">Mixed window still shows untouched risk: {plan.summary.mixedMovementHasUntouchedRisk ? 'yes' : 'no'}</p>}
               <p className="mt-1 text-xs text-text-secondary">Reminder churn risk: {plan.summary.reminderChurnRisk ?? 'low'}</p>
               <p className="mt-1 text-xs text-text-secondary">Recent completion: {plan.summary.hasRecentCompletion ? 'yes' : 'no'}</p>
               <p className="mt-1 text-xs text-text-secondary">Recent start: {plan.summary.hasRecentStart ? 'yes' : 'no'}</p>

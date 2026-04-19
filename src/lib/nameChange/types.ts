@@ -182,6 +182,7 @@ export interface NameChangePlanSummary {
   latestMovementPosture?: 'step-led' | 'reminder-led' | 'mixed';
   dominantMovementLane?: 'step-progress' | 'start-led' | 'completion-led' | 'reminder-churn' | 'no-step-movement' | 'mixed';
   mixedMovementReason?: 'starts-and-completions' | 'step-reminder-balance' | null;
+  mixedMovementHasUntouchedRisk?: boolean;
   reminderChurnRisk?: 'low' | 'medium' | 'high';
   hasRecentCompletion?: boolean;
   hasRecentStart?: boolean;
