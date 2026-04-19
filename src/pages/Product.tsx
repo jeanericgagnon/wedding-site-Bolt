@@ -29,7 +29,7 @@ const STEPS: Step[] = [
 const FEATURE_AUDIT_GROUPS = [
   {
     title: 'Public experience',
-    items: ['Wedding site templates', 'Public RSVP page', 'Event-specific RSVP', 'Photo upload page', 'Anniversary vault contribution', 'Archive + memory layer'],
+    items: ['Wedding site templates', 'Public RSVP page', 'Event-specific RSVP', 'Photo upload page', 'Archive mode foundation', 'Guest memory collection'],
   },
   {
     title: 'Planning core',
@@ -37,11 +37,11 @@ const FEATURE_AUDIT_GROUPS = [
   },
   {
     title: 'Operations',
-    items: ['Guest messaging', 'Planner command view', 'Dashboard overview', 'Planning workspace', 'Settings + preferences'],
+    items: ['Guest messaging', 'Planner coordination view', 'Dashboard overview', 'Planning workspace', 'Settings + preferences'],
   },
   {
     title: 'What couples actually use',
-    items: ['Drag-and-drop seating chart', 'Seat finder lookup for guests and staff', 'Planner-ready command view', 'RSVP board with live status', 'Planning hub for tasks + decisions', 'Guest photo sharing space'],
+    items: ['Drag-and-drop seating chart', 'Seat finder lookup for guests and staff', 'Planner-ready coordination view', 'RSVP board visibility', 'Planning hub for tasks + decisions', 'Guest photo sharing space'],
   },
 ] as const;
 

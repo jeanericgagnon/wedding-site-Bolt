@@ -292,6 +292,68 @@ Things that do **not** count as done:
 - coordinator / day-of
 - onboarding truth / first-run continuity
 
+## Ruthless 2-week finish order
+
+### Tier 1 — repo cannot credibly claim v1 without these
+1. **Public site / launch path / trust surface**
+   - Why first: if this is dishonest or broken, everything else is irrelevant because the product cannot be safely shown or sold.
+   - Proof gap: no brutal canonical smoke log yet.
+2. **Guests / RSVP ops**
+   - Why second: this is the operational spine that feeds seating, messaging, and event counts.
+   - Proof gap: still no hard proof that the live flow beats spreadsheet chaos in a real wedding scenario.
+3. **Planner / collaborator access + coordinator/day-of together**
+   - Why third: these are core differentiators, but also the easiest place for the product to feel fake-finished if role behavior is sloppy.
+   - Proof gap: role-aware smoke is still missing; trust is still inferred from surfaces more than proven from flow.
+
+### Tier 2 — must-ship slices that become believable once Tier 1 holds
+4. **Comms center**
+   - Why here: strong value, but depends on guest data and trustworthy message-state proof.
+   - Proof gap: still needs evidence that a couple could stay inside DayOf for the core send flow.
+5. **Seating**
+   - Why here: clearly important, but downstream of trustworthy guest + RSVP state.
+   - Proof gap: still no hard proof that lookup/assignment/export hold up under real event-week use.
+6. **Registry**
+   - Why here: important but less launch-fatal than guests/RSVP/launch/trust if it is honestly framed.
+   - Proof gap: merchant/import/purchased-state proof is still narrower than full promise territory.
+
+### Tier 3 — valuable, but should not distort the v1 claim
+7. **Memories / guest photo sharing**
+   - Why here: nice retention/story value, but not core to whether a couple can run the wedding.
+   - Proof gap: still depends on storage/provider and post-event usefulness proof.
+8. **Name-change planner**
+   - Why here: useful niche workflow, but absolutely not launch-defining for wedding-core v1.
+   - Proof gap: weak relative to core slices; should stay out of the top-level promise if unstable.
+
+## Stronger must / should / cut read
+
+### Must ship because they define whether DayOf is a real wedding product
+- public site / launch path / trust surface
+- guests / RSVP ops
+- planner / collaborator access
+- coordinator / day-of
+- comms center
+- seating
+- registry
+- onboarding truth / first-run continuity
+
+### Should ship if solid, but do not let them drag the v1 line
+- memories / guest photo sharing
+- name-change planner
+- extra polish around thin states and release checklisting
+
+### Cut / demote from promise immediately if proof stays weak
+- anniversary / archive ambition as a major product story
+- any advanced analytics framing
+- external custom domains
+- full automation language around migration, reminders, or merchant handling
+- anything that sounds like enterprise workflow governance or complete day-of control software
+
+## Cross-product proof gaps that still matter most
+- **No canonical v1 smoke log exists yet.** That is the biggest remaining finish blocker.
+- **Role-aware trust is still under-proven.** Planner/coordinator value is plausible, but not yet proven in one clear flow.
+- **Guest-state continuity is still under-proven.** Guests → RSVP → messages → seating still needs one coherent proof run.
+- **The product promise is cleaner now, but readiness is still more argued than demonstrated.**
+
 ## Should ship if time
 - memories / guest photo sharing as a stronger v1 slice
 - name-change planner if stable and honestly framed
@@ -324,6 +386,7 @@ Things that do **not** count as done:
 - Tightened the RSVP feature page so it no longer overclaims household certainty, automatic reminder maturity, fake analytics precision, or broad export certainty beyond the current live product bar.
 - Tightened the Seating feature page so it no longer overclaims real-time confidence, check-in certainty, perfect drift awareness, caterer-format polish, or automatic seating speed beyond what the product has actually earned.
 - Tightened top-level Home/Product promise copy so the main marketing surfaces no longer overclaim unlimited guest scale, a too-magical planner command center, or oversized post-wedding platform maturity beyond the current v1 line.
+- Tightened Product feature-group labels so post-wedding memory work and collaboration surfaces are framed in a way that matches the current v1 line instead of reading like a broader finished platform than the proof supports.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
