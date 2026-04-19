@@ -566,4 +566,26 @@ describe('nameChangeService normalization', () => {
       executionUpdatedAt: '2026-04-18T20:20:00.000Z',
     });
   });
+
+  it('does not refresh step touch timestamps for dismissal-only reminder changes', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const updatedPlan = annotateNameChangePlanStepsFromReminderChanges({
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'institution-banks'
+        ? { ...step, executionStatus: 'in_progress' as const, executionUpdatedAt: '2026-04-18T20:00:00.000Z' }
+        : step),
+    }, [
+      {
+        label: 'Follow up on Banks and credit cards',
+        depends_on_step_id: 'institution-banks',
+        status: 'dismissed',
+      },
+    ], '2026-04-18T21:00:00.000Z');
+
+    expect(updatedPlan.steps.find((step) => step.id === 'institution-banks')).toMatchObject({
+      executionStatus: 'in_progress',
+      executionUpdatedAt: '2026-04-18T20:00:00.000Z',
+      executionNote: 'Follow up on Banks and credit cards reminder → dismissed',
+    });
+  });
 });

@@ -333,6 +333,7 @@ export function annotateNameChangePlanStepsFromReminderChanges(
     steps: plan.steps.map((step) => {
       const changes = reminderChangesByStep.get(step.id);
       if (!changes || changes.length === 0) return step;
+      const hasNonDismissedChange = changes.some((change) => change.status !== 'dismissed');
 
       const note = changes
         .map((change) => `${change.label} reminder → ${change.status}`)
@@ -345,7 +346,7 @@ export function annotateNameChangePlanStepsFromReminderChanges(
           ? 'in_progress'
           : step.executionStatus,
         executionNote: mergeReminderAnnotation(step.executionNote, note),
-        executionUpdatedAt: now,
+        executionUpdatedAt: hasNonDismissedChange ? now : step.executionUpdatedAt,
       };
     }),
   }, plan);
