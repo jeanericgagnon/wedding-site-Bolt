@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sp
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
-import { deriveNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
+import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -435,7 +435,23 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <h3 className="text-lg font-semibold text-text-primary">Reminder attention needed</h3>
               <p className="text-sm text-text-secondary">Open reminders still tied to incomplete workflow steps.</p>
             </div>
-            <span className="rounded-full bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} attention item{reminderAttention.length === 1 ? '' : 's'}</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} attention item{reminderAttention.length === 1 ? '' : 's'}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.map((item) => item.reminderKey), 'scheduled'))}
+              >
+                Schedule all
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.map((item) => item.reminderKey), 'dismissed'))}
+              >
+                Dismiss all
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4 space-y-3">
@@ -450,6 +466,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 </div>
                 <p className="mt-3 text-sm text-text-secondary">Step is still {item.dependentStepExecutionStatus.replace('_', ' ')} · reminder is {item.reminderStatus}</p>
                 <p className="mt-2 text-xs font-medium text-text-primary">Follow-up target: {item.suggestedOffsetDays} day{item.suggestedOffsetDays === 1 ? '' : 's'} after the triggering step</p>
+                <div className="mt-3 flex gap-2">
+                  {item.reminderStatus !== 'scheduled' && (
+                    <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, item.reminderKey, 'scheduled'))}>Schedule</Button>
+                  )}
+                  {item.reminderStatus !== 'dismissed' && (
+                    <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, item.reminderKey, 'dismissed'))}>Dismiss</Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

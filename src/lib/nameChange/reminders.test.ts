@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangePlan } from './engine';
-import { buildNameChangeReminderSuggestions, deriveNameChangeReminderAttention, mapReminderSuggestionsToInputs, summarizeNameChangeReminders, syncNameChangeRemindersWithStepExecution, updateNameChangeReminderStatus } from './reminders';
+import { buildNameChangeReminderSuggestions, bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, mapReminderSuggestionsToInputs, summarizeNameChangeReminders, syncNameChangeRemindersWithStepExecution, updateNameChangeReminderStatus } from './reminders';
 import type { NameChangeEngineInput } from './types';
 
 function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): NameChangeEngineInput {
@@ -139,6 +139,32 @@ describe('name change reminder suggestions', () => {
       },
     ], 'reminder-banks', 'scheduled')).toEqual([
       expect.objectContaining({ reminder_key: 'reminder-banks', status: 'scheduled' }),
+    ]);
+  });
+
+  it('bulk-updates reminder status for a selected set of keys', () => {
+    expect(bulkUpdateNameChangeReminderStatus([
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium',
+        status: 'pending',
+      },
+      {
+        reminder_key: 'reminder-insurance',
+        label: 'Insurance',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-insurance',
+        suggested_offset_days: 7,
+        urgency: 'medium',
+        status: 'pending',
+      },
+    ], ['reminder-banks'], 'dismissed')).toEqual([
+      expect.objectContaining({ reminder_key: 'reminder-banks', status: 'dismissed' }),
+      expect.objectContaining({ reminder_key: 'reminder-insurance', status: 'pending' }),
     ]);
   });
 

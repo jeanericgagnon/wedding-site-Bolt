@@ -76,6 +76,15 @@ export function updateNameChangeReminderStatus(
   return reminders.map((reminder) => reminder.reminder_key === reminderKey ? { ...reminder, status } : reminder);
 }
 
+export function bulkUpdateNameChangeReminderStatus(
+  reminders: NameChangeReminderInput[],
+  reminderKeys: string[],
+  status: NameChangeReminderInput['status'],
+): NameChangeReminderInput[] {
+  const keys = new Set(reminderKeys);
+  return reminders.map((reminder) => keys.has(reminder.reminder_key) ? { ...reminder, status } : reminder);
+}
+
 export function syncNameChangeRemindersWithStepExecution(
   reminders: NameChangeReminderInput[],
   stepId: string,
