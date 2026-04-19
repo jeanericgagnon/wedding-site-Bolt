@@ -4,6 +4,8 @@ import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { fetchPaymentStatus, verifyCheckoutSession } from '../lib/stripeService';
+import { clearAllOnboardingDraftStorage } from '../lib/onboardingDraftCleanup';
+import { writeSignupReturnPath } from '../lib/signupContinuation';
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_ATTEMPTS = 15;
@@ -26,6 +28,8 @@ export const PaymentSuccess: React.FC = () => {
         try {
           const verified = await verifyCheckoutSession(sessionId);
           if (verified.paid) {
+            clearAllOnboardingDraftStorage();
+            writeSignupReturnPath(null);
             setStatus('confirmed');
             setTimeout(() => navigate('/onboarding/celebration?from=checkout', { replace: true }), 1200);
             return;
@@ -39,6 +43,8 @@ export const PaymentSuccess: React.FC = () => {
         try {
           const paymentStatus = await fetchPaymentStatus(user.id);
           if (paymentStatus === 'active') {
+            clearAllOnboardingDraftStorage();
+            writeSignupReturnPath(null);
             setStatus('confirmed');
             setTimeout(() => navigate('/onboarding/celebration?from=checkout', { replace: true }), 1500);
             return;
