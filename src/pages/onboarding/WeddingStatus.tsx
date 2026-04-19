@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
+import { writeSignupReturnPath } from '../../lib/signupContinuation';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
 
@@ -36,6 +37,10 @@ export const WeddingStatus: React.FC = () => {
   const [details, setDetails] = useState<StatusDetails>({});
   const [isDestinationWedding, setIsDestinationWedding] = useState(false);
   const [venueCoordinates, setVenueCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    writeSignupReturnPath(null);
+  }, []);
 
   const statusOptions = [
     { id: 'not_engaged' as const, label: "We're not engaged yet" },
