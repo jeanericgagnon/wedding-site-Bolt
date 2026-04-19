@@ -883,7 +883,8 @@ export const DashboardVault: React.FC = () => {
       .update({ vault_storage_provider: 'google_drive' })
       .eq('id', siteId);
 
-    if (!error) setVaultStorageProvider('google_drive');
+    if (error) throw error;
+    setVaultStorageProvider('google_drive');
   }
 
 
@@ -1033,7 +1034,9 @@ export const DashboardVault: React.FC = () => {
           setWeddingSiteId(demoSite.id);
           setVaultStorageProvider('google_drive');
           setGoogleDriveConnected(!!(demoSite as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
-          void forceGoogleDriveProvider(demoSite.id);
+          void forceGoogleDriveProvider(demoSite.id).catch(() => {
+            toast('Couldn’t sync Google Drive as the active vault provider right now.', 'error');
+          });
 if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
           else setWeddingDate(new Date(DEMO_WEDDING_DATE));
 
@@ -1098,7 +1101,9 @@ setWeddingSiteId('demo-site-id');
       setWeddingSiteId(site.id);
       setVaultStorageProvider('google_drive');
       setGoogleDriveConnected(!!(site as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
-      void forceGoogleDriveProvider(site.id);
+      void forceGoogleDriveProvider(site.id).catch(() => {
+        toast('Couldn’t sync Google Drive as the active vault provider right now.', 'error');
+      });
       if (site.wedding_date) setWeddingDate(new Date(site.wedding_date));
       if (site.site_slug) setSiteSlug(site.site_slug as string);
       setCoupleName1((site as { couple_name_1?: string | null }).couple_name_1 || 'Partner');
@@ -1177,13 +1182,22 @@ setWeddingSiteId('demo-site-id');
         return;
       }
 
-      toast('Google Drive connected successfully.');
-      setGoogleDriveConnected(true);
-      setVaultStorageProvider('google_drive');
-      checkGoogleDriveHealth();
-      loadData();
+      void (async () => {
+        try {
+          if (weddingSiteId) {
+            await forceGoogleDriveProvider(weddingSiteId);
+          }
+          toast('Google Drive connected successfully.');
+          setGoogleDriveConnected(true);
+          setVaultStorageProvider('google_drive');
+          checkGoogleDriveHealth();
+          loadData();
+        } catch (providerErr) {
+          toast(providerErr instanceof Error ? providerErr.message : 'Google Drive connected, but we could not save the vault provider.', 'error');
+        }
+      })();
     });
-  }, [loadData]);
+  }, [loadData, weddingSiteId]);
 
   useEffect(() => {
     if (!weddingDate || vaultConfigs.length === 0) return;
