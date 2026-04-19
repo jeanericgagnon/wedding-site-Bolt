@@ -1132,6 +1132,11 @@ setWeddingSiteId('demo-site-id');
         setEntries((entryData ?? []) as VaultEntry[]);
       }
     } catch {
+      setWeddingSiteId(null);
+      setVaultConfigs([]);
+      setEntries([]);
+      setGoogleDriveConnected(false);
+      setDriveNeedsReconnect(false);
       toast('Couldn’t load vault data right now. Please try again.', 'error');
     } finally {
       setLoading(false);
