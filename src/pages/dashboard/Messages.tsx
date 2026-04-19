@@ -733,11 +733,12 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
-    const { data: events } = await supabase
+    const { data: events, error: eventsError } = await supabase
       .from('itinerary_events')
       .select('id, event_name, event_date')
       .eq('wedding_site_id', weddingSite.id)
       .order('event_date', { ascending: true });
+    if (eventsError) throw eventsError;
 
     if (!events || events.length === 0) {
       setItineraryAudienceOptions([]);
@@ -746,10 +747,11 @@ export const DashboardMessages: React.FC = () => {
     }
 
     const eventIds = events.map((e: any) => e.id);
-    const { data: invites } = await supabase
+    const { data: invites, error: invitesError } = await supabase
       .from('event_invitations')
       .select('event_id, guest_id')
       .in('event_id', eventIds);
+    if (invitesError) throw invitesError;
 
     const map: Record<string, Set<string>> = {};
     for (const e of events as any[]) map[e.id] = new Set<string>();
