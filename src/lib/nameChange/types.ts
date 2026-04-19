@@ -183,6 +183,7 @@ export interface NameChangePlanSummary {
   reminderChurnRisk?: 'low' | 'medium' | 'high';
   hasRecentCompletion?: boolean;
   hasRecentStart?: boolean;
+  hasRecentUntouchedRisk?: boolean;
   recentExecutionActivity?: Array<{
     stepId: string | null;
     source: 'step' | 'reminder';

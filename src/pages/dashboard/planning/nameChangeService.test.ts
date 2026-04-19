@@ -460,6 +460,7 @@ describe('nameChangeService normalization', () => {
     expect(merged.summary.reminderChurnRisk).toBe('low');
     expect(merged.summary.hasRecentCompletion).toBe(true);
     expect(merged.summary.hasRecentStart).toBe(true);
+    expect(merged.summary.hasRecentUntouchedRisk).toBe(false);
   });
 
   it('appends manual reminder activity into recent execution activity', () => {
@@ -484,6 +485,7 @@ describe('nameChangeService normalization', () => {
     expect(updatedPlan.summary.reminderChurnRisk).toBe('medium');
     expect(updatedPlan.summary.hasRecentCompletion).toBe(false);
     expect(updatedPlan.summary.hasRecentStart).toBe(false);
+    expect(updatedPlan.summary.hasRecentUntouchedRisk).toBe(false);
   });
 
   it('marks latest movement posture as mixed when recent activity is balanced', () => {
@@ -506,6 +508,7 @@ describe('nameChangeService normalization', () => {
     expect(mixedPlan.summary.reminderChurnRisk).toBe('low');
     expect(mixedPlan.summary.hasRecentCompletion).toBe(false);
     expect(mixedPlan.summary.hasRecentStart).toBe(true);
+    expect(mixedPlan.summary.hasRecentUntouchedRisk).toBe(false);
   });
 
   it('flags high reminder churn when recent activity is dominated by reminder actions', () => {
@@ -522,6 +525,19 @@ describe('nameChangeService normalization', () => {
     expect(churnPlan.summary.reminderChurnRisk).toBe('high');
     expect(churnPlan.summary.hasRecentCompletion).toBe(false);
     expect(churnPlan.summary.hasRecentStart).toBe(false);
+    expect(churnPlan.summary.hasRecentUntouchedRisk).toBe(false);
+  });
+
+  it('flags untouched risk when recent activity still contains todo step entries', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const todoWindowPlan = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step, index) => index === 0
+        ? { ...step, executionStatus: 'todo' as const, executionUpdatedAt: '2026-04-18T20:00:00.000Z' }
+        : step),
+    }, basePlan);
+
+    expect(todoWindowPlan.summary.hasRecentUntouchedRisk).toBe(true);
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {
