@@ -67,10 +67,10 @@ export const GuestsFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Household Grouping</h3>
               <p className="text-ink/70 mb-4">
-                Automatically group guests by household. One RSVP per household, not per person. Prevents confusion and duplicate responses.
+                Keep guests organized by household so RSVPs and follow-up stay cleaner. DayOf supports household structure without pretending every family edge case resolves itself automatically.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Smart grouping by last name and address</li>
+                <li>• Clear household grouping</li>
                 <li>• Manual merge and split controls</li>
                 <li>• Household-level invitations</li>
               </ul>
@@ -101,7 +101,7 @@ export const GuestsFeature: React.FC = () => {
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Per-event guest access rules</li>
-                <li>• No leakage between events</li>
+                <li>• Clearer event-specific visibility</li>
                 <li>• Clear visibility controls</li>
               </ul>
             </div>
@@ -112,7 +112,7 @@ export const GuestsFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Duplicate Prevention</h3>
               <p className="text-ink/70 mb-4">
-                Smart detection prevents adding the same guest twice. Fuzzy matching catches typos and variations.
+                DayOf helps surface likely duplicates and risky overlaps before they turn into a mess. Human review still matters for the weird cases.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Name similarity detection</li>
@@ -142,10 +142,10 @@ export const GuestsFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Export for Vendors</h3>
               <p className="text-ink/70 mb-4">
-                Export your guest list in any format your vendors need. Caterer, venue, or your own updates.
+                Export guest data cleanly for caterers, venues, or your own review without rebuilding the list from scratch.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• CSV, Excel, PDF formats</li>
+                <li>• CSV export workflow</li>
                 <li>• Filtered by RSVP status or event</li>
                 <li>• Include meal preferences</li>
               </ul>
@@ -172,7 +172,7 @@ export const GuestsFeature: React.FC = () => {
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Search and filtering</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Find guests instantly with powerful search. Filter by RSVP status, event access rules, meal choices, or custom tags. Sort by name, response date, or household size.
+                      Search guests quickly, filter by RSVP status or event structure, and narrow the list enough to make real planning decisions without spreadsheet thrash.
                     </p>
                   </div>
                 </div>
@@ -222,18 +222,18 @@ export const GuestsFeature: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[
-                'Unlimited guests',
+                'Guest list built for real weddings',
                 'Household grouping',
                 'Plus-one management',
                 'Event access',
                 'Duplicate prevention',
-                'CSV import/export',
+                'CSV import + export',
                 'Advanced search',
                 'Custom tags',
                 'Private notes',
                 'Dietary updates',
                 'RSVP status filtering',
-                'Real-time updates',
+                'Clear follow-up visibility',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />

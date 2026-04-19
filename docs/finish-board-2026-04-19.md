@@ -124,6 +124,7 @@ Things that do **not** count as done:
 **Missing / partial**
 - not every edge-case rule is automated everywhere
 - reminder automation is phased / partial
+- guests marketing copy had been overstating household automation, duplicate prevention certainty, export breadth, and "real-time" confidence beyond the proof bar
 
 **Proof needed**
 - smoke covering guest import/edit, RSVP submit/update, event-aware status visibility, and exception surfacing
@@ -316,6 +317,7 @@ Things that do **not** count as done:
 - Tightened the Messaging feature page so it no longer overclaims unlimited email certainty, overstates tracking confidence, or sells fully automatic RSVP reminders as already-solid reality.
 - Tightened the Registry feature page so it no longer overclaims universal retailer support or proactive link-health guarantees, and instead frames registry strength as guided import, cleanup, repair, and clean presentation.
 - Fixed collaborator invite flow branding from legacy `WeddingSite` to `DayOf` so the planner/coordinator join path now matches the product users think they were invited into.
+- Tightened the Guests feature page so it no longer overclaims automatic household resolution, zero event leakage, fuzzy duplicate certainty, broad export-format guarantees, or generic "real-time" confidence that is not the real value bar.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
