@@ -1021,11 +1021,12 @@ export const DashboardVault: React.FC = () => {
       if (isDemoMode) {
         setSiteSlug('alex-jordan-demo');
 
-        const { data: demoSite } = await supabase
+        const { data: demoSite, error: demoSiteError } = await supabase
           .from('wedding_sites')
           .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected')
           .eq('site_slug', 'alex-jordan-demo')
           .maybeSingle();
+        if (demoSiteError) throw demoSiteError;
 
         if (demoSite) {
           setWeddingSiteId(demoSite.id);
@@ -1035,22 +1036,24 @@ export const DashboardVault: React.FC = () => {
 if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
           else setWeddingDate(new Date(DEMO_WEDDING_DATE));
 
-          const { data: configData } = await supabase
+          const { data: configData, error: configError } = await supabase
             .from('vault_configs')
             .select('*')
             .eq('wedding_site_id', demoSite.id)
             .order('duration_years', { ascending: true });
+          if (configError) throw configError;
 
           const configs = (configData ?? []) as VaultConfig[];
           setVaultConfigs(configs);
 
           if (configs.length > 0) {
             const configIds = configs.map(c => c.id);
-            const { data: entryData } = await supabase
+            const { data: entryData, error: entryError } = await supabase
               .from('vault_entries')
               .select('*')
               .in('vault_config_id', configIds)
               .order('created_at', { ascending: true });
+            if (entryError) throw entryError;
             setEntries((entryData ?? []) as VaultEntry[]);
           } else {
             setEntries([]);
@@ -1069,11 +1072,12 @@ setWeddingSiteId('demo-site-id');
       }
 
       if (!user) return;
-      const { data: site } = await supabase
+      const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
         .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected, couple_name_1, couple_name_2')
         .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .maybeSingle();
+      if (siteError) throw siteError;
 
       if (!site) return;
       setWeddingSiteId(site.id);
@@ -1086,11 +1090,12 @@ setWeddingSiteId('demo-site-id');
       setCoupleName2((site as { couple_name_2?: string | null }).couple_name_2 || 'Partner');
       setCoupleEmail(user.email ?? null);
 
-      const { data: configData } = await supabase
+      const { data: configData, error: configError } = await supabase
         .from('vault_configs')
         .select('*')
         .eq('wedding_site_id', site.id)
         .order('duration_years', { ascending: true });
+      if (configError) throw configError;
 
       const configs = (configData ?? []) as VaultConfig[];
       setVaultConfigs(configs);
