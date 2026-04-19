@@ -995,6 +995,20 @@ export const DashboardGuests: React.FC = () => {
     }
     if (!editingGuest) return;
 
+    const previousGuestValues = {
+      first_name: editingGuest.first_name ?? null,
+      last_name: editingGuest.last_name ?? null,
+      name: editingGuest.name ?? null,
+      email: editingGuest.email ?? null,
+      phone: editingGuest.phone ?? null,
+      plus_one_allowed: editingGuest.plus_one_allowed,
+      invited_to_ceremony: editingGuest.invited_to_ceremony,
+      invited_to_reception: editingGuest.invited_to_reception,
+    };
+    let previousInviteEventIds: string[] = [];
+    let guestUpdated = false;
+    let invitesCleared = false;
+
     try {
       if (isDemoMode) {
         setGuests(prev => prev.map(guest => (
@@ -1038,13 +1052,15 @@ export const DashboardGuests: React.FC = () => {
         .eq('id', editingGuest.id);
 
       if (error) throw error;
+      guestUpdated = true;
 
       const { data: existingInvitationRows, error: existingInvitesError } = await supabase
         .from('event_invitations')
-        .select('id')
+        .select('id, event_id')
         .eq('guest_id', editingGuest.id);
       if (existingInvitesError) throw existingInvitesError;
 
+      previousInviteEventIds = (existingInvitationRows ?? []).map((row) => row.event_id as string);
       const existingInvitationIds = (existingInvitationRows ?? []).map((row) => row.id as string);
       if (existingInvitationIds.length > 0) {
         await deleteEventRsvpsByInvitationIds(existingInvitationIds);
@@ -1055,6 +1071,7 @@ export const DashboardGuests: React.FC = () => {
         .delete()
         .eq('guest_id', editingGuest.id);
       if (clearInvitesError) throw clearInvitesError;
+      invitesCleared = true;
 
       if (realEventIds.length > 0) {
         const rows = realEventIds.map((eventId) => ({ event_id: eventId, guest_id: editingGuest.id }));
@@ -1068,6 +1085,19 @@ export const DashboardGuests: React.FC = () => {
       resetForm();
       toast('Guest updated', 'success');
     } catch {
+      if (!isDemoMode) {
+        if (invitesCleared) {
+          const rollbackEventIds = previousInviteEventIds.filter((eventId) => !eventId.startsWith('legacy-'));
+          if (rollbackEventIds.length > 0) {
+            await supabase.from('event_invitations').insert(
+              rollbackEventIds.map((eventId) => ({ event_id: eventId, guest_id: editingGuest.id })),
+            );
+          }
+        }
+        if (guestUpdated) {
+          await supabase.from('guests').update(previousGuestValues).eq('id', editingGuest.id);
+        }
+      }
       toast('Failed to update guest. Please try again.', 'error');
     }
   };
