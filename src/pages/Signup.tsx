@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
+import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 import { persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
 const makeBaseSlug = (email: string) => {
@@ -284,7 +285,17 @@ export const Signup: React.FC = () => {
             <p className="text-sm text-text-secondary">
               Already have an account?{' '}
               <button
-                onClick={() => navigate(hasInviteContext ? `/login?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}` : '/login')}
+                onClick={() => navigate(
+                  hasInviteContext
+                    ? `/login?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}`
+                    : '/login',
+                  explicitReturnPath || quickStartDraft ? {
+                    state: {
+                      returnTo: explicitReturnPath,
+                      quickStartDraft,
+                    },
+                  } : undefined,
+                )}
                 className="text-primary hover:text-primary-hover font-medium transition-colors"
               >
                 Sign in

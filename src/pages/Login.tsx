@@ -4,6 +4,8 @@ import { Heart, Chrome, ArrowLeft, Mail, AlertCircle } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
+import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -57,7 +59,7 @@ export const Login: React.FC = () => {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       if (data.session && oauthSource === 'google') {
-        const to = getPostLoginRoute(data.session.user.email);
+        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(data.session.user.email));
         setNotice('Google sign-in successful. Redirecting…');
         navigate(to, { replace: true });
       }
@@ -68,7 +70,7 @@ export const Login: React.FC = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       if (event === 'SIGNED_IN') {
-        const to = getPostLoginRoute(session?.user?.email);
+        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session?.user?.email));
         if (oauthSource === 'google') {
           setNotice('Google sign-in successful. Redirecting…');
         }
@@ -101,7 +103,7 @@ export const Login: React.FC = () => {
         navigate(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });
         return;
       }
-      navigate(getPostLoginRoute(signInData.user?.email));
+      navigate(consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email)));
     } catch (err: unknown) {
       setError((err as Error).message || 'Couldn’t sign you in right now. Please try again.');
     } finally {
@@ -129,6 +131,11 @@ export const Login: React.FC = () => {
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
         : '/login?oauth=google';
+
+      const savedReturnPath = resolveLoginReturnPath(getPostLoginRoute(formData.email));
+      if (!hasInviteContext && savedReturnPath) {
+        writeSignupReturnPath(savedReturnPath);
+      }
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
