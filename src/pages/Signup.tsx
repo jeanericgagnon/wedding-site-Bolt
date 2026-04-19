@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
+import { persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -69,10 +70,12 @@ export const Signup: React.FC = () => {
 
 
   const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
+  const quickStartDraft = (location.state as { quickStartDraft?: unknown } | null)?.quickStartDraft;
 
   useEffect(() => {
     if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
-  }, [explicitReturnPath]);
+    if (quickStartDraft) persistQuickStartDraftSnapshot(quickStartDraft);
+  }, [explicitReturnPath, quickStartDraft]);
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken) return '';

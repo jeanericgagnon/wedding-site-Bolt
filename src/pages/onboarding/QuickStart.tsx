@@ -23,6 +23,7 @@ import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUp
 import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
+import { QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
 import { buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
 
@@ -120,7 +121,7 @@ const WARM = '#8B7355';
 const SOFT = '#F5F4F2';
 const SOFT_HOVER = '#EEEDEB';
 const BORDER = '#E0DED9';
-const STORAGE_KEY = 'dayoflove:quickstart-shell';
+const STORAGE_KEY = QUICK_START_STORAGE_KEY;
 const PROCESSING_STEPS = [
   'Aggregating your answers',
   'Mapping wedding details',
