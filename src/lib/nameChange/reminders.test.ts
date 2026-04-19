@@ -362,6 +362,7 @@ describe('name change reminder suggestions', () => {
       blockedAndStale: 0,
       actionablePriority: 0,
       actionableNormal: 0,
+      actionableAndStale: 0,
       attentionPosture: 'mixed',
       stalePriority: 'mixed',
     });
@@ -434,6 +435,28 @@ describe('name change reminder suggestions', () => {
 
     expect(summary.actionablePriority).toBe(1);
     expect(summary.actionableNormal).toBe(1);
+    expect(summary.actionableAndStale).toBe(0);
+  });
+
+  it('counts actionable-and-stale attention separately', () => {
+    const summary = summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'a',
+        label: 'A',
+        dependsOnStepId: 'step-a',
+        dependentStepTitle: 'Step A',
+        dependentStepExecutionStatus: 'in_progress',
+        reminderStatus: 'scheduled',
+        urgency: 'medium',
+        priorityTier: 'elevated',
+        actionability: 'actionable_now',
+        suggestedOffsetDays: 2,
+        lastTouchedAt: '2026-04-14T12:00:00.000Z',
+        isStale: true,
+      },
+    ]);
+
+    expect(summary.actionableAndStale).toBe(1);
   });
 
   it('classifies attention posture as blocked-heavy or actionable-heavy', () => {
