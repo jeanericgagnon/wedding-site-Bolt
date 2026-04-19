@@ -782,32 +782,38 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
-    const cutoff = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const [expiringResult, txResult] = await Promise.all([
-      supabase
-        .from('sms_credit_transactions')
-        .select('remaining_credits, expires_at')
-        .eq('wedding_site_id', weddingSite.id)
-        .eq('reason', 'purchase')
-        .lte('expires_at', cutoff),
-      supabase
-        .from('sms_credit_transactions')
-        .select('id, credits_delta, reason, created_at, expires_at, remaining_credits')
-        .eq('wedding_site_id', weddingSite.id)
-        .order('created_at', { ascending: false })
-        .limit(8),
-    ]);
+    try {
+      const cutoff = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const [expiringResult, txResult] = await Promise.all([
+        supabase
+          .from('sms_credit_transactions')
+          .select('remaining_credits, expires_at')
+          .eq('wedding_site_id', weddingSite.id)
+          .eq('reason', 'purchase')
+          .lte('expires_at', cutoff),
+        supabase
+          .from('sms_credit_transactions')
+          .select('id, credits_delta, reason, created_at, expires_at, remaining_credits')
+          .eq('wedding_site_id', weddingSite.id)
+          .order('created_at', { ascending: false })
+          .limit(8),
+      ]);
 
-    if (expiringResult.error || txResult.error) {
+      if (expiringResult.error || txResult.error) {
+        toast('Couldn’t load SMS credit activity right now. Please try again.', 'error');
+        setSmsExpiringSoon(0);
+        setSmsTransactions([]);
+        return;
+      }
+
+      const soon = (expiringResult.data ?? []).reduce((sum, row: any) => sum + Number(row.remaining_credits ?? 0), 0);
+      setSmsExpiringSoon(soon);
+      setSmsTransactions((txResult.data ?? []) as SmsCreditTransaction[]);
+    } catch {
       toast('Couldn’t load SMS credit activity right now. Please try again.', 'error');
       setSmsExpiringSoon(0);
       setSmsTransactions([]);
-      return;
     }
-
-    const soon = (expiringResult.data ?? []).reduce((sum, row: any) => sum + Number(row.remaining_credits ?? 0), 0);
-    setSmsExpiringSoon(soon);
-    setSmsTransactions((txResult.data ?? []) as SmsCreditTransaction[]);
   }, [weddingSite, isDemoMode]);
 
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
