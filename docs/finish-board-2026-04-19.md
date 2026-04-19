@@ -354,6 +354,9 @@ Things that do **not** count as done:
 - **Guest-state continuity is still under-proven.** Guests → RSVP → messages → seating still needs one coherent proof run.
 - **The product promise is cleaner now, but readiness is still more argued than demonstrated.**
 
+Primary proof artifact for this now exists at:
+- `docs/v1-smoke-proof-log.md`
+
 ## Should ship if time
 - memories / guest photo sharing as a stronger v1 slice
 - name-change planner if stable and honestly framed
@@ -387,6 +390,7 @@ Things that do **not** count as done:
 - Tightened the Seating feature page so it no longer overclaims real-time confidence, check-in certainty, perfect drift awareness, caterer-format polish, or automatic seating speed beyond what the product has actually earned.
 - Tightened top-level Home/Product promise copy so the main marketing surfaces no longer overclaim unlimited guest scale, a too-magical planner command center, or oversized post-wedding platform maturity beyond the current v1 line.
 - Tightened Product feature-group labels so post-wedding memory work and collaboration surfaces are framed in a way that matches the current v1 line instead of reading like a broader finished platform than the proof supports.
+- Added `docs/v1-smoke-proof-log.md` as the hard must-ship proof gate so v1 readiness can be judged by flow evidence and blocker severity instead of scattered audits.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
