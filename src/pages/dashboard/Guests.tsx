@@ -465,7 +465,12 @@ export const DashboardGuests: React.FC = () => {
   const [formEventInviteIds, setFormEventInviteIds] = useState<Set<string>>(new Set());
 
   const fetchWeddingSite = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setWeddingSiteId(null);
+      setWeddingSiteInfo(null);
+      setGuests([]);
+      return;
+    }
 
     if (isDemoMode) {
       setWeddingSiteId(demoWeddingSite.id);
@@ -522,6 +527,10 @@ export const DashboardGuests: React.FC = () => {
       if ([1, 3, 7].includes(cadence)) setReminderCadenceDays(cadence as 1 | 3 | 7);
       setAutoRemindersEnabled(Boolean((data as { auto_reminders_enabled?: unknown }).auto_reminders_enabled));
       rsvpConfigLoadedRef.current = true;
+    } else {
+      setWeddingSiteId(null);
+      setWeddingSiteInfo(null);
+      setGuests([]);
     }
   }, [user, isDemoMode]);
 
