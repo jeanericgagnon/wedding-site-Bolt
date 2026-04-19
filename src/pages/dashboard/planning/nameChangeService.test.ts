@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { NameChangeCaseInput, NameChangeCaseRecord, NameChangeDocumentInput, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
 import {
+  annotateNameChangePlanStepsFromReminderChanges,
   appendNameChangeExecutionActivity,
   buildNameChangeWorkspaceBundle,
   deriveNameChangeWorkflowStatus,
@@ -488,6 +489,22 @@ describe('nameChangeService normalization', () => {
       title: 'Bulk reminder update (2)',
       executionStatus: 'in_progress',
       timestamp: '2026-04-18T20:05:00.000Z',
+    });
+  });
+
+  it('annotates dependent plan steps when reminder statuses change', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const updatedPlan = annotateNameChangePlanStepsFromReminderChanges(basePlan, [
+      {
+        label: 'Follow up on Banks and credit cards',
+        depends_on_step_id: 'institution-banks',
+        status: 'scheduled',
+      },
+    ], '2026-04-18T20:10:00.000Z');
+
+    expect(updatedPlan.steps.find((step) => step.id === 'institution-banks')).toMatchObject({
+      executionNote: expect.stringContaining('Follow up on Banks and credit cards reminder → scheduled'),
+      executionUpdatedAt: '2026-04-18T20:10:00.000Z',
     });
   });
 });

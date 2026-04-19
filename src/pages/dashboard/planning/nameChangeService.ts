@@ -300,6 +300,46 @@ export function appendNameChangeExecutionActivity(
   };
 }
 
+export function annotateNameChangePlanStepsFromReminderChanges(
+  plan: NameChangePlan,
+  changedReminders: Array<{
+    label: string;
+    depends_on_step_id: string;
+    status: NameChangeReminderInput['status'];
+  }>,
+  timestamp?: string,
+): NameChangePlan {
+  const now = timestamp ?? new Date().toISOString();
+  const reminderChangesByStep = new Map<string, Array<{ label: string; status: NameChangeReminderInput['status'] }>>();
+
+  changedReminders.forEach((reminder) => {
+    const list = reminderChangesByStep.get(reminder.depends_on_step_id) ?? [];
+    list.push({ label: reminder.label, status: reminder.status });
+    reminderChangesByStep.set(reminder.depends_on_step_id, list);
+  });
+
+  return mergeNameChangePlanExecutionState({
+    ...plan,
+    steps: plan.steps.map((step) => {
+      const changes = reminderChangesByStep.get(step.id);
+      if (!changes || changes.length === 0) return step;
+
+      const note = changes
+        .map((change) => `${change.label} reminder → ${change.status}`)
+        .slice(0, 2)
+        .join(' · ');
+
+      return {
+        ...step,
+        executionNote: step.executionNote
+          ? `${step.executionNote} · ${note}`
+          : note,
+        executionUpdatedAt: now,
+      };
+    }),
+  }, plan);
+}
+
 export function deriveNameChangeWorkflowStatus(plan: NameChangePlan): NameChangeCaseInput['workflow_status'] {
   if (plan.summary.blockers.length > 0) return 'draft';
 

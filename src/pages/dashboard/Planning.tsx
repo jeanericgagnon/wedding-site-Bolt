@@ -17,7 +17,7 @@ import {
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
-import { appendNameChangeExecutionActivity, buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
+import { annotateNameChangePlanStepsFromReminderChanges, appendNameChangeExecutionActivity, buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
 import { PlanningOverviewTab } from './planning/PlanningOverviewTab';
 import { TasksTab } from './planning/TasksTab';
 import { BudgetTab } from './planning/BudgetTab';
@@ -463,30 +463,33 @@ export const DashboardPlanning: React.FC = () => {
     setNameChangeReminders(nextReminders);
     if (changedReminders.length === 0) return;
 
-    if (changedReminders.length === 1) {
-      const changedReminder = changedReminders[0];
-      setNameChangePlan((prev) => appendNameChangeExecutionActivity(prev, {
-        title: `Reminder updated: ${changedReminder.label}`,
-        executionStatus: changedReminder.status === 'dismissed' ? 'todo' : changedReminder.status === 'sent' ? 'complete' : 'in_progress',
-        note: `Reminder status changed to ${changedReminder.status}`,
-      }));
-      return;
-    }
+    setNameChangePlan((prev) => {
+      const annotated = annotateNameChangePlanStepsFromReminderChanges(prev, changedReminders);
 
-    const statusCounts = changedReminders.reduce<Record<string, number>>((counts, reminder) => {
-      counts[reminder.status] = (counts[reminder.status] ?? 0) + 1;
-      return counts;
-    }, {});
-    const dominantStatus = (Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'scheduled') as NameChangeReminderInput['status'];
+      if (changedReminders.length === 1) {
+        const changedReminder = changedReminders[0];
+        return appendNameChangeExecutionActivity(annotated, {
+          title: `Reminder updated: ${changedReminder.label}`,
+          executionStatus: changedReminder.status === 'dismissed' ? 'todo' : changedReminder.status === 'sent' ? 'complete' : 'in_progress',
+          note: `Reminder status changed to ${changedReminder.status}`,
+        });
+      }
 
-    setNameChangePlan((prev) => appendNameChangeExecutionActivity(prev, {
-      title: `Bulk reminder update (${changedReminders.length})`,
-      executionStatus: dominantStatus === 'dismissed' ? 'todo' : dominantStatus === 'sent' ? 'complete' : 'in_progress',
-      note: changedReminders
-        .map((reminder) => `${reminder.label} → ${reminder.status}`)
-        .slice(0, 3)
-        .join(' · '),
-    }));
+      const statusCounts = changedReminders.reduce<Record<string, number>>((counts, reminder) => {
+        counts[reminder.status] = (counts[reminder.status] ?? 0) + 1;
+        return counts;
+      }, {});
+      const dominantStatus = (Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'scheduled') as NameChangeReminderInput['status'];
+
+      return appendNameChangeExecutionActivity(annotated, {
+        title: `Bulk reminder update (${changedReminders.length})`,
+        executionStatus: dominantStatus === 'dismissed' ? 'todo' : dominantStatus === 'sent' ? 'complete' : 'in_progress',
+        note: changedReminders
+          .map((reminder) => `${reminder.label} → ${reminder.status}`)
+          .slice(0, 3)
+          .join(' · '),
+      });
+    });
   }, [nameChangeReminders]);
 
   const handleSaveNameChange = useCallback(async () => {
