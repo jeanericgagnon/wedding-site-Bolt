@@ -109,6 +109,8 @@ export const PaymentRequired: React.FC = () => {
       return;
     }
     clearAllOnboardingDraftStorage();
+    writeSignupReturnPath(null);
+    clearOnboardingResumeStorage();
     navigate('/onboarding/celebration?bypassPayment=1', { replace: true });
   };
 
