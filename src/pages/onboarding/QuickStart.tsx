@@ -152,6 +152,8 @@ export const QuickStart: React.FC = () => {
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
   const [hasLocalDraftHydration, setHasLocalDraftHydration] = useState(false);
+  const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
+  const [isResettingDraft, setIsResettingDraft] = useState(false);
 
   const currentQuestion = questions[currentIndex];
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
@@ -162,6 +164,7 @@ export const QuickStart: React.FC = () => {
   useEffect(() => {
     const shouldReset = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('resetQuickStart') === '1';
     if (shouldReset) {
+      setIsResettingDraft(true);
       localStorage.removeItem(STORAGE_KEY);
       setInitialSetupAnswers(createEmptyInitialSetupAnswers());
       followUpAnswersRef.current = {};
@@ -172,11 +175,17 @@ export const QuickStart: React.FC = () => {
       setShowFollowUps(false);
       setViewState('question');
       setInputValue('');
+      setHasLocalDraftHydration(false);
+      setHasHydratedDraft(true);
+      setIsResettingDraft(false);
       return;
     }
 
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
+    if (!saved) {
+      setHasHydratedDraft(true);
+      return;
+    }
     try {
       const parsed = normalizeQuickStartDraftSnapshot(JSON.parse(saved));
       setInitialSetupAnswers(parsed.initialSetupAnswers);
@@ -190,11 +199,16 @@ export const QuickStart: React.FC = () => {
       setViewState(parsed.showFollowUps ? 'followups' : parsed.viewState);
       setHasLocalDraftHydration(hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(parsed.followUpAnswers).length > 0 || Boolean(parsed.clarifyingState));
     } catch {}
+    finally {
+      setHasHydratedDraft(true);
+      setIsResettingDraft(false);
+    }
   }, [hasLocalDraftHydration]);
 
   useEffect(() => {
+    if (!hasHydratedDraft || isResettingDraft) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }));
-  }, [initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState]);
+  }, [initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState, hasHydratedDraft, isResettingDraft]);
 
   useEffect(() => {
     followUpAnswersRef.current = followUpAnswers;
