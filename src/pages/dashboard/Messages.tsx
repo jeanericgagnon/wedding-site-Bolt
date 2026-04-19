@@ -741,6 +741,7 @@ export const DashboardMessages: React.FC = () => {
     }));
     setItineraryAudienceOptions(options);
     } catch {
+      toast('Couldn’t load itinerary audience segments right now. Please try again.', 'error');
       setItineraryAudienceOptions([]);
       setEventGuestIds({});
     }
@@ -772,6 +773,13 @@ export const DashboardMessages: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(8),
     ]);
+
+    if (expiringResult.error || txResult.error) {
+      toast('Couldn’t load SMS credit activity right now. Please try again.', 'error');
+      setSmsExpiringSoon(0);
+      setSmsTransactions([]);
+      return;
+    }
 
     const soon = (expiringResult.data ?? []).reduce((sum, row: any) => sum + Number(row.remaining_credits ?? 0), 0);
     setSmsExpiringSoon(soon);
