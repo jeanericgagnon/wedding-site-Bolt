@@ -97,6 +97,11 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     blockedAndStale,
     actionablePriority,
     actionableNormal,
+    attentionPosture: actionableNow === blockedByUntouchedStep
+      ? 'mixed'
+      : actionableNow > blockedByUntouchedStep
+        ? 'actionable-heavy'
+        : 'blocked-heavy',
     stalePriority: staleTodo === staleInProgress ? 'mixed' : staleTodo > staleInProgress ? 'untouched' : 'moving',
   };
 }
