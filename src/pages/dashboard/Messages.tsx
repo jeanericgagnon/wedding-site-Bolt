@@ -1917,12 +1917,14 @@ export const DashboardMessages: React.FC = () => {
     const delivered = messages.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
     const failed = messages.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
     const targeted = messages.reduce((sum, m) => sum + getRecipientCount(m), 0);
+    const skipped = deliveries.filter((d) => d.status === 'skipped').length;
     const successRate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
     const failRate = targeted > 0 ? Math.round((failed / targeted) * 100) : 0;
+    const skippedRate = targeted > 0 ? Math.round((skipped / targeted) * 100) : 0;
     const overdueScheduled = messages.filter((m) => m.status === 'scheduled' && isPastScheduledTime(m.scheduled_for)).length;
     const retryBacklog = messages.filter((m) => m.status === 'failed' || m.status === 'partial').length;
-    return { successRate, failRate, overdueScheduled, retryBacklog };
-  }, [messages]);
+    return { successRate, failRate, skipped, skippedRate, overdueScheduled, retryBacklog };
+  }, [messages, deliveries]);
 
   const campaignThreads = useMemo(() => {
     const map = new Map<string, {
@@ -1931,6 +1933,7 @@ export const DashboardMessages: React.FC = () => {
       count: number;
       delivered: number;
       failed: number;
+      skipped: number;
       unreached: number;
       latestStatus: string;
       latestAt: number;
@@ -1945,6 +1948,7 @@ export const DashboardMessages: React.FC = () => {
         count: 0,
         delivered: 0,
         failed: 0,
+        skipped: 0,
         unreached: 0,
         latestStatus: message.status,
         latestAt,
@@ -1953,6 +1957,7 @@ export const DashboardMessages: React.FC = () => {
       prev.count += 1;
       prev.delivered += Number(message.delivered_count ?? 0);
       prev.failed += Number(message.failed_count ?? 0);
+      prev.skipped += deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
       prev.unreached += getUnreachedCount(message);
       if (latestAt >= prev.latestAt) {
         prev.latestAt = latestAt;
@@ -1964,7 +1969,7 @@ export const DashboardMessages: React.FC = () => {
     return Array.from(map.values())
       .sort((a, b) => b.latestAt - a.latestAt)
       .slice(0, 5);
-  }, [messages]);
+  }, [messages, deliveries]);
 
   const providerTelemetry = useMemo(() => {
     const attempted = deliveries.filter((d) => d.status === 'sent' || d.status === 'failed');
@@ -2698,6 +2703,7 @@ export const DashboardMessages: React.FC = () => {
 
           <div className="flex flex-wrap gap-2 mb-4">
             <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show failed</button>
+            <button type="button" onClick={() => { setHistorySearch('Skipped:'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show skipped</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
@@ -2788,22 +2794,22 @@ export const DashboardMessages: React.FC = () => {
                 detail: 'Reached guests cleanly',
               },
               {
-                label: 'Failure rate',
+                label: 'Provider failure rate',
                 value: `${deliveryHealth.failRate}%`,
                 tone: deliveryHealth.failRate > 0 ? 'text-error' : 'text-text-primary',
-                detail: 'Messages that still failed',
+                detail: 'Provider-attempted sends that failed',
+              },
+              {
+                label: 'Skipped rate',
+                value: `${deliveryHealth.skippedRate}%`,
+                tone: deliveryHealth.skipped > 0 ? 'text-warning' : 'text-text-primary',
+                detail: `${deliveryHealth.skipped} recipients skipped before send`,
               },
               {
                 label: 'Past-due scheduled',
                 value: deliveryHealth.overdueScheduled,
                 tone: deliveryHealth.overdueScheduled > 0 ? 'text-warning' : 'text-text-primary',
                 detail: 'Scheduled items needing attention',
-              },
-              {
-                label: 'Still needs retry',
-                value: deliveryHealth.retryBacklog,
-                tone: deliveryHealth.retryBacklog > 0 ? 'text-warning' : 'text-text-primary',
-                detail: 'Failed sends you may want to rerun',
               },
             ].map((item) => (
               <div key={item.label} className="rounded-2xl border border-border-subtle bg-white px-3 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
@@ -2833,16 +2839,22 @@ export const DashboardMessages: React.FC = () => {
               </div>
               <div className="space-y-2">
                 {campaignThreads.map((thread) => (
-                  <div key={thread.key} className="flex items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3 text-sm">
+                  <button
+                    key={thread.key}
+                    type="button"
+                    onClick={() => setHistorySearch(thread.name)}
+                    className="w-full flex items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3 text-sm text-left hover:border-primary/30 hover:bg-white transition-colors"
+                  >
                     <div className="min-w-0">
                       <p className="font-medium text-text-primary truncate">{thread.name}</p>
-                      <p className="text-[11px] text-text-tertiary">{thread.count} send{thread.count !== 1 ? 's' : ''} · latest {thread.latestStatus}</p>
+                      <p className="text-[11px] text-text-tertiary">{thread.count} send{thread.count !== 1 ? 's' : ''} · latest {thread.latestStatus} · click to filter history</p>
                     </div>
                     <div className="text-right text-[11px] text-text-tertiary">
                       <p>{thread.delivered} delivered · {thread.failed} failed</p>
+                      {thread.skipped > 0 && <p className="text-warning">{thread.skipped} skipped</p>}
                       {thread.unreached > 0 && <p className="text-warning">{thread.unreached} unreached</p>}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -2890,6 +2902,7 @@ export const DashboardMessages: React.FC = () => {
               {filteredHistory.map((message) => {
                 const recipientCount = getRecipientCount(message);
                 const unreachedCount = getUnreachedCount(message);
+                const skippedCount = deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
                 const campaignName = getCampaignName(message);
                 return (
                   <div
@@ -2920,6 +2933,9 @@ export const DashboardMessages: React.FC = () => {
                         </span>
                         {typeof message.delivered_count === 'number' && typeof message.failed_count === 'number' && (
                           <span>{message.delivered_count} delivered · {message.failed_count} failed</span>
+                        )}
+                        {skippedCount > 0 && (
+                          <span>{skippedCount} skipped</span>
                         )}
                         {unreachedCount > 0 && (
                           <span>{unreachedCount} unreached</span>
