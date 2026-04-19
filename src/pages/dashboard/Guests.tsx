@@ -630,15 +630,12 @@ export const DashboardGuests: React.FC = () => {
       }
 
       try {
-        const [eventsRes, invitesRes, siteRes] = await Promise.all([
+        const [eventsRes, siteRes] = await Promise.all([
           supabase
             .from('itinerary_events')
             .select('id, event_name, event_date, start_time, location_name')
             .eq('wedding_site_id', weddingSiteId)
             .order('event_date', { ascending: true }),
-          supabase
-            .from('event_invitations')
-            .select('event_id, guest_id'),
           supabase
             .from('wedding_sites')
             .select('wedding_data')
@@ -646,11 +643,25 @@ export const DashboardGuests: React.FC = () => {
             .maybeSingle(),
         ]);
 
+        if (eventsRes.error) throw eventsRes.error;
+        if (siteRes.error) throw siteRes.error;
+
         if (cancelled) return;
 
         const seededEvents = (((siteRes.data?.wedding_data as { meta?: { rsvpEventSeeds?: Array<{ id: string; label: string; dateLabel?: string; locationName?: string | null }> } } | null)?.meta?.rsvpEventSeeds) ?? []);
+        const siteEvents = (eventsRes.data ?? []) as ItineraryEvent[];
+        const eventIds = siteEvents.map((event) => event.id);
 
-        setItineraryFilterEvents(deriveInviteEvents((eventsRes.data ?? []) as ItineraryEvent[], seededEvents) as ItineraryEvent[]);
+        const invitesRes = eventIds.length > 0
+          ? await supabase
+              .from('event_invitations')
+              .select('event_id, guest_id')
+              .in('event_id', eventIds)
+          : { data: [], error: null };
+
+        if (invitesRes.error) throw invitesRes.error;
+
+        setItineraryFilterEvents(deriveInviteEvents(siteEvents, seededEvents) as ItineraryEvent[]);
 
         const next = new Map<string, Set<string>>();
         ((invitesRes.data ?? []) as Array<{ event_id: string; guest_id: string }>).forEach((row) => {
@@ -901,6 +912,8 @@ export const DashboardGuests: React.FC = () => {
     }
     if (!weddingSiteId) return;
 
+    let createdGuestId: string | null = null;
+
     try {
       if (isDemoMode) {
         const newGuest: GuestWithRSVP = {
@@ -952,6 +965,7 @@ export const DashboardGuests: React.FC = () => {
         .single();
 
       if (error) throw error;
+      createdGuestId = createdGuest.id;
 
       if (createdGuest?.id && realEventIds.length > 0) {
         const rows = realEventIds.map((eventId) => ({ event_id: eventId, guest_id: createdGuest.id }));
@@ -965,6 +979,9 @@ export const DashboardGuests: React.FC = () => {
       resetForm();
       toast(`${formData.first_name} ${formData.last_name} added`, 'success');
     } catch (err) {
+      if (createdGuestId) {
+        await supabase.from('guests').delete().eq('id', createdGuestId);
+      }
       const msg = err instanceof Error ? err.message : 'Failed to add guest. Please try again.';
       toast(msg, 'error');
     }
