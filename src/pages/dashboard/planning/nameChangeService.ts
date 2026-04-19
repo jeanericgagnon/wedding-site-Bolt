@@ -241,6 +241,17 @@ export function mergeNameChangePlanExecutionState(
     counts[key] += 1;
     return counts;
   }, { todo: 0, in_progress: 0, complete: 0 });
+  const recentExecutionActivity = steps
+    .filter((step) => step.executionUpdatedAt)
+    .map((step) => ({
+      stepId: step.id,
+      title: step.title,
+      executionStatus: step.executionStatus ?? 'todo',
+      note: step.executionNote ?? null,
+      timestamp: step.executionUpdatedAt as string,
+    }))
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 5);
 
   return {
     ...generatedPlan,
@@ -248,6 +259,7 @@ export function mergeNameChangePlanExecutionState(
     summary: {
       ...generatedPlan.summary,
       executionCounts,
+      recentExecutionActivity,
     },
   };
 }

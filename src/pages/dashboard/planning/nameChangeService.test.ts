@@ -435,4 +435,23 @@ describe('nameChangeService normalization', () => {
       completedAt: '2026-04-18T19:00:00.000Z',
     });
   });
+
+  it('builds recent execution activity from updated workflow steps', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const merged = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step, index) => ({
+        ...step,
+        executionStatus: index === 0 ? 'complete' as const : index === 1 ? 'in_progress' as const : step.executionStatus,
+        executionNote: index < 2 ? `note-${index}` : step.executionNote,
+        executionUpdatedAt: index < 2 ? `2026-04-18T19:0${index}:00.000Z` : step.executionUpdatedAt,
+        completedAt: index === 0 ? '2026-04-18T19:00:00.000Z' : step.completedAt,
+      })),
+    }, basePlan);
+
+    expect(merged.summary.recentExecutionActivity).toEqual([
+      expect.objectContaining({ stepId: merged.steps[1].id, executionStatus: 'in_progress', note: 'note-1', timestamp: '2026-04-18T19:01:00.000Z' }),
+      expect.objectContaining({ stepId: merged.steps[0].id, executionStatus: 'complete', note: 'note-0', timestamp: '2026-04-18T19:00:00.000Z' }),
+    ]);
+  });
 });

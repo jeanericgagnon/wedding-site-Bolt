@@ -175,6 +175,13 @@ export interface NameChangePlanSummary {
     in_progress: number;
     complete: number;
   };
+  recentExecutionActivity?: Array<{
+    stepId: string;
+    title: string;
+    executionStatus: 'todo' | 'in_progress' | 'complete';
+    note: string | null;
+    timestamp: string;
+  }>;
   nextBestAction: string;
 }
 

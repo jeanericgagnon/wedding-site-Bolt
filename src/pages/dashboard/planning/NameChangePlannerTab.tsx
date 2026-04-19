@@ -398,6 +398,35 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         </div>
       </Card>
 
+      {(plan.summary.recentExecutionActivity?.length ?? 0) > 0 && (
+        <Card>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Recent execution activity</h3>
+              <p className="text-sm text-text-secondary">Latest name-change workflow updates captured from step execution notes and status changes.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {plan.summary.recentExecutionActivity?.length ?? 0} recent updates
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {plan.summary.recentExecutionActivity?.map((item) => (
+              <div key={`${item.stepId}-${item.timestamp}`} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{item.title}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{new Date(item.timestamp).toLocaleString()}</p>
+                  </div>
+                  <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{item.executionStatus}</span>
+                </div>
+                {item.note && <p className="mt-3 text-sm text-text-secondary">{item.note}</p>}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {effectiveReminders.length > 0 && (
         <Card>
           <div className="flex items-center justify-between gap-3">
