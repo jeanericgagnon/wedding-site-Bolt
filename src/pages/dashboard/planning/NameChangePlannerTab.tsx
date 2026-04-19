@@ -456,6 +456,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.blockedAndStale} blocked + stale</p>
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.blockedStalePriority} blocked stale priority · {reminderAttentionSummary.blockedStaleNormal} blocked stale normal</p>
               <p className="mt-1 text-xs text-text-secondary">Blocked stale posture: {reminderAttentionSummary.blockedStalePosture}</p>
+              <p className="mt-1 text-xs text-text-secondary">Dominant risk lane: {reminderAttentionSummary.dominantRiskLane}</p>
               <p className="mt-1 text-xs text-text-secondary">Attention posture: {reminderAttentionSummary.attentionPosture}</p>
               <p className="mt-1 text-xs text-text-secondary">Stale priority: {reminderAttentionSummary.stalePriority}</p>
             </div>

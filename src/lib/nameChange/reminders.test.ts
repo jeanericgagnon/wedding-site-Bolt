@@ -367,6 +367,7 @@ describe('name change reminder suggestions', () => {
       actionableStaleNormal: 0,
       blockedStalePriority: 0,
       blockedStaleNormal: 0,
+      dominantRiskLane: 'mixed',
       staleActionablePosture: 'mixed',
       blockedStalePosture: 'mixed',
       attentionPosture: 'mixed',
@@ -507,6 +508,53 @@ describe('name change reminder suggestions', () => {
     expect(summary.blockedStalePriority).toBe(1);
     expect(summary.blockedStaleNormal).toBe(1);
     expect(summary.blockedStalePosture).toBe('mixed');
+  });
+
+  it('classifies dominant risk lane across blocked stale, stale actionable, and routine actionable', () => {
+    expect(summarizeNameChangeReminderAttention([
+      {
+        reminderKey: 'a',
+        label: 'A',
+        dependsOnStepId: 'step-a',
+        dependentStepTitle: 'Step A',
+        dependentStepExecutionStatus: 'todo',
+        reminderStatus: 'pending',
+        urgency: 'medium',
+        priorityTier: 'elevated',
+        actionability: 'blocked_by_untouched_step',
+        suggestedOffsetDays: 2,
+        lastTouchedAt: null,
+        isStale: true,
+      },
+      {
+        reminderKey: 'b',
+        label: 'B',
+        dependsOnStepId: 'step-b',
+        dependentStepTitle: 'Step B',
+        dependentStepExecutionStatus: 'todo',
+        reminderStatus: 'pending',
+        urgency: 'medium',
+        priorityTier: 'normal',
+        actionability: 'blocked_by_untouched_step',
+        suggestedOffsetDays: 3,
+        lastTouchedAt: null,
+        isStale: true,
+      },
+      {
+        reminderKey: 'c',
+        label: 'C',
+        dependsOnStepId: 'step-c',
+        dependentStepTitle: 'Step C',
+        dependentStepExecutionStatus: 'in_progress',
+        reminderStatus: 'scheduled',
+        urgency: 'medium',
+        priorityTier: 'normal',
+        actionability: 'actionable_now',
+        suggestedOffsetDays: 4,
+        lastTouchedAt: '2026-04-18T12:00:00.000Z',
+        isStale: false,
+      },
+    ]).dominantRiskLane).toBe('blocked-stale');
   });
 
   it('classifies attention posture as blocked-heavy or actionable-heavy', () => {

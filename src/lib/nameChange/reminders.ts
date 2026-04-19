@@ -107,6 +107,21 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     actionableStaleNormal,
     blockedStalePriority,
     blockedStaleNormal,
+    dominantRiskLane: (() => {
+      const blockedStaleScore = blockedAndStale;
+      const staleActionableScore = actionableAndStale;
+      const routineActionableScore = actionableNow - actionableAndStale;
+
+      const entries = [
+        ['blocked-stale', blockedStaleScore],
+        ['stale-actionable', staleActionableScore],
+        ['routine-actionable', routineActionableScore],
+      ] as const;
+
+      const sorted = [...entries].sort((a, b) => b[1] - a[1]);
+      if (sorted[0][1] === sorted[1][1]) return 'mixed';
+      return sorted[0][0];
+    })(),
     staleActionablePosture: actionableStalePriority === actionableStaleNormal
       ? 'mixed'
       : actionableStalePriority > actionableStaleNormal
