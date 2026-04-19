@@ -1981,8 +1981,13 @@ Proceed with send?`)) return;
       return;
     }
 
-    await navigator.clipboard.writeText(rows.join('\n'));
-    toast(`Copied ${rows.length} SMS RSVP link${rows.length === 1 ? '' : 's'}`, 'success');
+    const payload = rows.join('\n');
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast(`Copied ${rows.length} SMS RSVP link${rows.length === 1 ? '' : 's'}`, 'success');
+    } catch {
+      window.prompt('Copy SMS RSVP links:', payload);
+    }
   };
 
   const exportAddressCollectionCSV = () => {
