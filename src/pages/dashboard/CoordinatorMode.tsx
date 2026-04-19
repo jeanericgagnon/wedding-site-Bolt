@@ -8,6 +8,7 @@ import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
+import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
@@ -270,6 +271,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
 
   const nextArrivals = useMemo(() => sortedGuests.filter((g) => !g.checked_in_at).slice(0, 5), [sortedGuests]);
+  const checkInWatchCount = useMemo(() => guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch').length, [guests]);
 
   const checkInQueue = useMemo(() => filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter), [sortedGuests, checkInQuery, checkInFilter]);
 
@@ -474,7 +476,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-sm font-medium text-text-primary">Check-in queue</p>
                   <p className="text-[11px] text-text-tertiary">Search arrivals fast and keep the live line moving.</p>
                 </div>
-                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown</p>
+                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
@@ -494,21 +496,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </div>
             </div>
             <div className="max-h-[60vh] overflow-auto divide-y divide-border-subtle/70">
-              {checkInQueue.map((g) => (
-                <div key={g.id} className="flex items-center justify-between px-4 py-2.5">
-                  <div>
-                    <p className="text-sm font-medium text-text-primary">{g.name}</p>
-                    <p className="text-xs text-text-tertiary">{g.rsvp_status}</p>
+              {checkInQueue.map((g) => {
+                const doorStatus = getCoordinatorDoorStatus(g);
+                return (
+                  <div key={g.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-text-primary">{g.name}</p>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] border ${doorStatus === 'ready' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : doorStatus === 'watch' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-border bg-surface-subtle text-text-tertiary'}`}>
+                          {getCoordinatorDoorStatusLabel(doorStatus)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-text-tertiary">{g.rsvp_status}{doorStatus === 'watch' ? ' · Flag before check-in' : ''}</p>
+                    </div>
+                    <button
+                      onClick={() => canCheckIn && void toggleCheckIn(g)}
+                      disabled={!canCheckIn || doorStatus === 'watch'}
+                      className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
+                    >
+                      {g.checked_in_at ? 'Checked in' : doorStatus === 'watch' ? 'Review first' : 'Check in'}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => canCheckIn && void toggleCheckIn(g)}
-                    disabled={!canCheckIn}
-                    className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : 'border-border text-text-secondary bg-white'}`}
-                  >
-                    {g.checked_in_at ? 'Checked in' : 'Check in'}
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
