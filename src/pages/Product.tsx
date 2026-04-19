@@ -79,7 +79,7 @@ export const Product: React.FC = () => {
     if (activeStep === 'launch') {
       return (
         <div className="space-y-4">
-          <p className="text-sm text-ink/70">Template: Modern Luxe • Website: draft is ready for private preview or go live</p>
+          <p className="text-sm text-ink/70">Template: Modern Luxe • Website: draft is ready for guest-facing launch when you are ready</p>
           <button className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Go live</button>
         </div>
       );

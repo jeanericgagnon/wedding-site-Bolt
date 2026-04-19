@@ -12,13 +12,12 @@ interface BillingModalProps {
 
 const PRO_FEATURES = [
   'Unlimited guests and RSVPs',
-  'Custom domain support',
+  'Personalized DayOf wedding URL',
   'Photo & video vault (5 GB)',
-  'Priority email support',
-  'Advanced analytics',
+  'Guest messaging workflows',
   'Remove Dayof branding',
-  'Scheduled messaging',
   'Seating chart tools',
+  'Planner collaboration access',
 ];
 
 export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan = 'free' }) => {

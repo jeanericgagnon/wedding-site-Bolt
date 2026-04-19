@@ -198,7 +198,7 @@ export const Home: React.FC = () => {
             </HeroReveal>
             <HeroReveal delay={0.3}>
               <p className="text-[0.8125rem] text-ink/60 updates-wide leading-loose">
-                $49 flat fee for 2 years • Auto-renew OFF by default • Private by default
+                $49 flat fee for 2 years • Auto-renew OFF by default • Hidden from search by default
               </p>
             </HeroReveal>
             <HeroReveal delay={0.38}>
@@ -464,7 +464,7 @@ export const Home: React.FC = () => {
                   'Meal choices + dietary updates',
                   'Guest list management',
                   'Itinerary timeline',
-                  'Private by default',
+                  'Hidden from search by default',
                   'Mobile-friendly for all ages',
                   'Guest export tools',
                 ].map((item, idx) => (
@@ -519,7 +519,7 @@ export const Home: React.FC = () => {
                 },
                 {
                   q: 'What about privacy and search engines?',
-                  a: 'Your site is private by default. It won\'t appear in search engines unless you explicitly enable public indexing.',
+                  a: 'Your site is hidden from search by default. Guest access controls and launch state are managed separately, so you can keep search indexing off without pretending the whole site is invisible under every circumstance.',
                 },
                 {
                   q: 'How do SMS credits work?',
