@@ -10,6 +10,7 @@ import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatch
 import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
 import * as XLSX from 'xlsx';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
+import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
 
 type Step =
@@ -130,6 +131,10 @@ export const GuidedSetup: React.FC = () => {
       colorScheme: 'romantic',
     },
   };
+
+  useEffect(() => {
+    writeSignupReturnPath(null);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
