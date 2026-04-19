@@ -15,8 +15,8 @@ import {
   generateMilestoneTasks,
 } from './planning/planningService';
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
-import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan } from '../../lib/nameChange/types';
-import { hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, saveNameChangeWorkspace } from './planning/nameChangeService';
+import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
+import { buildNameChangeWorkspaceBundle, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, saveNameChangeWorkspace } from './planning/nameChangeService';
 import { PlanningOverviewTab } from './planning/PlanningOverviewTab';
 import { TasksTab } from './planning/TasksTab';
 import { BudgetTab } from './planning/BudgetTab';
@@ -50,6 +50,7 @@ export const DashboardPlanning: React.FC = () => {
   const [nameChangeDocuments, setNameChangeDocuments] = useState<NameChangeDocumentInput[]>([]);
   const [nameChangeExtractedFields, setNameChangeExtractedFields] = useState<NameChangeExtractedFieldInput[]>([]);
   const [nameChangePlan, setNameChangePlan] = useState<NameChangePlan>(() => buildNameChangePlan({ profile: defaultNameChangeCaseInput, documents: [], extractedFields: [] }));
+  const [nameChangeReminders, setNameChangeReminders] = useState<NameChangeReminderInput[]>([]);
   const [nameChangeSaving, setNameChangeSaving] = useState(false);
   const { toast } = useToast();
 
@@ -83,7 +84,9 @@ export const DashboardPlanning: React.FC = () => {
         setNameChangeDraft(demoCase);
         setNameChangeDocuments(demoDocuments);
         setNameChangeExtractedFields(demoFields);
-        setNameChangePlan(buildNameChangePlan({ profile: demoCase, documents: demoDocuments, extractedFields: demoFields }));
+        const demoWorkspace = buildNameChangeWorkspaceBundle(demoCase, demoDocuments, demoFields);
+        setNameChangePlan(demoWorkspace.plan);
+        setNameChangeReminders(demoWorkspace.reminders);
         return;
       }
 
@@ -120,6 +123,7 @@ export const DashboardPlanning: React.FC = () => {
         setNameChangeDocuments(hydrated.documents);
         setNameChangeExtractedFields(hydrated.extractedFields);
         setNameChangePlan(hydrated.plan);
+        setNameChangeReminders(hydrated.reminders);
       }
     } catch (err) {
       console.error(err);
@@ -385,8 +389,10 @@ export const DashboardPlanning: React.FC = () => {
 
   const handleNameChangeDraft = useCallback((updates: Partial<NameChangeCaseInput>) => {
     setNameChangeDraft((prev) => {
-      const next = { ...prev, ...updates };
-      setNameChangePlan(buildNameChangePlan({ profile: next, documents: nameChangeDocuments, extractedFields: nameChangeExtractedFields }));
+      const next = { ...prev, ...updates }; 
+      const nextWorkspace = buildNameChangeWorkspaceBundle(next, nameChangeDocuments, nameChangeExtractedFields);
+      setNameChangePlan(nextWorkspace.plan);
+      setNameChangeReminders(nextWorkspace.reminders);
       return next;
     });
   }, [nameChangeDocuments, nameChangeExtractedFields]);
@@ -400,20 +406,30 @@ export const DashboardPlanning: React.FC = () => {
           [key]: value,
         },
       };
-      setNameChangePlan(buildNameChangePlan({ profile: next, documents: nameChangeDocuments, extractedFields: nameChangeExtractedFields }));
+      const nextWorkspace = buildNameChangeWorkspaceBundle(next, nameChangeDocuments, nameChangeExtractedFields);
+      setNameChangePlan(nextWorkspace.plan);
+      setNameChangeReminders(nextWorkspace.reminders);
       return next;
     });
   }, [nameChangeDocuments, nameChangeExtractedFields]);
 
   const handleNameChangeDocuments = useCallback((nextDocuments: NameChangeDocumentInput[]) => {
     setNameChangeDocuments(nextDocuments);
-    setNameChangePlan(buildNameChangePlan({ profile: nameChangeDraft, documents: nextDocuments, extractedFields: nameChangeExtractedFields }));
+    const nextWorkspace = buildNameChangeWorkspaceBundle(nameChangeDraft, nextDocuments, nameChangeExtractedFields);
+    setNameChangePlan(nextWorkspace.plan);
+    setNameChangeReminders(nextWorkspace.reminders);
   }, [nameChangeDraft, nameChangeExtractedFields]);
 
   const handleNameChangeExtractedFields = useCallback((nextFields: NameChangeExtractedFieldInput[]) => {
     setNameChangeExtractedFields(nextFields);
-    setNameChangePlan(buildNameChangePlan({ profile: nameChangeDraft, documents: nameChangeDocuments, extractedFields: nextFields }));
+    const nextWorkspace = buildNameChangeWorkspaceBundle(nameChangeDraft, nameChangeDocuments, nextFields);
+    setNameChangePlan(nextWorkspace.plan);
+    setNameChangeReminders(nextWorkspace.reminders);
   }, [nameChangeDraft, nameChangeDocuments]);
+
+  const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[]) => {
+    setNameChangeReminders(nextReminders);
+  }, []);
 
   const handleSaveNameChange = useCallback(async () => {
     if (isDemoMode) {
@@ -427,16 +443,17 @@ export const DashboardPlanning: React.FC = () => {
 
     try {
       setNameChangeSaving(true);
-      const result = await saveNameChangeWorkspace(siteId, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields);
+      const result = await saveNameChangeWorkspace(siteId, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders);
       setNameChangeDraft((prev) => ({ ...prev, workflow_status: result.caseRecord.workflow_status, latest_plan_summary: result.plan.summary as unknown as Record<string, unknown> }));
       setNameChangePlan(result.plan);
+      setNameChangeReminders(result.reminders);
       toast('Name change planner saved.', 'success');
     } catch {
       toast('Couldn’t save the name change planner right now.', 'error');
     } finally {
       setNameChangeSaving(false);
     }
-  }, [isDemoMode, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, siteId, toast]);
+  }, [isDemoMode, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders, siteId, toast]);
 
   return (
     <DashboardLayout currentPage="planning">
@@ -551,11 +568,13 @@ export const DashboardPlanning: React.FC = () => {
                 documents={nameChangeDocuments}
                 extractedFields={nameChangeExtractedFields}
                 plan={nameChangePlan}
+                reminders={nameChangeReminders}
                 saving={nameChangeSaving}
                 onDraftChange={handleNameChangeDraft}
                 onStructuredIntakeChange={handleStructuredIntake}
                 onDocumentsChange={handleNameChangeDocuments}
                 onExtractedFieldsChange={handleNameChangeExtractedFields}
+                onRemindersChange={handleNameChangeReminders}
                 onSave={handleSaveNameChange}
               />
             )}

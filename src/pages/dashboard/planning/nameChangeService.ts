@@ -402,8 +402,9 @@ export async function saveNameChangeWorkspace(
   caseInput: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
-): Promise<{ caseRecord: NameChangeCaseRecord; plan: NameChangePlan }> {
-  const workspace = buildNameChangeWorkspaceBundle(caseInput, documents, extractedFields);
+  reminders: NameChangeReminderInput[] | null = null,
+): Promise<{ caseRecord: NameChangeCaseRecord; plan: NameChangePlan; reminders: NameChangeReminderInput[] }> {
+  const workspace = buildNameChangeWorkspaceBundle(caseInput, documents, extractedFields, reminders);
   const normalizedCaseInput = workspace.draft;
   const normalizedDocuments = workspace.documents;
   const normalizedExtractedFields = workspace.extractedFields;
@@ -419,5 +420,5 @@ export async function saveNameChangeWorkspace(
   await replaceNameChangeReminders(caseRecord.id, workspace.reminders);
   await createNameChangePlanSnapshot(caseRecord.id, plan);
 
-  return { caseRecord, plan };
+  return { caseRecord, plan, reminders: workspace.reminders };
 }

@@ -226,4 +226,22 @@ describe('nameChangeService normalization', () => {
     expect(bundle.plan.steps.some((step) => step.id === 'institution-banks')).toBe(true);
     expect(bundle.reminders.some((reminder) => reminder.reminder_key === 'reminder-banks')).toBe(true);
   });
+
+  it('preserves explicit reminder statuses when building a workspace bundle', () => {
+    const bundle = buildNameChangeWorkspaceBundle(makeCase(), [], [], [
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Follow up on Banks and credit cards',
+        reason: 'Persist this status',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium',
+        status: 'scheduled',
+      },
+    ]);
+
+    expect(bundle.reminders).toEqual([
+      expect.objectContaining({ reminder_key: 'reminder-banks', status: 'scheduled' }),
+    ]);
+  });
 });

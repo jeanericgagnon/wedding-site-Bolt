@@ -3,12 +3,13 @@ import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sp
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
-import { buildNameChangeReminderSuggestions, summarizeNameChangeReminders } from '../../../lib/nameChange/reminders';
+import { summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
   NameChangeExtractedFieldInput,
   NameChangePlan,
+  NameChangeReminderInput,
 } from '../../../lib/nameChange/types';
 
 interface Props {
@@ -16,11 +17,13 @@ interface Props {
   documents: NameChangeDocumentInput[];
   extractedFields: NameChangeExtractedFieldInput[];
   plan: NameChangePlan;
+  reminders: NameChangeReminderInput[];
   saving: boolean;
   onDraftChange: (updates: Partial<NameChangeCaseInput>) => void;
   onStructuredIntakeChange: (key: string, value: unknown) => void;
   onDocumentsChange: (documents: NameChangeDocumentInput[]) => void;
   onExtractedFieldsChange: (fields: NameChangeExtractedFieldInput[]) => void;
+  onRemindersChange: (reminders: NameChangeReminderInput[]) => void;
   onSave: () => Promise<void>;
 }
 
@@ -66,11 +69,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   documents,
   extractedFields,
   plan,
+  reminders,
   saving,
   onDraftChange,
   onStructuredIntakeChange,
   onDocumentsChange,
   onExtractedFieldsChange,
+  onRemindersChange,
   onSave,
 }) => {
   const [showAdmin, setShowAdmin] = useState(false);
@@ -79,16 +84,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     blocked: plan.steps.filter((step) => step.status === 'blocked').length,
     later: plan.steps.filter((step) => step.status === 'later').length,
   }), [plan.steps]);
-  const reminderSuggestions = useMemo(() => buildNameChangeReminderSuggestions(plan), [plan]);
-  const reminderSummary = useMemo(() => summarizeNameChangeReminders(reminderSuggestions.map((reminder) => ({
-    reminder_key: reminder.id,
-    label: reminder.label,
-    reason: reminder.reason,
-    depends_on_step_id: reminder.dependsOnStepId,
-    suggested_offset_days: reminder.suggestedOffsetDays,
-    urgency: reminder.urgency,
-    status: 'pending',
-  }))), [reminderSuggestions]);
+  const effectiveReminders = useMemo(() => reminders, [reminders]);
+  const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
 
   return (
     <div className="space-y-6">
@@ -367,7 +364,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         </div>
       </Card>
 
-      {reminderSuggestions.length > 0 && (
+      {effectiveReminders.length > 0 && (
         <Card>
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -375,23 +372,34 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="text-sm text-text-secondary">Scaffolding for planner/admin follow-up timing based on the generated workflow.</p>
               <p className="mt-2 text-xs text-text-secondary">{reminderSummary.pending} pending · {reminderSummary.highUrgencyOpen} high-urgency open</p>
             </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{reminderSuggestions.length} suggestions</span>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{effectiveReminders.length} reminders</span>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {reminderSuggestions.map((reminder) => (
-              <div key={reminder.id} className="rounded-xl border border-border-subtle p-4">
+            {effectiveReminders.map((reminder) => (
+              <div key={reminder.reminder_key} className="rounded-xl border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{reminder.label}</p>
-                    <p className="mt-1 text-xs text-text-secondary">Depends on: {reminder.dependsOnStepId}</p>
+                    <p className="mt-1 text-xs text-text-secondary">Depends on: {reminder.depends_on_step_id}</p>
                   </div>
                   <span className={`rounded-full px-2 py-1 text-xs ${reminder.urgency === 'high' ? 'bg-warning/10 text-warning' : reminder.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
                     {reminder.urgency}
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-text-secondary">{reminder.reason}</p>
-                <p className="mt-3 text-xs font-medium text-text-primary">Target follow-up: {reminder.suggestedOffsetDays} day{reminder.suggestedOffsetDays === 1 ? '' : 's'} after the triggering step</p>
+                <p className="mt-3 text-xs font-medium text-text-primary">Target follow-up: {reminder.suggested_offset_days} day{reminder.suggested_offset_days === 1 ? '' : 's'} after the triggering step</p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{reminder.status}</span>
+                  <div className="flex gap-2">
+                    {reminder.status !== 'scheduled' && (
+                      <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, reminder.reminder_key, 'scheduled'))}>Schedule</Button>
+                    )}
+                    {reminder.status !== 'dismissed' && (
+                      <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, reminder.reminder_key, 'dismissed'))}>Dismiss</Button>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
