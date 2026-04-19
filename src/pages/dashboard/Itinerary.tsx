@@ -218,14 +218,17 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
       if (!user) return;
 
-      const { data: sites } = await supabase
+      const activeSite = await resolveActiveSiteForUser(user.id);
+      const { data: sites, error: siteError } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
+        .eq('id', activeSite?.id ?? '')
         .maybeSingle();
+      if (siteError) throw siteError;
 
       if (!sites) return;
 
@@ -257,10 +260,11 @@ export const DashboardItinerary: React.FC = () => {
 
       const eventsWithCounts = await Promise.all(
         normalizedEvents.map(async (event) => {
-          const { data: invites } = await supabase
+          const { data: invites, error: invitesError } = await supabase
             .from('event_invitations')
             .select('id')
             .eq('event_id', event.id);
+          if (invitesError) throw invitesError;
 
           const invitationIds = (invites ?? []).map((i) => i.id as string);
           const inviteCount = invitationIds.length;
@@ -299,6 +303,8 @@ export const DashboardItinerary: React.FC = () => {
 
       setEvents(eventsWithCounts);
     } catch {
+      setEvents([]);
+      alert('Failed to load itinerary events. Please try again.');
     } finally {
       setLoading(false);
     }
