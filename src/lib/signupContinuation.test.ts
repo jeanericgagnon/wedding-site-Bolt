@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { consumeSignupReturnPath, readSignupReturnPath, resolvePostSignupPath, writeSignupReturnPath } from './signupContinuation';
+import { buildQuickStartEntryPath } from './quickStartContinuation';
 
 describe('signupContinuation', () => {
   beforeEach(() => {
@@ -7,22 +8,22 @@ describe('signupContinuation', () => {
   });
 
   it('stores and resolves an explicit post-signup return path', () => {
-    writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
+    writeSignupReturnPath(buildQuickStartEntryPath());
 
-    expect(readSignupReturnPath()).toBe('/onboarding/quick-start?bypassPayment=1');
-    expect(resolvePostSignupPath('/onboarding?signup=1')).toBe('/onboarding/quick-start?bypassPayment=1');
+    expect(readSignupReturnPath()).toBe(buildQuickStartEntryPath());
+    expect(resolvePostSignupPath('/onboarding?signup=1')).toBe(buildQuickStartEntryPath());
   });
 
   it('consumes the saved return path exactly once', () => {
-    writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
+    writeSignupReturnPath(buildQuickStartEntryPath());
 
-    expect(consumeSignupReturnPath()).toBe('/onboarding/quick-start?bypassPayment=1');
+    expect(consumeSignupReturnPath()).toBe(buildQuickStartEntryPath());
     expect(readSignupReturnPath()).toBeNull();
     expect(resolvePostSignupPath('/onboarding?signup=1')).toBe('/onboarding?signup=1');
   });
 
   it('clears the marker when asked to write an empty value', () => {
-    writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
+    writeSignupReturnPath(buildQuickStartEntryPath());
     writeSignupReturnPath('');
 
     expect(readSignupReturnPath()).toBeNull();

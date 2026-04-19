@@ -24,7 +24,7 @@ import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } 
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
 import { persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
-import { buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
+import { buildQuickStartEntryPath, buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
 import { deriveFollowUpAnswersFromClarifyingState } from '../../lib/quickStartClarifyingRestore';
 import { resolveQuickStartResumeViewState } from '../../lib/quickStartResumeState';
@@ -334,14 +334,14 @@ export const QuickStart: React.FC = () => {
           clarifyingState: clarifyingOverride,
           viewState,
         });
-        writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
+        writeSignupReturnPath(buildQuickStartEntryPath());
         setLoading(false);
         setIsThinking(false);
         navigate('/signup?bypassPayment=1', {
           replace: true,
           state: {
             quickStartDraft: { initialSetupAnswers: answersOverride, followUpAnswers: followUpAnswersRef.current, clarifyingState: clarifyingOverride },
-            returnTo: '/onboarding/quick-start?bypassPayment=1',
+            returnTo: buildQuickStartEntryPath(),
           },
         });
         return;
@@ -626,7 +626,7 @@ export const QuickStart: React.FC = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16 flex items-center gap-4">
           <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => {
             localStorage.removeItem(STORAGE_KEY);
-            window.location.href = '/onboarding/quick-start?bypassPayment=1&resetQuickStart=1';
+            window.location.href = `${buildQuickStartEntryPath()}&resetQuickStart=1`;
           }}>
             Start over
           </button>

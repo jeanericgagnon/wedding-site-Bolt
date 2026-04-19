@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Heart, Sparkles, Calendar, ArrowRight } from 'lucide-react';
 import { Button, Card } from '../../components/ui';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
+import { buildQuickStartEntryPath } from '../../lib/quickStartContinuation';
 
 interface LocationState {
   weddingDate?: string;
@@ -37,7 +38,7 @@ export const Celebration: React.FC = () => {
   }, []);
 
   const handleQuickStart = () => {
-    navigate('/onboarding/quick-start?bypassPayment=1');
+    navigate(buildQuickStartEntryPath());
   };
 
   const handleGuidedSetup = () => {
