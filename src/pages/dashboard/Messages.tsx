@@ -258,8 +258,9 @@ function readSavedComposerTemplates(): SavedComposerTemplate[] {
 function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
   try {
     localStorage.setItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY, JSON.stringify(items.slice(0, 12)));
+    return true;
   } catch {
-    // ignore local persistence errors
+    return false;
   }
 }
 
@@ -1694,15 +1695,23 @@ export const DashboardMessages: React.FC = () => {
     };
 
     const updated = [next, ...savedTemplates.filter((item) => item.name !== next.name)].slice(0, 12);
+    const persisted = writeSavedComposerTemplates(updated);
+    if (!persisted) {
+      toast('Couldn’t save that reusable template on this device right now.', 'error');
+      return;
+    }
     setSavedTemplates(updated);
-    writeSavedComposerTemplates(updated);
     toast(`Saved reusable template “${name}”.`, 'success');
   }
 
   function deleteSavedTemplate(templateId: string) {
     const updated = savedTemplates.filter((item) => item.id !== templateId);
+    const persisted = writeSavedComposerTemplates(updated);
+    if (!persisted) {
+      toast('Couldn’t remove that saved template from this device right now.', 'error');
+      return;
+    }
     setSavedTemplates(updated);
-    writeSavedComposerTemplates(updated);
     toast('Removed saved template.', 'info');
   }
 
