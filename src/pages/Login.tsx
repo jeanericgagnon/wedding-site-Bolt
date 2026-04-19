@@ -48,6 +48,12 @@ export const Login: React.FC = () => {
   }, [inviteToken, inviteEmail]);
 
   useEffect(() => {
+    if (!explicitReturnPath && !quickStartDraft && !hasInviteContext) {
+      writeSignupReturnPath(null);
+    }
+  }, [explicitReturnPath, quickStartDraft, hasInviteContext]);
+
+  useEffect(() => {
     if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
     if (quickStartDraft) persistQuickStartDraftSnapshot(quickStartDraft);
 

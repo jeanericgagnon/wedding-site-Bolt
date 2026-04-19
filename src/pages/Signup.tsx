@@ -74,6 +74,12 @@ export const Signup: React.FC = () => {
   const quickStartDraft = (location.state as { quickStartDraft?: unknown } | null)?.quickStartDraft;
 
   useEffect(() => {
+    if (!explicitReturnPath && !quickStartDraft && !hasInviteContext) {
+      writeSignupReturnPath(null);
+    }
+  }, [explicitReturnPath, quickStartDraft, hasInviteContext]);
+
+  useEffect(() => {
     if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
     if (quickStartDraft) persistQuickStartDraftSnapshot(quickStartDraft);
   }, [explicitReturnPath, quickStartDraft]);
