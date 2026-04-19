@@ -21,6 +21,7 @@
 - Added a real `/trust` page.
 - Replaced footer “coming soon” placeholders with live links to Trust, Privacy Policy, and Terms of Service.
 - Fixed footer brand/contact from placeholder-ish values to DayOf + `support@dayof.love`.
+- Fixed raw `SITE_TRUST_COPY` placeholder leaks that were rendering literal template text in marketing/onboarding copy.
 
 ## Why this batch mattered
 Leaving fake footer placeholders on a product this close to the line makes the whole thing feel less real than it is. This batch removes obvious trust debt from the public surface.

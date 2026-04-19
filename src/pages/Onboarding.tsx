@@ -1131,7 +1131,7 @@ export const Onboarding: React.FC = () => {
           Your website is ready to shape
         </h1>
         <p className="text-lg text-text-secondary mb-4">
-          We created a polished starting point from your answers. ${SITE_TRUST_COPY.privateEditing}
+          We created a polished starting point from your answers. {SITE_TRUST_COPY.privateEditing}
         </p>
 
         <Card variant="bordered" padding="lg" className="mb-8">

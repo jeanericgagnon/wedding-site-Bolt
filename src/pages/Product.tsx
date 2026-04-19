@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
+import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { ArrowRight, Calendar, CheckCircle2, Mail, Shield, Users, Wallet } from 'lucide-react';
 import { HeroReveal, SlideReveal } from '../components/marketing/Reveal';
 
@@ -17,7 +18,7 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  { id: 'launch', title: 'Launch a site you’re proud to share', kicker: 'Step 1', outcome: '${SITE_TRUST_COPY.privateEditing}', detail: 'Start with a strong template, clear setup, and ${SITE_TRUST_COPY.draftToLaunch.toLowerCase()}' },
+  { id: 'launch', title: 'Launch a site you’re proud to share', kicker: 'Step 1', outcome: SITE_TRUST_COPY.privateEditing, detail: `Start with a strong template, clear setup, and ${SITE_TRUST_COPY.draftToLaunch.toLowerCase()}` },
   { id: 'guests', title: 'Organize guests + households', kicker: 'Step 2', outcome: 'Know who is invited and where they belong.', detail: 'Households, plus-ones, and statuses in one place.' },
   { id: 'rsvp', title: 'Collect RSVPs cleanly', kicker: 'Step 3', outcome: 'Get responses without confusion.', detail: 'Event-level RSVP and meal tracking without hacks.' },
   { id: 'message', title: 'Message everyone', kicker: 'Step 4', outcome: 'Send the right update to the right group.', detail: 'Stop copy/pasting from spreadsheets to email tools.' },

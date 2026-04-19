@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
+import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import {
   Heart,
   Users,
@@ -526,7 +527,7 @@ export const Home: React.FC = () => {
                 },
                 {
                   q: 'Do I get a custom wedding URL?',
-                  a: '${SITE_TRUST_COPY.customWeddingUrlExplainer}',
+                  a: SITE_TRUST_COPY.customWeddingUrlExplainer,
                 },
                 {
                   q: 'What if I need a refund?',
