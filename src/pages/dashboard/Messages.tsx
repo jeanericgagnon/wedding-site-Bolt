@@ -19,8 +19,8 @@ const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bu
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
 
 // Optional table: can be missing in lean deployments.
-// Default false to avoid noisy 404 probing on each page load.
-let hasMessageDeliveriesTable: boolean | null = false;
+// Start unknown, then permanently disable after one confirmed missing-table miss.
+let hasMessageDeliveriesTable: boolean | null = null;
 
 
 function buildDemoMessageSeed(): Message[] {
@@ -188,6 +188,120 @@ interface DeliveryRow {
   recipient_email: string;
 }
 
+type ChannelType = 'email' | 'sms';
+
+type MessageTemplateKey =
+  | 'blank'
+  | 'save-the-date'
+  | 'rsvp-reminder'
+  | 'event-reminder'
+  | 'day-of-update'
+  | 'photo-request'
+  | 'thank-you';
+
+interface ComposerTemplate {
+  key: MessageTemplateKey;
+  label: string;
+  detail: string;
+  campaignType?: string;
+  defaultChannel: ChannelType;
+  build: (input: {
+    audienceLabel: string | null;
+    venue: string | null;
+    weddingDate: string | null;
+    applyTemplateVariables: (text: string) => string;
+  }) => { subject: string; body: string };
+}
+
+const COMPOSER_TEMPLATES: ComposerTemplate[] = [
+  {
+    key: 'blank',
+    label: 'Blank message',
+    detail: 'Start from scratch.',
+    defaultChannel: 'email',
+    build: () => ({ subject: '', body: '' }),
+  },
+  {
+    key: 'save-the-date',
+    label: 'Save the date',
+    detail: 'Early heads-up with a clean scheduled campaign shape.',
+    campaignType: 'save-the-date',
+    defaultChannel: 'email',
+    build: ({ applyTemplateVariables }) => ({
+      subject: applyTemplateVariables('Save the Date!'),
+      body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
+    }),
+  },
+  {
+    key: 'rsvp-reminder',
+    label: 'RSVP reminder',
+    detail: 'Nudge anyone who still has not replied.',
+    campaignType: 'rsvp-reminder',
+    defaultChannel: 'email',
+    build: ({ audienceLabel, applyTemplateVariables }) => {
+      const draft = buildRsvpReminderDraft({ audienceLabel });
+      return {
+        subject: applyTemplateVariables(draft.subject),
+        body: applyTemplateVariables(draft.body),
+      };
+    },
+  },
+  {
+    key: 'event-reminder',
+    label: 'Event reminder',
+    detail: 'Useful reminder for a specific event or group.',
+    campaignType: 'event-reminder',
+    defaultChannel: 'email',
+    build: ({ audienceLabel, venue, applyTemplateVariables }) => {
+      const draft = buildEventReminderDraft({
+        audienceLabel,
+        eventLabel: audienceLabel && audienceLabel !== 'All Guests' ? audienceLabel : 'the celebration',
+        venue,
+      });
+      return {
+        subject: applyTemplateVariables(draft.subject),
+        body: applyTemplateVariables(draft.body),
+      };
+    },
+  },
+  {
+    key: 'day-of-update',
+    label: 'Day-of update',
+    detail: 'Fast operational update for guests.',
+    campaignType: 'day-of-update',
+    defaultChannel: 'sms',
+    build: ({ audienceLabel, venue, weddingDate, applyTemplateVariables }) => {
+      const draft = buildDayOfUpdateDraft({ venue, weddingDate, audienceLabel });
+      return {
+        subject: applyTemplateVariables(draft.subject),
+        body: applyTemplateVariables(draft.body),
+      };
+    },
+  },
+  {
+    key: 'photo-request',
+    label: 'Photo request',
+    detail: 'Ask guests to upload photos after the event.',
+    campaignType: 'photo-request',
+    defaultChannel: 'email',
+    build: ({ applyTemplateVariables }) => ({
+      subject: applyTemplateVariables('Share your photos with us 📸'),
+      body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
+    }),
+  },
+  {
+    key: 'thank-you',
+    label: 'Thank you',
+    detail: 'Close the loop after the celebration.',
+    campaignType: 'thank-you',
+    defaultChannel: 'email',
+    build: ({ applyTemplateVariables }) => ({
+      subject: applyTemplateVariables('Thank You!'),
+      body: applyTemplateVariables('Thank you so much for celebrating our special day with us! Your presence meant the world to us. We are grateful for your love and support.'),
+    }),
+  },
+];
+
 
 function isPastScheduledTime(scheduledFor: string | null): boolean {
   if (!scheduledFor) return false;
@@ -279,6 +393,17 @@ function getCampaignTypeLabel(message: Message): string | null {
   return raw;
 }
 
+function getCampaignName(message: Message): string | null {
+  const raw = message.recipient_filter?.campaignName;
+  return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : null;
+}
+
+function getTemplateKey(message: Message): MessageTemplateKey {
+  const raw = message.recipient_filter?.templateKey;
+  if (typeof raw !== 'string') return 'blank';
+  return (COMPOSER_TEMPLATES.some((tpl) => tpl.key === raw) ? raw : 'blank') as MessageTemplateKey;
+}
+
 interface MessageDetailModalProps {
   message: Message;
   deliveries: DeliveryRow[];
@@ -291,6 +416,8 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const [retrying, setRetrying] = React.useState(false);
   const recipientCount = getRecipientCount(message);
   const audienceLabel = getAudienceLabel(message);
+  const campaignName = getCampaignName(message);
+  const campaignType = getCampaignTypeLabel(message);
 
   const sentDate = message.sent_at
     ? new Date(message.sent_at).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })
@@ -321,6 +448,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div>
+              {campaignName && <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-text-tertiary mb-1">{campaignName}</p>}
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold text-text-primary">{message.subject}</h2>
                 {getStatusBadge(message)}
@@ -348,6 +476,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             <div>
               <p className="text-text-tertiary text-xs mb-1">Audience</p>
               <p className="font-medium text-text-primary">{audienceLabel}</p>
+              {campaignType && <p className="text-[11px] text-text-tertiary mt-1">{campaignType}</p>}
             </div>
             <div>
               <p className="text-text-tertiary text-xs mb-1">Recipients</p>
@@ -511,6 +640,8 @@ export const DashboardMessages: React.FC = () => {
   const [historySearch, setHistorySearch] = useState('');
 
   const [formData, setFormData] = useState({
+    campaignName: '',
+    templateKey: 'blank' as MessageTemplateKey,
     subject: '',
     body: '',
     audience: 'all',
@@ -528,6 +659,7 @@ export const DashboardMessages: React.FC = () => {
 
     setFormData((prev) => ({
       ...prev,
+      campaignName: prev.campaignName,
       subject: prefillSubject ?? prev.subject,
       body: prefillBody ?? prev.body,
     }));
@@ -691,7 +823,12 @@ export const DashboardMessages: React.FC = () => {
     }
 
     const messageIds = messages.slice(0, 50).map((m) => m.id);
-    if (messageIds.length === 0 || hasMessageDeliveriesTable === false) {
+    if (messageIds.length === 0) {
+      setDeliveries([]);
+      return;
+    }
+
+    if (hasMessageDeliveriesTable === false) {
       setDeliveries([]);
       return;
     }
@@ -901,6 +1038,8 @@ export const DashboardMessages: React.FC = () => {
       .replace(/\[ADD DETAILS\]/g, 'timeline, parking, dress code, and arrival instructions');
   };
 
+  const selectedTemplate = COMPOSER_TEMPLATES.find((tpl) => tpl.key === formData.templateKey) ?? COMPOSER_TEMPLATES[0];
+
   const handleSendMessage = async (e: React.FormEvent, saveAsDraft = false) => {
     e.preventDefault();
     if (!weddingSite) return;
@@ -932,9 +1071,18 @@ export const DashboardMessages: React.FC = () => {
 
       const status = saveAsDraft ? 'draft' : isScheduled ? 'scheduled' : 'queued';
       const scheduledFor = isScheduled ? `${formData.scheduleDate}T${formData.scheduleTime}:00` : null;
+      const campaignName = formData.campaignName.trim();
       const normalizedSubject = formData.channel === 'sms'
         ? (formData.subject.trim() || `SMS • ${selectedAudience?.label ?? 'All guests'}`)
         : formData.subject;
+      const recipientMeta = {
+        audience: formData.audience,
+        audience_label: selectedAudience?.label ?? null,
+        recipient_count: recipientCount,
+        campaignName: campaignName || null,
+        campaignType: selectedTemplate.campaignType ?? null,
+        templateKey: formData.templateKey,
+      };
 
       let inserted: { id: string } | null = null;
 
@@ -949,7 +1097,7 @@ export const DashboardMessages: React.FC = () => {
           status: status === 'queued' ? 'sent' : status,
           channel: formData.channel,
           audience_filter: formData.audience,
-          recipient_filter: { audience: formData.audience, recipient_count: recipientCount },
+          recipient_filter: recipientMeta,
           recipient_count: recipientCount,
           delivered_count: status === 'queued' ? recipientCount : 0,
           failed_count: 0,
@@ -981,13 +1129,13 @@ export const DashboardMessages: React.FC = () => {
           .update({
             audience_filter: formData.audience,
             recipient_count: recipientCount,
-            recipient_filter: { audience: formData.audience, audience_label: selectedAudience?.label ?? null, recipient_count: recipientCount },
+            recipient_filter: recipientMeta,
           })
           .eq('id', inserted.id);
       }
 
       setShowRecipientPreview(false);
-      setFormData({ subject: '', body: '', audience: 'all', channel: formData.channel, scheduleType: 'now', scheduleDate: '', scheduleTime: '' });
+      setFormData({ campaignName: '', templateKey: 'blank', subject: '', body: '', audience: 'all', channel: formData.channel, scheduleType: 'now', scheduleDate: '', scheduleTime: '' });
 
       if (saveAsDraft) {
         toast('Saved as draft', 'info');
@@ -1038,6 +1186,10 @@ export const DashboardMessages: React.FC = () => {
     const scheduleTime = scheduledAt ? `${String(scheduledAt.getHours()).padStart(2, '0')}:${String(scheduledAt.getMinutes()).padStart(2, '0')}` : '';
 
     setFormData({
+      campaignName: mode === 'duplicate'
+        ? `Copy of ${getCampaignName(message) ?? getCampaignTypeLabel(message) ?? message.subject}`
+        : getCampaignName(message) ?? '',
+      templateKey: getTemplateKey(message),
       subject: mode === 'duplicate' && message.status !== 'draft' ? `Copy of ${message.subject}` : message.subject,
       body: message.body,
       audience: message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all',
@@ -1098,6 +1250,28 @@ export const DashboardMessages: React.FC = () => {
 
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
 
+  function applyComposerTemplate(templateKey: MessageTemplateKey, overrides?: Partial<typeof formData>) {
+    const template = COMPOSER_TEMPLATES.find((tpl) => tpl.key === templateKey) ?? COMPOSER_TEMPLATES[0];
+    const nextAudienceValue = overrides?.audience ?? formData.audience;
+    const nextAudience = audienceOptions.find((opt) => opt.value === nextAudienceValue) ?? null;
+    const draft = template.build({
+      audienceLabel: nextAudience?.label ?? null,
+      venue: weddingSite?.venue_name ?? null,
+      weddingDate: weddingSite?.wedding_date ?? null,
+      applyTemplateVariables,
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      ...overrides,
+      templateKey: template.key,
+      channel: overrides?.channel ?? template.defaultChannel,
+      subject: draft.subject,
+      body: draft.body,
+      campaignName: overrides?.campaignName ?? (template.key === 'blank' ? prev.campaignName : template.label),
+    }));
+  }
+
   const applySaveTheDatePreset = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1105,16 +1279,14 @@ export const DashboardMessages: React.FC = () => {
     const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
     const dd = String(tomorrow.getDate()).padStart(2, '0');
 
-    setFormData((prev) => ({
-      ...prev,
-      channel: 'email',
+    applyComposerTemplate('save-the-date', {
       audience: 'all',
+      channel: 'email',
       scheduleType: 'later',
       scheduleDate: `${yyyy}-${mm}-${dd}`,
       scheduleTime: '10:00',
-      subject: applyTemplateVariables('Save the Date!'),
-      body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
-    }));
+      campaignName: 'Save the date',
+    });
     toast('Save-the-date preset loaded (scheduled for tomorrow at 10:00).', 'success');
   };
 
@@ -1136,7 +1308,7 @@ export const DashboardMessages: React.FC = () => {
       subject: applyTemplateVariables('Save the Date!'),
       body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
       audience_filter: 'all',
-      recipient_filter: { audience: 'all', campaignType: 'save-the-date' },
+      recipient_filter: { audience: 'all', audience_label: 'All Guests', campaignName: 'Save the date', campaignType: 'save-the-date', templateKey: 'save-the-date', recipient_count: guests.length },
       scheduled_for: tomorrow.toISOString(),
       status: 'scheduled',
     };
@@ -1172,38 +1344,24 @@ export const DashboardMessages: React.FC = () => {
   };
 
   const applyEventReminderDraft = () => {
-    const draft = buildEventReminderDraft({
-      audienceLabel: selectedAudience?.label ?? null,
-      eventLabel: selectedAudience?.value === 'ceremony_only' ? 'ceremony' : selectedAudience?.value === 'reception_only' ? 'reception' : selectedAudience?.value === 'all' ? 'the celebration' : 'this event',
-      venue: weddingSite?.venue_name ?? null,
-    });
-    setFormData((prev) => ({
-      ...prev,
-      subject: applyTemplateVariables(draft.subject),
-      body: applyTemplateVariables(draft.body),
+    applyComposerTemplate('event-reminder', {
       channel: 'email',
       scheduleType: 'now',
       scheduleDate: '',
       scheduleTime: '',
-    }));
+      campaignName: selectedAudience?.value?.startsWith('event:') ? `${selectedAudience.label} reminder` : 'Event reminder',
+    });
     toast('Event reminder draft loaded.', 'info');
   };
 
   const applyDayOfDraft = () => {
-    const draft = buildDayOfUpdateDraft({
-      venue: weddingSite?.venue_name ?? null,
-      weddingDate: weddingSite?.wedding_date ?? null,
-      audienceLabel: selectedAudience?.label ?? null,
-    });
-    setFormData((prev) => ({
-      ...prev,
+    applyComposerTemplate('day-of-update', {
       channel: 'sms',
       scheduleType: 'now',
       scheduleDate: '',
       scheduleTime: '',
-      subject: applyTemplateVariables(draft.subject),
-      body: applyTemplateVariables(draft.body),
-    }));
+      campaignName: 'Day-of update',
+    });
     toast('Day-of update draft loaded.', 'info');
   };
 
@@ -1237,7 +1395,7 @@ export const DashboardMessages: React.FC = () => {
     if (historyAudienceFilter !== 'all' && aud !== historyAudienceFilter) return false;
     const query = historySearch.trim().toLowerCase();
     if (query) {
-      const haystack = [m.subject, m.body, aud, m.channel, m.status].filter(Boolean).join(' ').toLowerCase();
+      const haystack = [m.subject, m.body, aud, m.channel, m.status, getCampaignName(m), getCampaignTypeLabel(m)].filter(Boolean).join(' ').toLowerCase();
       if (!haystack.includes(query)) return false;
     }
     return true;
@@ -1504,6 +1662,33 @@ export const DashboardMessages: React.FC = () => {
               {!canCompose && <p className="text-xs text-text-tertiary mb-3">Viewer mode is on, so writing and sending are turned off.</p>}
               <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
                 <fieldset disabled={!canCompose} className="space-y-6">
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-2">Campaign name</label>
+                      <Input
+                        value={formData.campaignName}
+                        onChange={(e) => setFormData({ ...formData, campaignName: e.target.value })}
+                        placeholder="Spring RSVP reminder"
+                      />
+                      <p className="text-xs text-text-tertiary mt-1">Used to organize drafts, scheduled sends, and history. Subject stays separate.</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-2">Template</label>
+                      <select
+                        value={formData.templateKey}
+                        onChange={(e) => applyComposerTemplate(e.target.value as MessageTemplateKey)}
+                        className="w-full px-4 py-2.5 border border-border rounded-lg bg-surface-subtle text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      >
+                        {COMPOSER_TEMPLATES.map((template) => (
+                          <option key={template.key} value={template.key}>{template.label}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-text-tertiary mt-1">{selectedTemplate.detail}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">Channel</label>
                   <div className="inline-flex rounded-lg border border-border overflow-hidden bg-white">
@@ -1841,13 +2026,7 @@ export const DashboardMessages: React.FC = () => {
                     {
                       label: 'Insert photo template',
                       detail: 'Drop in an upload request tied to your memories flow',
-                      action: () => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          subject: applyTemplateVariables('Share your photos with us 📸'),
-                          body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
-                        }));
-                      },
+                      action: () => applyComposerTemplate('photo-request', { campaignName: 'Photo request' }),
                       disabled: !canCompose,
                     },
                   ].map((item) => (
@@ -1874,18 +2053,17 @@ export const DashboardMessages: React.FC = () => {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
-                  { label: 'Save the Date', detail: 'Early excitement and initial heads-up', subject: 'Save the Date!', body: 'We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.' },
-                  { label: 'RSVP Reminder', detail: 'Nudge people who still have not replied', subject: 'RSVP Reminder', body: 'We hope you can join us for our special day! Please RSVP by [DATE] so we can finalize our guest count. Visit [RSVP LINK] to respond.' },
-                  { label: 'Week-Of Details', detail: 'Useful logistics right before the event', subject: 'Wedding Week Details', body: 'The big day is almost here! Here are some important details for the wedding week: [ADD DETAILS]' },
-                  { label: 'Photo Upload Request', detail: 'Drive guests into your upload flow', subject: 'Share your photos with us 📸', body: 'We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]' },
-                  { label: 'Photo Upload Reminder', detail: 'One more ask for missing photos', subject: 'Last call for wedding photos', body: 'If you snapped any photos, we would love to see them. Add yours here: [PHOTO LINK]' },
-                  { label: 'Photo + RSVP Combo', detail: 'Handle both asks in one touchpoint', subject: 'Quick wedding update', body: 'Hi! RSVP here: [RSVP LINK]\n\nAnd if you have photos from our events, upload here: [PHOTO LINK]' },
-                  { label: 'Thank You', detail: 'Close the loop after the celebration', subject: 'Thank You!', body: 'Thank you so much for celebrating our special day with us! Your presence meant the world to us. We are grateful for your love and support.' },
+                  { label: 'Save the Date', detail: 'Early excitement and initial heads-up', templateKey: 'save-the-date' as MessageTemplateKey, campaignName: 'Save the date' },
+                  { label: 'RSVP Reminder', detail: 'Nudge people who still have not replied', templateKey: 'rsvp-reminder' as MessageTemplateKey, campaignName: 'RSVP reminder' },
+                  { label: 'Week-Of Details', detail: 'Useful logistics right before the event', templateKey: 'event-reminder' as MessageTemplateKey, campaignName: 'Week-of details' },
+                  { label: 'Photo Upload Request', detail: 'Drive guests into your upload flow', templateKey: 'photo-request' as MessageTemplateKey, campaignName: 'Photo request' },
+                  { label: 'Day-Of Update', detail: 'Fast text-first guest update', templateKey: 'day-of-update' as MessageTemplateKey, campaignName: 'Day-of update' },
+                  { label: 'Thank You', detail: 'Close the loop after the celebration', templateKey: 'thank-you' as MessageTemplateKey, campaignName: 'Thank you' },
                 ].map(tpl => (
                   <button
                     key={tpl.label}
                     type="button"
-                    onClick={() => setFormData({ ...formData, subject: applyTemplateVariables(tpl.subject), body: applyTemplateVariables(tpl.body) })}
+                    onClick={() => applyComposerTemplate(tpl.templateKey, { campaignName: tpl.campaignName })}
                     disabled={!canCompose}
                     className="w-full rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
                   >
@@ -2064,6 +2242,7 @@ export const DashboardMessages: React.FC = () => {
             <div className="space-y-4">
               {filteredHistory.map((message) => {
                 const recipientCount = getRecipientCount(message);
+                const campaignName = getCampaignName(message);
                 return (
                   <button
                     key={message.id}
@@ -2073,6 +2252,7 @@ export const DashboardMessages: React.FC = () => {
                   >
                     <div className="mb-3 flex items-start justify-between gap-4">
                       <div>
+                        {campaignName && <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">{campaignName}</p>}
                         <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors break-words leading-snug">
                           {message.subject}
                         </h3>

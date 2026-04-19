@@ -212,7 +212,34 @@ Deno.serve(async (req: Request) => {
       guestQuery = guestQuery.not("email", "is", null);
     }
 
-    if (audience === "attending") {
+    if (audience.startsWith("event:")) {
+      const eventId = audience.replace("event:", "").trim();
+      if (!eventId) {
+        return new Response(JSON.stringify({ error: "Invalid event audience" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: eventInvites, error: eventInvitesError } = await adminClient
+        .from("event_invitations")
+        .select("guest_id")
+        .eq("event_id", eventId);
+
+      if (eventInvitesError) {
+        return new Response(JSON.stringify({ error: "Failed to load event audience" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const guestIds = Array.from(new Set((eventInvites ?? []).map((row: { guest_id: string | null }) => row.guest_id).filter(Boolean))) as string[];
+      if (guestIds.length === 0) {
+        guestQuery = guestQuery.in("id", ["00000000-0000-0000-0000-000000000000"]);
+      } else {
+        guestQuery = guestQuery.in("id", guestIds);
+      }
+    } else if (audience === "attending") {
       guestQuery = guestQuery.eq("rsvp_status", "confirmed");
     } else if (audience === "not_responded") {
       guestQuery = guestQuery.eq("rsvp_status", "pending");
