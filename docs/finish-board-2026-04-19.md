@@ -19,11 +19,26 @@ Not part of the v1 line:
 
 ## Per-feature v1 bars
 
+Real bar for every slice:
+- not just present, but fully functioning in the live flow that matters
+- actually useful under real wedding pressure
+- trustworthy enough that couples/planners/coordinators would rely on it
+- not obviously brittle or embarrassing outside demo mode
+- strong enough that public claims feel earned
+
+Things that do **not** count as done:
+- route exists
+- surface exists
+- UI looks polished
+- one happy path works once
+- demo mode works
+- docs claim it works
+
 ### 1) Comms center
 **V1 bar**
-- couples can draft, segment, schedule, and send guest messages with visible lifecycle states
-- email-first is enough; SMS can stay credit-based / partial if framed clearly
-- delivery history must distinguish draft, scheduled, sent, partial, failed
+- couples can reliably draft, segment, schedule, and send guest messages in a way that reduces manual follow-up chaos
+- email-first is enough only if it feels dependable in a real guest workflow; SMS can stay partial if framed clearly
+- delivery history must distinguish draft, scheduled, sent, partial, failed in a way users would actually trust
 
 **Done**
 - messages dashboard exists
@@ -34,11 +49,12 @@ Not part of the v1 line:
 **Missing / partial**
 - not a full communications CRM
 - provider completeness and telemetry are only as good as delivery logs captured
-- any copy implying fully mature automation should be treated carefully
+- public claims were too strong on the messaging feature page and needed tightening
 
 **Proof needed**
-- one smoke showing draft -> scheduled or sent -> history state update
-- no vague fake-success wording in the UI
+- one smoke showing draft -> scheduled or sent -> history state update with believable statuses
+- proof that a couple could use this instead of bouncing to another email tool for the core wedding flow
+- no vague fake-success wording in the UI or marketing copy
 
 **Priority**
 - must ship
@@ -48,8 +64,8 @@ Not part of the v1 line:
 
 ### 2) Coordinator / day-of
 **V1 bar**
-- coordinator mode must help staff answer basic live questions, track check-ins, view timeline focus, and send/queue simple updates
-- should feel practically useful on event day, not like full arrival-control software
+- coordinator mode must help staff answer live questions, track arrivals, see what is happening next, and send/queue useful updates without confusion
+- should make the event feel calmer in a live scenario, not just look like a dashboard
 
 **Done**
 - dedicated coordinator dashboard exists
@@ -60,7 +76,8 @@ Not part of the v1 line:
 - not a complete event-day operations system
 
 **Proof needed**
-- role-aware smoke showing coordinator opens mode, sees guests/events, can toggle check-in, and use live queue credibly
+- role-aware smoke showing coordinator opens mode, sees guests/events, can toggle check-in, and use live queue credibly under realistic pressure
+- enough confidence that a real coordinator would not immediately fall back to paper/text chaos
 - copy must avoid claiming comprehensive event control
 
 **Priority**
@@ -71,7 +88,7 @@ Not part of the v1 line:
 
 ### 3) Name-change planner
 **V1 bar**
-- product can support a structured post-wedding name-change workspace with case setup, document awareness, reminder flow, and actionable plan output
+- product can support a structured post-wedding name-change workflow that genuinely reduces confusion, missed steps, and manual tracking
 - should be clearly framed as a structured helper/workspace, not a guaranteed legal automation engine
 
 **Done**
@@ -84,7 +101,7 @@ Not part of the v1 line:
 - should not distort the core product claim if still partial
 
 **Proof needed**
-- manual smoke showing save/load of a case, reminders, and plan status
+- manual smoke showing save/load of a case, reminders, and plan status in a way that would actually help someone finish the process
 - copy should frame it as planning support, not legal completion automation
 
 **Priority**
@@ -95,8 +112,8 @@ Not part of the v1 line:
 
 ### 4) Guests / RSVP ops
 **V1 bar**
-- guest list, householding, plus-one handling, RSVP status, event-level invites, meal/dietary capture, and exception visibility must be usable enough for a real wedding
-- manual admin override/support is acceptable; full rules engine is not required
+- guest list, householding, plus-one handling, RSVP status, event-level invites, meal/dietary capture, and exception visibility must hold up in a real wedding without creating more cleanup work than they save
+- manual admin override/support is acceptable only if the workflow still feels calmer than spreadsheet chaos
 
 **Done**
 - substantial guests dashboard exists
@@ -110,6 +127,7 @@ Not part of the v1 line:
 
 **Proof needed**
 - smoke covering guest import/edit, RSVP submit/update, event-aware status visibility, and exception surfacing
+- confidence that a couple could trust the guest book for real decisions like seating, reminders, and counts
 - no copy implying perfect automation
 
 **Priority**
@@ -120,8 +138,8 @@ Not part of the v1 line:
 
 ### 5) Seating
 **V1 bar**
-- couples can create tables, assign guests, detect unassigned/drifted seats, and export a usable seating view
-- day-of lookup and simple check-in tie-in should be practical
+- couples can create tables, assign guests, detect drift, and answer "where is this person sitting?" fast enough that the feature actually reduces event-week stress
+- day-of lookup and simple check-in tie-in should be practical under real usage, not just pretty in setup
 
 **Done**
 - seating planner exists
@@ -133,6 +151,7 @@ Not part of the v1 line:
 
 **Proof needed**
 - smoke showing event selection, table creation, guest assignment, and export or lookup
+- enough confidence that staff could actually use lookup/seating on wedding day without apologizing for the software
 
 **Priority**
 - must ship
@@ -142,8 +161,8 @@ Not part of the v1 line:
 
 ### 6) Memories / guest photo sharing
 **V1 bar**
-- couples can create guest photo buckets, collect uploads, moderate visibility, and keep a credible post-wedding memory path alive
-- archive/anniversary layer can be meaningful without being overpromised as a giant platform
+- couples can create guest photo buckets, collect uploads, moderate visibility, and keep a credible memory path alive that feels worth using after the event
+- archive/anniversary layer can be meaningful without pretending the post-wedding system is more mature than it is
 
 **Done**
 - guest photo sharing dashboard exists
@@ -155,7 +174,7 @@ Not part of the v1 line:
 - anniversary/storytelling layer is more product direction than fully hardened proof everywhere
 
 **Proof needed**
-- one smoke showing bucket create/manage + upload/moderation path
+- one smoke showing bucket create/manage + upload/moderation path that would actually work for a real couple collecting guest photos
 - avoid overclaiming fully magical archive intelligence
 
 **Priority**
@@ -166,7 +185,7 @@ Not part of the v1 line:
 
 ### 7) Registry
 **V1 bar**
-- couples can add/edit/import registry items, repair weak imports, manage purchased state internally, and present a clean guest-facing registry
+- couples can add/edit/import registry items, repair weak imports, manage purchased state internally, and present a clean guest-facing registry without constant babysitting
 - guided cleanup is enough; perfect merchant automation is not required
 
 **Done**
@@ -178,7 +197,7 @@ Not part of the v1 line:
 - multi-merchant save reliability still not proven as universal
 
 **Proof needed**
-- smoke showing add/import/edit and internal purchased tracking
+- smoke showing add/import/edit and internal purchased tracking in a way that would survive real usage
 - public claims must stay narrower than internal capability where parity is unproven
 
 **Priority**
@@ -189,7 +208,7 @@ Not part of the v1 line:
 
 ### 8) Planner / collaborator access
 **V1 bar**
-- couple can invite planner/coordinator/viewer access from settings, role framing appears in major operational surfaces, and permissions differ in a visible useful way
+- couple can invite planner/coordinator/viewer access from settings, role framing appears in major operational surfaces, and permissions differ in a visible useful way that a real planner would trust
 - does not need full enterprise approvals system
 
 **Done**
@@ -202,7 +221,7 @@ Not part of the v1 line:
 - some trust depends on role-aware smoke rather than clear consolidated proof
 
 **Proof needed**
-- smoke showing invite flow and role-specific dashboard behavior
+- smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
 - copy must say structured collaboration, not full workflow governance
 
 **Priority**
@@ -213,8 +232,8 @@ Not part of the v1 line:
 
 ### 9) Public site / launch path / trust surface
 **V1 bar**
-- marketing -> auth/onboarding -> builder -> publish/live site -> RSVP should feel real, honest, and coherent
-- trust/legal surfaces and launch/privacy wording must match actual runtime behavior
+- marketing -> auth/onboarding -> builder -> publish/live site -> RSVP should feel real, honest, coherent, and safe to trust in front of guests
+- trust/legal surfaces and launch/privacy wording must match actual runtime behavior closely enough that the product is not embarrassing in a real customer flow
 
 **Done**
 - public pages, builder, site view, trust page, privacy page, and terms page exist
@@ -226,7 +245,7 @@ Not part of the v1 line:
 
 **Proof needed**
 - brutal end-to-end smoke over real couple and guest path
-- no misleading copy about private preview, private by default, custom domains, or fake billing promises
+- no misleading copy about private preview, private by default, custom domains, fake analytics certainty, or fake billing promises
 
 **Priority**
 - must ship
@@ -236,7 +255,7 @@ Not part of the v1 line:
 
 ### 10) Onboarding (only as it affects product truth)
 **V1 bar**
-- onboarding gets couples into a real starting point fast, without pretending setup completion equals full launch readiness
+- onboarding gets couples into a real starting point fast and reduces first-run confusion instead of adding another fake setup layer
 - migration/setup guidance must stay honest about guided vs automated behavior
 
 **Done**
@@ -292,6 +311,7 @@ Not part of the v1 line:
   - removed Product copy implying a separate private-preview product shape
   - removed fake billing promises like custom domains / advanced analytics / scheduled messaging from the upgrade surface
 - Tightened Settings privacy language so invite-only access is framed as a guest access link instead of a fake “private preview” product, and clarified search visibility text accordingly.
+- Tightened the Messaging feature page so it no longer overclaims unlimited email certainty, overstates tracking confidence, or sells fully automatic RSVP reminders as already-solid reality.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

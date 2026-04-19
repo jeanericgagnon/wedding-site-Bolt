@@ -85,7 +85,7 @@ export const MessagingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Email included</h3>
               <p className="text-ink/70 mb-4">
-                Send unlimited emails to your guests. Save the date, RSVP reminders, venue updates, or thank you notes.
+                Send wedding guest emails without bolting on a separate tool. Draft invitations, RSVP reminders, venue updates, and thank-you follow-ups in one place.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Fair-use limits (no spam)</li>
@@ -145,12 +145,12 @@ export const MessagingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Open Tracking</h3>
               <p className="text-ink/70 mb-4">
-                See who opened your emails and when. Know if important updates were received.
+                See practical delivery signals first, then use them to decide who still needs follow-up. Measured counts matter more than fake certainty.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Email open rates</li>
-                <li>• Click updates</li>
-                <li>• Individual guest history</li>
+                <li>• Delivery-oriented status view</li>
+                <li>• Guest follow-up guidance</li>
+                <li>• History tied to actual message state</li>
               </ul>
             </div>
 
@@ -216,10 +216,10 @@ export const MessagingFeature: React.FC = () => {
                     <Bell className="w-6 h-6 text-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-ink mb-3">Automatic reminders</h3>
-                    <p className="text-ink/70 leading-relaxed">
-                      Set up automatic RSVP reminder emails for guests who haven't responded. Customizable timing and message content.
-                    </p>
+              <h3 className="text-xl font-semibold text-ink mb-3">Automatic reminders</h3>
+              <p className="text-ink/70 leading-relaxed">
+                      Reminder drafting and scheduled follow-up are the current strength. More automated RSVP reminder behavior is being tightened in phases, so we do not pretend every reminder path is fully hands-off yet.
+              </p>
                   </div>
                 </div>
               </div>
@@ -248,7 +248,7 @@ export const MessagingFeature: React.FC = () => {
                 'Click updates',
                 'Message templates',
                 'Custom messages',
-                'Automated reminders',
+                'Reminder drafting + scheduled follow-up',
                 'Opt-out management',
                 'CAN-SPAM compliant',
                 'International support',
