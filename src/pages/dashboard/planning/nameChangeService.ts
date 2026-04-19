@@ -341,6 +341,9 @@ export function annotateNameChangePlanStepsFromReminderChanges(
 
       return {
         ...step,
+        executionStatus: step.executionStatus === 'todo' && changes.some((change) => change.status === 'scheduled')
+          ? 'in_progress'
+          : step.executionStatus,
         executionNote: mergeReminderAnnotation(step.executionNote, note),
         executionUpdatedAt: now,
       };

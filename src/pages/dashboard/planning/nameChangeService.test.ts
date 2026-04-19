@@ -518,6 +518,7 @@ describe('nameChangeService normalization', () => {
     ], '2026-04-18T20:10:00.000Z');
 
     expect(updatedPlan.steps.find((step) => step.id === 'institution-banks')).toMatchObject({
+      executionStatus: 'in_progress',
       executionNote: expect.stringContaining('Follow up on Banks and credit cards reminder → scheduled'),
       executionUpdatedAt: '2026-04-18T20:10:00.000Z',
     });
@@ -539,8 +540,30 @@ describe('nameChangeService normalization', () => {
     ], '2026-04-18T20:15:00.000Z');
 
     expect(firstPass.steps.find((step) => step.id === 'institution-banks')).toMatchObject({
+      executionStatus: 'in_progress',
       executionNote: 'Called SSA already · Follow up on Banks and credit cards reminder → scheduled',
       executionUpdatedAt: '2026-04-18T20:15:00.000Z',
+    });
+  });
+
+  it('does not downgrade already-in-progress steps when reminder changes come through', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const updatedPlan = annotateNameChangePlanStepsFromReminderChanges({
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'institution-banks'
+        ? { ...step, executionStatus: 'complete' as const, executionNote: 'Bank updated already' }
+        : step),
+    }, [
+      {
+        label: 'Follow up on Banks and credit cards',
+        depends_on_step_id: 'institution-banks',
+        status: 'scheduled',
+      },
+    ], '2026-04-18T20:20:00.000Z');
+
+    expect(updatedPlan.steps.find((step) => step.id === 'institution-banks')).toMatchObject({
+      executionStatus: 'complete',
+      executionUpdatedAt: '2026-04-18T20:20:00.000Z',
     });
   });
 });
