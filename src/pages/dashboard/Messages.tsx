@@ -428,12 +428,16 @@ interface MessageDetailModalProps {
   onClose: () => void;
   onRetry: (message: Message) => Promise<void>;
   onSendScheduledNow: (message: Message) => Promise<void>;
+  onReschedule: (message: Message, scheduledFor: string) => Promise<void>;
+  onCancelSchedule: (message: Message) => Promise<void>;
   onLoadIntoComposer: (message: Message, mode: 'edit' | 'duplicate') => void;
 }
 
-const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, onClose, onRetry, onSendScheduledNow, onLoadIntoComposer }) => {
+const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, onClose, onRetry, onSendScheduledNow, onReschedule, onCancelSchedule, onLoadIntoComposer }) => {
   const [retrying, setRetrying] = React.useState(false);
   const [sendingScheduledNow, setSendingScheduledNow] = React.useState(false);
+  const [rescheduling, setRescheduling] = React.useState(false);
+  const [cancellingSchedule, setCancellingSchedule] = React.useState(false);
   const recipientCount = getRecipientCount(message);
   const audienceLabel = getAudienceLabel(message);
   const campaignName = getCampaignName(message);
@@ -445,6 +449,17 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const scheduledDate = message.scheduled_for
     ? new Date(message.scheduled_for).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })
     : null;
+  const initialScheduleInput = React.useMemo(() => {
+    if (!message.scheduled_for) return '';
+    const d = new Date(message.scheduled_for);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  }, [message.scheduled_for]);
+  const [scheduleInput, setScheduleInput] = React.useState(initialScheduleInput);
   const messageDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id);
   const failedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'failed');
   const topFailureReasons = Array.from(
@@ -518,6 +533,65 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               </div>
             </div>
           </div>
+
+          {message.status === 'scheduled' && (
+            <div className="rounded-xl border border-border bg-surface-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Scheduled send control</p>
+                  <p className="mt-1 text-xs text-text-tertiary">Adjust the send time here or drop it back to draft without leaving the comms center.</p>
+                </div>
+                {message.scheduled_for && isPastScheduledTime(message.scheduled_for) && (
+                  <span className="rounded-full border border-warning/20 bg-warning-light px-2 py-0.5 text-[11px] font-medium text-warning">Due now</span>
+                )}
+              </div>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-text-tertiary mb-1">Send at</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduleInput}
+                    onChange={(e) => setScheduleInput(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-white text-sm text-text-primary"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={rescheduling || !scheduleInput}
+                    onClick={async () => {
+                      setRescheduling(true);
+                      try {
+                        await onReschedule(message, new Date(scheduleInput).toISOString());
+                      } finally {
+                        setRescheduling(false);
+                        onClose();
+                      }
+                    }}
+                  >
+                    {rescheduling ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Saving…</> : 'Reschedule'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={cancellingSchedule}
+                    onClick={async () => {
+                      setCancellingSchedule(true);
+                      try {
+                        await onCancelSchedule(message);
+                      } finally {
+                        setCancellingSchedule(false);
+                        onClose();
+                      }
+                    }}
+                  >
+                    {cancellingSchedule ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Updating…</> : 'Unschedule to draft'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {failedDeliveries.length > 0 && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
@@ -1317,6 +1391,54 @@ export const DashboardMessages: React.FC = () => {
       await fetchMessages();
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Couldn’t send that scheduled message right now.', 'error');
+    }
+  }
+
+  async function handleRescheduleMessage(message: Message, scheduledFor: string) {
+    if (isDemoMode) {
+      setMessages((prev) => prev.map((item) => (
+        item.id === message.id
+          ? { ...item, status: 'scheduled', scheduled_for: scheduledFor }
+          : item
+      )));
+      toast(`Rescheduled for ${new Date(scheduledFor).toLocaleString()}.`, 'success');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ status: 'scheduled', scheduled_for: scheduledFor, sent_at: null })
+        .eq('id', message.id);
+      if (error) throw error;
+      toast(`Rescheduled for ${new Date(scheduledFor).toLocaleString()}.`, 'success');
+      await fetchMessages();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Couldn’t reschedule that campaign right now.', 'error');
+    }
+  }
+
+  async function handleCancelSchedule(message: Message) {
+    if (isDemoMode) {
+      setMessages((prev) => prev.map((item) => (
+        item.id === message.id
+          ? { ...item, status: 'draft', scheduled_for: null }
+          : item
+      )));
+      toast('Scheduled campaign moved back to draft.', 'info');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ status: 'draft', scheduled_for: null })
+        .eq('id', message.id);
+      if (error) throw error;
+      toast('Scheduled campaign moved back to draft.', 'info');
+      await fetchMessages();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Couldn’t unschedule that campaign right now.', 'error');
     }
   }
 
@@ -2491,6 +2613,8 @@ export const DashboardMessages: React.FC = () => {
           onClose={() => setViewingMessage(null)}
           onRetry={handleRetry}
           onSendScheduledNow={handleSendScheduledNow}
+          onReschedule={handleRescheduleMessage}
+          onCancelSchedule={handleCancelSchedule}
           onLoadIntoComposer={loadMessageIntoComposer}
         />
       )}
