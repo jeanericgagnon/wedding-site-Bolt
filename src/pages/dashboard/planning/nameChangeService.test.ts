@@ -473,4 +473,21 @@ describe('nameChangeService normalization', () => {
       timestamp: '2026-04-18T20:00:00.000Z',
     });
   });
+
+  it('appends bulk reminder activity into recent execution activity', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const updatedPlan = appendNameChangeExecutionActivity(basePlan, {
+      title: 'Bulk reminder update (2)',
+      executionStatus: 'in_progress',
+      note: 'Follow up on Banks and credit cards → scheduled · Follow up on Health, auto, renters, and life insurance → scheduled',
+      timestamp: '2026-04-18T20:05:00.000Z',
+    });
+
+    expect(updatedPlan.summary.recentExecutionActivity?.[0]).toMatchObject({
+      stepId: null,
+      title: 'Bulk reminder update (2)',
+      executionStatus: 'in_progress',
+      timestamp: '2026-04-18T20:05:00.000Z',
+    });
+  });
 });

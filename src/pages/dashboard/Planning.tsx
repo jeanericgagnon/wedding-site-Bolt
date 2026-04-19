@@ -459,14 +459,33 @@ export const DashboardPlanning: React.FC = () => {
 
   const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[]) => {
     const previousReminders = new Map(nameChangeReminders.map((reminder) => [reminder.reminder_key, reminder]));
-    const changedReminder = nextReminders.find((reminder) => previousReminders.get(reminder.reminder_key)?.status !== reminder.status);
+    const changedReminders = nextReminders.filter((reminder) => previousReminders.get(reminder.reminder_key)?.status !== reminder.status);
     setNameChangeReminders(nextReminders);
-    if (!changedReminder) return;
+    if (changedReminders.length === 0) return;
+
+    if (changedReminders.length === 1) {
+      const changedReminder = changedReminders[0];
+      setNameChangePlan((prev) => appendNameChangeExecutionActivity(prev, {
+        title: `Reminder updated: ${changedReminder.label}`,
+        executionStatus: changedReminder.status === 'dismissed' ? 'todo' : changedReminder.status === 'sent' ? 'complete' : 'in_progress',
+        note: `Reminder status changed to ${changedReminder.status}`,
+      }));
+      return;
+    }
+
+    const statusCounts = changedReminders.reduce<Record<string, number>>((counts, reminder) => {
+      counts[reminder.status] = (counts[reminder.status] ?? 0) + 1;
+      return counts;
+    }, {});
+    const dominantStatus = (Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'scheduled') as NameChangeReminderInput['status'];
 
     setNameChangePlan((prev) => appendNameChangeExecutionActivity(prev, {
-      title: `Reminder updated: ${changedReminder.label}`,
-      executionStatus: changedReminder.status === 'dismissed' ? 'todo' : changedReminder.status === 'sent' ? 'complete' : 'in_progress',
-      note: `Reminder status changed to ${changedReminder.status}`,
+      title: `Bulk reminder update (${changedReminders.length})`,
+      executionStatus: dominantStatus === 'dismissed' ? 'todo' : dominantStatus === 'sent' ? 'complete' : 'in_progress',
+      note: changedReminders
+        .map((reminder) => `${reminder.label} → ${reminder.status}`)
+        .slice(0, 3)
+        .join(' · '),
     }));
   }, [nameChangeReminders]);
 
