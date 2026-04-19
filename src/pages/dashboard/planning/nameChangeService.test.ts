@@ -460,6 +460,7 @@ describe('nameChangeService normalization', () => {
     expect(merged.summary.dominantMovementLane).toBe('step-progress');
     expect(merged.summary.mixedMovementReason).toBeNull();
     expect(merged.summary.mixedMovementHasUntouchedRisk).toBe(false);
+    expect(merged.summary.mixedMovementReminderHeavy).toBe(false);
     expect(merged.summary.reminderChurnRisk).toBe('low');
     expect(merged.summary.hasRecentCompletion).toBe(true);
     expect(merged.summary.hasRecentStart).toBe(true);
@@ -489,6 +490,7 @@ describe('nameChangeService normalization', () => {
     expect(updatedPlan.summary.dominantMovementLane).toBe('no-step-movement');
     expect(updatedPlan.summary.mixedMovementReason).toBeNull();
     expect(updatedPlan.summary.mixedMovementHasUntouchedRisk).toBe(false);
+    expect(updatedPlan.summary.mixedMovementReminderHeavy).toBe(false);
     expect(updatedPlan.summary.reminderChurnRisk).toBe('medium');
     expect(updatedPlan.summary.hasRecentCompletion).toBe(false);
     expect(updatedPlan.summary.hasRecentStart).toBe(false);
@@ -516,6 +518,7 @@ describe('nameChangeService normalization', () => {
     expect(mixedPlan.summary.dominantMovementLane).toBe('mixed');
     expect(mixedPlan.summary.mixedMovementReason).toBe('step-reminder-balance');
     expect(mixedPlan.summary.mixedMovementHasUntouchedRisk).toBe(false);
+    expect(mixedPlan.summary.mixedMovementReminderHeavy).toBe(false);
     expect(mixedPlan.summary.reminderChurnRisk).toBe('low');
     expect(mixedPlan.summary.hasRecentCompletion).toBe(false);
     expect(mixedPlan.summary.hasRecentStart).toBe(true);
@@ -549,6 +552,7 @@ describe('nameChangeService normalization', () => {
     expect(churnPlan.summary.dominantMovementLane).toBe('no-step-movement');
     expect(churnPlan.summary.mixedMovementReason).toBeNull();
     expect(churnPlan.summary.mixedMovementHasUntouchedRisk).toBe(false);
+    expect(churnPlan.summary.mixedMovementReminderHeavy).toBe(false);
     expect(churnPlan.summary.reminderChurnRisk).toBe('high');
     expect(churnPlan.summary.hasRecentCompletion).toBe(false);
     expect(churnPlan.summary.hasRecentStart).toBe(false);
@@ -570,6 +574,7 @@ describe('nameChangeService normalization', () => {
     expect(todoWindowPlan.summary.dominantMovementLane).toBe('step-progress');
     expect(todoWindowPlan.summary.mixedMovementReason).toBeNull();
     expect(todoWindowPlan.summary.mixedMovementHasUntouchedRisk).toBe(false);
+    expect(todoWindowPlan.summary.mixedMovementReminderHeavy).toBe(false);
   });
 
   it('marks recent activity as completion-led when completions dominate the latest window', () => {
@@ -584,6 +589,7 @@ describe('nameChangeService normalization', () => {
     expect(completionPlan.summary.dominantMovementLane).toBe('completion-led');
     expect(completionPlan.summary.mixedMovementReason).toBeNull();
     expect(completionPlan.summary.mixedMovementHasUntouchedRisk).toBe(false);
+    expect(completionPlan.summary.mixedMovementReminderHeavy).toBe(false);
   });
 
   it('explains mixed movement when both starts and completions are present without dominance', () => {
@@ -614,6 +620,7 @@ describe('nameChangeService normalization', () => {
     expect(balancedMixed.summary.dominantMovementLane).toBe('mixed');
     expect(balancedMixed.summary.mixedMovementReason).toBe('starts-and-completions');
     expect(balancedMixed.summary.mixedMovementHasUntouchedRisk).toBe(false);
+    expect(balancedMixed.summary.mixedMovementReminderHeavy).toBe(false);
   });
 
   it('marks mixed movement as still carrying untouched risk when todo step entries are in the latest mixed window', () => {
@@ -642,6 +649,7 @@ describe('nameChangeService normalization', () => {
     expect(mixed.summary.dominantMovementLane).toBe('mixed');
     expect(mixed.summary.mixedMovementReason).toBe('step-reminder-balance');
     expect(mixed.summary.mixedMovementHasUntouchedRisk).toBe(true);
+    expect(mixed.summary.mixedMovementReminderHeavy).toBe(false);
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {
