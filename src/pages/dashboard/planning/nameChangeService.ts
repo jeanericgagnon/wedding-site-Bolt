@@ -277,6 +277,12 @@ export function mergeNameChangePlanExecutionState(
       : activitySourceCounts.reminder > activitySourceCounts.step
         ? 'reminder-churn'
         : 'mixed';
+  const mixedMovementReason = dominantMovementLane === 'mixed'
+    ? (mergedRecentExecutionActivity.some((item) => item.executionStatus === 'complete')
+        && mergedRecentExecutionActivity.some((item) => item.source === 'step' && item.executionStatus === 'in_progress')
+        ? 'starts-and-completions'
+        : 'step-reminder-balance')
+    : null;
   const reminderChurnRisk = activitySourceCounts.reminder >= 4
     ? 'high'
     : activitySourceCounts.reminder > activitySourceCounts.step
@@ -296,6 +302,7 @@ export function mergeNameChangePlanExecutionState(
       activitySourceCounts,
       latestMovementPosture,
       dominantMovementLane,
+      mixedMovementReason,
       reminderChurnRisk,
       hasRecentCompletion,
       hasRecentStart,
@@ -399,6 +406,42 @@ export function appendNameChangeExecutionActivity(
         if (!items.some((item) => item.source === 'step')) return 'no-step-movement';
         if (counts.step === counts.reminder) return 'mixed';
         return counts.step > counts.reminder ? 'step-progress' : 'reminder-churn';
+      })(),
+      mixedMovementReason: (() => {
+        const items = [
+          {
+            stepId: null,
+            source: activity.source ?? 'reminder',
+            title: activity.title,
+            executionStatus: activity.executionStatus,
+            note: activity.note,
+            timestamp,
+          },
+          ...existing,
+        ]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          .slice(0, 5);
+        const counts = items.reduce((result, item) => {
+          result[item.source] += 1;
+          return result;
+        }, { step: 0, reminder: 0 });
+        const lane = items.filter((item) => item.executionStatus === 'complete').length >= 2
+          ? 'completion-led'
+          : items.filter((item) => item.source === 'step' && item.executionStatus === 'in_progress').length >= 2
+            ? 'start-led'
+            : !items.some((item) => item.source === 'step')
+              ? 'no-step-movement'
+              : counts.step > counts.reminder
+                ? 'step-progress'
+                : counts.reminder > counts.step
+                  ? 'reminder-churn'
+                  : 'mixed';
+
+        if (lane !== 'mixed') return null;
+        return items.some((item) => item.executionStatus === 'complete')
+          && items.some((item) => item.source === 'step' && item.executionStatus === 'in_progress')
+          ? 'starts-and-completions'
+          : 'step-reminder-balance';
       })(),
       reminderChurnRisk: (() => {
         const counts = [

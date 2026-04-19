@@ -458,6 +458,7 @@ describe('nameChangeService normalization', () => {
     expect(merged.summary.activitySourceCounts).toEqual({ step: 2, reminder: 0 });
     expect(merged.summary.latestMovementPosture).toBe('step-led');
     expect(merged.summary.dominantMovementLane).toBe('step-progress');
+    expect(merged.summary.mixedMovementReason).toBeNull();
     expect(merged.summary.reminderChurnRisk).toBe('low');
     expect(merged.summary.hasRecentCompletion).toBe(true);
     expect(merged.summary.hasRecentStart).toBe(true);
@@ -485,6 +486,7 @@ describe('nameChangeService normalization', () => {
     expect(updatedPlan.summary.activitySourceCounts).toEqual({ step: 0, reminder: 1 });
     expect(updatedPlan.summary.latestMovementPosture).toBe('reminder-led');
     expect(updatedPlan.summary.dominantMovementLane).toBe('no-step-movement');
+    expect(updatedPlan.summary.mixedMovementReason).toBeNull();
     expect(updatedPlan.summary.reminderChurnRisk).toBe('medium');
     expect(updatedPlan.summary.hasRecentCompletion).toBe(false);
     expect(updatedPlan.summary.hasRecentStart).toBe(false);
@@ -510,6 +512,7 @@ describe('nameChangeService normalization', () => {
     expect(mixedPlan.summary.activitySourceCounts).toEqual({ step: 1, reminder: 1 });
     expect(mixedPlan.summary.latestMovementPosture).toBe('mixed');
     expect(mixedPlan.summary.dominantMovementLane).toBe('mixed');
+    expect(mixedPlan.summary.mixedMovementReason).toBe('step-reminder-balance');
     expect(mixedPlan.summary.reminderChurnRisk).toBe('low');
     expect(mixedPlan.summary.hasRecentCompletion).toBe(false);
     expect(mixedPlan.summary.hasRecentStart).toBe(true);
@@ -541,6 +544,7 @@ describe('nameChangeService normalization', () => {
     expect(churnPlan.summary.activitySourceCounts).toEqual({ step: 0, reminder: 4 });
     expect(churnPlan.summary.latestMovementPosture).toBe('reminder-led');
     expect(churnPlan.summary.dominantMovementLane).toBe('no-step-movement');
+    expect(churnPlan.summary.mixedMovementReason).toBeNull();
     expect(churnPlan.summary.reminderChurnRisk).toBe('high');
     expect(churnPlan.summary.hasRecentCompletion).toBe(false);
     expect(churnPlan.summary.hasRecentStart).toBe(false);
@@ -560,6 +564,7 @@ describe('nameChangeService normalization', () => {
     expect(todoWindowPlan.summary.hasRecentUntouchedRisk).toBe(true);
     expect(todoWindowPlan.summary.hasZeroRecentStepMovement).toBe(false);
     expect(todoWindowPlan.summary.dominantMovementLane).toBe('step-progress');
+    expect(todoWindowPlan.summary.mixedMovementReason).toBeNull();
   });
 
   it('marks recent activity as completion-led when completions dominate the latest window', () => {
@@ -572,6 +577,36 @@ describe('nameChangeService normalization', () => {
     }, basePlan);
 
     expect(completionPlan.summary.dominantMovementLane).toBe('completion-led');
+    expect(completionPlan.summary.mixedMovementReason).toBeNull();
+  });
+
+  it('explains mixed movement when both starts and completions are present without dominance', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const mixedStepPlan = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step, index) => index === 0
+        ? { ...step, executionStatus: 'complete' as const, executionUpdatedAt: '2026-04-18T19:00:00.000Z', completedAt: '2026-04-18T19:00:00.000Z' }
+        : index === 1
+          ? { ...step, executionStatus: 'in_progress' as const, executionUpdatedAt: '2026-04-18T19:01:00.000Z' }
+          : step),
+    }, basePlan);
+
+    expect(mixedStepPlan.summary.dominantMovementLane).toBe('step-progress');
+    const reminderMixed = appendNameChangeExecutionActivity(mixedStepPlan, {
+      title: 'Reminder updated: Follow up on Banks and credit cards',
+      executionStatus: 'in_progress',
+      note: 'Reminder status changed to scheduled',
+      timestamp: '2026-04-18T20:00:00.000Z',
+    });
+    const balancedMixed = appendNameChangeExecutionActivity(reminderMixed, {
+      title: 'Reminder updated: Follow up on Health, auto, renters, and life insurance',
+      executionStatus: 'in_progress',
+      note: 'Reminder status changed to scheduled',
+      timestamp: '2026-04-18T20:01:00.000Z',
+    });
+
+    expect(balancedMixed.summary.dominantMovementLane).toBe('mixed');
+    expect(balancedMixed.summary.mixedMovementReason).toBe('starts-and-completions');
   });
 
   it('appends bulk reminder activity into recent execution activity', () => {
