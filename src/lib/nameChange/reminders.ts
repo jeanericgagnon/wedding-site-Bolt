@@ -74,6 +74,9 @@ export function summarizeNameChangeReminders(reminders: NameChangeReminderInput[
 export function summarizeNameChangeReminderAttention(attentionItems: NameChangeReminderAttentionItem[]) {
   const staleTodo = attentionItems.filter((item) => item.isStale && item.dependentStepExecutionStatus === 'todo').length;
   const staleInProgress = attentionItems.filter((item) => item.isStale && item.dependentStepExecutionStatus === 'in_progress').length;
+  const critical = attentionItems.filter((item) => item.priorityTier === 'critical').length;
+  const elevated = attentionItems.filter((item) => item.priorityTier === 'elevated').length;
+  const normal = attentionItems.filter((item) => (item.priorityTier ?? 'normal') === 'normal').length;
 
   return {
     total: attentionItems.length,
@@ -81,6 +84,9 @@ export function summarizeNameChangeReminderAttention(attentionItems: NameChangeR
     staleTodo,
     staleInProgress,
     highUrgency: attentionItems.filter((item) => item.urgency === 'high').length,
+    critical,
+    elevated,
+    normal,
     stalePriority: staleTodo === staleInProgress ? 'mixed' : staleTodo > staleInProgress ? 'untouched' : 'moving',
   };
 }

@@ -347,7 +347,17 @@ describe('name change reminder suggestions', () => {
         lastTouchedAt: '2026-04-18T12:00:00.000Z',
         isStale: true,
       },
-    ])).toEqual({ total: 2, stale: 2, staleTodo: 1, staleInProgress: 1, highUrgency: 1, stalePriority: 'mixed' });
+    ])).toEqual({
+      total: 2,
+      stale: 2,
+      staleTodo: 1,
+      staleInProgress: 1,
+      highUrgency: 1,
+      critical: 0,
+      elevated: 0,
+      normal: 2,
+      stalePriority: 'mixed',
+    });
   });
 
   it('classifies stale priority toward untouched or moving work', () => {

@@ -443,6 +443,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="text-sm text-text-secondary">Open reminders still tied to incomplete workflow steps.</p>
               <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.stale} stale · {reminderAttentionSummary.highUrgency} high urgency</p>
               <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.staleTodo} untouched stale · {reminderAttentionSummary.staleInProgress} stale but moving</p>
+              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.critical} critical · {reminderAttentionSummary.elevated} elevated · {reminderAttentionSummary.normal} normal</p>
               <p className="mt-1 text-xs text-text-secondary">Stale priority: {reminderAttentionSummary.stalePriority}</p>
             </div>
             <div className="flex items-center gap-2">
