@@ -24,6 +24,7 @@ import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCo
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId } from '../../lib/coordinatorTimelineFocus';
 import { getCoordinatorPrimaryTimelineAction } from '../../lib/coordinatorTimelineActions';
+import { resolveCoordinatorTimelineAlertIntent } from '../../lib/coordinatorTimelineAlertIntent';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
@@ -424,6 +425,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (!nextState || !canEditTimeline) return;
     setTimelineState((prev) => setCoordinatorEventTimelineState(prev, eventId, nextState));
     setActiveTimelineEventId(eventId);
+    const suggestedIntent = resolveCoordinatorTimelineAlertIntent(alertSuggestions, eventId);
+    if (suggestedIntent) {
+      setLastAlertSuggestionKey(suggestedIntent);
+    }
     setPanelFocus('timeline');
   };
 
