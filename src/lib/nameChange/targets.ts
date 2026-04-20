@@ -63,6 +63,7 @@ function buildPhotoIdInstitutionTarget(config: {
     lane: 'state',
     recommendedFormCode: config.recommendedFormCode,
     formBuilderKey: config.formBuilderKey,
+    sequenceProfile: config.key,
     prerequisiteRules: [
       config.primaryRule,
       config.secondaryRule,
@@ -95,6 +96,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
     lane: 'federal',
     recommendedFormCode: NAME_CHANGE_SS5_FORM_CONTRACT.formCode,
     formBuilderKey: 'ss5',
+    sequenceProfile: 'ssa',
     prerequisiteRules: [],
     autofillTargetFields: [
       'applicant.current_first_name',
@@ -152,6 +154,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
     lane: 'state',
     recommendedFormCode: NAME_CHANGE_DMV_FORM_CONTRACT.formCode,
     formBuilderKey: 'dmv',
+    sequenceProfile: 'dmv',
     prerequisiteRules: [
       {
         key: 'federal-ssa-progress',
@@ -221,6 +224,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
     lane: 'federal',
     recommendedFormCode: NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT.formCode,
     formBuilderKey: 'passport',
+    sequenceProfile: 'passport',
     prerequisiteRules: [
       {
         key: 'federal-ssa-progress',
@@ -290,6 +294,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
     lane: 'state',
     recommendedFormCode: NAME_CHANGE_EMPLOYER_PACKET_CONTRACT.formCode,
     formBuilderKey: 'employer',
+    sequenceProfile: 'employer',
     prerequisiteRules: [
       {
         key: 'federal-ssa-complete',
@@ -425,6 +430,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
     lane: 'state',
     recommendedFormCode: NAME_CHANGE_VOTER_PACKET_CONTRACT.formCode,
     formBuilderKey: 'voter',
+    sequenceProfile: 'voter',
     prerequisiteRules: [
       {
         key: 'state-dmv-complete',
@@ -484,6 +490,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
     lane: 'federal',
     recommendedFormCode: NAME_CHANGE_TSA_PACKET_CONTRACT.formCode,
     formBuilderKey: 'tsa',
+    sequenceProfile: 'tsa',
     prerequisiteRules: [
       {
         key: 'passport-progress',
@@ -552,6 +559,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
     lane: 'state',
     recommendedFormCode: NAME_CHANGE_LICENSE_PACKET_CONTRACT.formCode,
     formBuilderKey: 'licenses',
+    sequenceProfile: 'licenses',
     prerequisiteRules: [
       {
         key: 'primary-photo-id-progress',

@@ -6,6 +6,7 @@ import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
   NameChangeExecutionDependency,
+  NameChangeExecutionSequenceProfileKey,
   NameChangeExecutionSequenceSnapshot,
   NameChangeExecutionTargetKey,
   NameChangeExtractedFieldInput,
@@ -183,7 +184,7 @@ const buildTsaDependencies: DependencyRecipe = ({ intake, requirements, prerequi
   ...prerequisiteDependencies,
 ];
 
-const TARGET_DEPENDENCY_RECIPES: Record<NameChangeExecutionTargetKey, DependencyRecipe> = {
+const SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSequenceProfileKey, DependencyRecipe> = {
   ssa: buildLegalAndIdentityDependencies,
   dmv: buildDmvDependencies,
   passport: buildPassportDependencies,
@@ -243,7 +244,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
   };
   const prerequisiteDependencies = evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan);
 
-  const dependencies = TARGET_DEPENDENCY_RECIPES[targetKey]({
+  const dependencies = SEQUENCE_PROFILE_RECIPES[target.sequenceProfile]({
     profile,
     intake,
     requirements,

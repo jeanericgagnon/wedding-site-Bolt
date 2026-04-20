@@ -386,6 +386,7 @@ export interface NameChangeExecutionPrerequisiteRule {
 
 export type NameChangeExecutionTargetKey = 'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses';
 export type NameChangeFormBuilderKey = 'ss5' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses';
+export type NameChangeExecutionSequenceProfileKey = 'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses';
 
 export interface NameChangeExecutionTargetDefinition {
   key: NameChangeExecutionTargetKey;
@@ -393,6 +394,7 @@ export interface NameChangeExecutionTargetDefinition {
   lane: 'federal' | 'state';
   recommendedFormCode: string;
   formBuilderKey: NameChangeFormBuilderKey;
+  sequenceProfile: NameChangeExecutionSequenceProfileKey;
   prerequisiteRules: NameChangeExecutionPrerequisiteRule[];
   autofillTargetFields: string[];
   checklistSpecs: Array<{
