@@ -55,6 +55,18 @@ interface ExecutionCardSectionConfig {
   cards: ExecutionCardConfig[];
 }
 
+interface ExecutionSectionSummary {
+  key: string;
+  title: string;
+  description: string;
+  cards: ExecutionCardConfig[];
+  readyCount: number;
+  blockedCount: number;
+  attentionCount: number;
+  highestRiskCard: string;
+  staleReminderOverlap: number;
+}
+
 interface Props {
   draft: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
@@ -490,6 +502,34 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     utilitiesExecutionSnapshot,
     voterExecutionSnapshot,
   ]);
+  const executionSectionSummaries = useMemo<ExecutionSectionSummary[]>(() => (
+    executionSections.map((section) => {
+      const readyCount = section.cards.filter((card) => card.snapshot.ready).length;
+      const blockedCount = section.cards.filter((card) => !card.snapshot.ready).length;
+      const attentionCount = section.cards.reduce((sum, card) => sum + card.snapshot.checklist.filter((item) => item.status === 'attention').length, 0);
+      const highestRiskCard = section.cards.reduce((current, card) => {
+        const blockerCount = card.snapshot.blockers.length;
+        const currentBlockerCount = current?.snapshot.blockers.length ?? -1;
+        if (blockerCount > currentBlockerCount) return card;
+
+        const cardAttention = card.snapshot.checklist.filter((item) => item.status === 'attention').length;
+        const currentAttention = current ? current.snapshot.checklist.filter((item) => item.status === 'attention').length : -1;
+        return cardAttention > currentAttention ? card : current;
+      }, null as ExecutionCardConfig | null)?.title ?? 'No major risk in this section';
+      const staleReminderOverlap = reminderAttention.filter((item) =>
+        section.cards.some((card) => item.dependentStepTitle.toLowerCase().includes(card.title.toLowerCase().replace('guided execution: ', '').split(' ')[0])) && item.isStale,
+      ).length;
+
+      return {
+        ...section,
+        readyCount,
+        blockedCount,
+        attentionCount,
+        highestRiskCard,
+        staleReminderOverlap,
+      };
+    })
+  ), [executionSections, reminderAttention]);
 
   return (
     <div className="space-y-6">
@@ -715,11 +755,34 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         </div>
       </Card>
 
-      {executionSections.map((section) => (
+      {executionSectionSummaries.map((section) => (
         <div key={section.key} className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold text-text-primary">{section.title}</h3>
             <p className="text-sm text-text-secondary">{section.description}</p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Section readiness</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{section.readyCount} ready · {section.blockedCount} blocked</p>
+              <p className="mt-2 text-xs text-text-secondary">Cards in this section that can move now vs still need work.</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Attention load</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{section.attentionCount} attention markers</p>
+              <p className="mt-2 text-xs text-text-secondary">Checklist items that are not outright blocked but still need eyes.</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Highest-risk card</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{section.highestRiskCard}</p>
+              <p className="mt-2 text-xs text-text-secondary">The card in this section carrying the most blockers / unresolved attention.</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Stale reminder overlap</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{section.staleReminderOverlap} stale overlaps</p>
+              <p className="mt-2 text-xs text-text-secondary">How much stale reminder pressure seems to be pooling around this section.</p>
+            </div>
           </div>
 
           <div className="space-y-6">
