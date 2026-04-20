@@ -231,6 +231,7 @@ Things that do **not** count as done:
 - hidden pages could still be reached by direct URL even after nav cleanup, which left shell-level role enforcement incomplete until corrected
 - Guests still exposed an import path to read-only collaborator roles, which broke action-level permission trust inside a must-ship ops surface until corrected
 - Messaging still exposed scheduled-send execution controls to non-compose roles, which broke action-level permission trust inside a must-ship comms surface until corrected
+- Coordinator Mode still relied on UI disable states for some alert/Q&A actions, which left handler-level permission trust weaker than it should be until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -417,6 +418,7 @@ Primary proof artifact for this now exists at:
 - Fixed shell-level deep-link enforcement so pages outside the collaborator’s visible role map now redirect back to overview instead of relying on sidebar hiding alone.
 - Fixed Guests import permission gating so read-only collaborator roles can no longer start guest import from the UI or handler path.
 - Fixed Messaging scheduled-send permission gating so non-compose roles can no longer run due sends, send scheduled campaigns immediately, or move scheduled campaigns back to draft.
+- Fixed Coordinator Mode handler guards so weaker collaborator roles can no longer send/schedule coordinator alerts or add guest questions just by reaching the action path.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

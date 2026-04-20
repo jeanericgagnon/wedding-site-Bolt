@@ -383,6 +383,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const sendDayOfAlert = async () => {
     if (!siteId) return;
+    if (!canSendAlerts) {
+      toast('Your collaborator role cannot send coordinator alerts.', 'info');
+      return;
+    }
+    if (alertForm.scheduleType === 'later' && !canScheduleAlerts) {
+      toast('Your collaborator role cannot schedule coordinator alerts.', 'info');
+      return;
+    }
     if (alertValidationError) {
       toast(alertValidationError, 'error');
       return;
@@ -424,6 +432,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
   };
 
   const addQnaItem = async () => {
+    if (!canEditQna) {
+      toast('Your collaborator role cannot add guest questions here.', 'info');
+      return;
+    }
+
     const q = qnaInput.trim();
     if (!q) return;
 
