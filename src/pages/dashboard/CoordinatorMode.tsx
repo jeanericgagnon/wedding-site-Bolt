@@ -38,6 +38,7 @@ import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetStat
 import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSummary';
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
 import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPriority';
+import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorCommandPriorityReason';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -399,6 +400,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
     qnaLabel: qnaTargetState.label,
     alertAligned: alertTargetCue.aligned,
   }), [checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned]);
+  const priorityCommandReason = useMemo(() => getCoordinatorCommandPriorityReason({
+    priority: priorityCommandLabel,
+    checkInLabel: checkInTargetState.label,
+    timelineLabel: timelineTargetState.label,
+    qnaLabel: qnaTargetState.label,
+    alertAligned: alertTargetCue.aligned,
+    alertLaneLabel,
+  }), [priorityCommandLabel, checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned, alertLaneLabel]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -744,7 +753,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <span className="text-[10px] font-medium text-text-primary">{item.label}</span>
                 {priorityCommandLabel === item.label && (
                   <span className="ml-1 rounded-full border border-primary/20 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-primary">
-                    Priority
+                    Priority — {priorityCommandReason}
                   </span>
                 )}
                 <span className="mx-1 text-[10px] text-text-tertiary">·</span>
