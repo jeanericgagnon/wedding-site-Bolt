@@ -3512,7 +3512,7 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                     <button
                       onClick={() => void handleRetry(m)}
-                      disabled={retryingMessageId !== null}
+                      disabled={retryingMessageId !== null || !canCompose}
                       className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-50"
                     >
                       {retryingMessageId === m.id ? 'Retrying…' : 'Retry'}
