@@ -1,29 +1,16 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
 import { evaluateNameChangeExecutionGates } from './executionGates';
 import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
+import { NAME_CHANGE_FORM_BUILDERS } from './formRegistry';
 import { buildNameChangeTargetChecklist } from './targetChecklist';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
-import { buildNameChangeSs5FormSnapshot } from './ss5Form';
-import { buildNameChangeDmvFormSnapshot } from './dmvForm';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
   NameChangeExtractedFieldInput,
-  NameChangeFormPayloadSnapshot,
   NameChangePlan,
   NameChangeTargetExecutionSnapshot,
 } from './types';
-
-function buildTargetFormPayload(
-  formBuilderKey: 'ss5' | 'dmv',
-  profile: NameChangeCaseInput,
-  documents: NameChangeDocumentInput[],
-  extractedFields: NameChangeExtractedFieldInput[],
-): NameChangeFormPayloadSnapshot {
-  return formBuilderKey === 'ss5'
-    ? buildNameChangeSs5FormSnapshot(profile, documents, extractedFields)
-    : buildNameChangeDmvFormSnapshot(profile, documents, extractedFields);
-}
 
 export function buildNameChangeTargetExecutionSnapshot(
   targetKey: 'ssa' | 'dmv',
@@ -36,7 +23,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
   const sequence = buildNameChangeExecutionSequenceSnapshot(targetKey, profile, documents, extractedFields, plan);
   const checklist = buildNameChangeTargetChecklist(target, profile, documents, extractedFields);
-  const formPayload = buildTargetFormPayload(target.formBuilderKey, profile, documents, extractedFields);
+  const formPayload = NAME_CHANGE_FORM_BUILDERS[target.formBuilderKey](profile, documents, extractedFields);
   const gates = evaluateNameChangeExecutionGates(sequence.dependencies, checklist);
 
   return {
