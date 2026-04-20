@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { getSectionPrimaryImage } from '../../lib/sectionMedia';
 
 interface Props {
   data: WeddingDataV1;
@@ -23,7 +24,7 @@ export const HeroSection: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
-  const bgImage = readBuilderValue(settings.backgroundImage as string | { value: string } | undefined, '') || media.heroImageUrl || '';
+  const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
   const opacity = typeof settings.overlayOpacity === 'number' ? settings.overlayOpacity / 100 : 0.3;
 
   return (
@@ -57,7 +58,7 @@ export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
-  const bgImage = readBuilderValue(settings.backgroundImage as string | { value: string } | undefined, '') || media.heroImageUrl || '';
+  const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
   const hasImage = !!bgImage;
 
   return (
@@ -92,7 +93,7 @@ export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
   const date = formatDate(event.weddingDateISO);
-  const bgImage = readBuilderValue(settings.backgroundImage as string | { value: string } | undefined, '') || media.heroImageUrl || '';
+  const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden bg-neutral-900">
@@ -143,7 +144,7 @@ export const HeroCountdown: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || `${couple.partner1Name} & ${couple.partner2Name}`;
   const date = formatDate(event.weddingDateISO);
-  const bgImage = readBuilderValue(settings.backgroundImage as string | { value: string } | undefined, '') || media.heroImageUrl || '';
+  const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
   const countdown = getCountdownParts(event.weddingDateISO);
 
   return (
