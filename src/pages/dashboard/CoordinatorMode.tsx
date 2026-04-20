@@ -55,6 +55,9 @@ import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSu
 import { getCoordinatorAlertOverrideLabel } from '../../lib/coordinatorAlertOverrideLabel';
 import { getCoordinatorAlertOverrideTargetLabel } from '../../lib/coordinatorAlertOverrideTargetLabel';
 import { getCoordinatorAlertOverrideCurrentLabel } from '../../lib/coordinatorAlertOverrideCurrentLabel';
+import { shouldResetCoordinatorAlertOverride } from '../../lib/coordinatorAlertOverrideReset';
+import { getCoordinatorAlertSummaryStateLabel } from '../../lib/coordinatorAlertSummaryStateLabel';
+import { getCoordinatorAlertSummaryTransitionLabel } from '../../lib/coordinatorAlertSummaryTransitionLabel';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -129,6 +132,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
   const [commandJumpTargetId, setCommandJumpTargetId] = useState<string | null>(null);
   const [manualOverrideLabel, setManualOverrideLabel] = useState<string | null>(null);
+  const [alertOverrideLabelState, setAlertOverrideLabelState] = useState<string | null>(null);
+  const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -373,6 +378,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
     subject: alertForm.subject,
     audienceLabel: alertSummary.audienceLabel,
   }), [alertForm.subject, alertSummary.audienceLabel]);
+  const alertSummaryStateLabel = useMemo(() => getCoordinatorAlertSummaryStateLabel({
+    aligned: alertTargetCue.aligned,
+    laneLabel: alertLaneLabel,
+  }), [alertTargetCue.aligned, alertLaneLabel]);
+  const alertSummaryTransitionLabel = useMemo(() => getCoordinatorAlertSummaryTransitionLabel({
+    previousAligned: previousAlertAligned,
+    currentAligned: alertTargetCue.aligned,
+  }), [previousAlertAligned, alertTargetCue.aligned]);
 
   useEffect(() => {
     if (!preferredAlertSuggestion) return;
@@ -424,8 +437,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
     checkInLabel: checkInTargetState.label,
     timelineLabel: timelineTargetState.label,
     qnaLabel: qnaTargetState.label,
-    alertLabel: `${alertTargetCue.aligned ? 'Board-aligned' : 'Customized'} ${alertLaneLabel.toLowerCase()}`,
-  }), [checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned, alertLaneLabel]);
+    alertLabel: alertSummaryStateLabel,
+  }), [checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertSummaryStateLabel]);
   const priorityCommandLabel = useMemo(() => getCoordinatorCommandPriority({
     checkInLabel: checkInTargetState.label,
     timelineLabel: timelineTargetState.label,
@@ -902,6 +915,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <div>
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
               {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
+              {!commandJumpLabel && alertSummaryTransitionLabel && <p className="text-[11px] text-primary">{alertSummaryTransitionLabel}</p>}
               {!commandJumpLabel && manualOverrideLabel && (
                 <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <p className="text-amber-700">{manualOverrideLabel}</p>
