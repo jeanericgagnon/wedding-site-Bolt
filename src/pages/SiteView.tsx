@@ -22,7 +22,7 @@ import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { getSiteVisibilityState } from '../lib/siteVisibilityState';
-import { getIsPublishedFromSiteRow, getPublicBuilderProject } from '../lib/publicSiteProject';
+import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
 
 interface PublicItineraryRow {
   id?: string;
@@ -494,7 +494,7 @@ export const SiteView: React.FC = () => {
         if (isPublished && persistedSections.length > 0 && !(siteJson && siteJson.pages?.length > 0)) {
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(
-              safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData())
+              getPublicWeddingData(row) ?? createEmptyWeddingData()
             )
           );
           const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
@@ -531,7 +531,7 @@ export const SiteView: React.FC = () => {
 
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(
-              safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData())
+              getPublicWeddingData(row) ?? createEmptyWeddingData()
             )
           );
           const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
@@ -547,7 +547,7 @@ export const SiteView: React.FC = () => {
           setBuilderSections(sections);
           setWeddingData(wData);
         } else {
-          const parsedWData = safeJsonParse<WeddingDataV1 | null>(data.wedding_data, null);
+          const parsedWData = getPublicWeddingData(row);
           const rawWData = parsedWData
             ? normalizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsedWData))
             : null;

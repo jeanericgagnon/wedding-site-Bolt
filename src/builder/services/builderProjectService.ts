@@ -164,16 +164,18 @@ export const builderProjectService = {
     const publishedAt = new Date().toISOString();
 
     let currentSiteJson: unknown = null;
+    let currentWeddingData: unknown = null;
 
     {
       const primary = await supabase
         .from('wedding_sites')
-        .select('site_json')
+        .select('site_json, wedding_data')
         .eq('id', weddingSiteId)
         .maybeSingle();
 
       if (!primary.error) {
         currentSiteJson = primary.data?.site_json ?? null;
+        currentWeddingData = primary.data?.wedding_data ?? null;
       } else {
         const fallback = await supabase
           .from('wedding_sites')
@@ -193,19 +195,31 @@ export const builderProjectService = {
         ? (currentSiteJsonObj.publishedVersion as number) + 1
         : 1;
 
+    const durableWeddingData = currentWeddingData
+      ? rewriteSignedMediaUrlsToPublicDeep(currentWeddingData)
+      : null;
+
     const nextSiteJson: Record<string, unknown> = {
       ...currentSiteJsonObj,
       publishStatus: 'published',
       lastPublishedAt: publishedAt,
       publishedVersion: nextPublishedVersion,
+      ...(durableWeddingData ? { weddingDataSnapshot: durableWeddingData } : {}),
     };
+
+    const nextPublishedJson: Record<string, unknown> | unknown = currentSiteJsonObj && typeof currentSiteJsonObj === 'object'
+      ? {
+          ...currentSiteJsonObj,
+          ...(durableWeddingData ? { weddingDataSnapshot: durableWeddingData } : {}),
+        }
+      : currentSiteJson;
 
     // Try richest publish payload first, then gracefully degrade for schema-drifted tables.
     const publishPayload: Record<string, unknown> = {
       is_published: true,
       published_at: publishedAt,
       updated_at: publishedAt,
-      published_json: currentSiteJson,
+      published_json: nextPublishedJson,
       site_json: nextSiteJson,
     };
 

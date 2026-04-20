@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getIsPublishedFromSiteRow, getPublicBuilderProject } from './publicSiteProject';
+import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from './publicSiteProject';
 
 const draftProject = {
   id: 'draft',
@@ -19,6 +19,27 @@ const publishedProject = {
   id: 'published',
   pages: [{ ...draftProject.pages[0], sections: [{ ...draftProject.pages[0].sections[0], settings: { headline: 'Published headline' } }] }],
   publishStatus: 'published',
+};
+
+const liveWeddingData = {
+  version: '1',
+  couple: { partner1Name: 'Draft', partner2Name: 'Names', displayName: 'Draft Names' },
+  event: {},
+  venues: [],
+  schedule: [],
+  rsvp: { enabled: true },
+  travel: {},
+  registry: { links: [] },
+  faq: [],
+  theme: {},
+  media: { gallery: [], heroImageUrl: 'https://example.com/draft-hero.jpg' },
+  meta: { createdAtISO: '2026-04-19T00:00:00.000Z', updatedAtISO: '2026-04-19T01:30:00.000Z' },
+};
+
+const publishedWeddingData = {
+  ...liveWeddingData,
+  couple: { partner1Name: 'Published', partner2Name: 'Names', displayName: 'Published Names' },
+  media: { gallery: [], heroImageUrl: 'https://example.com/published-hero.jpg' },
 };
 
 describe('publicSiteProject', () => {
@@ -50,5 +71,30 @@ describe('publicSiteProject', () => {
     };
 
     expect(getIsPublishedFromSiteRow(row)).toBe(true);
+  });
+
+  it('prefers published wedding data snapshot for guest-facing content', () => {
+    const row = {
+      is_published: true,
+      site_json: draftProject,
+      published_json: {
+        ...publishedProject,
+        weddingDataSnapshot: publishedWeddingData,
+      },
+      wedding_data: liveWeddingData,
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Published Names');
+    expect(getPublicWeddingData(row)?.media.heroImageUrl).toBe('https://example.com/published-hero.jpg');
+  });
+
+  it('falls back to live wedding_data when no published snapshot exists', () => {
+    const row = {
+      is_published: false,
+      site_json: draftProject,
+      wedding_data: liveWeddingData,
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
   });
 });
