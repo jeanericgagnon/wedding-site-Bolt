@@ -49,14 +49,14 @@ export const Home: React.FC = () => {
       title: 'Messaging',
       icon: Mail,
       href: '/features/messaging',
-      bullets: ['Email blasts included', 'Guest segmentation', 'Schedule sends', 'Delivery status updates', 'Draft + scheduled send flow', 'Ready-to-send templates'],
+      bullets: ['Email included (fair-use)', 'Guest segmentation', 'Schedule sends', 'Delivery status updates', 'Draft + scheduled send flow', 'Ready-to-send templates'],
     },
     {
       id: 'planner',
       title: 'Planner Collaboration',
       icon: Calendar,
       href: '/product',
-      bullets: ['Invite your planner from the couple side', 'Named planner invite with role preset', 'Planner command view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Built for real event-day help'],
+      bullets: ['Invite your planner from the couple side', 'Named planner invite with role preset', 'Planner coordination view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Built for real event-day help'],
     },
     {
       id: 'memory',
@@ -77,14 +77,14 @@ export const Home: React.FC = () => {
       title: 'Registry',
       icon: Heart,
       href: '/features/registry',
-      bullets: ['Link existing registries', 'Link any registry', 'Honeymoon fund', 'Charity donations', 'Simple gift cards and links', 'No sponsored clutter'],
+      bullets: ['Link existing registries', 'Major-registry-friendly links', 'Honeymoon fund', 'Charity donations', 'Simple gift cards and links', 'No sponsored clutter'],
     },
     {
       id: 'seating',
       title: 'Seating',
       icon: Calendar,
       href: '/features/seating',
-      bullets: ['Drag-and-drop seating board', 'Table capacity management', 'Auto-assign by RSVP', 'Table assignment workflows', 'Export for caterer', 'Per-event seating'],
+      bullets: ['Drag-and-drop seating board', 'Table capacity management', 'Auto-assign starting point', 'Table assignment workflows', 'Export for caterer', 'Per-event seating'],
     },
   ] as const;
 
