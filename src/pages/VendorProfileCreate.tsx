@@ -89,6 +89,9 @@ export const VendorProfileCreatePage: React.FC = () => {
               <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Draft</p>
               <input value={draft.vendor_name} onChange={(e) => setDraft((prev) => prev ? { ...prev, vendor_name: e.target.value } : prev)} className="mt-2 w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-2xl font-semibold outline-none" />
               <input value={draft.descriptor ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, descriptor: e.target.value || null } : prev)} placeholder="Short descriptor" className="mt-3 w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-[#6f5843] outline-none" />
+              {typeof draft.source_payload?.sourceLabel === 'string' && (
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Generated from {draft.source_payload.sourceLabel}</p>
+              )}
             </div>
             <textarea value={draft.about} onChange={(e) => setDraft((prev) => prev ? { ...prev, about: e.target.value } : prev)} className="min-h-[132px] w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-[#4b3a2c] leading-7 outline-none" />
             <input value={draft.slug} onChange={(e) => setDraft((prev) => prev ? { ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') } : prev)} placeholder="vendor-page-slug" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />

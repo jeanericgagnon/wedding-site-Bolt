@@ -68,9 +68,23 @@ function extractMeta(html: string, key: string): string | null {
   return null;
 }
 
+function extractFirstMatch(html: string, pattern: RegExp): string | null {
+  const match = html.match(pattern);
+  return match?.[1]?.trim() ?? null;
+}
+
 function extractTitle(html: string): string | null {
   const match = html.match(/<title>([^<]+)<\/title>/i);
   return match?.[1]?.trim() ?? null;
+}
+
+function extractInstagramUrlFromHtml(html: string): string | null {
+  return normalizeUrl(extractFirstMatch(html, /href=["'](https?:\/\/(?:www\.)?instagram\.com\/[^"'#?]+(?:\/)?)["']/i));
+}
+
+function extractMailtoEmail(html: string): string | null {
+  const email = extractFirstMatch(html, /href=["']mailto:([^"'?]+)["']/i);
+  return email?.toLowerCase() ?? null;
 }
 
 function screenshotUrl(url: string | null): string | null {
@@ -101,6 +115,40 @@ function rankImage(url: string, primaryWebsiteImage: string | null, websiteShot:
   return 60;
 }
 
+function cleanDescriptor(input: string | null, vendorName: string): string | null {
+  if (!input) return null;
+  const cleaned = input
+    .replace(/\s*[|\-–—]\s*(home|about|contact|portfolio|weddings?).*$/i, '')
+    .replace(new RegExp(vendorName, 'ig'), '')
+    .replace(/^[\s|\-–—:,]+|[\s|\-–—:,]+$/g, '')
+    .trim();
+  if (!cleaned || cleaned.length < 4) return null;
+  return cleaned.slice(0, 80);
+}
+
+function cleanAbout(input: string | null, vendorName: string, sourceLabel: string): string {
+  const fallback = `${vendorName} is a wedding vendor profile built from public source details, keeping the strongest images, core links, and a direct inquiry path in one clean page.`;
+  if (!input) return fallback;
+
+  const normalized = input
+    .replace(/\s+/g, ' ')
+    .replace(/cookie[^.]+\./gi, '')
+    .replace(/subscribe[^.]+\./gi, '')
+    .replace(/learn more[^.]*\.?/gi, '')
+    .trim();
+
+  const sentences = normalized.match(/[^.!?]+[.!?]?/g)?.map((part) => part.trim()).filter(Boolean) ?? [];
+  const picked = sentences.filter((sentence) => sentence.length > 24 && sentence.length < 170).slice(0, 2).join(' ');
+  const cleaned = (picked || normalized).trim();
+  if (!cleaned) return fallback;
+
+  if (cleaned.length < 90) {
+    return `${cleaned} This profile pulls together the essential images, links, and inquiry path from ${sourceLabel}.`.slice(0, 240);
+  }
+
+  return cleaned.slice(0, 240);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -124,6 +172,8 @@ Deno.serve(async (req) => {
     let websiteTitle: string | null = null;
     let websiteDescription: string | null = null;
     let websiteImage: string | null = null;
+    let websiteInstagramUrl: string | null = null;
+    let websiteContactEmail: string | null = null;
 
     if (normalizedWebsite) {
       try {
@@ -138,23 +188,28 @@ Deno.serve(async (req) => {
           websiteTitle = extractMeta(html, 'og:title') || extractTitle(html);
           websiteDescription = extractMeta(html, 'og:description') || extractMeta(html, 'description');
           websiteImage = extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image');
+          websiteInstagramUrl = extractInstagramUrlFromHtml(html);
+          websiteContactEmail = extractMailtoEmail(html);
         }
       } catch {
         // ignore and fall back
       }
     }
 
+    const resolvedInstagram = normalizedInstagram ?? websiteInstagramUrl;
+    const resolvedInstagramHandle = extractInstagramHandle(resolvedInstagram);
+
     const descriptor = websiteTitle && !websiteTitle.toLowerCase().includes(vendorName.toLowerCase())
-      ? websiteTitle.slice(0, 80)
-      : instagramHandle
-        ? `Wedding vendor on Instagram @${instagramHandle}`
+      ? cleanDescriptor(websiteTitle, vendorName)
+      : resolvedInstagramHandle
+        ? `Wedding vendor on Instagram @${resolvedInstagramHandle}`
         : websiteLabel
           ? `${websiteLabel} wedding vendor profile`
           : 'Wedding vendor profile';
 
     const about = websiteDescription?.trim()
-      ? websiteDescription.trim().slice(0, 220)
-      : instagramHandle
+      ? cleanAbout(websiteDescription, vendorName, sourceLabel)
+      : resolvedInstagramHandle
         ? `${vendorName} is a wedding vendor surfaced from public Instagram details. This page keeps the strongest images, core links, and a direct inquiry path in one simple place so couples can get oriented fast.`
         : websiteLabel
           ? `${vendorName} is a wedding vendor profile generated from public web details from ${titleCase(websiteLabel)}. It keeps the key images, source links, and inquiry path in one clean page for quick couple review.`
@@ -183,16 +238,18 @@ Deno.serve(async (req) => {
       about,
       hero_image_url: heroImage,
       image_urls: galleryImages,
-      instagram_url: normalizedInstagram,
+      instagram_url: resolvedInstagram,
       website_url: normalizedWebsite,
-      contact_email: null,
+      contact_email: websiteContactEmail,
       source_payload: {
         sourceLabel,
-        instagramHandle,
+        instagramHandle: resolvedInstagramHandle,
         websiteLabel,
         websiteTitle,
         websiteDescription,
         websiteImage,
+        websiteInstagramUrl,
+        websiteContactEmail,
       },
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
