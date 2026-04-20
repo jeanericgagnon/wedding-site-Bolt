@@ -2077,6 +2077,7 @@ export const DashboardMessages: React.FC = () => {
       subject: applyTemplateVariables('Save the Date!'),
       body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
       audience_filter: 'all',
+      recipient_count: guests.length,
       recipient_filter: {
         audience: 'all',
         audience_label: 'All Guests',
