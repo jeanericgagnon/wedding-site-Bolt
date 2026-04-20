@@ -122,12 +122,28 @@ function looksLikeLogo(url: string | null): boolean {
   return /logo|icon|avatar|favicon/i.test(url);
 }
 
-function rankImage(url: string, primaryWebsiteImage: string | null, websiteShot: string | null, instagramShot: string | null): number {
+function isScreenshotUrl(url: string): boolean {
+  return url.includes('image.thum.io/get/width/1200/noanimate/');
+}
+
+function rankImage(
+  url: string,
+  primaryWebsiteImage: string | null,
+  websiteShot: string | null,
+  instagramShot: string | null,
+  pinterestShot: string | null,
+  tiktokShot: string | null,
+  facebookShot: string | null,
+  youtubeShot: string | null,
+): number {
   if (url === primaryWebsiteImage && !looksLikeLogo(url)) return 100;
   if (url === websiteShot) return 80;
-  if (url === instagramShot) return 72;
-  if (/pinterest/i.test(url)) return 78;
-  if (/tiktok|youtube|facebook/i.test(url)) return 68;
+  if (url === pinterestShot) return 77;
+  if (url === instagramShot) return 74;
+  if (url === tiktokShot) return 70;
+  if (url === youtubeShot) return 68;
+  if (url === facebookShot) return 66;
+  if (isScreenshotUrl(url)) return 58;
   if (looksLikeLogo(url)) return 30;
   return 60;
 }
@@ -266,10 +282,14 @@ Deno.serve(async (req) => {
     ].filter((value, index, arr): value is string => !!value && arr.indexOf(value) === index);
 
     const images = rawImages
-      .sort((a, b) => rankImage(b, websiteImage, websiteShot, instagramShot) - rankImage(a, websiteImage, websiteShot, instagramShot))
+      .sort((a, b) => rankImage(b, websiteImage, websiteShot, instagramShot, pinterestShot, tiktokShot, facebookShot, youtubeShot) - rankImage(a, websiteImage, websiteShot, instagramShot, pinterestShot, tiktokShot, facebookShot, youtubeShot))
       .slice(0, 6);
 
-    const heroImage = images.find((image) => !looksLikeLogo(image)) ?? images[0] ?? null;
+    const heroImage = images
+      .filter((image) => !looksLikeLogo(image))
+      .sort((a, b) => rankImage(b, websiteImage, websiteShot, instagramShot, pinterestShot, tiktokShot, facebookShot, youtubeShot) - rankImage(a, websiteImage, websiteShot, instagramShot, pinterestShot, tiktokShot, facebookShot, youtubeShot))[0]
+      ?? images[0]
+      ?? null;
     const galleryImages = images.filter((image) => image !== heroImage);
 
     return new Response(JSON.stringify({

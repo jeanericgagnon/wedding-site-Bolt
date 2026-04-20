@@ -127,6 +127,7 @@ export const VendorProfileCreatePage: React.FC = () => {
                 placeholder="One image URL per line"
                 className="min-h-[120px] w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none"
               />
+              {draft.hero_image_url && <p className="text-xs text-[#8b6f53]">Current hero image: {draft.hero_image_url}</p>}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[draft.hero_image_url, ...(draft.image_urls || [])].filter((image): image is string => Boolean(image)).slice(0, 6).map((image) => (
