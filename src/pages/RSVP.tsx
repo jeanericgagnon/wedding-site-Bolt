@@ -373,6 +373,7 @@ export default function RSVP() {
       setCustomAnswers((foundRsvp.custom_answers && typeof foundRsvp.custom_answers === 'object') ? foundRsvp.custom_answers : {});
     }
     if (!foundRsvp) {
+      setExistingRsvp(null);
       setFormData(prev => ({
         ...prev,
         attending: true,
