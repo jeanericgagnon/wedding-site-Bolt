@@ -1847,6 +1847,13 @@ export const DashboardMessages: React.FC = () => {
           status: 'scheduled',
           scheduled_for: scheduledFor,
           sent_at: null,
+        })
+        .eq('id', message.id);
+      if (error) throw error;
+
+      void supabase
+        .from('messages')
+        .update({
           recipient_count: snapshot.totalAudienceCount,
           recipient_filter: {
             ...(message.recipient_filter ?? {}),
@@ -1856,7 +1863,7 @@ export const DashboardMessages: React.FC = () => {
           },
         })
         .eq('id', message.id);
-      if (error) throw error;
+
       toast(`Rescheduled for ${new Date(scheduledFor).toLocaleString()}.`, 'success');
       await fetchMessages();
     } catch (err) {
@@ -1901,6 +1908,13 @@ export const DashboardMessages: React.FC = () => {
         .update({
           status: 'draft',
           scheduled_for: null,
+        })
+        .eq('id', message.id);
+      if (error) throw error;
+
+      void supabase
+        .from('messages')
+        .update({
           recipient_count: snapshot.totalAudienceCount,
           recipient_filter: {
             ...(message.recipient_filter ?? {}),
@@ -1910,7 +1924,7 @@ export const DashboardMessages: React.FC = () => {
           },
         })
         .eq('id', message.id);
-      if (error) throw error;
+
       toast('Scheduled campaign moved back to draft.', 'info');
       await fetchMessages();
     } catch (err) {
