@@ -1538,6 +1538,11 @@ export const DashboardMessages: React.FC = () => {
   };
 
   function loadMessageIntoComposer(message: Message, mode: 'edit' | 'duplicate') {
+    if (!canComposeDashboardMessages(messagesRole)) {
+      toast('Your collaborator role cannot edit campaigns from Messaging.', 'info');
+      return;
+    }
+
     const scheduledAt = message.scheduled_for ? new Date(message.scheduled_for) : null;
     const scheduleDate = scheduledAt ? `${scheduledAt.getFullYear()}-${String(scheduledAt.getMonth() + 1).padStart(2, '0')}-${String(scheduledAt.getDate()).padStart(2, '0')}` : '';
     const scheduleTime = scheduledAt ? `${String(scheduledAt.getHours()).padStart(2, '0')}:${String(scheduledAt.getMinutes()).padStart(2, '0')}` : '';
@@ -1561,6 +1566,11 @@ export const DashboardMessages: React.FC = () => {
   }
 
   function startFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
+    if (!canComposeDashboardMessages(messagesRole)) {
+      toast('Your collaborator role cannot create follow-up campaigns from Messaging.', 'info');
+      return;
+    }
+
     if (!activeCampaignLatestMessage) return;
 
     const audience = activeCampaignLatestMessage.audience_filter ?? (activeCampaignLatestMessage.recipient_filter?.audience as string) ?? 'all';
@@ -1610,6 +1620,11 @@ export const DashboardMessages: React.FC = () => {
   }
 
   function startScheduledFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
+    if (!canComposeDashboardMessages(messagesRole)) {
+      toast('Your collaborator role cannot schedule follow-up campaigns from Messaging.', 'info');
+      return;
+    }
+
     if (!activeCampaignLatestMessage) return;
 
     const now = new Date();
