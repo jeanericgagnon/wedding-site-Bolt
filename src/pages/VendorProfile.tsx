@@ -46,6 +46,9 @@ export const VendorProfilePage: React.FC = () => {
     return all.slice(0, 6);
   }, [profile]);
 
+  const featuredImage = galleryImages[0] ?? null;
+  const secondaryImages = galleryImages.slice(1, 6);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
@@ -98,12 +101,19 @@ export const VendorProfilePage: React.FC = () => {
         {galleryImages.length > 0 && (
           <section className="space-y-4">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">Images</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-              {galleryImages.slice(0, 6).map((image, index) => (
-                <div key={`${image}-${index}`} className={`overflow-hidden rounded-[24px] bg-white shadow-[0_18px_40px_rgba(53,37,22,0.08)] ${index === 0 ? 'col-span-2 row-span-2' : ''}`}>
-                  <img src={image} alt={`${profile.vendor_name} ${index + 1}`} className="h-full w-full object-cover aspect-square" />
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-[1.25fr_0.75fr]">
+              {featuredImage && (
+                <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_18px_40px_rgba(53,37,22,0.08)]">
+                  <img src={featuredImage} alt={`${profile.vendor_name} featured`} className="h-full w-full object-cover aspect-[4/5] sm:aspect-[4/4.4]" />
                 </div>
-              ))}
+              )}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 auto-rows-fr">
+                {secondaryImages.map((image, index) => (
+                  <div key={`${image}-${index}`} className="overflow-hidden rounded-[24px] bg-white shadow-[0_18px_40px_rgba(53,37,22,0.08)]">
+                    <img src={image} alt={`${profile.vendor_name} ${index + 2}`} className="h-full w-full object-cover aspect-square" />
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         )}

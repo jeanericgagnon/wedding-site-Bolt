@@ -80,6 +80,19 @@ function logoUrl(url: string | null): string | null {
   }
 }
 
+function looksLikeLogo(url: string | null): boolean {
+  if (!url) return false;
+  return /logo|icon|avatar|favicon/i.test(url);
+}
+
+function rankImage(url: string, primaryWebsiteImage: string | null, websiteShot: string | null, instagramShot: string | null): number {
+  if (url === primaryWebsiteImage && !looksLikeLogo(url)) return 100;
+  if (url === websiteShot) return 80;
+  if (url === instagramShot) return 72;
+  if (looksLikeLogo(url)) return 30;
+  return 60;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -135,20 +148,29 @@ Deno.serve(async (req) => {
           ? `${vendorName} is a wedding vendor profile generated from public web details from ${websiteLabel}, keeping the key images, links, and contact path in one fast page.`
           : `${vendorName} is a wedding vendor profile generated from public web details so couples can quickly get the essentials in one clean place.`;
 
-    const images = [
+    const websiteShot = screenshotUrl(normalizedWebsite);
+    const instagramShot = screenshotUrl(normalizedInstagram);
+    const rawImages = [
       websiteImage,
+      websiteShot,
+      instagramShot,
       logoUrl(normalizedWebsite),
-      screenshotUrl(normalizedWebsite),
-      screenshotUrl(normalizedInstagram),
-    ].filter((value, index, arr): value is string => !!value && arr.indexOf(value) === index).slice(0, 6);
+    ].filter((value, index, arr): value is string => !!value && arr.indexOf(value) === index);
+
+    const images = rawImages
+      .sort((a, b) => rankImage(b, websiteImage, websiteShot, instagramShot) - rankImage(a, websiteImage, websiteShot, instagramShot))
+      .slice(0, 6);
+
+    const heroImage = images.find((image) => !looksLikeLogo(image)) ?? images[0] ?? null;
+    const galleryImages = images.filter((image) => image !== heroImage);
 
     return new Response(JSON.stringify({
       slug: slugify(vendorName),
       vendor_name: vendorName.trim(),
       descriptor: descriptor || null,
       about,
-      hero_image_url: images[0] ?? null,
-      image_urls: images,
+      hero_image_url: heroImage,
+      image_urls: galleryImages,
       instagram_url: normalizedInstagram,
       website_url: normalizedWebsite,
       contact_email: null,
