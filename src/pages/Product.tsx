@@ -41,7 +41,7 @@ const FEATURE_AUDIT_GROUPS = [
   },
   {
     title: 'What couples actually use',
-    items: ['Drag-and-drop seating chart', 'Seat finder lookup for guests and staff', 'Planner-ready coordination view', 'RSVP board visibility', 'Planning hub for tasks + decisions', 'Guest photo sharing space'],
+    items: ['Drag-and-drop seating chart', 'Seat finder lookup for guests and staff', 'Planner-ready coordination view', 'RSVP board visibility', 'Planning hub for tasks + decisions', 'Core guest ops that hold together'],
   },
 ] as const;
 
