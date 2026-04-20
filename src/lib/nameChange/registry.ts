@@ -94,6 +94,17 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     reminderDaysAfterPrimaryId: 7,
   },
   {
+    key: 'utilities-housing',
+    label: 'Utilities, lease, and landlord records',
+    category: 'personal',
+    launchPriority: 35,
+    triggers: ['all'],
+    notes: 'Useful once your primary ID is moving so leases, portals, and mailed statements stop drifting.',
+    suggestedTiming: 'During the first 1-2 weeks after primary ID changes',
+    evidenceNeeded: ['Updated photo ID when available', 'Utility or lease account details', 'Legal proof document'],
+    reminderDaysAfterPrimaryId: 8,
+  },
+  {
     key: 'voter-registration',
     label: 'California voter registration',
     category: 'government',

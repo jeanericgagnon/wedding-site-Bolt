@@ -16,6 +16,7 @@ import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirem
 import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
 import { buildNameChangeSsaExecutionSnapshot } from '../../../lib/nameChange/ssaFlow';
 import { buildNameChangeTsaExecutionSnapshot } from '../../../lib/nameChange/tsaFlow';
+import { buildNameChangeUtilitiesExecutionSnapshot } from '../../../lib/nameChange/utilitiesFlow';
 import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/voterFlow';
 import type {
   NameChangeCaseInput,
@@ -210,6 +211,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const medicalExecutionSnapshot = useMemo(() => buildNameChangeMedicalExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const voterExecutionSnapshot = useMemo(() => buildNameChangeVoterExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const tsaExecutionSnapshot = useMemo(() => buildNameChangeTsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
+  const utilitiesExecutionSnapshot = useMemo(() => buildNameChangeUtilitiesExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const dmvExecutionSnapshot = useMemo(() => buildNameChangeDmvExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const passportExecutionSnapshot = useMemo(() => buildNameChangePassportExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
@@ -324,6 +326,17 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         snapshot: medicalExecutionSnapshot,
       },
       {
+        key: 'utilities',
+        title: 'Guided execution: utilities / lease / landlord records',
+        description: 'Household-admin execution slice for utilities, lease portals, and landlord records once primary photo ID is moving.',
+        readyLabel: 'ready for utilities/lease prep',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'Utilities/lease sequencing dependencies',
+        payloadTitle: 'Utilities/lease packet snapshot',
+        payloadDescription: 'Structured downstream packet for utilities, lease, and landlord record updates.',
+        snapshot: utilitiesExecutionSnapshot,
+      },
+      {
         key: 'voter',
         title: 'Guided execution: California voter registration',
         description: 'California-specific post-DMV execution slice for voter registration follow-through.',
@@ -363,6 +376,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     passportExecutionSnapshot,
     ssaExecutionSnapshot,
     tsaExecutionSnapshot,
+    utilitiesExecutionSnapshot,
     voterExecutionSnapshot,
   ]);
 

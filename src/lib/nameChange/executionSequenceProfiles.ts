@@ -212,6 +212,13 @@ export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSeq
     supportSatisfiedReason: 'Medical/provider identity support exists in intake.',
     supportMissingReason: 'No medical/provider identity support exists in intake yet.',
   }),
+  utilities: buildPhotoIdPacketDependencies({
+    supportKey: 'utilities-identity-support',
+    supportLabel: 'Utilities/lease identity support exists',
+    supportDocumentKinds: ['current_drivers_license', 'proof_of_address'],
+    supportSatisfiedReason: 'Utilities/lease identity support exists in intake.',
+    supportMissingReason: 'No utilities/lease identity support exists in intake yet.',
+  }),
   voter: buildVoterDependencies,
   tsa: buildTsaDependencies,
   licenses: buildEmploymentTargetDependencies({

@@ -7,6 +7,7 @@ import { NAME_CHANGE_MEDICAL_PACKET_CONTRACT } from './medicalPacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
 import { NAME_CHANGE_TSA_PACKET_CONTRACT } from './tsaPacket';
+import { NAME_CHANGE_UTILITIES_PACKET_CONTRACT } from './utilitiesPacket';
 import { NAME_CHANGE_VOTER_PACKET_CONTRACT } from './voterPacket';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
@@ -48,10 +49,10 @@ function buildSharedIdentityChecklist(targetNoun: string, supportKey: string, su
 }
 
 function buildPhotoIdInstitutionTarget(config: {
-  key: Extract<NameChangeExecutionTargetDefinition['key'], 'banks' | 'insurance' | 'medical'>;
+  key: Extract<NameChangeExecutionTargetDefinition['key'], 'banks' | 'insurance' | 'medical' | 'utilities'>;
   label: string;
   recommendedFormCode: string;
-  formBuilderKey: Extract<NameChangeExecutionTargetDefinition['formBuilderKey'], 'banks' | 'insurance' | 'medical'>;
+  formBuilderKey: Extract<NameChangeExecutionTargetDefinition['formBuilderKey'], 'banks' | 'insurance' | 'medical' | 'utilities'>;
   supportKey: string;
   supportLabel: string;
   supportDocumentKinds: NameChangeExecutionTargetDefinition['checklistSpecs'][number]['documentKinds'];
@@ -90,7 +91,7 @@ function buildPhotoIdInstitutionTarget(config: {
   };
 }
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -452,6 +453,35 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
       missingReason: 'Insurance rollout is not moving yet, so provider records may be the first healthcare lane to start.',
       attentionReason: 'Insurance rollout is already moving, which helps member records and provider rosters stay aligned.',
       satisfiedReason: 'Insurance rollout is already moving for healthcare record coordination.',
+    },
+  }),
+  utilities: buildPhotoIdInstitutionTarget({
+    key: 'utilities',
+    label: 'Utilities / lease / landlord records',
+    recommendedFormCode: NAME_CHANGE_UTILITIES_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'utilities',
+    supportKey: 'utilities-support-doc',
+    supportLabel: 'Utilities/lease-supporting document intake',
+    supportDocumentKinds: ['current_drivers_license', 'proof_of_address'],
+    primaryRule: {
+      key: 'primary-photo-id-progress',
+      label: 'Primary photo ID underway before utilities/lease rollout',
+      required: true,
+      requiredStepId: 'state-dmv',
+      requiredStatuses: ['in_progress', 'complete'],
+      missingReason: 'Utilities/lease record updates usually go smoother once your primary photo ID is moving or already updated.',
+      attentionReason: 'Primary photo ID is moving, which supports utilities/lease follow-through.',
+      satisfiedReason: 'Primary photo ID is already moving or complete for utilities/lease follow-through.',
+    },
+    secondaryRule: {
+      key: 'bank-rollout-progress',
+      label: 'Bank rollout already moving',
+      required: false,
+      requiredStepId: 'institution-banks',
+      requiredStatuses: ['in_progress', 'complete'],
+      missingReason: 'Bank rollout is not moving yet, so utilities/lease updates may be the first household admin lane to start.',
+      attentionReason: 'Bank rollout is already moving, which helps household account records stay coordinated.',
+      satisfiedReason: 'Bank rollout is already moving for household record coordination.',
     },
   }),
   voter: {
