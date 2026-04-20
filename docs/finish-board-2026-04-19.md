@@ -240,6 +240,7 @@ Things that do **not** count as done:
 - assisted RSVP could still leave stale attending-only RSVP detail behind on manual declines, which weakened guest↔RSVP continuity until corrected
 - the demo/manual assisted-RSVP proof path still drifted from the persisted cleanup path, which weakened confidence in manual guest-ops continuity until corrected
 - assisted/manual RSVP still drifted from the public RSVP contract on ceremony/reception attendance flags, which weakened per-event RSVP continuity until corrected
+- event-specific RSVP inserts still drifted from event-specific RSVP updates on response timestamps, which weakened downstream itinerary/seating consistency until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -435,6 +436,7 @@ Primary proof artifact for this now exists at:
 - Fixed assisted-RSVP decline cleanup so meal and plus-one detail no longer linger after a manual decline and confuse downstream guest-ops surfaces.
 - Fixed the demo/manual assisted-RSVP path so decline cleanup now matches the persisted path instead of leaving stale attending-only detail behind in proof/demo flows.
 - Fixed assisted/manual RSVP event-selection alignment so ceremony/reception attendance flags now update with manual RSVP changes instead of drifting from the public RSVP contract.
+- Fixed event-specific RSVP insert behavior so first-time event responses now stamp `responded_at` the same way updates do, keeping downstream event counters/timelines more consistent.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

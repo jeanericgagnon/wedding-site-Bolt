@@ -236,6 +236,7 @@ export default function EventRSVP() {
               attending: rsvpForm.attending,
               dietary_restrictions: rsvpForm.dietary_restrictions || null,
               notes: rsvpForm.notes || null,
+              responded_at: new Date().toISOString(),
             },
           ]);
 
