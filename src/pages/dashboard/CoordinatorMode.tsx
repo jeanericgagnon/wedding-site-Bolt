@@ -14,6 +14,7 @@ import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorE
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { buildCoordinatorPrimaryAction } from '../../lib/coordinatorPrimaryAction';
 import { buildCoordinatorCorrectionCues } from '../../lib/coordinatorCorrectionsSummary';
+import { resolveCoordinatorCorrectionCueTarget } from '../../lib/coordinatorCorrectionCueTarget';
 import { resolveCoordinatorPrimaryActionTarget } from '../../lib/coordinatorPrimaryActionTarget';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
