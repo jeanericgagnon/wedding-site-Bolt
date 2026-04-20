@@ -97,4 +97,46 @@ describe('publicSiteProject', () => {
 
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
   });
+
+  it('rewrites signed media urls for public builder project parity', () => {
+    const row = {
+      is_published: true,
+      published_json: {
+        ...publishedProject,
+        pages: [{
+          ...publishedProject.pages[0],
+          sections: [{
+            ...publishedProject.pages[0].sections[0],
+            settings: {
+              heroImage: 'https://xyz.supabase.co/storage/v1/object/sign/site-media/foo.jpg?token=abc',
+            },
+          }],
+        }],
+      },
+    };
+
+    expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.heroImage).toBe(
+      'https://xyz.supabase.co/storage/v1/object/public/site-media/foo.jpg',
+    );
+  });
+
+  it('rewrites signed media urls for public wedding data parity', () => {
+    const row = {
+      is_published: true,
+      published_json: {
+        ...publishedProject,
+        weddingDataSnapshot: {
+          ...publishedWeddingData,
+          media: {
+            gallery: [],
+            heroImageUrl: 'https://xyz.supabase.co/storage/v1/object/sign/site-media/bar.jpg?token=abc',
+          },
+        },
+      },
+    };
+
+    expect(getPublicWeddingData(row)?.media.heroImageUrl).toBe(
+      'https://xyz.supabase.co/storage/v1/object/public/site-media/bar.jpg',
+    );
+  });
 });
