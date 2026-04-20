@@ -33,6 +33,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
       countyContext: results.find((result) => result.key === 'county-context'),
       passportTimingRisk: results.find((result) => result.key === 'passport-timing-risk'),
       expeditedTravelSequencing: results.find((result) => result.key === 'expedited-travel-sequencing'),
+      passportEligibilityPath: results.find((result) => result.key === 'passport-eligibility-path'),
     },
     prerequisiteDependencies,
   });

@@ -89,6 +89,22 @@ describe('name change passport execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'missing' });
   });
 
+  it('surfaces the unmodeled passport eligibility path for non-citizen cases', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangePassportExecutionSnapshot(makeCase({ is_us_citizen: false }), documents, []);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.');
+    expect(snapshot.checklist.find((item) => item.key === 'passport-eligibility-path')).toMatchObject({ status: 'missing' });
+  });
+
   it('blocks passport execution when travel is booked soon but no travel identity support is in intake', () => {
     const documents: NameChangeDocumentInput[] = [
       {

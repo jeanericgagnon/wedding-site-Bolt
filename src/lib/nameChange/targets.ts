@@ -282,6 +282,14 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         satisfiedReason: 'Expedited travel sequencing is ready for passport prep.',
       },
       {
+        key: 'passport-eligibility-path',
+        label: 'Passport eligibility path is clear',
+        kind: 'requirement',
+        requirementKey: 'passport-eligibility-path',
+        missingReason: 'Passport eligibility path has not been evaluated yet.',
+        satisfiedReason: 'Passport eligibility path is clear for this passport prep flow.',
+      },
+      {
         key: 'target-surname',
         label: 'Target surname available for passport packet',
         kind: 'field_presence',
@@ -656,6 +664,14 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         missingReason: 'Expedited travel sequencing has not been evaluated yet.',
         attentionReason: 'Expedited travel is in play, so TSA / travel profile updates should stay on the fast path.',
         satisfiedReason: 'Expedited travel sequencing is ready for TSA / travel profile prep.',
+      },
+      {
+        key: 'passport-eligibility-path',
+        label: 'Passport eligibility path is clear',
+        kind: 'requirement',
+        requirementKey: 'passport-eligibility-path',
+        missingReason: 'Passport eligibility path has not been evaluated yet.',
+        satisfiedReason: 'Passport eligibility path is clear for TSA / travel profile follow-through.',
       },
       {
         key: 'current-legal-name',

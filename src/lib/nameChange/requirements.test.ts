@@ -142,4 +142,26 @@ describe('name change requirements skeleton', () => {
       reason: 'This is an expedited travel case, so passport/TSA sequencing should be treated as an active fast-path, not routine follow-through.',
     });
   });
+
+  it('marks passport eligibility path missing for non-citizen passport follow-through', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ is_us_citizen: false }),
+      documents,
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'passport-eligibility-path')).toMatchObject({
+      status: 'missing',
+      reason: 'Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.',
+    });
+  });
 });

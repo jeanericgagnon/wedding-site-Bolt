@@ -133,4 +133,26 @@ describe('name change TSA execution snapshot', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.checklist.find((item) => item.key === 'expedited-travel-sequencing')).toMatchObject({ status: 'attention' });
   });
+
+  it('blocks TSA update when passport eligibility path is not modeled for the case', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase({ is_us_citizen: false }), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-passport'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTsaExecutionSnapshot(makeCase({ is_us_citizen: false }), documents, [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.');
+  });
 });

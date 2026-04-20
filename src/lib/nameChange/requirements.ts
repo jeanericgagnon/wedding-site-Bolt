@@ -104,6 +104,19 @@ export function evaluateNameChangeRequirements(
           : 'This is an expedited travel case, but travel-facing identity support is still too thin to run a safe fast-path.')
         : 'No expedited travel sequencing override is currently needed.',
     },
+    {
+      key: 'passport-eligibility-path',
+      label: 'Passport eligibility path is clear',
+      stage: 'institutional',
+      status: canonicalCase.identity.passportNeedsUpdate
+        ? (canonicalCase.identity.isUsCitizen ? 'satisfied' : 'missing')
+        : 'satisfied',
+      reason: canonicalCase.identity.passportNeedsUpdate
+        ? (canonicalCase.identity.isUsCitizen
+          ? 'Current modeled passport path matches a U.S.-citizen passport update flow.'
+          : 'Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.')
+        : 'No passport eligibility path review is currently needed.',
+    },
   ];
 
   return {
