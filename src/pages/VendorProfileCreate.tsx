@@ -93,25 +93,37 @@ export const VendorProfileCreatePage: React.FC = () => {
           <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4">
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Draft</p>
-              <input value={draft.vendor_name} onChange={(e) => setDraft((prev) => prev ? { ...prev, vendor_name: e.target.value } : prev)} className="mt-2 w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-2xl font-semibold outline-none" />
-              <input value={draft.descriptor ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, descriptor: e.target.value || null } : prev)} placeholder="Short descriptor" className="mt-3 w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-[#6f5843] outline-none" />
+              <h2 className="mt-2 text-2xl font-semibold">Canonical vendor page fields</h2>
+              <p className="mt-2 text-sm text-[#6f5843]">Everything below maps directly into the one live page template: hero, images, about, links, and contact.</p>
               {typeof draft.source_payload?.sourceLabel === 'string' && (
                 <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Generated from {draft.source_payload.sourceLabel}</p>
               )}
             </div>
-            <textarea value={draft.about} onChange={(e) => setDraft((prev) => prev ? { ...prev, about: e.target.value } : prev)} className="min-h-[132px] w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-[#4b3a2c] leading-7 outline-none" />
-            <input value={draft.slug} onChange={(e) => setDraft((prev) => prev ? { ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') } : prev)} placeholder="vendor-page-slug" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-            <input value={draft.instagram_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, instagram_url: e.target.value || null } : prev)} placeholder="Instagram URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-            <input value={draft.website_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, website_url: e.target.value || null } : prev)} placeholder="Website URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <input value={typeof draft.source_payload?.pinterest_url === 'string' ? draft.source_payload.pinterest_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, pinterest_url: e.target.value || null } } : prev)} placeholder="Pinterest URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-              <input value={typeof draft.source_payload?.tiktok_url === 'string' ? draft.source_payload.tiktok_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, tiktok_url: e.target.value || null } } : prev)} placeholder="TikTok URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-              <input value={typeof draft.source_payload?.facebook_url === 'string' ? draft.source_payload.facebook_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, facebook_url: e.target.value || null } } : prev)} placeholder="Facebook URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-              <input value={typeof draft.source_payload?.youtube_url === 'string' ? draft.source_payload.youtube_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, youtube_url: e.target.value || null } } : prev)} placeholder="YouTube URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+            <div className="rounded-[24px] border border-[#eadfce] p-4 sm:p-5 space-y-3">
+              <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Hero</p>
+              <input value={draft.vendor_name} onChange={(e) => setDraft((prev) => prev ? { ...prev, vendor_name: e.target.value } : prev)} className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-2xl font-semibold outline-none" placeholder="Vendor name" />
+              <input value={draft.descriptor ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, descriptor: e.target.value || null } : prev)} placeholder="Short descriptor under the vendor name" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-[#6f5843] outline-none" />
+              <input value={draft.slug} onChange={(e) => setDraft((prev) => prev ? { ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') } : prev)} placeholder="vendor-page-slug" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
             </div>
-            <input type="email" value={draft.contact_email ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, contact_email: e.target.value || null } : prev)} placeholder="Contact email for direct inquiry CTA" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Images (first line becomes hero)</p>
+            <div className="rounded-[24px] border border-[#eadfce] p-4 sm:p-5 space-y-3">
+              <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">About</p>
+              <textarea value={draft.about} onChange={(e) => setDraft((prev) => prev ? { ...prev, about: e.target.value } : prev)} className="min-h-[132px] w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-[#4b3a2c] leading-7 outline-none" placeholder="Short 2–3 sentence vendor description" />
+            </div>
+            <div className="rounded-[24px] border border-[#eadfce] p-4 sm:p-5 space-y-3">
+              <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Links + Contact</p>
+              <input value={draft.instagram_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, instagram_url: e.target.value || null } : prev)} placeholder="Instagram URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              <input value={draft.website_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, website_url: e.target.value || null } : prev)} placeholder="Website URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input value={typeof draft.source_payload?.pinterest_url === 'string' ? draft.source_payload.pinterest_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, pinterest_url: e.target.value || null } } : prev)} placeholder="Pinterest URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+                <input value={typeof draft.source_payload?.tiktok_url === 'string' ? draft.source_payload.tiktok_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, tiktok_url: e.target.value || null } } : prev)} placeholder="TikTok URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+                <input value={typeof draft.source_payload?.facebook_url === 'string' ? draft.source_payload.facebook_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, facebook_url: e.target.value || null } } : prev)} placeholder="Facebook URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+                <input value={typeof draft.source_payload?.youtube_url === 'string' ? draft.source_payload.youtube_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, youtube_url: e.target.value || null } } : prev)} placeholder="YouTube URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              </div>
+              <input type="email" value={draft.contact_email ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, contact_email: e.target.value || null } : prev)} placeholder="Contact email for direct inquiry CTA" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+            </div>
+            <div className="rounded-[24px] border border-[#eadfce] p-4 sm:p-5 space-y-3">
+              <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Images</p>
+              <p className="text-xs text-[#8b6f53]">First line becomes the hero. Up to five more images fill the gallery.</p>
               <textarea
                 value={imageEditor}
                 onChange={(e) => {
