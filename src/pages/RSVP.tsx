@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -238,6 +238,7 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
 
 export default function RSVP() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<'search' | 'pick' | 'form' | 'success'>('search');
   const [searchValue, setSearchValue] = useState('');
@@ -257,6 +258,28 @@ export default function RSVP() {
   const [householdGuests, setHouseholdGuests] = useState<HouseholdGuest[]>([]);
   const [applyToHousehold, setApplyToHousehold] = useState(true);
   const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
+
+  const resetToSearch = useCallback((preserveToken = false) => {
+    setStep('search');
+    setError('');
+    setGuest(null);
+    setExistingRsvp(null);
+    setAmbiguousGuests([]);
+    setRsvpDeadline(null);
+    setMusicPlaylistUrl(null);
+    setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+    setCustomAnswers({});
+    setRsvpQuestions([]);
+    setHouseholdGuests([]);
+    setApplyToHousehold(true);
+    setSelectedHouseholdGuestIds([]);
+    setFormStep(1);
+    setActivePredictionIndex(-1);
+    setSearchValue(preserveToken ? (searchParams.get('token') ?? '') : '');
+    if (!preserveToken && searchParams.get('token')) {
+      navigate('/rsvp', { replace: true });
+    }
+  }, [navigate, searchParams]);
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -751,7 +774,7 @@ export default function RSVP() {
             </div>
 
             <button
-              onClick={() => { setStep('search'); setError(''); setAmbiguousGuests([]); }}
+              onClick={() => { resetToSearch(true); }}
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               Search again
@@ -1276,20 +1299,7 @@ export default function RSVP() {
             <div className="space-y-1.5">
               <Button
                 onClick={() => {
-                  setStep('search');
-                  setSearchValue('');
-                  setGuest(null);
-                  setExistingRsvp(null);
-                  setAmbiguousGuests([]);
-                  setRsvpDeadline(null);
-                  setMusicPlaylistUrl(null);
-                  setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
-                  setCustomAnswers({});
-                  setRsvpQuestions([]);
-                  setHouseholdGuests([]);
-                  setApplyToHousehold(true);
-                  setSelectedHouseholdGuestIds([]);
-                  setFormStep(1);
+                  resetToSearch(true);
                 }}
                 className="w-full h-11"
               >
@@ -1297,20 +1307,7 @@ export default function RSVP() {
               </Button>
               <button
                 onClick={() => {
-                  setStep('search');
-                  setSearchValue('');
-                  setGuest(null);
-                  setExistingRsvp(null);
-                  setAmbiguousGuests([]);
-                  setRsvpDeadline(null);
-                  setMusicPlaylistUrl(null);
-                  setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
-                  setCustomAnswers({});
-                  setRsvpQuestions([]);
-                  setHouseholdGuests([]);
-                  setApplyToHousehold(true);
-                  setSelectedHouseholdGuestIds([]);
-                  setFormStep(1);
+                  resetToSearch(false);
                 }}
                 className="w-full text-sm text-gray-500 hover:text-gray-700"
               >
