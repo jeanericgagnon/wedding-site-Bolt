@@ -29,6 +29,7 @@ import { getCoordinatorCommandModeLabel } from '../../lib/coordinatorCommandMode
 import { getCoordinatorCommandModeGuidance } from '../../lib/coordinatorCommandModeGuidance';
 import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
 import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFocusReason';
+import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutralFocusTarget';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -487,6 +488,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
 
 
+
+
+  const revisitNeutralFocus = () => {
+    const target = resolveCoordinatorNeutralFocusTarget(panelFocus);
+    setPanelFocus(target.panelFocus);
+    setCheckInReviewOnly(target.reviewOnly);
+    if (target.panelFocus === 'check-in') {
+      setCheckInFilter('arrivals');
+    }
+    if (target.panelFocus === 'qna') {
+      setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
+    }
+  };
 
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
