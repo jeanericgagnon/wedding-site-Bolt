@@ -240,6 +240,9 @@ interface SavedComposerTemplate {
   channel: ChannelType;
   audience: string;
   campaignName: string;
+  scheduleType?: 'now' | 'later';
+  scheduleDate?: string;
+  scheduleTime?: string;
   createdAt: string;
 }
 
@@ -1846,6 +1849,9 @@ export const DashboardMessages: React.FC = () => {
       body: template.body,
       audience: template.audience,
       channel: template.channel,
+      scheduleType: template.scheduleType ?? 'now',
+      scheduleDate: template.scheduleDate ?? '',
+      scheduleTime: template.scheduleTime ?? '',
     }));
     toast(`Loaded template “${template.name}”.`, 'info');
   }
@@ -1868,6 +1874,9 @@ export const DashboardMessages: React.FC = () => {
       channel: formData.channel,
       audience: formData.audience,
       campaignName: formData.campaignName,
+      scheduleType: formData.scheduleType as 'now' | 'later',
+      scheduleDate: formData.scheduleDate,
+      scheduleTime: formData.scheduleTime,
       createdAt: new Date().toISOString(),
     };
 
@@ -2745,6 +2754,9 @@ export const DashboardMessages: React.FC = () => {
                           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">{template.channel.toUpperCase()} · {audienceOptions.find((option) => option.value === template.audience)?.label ?? 'Saved audience'}</p>
                           <h3 className="mt-1 text-sm font-semibold text-text-primary">{template.name}</h3>
                           <p className="mt-1 text-xs text-text-secondary line-clamp-2">{template.subject || '(No subject)'}{template.body ? ` — ${template.body}` : ''}</p>
+                          {template.scheduleType === 'later' && template.scheduleDate && template.scheduleTime && (
+                            <p className="mt-1 text-[11px] text-text-tertiary">Saved with schedule: {formatScheduledDate(`${template.scheduleDate}T${template.scheduleTime}:00`)}</p>
+                          )}
                           <p className="mt-2 text-[11px] text-text-tertiary">Saved {new Date(template.createdAt).toLocaleString()}</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
