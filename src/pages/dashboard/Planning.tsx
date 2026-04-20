@@ -48,6 +48,7 @@ export const DashboardPlanning: React.FC = () => {
   const [seatingReadiness, setSeatingReadiness] = useState({ attending: 0, seated: 0, unassigned: 0 });
   const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
   const [planningRole, setPlanningRole] = useState<PlannerAccessRole>('owner');
+  const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [nameChangeDraft, setNameChangeDraft] = useState<NameChangeCaseInput>(defaultNameChangeCaseInput);
   const [nameChangeDocuments, setNameChangeDocuments] = useState<NameChangeDocumentInput[]>([]);
   const [nameChangeExtractedFields, setNameChangeExtractedFields] = useState<NameChangeExtractedFieldInput[]>([]);
@@ -97,7 +98,10 @@ export const DashboardPlanning: React.FC = () => {
       setSiteId(id);
       if (user) {
         const activeSite = await resolveActiveSiteForUser(user.id);
-        if (activeSite?.id === id) setPlanningRole(activeSite.role);
+        if (activeSite?.id === id) {
+          setActiveSiteRole(activeSite.role);
+          setPlanningRole(activeSite.role);
+        }
       }
       try {
         const rawRole = localStorage.getItem(`dayof.planning.role.${id}`) as PlannerAccessRole | null;
@@ -559,12 +563,16 @@ export const DashboardPlanning: React.FC = () => {
             <select
               value={planningRole}
               onChange={(e) => setPlanningRole(e.target.value as PlannerAccessRole)}
+              disabled={activeSiteRole !== 'owner'}
               className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {PLANNER_ROLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
+            {activeSiteRole !== 'owner' && (
+              <p className="mt-1 text-xs text-text-tertiary">Access view follows your actual collaborator role on this site.</p>
+            )}
           </div>
         </div>
 

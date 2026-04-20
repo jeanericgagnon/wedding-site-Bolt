@@ -79,6 +79,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertBusy, setAlertBusy] = useState(false);
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
   const [coordinatorRole, setCoordinatorRole] = useState<PlannerAccessRole>('owner');
+  const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [alertChannelFilter, setAlertChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
   const [qnaInput, setQnaInput] = useState('');
@@ -122,6 +123,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         if (!resolvedSiteId) return;
         if (!mounted) return;
         setSiteId(resolvedSiteId);
+        setActiveSiteRole(activeSite?.role ?? 'owner');
         setCoordinatorRole(activeSite?.role ?? 'owner');
 
         const [{ data: guestsData }, { data: eventsData }] = await Promise.all([
@@ -513,13 +515,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <select
               value={coordinatorRole}
               onChange={(e) => setCoordinatorRole(e.target.value as PlannerAccessRole)}
+              disabled={activeSiteRole !== 'owner'}
               className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
             >
               {PLANNER_ROLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
-              {checkInQueue.length === 0 && <div className="px-4 py-6 text-sm text-text-tertiary">No guests match this live queue view.</div>}
             </select>
+            {activeSiteRole !== 'owner' && (
+              <p className="mt-1 text-[11px] text-text-tertiary">Access view follows your actual collaborator role on this site.</p>
+            )}
           </div>
         </div>
 

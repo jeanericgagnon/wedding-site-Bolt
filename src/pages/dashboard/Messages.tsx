@@ -879,6 +879,7 @@ export const DashboardMessages: React.FC = () => {
   const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
   const [messagesRole, setMessagesRole] = useState<PlannerAccessRole>('owner');
+  const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
@@ -981,6 +982,7 @@ export const DashboardMessages: React.FC = () => {
     }
 
     const activeSite = await resolveActiveSiteForUser(user.id);
+    setActiveSiteRole(activeSite?.role ?? 'owner');
     setMessagesRole(activeSite?.role ?? 'owner');
 
     const { data, error } = await supabase
@@ -2285,6 +2287,7 @@ export const DashboardMessages: React.FC = () => {
                 <select
                   value={messagesRole}
                   onChange={(e) => setMessagesRole(e.target.value as PlannerAccessRole)}
+                  disabled={activeSiteRole !== 'owner'}
                   className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
                 >
                   <option value="owner">Couple owner</option>
@@ -2292,6 +2295,9 @@ export const DashboardMessages: React.FC = () => {
                   <option value="coordinator">Coordinator</option>
                   <option value="viewer">Read only</option>
                 </select>
+                {activeSiteRole !== 'owner' && (
+                  <p className="mt-1 text-[11px] text-text-tertiary">Access view follows your actual collaborator role on this site.</p>
+                )}
               </div>
             </div>
           </div>

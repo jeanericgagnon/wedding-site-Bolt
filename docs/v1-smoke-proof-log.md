@@ -258,6 +258,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - The collaborator proof gap is now narrower and more concrete: role behavior and permission boundaries still need executed QA, not speculative trust-copy cleanup.
 - Concrete finish gap found and fixed: major collaborator-facing ops surfaces were still defaulting to `owner` until a local role override existed. Planning, Guests, Messages, and Coordinator Mode now bootstrap from the active site role first, then allow a saved per-surface override.
 - Concrete finish gap found and fixed: the dashboard shell knew the active-site role but still showed a too-broad owner-shaped navigation map. The shell now filters nav affordances by real role so viewers/coordinators do not get the wrong product shape presented up front.
+- Concrete finish gap found and fixed: collaborator-facing role selectors on Planning, Messages, and Coordinator Mode could still let non-owners locally impersonate a stronger role. Those selectors are now owner-only, and collaborators see their real role as read-through state instead.
 
 ## Finish-lane read right now
 - Public promise is much cleaner than before.
