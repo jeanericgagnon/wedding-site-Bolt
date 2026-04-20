@@ -1715,6 +1715,12 @@ export const DashboardMessages: React.FC = () => {
               delivered_count: deliveredCount,
               failed_count: 0,
               recipient_count: recipients.length,
+              recipient_filter: {
+                ...(item.recipient_filter ?? {}),
+                recipient_count: recipients.length,
+                reachable_count: deliveredCount,
+                skipped_count: skippedCount,
+              },
             }
           : item
       )));
@@ -1868,6 +1874,12 @@ export const DashboardMessages: React.FC = () => {
             delivered_count: deliveredCount,
             failed_count: 0,
             recipient_count: recipients.length,
+            recipient_filter: {
+              ...(message.recipient_filter ?? {}),
+              recipient_count: recipients.length,
+              reachable_count: deliveredCount,
+              skipped_count: skippedCount,
+            },
           };
         }));
         toast(`Processed ${dueIds.length} scheduled message${dueIds.length !== 1 ? 's' : ''} in demo${skippedRecipients > 0 ? ` • skipped ${skippedRecipients} recipient${skippedRecipients !== 1 ? 's' : ''}` : ''}.`, skippedRecipients > 0 ? 'info' : 'success');
