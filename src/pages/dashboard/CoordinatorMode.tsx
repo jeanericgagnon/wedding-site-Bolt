@@ -42,6 +42,7 @@ import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorComman
 import { getCoordinatorCommandPriorityTargetReason } from '../../lib/coordinatorCommandPriorityTargetReason';
 import { getCoordinatorCommandPriorityCta } from '../../lib/coordinatorCommandPriorityCta';
 import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
+import { shouldResetCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpReset';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -116,6 +117,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [commandSource, setCommandSource] = useState<'primary-action' | 'escalation' | 'correction' | null>(null);
   const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);
   const [commandJumpLabel, setCommandJumpLabel] = useState<string | null>(null);
+  const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -569,6 +571,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
     setCommandJumpLabel(getCoordinatorCommandJumpLabel(label));
+    setCommandJumpPanelFocus(target.panelFocus);
     if (label === 'Check-in') {
       setCheckInFilter('arrivals');
       if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
@@ -580,6 +583,18 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setActiveQnaId(qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems));
     }
   };
+
+
+  useEffect(() => {
+    if (shouldResetCoordinatorCommandJumpLabel({
+      jumpLabel: commandJumpLabel,
+      panelFocus,
+      expectedPanelFocus: commandJumpPanelFocus,
+    })) {
+      setCommandJumpLabel(null);
+      setCommandJumpPanelFocus(null);
+    }
+  }, [commandJumpLabel, commandJumpPanelFocus, panelFocus]);
 
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
