@@ -1,11 +1,13 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
+import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
 import { buildNameChangeDmvFormSnapshot } from './dmvForm';
 import { evaluateNameChangeRequirements } from './requirements';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeCaseInput,
   NameChangeDocumentInput,
+  NameChangeExecutionSequenceSnapshot,
   NameChangeExtractedFieldInput,
   NameChangeFormPayloadSnapshot,
 } from './types';
@@ -16,6 +18,7 @@ export interface NameChangeDmvExecutionSnapshot {
   recommendedFormCode: 'CA-DL-44';
   autofillFields: NameChangeAutofillFieldMapping[];
   formPayload: NameChangeFormPayloadSnapshot;
+  sequence: NameChangeExecutionSequenceSnapshot;
   checklist: Array<{
     label: string;
     status: 'ready' | 'missing' | 'attention';
@@ -38,6 +41,7 @@ export function buildNameChangeDmvExecutionSnapshot(
   const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
   const formPayload = buildNameChangeDmvFormSnapshot(profile, documents, extractedFields);
+  const sequence = buildNameChangeExecutionSequenceSnapshot('dmv', profile, documents, extractedFields);
 
   const legalProof = requirements.results.find((result) => result.key === 'legal-proof-document');
   const countyContext = requirements.results.find((result) => result.key === 'county-context');
@@ -84,7 +88,10 @@ export function buildNameChangeDmvExecutionSnapshot(
     },
   ];
 
-  const blockers = checklist.filter((item) => item.status === 'missing').map((item) => item.reason);
+  const blockers = [
+    ...sequence.blockers,
+    ...checklist.filter((item) => item.status === 'missing').map((item) => item.reason),
+  ];
 
   return {
     ready: blockers.length === 0,
@@ -99,6 +106,7 @@ export function buildNameChangeDmvExecutionSnapshot(
       'legal.marriage_date',
     ].includes(field.targetField)),
     formPayload,
+    sequence,
     checklist,
   };
 }

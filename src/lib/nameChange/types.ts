@@ -357,6 +357,22 @@ export interface NameChangeFormPayloadSnapshot {
   };
 }
 
+export interface NameChangeExecutionDependency {
+  key: string;
+  label: string;
+  required: boolean;
+  status: 'satisfied' | 'missing' | 'attention';
+  reason: string;
+}
+
+export interface NameChangeExecutionSequenceSnapshot {
+  target: string;
+  lane: 'federal' | 'state';
+  ready: boolean;
+  blockers: string[];
+  dependencies: NameChangeExecutionDependency[];
+}
+
 export interface NameChangeMarriageCertificateExtraction {
   firstName: string | null;
   lastName: string | null;

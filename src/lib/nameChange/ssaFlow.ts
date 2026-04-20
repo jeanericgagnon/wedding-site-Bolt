@@ -1,11 +1,13 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
+import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
 import { evaluateNameChangeRequirements } from './requirements';
 import { buildNameChangeSs5FormSnapshot } from './ss5Form';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeCaseInput,
   NameChangeDocumentInput,
+  NameChangeExecutionSequenceSnapshot,
   NameChangeExtractedFieldInput,
   NameChangeFormPayloadSnapshot,
 } from './types';
@@ -16,6 +18,7 @@ export interface NameChangeSsaExecutionSnapshot {
   recommendedFormCode: 'SSA-SS5';
   autofillFields: NameChangeAutofillFieldMapping[];
   formPayload: NameChangeFormPayloadSnapshot;
+  sequence: NameChangeExecutionSequenceSnapshot;
   checklist: Array<{
     label: string;
     status: 'ready' | 'missing' | 'attention';
@@ -38,6 +41,7 @@ export function buildNameChangeSsaExecutionSnapshot(
   const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
   const formPayload = buildNameChangeSs5FormSnapshot(profile, documents, extractedFields);
+  const sequence = buildNameChangeExecutionSequenceSnapshot('ssa', profile, documents, extractedFields);
 
   const legalProof = requirements.results.find((result) => result.key === 'legal-proof-document');
   const identityCoverage = requirements.results.find((result) => result.key === 'identity-document-coverage');
@@ -81,7 +85,10 @@ export function buildNameChangeSsaExecutionSnapshot(
     },
   ];
 
-  const blockers = checklist.filter((item) => item.status === 'missing').map((item) => item.reason);
+  const blockers = [
+    ...sequence.blockers,
+    ...checklist.filter((item) => item.status === 'missing').map((item) => item.reason),
+  ];
 
   return {
     ready: blockers.length === 0,
@@ -95,6 +102,7 @@ export function buildNameChangeSsaExecutionSnapshot(
       'legal.marriage_date',
     ].includes(field.targetField)),
     formPayload,
+    sequence,
     checklist,
   };
 }

@@ -355,6 +355,23 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           ))}
         </div>
 
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <h4 className="text-sm font-semibold text-text-primary">SSA sequencing dependencies</h4>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {ssaExecutionSnapshot.sequence.dependencies.map((dependency) => (
+              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
+                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                    {dependency.status}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {ssaExecutionSnapshot.autofillFields.map((field) => (
             <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
@@ -411,6 +428,23 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <h4 className="text-sm font-semibold text-text-primary">DMV sequencing dependencies</h4>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {dmvExecutionSnapshot.sequence.dependencies.map((dependency) => (
+              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
+                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                    {dependency.status}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
