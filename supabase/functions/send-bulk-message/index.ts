@@ -488,28 +488,27 @@ async function deliverMessage(opts: {
     : "partial";
   const sentAt = new Date().toISOString();
 
-  const fullUpdate = await adminClient
+  const finalStatusUpdate = await adminClient
     .from("messages")
     .update({
       status: finalStatus,
       sent_at: sentAt,
+    })
+    .eq("id", messageId);
+
+  if (finalStatusUpdate.error) {
+    return { ok: false, status: 500, body: { error: finalStatusUpdate.error.message } };
+  }
+
+  await adminClient
+    .from("messages")
+    .update({
       sending_finished_at: sentAt,
       delivered_count: deliveredCount,
       failed_count: failedCount,
       recipient_count: allGuests.length,
     })
     .eq("id", messageId);
-
-  if (fullUpdate.error) {
-    await adminClient
-      .from("messages")
-      .update({
-        status: finalStatus,
-        sent_at: sentAt,
-        recipient_count: allGuests.length,
-      })
-      .eq("id", messageId);
-  }
 
   await adminClient
     .from("messages")
