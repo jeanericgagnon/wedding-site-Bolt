@@ -53,7 +53,6 @@ interface ExecutionCardSectionConfig {
   title: string;
   description: string;
   cards: ExecutionCardConfig[];
-  relatedStepIds: string[];
 }
 
 interface ExecutionSectionSummary {
@@ -67,6 +66,13 @@ interface ExecutionSectionSummary {
   highestRiskCard: string;
   staleReminderOverlap: number;
 }
+
+const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
+  'core-government': ['federal-ssa', 'state-dmv', 'federal-passport'],
+  'work-identity': ['institutions-rollout'],
+  institutional: ['institutions-rollout'],
+  cleanup: ['institutions-rollout'],
+};
 
 interface Props {
   draft: NameChangeCaseInput;
@@ -467,28 +473,24 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         title: 'Core government path',
         description: 'The federal/state backbone. This is the sequence that makes the rest of the name-change system easier instead of messier.',
         cards: coreGovernmentCards,
-        relatedStepIds: ['federal-ssa', 'state-dmv', 'federal-passport'],
       },
       {
         key: 'work-identity',
         title: 'Work identity follow-through',
         description: 'Employment-linked updates that usually matter once the government path and primary ID are actually moving.',
         cards: workIdentityCards,
-        relatedStepIds: ['institutions-rollout'],
       },
       {
         key: 'institutional',
         title: 'Institutional follow-through',
         description: 'The long-tail admin lanes where mismatched records get annoying fast if they lag behind the identity backbone.',
         cards: institutionCards,
-        relatedStepIds: ['institutions-rollout'],
       },
       {
         key: 'cleanup',
         title: 'Cleanup and tail-end identity sync',
         description: 'Lower-volume but still real updates that round out the workflow once the major lanes are already in motion.',
         cards: cleanupCards,
-        relatedStepIds: ['institutions-rollout'],
       },
     ].filter((section) => section.cards.length > 0);
   }, [
@@ -521,8 +523,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         const currentAttention = current ? current.snapshot.checklist.filter((item) => item.status === 'attention').length : -1;
         return cardAttention > currentAttention ? card : current;
       }, null as ExecutionCardConfig | null)?.title ?? 'No major risk in this section';
+      const relatedStepIds = EXECUTION_SECTION_STEP_IDS[section.key] ?? [];
       const staleReminderOverlap = reminderAttention.filter((item) =>
-        item.isStale && section.relatedStepIds.includes(item.dependsOnStepId),
+        item.isStale && relatedStepIds.includes(item.dependsOnStepId),
       ).length;
 
       return {
