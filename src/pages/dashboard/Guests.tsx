@@ -1938,7 +1938,23 @@ Proceed with send?`)) return;
       const nextNotes = [manualTag, assistedRsvpNotes.trim()].filter(Boolean).join(' ');
 
       if (isDemoMode) {
-        setGuests((prev) => prev.map((guest) => guest.id === assistedRsvpGuest.id ? { ...guest, rsvp_status: assistedRsvpStatus, rsvp_received_at: new Date().toISOString(), notes: nextNotes } : guest));
+        setGuests((prev) => prev.map((guest) => guest.id === assistedRsvpGuest.id ? {
+          ...guest,
+          rsvp_status: assistedRsvpStatus,
+          rsvp_received_at: new Date().toISOString(),
+          notes: nextNotes,
+          rsvp: assistedRsvpStatus === 'confirmed'
+            ? guest.rsvp
+            : guest.rsvp
+              ? {
+                  ...guest.rsvp,
+                  attending: false,
+                  meal_choice: null,
+                  plus_one_name: null,
+                  plus_one_count: 0,
+                }
+              : guest.rsvp,
+        } : guest));
         setAssistedRsvpGuest(null);
         toast('RSVP recorded for guest', 'success');
         return;

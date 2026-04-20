@@ -269,6 +269,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: a few remaining Coordinator/Guests edge paths still skipped the new permission wall. Undo-last-check-in, coordinator check-in, door escalation, and Q&A answer saves now hard-stop on the collaborator’s actual permission level instead of relying on surrounding UI state.
 - Concrete finish gap found and fixed: assisted RSVP was still one of the remaining manual-ops paths outside the new guest permission wall. Read-only collaborator roles can no longer record assisted RSVPs through the handler path.
 - Concrete finish gap found and fixed: assisted RSVP could leave stale attending-only RSVP detail behind when a guest was manually marked declined. The manual RSVP path now clears meal and plus-one detail on decline so guest-ops views do not keep showing stale attending-state data.
+- Concrete finish gap found and fixed: the demo/manual proof path for assisted RSVP still preserved stale attending-only detail on declines even after the persisted path was corrected. Demo guest state now clears meal and plus-one detail on manual declines too, so proof behavior matches the real path.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -280,6 +281,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the Coordinator/Guests edge-path permission fix.
 - `npm run build` passes after the assisted-RSVP permission fix.
 - `npm run build` passes after the assisted-RSVP continuity fix.
+- `npm run build` passes after the demo/manual assisted-RSVP continuity fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Finish-lane read right now
