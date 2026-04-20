@@ -1635,6 +1635,11 @@ export const DashboardMessages: React.FC = () => {
   }
 
   async function handleSendScheduledNow(message: Message) {
+    if (!canComposeDashboardMessages(messagesRole)) {
+      toast('Your collaborator role cannot send campaigns from Messaging.', 'info');
+      return;
+    }
+
     if (isDemoMode) {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const recipients = getRecipients(audience);
@@ -1724,6 +1729,11 @@ export const DashboardMessages: React.FC = () => {
   }
 
   async function handleCancelSchedule(message: Message) {
+    if (!canComposeDashboardMessages(messagesRole)) {
+      toast('Your collaborator role cannot change scheduled campaigns.', 'info');
+      return;
+    }
+
     if (isDemoMode) {
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
@@ -1764,6 +1774,11 @@ export const DashboardMessages: React.FC = () => {
   }, [messages, viewingMessage]);
 
   async function handleRunDueScheduledMessages() {
+    if (!canComposeDashboardMessages(messagesRole)) {
+      toast('Your collaborator role cannot run scheduled sends.', 'info');
+      return;
+    }
+
     if (isDemoMode) {
       const dueIds = messages
         .filter((m) => m.status === 'scheduled' && isPastScheduledTime(m.scheduled_for))
@@ -2296,7 +2311,7 @@ export const DashboardMessages: React.FC = () => {
                 variant={deliveryHealth.overdueScheduled > 0 ? 'primary' : 'outline'}
                 size="sm"
                 onClick={handleRunDueScheduledMessages}
-                disabled={processingScheduled}
+                disabled={processingScheduled || !canCompose}
               >
                 {processingScheduled
                   ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running due sends…</>
@@ -3385,7 +3400,7 @@ export const DashboardMessages: React.FC = () => {
                       <div className="mt-4 flex flex-wrap gap-2 border-t border-border-subtle pt-3">
                         {message.status === 'scheduled' && (
                           <>
-                            <Button size="sm" variant="primary" onClick={() => void handleSendScheduledNow(message)}>
+                            <Button size="sm" variant="primary" onClick={() => void handleSendScheduledNow(message)} disabled={!canCompose}>
                               <Send className="w-3.5 h-3.5 mr-1.5" />Send now
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => {
@@ -3394,7 +3409,7 @@ export const DashboardMessages: React.FC = () => {
                             }}>
                               <Calendar className="w-3.5 h-3.5 mr-1.5" />Reschedule
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => void handleCancelSchedule(message)}>
+                            <Button size="sm" variant="outline" onClick={() => void handleCancelSchedule(message)} disabled={!canCompose}>
                               Move to draft
                             </Button>
                           </>

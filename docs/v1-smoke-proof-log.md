@@ -261,9 +261,11 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: collaborator-facing role selectors on Planning, Messages, and Coordinator Mode could still let non-owners locally impersonate a stronger role. Those selectors are now owner-only, and collaborators see their real role as read-through state instead.
 - Concrete finish gap found and fixed: nav hiding alone still allowed deep-link access to pages outside a collaborator's visible role map. The dashboard shell now redirects hidden current pages back to overview, so shell-level role gating is enforced on navigation as well as display.
 - Concrete finish gap found and fixed: Guests still allowed read-only collaborator roles to start the import flow. Guest import is now gated behind the same edit permission as other guest-management actions, with a handler-level guard as backup.
+- Concrete finish gap found and fixed: Messaging still exposed scheduled-send execution controls to non-compose roles. Running due sends, sending scheduled campaigns now, and moving scheduled campaigns back to draft are now gated by compose permission in both the UI and handler paths.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
+- `npm run build` passes after the Messaging scheduled-send permission fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Finish-lane read right now
