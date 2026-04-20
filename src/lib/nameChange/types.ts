@@ -384,6 +384,15 @@ export interface NameChangeExecutionPrerequisiteRule {
   satisfiedReason: string;
 }
 
+export interface NameChangeExecutionTargetDefinition {
+  key: 'ssa' | 'dmv';
+  label: string;
+  lane: 'federal' | 'state';
+  recommendedFormCode: string;
+  prerequisiteRules: NameChangeExecutionPrerequisiteRule[];
+  autofillTargetFields: string[];
+}
+
 export interface NameChangeMarriageCertificateExtraction {
   firstName: string | null;
   lastName: string | null;

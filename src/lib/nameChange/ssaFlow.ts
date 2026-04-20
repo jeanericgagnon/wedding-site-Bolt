@@ -3,6 +3,7 @@ import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
 import { evaluateNameChangeRequirements } from './requirements';
 import { buildNameChangeSs5FormSnapshot } from './ss5Form';
+import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeCaseInput,
@@ -96,13 +97,7 @@ export function buildNameChangeSsaExecutionSnapshot(
     ready: blockers.length === 0,
     blockers,
     recommendedFormCode: 'SSA-SS5',
-    autofillFields: autofill.fields.filter((field) => [
-      'applicant.current_first_name',
-      'applicant.current_middle_name',
-      'applicant.current_last_name',
-      'applicant.target_last_name',
-      'legal.marriage_date',
-    ].includes(field.targetField)),
+    autofillFields: autofill.fields.filter((field) => NAME_CHANGE_EXECUTION_TARGETS.ssa.autofillTargetFields.includes(field.targetField)),
     formPayload,
     sequence,
     checklist,
