@@ -44,6 +44,7 @@ import { getCoordinatorCommandPriorityCta } from '../../lib/coordinatorCommandPr
 import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
 import { shouldResetCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpReset';
 import { shouldResetCoordinatorCommandJumpLabelForTargetChange } from '../../lib/coordinatorCommandJumpTargetReset';
+import { getCoordinatorManualOverrideLabel } from '../../lib/coordinatorManualOverrideLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -120,6 +121,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [commandJumpLabel, setCommandJumpLabel] = useState<string | null>(null);
   const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
   const [commandJumpTargetId, setCommandJumpTargetId] = useState<string | null>(null);
+  const [manualOverrideLabel, setManualOverrideLabel] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -814,6 +816,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <div>
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
               {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
+              {!commandJumpLabel && manualOverrideLabel && <p className="text-[11px] text-amber-700">{manualOverrideLabel}</p>}
             </div>
             <p className="text-[11px] text-text-tertiary">What the board thinks matters right now</p>
           </div>
