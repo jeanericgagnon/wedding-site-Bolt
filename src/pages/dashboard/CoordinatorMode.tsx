@@ -17,6 +17,7 @@ import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinato
 import { normalizeCoordinatorModeSessionState } from '../../lib/coordinatorModeSessionState';
 import { normalizeCoordinatorDraftState } from '../../lib/coordinatorDraftState';
 import { normalizeCoordinatorActiveWorkState } from '../../lib/coordinatorActiveWorkState';
+import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
@@ -74,6 +75,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [qnaInput, setQnaInput] = useState('');
   const [qnaDraftAnswers, setQnaDraftAnswers] = useState<Record<string, string>>({});
   const [activeQnaId, setActiveQnaId] = useState<string | null>(null);
+  const [activeTimelineEventId, setActiveTimelineEventId] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -390,6 +392,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {
     if (!nextState || !canEditTimeline) return;
     setTimelineState((prev) => setCoordinatorEventTimelineState(prev, eventId, nextState));
+    setActiveTimelineEventId(eventId);
     setPanelFocus('timeline');
   };
 
@@ -598,7 +601,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       timelineState,
                     });
                     return (
-                      <div key={e.id} className={`rounded-lg border px-3 py-2 ${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}>
+                      <div key={e.id} className={`rounded-lg border px-3 py-2 ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}>
                         <div className="flex items-center justify-between gap-2">
                           <div>
                             <p className="text-sm text-text-primary">{e.event_name}</p>
@@ -606,7 +609,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           </div>
                           <select
                             value={state}
-                            onChange={(ev) => canEditTimeline && setTimelineState((prev) => setCoordinatorEventTimelineState(prev, e.id, ev.target.value as TimelineState))}
+                            onChange={(ev) => { if (canEditTimeline) { setActiveTimelineEventId(e.id); setTimelineState((prev) => setCoordinatorEventTimelineState(prev, e.id, ev.target.value as TimelineState)); } }}
                             disabled={!canEditTimeline}
                             className="text-[11px] rounded-md border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
                           >
