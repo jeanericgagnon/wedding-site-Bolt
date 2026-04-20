@@ -13,6 +13,7 @@ import { getCoordinatorCheckInActionLabel, getCoordinatorTimelineCorrectionActio
 import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { buildCoordinatorPrimaryAction } from '../../lib/coordinatorPrimaryAction';
+import { buildCoordinatorCorrectionCues } from '../../lib/coordinatorCorrectionsSummary';
 import { resolveCoordinatorPrimaryActionTarget } from '../../lib/coordinatorPrimaryActionTarget';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
@@ -360,6 +361,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     events,
     timelineState,
   }), [guests, qnaItems, events, timelineState]);
+  const correctionCues = useMemo(() => buildCoordinatorCorrectionCues({
+    guests,
+    events,
+    timelineState,
+  }), [guests, events, timelineState]);
 
   const filteredAlertLog = useMemo(
     () => alertLog.filter((a) => {
