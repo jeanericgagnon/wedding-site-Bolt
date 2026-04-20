@@ -47,6 +47,7 @@ import { shouldResetCoordinatorCommandJumpLabelForTargetChange } from '../../lib
 import { getCoordinatorManualOverrideLabel } from '../../lib/coordinatorManualOverrideLabel';
 import { getCoordinatorManualOverrideActionLabel } from '../../lib/coordinatorManualOverrideAction';
 import { getCoordinatorManualOverrideTargetLabel } from '../../lib/coordinatorManualOverrideTargetLabel';
+import { getCoordinatorManualOverrideCurrentTargetLabel } from '../../lib/coordinatorManualOverrideCurrentTargetLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -444,6 +445,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
           ? qnaTargetItem?.question ?? null
           : null,
   }), [panelFocus, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
+  const manualOverrideCurrentTargetLabel = useMemo(() => getCoordinatorManualOverrideCurrentTargetLabel({
+    panelFocus,
+    currentTargetName: panelFocus === 'check-in'
+      ? sortedGuests.find((guest) => guest.id === activeGuestId)?.name ?? null
+      : panelFocus === 'timeline'
+        ? events.find((event) => event.id === activeTimelineEventId)?.event_name ?? null
+        : panelFocus === 'qna'
+          ? qnaItems.find((item) => item.id === activeQnaId)?.question ?? null
+          : null,
+  }), [panelFocus, sortedGuests, activeGuestId, events, activeTimelineEventId, qnaItems, activeQnaId]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -854,6 +865,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <p className="text-amber-700">{manualOverrideLabel}</p>
                   {manualOverrideTargetLabel && <p className="text-amber-800/80">{manualOverrideTargetLabel}</p>}
+                  {manualOverrideCurrentTargetLabel && <p className="text-text-secondary">{manualOverrideCurrentTargetLabel}</p>}
                   {manualOverrideActionLabel && (
                     <button
                       type="button"
