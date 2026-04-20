@@ -25,6 +25,7 @@ import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineS
 import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId } from '../../lib/coordinatorTimelineFocus';
 import { getCoordinatorPrimaryTimelineAction } from '../../lib/coordinatorTimelineActions';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
+import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
