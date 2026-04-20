@@ -33,6 +33,7 @@ import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutr
 import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
 import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
+import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -962,6 +963,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   </div>
                   <p className="text-[11px] font-medium text-text-primary">{alertTargetCue.title}</p>
                   <p className="text-[11px] text-text-secondary">{alertTargetCue.detail}</p>
+                  {!alertTargetCue.aligned && preferredAlertSuggestion && (
+                    <button
+                      type="button"
+                      onClick={() => setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion }))}
+                      className="inline-flex w-fit px-2.5 py-1 rounded-md border border-amber-300 bg-white text-[11px] font-medium text-amber-800"
+                    >
+                      Re-align to {preferredAlertSuggestion.label.toLowerCase()}
+                    </button>
+                  )}
                   <p className="text-[11px] text-text-secondary">{alertSummary.intentLabel} · {alertSummary.audienceLabel} · {alertSummary.recipientLabel}</p>
                   <p className="text-[11px] text-text-tertiary">{alertSummary.deliveryLabel}</p>
                 </div>
