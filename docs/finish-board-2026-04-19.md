@@ -261,6 +261,7 @@ Things that do **not** count as done:
 - password-protected public access could still degrade toward open when the stored password hash was missing, which was a sibling launch-path trust bug until corrected
 - guest-facing RSVP lookup/search could still leave prior guest context hanging around during a fresh lookup or after a failed lookup, which weakened guest-facing runtime truth until corrected
 - guest-facing RSVP token auto-load could still leave prior guest context hanging around behind a bad or changed token, which weakened guest-facing runtime truth until corrected
+- SiteView could still carry stale privacy-gate/error/coming-soon state from a prior slug while a new public site load was starting, which weakened launch-path truth until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -478,6 +479,7 @@ Primary proof artifact for this now exists at:
 - Fixed password-protected public site gating so password mode now blocks unless the row has a real password hash and the site has been unlocked in-session.
 - Fixed RSVP fresh-lookups so prior guest/RSVP/household context is cleared before a new lookup runs instead of lingering behind the next search attempt.
 - Fixed RSVP token auto-load so prior guest/RSVP/household context is cleared before token-driven lookup runs instead of lingering behind a bad token state.
+- Fixed SiteView load startup so privacy-gate/error/coming-soon state is reset before a new slug loads instead of briefly inheriting the prior site’s public-access state.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

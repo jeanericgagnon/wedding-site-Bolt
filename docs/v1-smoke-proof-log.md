@@ -292,6 +292,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: password-protected public access could still degrade to open if the site row was missing `site_password_hash`, because the gate only blocked when a hash existed. Password mode now blocks whenever the site is marked password-protected unless a real hash exists and the site has already been unlocked for the current session.
 - Concrete finish gap found and fixed: RSVP search/lookup could leave the prior guest context hanging around while a new lookup was in flight or after it failed, because the handler did not clear guest/RSVP/household state before searching again. Fresh lookups now reset the prior guest context before the next lookup runs.
 - Concrete finish gap found and fixed: RSVP token auto-load had the same stale-state problem as manual search. A bad or changed token could leave the last guest/RSVP/household context hanging behind the error state. Token-driven lookups now clear prior guest context before loading.
+- Concrete finish gap found and fixed: SiteView could start a new slug load while still carrying the prior site’s privacy gate, error, or coming-soon state until the next fetch resolved. Public site loads now reset those gate/error fields up front so one site’s state does not bleed into another site view attempt.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -326,6 +327,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the password-mode gating fix.
 - `npm run build` passes after the RSVP fresh-lookup state reset fix.
 - `npm run build` passes after the RSVP token-auto-load state reset fix.
+- `npm run build` passes after the SiteView stale-gate reset fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Highest-value next proof seam
