@@ -56,6 +56,12 @@ describe('name change reminder suggestions', () => {
       id: 'reminder-passport-followup',
       dependsOnStepId: 'federal-passport',
     });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-ssa-followup')).toMatchObject({
+      dependsOnStepId: 'federal-ssa',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-dmv-followup')).toMatchObject({
+      dependsOnStepId: 'state-dmv',
+    });
     expect(reminders.map((reminder) => reminder.suggestedOffsetDays)).toEqual([...reminders.map((reminder) => reminder.suggestedOffsetDays)].sort((a, b) => a - b));
     expect(reminders.some((reminder) => reminder.id === 'reminder-irs-employer')).toBe(true);
     expect(reminders.some((reminder) => reminder.id === 'reminder-banks')).toBe(true);
@@ -67,6 +73,14 @@ describe('name change reminder suggestions', () => {
     const reminders = buildNameChangeReminderSuggestions(plan);
     expect(reminders.find((reminder) => reminder.id === 'reminder-passport-followup')).toMatchObject({
       suggestedOffsetDays: 1,
+      urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-ssa-followup')).toMatchObject({
+      suggestedOffsetDays: 1,
+      urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-dmv-followup')).toMatchObject({
+      suggestedOffsetDays: 2,
       urgency: 'high',
     });
   });
@@ -83,6 +97,10 @@ describe('name change reminder suggestions', () => {
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-banks')).toMatchObject({
       status: 'pending',
       depends_on_step_id: 'institution-banks',
+    });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-ssa-followup')).toMatchObject({
+      status: 'pending',
+      depends_on_step_id: 'federal-ssa',
     });
   });
 

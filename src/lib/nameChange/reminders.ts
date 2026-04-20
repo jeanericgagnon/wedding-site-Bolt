@@ -12,6 +12,24 @@ function urgencyFromOffset(days: number): NameChangeReminderSuggestion['urgency'
 export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameChangeReminderSuggestion[] {
   const suggestions: NameChangeReminderSuggestion[] = [];
 
+  suggestions.push({
+    id: 'reminder-ssa-followup',
+    label: 'Check SSA name change progress',
+    suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? 1 : 3,
+    reason: 'SSA is the anchor for the federal-first path, so an early follow-up helps keep the rest of the workflow from drifting.',
+    dependsOnStepId: 'federal-ssa',
+    urgency: plan.profile.urgencyLevel === 'expedited' ? 'high' : 'medium',
+  });
+
+  suggestions.push({
+    id: 'reminder-dmv-followup',
+    label: 'Check California DMV name change progress',
+    suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? 2 : 5,
+    reason: 'California DMV progress is the main state identity hinge for downstream account updates.',
+    dependsOnStepId: 'state-dmv',
+    urgency: plan.profile.urgencyLevel === 'expedited' ? 'high' : 'medium',
+  });
+
   if (plan.profile.passportNeedsUpdate) {
     suggestions.push({
       id: 'reminder-passport-followup',
