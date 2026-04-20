@@ -198,6 +198,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     }))
     .filter((section) => section.items.length > 0);
 
+  useEffect(() => {
+    if (!activeSiteRole) return;
+    const canAccessCurrentPage = visibleNavSections.some((section) => section.items.some((item) => item.id === currentPage));
+    if (!canAccessCurrentPage) {
+      navigate('/dashboard/overview', { replace: true });
+    }
+  }, [activeSiteRole, currentPage, navigate, visibleNavSections]);
+
   const handleSiteSwitch = (nextSiteId: string) => {
     setStoredActiveSiteId(nextSiteId);
     window.location.reload();
