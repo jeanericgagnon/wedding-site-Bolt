@@ -2077,7 +2077,16 @@ export const DashboardMessages: React.FC = () => {
       subject: applyTemplateVariables('Save the Date!'),
       body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
       audience_filter: 'all',
-      recipient_filter: { audience: 'all', audience_label: 'All Guests', campaignName: 'Save the date', campaignType: 'save-the-date', templateKey: 'save-the-date', recipient_count: guests.length },
+      recipient_filter: {
+        audience: 'all',
+        audience_label: 'All Guests',
+        campaignName: 'Save the date',
+        campaignType: 'save-the-date',
+        templateKey: 'save-the-date',
+        recipient_count: guests.length,
+        reachable_count: guests.filter((guest) => !!guest.email).length,
+        skipped_count: guests.filter((guest) => !guest.email).length,
+      },
       scheduled_for: tomorrow.toISOString(),
       status: 'scheduled',
     };
