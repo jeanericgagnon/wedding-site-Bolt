@@ -1839,6 +1839,11 @@ export const DashboardMessages: React.FC = () => {
   }
 
   async function handleRescheduleMessage(message: Message, scheduledFor: string) {
+    if (!canComposeDashboardMessages(messagesRole)) {
+      toast('Your collaborator role cannot reschedule campaigns.', 'info');
+      return;
+    }
+
     if (isPastScheduledTime(scheduledFor)) {
       toast('Pick a future time to reschedule. Use send now if you want it to go immediately.', 'error');
       return;
