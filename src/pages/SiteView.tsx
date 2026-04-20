@@ -409,6 +409,12 @@ export const SiteView: React.FC = () => {
 
   useEffect(() => {
     const loadSite = async () => {
+      setPrivacyGate('loading');
+      setPasswordGateError('');
+      setIsComingSoon(false);
+      setError(null);
+      setWeddingSiteId(null);
+
       if (!resolvedSlug) {
         setError('Invalid site URL');
         setLoading(false);
