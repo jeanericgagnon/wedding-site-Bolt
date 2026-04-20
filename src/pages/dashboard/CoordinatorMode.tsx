@@ -29,6 +29,7 @@ import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validate
 import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
 import { buildCoordinatorAlertSummary } from '../../lib/coordinatorAlertSummary';
+import { getCoordinatorAlertLaneLabel } from '../../lib/coordinatorAlertLane';
 import { normalizeCoordinatorAlertIntentState, resolveCoordinatorPreferredAlertSuggestion } from '../../lib/coordinatorAlertIntent';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
@@ -304,6 +305,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     preferredSuggestion: preferredAlertSuggestion,
     recipientCount: alertAudienceCount,
   }), [alertForm, eventAudienceOptions, preferredAlertSuggestion, alertAudienceCount]);
+  const alertLaneLabel = useMemo(() => getCoordinatorAlertLaneLabel(preferredAlertSuggestion), [preferredAlertSuggestion]);
 
   useEffect(() => {
     if (!preferredAlertSuggestion) return;
@@ -805,8 +807,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     </div>
                   ) : <div />}
                 </div>
-                <div className="rounded-md border border-border/60 bg-surface-subtle/40 px-3 py-2 space-y-1">
-                  <p className="text-[11px] font-medium text-text-primary">Ready to send</p>
+                <div className="rounded-md border border-border/60 bg-surface-subtle/40 px-3 py-2 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] font-medium text-text-primary">Ready to send</p>
+                    <span className="px-2 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-medium text-primary">{alertLaneLabel}</span>
+                  </div>
                   <p className="text-[11px] text-text-secondary">{alertSummary.intentLabel} · {alertSummary.audienceLabel} · {alertSummary.recipientLabel}</p>
                   <p className="text-[11px] text-text-tertiary">{alertSummary.deliveryLabel}</p>
                 </div>
