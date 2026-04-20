@@ -11,6 +11,7 @@ import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '..
 import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
 import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
+import { buildCoordinatorPrimaryAction } from '../../lib/coordinatorPrimaryAction';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
 import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinatorEscalationAction';
@@ -343,6 +344,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [sortedGuests, checkInQuery, checkInFilter, checkInReviewOnly]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
+    guests,
+    qnaItems,
+    events,
+    timelineState,
+  }), [guests, qnaItems, events, timelineState]);
+  const primaryAction = useMemo(() => buildCoordinatorPrimaryAction({
     guests,
     qnaItems,
     events,
