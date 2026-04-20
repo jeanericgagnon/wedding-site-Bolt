@@ -204,6 +204,7 @@ interface DeliveryRow {
   attempted_at: string | null;
   delivered_at: string | null;
   recipient_email: string;
+  recipient_name?: string | null;
 }
 
 type ChannelType = 'email' | 'sms';
@@ -688,7 +689,8 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                     <div key={delivery.id} className="px-3 py-2.5 text-xs">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium text-rose-900">{delivery.recipient_email || 'Unknown recipient'}</p>
+                          <p className="font-medium text-rose-900">{delivery.recipient_name || delivery.recipient_email || 'Unknown recipient'}</p>
+                          {delivery.recipient_name && <p className="text-rose-700">{delivery.recipient_email || 'No contact recorded'}</p>}
                           <p className="mt-0.5 text-rose-700">{delivery.error_message || 'Delivery failed before the provider returned a clear reason.'}</p>
                         </div>
                         <span className="shrink-0 text-[11px] text-rose-600">{delivery.attempted_at ? new Date(delivery.attempted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Attempted'}</span>
@@ -731,7 +733,8 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                     <div key={delivery.id} className="px-3 py-2.5 text-xs">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium text-amber-900">{delivery.recipient_email || 'Unknown recipient'}</p>
+                          <p className="font-medium text-amber-900">{delivery.recipient_name || delivery.recipient_email || 'Unknown recipient'}</p>
+                          {delivery.recipient_name && <p className="text-amber-700">{delivery.recipient_email || 'No contact recorded'}</p>}
                           <p className="mt-0.5 text-amber-700">{delivery.error_message || 'Skipped before the provider was called.'}</p>
                         </div>
                         <span className="shrink-0 text-[11px] text-amber-600">{delivery.attempted_at ? new Date(delivery.attempted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Skipped'}</span>
@@ -1077,7 +1080,7 @@ export const DashboardMessages: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('message_deliveries')
-        .select('id, message_id, status, provider_message_id, error_message, attempted_at, delivered_at, recipient_email')
+        .select('id, message_id, status, provider_message_id, error_message, attempted_at, delivered_at, recipient_email, recipient_name')
         .in('message_id', messageIds);
 
       if (error) {
