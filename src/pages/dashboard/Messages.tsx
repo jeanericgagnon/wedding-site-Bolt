@@ -468,7 +468,10 @@ function getRecipientCount(message: Message): number {
 }
 
 function getSkippedCount(message: Message, deliveries: DeliveryRow[]): number {
-  return deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
+  const fromDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
+  if (fromDeliveries > 0) return fromDeliveries;
+  const fallback = message.recipient_filter?.skipped_count;
+  return typeof fallback === 'number' ? fallback : 0;
 }
 
 function getUnreachedCount(message: Message, deliveries?: DeliveryRow[]): number {
@@ -1396,6 +1399,8 @@ export const DashboardMessages: React.FC = () => {
         audience: formData.audience,
         audience_label: selectedAudience?.label ?? null,
         recipient_count: totalAudienceCount,
+        reachable_count: recipientCount,
+        skipped_count: skippedRecipientCount,
         campaignName: campaignName || null,
         campaignType: selectedTemplate.campaignType ?? null,
         templateKey: formData.templateKey,
