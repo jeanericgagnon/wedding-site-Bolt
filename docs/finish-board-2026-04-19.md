@@ -257,6 +257,7 @@ Things that do **not** count as done:
 - guest-facing RSVP deadline enforcement was still too UI-dependent, which left a handler-path gap for brand-new late responses until corrected
 - EventRSVP support detection was still using a module-global flag, which could leak an unsupported state across unrelated guests/pages until corrected
 - invite-only public access could still degrade to “any token works” when the stored site token was missing, which was a real launch-path trust bug until corrected
+- password-protected public access could still degrade toward open when the stored password hash was missing, which was a sibling launch-path trust bug until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -470,6 +471,7 @@ Primary proof artifact for this now exists at:
 - Fixed RSVP handler-level deadline enforcement so new post-deadline responses are blocked in the submit path unless the guest already has an RSVP on file.
 - Fixed EventRSVP support detection so event-RSVP availability is scoped to the current page/component instead of leaking across guests through a module-global flag.
 - Fixed invite-only public site gating so access now requires a real stored guest-access token and an exact match instead of silently accepting any non-empty token when the row is misconfigured.
+- Fixed password-protected public site gating so password mode now blocks unless the row has a real password hash and the site has been unlocked in-session.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

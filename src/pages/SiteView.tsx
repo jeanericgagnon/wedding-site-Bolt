@@ -451,9 +451,9 @@ export const SiteView: React.FC = () => {
 
         setHideFromSearch(hideSearch);
 
-        if (privacyMode === 'password_protected' && pwHash) {
+        if (privacyMode === 'password_protected') {
           const alreadyUnlocked = sessionStorage.getItem(`dayof_pw_unlocked_${resolvedSlug}`) === '1';
-          if (!alreadyUnlocked) {
+          if (!pwHash || !alreadyUnlocked) {
             setPrivacyGate('password_required');
             setLoading(false);
             return;

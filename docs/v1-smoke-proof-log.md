@@ -288,6 +288,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: the RSVP deadline was mostly enforced through UI state, but the submit handler itself did not hard-stop a brand-new RSVP after deadline. The guest-facing submit path now blocks new post-deadline responses unless the guest already has an RSVP on file.
 - Concrete finish gap found and fixed: EventRSVP used a module-global `hasEventRsvpsTable` flag, so one site/session falling into the unsupported path could disable event-specific RSVP for unrelated guests until reload. Event RSVP support is now scoped to component state instead of leaking across guests/pages.
 - Concrete finish gap found and fixed: invite-only public site access could still accept any non-empty token when the site row was missing `guest_access_token`, because the gate only compared tokens when a saved token existed. Invite-only now requires a real stored access token and an exact match instead of silently degrading to “any token works.”
+- Concrete finish gap found and fixed: password-protected public access could still degrade to open if the site row was missing `site_password_hash`, because the gate only blocked when a hash existed. Password mode now blocks whenever the site is marked password-protected unless a real hash exists and the site has already been unlocked for the current session.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -318,6 +319,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the RSVP handler-level deadline enforcement fix.
 - `npm run build` passes after the EventRSVP support-scoping fix.
 - `npm run build` passes after the invite-only token enforcement fix.
+- `npm run build` passes after the password-mode gating fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Highest-value next proof seam
