@@ -224,6 +224,7 @@ Things that do **not** count as done:
 - collaborator persistence and full boundaries are still being tightened
 - some trust depends on role-aware smoke rather than clear consolidated proof
 - collaborator invite/join flow had lingering brand inconsistency that made the trust surface feel half-migrated
+- older QA notes overstated one gap: invited-email claim enforcement is already real; the live blocker is executed role/permission proof
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -403,6 +404,7 @@ Primary proof artifact for this now exists at:
 - Renamed the Product section header from `Everything you get` to `Current product shape` so the page framing matches the actual must-ship vs should-ship split.
 - Tightened the Home archive/memory panel so it now frames that slice as post-wedding memory foundation instead of a more mature anniversary platform than the current proof supports.
 - Tightened remaining Home feature-panel labels so the carousel no longer overclaims messaging blast maturity, planner command-center framing, universal registry breadth, or stronger seating automation than the current v1 proof supports.
+- Corrected collaborator proof logging so the finish board and smoke-proof log no longer chase a stale email-match gap and instead focus on the real remaining blocker: executed role-aware permission proof.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

@@ -14,6 +14,7 @@ Date: 2026-04-13
 - has a real invite route
 - token is validated against DB
 - valid invite details are shown
+- invited email is enforced on claim in both the UI flow and the backend RPC
 - authenticated user can claim invite
 - collaborator row is upserted
 - invite status is marked accepted
@@ -21,7 +22,6 @@ Date: 2026-04-13
 
 ## Real remaining gaps
 - no dedicated resend action yet
-- no strict email-match enforcement on claim yet
 - no expiry enforcement UI yet
 - no polished collaborator management screen beyond Settings block
 - no full role-matrix backend migration for planner yet
@@ -31,4 +31,4 @@ The collaborator flow is now **real enough to count as working v1**.
 It is not fully mature, but it is no longer fake or local-only theater.
 
 ## Next step
-- 10.4.1 align backend/frontend permission enforcement to the collaborator matrix
+- 10.4.1 execute role-aware collaborator QA and align backend/frontend permission enforcement to the collaborator matrix where it still drifts

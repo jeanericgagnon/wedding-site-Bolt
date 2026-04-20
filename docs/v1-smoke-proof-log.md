@@ -253,6 +253,10 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - P1: role-aware collaborator/coordinator proof still missing
 - P1: guest-state continuity across RSVP -> messages -> seating still unproven in one run
 
+## Proof notes from current inspection
+- Collaborator invite claim already enforces invited-email match in both the Accept Collaborator Invite UI flow and the `claim_collaborator_invite` RPC. That older gap should no longer be treated as an active v1 blocker.
+- The collaborator proof gap is now narrower and more concrete: role behavior and permission boundaries still need executed QA, not speculative trust-copy cleanup.
+
 ## Finish-lane read right now
 - Public promise is much cleaner than before.
 - The repo is now closer to **truthful** than **proven**.
