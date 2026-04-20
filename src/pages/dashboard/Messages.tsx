@@ -273,8 +273,14 @@ function normalizeSavedComposerTemplates(items: SavedComposerTemplate[]): SavedC
   return items.map((item) => {
     const createdAt = typeof item?.createdAt === 'string' ? item.createdAt : new Date().toISOString();
     const updatedAt = typeof item?.updatedAt === 'string' ? item.updatedAt : createdAt;
+    const scheduleType = item?.scheduleType === 'later' ? 'later' : 'now';
+    const scheduleDate = typeof item?.scheduleDate === 'string' ? item.scheduleDate : '';
+    const scheduleTime = typeof item?.scheduleTime === 'string' ? item.scheduleTime : '';
     return {
       ...item,
+      scheduleType,
+      scheduleDate,
+      scheduleTime,
       createdAt,
       updatedAt,
     } as SavedComposerTemplate;
