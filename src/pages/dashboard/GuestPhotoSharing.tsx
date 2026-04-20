@@ -302,6 +302,13 @@ export const GuestPhotoSharing: React.FC = () => {
       setEvents((eventsData as ItineraryEvent[] | null) ?? []);
       setBuckets(nextBuckets);
       setUploads((uploadsData as PhotoUploadRow[] | null) ?? []);
+      setBucketUploadLinks((prev) => {
+        const liveBucketIds = new Set(nextBuckets.map((bucket) => bucket.id));
+        const nextLinks = Object.fromEntries(
+          Object.entries(prev).filter(([bucketId, link]) => liveBucketIds.has(bucketId) && typeof link === 'string' && link.length > 0)
+        );
+        return JSON.stringify(prev) === JSON.stringify(nextLinks) ? prev : nextLinks;
+      });
 
       const nextDrafts: Record<string, { opensAt: string; closesAt: string }> = {};
       nextBuckets.forEach((a) => {
