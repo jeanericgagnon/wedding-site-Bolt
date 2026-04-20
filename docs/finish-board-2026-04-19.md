@@ -229,6 +229,7 @@ Things that do **not** count as done:
 - the dashboard shell still exposed a broader owner-shaped navigation map than some collaborator roles should see, which weakened role trust before entering individual surfaces
 - collaborator-facing role selectors still allowed local self-escalation on some ops surfaces, which weakened permission trust until corrected
 - hidden pages could still be reached by direct URL even after nav cleanup, which left shell-level role enforcement incomplete until corrected
+- Guests still exposed an import path to read-only collaborator roles, which broke action-level permission trust inside a must-ship ops surface until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -413,6 +414,7 @@ Primary proof artifact for this now exists at:
 - Fixed dashboard-shell role gating so collaborator nav now matches the active-site role more closely instead of presenting the full owner-shaped product map to everyone.
 - Fixed local role-selector escalation on Planning, Messages, and Coordinator Mode so only owners can change the role view there; collaborators now inherit and see their actual site role.
 - Fixed shell-level deep-link enforcement so pages outside the collaborator’s visible role map now redirect back to overview instead of relying on sidebar hiding alone.
+- Fixed Guests import permission gating so read-only collaborator roles can no longer start guest import from the UI or handler path.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

@@ -2429,6 +2429,12 @@ Proceed with send?`)) return;
   }, [isDemoMode, itineraryEvents, supabase, user?.id, weddingSiteId, toast]);
 
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role is read-only for guest imports.', 'info');
+      e.target.value = '';
+      return;
+    }
+
     const file = e.target.files?.[0];
     if (!file) {
       toast('Please choose a CSV or Excel file to import.', 'error');
@@ -3853,7 +3859,7 @@ Proceed with send?`)) return;
                   variant="outline"
                   size="md"
                   onClick={() => csvFileInputRef.current?.click()}
-                  disabled={csvImporting}
+                  disabled={csvImporting || !canEditGuests}
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {csvImporting ? 'Parsing…' : 'Import Guests'}
