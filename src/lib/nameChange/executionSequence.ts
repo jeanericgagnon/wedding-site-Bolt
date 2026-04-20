@@ -219,7 +219,8 @@ export function buildNameChangeExecutionSequenceSnapshot(
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ]
-      : [
+      : targetKey === 'tsa'
+      ? [
         {
           key: 'identity-document-coverage',
           label: 'Identity document coverage',
@@ -244,6 +245,36 @@ export function buildNameChangeExecutionSequenceSnapshot(
           reason: intake.documents.some((document) => ['current_passport', 'current_drivers_license'].includes(document.kind) && document.intakeStatus !== 'not_started')
             ? 'Passport or Real ID support exists in intake for travel-profile updates.'
             : 'No passport or Real ID support exists in intake yet for travel-profile updates.',
+        },
+        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
+      ]
+      : [
+        {
+          key: 'identity-document-coverage',
+          label: 'Identity document coverage',
+          required: true,
+          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
+          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
+        },
+        {
+          key: 'employment-context',
+          label: 'Employment context eligible for license updates',
+          required: true,
+          status: profile.employment_status === 'employed' || profile.employment_status === 'self_employed' ? 'satisfied' : 'missing',
+          reason: profile.employment_status === 'employed' || profile.employment_status === 'self_employed'
+            ? 'Employment context is active enough to justify professional license / certification updates.'
+            : 'Professional license updates only matter when employment context is active.',
+        },
+        {
+          key: 'license-identity-support',
+          label: 'Professional-license identity support exists',
+          required: false,
+          status: intake.documents.some((document) => ['current_drivers_license', 'current_passport'].includes(document.kind) && document.intakeStatus !== 'not_started')
+            ? 'satisfied'
+            : 'attention',
+          reason: intake.documents.some((document) => ['current_drivers_license', 'current_passport'].includes(document.kind) && document.intakeStatus !== 'not_started')
+            ? 'Current ID support exists in intake for professional license updates.'
+            : 'No current ID support exists in intake yet for professional license updates.',
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ];

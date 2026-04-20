@@ -2,13 +2,14 @@ import { NAME_CHANGE_BANK_PACKET_CONTRACT } from './bankPacket';
 import { NAME_CHANGE_DMV_FORM_CONTRACT } from './dmvForm';
 import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
 import { NAME_CHANGE_INSURANCE_PACKET_CONTRACT } from './insurancePacket';
+import { NAME_CHANGE_LICENSE_PACKET_CONTRACT } from './licensePacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
 import { NAME_CHANGE_TSA_PACKET_CONTRACT } from './tsaPacket';
 import { NAME_CHANGE_VOTER_PACKET_CONTRACT } from './voterPacket';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -561,6 +562,75 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         documentKinds: ['current_passport', 'current_drivers_license'],
         missingReason: 'No passport or Real ID support document is represented in intake yet for travel-profile updates.',
         satisfiedReason: 'A passport or Real ID support document exists in intake for travel-profile updates.',
+      },
+    ],
+  },
+  licenses: {
+    key: 'licenses',
+    label: 'Professional licenses / certifications',
+    lane: 'state',
+    recommendedFormCode: NAME_CHANGE_LICENSE_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'licenses',
+    prerequisiteRules: [
+      {
+        key: 'primary-photo-id-progress',
+        label: 'Primary photo ID underway before license updates',
+        required: true,
+        requiredStepId: 'state-dmv',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'Professional license updates usually go smoother once your primary photo ID is moving or already updated.',
+        attentionReason: 'Primary photo ID is moving, which supports professional license follow-through.',
+        satisfiedReason: 'Primary photo ID is already moving or complete for professional license follow-through.',
+      },
+      {
+        key: 'employer-rollout-progress',
+        label: 'Employer / payroll rollout already moving',
+        required: false,
+        requiredStepId: 'institution-irs-employer',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'Employer / payroll rollout is not moving yet, so professional-license updates may be starting first.',
+        attentionReason: 'Employer / payroll rollout is already moving, which helps work-related identity changes stay coordinated.',
+        satisfiedReason: 'Employer / payroll rollout is already moving for work-related identity coordination.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'applicant.county',
+    ],
+    checklistSpecs: [
+      {
+        key: 'identity-document-coverage',
+        label: 'Identity document coverage',
+        kind: 'requirement',
+        requirementKey: 'identity-document-coverage',
+        missingReason: 'Identity coverage requirement not evaluated.',
+        satisfiedReason: 'Identity document coverage is ready for professional license prep.',
+      },
+      {
+        key: 'current-legal-name',
+        label: 'Current legal name available for license update',
+        kind: 'field_presence',
+        targetField: 'applicant.current_first_name',
+        missingReason: 'Current legal name fields are still incomplete for professional license prep.',
+        satisfiedReason: 'Current legal first and last name are available for professional license prep.',
+      },
+      {
+        key: 'target-surname',
+        label: 'Target surname available for license update',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target last name is still missing for professional license prep.',
+        satisfiedReason: 'Target last name is available for professional license prep.',
+      },
+      {
+        key: 'license-support-doc',
+        label: 'Professional-license-supporting intake',
+        kind: 'document_support',
+        documentKinds: ['current_drivers_license', 'current_passport'],
+        missingReason: 'No current ID document is represented in intake yet for professional license updates.',
+        satisfiedReason: 'A current ID document exists in intake for professional license updates.',
       },
     ],
   },

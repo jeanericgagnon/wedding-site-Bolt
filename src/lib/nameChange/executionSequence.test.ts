@@ -283,4 +283,33 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'passport-progress')).toMatchObject({ status: 'satisfied' });
   });
+
+  it('marks professional-license sequencing ready when DMV is in progress for employed users', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const profile = makeCase();
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'state-dmv' ? { ...step, executionStatus: 'in_progress' as const } : step,
+      ),
+    };
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('licenses', profile, documents, [], plan);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'employment-context')).toMatchObject({ status: 'satisfied' });
+  });
 });

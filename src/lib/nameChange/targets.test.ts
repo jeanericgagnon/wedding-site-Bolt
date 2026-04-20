@@ -49,6 +49,12 @@ describe('name change execution targets', () => {
       recommendedFormCode: 'TSA-TRAVEL-PROFILE-UPDATE',
       formBuilderKey: 'tsa',
     });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.licenses).toMatchObject({
+      key: 'licenses',
+      lane: 'state',
+      recommendedFormCode: 'PROFESSIONAL-LICENSE-UPDATE-PACKET',
+      formBuilderKey: 'licenses',
+    });
     expect(NAME_CHANGE_EXECUTION_TARGETS.dmv.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'federal-ssa',
       requiredStatuses: ['complete'],
@@ -75,6 +81,10 @@ describe('name change execution targets', () => {
     });
     expect(NAME_CHANGE_EXECUTION_TARGETS.tsa.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'federal-passport',
+      requiredStatuses: ['in_progress', 'complete'],
+    });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.licenses.prerequisiteRules[0]).toMatchObject({
+      requiredStepId: 'state-dmv',
       requiredStatuses: ['in_progress', 'complete'],
     });
   });
