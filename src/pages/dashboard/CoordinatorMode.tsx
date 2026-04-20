@@ -37,6 +37,7 @@ import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState 
 import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetState';
 import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSummary';
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
+import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPriority';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -392,6 +393,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     qnaLabel: qnaTargetState.label,
     alertLabel: `${alertTargetCue.aligned ? 'Board-aligned' : 'Customized'} ${alertLaneLabel.toLowerCase()}`,
   }), [checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned, alertLaneLabel]);
+  const priorityCommandLabel = useMemo(() => getCoordinatorCommandPriority({
+    checkInLabel: checkInTargetState.label,
+    timelineLabel: timelineTargetState.label,
+    qnaLabel: qnaTargetState.label,
+    alertAligned: alertTargetCue.aligned,
+  }), [checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -732,9 +739,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 key={item.label}
                 type="button"
                 onClick={() => jumpToCommandSummaryItem(item.label as 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting')}
-                className="rounded-full border border-border/50 bg-surface-subtle/40 px-2.5 py-1 text-left hover:border-primary/35 hover:bg-primary/[0.04]"
+                className={`rounded-full border px-2.5 py-1 text-left hover:border-primary/35 hover:bg-primary/[0.04] ${priorityCommandLabel === item.label ? 'border-primary/30 bg-primary/[0.06]' : 'border-border/50 bg-surface-subtle/40'}`}
               >
                 <span className="text-[10px] font-medium text-text-primary">{item.label}</span>
+                {priorityCommandLabel === item.label && (
+                  <span className="ml-1 rounded-full border border-primary/20 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+                    Priority
+                  </span>
+                )}
                 <span className="mx-1 text-[10px] text-text-tertiary">·</span>
                 <span className="text-[10px] text-text-secondary">{item.detail}</span>
               </button>
