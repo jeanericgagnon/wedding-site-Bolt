@@ -244,6 +244,7 @@ interface SavedComposerTemplate {
   scheduleDate?: string;
   scheduleTime?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 function isSavedTemplateScheduleUsable(template: SavedComposerTemplate): boolean {
@@ -1897,7 +1898,8 @@ export const DashboardMessages: React.FC = () => {
       scheduleType: formData.scheduleType as 'now' | 'later',
       scheduleDate: formData.scheduleDate,
       scheduleTime: formData.scheduleTime,
-      createdAt: new Date().toISOString(),
+      createdAt: existingTemplate?.createdAt ?? new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     const updated = [next, ...savedTemplates.filter((item) => normalizeSavedTemplateName(item.name) !== normalizedName)].slice(0, 12);
@@ -2788,7 +2790,10 @@ export const DashboardMessages: React.FC = () => {
                                 : 'Saved schedule has expired and will not be reused'}
                             </p>
                           )}
-                          <p className="mt-2 text-[11px] text-text-tertiary">Saved {new Date(template.createdAt).toLocaleString()}</p>
+                          <p className="mt-2 text-[11px] text-text-tertiary">
+                            Created {new Date(template.createdAt).toLocaleString()}
+                            {template.updatedAt ? ` • Updated ${new Date(template.updatedAt).toLocaleString()}` : ''}
+                          </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <Button size="sm" variant="outline" onClick={() => applySavedTemplate(template)}>
