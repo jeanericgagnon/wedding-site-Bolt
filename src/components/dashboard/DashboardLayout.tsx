@@ -44,6 +44,8 @@ type SiteMembershipOption = {
   role: string;
 };
 
+type DashboardRole = 'owner' | 'planner' | 'coordinator' | 'viewer';
+
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -54,7 +56,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [sitePrivacyMode, setSitePrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
   const [showMoreFeatures, setShowMoreFeatures] = useState(false);
   const [siteMemberships, setSiteMemberships] = useState<SiteMembershipOption[]>([]);
-  const [activeSiteRole, setActiveSiteRole] = useState<string | null>(null);
+  const [activeSiteRole, setActiveSiteRole] = useState<DashboardRole | null>(null);
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
@@ -181,13 +183,28 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     },
   ];
 
+  const role = activeSiteRole ?? 'owner';
+  const canSeeNavItem = (itemId: string) => {
+    if (role === 'owner') return true;
+    if (role === 'planner') return itemId !== 'builder' && itemId !== 'audit-logs';
+    if (role === 'coordinator') return ['overview', 'guests', 'itinerary', 'messages', 'photos', 'planning', 'seating', 'coordinator', 'vault'].includes(itemId);
+    return ['overview', 'registry', 'guests', 'itinerary', 'messages', 'photos', 'planning', 'vault'].includes(itemId);
+  };
+
+  const visibleNavSections = navSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => canSeeNavItem(item.id)),
+    }))
+    .filter((section) => section.items.length > 0);
+
   const handleSiteSwitch = (nextSiteId: string) => {
     setStoredActiveSiteId(nextSiteId);
     window.location.reload();
   };
 
   const siteVisibility = useMemo(() => getSiteVisibilityState({ isPublished: siteIsPublished, privacyMode: sitePrivacyMode, hideFromSearch: siteJsonState?.hide_from_search === true }), [siteIsPublished, sitePrivacyMode, siteJsonState]);
-  const currentNavLabel = navSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label || 'Dashboard';
+  const currentNavLabel = visibleNavSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label || 'Dashboard';
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -241,7 +258,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             )}
 
             <div className="space-y-6">
-              {navSections.map((section, sectionIndex) => (
+              {visibleNavSections.map((section, sectionIndex) => (
                 <div key={section.title || `section-${sectionIndex}`}>
                   {section.title && (
                     <button

@@ -226,6 +226,7 @@ Things that do **not** count as done:
 - collaborator invite/join flow had lingering brand inconsistency that made the trust surface feel half-migrated
 - older QA notes overstated one gap: invited-email claim enforcement is already real; the live blocker is executed role/permission proof
 - collaborator-facing ops surfaces had still been booting into owner mode before local overrides, which weakened real role-trust until corrected
+- the dashboard shell still exposed a broader owner-shaped navigation map than some collaborator roles should see, which weakened role trust before entering individual surfaces
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -407,6 +408,7 @@ Primary proof artifact for this now exists at:
 - Tightened remaining Home feature-panel labels so the carousel no longer overclaims messaging blast maturity, planner command-center framing, universal registry breadth, or stronger seating automation than the current v1 proof supports.
 - Corrected collaborator proof logging so the finish board and smoke-proof log no longer chase a stale email-match gap and instead focus on the real remaining blocker: executed role-aware permission proof.
 - Fixed role bootstrapping on Planning, Guests, Messages, and Coordinator Mode so collaborator-facing ops surfaces now start from the actual active-site role instead of silently defaulting to owner.
+- Fixed dashboard-shell role gating so collaborator nav now matches the active-site role more closely instead of presenting the full owner-shaped product map to everyone.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
