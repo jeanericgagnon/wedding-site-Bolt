@@ -373,6 +373,17 @@ export interface NameChangeExecutionSequenceSnapshot {
   dependencies: NameChangeExecutionDependency[];
 }
 
+export interface NameChangeExecutionPrerequisiteRule {
+  key: string;
+  label: string;
+  required: boolean;
+  requiredStepId: string;
+  requiredStatuses: Array<'todo' | 'in_progress' | 'complete'>;
+  missingReason: string;
+  attentionReason?: string;
+  satisfiedReason: string;
+}
+
 export interface NameChangeMarriageCertificateExtraction {
   firstName: string | null;
   lastName: string | null;

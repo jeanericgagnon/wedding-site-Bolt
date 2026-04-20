@@ -1,9 +1,11 @@
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
+import { evaluateNameChangeExecutionPrerequisites } from './executionPrerequisites';
 import { evaluateNameChangeRequirements } from './requirements';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
   NameChangeExecutionDependency,
+  NameChangeExecutionPrerequisiteRule,
   NameChangeExecutionSequenceSnapshot,
   NameChangeExtractedFieldInput,
   NameChangePlan,
@@ -27,7 +29,18 @@ export function buildNameChangeExecutionSequenceSnapshot(
   const identityCoverage = requirements.results.find((result) => result.key === 'identity-document-coverage');
   const countyContext = requirements.results.find((result) => result.key === 'county-context');
 
-  const ssaStep = plan?.steps.find((step) => step.id === 'federal-ssa');
+  const dmvPrerequisiteRules: NameChangeExecutionPrerequisiteRule[] = [
+    {
+      key: 'federal-ssa-progress',
+      label: 'SSA execution completed before DMV prep',
+      required: true,
+      requiredStepId: 'federal-ssa',
+      requiredStatuses: ['complete'],
+      missingReason: 'SSA execution is not complete yet, so DMV sequencing is still blocked on the federal-first path.',
+      attentionReason: 'SSA execution is in progress, so DMV should stay queued behind the federal-first path.',
+      satisfiedReason: 'SSA execution is marked complete, so DMV sequencing can proceed on the federal-first path.',
+    },
+  ];
 
   const dependencies: NameChangeExecutionDependency[] = target === 'ssa'
     ? [
@@ -72,17 +85,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
             ? 'California-facing identity or address support exists in intake.'
             : 'No California-facing identity or address support exists in intake yet.',
         },
-        {
-          key: 'federal-ssa-progress',
-          label: 'SSA execution completed before DMV prep',
-          required: true,
-          status: ssaStep?.executionStatus === 'complete' ? 'satisfied' : ssaStep?.executionStatus === 'in_progress' ? 'attention' : 'missing',
-          reason: ssaStep?.executionStatus === 'complete'
-            ? 'SSA execution is marked complete, so DMV sequencing can proceed on the federal-first path.'
-            : ssaStep?.executionStatus === 'in_progress'
-              ? 'SSA execution is in progress, so DMV should stay queued behind the federal-first path.'
-              : 'SSA execution is not complete yet, so DMV sequencing is still blocked on the federal-first path.',
-        },
+        ...evaluateNameChangeExecutionPrerequisites(dmvPrerequisiteRules, plan),
       ];
 
   const blockers = dependencies.filter((dependency) => dependency.required && dependency.status === 'missing').map((dependency) => dependency.reason);
