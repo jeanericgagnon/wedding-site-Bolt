@@ -9,6 +9,85 @@ import { NAME_CHANGE_TSA_PACKET_CONTRACT } from './tsaPacket';
 import { NAME_CHANGE_VOTER_PACKET_CONTRACT } from './voterPacket';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
+function buildSharedIdentityChecklist(targetNoun: string, supportKey: string, supportLabel: string, supportDocumentKinds: NameChangeExecutionTargetDefinition['checklistSpecs'][number]['documentKinds']): NameChangeExecutionTargetDefinition['checklistSpecs'] {
+  return [
+    {
+      key: 'identity-document-coverage',
+      label: 'Identity document coverage',
+      kind: 'requirement',
+      requirementKey: 'identity-document-coverage',
+      missingReason: 'Identity coverage requirement not evaluated.',
+      satisfiedReason: `Identity document coverage is ready for ${targetNoun}.`,
+    },
+    {
+      key: 'current-legal-name',
+      label: `Current legal name available for ${targetNoun}`,
+      kind: 'field_presence',
+      targetField: 'applicant.current_first_name',
+      missingReason: `Current legal name fields are still incomplete for ${targetNoun}.`,
+      satisfiedReason: `Current legal first and last name are available for ${targetNoun}.`,
+    },
+    {
+      key: 'target-surname',
+      label: `Target surname available for ${targetNoun}`,
+      kind: 'field_presence',
+      targetField: 'applicant.target_last_name',
+      missingReason: `Target last name is still missing for ${targetNoun}.`,
+      satisfiedReason: `Target last name is available for ${targetNoun}.`,
+    },
+    {
+      key: supportKey,
+      label: supportLabel,
+      kind: 'document_support',
+      documentKinds: supportDocumentKinds,
+      missingReason: `No supporting document is represented in intake yet for ${targetNoun}.`,
+      satisfiedReason: `A supporting document exists in intake for ${targetNoun}.`,
+    },
+  ];
+}
+
+function buildPhotoIdInstitutionTarget(config: {
+  key: Extract<NameChangeExecutionTargetDefinition['key'], 'banks' | 'insurance'>;
+  label: string;
+  recommendedFormCode: string;
+  formBuilderKey: Extract<NameChangeExecutionTargetDefinition['formBuilderKey'], 'banks' | 'insurance'>;
+  supportKey: string;
+  supportLabel: string;
+  supportDocumentKinds: NameChangeExecutionTargetDefinition['checklistSpecs'][number]['documentKinds'];
+  primaryRule: NameChangeExecutionTargetDefinition['prerequisiteRules'][number];
+  secondaryRule: NameChangeExecutionTargetDefinition['prerequisiteRules'][number];
+}): NameChangeExecutionTargetDefinition {
+  return {
+    key: config.key,
+    label: config.label,
+    lane: 'state',
+    recommendedFormCode: config.recommendedFormCode,
+    formBuilderKey: config.formBuilderKey,
+    prerequisiteRules: [
+      config.primaryRule,
+      config.secondaryRule,
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'legal.marriage_date',
+      'applicant.county',
+    ],
+    checklistSpecs: [
+      {
+        key: 'legal-proof-document',
+        label: `Legal proof ready for ${config.label.toLowerCase()} packet`,
+        kind: 'requirement',
+        requirementKey: 'legal-proof-document',
+        missingReason: 'Legal proof requirement not evaluated.',
+        satisfiedReason: `Legal proof document is ready for ${config.label.toLowerCase()} prep.`,
+      },
+      ...buildSharedIdentityChecklist(`${config.label.toLowerCase()} prep`, config.supportKey, config.supportLabel, config.supportDocumentKinds),
+    ],
+  };
+}
+
 export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
@@ -282,162 +361,64 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
       },
     ],
   },
-  banks: {
+  banks: buildPhotoIdInstitutionTarget({
     key: 'banks',
     label: 'Banks and credit cards',
-    lane: 'state',
     recommendedFormCode: NAME_CHANGE_BANK_PACKET_CONTRACT.formCode,
     formBuilderKey: 'banks',
-    prerequisiteRules: [
-      {
-        key: 'primary-photo-id-progress',
-        label: 'Primary photo ID underway before bank rollout',
-        required: true,
-        requiredStepId: 'state-dmv',
-        requiredStatuses: ['in_progress', 'complete'],
-        missingReason: 'Banks are usually easiest once your primary photo ID is moving or already updated.',
-        attentionReason: 'Primary photo ID is moving, which supports bank update follow-through.',
-        satisfiedReason: 'Primary photo ID is already moving or complete for bank update follow-through.',
-      },
-      {
-        key: 'passport-or-dmv-progress',
-        label: 'At least one travel / ID-facing record is moving',
-        required: false,
-        requiredStepId: 'federal-passport',
-        requiredStatuses: ['in_progress', 'complete'],
-        missingReason: 'No passport progress is recorded yet, so bank updates may rely only on DMV proof.',
-        attentionReason: 'Passport progress exists, which helps cross-check travel-facing identity records.',
-        satisfiedReason: 'Passport progress exists for cross-checking travel-facing identity records.',
-      },
-    ],
-    autofillTargetFields: [
-      'applicant.current_first_name',
-      'applicant.current_last_name',
-      'applicant.target_last_name',
-      'legal.marriage_date',
-      'applicant.county',
-    ],
-    checklistSpecs: [
-      {
-        key: 'legal-proof-document',
-        label: 'Legal proof ready for bank packet',
-        kind: 'requirement',
-        requirementKey: 'legal-proof-document',
-        missingReason: 'Legal proof requirement not evaluated.',
-        satisfiedReason: 'Legal proof document is ready for bank packet prep.',
-      },
-      {
-        key: 'identity-document-coverage',
-        label: 'Identity document coverage',
-        kind: 'requirement',
-        requirementKey: 'identity-document-coverage',
-        missingReason: 'Identity coverage requirement not evaluated.',
-        satisfiedReason: 'Identity document coverage is ready for bank packet prep.',
-      },
-      {
-        key: 'current-legal-name',
-        label: 'Current legal name available for bank packet',
-        kind: 'field_presence',
-        targetField: 'applicant.current_first_name',
-        missingReason: 'Current legal name fields are still incomplete for bank packet prep.',
-        satisfiedReason: 'Current legal first and last name are available for bank packet prep.',
-      },
-      {
-        key: 'target-surname',
-        label: 'Target surname available for bank packet',
-        kind: 'field_presence',
-        targetField: 'applicant.target_last_name',
-        missingReason: 'Target last name is still missing for bank packet prep.',
-        satisfiedReason: 'Target last name is available for bank packet prep.',
-      },
-      {
-        key: 'bank-support-doc',
-        label: 'Bank-supporting document intake',
-        kind: 'document_support',
-        documentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
-        missingReason: 'No bank-supporting ID/address document is represented in intake yet.',
-        satisfiedReason: 'A bank-supporting ID/address document exists in intake.',
-      },
-    ],
-  },
-  insurance: {
+    supportKey: 'bank-support-doc',
+    supportLabel: 'Bank-supporting document intake',
+    supportDocumentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+    primaryRule: {
+      key: 'primary-photo-id-progress',
+      label: 'Primary photo ID underway before bank rollout',
+      required: true,
+      requiredStepId: 'state-dmv',
+      requiredStatuses: ['in_progress', 'complete'],
+      missingReason: 'Banks are usually easiest once your primary photo ID is moving or already updated.',
+      attentionReason: 'Primary photo ID is moving, which supports bank update follow-through.',
+      satisfiedReason: 'Primary photo ID is already moving or complete for bank update follow-through.',
+    },
+    secondaryRule: {
+      key: 'passport-or-dmv-progress',
+      label: 'At least one travel / ID-facing record is moving',
+      required: false,
+      requiredStepId: 'federal-passport',
+      requiredStatuses: ['in_progress', 'complete'],
+      missingReason: 'No passport progress is recorded yet, so bank updates may rely only on DMV proof.',
+      attentionReason: 'Passport progress exists, which helps cross-check travel-facing identity records.',
+      satisfiedReason: 'Passport progress exists for cross-checking travel-facing identity records.',
+    },
+  }),
+  insurance: buildPhotoIdInstitutionTarget({
     key: 'insurance',
     label: 'Health, auto, renters, and life insurance',
-    lane: 'state',
     recommendedFormCode: NAME_CHANGE_INSURANCE_PACKET_CONTRACT.formCode,
     formBuilderKey: 'insurance',
-    prerequisiteRules: [
-      {
-        key: 'primary-photo-id-progress',
-        label: 'Primary photo ID underway before insurance rollout',
-        required: true,
-        requiredStepId: 'state-dmv',
-        requiredStatuses: ['in_progress', 'complete'],
-        missingReason: 'Insurance updates usually go smoother once your primary photo ID is moving or already updated.',
-        attentionReason: 'Primary photo ID is moving, which supports insurance update follow-through.',
-        satisfiedReason: 'Primary photo ID is already moving or complete for insurance update follow-through.',
-      },
-      {
-        key: 'employer-or-bank-progress',
-        label: 'Another institutional lane is already moving',
-        required: false,
-        requiredStepId: 'institution-banks',
-        requiredStatuses: ['in_progress', 'complete'],
-        missingReason: 'No other institutional rollout step is moving yet, so insurance may be the first account-update lane to start.',
-        attentionReason: 'Another institutional lane is already moving, which helps normalize packet handling.',
-        satisfiedReason: 'Another institutional lane is already moving for packet normalization.',
-      },
-    ],
-    autofillTargetFields: [
-      'applicant.current_first_name',
-      'applicant.current_last_name',
-      'applicant.target_last_name',
-      'legal.marriage_date',
-      'applicant.county',
-    ],
-    checklistSpecs: [
-      {
-        key: 'legal-proof-document',
-        label: 'Legal proof ready for insurance packet',
-        kind: 'requirement',
-        requirementKey: 'legal-proof-document',
-        missingReason: 'Legal proof requirement not evaluated.',
-        satisfiedReason: 'Legal proof document is ready for insurance packet prep.',
-      },
-      {
-        key: 'identity-document-coverage',
-        label: 'Identity document coverage',
-        kind: 'requirement',
-        requirementKey: 'identity-document-coverage',
-        missingReason: 'Identity coverage requirement not evaluated.',
-        satisfiedReason: 'Identity document coverage is ready for insurance packet prep.',
-      },
-      {
-        key: 'current-legal-name',
-        label: 'Current legal name available for insurance packet',
-        kind: 'field_presence',
-        targetField: 'applicant.current_first_name',
-        missingReason: 'Current legal name fields are still incomplete for insurance packet prep.',
-        satisfiedReason: 'Current legal first and last name are available for insurance packet prep.',
-      },
-      {
-        key: 'target-surname',
-        label: 'Target surname available for insurance packet',
-        kind: 'field_presence',
-        targetField: 'applicant.target_last_name',
-        missingReason: 'Target last name is still missing for insurance packet prep.',
-        satisfiedReason: 'Target last name is available for insurance packet prep.',
-      },
-      {
-        key: 'insurance-support-doc',
-        label: 'Insurance-supporting document intake',
-        kind: 'document_support',
-        documentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
-        missingReason: 'No insurance-supporting ID/address document is represented in intake yet.',
-        satisfiedReason: 'An insurance-supporting ID/address document exists in intake.',
-      },
-    ],
-  },
+    supportKey: 'insurance-support-doc',
+    supportLabel: 'Insurance-supporting document intake',
+    supportDocumentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+    primaryRule: {
+      key: 'primary-photo-id-progress',
+      label: 'Primary photo ID underway before insurance rollout',
+      required: true,
+      requiredStepId: 'state-dmv',
+      requiredStatuses: ['in_progress', 'complete'],
+      missingReason: 'Insurance updates usually go smoother once your primary photo ID is moving or already updated.',
+      attentionReason: 'Primary photo ID is moving, which supports insurance update follow-through.',
+      satisfiedReason: 'Primary photo ID is already moving or complete for insurance update follow-through.',
+    },
+    secondaryRule: {
+      key: 'employer-or-bank-progress',
+      label: 'Another institutional lane is already moving',
+      required: false,
+      requiredStepId: 'institution-banks',
+      requiredStatuses: ['in_progress', 'complete'],
+      missingReason: 'No other institutional rollout step is moving yet, so insurance may be the first account-update lane to start.',
+      attentionReason: 'Another institutional lane is already moving, which helps normalize packet handling.',
+      satisfiedReason: 'Another institutional lane is already moving for packet normalization.',
+    },
+  }),
   voter: {
     key: 'voter',
     label: 'California voter registration',
