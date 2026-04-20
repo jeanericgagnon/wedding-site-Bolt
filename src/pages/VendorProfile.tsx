@@ -71,6 +71,7 @@ export const VendorProfilePage: React.FC = () => {
   const hasTwoImages = galleryImages.length === 2;
   const hasDescriptor = Boolean(profile?.descriptor);
   const hasDirectEmail = Boolean(profile?.contact_email);
+  const hasPublicLinks = publicLinks.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,7 +170,7 @@ export const VendorProfilePage: React.FC = () => {
 
           <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4 lg:sticky lg:top-6">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">Links</h2>
-            {publicLinks.length > 0 ? (
+            {hasPublicLinks ? (
               <div className="space-y-3">
                 {publicLinks.map((link) => (
                   <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
@@ -181,8 +182,18 @@ export const VendorProfilePage: React.FC = () => {
             ) : (
               <p className="text-sm sm:text-base text-[#6f5843]">Public links will appear here once they’re available for this vendor.</p>
             )}
-            {publicLinks.length > 0 && (
+            {hasPublicLinks && (
               <p className="pt-2 text-xs text-[#8b6f53]">Use these links to browse more recent work, social proof, or the vendor’s main site before reaching out.</p>
+            )}
+            {(hasDirectEmail || hasPublicLinks) && (
+              <div className="rounded-[22px] bg-[#f8f3ec] px-4 py-4 space-y-2">
+                <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Best next step</p>
+                <p className="text-sm text-[#6f5843]">
+                  {hasDirectEmail
+                    ? `Email ${profile.vendor_name} directly for the fastest reply.`
+                    : 'Review links, then use the inquiry form below to reach out.'}
+                </p>
+              </div>
             )}
           </div>
         </section>
@@ -202,7 +213,7 @@ export const VendorProfilePage: React.FC = () => {
           {profile.contact_email && (
             <div className="rounded-[24px] bg-white/8 border border-white/10 p-4 sm:p-5 space-y-3">
               <p className="text-xs uppercase tracking-[0.22em] text-[#d8c4ad]">Fastest contact path</p>
-              <div className="flex flex-wrap gap-3">
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
                 <a
                   href={`mailto:${profile.contact_email}?subject=${encodeURIComponent(`Inquiry for ${profile.vendor_name}`)}`}
                   className="inline-flex items-center justify-center rounded-2xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d] hover:bg-white"
@@ -211,7 +222,7 @@ export const VendorProfilePage: React.FC = () => {
                 </a>
                 <a
                   href={`mailto:${profile.contact_email}`}
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
+                  className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 break-all"
                 >
                   {profile.contact_email}
                 </a>
