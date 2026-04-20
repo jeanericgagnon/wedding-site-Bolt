@@ -339,6 +339,24 @@ export interface NameChangeAutofillPrepSnapshot {
   };
 }
 
+export interface NameChangeFormFieldPayload {
+  fieldKey: string;
+  label: string;
+  value: string | null;
+  source: 'canonical_case' | 'extracted_field' | 'derived';
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface NameChangeFormPayloadSnapshot {
+  formCode: string;
+  fields: NameChangeFormFieldPayload[];
+  summary: {
+    ready: number;
+    missing: number;
+    extractedBacked: number;
+  };
+}
+
 export interface NameChangeMarriageCertificateExtraction {
   firstName: string | null;
   lastName: string | null;

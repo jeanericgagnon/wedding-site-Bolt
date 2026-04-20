@@ -1,11 +1,13 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { evaluateNameChangeRequirements } from './requirements';
+import { buildNameChangeSs5FormSnapshot } from './ss5Form';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeCaseInput,
   NameChangeDocumentInput,
   NameChangeExtractedFieldInput,
+  NameChangeFormPayloadSnapshot,
 } from './types';
 
 export interface NameChangeSsaExecutionSnapshot {
@@ -13,6 +15,7 @@ export interface NameChangeSsaExecutionSnapshot {
   blockers: string[];
   recommendedFormCode: 'SSA-SS5';
   autofillFields: NameChangeAutofillFieldMapping[];
+  formPayload: NameChangeFormPayloadSnapshot;
   checklist: Array<{
     label: string;
     status: 'ready' | 'missing' | 'attention';
@@ -34,6 +37,7 @@ export function buildNameChangeSsaExecutionSnapshot(
   const requirements = evaluateNameChangeRequirements(profile, documents, extractedFields);
   const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
+  const formPayload = buildNameChangeSs5FormSnapshot(profile, documents, extractedFields);
 
   const legalProof = requirements.results.find((result) => result.key === 'legal-proof-document');
   const identityCoverage = requirements.results.find((result) => result.key === 'identity-document-coverage');
@@ -90,6 +94,7 @@ export function buildNameChangeSsaExecutionSnapshot(
       'applicant.target_last_name',
       'legal.marriage_date',
     ].includes(field.targetField)),
+    formPayload,
     checklist,
   };
 }
