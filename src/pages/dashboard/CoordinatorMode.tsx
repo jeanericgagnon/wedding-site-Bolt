@@ -27,6 +27,7 @@ import { getCoordinatorPrimaryTimelineAction } from '../../lib/coordinatorTimeli
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
+import { normalizeCoordinatorAlertIntentState, resolveCoordinatorPreferredAlertSuggestion } from '../../lib/coordinatorAlertIntent';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
 import { resolveCoordinatorQnaFocusAfterItemsChange, resolveCoordinatorTimelineFocusAfterStateChange } from '../../lib/coordinatorResolvedFocus';
@@ -78,6 +79,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [qnaDraftAnswers, setQnaDraftAnswers] = useState<Record<string, string>>({});
   const [activeQnaId, setActiveQnaId] = useState<string | null>(null);
   const [activeTimelineEventId, setActiveTimelineEventId] = useState<string | null>(null);
+  const [lastAlertSuggestionKey, setLastAlertSuggestionKey] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -269,6 +271,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [events, timelineState]);
 
   const alertValidationError = useMemo(() => validateCoordinatorAlertForm(alertForm, alertAudienceCount), [alertForm, alertAudienceCount]);
+
   const handoffCopy = {
     title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
     detail: coordinatorRole === 'viewer'
@@ -289,6 +292,20 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const liveEvent = useMemo(() => events.find((event) => event.id === liveEventId) ?? null, [events, liveEventId]);
   const upNextEvent = useMemo(() => events.find((event) => event.id === upNextEventId) ?? null, [events, upNextEventId]);
   const alertSuggestions = useMemo(() => buildCoordinatorAlertSuggestions({ liveEvent, upNextEvent }), [liveEvent, upNextEvent]);
+  const preferredAlertSuggestion = useMemo(() => resolveCoordinatorPreferredAlertSuggestion(alertSuggestions, lastAlertSuggestionKey), [alertSuggestions, lastAlertSuggestionKey]);
+
+  useEffect(() => {
+    if (!preferredAlertSuggestion) return;
+    setAlertForm((prev) => {
+      if (prev.subject.trim() || prev.body.trim()) return prev;
+      return {
+        ...prev,
+        audience: prev.audience || preferredAlertSuggestion.audience,
+        subject: preferredAlertSuggestion.subject,
+        body: preferredAlertSuggestion.body,
+      };
+    });
+  }, [preferredAlertSuggestion]);
 
   const alertStats = useMemo(() => {
     const total = alertLog.length;
@@ -673,12 +690,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <button
                     key={suggestion.key}
                     type="button"
-                    onClick={() => setAlertForm((prev) => ({
-                      ...prev,
-                      subject: suggestion.subject,
-                      body: suggestion.body,
-                      audience: suggestion.audience,
-                    }))}
+                    onClick={() => {
+                      setAlertForm((prev) => ({
+                        ...prev,
+                        subject: suggestion.subject,
+                        body: suggestion.body,
+                        audience: suggestion.audience,
+                      }));
+                      setLastAlertSuggestionKey(suggestion.key);
+                    }}
                     className={`text-[11px] px-2 py-1 rounded-full border ${suggestion.key.startsWith('live:') ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
                   >
                     {suggestion.label}
