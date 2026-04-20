@@ -197,7 +197,8 @@ export function buildNameChangeExecutionSequenceSnapshot(
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ]
-      : [
+      : targetKey === 'voter'
+      ? [
         {
           key: 'county-context',
           label: 'County / jurisdiction context',
@@ -215,6 +216,34 @@ export function buildNameChangeExecutionSequenceSnapshot(
           reason: intake.documents.some((document) => ['current_drivers_license', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
             ? 'California voter-supporting identity/address support exists in intake.'
             : 'No California voter-supporting identity/address support exists in intake yet.',
+        },
+        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
+      ]
+      : [
+        {
+          key: 'identity-document-coverage',
+          label: 'Identity document coverage',
+          required: true,
+          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
+          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
+        },
+        {
+          key: 'passport-timing-risk',
+          label: 'Passport timing risk reviewed',
+          required: false,
+          status: requirementStatusToDependencyStatus(passportTimingRisk?.status ?? 'attention'),
+          reason: passportTimingRisk?.reason ?? 'Passport timing risk has not been evaluated.',
+        },
+        {
+          key: 'travel-profile-support',
+          label: 'Travel-profile support exists',
+          required: false,
+          status: intake.documents.some((document) => ['current_passport', 'current_drivers_license'].includes(document.kind) && document.intakeStatus !== 'not_started')
+            ? 'satisfied'
+            : 'attention',
+          reason: intake.documents.some((document) => ['current_passport', 'current_drivers_license'].includes(document.kind) && document.intakeStatus !== 'not_started')
+            ? 'Passport or Real ID support exists in intake for travel-profile updates.'
+            : 'No passport or Real ID support exists in intake yet for travel-profile updates.',
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ];

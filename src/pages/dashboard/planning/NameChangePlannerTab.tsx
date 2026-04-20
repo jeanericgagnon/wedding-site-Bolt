@@ -13,6 +13,7 @@ import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../.
 import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
 import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
 import { buildNameChangeSsaExecutionSnapshot } from '../../../lib/nameChange/ssaFlow';
+import { buildNameChangeTsaExecutionSnapshot } from '../../../lib/nameChange/tsaFlow';
 import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/voterFlow';
 import type {
   NameChangeCaseInput,
@@ -105,6 +106,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const bankExecutionSnapshot = useMemo(() => buildNameChangeBankExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const insuranceExecutionSnapshot = useMemo(() => buildNameChangeInsuranceExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const voterExecutionSnapshot = useMemo(() => buildNameChangeVoterExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
+  const tsaExecutionSnapshot = useMemo(() => buildNameChangeTsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const dmvExecutionSnapshot = useMemo(() => buildNameChangeDmvExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const passportExecutionSnapshot = useMemo(() => buildNameChangePassportExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
@@ -864,6 +866,81 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
         </div>
       </Card>
+
+      {draft.passport_needs_update && <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Guided execution: TSA / travel profiles</h3>
+            <p className="text-sm text-text-secondary">Travel-facing execution slice for TSA PreCheck and loyalty/travel profile follow-through once passport work is underway.</p>
+          </div>
+          <span className={`rounded-full px-2 py-1 text-xs ${tsaExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+            {tsaExecutionSnapshot.ready ? 'ready for travel profile prep' : 'not ready'}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {tsaExecutionSnapshot.checklist.map((item) => (
+            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                  {item.status}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <h4 className="text-sm font-semibold text-text-primary">TSA / travel sequencing dependencies</h4>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {tsaExecutionSnapshot.sequence.dependencies.map((dependency) => (
+              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
+                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                    {dependency.status}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {tsaExecutionSnapshot.autofillFields.map((field) => (
+            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
+              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-text-primary">TSA / travel packet snapshot</h4>
+              <p className="text-xs text-text-secondary">Structured downstream packet for TSA PreCheck and travel profile updates.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {tsaExecutionSnapshot.formPayload.summary.ready} ready · {tsaExecutionSnapshot.formPayload.summary.missing} missing · {tsaExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {tsaExecutionSnapshot.formPayload.fields.map((field) => (
+              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
+                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
+                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>}
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <Card>

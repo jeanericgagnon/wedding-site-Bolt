@@ -245,4 +245,42 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'state-dmv-complete')).toMatchObject({ status: 'satisfied' });
   });
+
+  it('marks TSA sequencing ready when passport work is in progress', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const profile = makeCase({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true } });
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'federal-passport' ? { ...step, executionStatus: 'in_progress' as const } : step,
+      ),
+    };
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('tsa', profile, documents, extractedFields, plan);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'passport-progress')).toMatchObject({ status: 'satisfied' });
+  });
 });

@@ -4,6 +4,7 @@ import { buildNameChangeEmployerPacketSnapshot } from './employerPacket';
 import { buildNameChangeInsurancePacketSnapshot } from './insurancePacket';
 import { buildNameChangePassportFormSnapshot } from './passportForm';
 import { buildNameChangeSs5FormSnapshot } from './ss5Form';
+import { buildNameChangeTsaPacketSnapshot } from './tsaPacket';
 import { buildNameChangeVoterPacketSnapshot } from './voterPacket';
 import type {
   NameChangeCaseInput,
@@ -26,5 +27,6 @@ export const NAME_CHANGE_FORM_BUILDERS: Record<NameChangeFormBuilderKey, NameCha
   dmv: buildNameChangeDmvFormSnapshot,
   passport: buildNameChangePassportFormSnapshot,
   employer: buildNameChangeEmployerPacketSnapshot,
+  tsa: buildNameChangeTsaPacketSnapshot,
   voter: buildNameChangeVoterPacketSnapshot,
 };

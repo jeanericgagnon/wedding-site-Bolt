@@ -4,10 +4,11 @@ import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
 import { NAME_CHANGE_INSURANCE_PACKET_CONTRACT } from './insurancePacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
+import { NAME_CHANGE_TSA_PACKET_CONTRACT } from './tsaPacket';
 import { NAME_CHANGE_VOTER_PACKET_CONTRACT } from './voterPacket';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -492,6 +493,74 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         documentKinds: ['current_drivers_license', 'proof_of_address'],
         missingReason: 'No California voter-supporting ID/address document is represented in intake yet.',
         satisfiedReason: 'A California voter-supporting ID/address document exists in intake.',
+      },
+    ],
+  },
+  tsa: {
+    key: 'tsa',
+    label: 'TSA PreCheck / travel profiles',
+    lane: 'federal',
+    recommendedFormCode: NAME_CHANGE_TSA_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'tsa',
+    prerequisiteRules: [
+      {
+        key: 'passport-progress',
+        label: 'Passport underway before TSA/travel profile update',
+        required: true,
+        requiredStepId: 'federal-passport',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'TSA / travel profiles should wait until passport work is underway so bookings and identity records stay aligned.',
+        attentionReason: 'Passport work is moving, which supports TSA / travel profile follow-through.',
+        satisfiedReason: 'Passport work is already moving or complete for TSA / travel profile follow-through.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'identity.passport_issue_date',
+    ],
+    checklistSpecs: [
+      {
+        key: 'identity-document-coverage',
+        label: 'Identity document coverage',
+        kind: 'requirement',
+        requirementKey: 'identity-document-coverage',
+        missingReason: 'Identity coverage requirement not evaluated.',
+        satisfiedReason: 'Identity document coverage is ready for TSA / travel profile prep.',
+      },
+      {
+        key: 'passport-timing-risk',
+        label: 'Passport timing risk reviewed',
+        kind: 'requirement',
+        requirementKey: 'passport-timing-risk',
+        missingReason: 'Passport timing review has not been evaluated yet.',
+        attentionReason: 'Travel is already booked and passport timing still needs careful sequencing.',
+        satisfiedReason: 'Passport timing risk has been reviewed for TSA / travel profile prep.',
+      },
+      {
+        key: 'current-legal-name',
+        label: 'Current legal name available for TSA update',
+        kind: 'field_presence',
+        targetField: 'applicant.current_first_name',
+        missingReason: 'Current legal name fields are still incomplete for TSA / travel profile prep.',
+        satisfiedReason: 'Current legal first and last name are available for TSA / travel profile prep.',
+      },
+      {
+        key: 'target-surname',
+        label: 'Target surname available for TSA update',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target last name is still missing for TSA / travel profile prep.',
+        satisfiedReason: 'Target last name is available for TSA / travel profile prep.',
+      },
+      {
+        key: 'tsa-support-doc',
+        label: 'Travel-profile-supporting document intake',
+        kind: 'document_support',
+        documentKinds: ['current_passport', 'current_drivers_license'],
+        missingReason: 'No passport or Real ID support document is represented in intake yet for travel-profile updates.',
+        satisfiedReason: 'A passport or Real ID support document exists in intake for travel-profile updates.',
       },
     ],
   },

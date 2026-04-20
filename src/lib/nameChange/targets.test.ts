@@ -43,6 +43,12 @@ describe('name change execution targets', () => {
       recommendedFormCode: 'CA-VOTER-REGISTRATION-UPDATE',
       formBuilderKey: 'voter',
     });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.tsa).toMatchObject({
+      key: 'tsa',
+      lane: 'federal',
+      recommendedFormCode: 'TSA-TRAVEL-PROFILE-UPDATE',
+      formBuilderKey: 'tsa',
+    });
     expect(NAME_CHANGE_EXECUTION_TARGETS.dmv.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'federal-ssa',
       requiredStatuses: ['complete'],
@@ -66,6 +72,10 @@ describe('name change execution targets', () => {
     expect(NAME_CHANGE_EXECUTION_TARGETS.voter.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'state-dmv',
       requiredStatuses: ['complete'],
+    });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.tsa.prerequisiteRules[0]).toMatchObject({
+      requiredStepId: 'federal-passport',
+      requiredStatuses: ['in_progress', 'complete'],
     });
   });
 });
