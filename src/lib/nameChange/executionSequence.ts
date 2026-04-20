@@ -32,6 +32,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
       identityCoverage: results.find((result) => result.key === 'identity-document-coverage'),
       countyContext: results.find((result) => result.key === 'county-context'),
       passportTimingRisk: results.find((result) => result.key === 'passport-timing-risk'),
+      expeditedTravelSequencing: results.find((result) => result.key === 'expedited-travel-sequencing'),
     },
     prerequisiteDependencies,
   });

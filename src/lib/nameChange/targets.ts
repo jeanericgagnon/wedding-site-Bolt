@@ -274,6 +274,14 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         satisfiedReason: 'Passport timing risk has been reviewed.',
       },
       {
+        key: 'expedited-travel-sequencing',
+        label: 'Expedited travel sequencing ready',
+        kind: 'requirement',
+        requirementKey: 'expedited-travel-sequencing',
+        missingReason: 'Expedited travel sequencing has not been evaluated yet.',
+        satisfiedReason: 'Expedited travel sequencing is ready for passport prep.',
+      },
+      {
         key: 'target-surname',
         label: 'Target surname available for passport packet',
         kind: 'field_presence',
@@ -639,6 +647,15 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         missingReason: 'Passport timing review has not been evaluated yet.',
         attentionReason: 'Travel is already booked and passport timing still needs careful sequencing.',
         satisfiedReason: 'Passport timing risk has been reviewed for TSA / travel profile prep.',
+      },
+      {
+        key: 'expedited-travel-sequencing',
+        label: 'Expedited travel sequencing ready',
+        kind: 'requirement',
+        requirementKey: 'expedited-travel-sequencing',
+        missingReason: 'Expedited travel sequencing has not been evaluated yet.',
+        attentionReason: 'Expedited travel is in play, so TSA / travel profile updates should stay on the fast path.',
+        satisfiedReason: 'Expedited travel sequencing is ready for TSA / travel profile prep.',
       },
       {
         key: 'current-legal-name',

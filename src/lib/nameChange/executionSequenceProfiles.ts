@@ -12,6 +12,7 @@ type RequirementBag = {
   identityCoverage: NameChangeRequirementResult | undefined;
   countyContext: NameChangeRequirementResult | undefined;
   passportTimingRisk: NameChangeRequirementResult | undefined;
+  expeditedTravelSequencing: NameChangeRequirementResult | undefined;
 };
 
 export type NameChangeSequenceContext = {
@@ -105,6 +106,7 @@ const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requir
       : 'Current modeled passport flow assumes U.S. citizenship eligibility.',
   },
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
+  buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.'),
   ...prerequisiteDependencies,
 ];
 
@@ -167,6 +169,7 @@ const buildVoterDependencies: NameChangeDependencyRecipe = ({ intake, requiremen
 const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
+  buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.'),
   buildDocumentSupportDependency(intake, {
     key: 'travel-profile-support',
     label: 'Travel-profile support exists',

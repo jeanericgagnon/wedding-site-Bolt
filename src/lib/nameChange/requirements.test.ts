@@ -120,4 +120,26 @@ describe('name change requirements skeleton', () => {
       reason: 'Travel is already booked, but no current passport or Real ID support is represented in intake yet.',
     });
   });
+
+  it('flags expedited travel sequencing when urgent travel needs the fast path', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ urgency_level: 'expedited' }),
+      documents,
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'expedited-travel-sequencing')).toMatchObject({
+      status: 'attention',
+      reason: 'This is an expedited travel case, so passport/TSA sequencing should be treated as an active fast-path, not routine follow-through.',
+    });
+  });
 });

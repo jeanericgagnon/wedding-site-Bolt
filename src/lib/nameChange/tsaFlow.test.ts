@@ -103,4 +103,34 @@ describe('name change TSA execution snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('Travel is already booked, but no current passport or Real ID support is represented in intake yet.');
   });
+
+  it('keeps expedited travel TSA cases on the fast path as attention, not routine satisfied', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const profile = makeCase({
+      urgency_level: 'expedited',
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: true,
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-passport'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTsaExecutionSnapshot(profile, documents, [], plan);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.checklist.find((item) => item.key === 'expedited-travel-sequencing')).toMatchObject({ status: 'attention' });
+  });
 });
