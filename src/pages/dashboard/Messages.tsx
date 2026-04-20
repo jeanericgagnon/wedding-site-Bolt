@@ -685,7 +685,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={rescheduling || !scheduleInput || scheduleInputIsPast}
+                    disabled={!canManageCampaigns || rescheduling || !scheduleInput || scheduleInputIsPast}
                     onClick={async () => {
                       setRescheduling(true);
                       try {
@@ -701,7 +701,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={cancellingSchedule}
+                    disabled={!canManageCampaigns || cancellingSchedule}
                     onClick={async () => {
                       setCancellingSchedule(true);
                       try {
@@ -868,7 +868,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               <Button
                 variant="primary"
                 size="sm"
-                disabled={retrying}
+                disabled={!canManageCampaigns || retrying}
                 onClick={async () => {
                   setRetrying(true);
                   try {
@@ -889,7 +889,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               <Button
                 variant="primary"
                 size="sm"
-                disabled={sendingScheduledNow}
+                disabled={!canManageCampaigns || sendingScheduledNow}
                 onClick={async () => {
                   setSendingScheduledNow(true);
                   try {
