@@ -45,6 +45,7 @@ import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJump
 import { shouldResetCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpReset';
 import { shouldResetCoordinatorCommandJumpLabelForTargetChange } from '../../lib/coordinatorCommandJumpTargetReset';
 import { getCoordinatorManualOverrideLabel } from '../../lib/coordinatorManualOverrideLabel';
+import { getCoordinatorManualOverrideActionLabel } from '../../lib/coordinatorManualOverrideAction';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -431,6 +432,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     qnaTargetQuestion: qnaTargetItem?.question ?? null,
   }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
   const priorityCommandCta = useMemo(() => getCoordinatorCommandPriorityCta(priorityCommandLabel), [priorityCommandLabel]);
+  const manualOverrideActionLabel = useMemo(() => getCoordinatorManualOverrideActionLabel(panelFocus), [panelFocus]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -633,6 +635,27 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
   }, [commandJumpLabel, commandJumpPanelFocus, commandJumpTargetId, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
 
+
+  const returnToBoardTarget = () => {
+    if (panelFocus === 'check-in' && checkInBoardTargetId) {
+      setActiveGuestId(checkInBoardTargetId);
+      setCheckInFilter('arrivals');
+      setCheckInReviewOnly(true);
+      setManualOverrideLabel(null);
+      return;
+    }
+    if (panelFocus === 'timeline' && timelineBoardTargetId) {
+      setActiveTimelineEventId(timelineBoardTargetId);
+      setManualOverrideLabel(null);
+      return;
+    }
+    if (panelFocus === 'qna') {
+      const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
+      setActiveQnaId(nextQnaId);
+      setManualOverrideLabel(null);
+    }
+  };
+
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
       hasDoorReview: guests.some((guest) => getCoordinatorDoorStatus(guest) === 'watch'),
@@ -816,7 +839,20 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <div>
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
               {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
-              {!commandJumpLabel && manualOverrideLabel && <p className="text-[11px] text-amber-700">{manualOverrideLabel}</p>}
+              {!commandJumpLabel && manualOverrideLabel && (
+                <div className="flex items-center gap-2 text-[11px]">
+                  <p className="text-amber-700">{manualOverrideLabel}</p>
+                  {manualOverrideActionLabel && (
+                    <button
+                      type="button"
+                      onClick={returnToBoardTarget}
+                      className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-amber-700"
+                    >
+                      {manualOverrideActionLabel}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <p className="text-[11px] text-text-tertiary">What the board thinks matters right now</p>
           </div>
