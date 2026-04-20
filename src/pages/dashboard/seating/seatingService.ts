@@ -286,8 +286,7 @@ export async function getEligibleGuests(
 
     let isAttending: boolean;
     if (hasEventInvitations) {
-      const baseAccepted = isAttendingRsvpStatus(g.rsvp_status);
-      isAttending = isInvitedToEvent && (typeof eventRsvp === 'boolean' ? eventRsvp : baseAccepted);
+      isAttending = isInvitedToEvent && eventRsvp === true;
     } else {
       isAttending = isAttendingRsvpStatus(g.rsvp_status);
     }
