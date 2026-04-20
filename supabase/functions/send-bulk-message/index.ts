@@ -268,6 +268,13 @@ async function deliverMessage(opts: {
 
   let deliveredCount = 0;
   let failedCount = 0;
+  const refreshedRecipientFilter = {
+    ...(message.recipient_filter ?? {}),
+    audience,
+    recipient_count: allGuests.length,
+    reachable_count: eligibleGuests.length,
+    skipped_count: skippedGuests.length,
+  };
 
   if (channel === "sms") {
     if (!twilioSid || !twilioToken || !twilioFrom) {
@@ -490,6 +497,7 @@ async function deliverMessage(opts: {
       delivered_count: deliveredCount,
       failed_count: failedCount,
       recipient_count: allGuests.length,
+      recipient_filter: refreshedRecipientFilter,
     })
     .eq("id", messageId);
 
@@ -500,6 +508,7 @@ async function deliverMessage(opts: {
         status: finalStatus,
         sent_at: sentAt,
         recipient_count: allGuests.length,
+        recipient_filter: refreshedRecipientFilter,
       })
       .eq("id", messageId);
   }
