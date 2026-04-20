@@ -425,11 +425,16 @@ function getRecipientCount(message: Message): number {
   return message.recipient_count ?? (message.recipient_filter?.recipient_count as number) ?? 0;
 }
 
-function getUnreachedCount(message: Message): number {
+function getSkippedCount(message: Message, deliveries: DeliveryRow[]): number {
+  return deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
+}
+
+function getUnreachedCount(message: Message, deliveries?: DeliveryRow[]): number {
   const total = getRecipientCount(message);
   const delivered = Number(message.delivered_count ?? 0);
   const failed = Number(message.failed_count ?? 0);
-  return Math.max(total - delivered - failed, 0);
+  const skipped = deliveries ? getSkippedCount(message, deliveries) : 0;
+  return Math.max(total - delivered - failed - skipped, 0);
 }
 
 function getCampaignThreadKey(message: Message): string {
@@ -483,7 +488,8 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const [rescheduling, setRescheduling] = React.useState(false);
   const [cancellingSchedule, setCancellingSchedule] = React.useState(false);
   const recipientCount = getRecipientCount(message);
-  const unreachedCount = getUnreachedCount(message);
+  const skippedCount = getSkippedCount(message, deliveries);
+  const unreachedCount = getUnreachedCount(message, deliveries);
   const audienceLabel = getAudienceLabel(message);
   const campaignName = getCampaignName(message);
   const campaignType = getCampaignTypeLabel(message);
@@ -569,7 +575,8 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             <div>
               <p className="text-text-tertiary text-xs mb-1">Recipients</p>
               <p className="font-medium text-text-primary">{recipientCount} {recipientCount === 1 ? 'person' : 'people'}</p>
-              {unreachedCount > 0 && <p className="text-[11px] text-warning mt-1">{unreachedCount} unreachable or not attempted</p>}
+              {skippedCount > 0 && <p className="text-[11px] text-warning mt-1">{skippedCount} skipped before send</p>}
+              {unreachedCount > 0 && <p className="text-[11px] text-warning mt-1">{unreachedCount} unreached after send</p>}
             </div>
             <div>
               <p className="text-text-tertiary text-xs mb-1">Channel</p>
@@ -1981,10 +1988,10 @@ export const DashboardMessages: React.FC = () => {
     const aud = m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all';
     if (historyAudienceFilter !== 'all' && aud !== historyAudienceFilter) return false;
     if (historyCampaignFilter && getCampaignThreadKey(m) !== historyCampaignFilter) return false;
-    const skippedCount = deliveries.filter((delivery) => delivery.message_id === m.id && delivery.status === 'skipped').length;
+    const skippedCount = getSkippedCount(m, deliveries);
     const failedCount = Number(m.failed_count ?? 0);
     const deliveredCount = Number(m.delivered_count ?? 0);
-    const unreachedCount = getUnreachedCount(m);
+    const unreachedCount = getUnreachedCount(m, deliveries);
     if (historyDeliveryFilter === 'delivered' && deliveredCount <= 0) return false;
     if (historyDeliveryFilter === 'failed' && failedCount <= 0) return false;
     if (historyDeliveryFilter === 'skipped' && skippedCount <= 0) return false;
@@ -2102,8 +2109,8 @@ export const DashboardMessages: React.FC = () => {
       prev.count += 1;
       prev.delivered += Number(message.delivered_count ?? 0);
       prev.failed += Number(message.failed_count ?? 0);
-      prev.skipped += deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
-      prev.unreached += getUnreachedCount(message);
+      prev.skipped += getSkippedCount(message, deliveries);
+      prev.unreached += getUnreachedCount(message, deliveries);
       if (latestAt >= prev.latestAt) {
         prev.latestAt = latestAt;
         prev.latestStatus = message.status;
@@ -3147,7 +3154,7 @@ export const DashboardMessages: React.FC = () => {
                     <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Recipients {getRecipientCount(activeCampaignLatestMessage)}</span>
                     <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Delivered {activeCampaignLatestMessage.delivered_count ?? 0}</span>
                     <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Failed {activeCampaignLatestMessage.failed_count ?? 0}</span>
-                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Skipped {deliveries.filter((delivery) => delivery.message_id === activeCampaignLatestMessage.id && delivery.status === 'skipped').length}</span>
+                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Skipped {getSkippedCount(activeCampaignLatestMessage, deliveries)}</span>
                   </div>
                 </div>
               )}
@@ -3195,8 +3202,8 @@ export const DashboardMessages: React.FC = () => {
             <div className="space-y-4">
               {filteredHistory.map((message) => {
                 const recipientCount = getRecipientCount(message);
-                const unreachedCount = getUnreachedCount(message);
-                const skippedCount = deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
+                const skippedCount = getSkippedCount(message, deliveries);
+                const unreachedCount = getUnreachedCount(message, deliveries);
                 const campaignName = getCampaignName(message);
                 return (
                   <div
