@@ -8,8 +8,6 @@ import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Header, Footer } from '../components/layout';
 
-let hasEventRsvpsTable: boolean | null = null;
-
 interface Guest {
   id: string;
   name: string;
@@ -57,6 +55,7 @@ export default function EventRSVP() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [hasEventRsvpSupport, setHasEventRsvpSupport] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -110,7 +109,7 @@ export default function EventRSVP() {
       const invitationsWithRsvps = await Promise.all(
         (invitationsData || []).map(async (invitation) => {
           let rsvpData: { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null = null;
-          if (hasEventRsvpsTable !== false) {
+          if (hasEventRsvpSupport !== false) {
             const { data, error } = await supabase
               .from('event_rsvps')
               .select('attending, dietary_restrictions, notes')
@@ -120,10 +119,10 @@ export default function EventRSVP() {
             if (error) {
               const msg = (error.message || '').toLowerCase();
               if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
-                hasEventRsvpsTable = false;
+                setHasEventRsvpSupport(false);
               }
             } else {
-              hasEventRsvpsTable = true;
+              setHasEventRsvpSupport(true);
               rsvpData = (data as { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null) ?? null;
             }
           }
@@ -204,7 +203,7 @@ export default function EventRSVP() {
       const invitation = invitations.find((i) => i.id === selectedEvent);
       if (!invitation) return;
 
-      if (hasEventRsvpsTable === false) {
+      if (hasEventRsvpSupport === false) {
         setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
         return;
       }
@@ -223,7 +222,7 @@ export default function EventRSVP() {
         if (error) {
           const msg = (error.message || '').toLowerCase();
           if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
-            hasEventRsvpsTable = false;
+            setHasEventRsvpSupport(false);
           }
           throw error;
         }
@@ -243,7 +242,7 @@ export default function EventRSVP() {
         if (error) {
           const msg = (error.message || '').toLowerCase();
           if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
-            hasEventRsvpsTable = false;
+            setHasEventRsvpSupport(false);
           }
           throw error;
         }

@@ -255,6 +255,7 @@ Things that do **not** count as done:
 - ambiguous RSVP guest selection could still lose already-known RSVP config when the follow-up token lookup failed, which weakened guest-facing RSVP resilience until corrected
 - guest-facing RSVP could still carry stale `existingRsvp` state when switching from a responded guest to a non-responded guest, which weakened form truth until corrected
 - guest-facing RSVP deadline enforcement was still too UI-dependent, which left a handler-path gap for brand-new late responses until corrected
+- EventRSVP support detection was still using a module-global flag, which could leak an unsupported state across unrelated guests/pages until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -466,6 +467,7 @@ Primary proof artifact for this now exists at:
 - Fixed RSVP picked-guest fallback so already-known deadline/question/meal/household context is preserved even when the follow-up lookup for a picked guest fails.
 - Fixed RSVP guest switching so selecting a guest with no RSVP now clears prior `existingRsvp` state instead of carrying a previous guest’s response forward.
 - Fixed RSVP handler-level deadline enforcement so new post-deadline responses are blocked in the submit path unless the guest already has an RSVP on file.
+- Fixed EventRSVP support detection so event-RSVP availability is scoped to the current page/component instead of leaking across guests through a module-global flag.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
