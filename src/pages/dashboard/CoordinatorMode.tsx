@@ -49,6 +49,7 @@ import { getCoordinatorManualOverrideActionLabel } from '../../lib/coordinatorMa
 import { getCoordinatorManualOverrideTargetLabel } from '../../lib/coordinatorManualOverrideTargetLabel';
 import { getCoordinatorManualOverrideCurrentTargetLabel } from '../../lib/coordinatorManualOverrideCurrentTargetLabel';
 import { shouldResetCoordinatorManualOverride } from '../../lib/coordinatorManualOverrideReset';
+import { getCoordinatorRealignmentLabel } from '../../lib/coordinatorRealignmentLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -134,6 +135,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [manualOverrideLabel, setManualOverrideLabel] = useState<string | null>(null);
   const [alertOverrideLabelState, setAlertOverrideLabelState] = useState<string | null>(null);
   const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
+  const [realignmentLabel, setRealignmentLabel] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -729,6 +731,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       currentTargetId,
     })) {
       setManualOverrideLabel(null);
+      setRealignmentLabel(getCoordinatorRealignmentLabel(panelFocus));
     }
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
 
@@ -916,6 +919,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
               {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
               {!commandJumpLabel && alertSummaryTransitionLabel && <p className="text-[11px] text-primary">{alertSummaryTransitionLabel}</p>}
+              {!commandJumpLabel && !alertSummaryTransitionLabel && realignmentLabel && <p className="text-[11px] text-primary">{realignmentLabel}</p>}
               {!commandJumpLabel && manualOverrideLabel && (
                 <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <p className="text-amber-700">{manualOverrideLabel}</p>
