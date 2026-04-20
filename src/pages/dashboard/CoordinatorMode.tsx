@@ -34,6 +34,7 @@ import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
 import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
+import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -846,24 +847,39 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 ))}
               </div>
               <div className="flex flex-wrap gap-1.5 mb-3">
-                {alertSuggestions.map((suggestion) => (
-                  <button
-                    key={suggestion.key}
-                    type="button"
-                    onClick={() => {
-                      setAlertForm((prev) => ({
-                        ...prev,
-                        subject: suggestion.subject,
-                        body: suggestion.body,
-                        audience: suggestion.audience,
-                      }));
-                      setLastAlertSuggestionKey(suggestion.key);
-                    }}
-                    className={`text-[11px] px-2 py-1 rounded-full border ${suggestion.key.startsWith('live:') ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
-                  >
-                    {suggestion.label}
-                  </button>
-                ))}
+                {alertSuggestions.map((suggestion) => {
+                  const suggestionState = getCoordinatorAlertSuggestionState({
+                    suggestion,
+                    preferredSuggestion: preferredAlertSuggestion,
+                    subject: alertForm.subject,
+                    body: alertForm.body,
+                    audience: alertForm.audience,
+                  });
+
+                  return (
+                    <button
+                      key={suggestion.key}
+                      type="button"
+                      onClick={() => {
+                        setAlertForm((prev) => ({
+                          ...prev,
+                          subject: suggestion.subject,
+                          body: suggestion.body,
+                          audience: suggestion.audience,
+                        }));
+                        setLastAlertSuggestionKey(suggestion.key);
+                      }}
+                      className={`text-[11px] px-2 py-1 rounded-full border inline-flex items-center gap-1.5 ${suggestionState.isDraftMatch ? 'border-primary/35 bg-primary/10 text-primary' : suggestionState.isBoardTarget ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
+                    >
+                      <span>{suggestion.label}</span>
+                      {suggestionState.badge && (
+                        <span className={`px-1.5 py-0.5 rounded-full border text-[9px] font-medium ${suggestionState.isDraftMatch ? 'border-primary/25 bg-white/80 text-primary' : 'border-primary/15 bg-primary/[0.04] text-primary/80'}`}>
+                          {suggestionState.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' }))}
