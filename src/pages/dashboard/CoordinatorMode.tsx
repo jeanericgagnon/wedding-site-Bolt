@@ -30,6 +30,7 @@ import { getCoordinatorCommandModeGuidance } from '../../lib/coordinatorCommandM
 import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
 import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFocusReason';
 import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutralFocusTarget';
+import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -648,6 +649,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 >
                   <p className="text-sm font-medium text-text-primary">{item.title}</p>
                   <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
+                  <p className="mt-1 text-[10px] text-text-tertiary/80">{getCoordinatorActionHint('escalation')}</p>
                 </button>
               ))}
             </div>
