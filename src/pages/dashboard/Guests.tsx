@@ -1945,10 +1945,19 @@ Proceed with send?`)) return;
           notes: nextNotes,
           rsvp: assistedRsvpStatus === 'confirmed'
             ? guest.rsvp
+              ? {
+                  ...guest.rsvp,
+                  attending: true,
+                  attending_ceremony: guest.invited_to_ceremony,
+                  attending_reception: guest.invited_to_reception,
+                }
+              : guest.rsvp
             : guest.rsvp
               ? {
                   ...guest.rsvp,
                   attending: false,
+                  attending_ceremony: false,
+                  attending_reception: false,
                   meal_choice: null,
                   plus_one_name: null,
                   plus_one_count: 0,
@@ -1975,6 +1984,8 @@ Proceed with send?`)) return;
       const nextAttending = assistedRsvpStatus === 'confirmed';
       const assistedRsvpPayload = {
         attending: nextAttending,
+        attending_ceremony: nextAttending ? assistedRsvpGuest.invited_to_ceremony : false,
+        attending_reception: nextAttending ? assistedRsvpGuest.invited_to_reception : false,
         notes: nextNotes,
         responded_at: recordedAt,
         ...(nextAttending ? {} : {
