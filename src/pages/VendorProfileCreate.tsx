@@ -12,6 +12,17 @@ function normalizeImageLines(input: string): string[] {
     .slice(0, 6);
 }
 
+function draftLinks(draft: VendorProfileDraft) {
+  return [
+    draft.instagram_url ? { label: 'Instagram', href: draft.instagram_url } : null,
+    draft.website_url ? { label: 'Website', href: draft.website_url } : null,
+    typeof draft.source_payload?.pinterest_url === 'string' && draft.source_payload.pinterest_url ? { label: 'Pinterest', href: draft.source_payload.pinterest_url } : null,
+    typeof draft.source_payload?.tiktok_url === 'string' && draft.source_payload.tiktok_url ? { label: 'TikTok', href: draft.source_payload.tiktok_url } : null,
+    typeof draft.source_payload?.facebook_url === 'string' && draft.source_payload.facebook_url ? { label: 'Facebook', href: draft.source_payload.facebook_url } : null,
+    typeof draft.source_payload?.youtube_url === 'string' && draft.source_payload.youtube_url ? { label: 'YouTube', href: draft.source_payload.youtube_url } : null,
+  ].filter((item): item is { label: string; href: string } => Boolean(item));
+}
+
 export const VendorProfileCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -90,6 +101,7 @@ export const VendorProfileCreatePage: React.FC = () => {
         </form>
 
         {draft && (
+          <div className="space-y-6">
           <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4">
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Draft</p>
@@ -162,6 +174,61 @@ export const VendorProfileCreatePage: React.FC = () => {
               <div className="text-sm text-[#8b6f53] self-center">Preferred path: /vendor/{draft.slug}</div>
             </div>
             <p className="text-xs text-[#8b6f53]">If that slug is already taken, publish will automatically use the next clean available URL.</p>
+          </div>
+
+          <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-5">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Template preview</p>
+              <h3 className="mt-2 text-xl font-semibold">How this draft will pour into the live shell</h3>
+            </div>
+            <div className="overflow-hidden rounded-[24px] border border-[#eadfce] bg-[#f8f3ec]">
+              <div className="aspect-[16/10] bg-[#e9dfd2] flex items-center justify-center overflow-hidden">
+                {draft.hero_image_url ? (
+                  <img src={draft.hero_image_url} alt={draft.vendor_name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/70 text-xl font-semibold tracking-[0.18em] text-[#8b6f53]">
+                    {draft.vendor_name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'VP'}
+                  </div>
+                )}
+              </div>
+              <div className="p-5 space-y-5">
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Hero</p>
+                  <h4 className="text-2xl font-semibold leading-tight">{draft.vendor_name || 'Vendor name'}</h4>
+                  <p className="text-sm text-[#6f5843]">{draft.descriptor || 'Short descriptor will sit here if present.'}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Images</p>
+                  {(draft.image_urls || []).length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {draft.image_urls.slice(0, 3).map((image) => (
+                        <img key={image} src={image} alt={draft.vendor_name} className="aspect-square w-full rounded-2xl object-cover bg-white" />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[#6f5843]">Gallery images will appear here when present.</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">About</p>
+                  <p className="text-sm leading-7 text-[#4b3a2c]">{draft.about || 'Short vendor description will render here.'}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Links + Contact</p>
+                  <div className="flex flex-wrap gap-2">
+                    {draftLinks(draft).length > 0 ? draftLinks(draft).map((link) => (
+                      <span key={link.label} className="rounded-full bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">{link.label}</span>
+                    )) : <span className="text-sm text-[#6f5843]">Links will render here if present.</span>}
+                    {draft.contact_email && <span className="rounded-full bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">Direct email CTA</span>}
+                    <span className="rounded-full bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">Inquiry form</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           </div>
         )}
 
