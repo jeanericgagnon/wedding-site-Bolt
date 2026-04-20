@@ -1175,6 +1175,10 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleUndoLastCheckIn = async () => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot update guest check-in.', 'info');
+      return;
+    }
     if (!weddingSiteId || !lastCheckIn || isDemoMode) return;
     try {
       const { error } = await supabase

@@ -231,6 +231,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [guests]);
 
   const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {
+    if (!canCheckIn) {
+      toast('Your collaborator role cannot update coordinator check-in.', 'info');
+      return;
+    }
     if (!siteId || isDemoMode) return;
     const next = guest.checked_in_at ? null : new Date().toISOString();
     const { error } = await supabase
@@ -467,6 +471,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
 
   const escalateDoorReview = (guest: GuestLiteForCoordinator) => {
+    if (!canEditQna) {
+      toast('Your collaborator role cannot escalate door issues into guest Q&A.', 'info');
+      return;
+    }
     setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));
     setCommandSource('escalation');
     setPanelFocus('qna');
@@ -514,6 +522,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
   };
 
   const saveQnaAnswer = async (id: string) => {
+    if (!canEditQna) {
+      toast('Your collaborator role cannot edit guest questions here.', 'info');
+      return;
+    }
     const draftAnswer = qnaDraftAnswers[id] ?? qnaItems.find((item) => item.id === id)?.answer ?? '';
     const nextItems = updateCoordinatorQnaItem(qnaItems, id, draftAnswer);
     const nextItem = nextItems.find((item) => item.id === id);
