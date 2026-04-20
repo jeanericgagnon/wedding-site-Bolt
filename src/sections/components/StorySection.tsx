@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { getSectionPrimaryImage } from '../../lib/sectionMedia';
 
 interface Props {
   data: WeddingDataV1;
@@ -10,9 +11,10 @@ interface Props {
 
 export const StorySection: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
+  const media = data?.media;
   const { settings } = instance;
   const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = readBuilderValue(settings.photo as string | { value: string } | undefined, '') || '';
+  const photoUrl = getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || '');
 
   return (
     <section className="py-16 px-4 bg-surface">
@@ -37,9 +39,10 @@ export const StorySection: React.FC<Props> = ({ data, instance }) => {
 
 export const StoryCentered: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
+  const media = data?.media;
   const { settings } = instance;
   const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = readBuilderValue(settings.photo as string | { value: string } | undefined, '') || '';
+  const photoUrl = getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || '');
 
   return (
     <section className="py-20 px-4 bg-surface">
@@ -73,7 +76,7 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
   const media = data?.media;
   const { settings } = instance;
   const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = readBuilderValue(settings.photo as string | { value: string } | undefined, '') || media?.heroImageUrl || '';
+  const photoUrl = getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || '');
 
   return (
     <section className="py-20 bg-surface">

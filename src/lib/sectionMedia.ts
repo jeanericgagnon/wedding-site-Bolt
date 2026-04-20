@@ -16,6 +16,7 @@ export const getSectionPrimaryImage = (settings: Record<string, unknown>, fallba
     settings.heroImageUrl,
     settings.image,
     settings.coverImage,
+    settings.photo,
   ];
 
   for (const candidate of candidates) {

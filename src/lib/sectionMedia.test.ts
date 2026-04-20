@@ -13,8 +13,10 @@ describe('getSectionPrimaryImage', () => {
     expect(getSectionPrimaryImage({ coverImage: 'https://example.com/cover.jpg' }, 'https://example.com/fallback.jpg')).toBe('https://example.com/cover.jpg');
   });
 
-  it('supports builder value objects and final fallback', () => {
+  it('supports builder value objects, photo aliases, and final fallback', () => {
     expect(getSectionPrimaryImage({ heroImage: { value: 'https://example.com/object.jpg' } }, 'https://example.com/fallback.jpg')).toBe('https://example.com/object.jpg');
+    expect(getSectionPrimaryImage({ photo: 'https://example.com/photo.jpg' }, 'https://example.com/fallback.jpg')).toBe('https://example.com/photo.jpg');
+    expect(getSectionPrimaryImage({ photo: { value: 'https://example.com/photo-object.jpg' } }, 'https://example.com/fallback.jpg')).toBe('https://example.com/photo-object.jpg');
     expect(getSectionPrimaryImage({}, 'https://example.com/fallback.jpg')).toBe('https://example.com/fallback.jpg');
   });
 });
