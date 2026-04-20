@@ -95,10 +95,10 @@ export function evaluateNameChangeRequirements(
       key: 'expedited-travel-sequencing',
       label: 'Expedited travel sequencing ready',
       stage: 'institutional',
-      status: canonicalCase.urgencyLevel === 'expedited' && canonicalCase.lifeContext.travelBookedSoon
+      status: canonicalCase.lifeContext.urgencyLevel === 'expedited' && canonicalCase.lifeContext.travelBookedSoon
         ? (canonicalCase.identity.passportNeedsUpdate && hasTravelIdentitySupport ? 'attention' : 'missing')
         : 'satisfied',
-      reason: canonicalCase.urgencyLevel === 'expedited' && canonicalCase.lifeContext.travelBookedSoon
+      reason: canonicalCase.lifeContext.urgencyLevel === 'expedited' && canonicalCase.lifeContext.travelBookedSoon
         ? (canonicalCase.identity.passportNeedsUpdate && hasTravelIdentitySupport
           ? 'This is an expedited travel case, so passport/TSA sequencing should be treated as an active fast-path, not routine follow-through.'
           : 'This is an expedited travel case, but travel-facing identity support is still too thin to run a safe fast-path.')
