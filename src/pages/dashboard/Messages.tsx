@@ -263,18 +263,22 @@ function readSavedComposerTemplates(): SavedComposerTemplate[] {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
 
-    return parsed.map((item) => {
-      const createdAt = typeof item?.createdAt === 'string' ? item.createdAt : new Date().toISOString();
-      const updatedAt = typeof item?.updatedAt === 'string' ? item.updatedAt : createdAt;
-      return {
-        ...item,
-        createdAt,
-        updatedAt,
-      } as SavedComposerTemplate;
-    });
+    return normalizeSavedComposerTemplates(parsed as SavedComposerTemplate[]);
   } catch {
     return [];
   }
+}
+
+function normalizeSavedComposerTemplates(items: SavedComposerTemplate[]): SavedComposerTemplate[] {
+  return items.map((item) => {
+    const createdAt = typeof item?.createdAt === 'string' ? item.createdAt : new Date().toISOString();
+    const updatedAt = typeof item?.updatedAt === 'string' ? item.updatedAt : createdAt;
+    return {
+      ...item,
+      createdAt,
+      updatedAt,
+    } as SavedComposerTemplate;
+  });
 }
 
 function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
@@ -936,7 +940,21 @@ export const DashboardMessages: React.FC = () => {
   }, [location.search]);
 
   useEffect(() => {
-    setSavedTemplates(readSavedComposerTemplates());
+    const loaded = readSavedComposerTemplates();
+    setSavedTemplates(loaded);
+
+    try {
+      const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(parsed)) {
+        const normalized = normalizeSavedComposerTemplates(parsed as SavedComposerTemplate[]);
+        if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {
+          writeSavedComposerTemplates(normalized);
+        }
+      }
+    } catch {
+      // ignore normalization persistence issues
+    }
   }, []);
 
   useEffect(() => {
