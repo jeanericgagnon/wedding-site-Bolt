@@ -1,4 +1,5 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
+import { evaluateNameChangeExecutionGates } from './executionGates';
 import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
 import { buildNameChangeTargetChecklist } from './targetChecklist';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
@@ -36,16 +37,13 @@ export function buildNameChangeTargetExecutionSnapshot(
   const sequence = buildNameChangeExecutionSequenceSnapshot(targetKey, profile, documents, extractedFields, plan);
   const checklist = buildNameChangeTargetChecklist(target, profile, documents, extractedFields);
   const formPayload = buildTargetFormPayload(target.formBuilderKey, profile, documents, extractedFields);
-  const blockers = [
-    ...sequence.blockers,
-    ...checklist.filter((item) => item.status === 'missing').map((item) => item.reason),
-  ];
+  const gates = evaluateNameChangeExecutionGates(sequence.dependencies, checklist);
 
   return {
     targetKey,
     targetLabel: target.label,
-    ready: blockers.length === 0,
-    blockers,
+    ready: gates.ready,
+    blockers: gates.blockers,
     recommendedFormCode: target.recommendedFormCode,
     autofillFields: autofill.fields.filter((field) => target.autofillTargetFields.includes(field.targetField)),
     formPayload,
