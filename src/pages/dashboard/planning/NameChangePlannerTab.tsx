@@ -30,6 +30,7 @@ import type {
 
 interface ExecutionCardConfig {
   key: string;
+  anchorId?: string;
   title: string;
   description: string;
   readyLabel: string;
@@ -63,6 +64,7 @@ interface ExecutionSectionSummary {
   readyCount: number;
   blockedCount: number;
   attentionCount: number;
+  highestRiskCardKey: string | null;
   highestRiskCard: string;
   staleReminderOverlap: number;
   reminderKeys: string[];
@@ -131,6 +133,7 @@ function ensureDocument(documents: NameChangeDocumentInput[], kind: NameChangeDo
 }
 
 const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
+  anchorId,
   title,
   description,
   readyLabel,
@@ -141,6 +144,7 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
   snapshot,
 }) => (
   <Card>
+    <div id={anchorId} className="scroll-mt-24" />
     <div className="flex items-center justify-between gap-3">
       <div>
         <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
@@ -516,7 +520,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       const readyCount = section.cards.filter((card) => card.snapshot.ready).length;
       const blockedCount = section.cards.filter((card) => !card.snapshot.ready).length;
       const attentionCount = section.cards.reduce((sum, card) => sum + card.snapshot.checklist.filter((item) => item.status === 'attention').length, 0);
-      const highestRiskCard = section.cards.reduce((current, card) => {
+      const highestRiskCardConfig = section.cards.reduce((current, card) => {
         const blockerCount = card.snapshot.blockers.length;
         const currentBlockerCount = current?.snapshot.blockers.length ?? -1;
         if (blockerCount > currentBlockerCount) return card;
@@ -524,7 +528,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         const cardAttention = card.snapshot.checklist.filter((item) => item.status === 'attention').length;
         const currentAttention = current ? current.snapshot.checklist.filter((item) => item.status === 'attention').length : -1;
         return cardAttention > currentAttention ? card : current;
-      }, null as ExecutionCardConfig | null)?.title ?? 'No major risk in this section';
+      }, null as ExecutionCardConfig | null);
+      const highestRiskCardKey = highestRiskCardConfig?.key ?? null;
+      const highestRiskCard = highestRiskCardConfig?.title ?? 'No major risk in this section';
       const relatedStepIds = EXECUTION_SECTION_STEP_IDS[section.key] ?? [];
       const sectionReminderItems = reminderAttention.filter((item) => relatedStepIds.includes(item.dependsOnStepId));
       const staleReminderKeys = sectionReminderItems.filter((item) => item.isStale).map((item) => item.reminderKey);
@@ -536,6 +542,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         readyCount,
         blockedCount,
         attentionCount,
+        highestRiskCardKey,
         highestRiskCard,
         staleReminderOverlap,
         reminderKeys,
@@ -777,6 +784,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
           {(section.reminderKeys.length > 0 || section.staleReminderKeys.length > 0) && (
             <div className="flex flex-wrap gap-2">
+              {section.highestRiskCardKey && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => document.getElementById(`execution-card-${section.highestRiskCardKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                >
+                  Focus highest-risk card
+                </Button>
+              )}
               {section.staleReminderKeys.length > 0 && (
                 <Button
                   size="sm"
@@ -829,7 +845,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
           <div className="space-y-6">
             {section.cards.map(({ key, ...card }) => (
-              <ExecutionSnapshotCard key={key} {...card} />
+              <ExecutionSnapshotCard key={key} anchorId={`execution-card-${key}`} {...card} />
             ))}
           </div>
         </div>
