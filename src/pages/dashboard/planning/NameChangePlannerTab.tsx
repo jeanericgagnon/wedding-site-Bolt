@@ -48,6 +48,13 @@ interface ReminderPostureCardConfig {
   tone?: 'warning' | 'primary' | 'danger' | 'neutral';
 }
 
+interface ExecutionCardSectionConfig {
+  key: string;
+  title: string;
+  description: string;
+  cards: ExecutionCardConfig[];
+}
+
 interface Props {
   draft: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
@@ -284,8 +291,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       },
     ];
   }, [reminderAttention.length, reminderAttentionSummary]);
-  const executionCards = useMemo<ExecutionCardConfig[]>(() => {
-    const cards: ExecutionCardConfig[] = [
+  const executionSections = useMemo<ExecutionCardSectionConfig[]>(() => {
+    const coreGovernmentCards: ExecutionCardConfig[] = [
       {
         key: 'ssa',
         title: 'Guided execution: SSA first',
@@ -311,7 +318,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     ];
 
     if (draft.passport_needs_update) {
-      cards.push(
+      coreGovernmentCards.push(
         {
           key: 'passport',
           title: 'Guided execution: passport follow-through',
@@ -326,8 +333,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       );
     }
 
+    const workIdentityCards: ExecutionCardConfig[] = [];
+
     if (draft.employment_status === 'employed' || draft.employment_status === 'self_employed') {
-      cards.push(
+      workIdentityCards.push(
         {
           key: 'employer',
           title: 'Guided execution: employer / payroll follow-through',
@@ -353,7 +362,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       );
     }
 
-    cards.push(
+    const institutionCards: ExecutionCardConfig[] = [
       {
         key: 'banks',
         title: 'Guided execution: banks / credit cards',
@@ -409,6 +418,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         payloadDescription: 'Structured downstream packet for display-name and lightweight social/account identity updates.',
         snapshot: courtesyExecutionSnapshot,
       },
+    ];
+
+    const cleanupCards: ExecutionCardConfig[] = [
       {
         key: 'voter',
         title: 'Guided execution: California voter registration',
@@ -420,10 +432,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         payloadDescription: 'Structured downstream packet for California voter registration updates.',
         snapshot: voterExecutionSnapshot,
       },
-    );
+    ];
 
     if (draft.passport_needs_update) {
-      cards.push({
+      cleanupCards.push({
         key: 'tsa',
         title: 'Guided execution: TSA / travel profiles',
         description: 'Travel-facing execution slice for TSA PreCheck and loyalty/travel profile follow-through once passport work is underway.',
@@ -436,7 +448,32 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       });
     }
 
-    return cards;
+    return [
+      {
+        key: 'core-government',
+        title: 'Core government path',
+        description: 'The federal/state backbone. This is the sequence that makes the rest of the name-change system easier instead of messier.',
+        cards: coreGovernmentCards,
+      },
+      {
+        key: 'work-identity',
+        title: 'Work identity follow-through',
+        description: 'Employment-linked updates that usually matter once the government path and primary ID are actually moving.',
+        cards: workIdentityCards,
+      },
+      {
+        key: 'institutional',
+        title: 'Institutional follow-through',
+        description: 'The long-tail admin lanes where mismatched records get annoying fast if they lag behind the identity backbone.',
+        cards: institutionCards,
+      },
+      {
+        key: 'cleanup',
+        title: 'Cleanup and tail-end identity sync',
+        description: 'Lower-volume but still real updates that round out the workflow once the major lanes are already in motion.',
+        cards: cleanupCards,
+      },
+    ].filter((section) => section.cards.length > 0);
   }, [
     bankExecutionSnapshot,
     courtesyExecutionSnapshot,
@@ -678,8 +715,19 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         </div>
       </Card>
 
-      {executionCards.map(({ key, ...card }) => (
-        <ExecutionSnapshotCard key={key} {...card} />
+      {executionSections.map((section) => (
+        <div key={section.key} className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">{section.title}</h3>
+            <p className="text-sm text-text-secondary">{section.description}</p>
+          </div>
+
+          <div className="space-y-6">
+            {section.cards.map(({ key, ...card }) => (
+              <ExecutionSnapshotCard key={key} {...card} />
+            ))}
+          </div>
+        </div>
       ))}
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
