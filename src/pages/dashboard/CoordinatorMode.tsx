@@ -34,6 +34,7 @@ import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
 import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
 import { getCoordinatorCheckInBoardTargetId, getCoordinatorCheckInTargetState } from '../../lib/coordinatorCheckInTargetState';
 import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState } from '../../lib/coordinatorTimelineTargetState';
+import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetState';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -381,6 +382,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const checkInTargetState = useMemo(() => getCoordinatorCheckInTargetState({ boardTargetId: checkInBoardTargetId, activeGuestId }), [checkInBoardTargetId, activeGuestId]);
   const timelineBoardTargetId = useMemo(() => getCoordinatorTimelineBoardTargetId({ liveEventId, upNextEventId }), [liveEventId, upNextEventId]);
   const timelineTargetState = useMemo(() => getCoordinatorTimelineTargetState({ boardTargetId: timelineBoardTargetId, activeTimelineEventId }), [timelineBoardTargetId, activeTimelineEventId]);
+  const qnaBoardTargetId = useMemo(() => getFirstOpenCoordinatorQnaId(qnaItems), [qnaItems]);
+  const qnaTargetState = useMemo(() => getCoordinatorQnaTargetState({ boardTargetId: qnaBoardTargetId, activeQnaId }), [qnaBoardTargetId, activeQnaId]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -1050,7 +1053,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
             <div className="border-t border-border/60 pt-3">
               <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-text-primary">Guest questions{panelFocus === 'qna' ? ' · focus' : ''}{activeQnaId ? ` · ${getCoordinatorActiveTargetLabel('qna')}` : ''}</p>
+                <p className="text-sm font-medium text-text-primary">Guest questions{panelFocus === 'qna' ? ' · focus' : ''}{activeQnaId ? ` · ${getCoordinatorActiveTargetLabel('qna')}` : ''}{qnaTargetState.label ? ` · ${qnaTargetState.label}` : ''}</p>
                 <p className="text-[11px] text-text-tertiary">{qnaCounts.open} open · {qnaCounts.answered} answered</p>
               </div>
               <fieldset disabled={!canEditQna}>
@@ -1069,7 +1072,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   qnaItems.slice(0, 8).map((item) => (
                     <div key={item.id} className={`text-xs border rounded-md px-2.5 py-2 space-y-2 ${activeQnaId === item.id ? 'border-primary/40 ring-2 ring-primary/10 bg-primary/5' : 'border-border/50'}`}>
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-text-secondary">{item.question}</span>
+                        <div className="space-y-1">
+                          <span className="text-text-secondary">{item.question}</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {qnaBoardTargetId === item.id && (
+                              <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${qnaTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                                {qnaTargetState.isBoardTargetActive ? 'Board question in progress' : 'Board question'}
+                              </span>
+                            )}
+                            {activeQnaId === item.id && qnaBoardTargetId !== item.id && (
+                              <span className="px-2 py-0.5 rounded border whitespace-nowrap border-primary/20 bg-primary/5 text-primary">
+                                Working question
+                              </span>
+                            )}
+                          </div>
+                        </div>
                         <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${item.status === 'answered' ? 'text-success border-success/35 bg-success/5' : 'text-warning border-warning/35 bg-warning/5'}`}>
                           {item.status === 'answered' ? 'Answered' : 'New'}
                         </span>
