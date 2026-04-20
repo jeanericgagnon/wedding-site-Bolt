@@ -261,7 +261,17 @@ function readSavedComposerTemplates(): SavedComposerTemplate[] {
     const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.map((item) => {
+      const createdAt = typeof item?.createdAt === 'string' ? item.createdAt : new Date().toISOString();
+      const updatedAt = typeof item?.updatedAt === 'string' ? item.updatedAt : createdAt;
+      return {
+        ...item,
+        createdAt,
+        updatedAt,
+      } as SavedComposerTemplate;
+    });
   } catch {
     return [];
   }
