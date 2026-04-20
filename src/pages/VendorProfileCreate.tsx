@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { generateVendorProfileDraft, createVendorProfile, type VendorProfileDraft } from '../lib/vendorProfiles';
+import { Link, useNavigate } from 'react-router-dom';
+import { generateVendorProfileDraft, createVendorProfile, type VendorProfile, type VendorProfileDraft } from '../lib/vendorProfiles';
 import { useToast } from '../components/ui/Toast';
 
 function normalizeImageLines(input: string): string[] {
@@ -20,6 +20,7 @@ export const VendorProfileCreatePage: React.FC = () => {
   const [draft, setDraft] = useState<VendorProfileDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [imageEditor, setImageEditor] = useState('');
+  const [createdProfile, setCreatedProfile] = useState<VendorProfile | null>(null);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +29,7 @@ export const VendorProfileCreatePage: React.FC = () => {
       const nextDraft = await generateVendorProfileDraft(form);
       const next = { ...nextDraft, contact_email: form.contactEmail.trim() || nextDraft.contact_email };
       setDraft(next);
+      setCreatedProfile(null);
       setImageEditor([next.hero_image_url, ...next.image_urls].filter(Boolean).join('\n'));
       toast('Vendor draft generated.', 'success');
     } catch (err) {
@@ -42,12 +44,23 @@ export const VendorProfileCreatePage: React.FC = () => {
     try {
       setSaving(true);
       const created = await createVendorProfile(draft);
+      setCreatedProfile(created);
       toast('Vendor page created.', 'success');
-      navigate(`/vendor/${created.slug}`);
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Could not create vendor page.', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCopyLiveUrl = async () => {
+    if (!createdProfile) return;
+    const url = `${window.location.origin}/vendor/${createdProfile.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('Live vendor URL copied.', 'success');
+    } catch {
+      window.prompt('Copy live vendor URL:', url);
     }
   };
 
@@ -114,6 +127,26 @@ export const VendorProfileCreatePage: React.FC = () => {
               <div className="text-sm text-[#8b6f53] self-center">Preferred path: /vendor/{draft.slug}</div>
             </div>
             <p className="text-xs text-[#8b6f53]">If that slug is already taken, publish will automatically use the next clean available URL.</p>
+          </div>
+        )}
+
+        {createdProfile && (
+          <div className="rounded-[28px] bg-[#2f261d] p-6 sm:p-8 text-white shadow-[0_24px_80px_rgba(31,21,12,0.24)] space-y-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-[#d8c4ad]">Published</p>
+              <h2 className="mt-2 text-2xl font-semibold">/{`vendor/${createdProfile.slug}`}</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link to={`/vendor/${createdProfile.slug}`} className="rounded-2xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d]">
+                Open live page
+              </Link>
+              <button type="button" onClick={handleCopyLiveUrl} className="rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white">
+                Copy live URL
+              </button>
+              <button type="button" onClick={() => navigate(0)} className="rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80">
+                Start another vendor
+              </button>
+            </div>
           </div>
         )}
       </div>

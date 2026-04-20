@@ -48,6 +48,7 @@ export const VendorProfilePage: React.FC = () => {
 
   const featuredImage = galleryImages[0] ?? null;
   const secondaryImages = galleryImages.slice(1, 6);
+  const initials = useMemo(() => profile?.vendor_name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') ?? 'VP', [profile?.vendor_name]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,9 +82,15 @@ export const VendorProfilePage: React.FC = () => {
     <div className="min-h-screen bg-[#f6f1ea] text-[#2f261d]">
       <div className="max-w-5xl mx-auto px-4 py-4 sm:px-6 sm:py-8 space-y-8 sm:space-y-12">
         <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_24px_80px_rgba(53,37,22,0.12)]">
-          {profile.hero_image_url && (
+          {profile.hero_image_url ? (
             <div className="aspect-[4/5] sm:aspect-[16/8] bg-[#e9dfd2]">
               <img src={profile.hero_image_url} alt={profile.vendor_name} className="h-full w-full object-cover" />
+            </div>
+          ) : (
+            <div className="aspect-[4/5] sm:aspect-[16/8] bg-[linear-gradient(135deg,#e9dfd2_0%,#f8f3ec_55%,#e1d3c2_100%)] flex items-center justify-center">
+              <div className="flex h-28 w-28 items-center justify-center rounded-full border border-white/60 bg-white/70 text-3xl font-semibold tracking-[0.18em] text-[#8b6f53] shadow-[0_18px_40px_rgba(53,37,22,0.08)] sm:h-36 sm:w-36 sm:text-4xl">
+                {initials}
+              </div>
             </div>
           )}
           <div className="p-6 sm:p-10 space-y-3">
