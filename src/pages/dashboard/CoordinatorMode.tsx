@@ -28,6 +28,7 @@ import { normalizeCoordinatorCommandState } from '../../lib/coordinatorCommandSt
 import { getCoordinatorCommandModeLabel } from '../../lib/coordinatorCommandModeLabel';
 import { getCoordinatorCommandModeGuidance } from '../../lib/coordinatorCommandModeGuidance';
 import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
+import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFocusReason';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -97,6 +98,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [activeGuestId, setActiveGuestId] = useState<string | null>(null);
   const [lastAlertSuggestionKey, setLastAlertSuggestionKey] = useState<string | null>(null);
   const [commandSource, setCommandSource] = useState<'primary-action' | 'escalation' | 'correction' | null>(null);
+  const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -496,6 +498,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setPanelFocus(next.panelFocus);
     setCheckInFilter(next.checkInFilter);
     setCheckInReviewOnly(next.checkInReviewOnly);
+    setNeutralFocusReason(getCoordinatorNeutralFocusReason(next.panelFocus));
     if (next.panelFocus === 'qna') {
       setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
     }
