@@ -40,6 +40,7 @@ import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommand
 import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPriority';
 import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorCommandPriorityReason';
 import { getCoordinatorCommandPriorityTargetReason } from '../../lib/coordinatorCommandPriorityTargetReason';
+import { getCoordinatorCommandPriorityCta } from '../../lib/coordinatorCommandPriorityCta';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -421,6 +422,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     timelineTargetName: timelineTargetEvent?.event_name ?? null,
     qnaTargetQuestion: qnaTargetItem?.question ?? null,
   }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
+  const priorityCommandCta = useMemo(() => getCoordinatorCommandPriorityCta(priorityCommandLabel), [priorityCommandLabel]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -769,8 +771,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
               >
                 <span className="text-[10px] font-medium text-text-primary">{item.label}</span>
                 {priorityCommandLabel === item.label && (
-                  <span className="ml-1 rounded-full border border-primary/20 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-primary">
-                    Priority — {priorityCommandReason}{priorityCommandTargetReason ? ` ${priorityCommandTargetReason}` : ''}
+                  <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-primary/20 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+                    <span>Priority — {priorityCommandReason}{priorityCommandTargetReason ? ` ${priorityCommandTargetReason}` : ''}</span>
+                    <span className="rounded-full border border-primary/15 bg-primary/[0.05] px-1.5 py-0.5">{priorityCommandCta}</span>
                   </span>
                 )}
                 <span className="mx-1 text-[10px] text-text-tertiary">·</span>
