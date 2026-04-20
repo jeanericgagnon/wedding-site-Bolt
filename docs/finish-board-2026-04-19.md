@@ -250,6 +250,7 @@ Things that do **not** count as done:
 - top-level Home/Product promise surfaces had still been slightly stronger than the earned v1 bar around guest scale, coordination shape, and archive ambition
 - top-level export wording had still been broader than the current slice-by-slice proof around data portability
 - Product grouping still risked blending a should-ship memories slice into the core must-ship usage story
+- Product summary language still risked treating the whole current product shape as equally earned instead of separating core v1 from broader direction
 
 **Proof needed**
 - brutal end-to-end smoke over real couple and guest path
@@ -395,6 +396,7 @@ Primary proof artifact for this now exists at:
 - Added `docs/v1-smoke-proof-log.md` as the hard must-ship proof gate so v1 readiness can be judged by flow evidence and blocker severity instead of scattered audits.
 - Tightened Home FAQ export language so the top-level trust surface no longer promises a uniform export contract across every slice before that proof exists.
 - Tightened Product grouping so a should-ship memories slice no longer reads like part of the core must-ship “what couples actually use” v1 story.
+- Tightened Product summary language so the page now explicitly separates the core earned v1 line from broader surrounding product direction.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

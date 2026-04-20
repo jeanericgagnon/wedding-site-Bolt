@@ -292,7 +292,7 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-6xl">
           <SlideReveal from="left" className="mb-6">
             <h2 className="section-title mb-2">Everything you get</h2>
-            <p className="text-ink/70">Everything here is part of the current DayOf product shape, with the v1 line centered on what couples can actually rely on today.</p>
+            <p className="text-ink/70">This is the current DayOf product shape. The core v1 line is centered on what couples can actually rely on today, while some surrounding slices remain broader product direction unless proven harder.</p>
           </SlideReveal>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {FEATURE_AUDIT_GROUPS.map((group) => (
