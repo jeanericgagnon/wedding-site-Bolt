@@ -1361,9 +1361,11 @@ export const DashboardMessages: React.FC = () => {
     setSending(true);
     try {
       const recipients = getRecipients(formData.audience);
+      const totalAudienceCount = recipients.length;
       const recipientCount = formData.channel === 'sms'
         ? recipients.filter(g => g.phone).length
         : recipients.filter(g => g.email).length;
+      const skippedRecipientCount = Math.max(totalAudienceCount - recipientCount, 0);
 
       if (recipientCount === 0 && !saveAsDraft) {
         toast(formData.channel === 'sms'
@@ -1393,7 +1395,7 @@ export const DashboardMessages: React.FC = () => {
       const recipientMeta = {
         audience: formData.audience,
         audience_label: selectedAudience?.label ?? null,
-        recipient_count: recipientCount,
+        recipient_count: isDemoMode && isSendNow ? totalAudienceCount : recipientCount,
         campaignName: campaignName || null,
         campaignType: selectedTemplate.campaignType ?? null,
         templateKey: formData.templateKey,
@@ -1409,11 +1411,11 @@ export const DashboardMessages: React.FC = () => {
           body: formData.body,
           sent_at: status === 'queued' ? new Date().toISOString() : null,
           scheduled_for: scheduledFor,
-          status: status === 'queued' ? 'sent' : status,
+          status: status === 'queued' ? (skippedRecipientCount > 0 ? 'partial' : 'sent') : status,
           channel: formData.channel,
           audience_filter: formData.audience,
           recipient_filter: recipientMeta,
-          recipient_count: recipientCount,
+          recipient_count: status === 'queued' ? totalAudienceCount : recipientCount,
           delivered_count: status === 'queued' ? recipientCount : 0,
           failed_count: 0,
         };
@@ -1466,7 +1468,11 @@ export const DashboardMessages: React.FC = () => {
 
       if (isSendNow && inserted?.id) {
         if (isDemoMode) {
-          toast(`Delivered to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} (demo)`, 'success');
+          if (skippedRecipientCount > 0) {
+            toast(`Delivered ${recipientCount} • skipped ${skippedRecipientCount} (demo)`, 'info');
+          } else {
+            toast(`Delivered to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} (demo)`, 'success');
+          }
           return;
         }
 
