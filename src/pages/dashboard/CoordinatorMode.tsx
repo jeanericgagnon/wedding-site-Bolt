@@ -41,6 +41,7 @@ import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPrior
 import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorCommandPriorityReason';
 import { getCoordinatorCommandPriorityTargetReason } from '../../lib/coordinatorCommandPriorityTargetReason';
 import { getCoordinatorCommandPriorityCta } from '../../lib/coordinatorCommandPriorityCta';
+import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -114,6 +115,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [lastAlertSuggestionKey, setLastAlertSuggestionKey] = useState<string | null>(null);
   const [commandSource, setCommandSource] = useState<'primary-action' | 'escalation' | 'correction' | null>(null);
   const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);
+  const [commandJumpLabel, setCommandJumpLabel] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -566,6 +568,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const target = getCoordinatorCommandSummaryTarget(label);
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
+    setCommandJumpLabel(getCoordinatorCommandJumpLabel(label));
     if (label === 'Check-in') {
       setCheckInFilter('arrivals');
       if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
@@ -758,7 +761,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
         <div className="rounded-lg border border-border/35 bg-white px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
           <div className="flex items-center justify-between gap-3 mb-2">
-            <p className="text-xs font-medium text-text-primary">Live command summary</p>
+            <div>
+              <p className="text-xs font-medium text-text-primary">Live command summary</p>
+              {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
+            </div>
             <p className="text-[11px] text-text-tertiary">What the board thinks matters right now</p>
           </div>
           <div className="flex flex-wrap gap-2">
