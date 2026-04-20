@@ -1603,18 +1603,28 @@ export const DashboardMessages: React.FC = () => {
 
   async function handleSendScheduledNow(message: Message) {
     if (isDemoMode) {
+      const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+      const recipients = getRecipients(audience);
+      const deliveredCount = message.channel === 'sms'
+        ? recipients.filter((guest) => !!guest.phone).length
+        : recipients.filter((guest) => !!guest.email).length;
+      const skippedCount = Math.max(recipients.length - deliveredCount, 0);
+
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
           ? {
               ...item,
-              status: 'sent',
+              status: skippedCount > 0 ? 'partial' : 'sent',
               sent_at: new Date().toISOString(),
-              delivered_count: getRecipientCount(item),
+              delivered_count: deliveredCount,
               failed_count: 0,
+              recipient_count: recipients.length,
             }
           : item
       )));
-      toast('Scheduled message sent now (demo).', 'success');
+      toast(skippedCount > 0
+        ? `Scheduled message sent in demo: delivered ${deliveredCount} • skipped ${skippedCount}.`
+        : `Scheduled message sent in demo: delivered ${deliveredCount}.`, skippedCount > 0 ? 'info' : 'success');
       return;
     }
 
@@ -1728,18 +1738,28 @@ export const DashboardMessages: React.FC = () => {
 
       setProcessingScheduled(true);
       try {
-        setMessages((prev) => prev.map((message) => (
-          dueIds.includes(message.id)
-            ? {
-                ...message,
-                status: 'sent',
-                sent_at: new Date().toISOString(),
-                delivered_count: getRecipientCount(message),
-                failed_count: 0,
-              }
-            : message
-        )));
-        toast(`Processed ${dueIds.length} scheduled message${dueIds.length !== 1 ? 's' : ''} (demo).`, 'success');
+        let skippedRecipients = 0;
+        setMessages((prev) => prev.map((message) => {
+          if (!dueIds.includes(message.id)) return message;
+
+          const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+          const recipients = getRecipients(audience);
+          const deliveredCount = message.channel === 'sms'
+            ? recipients.filter((guest) => !!guest.phone).length
+            : recipients.filter((guest) => !!guest.email).length;
+          const skippedCount = Math.max(recipients.length - deliveredCount, 0);
+          skippedRecipients += skippedCount;
+
+          return {
+            ...message,
+            status: skippedCount > 0 ? 'partial' : 'sent',
+            sent_at: new Date().toISOString(),
+            delivered_count: deliveredCount,
+            failed_count: 0,
+            recipient_count: recipients.length,
+          };
+        }));
+        toast(`Processed ${dueIds.length} scheduled message${dueIds.length !== 1 ? 's' : ''} in demo${skippedRecipients > 0 ? ` • skipped ${skippedRecipients} recipient${skippedRecipients !== 1 ? 's' : ''}` : ''}.`, skippedRecipients > 0 ? 'info' : 'success');
       } finally {
         setProcessingScheduled(false);
       }
