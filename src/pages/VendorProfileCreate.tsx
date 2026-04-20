@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { generateVendorProfileDraft, createVendorProfile, type VendorProfileDraft } from '../lib/vendorProfiles';
 import { useToast } from '../components/ui/Toast';
 
+function normalizeImageLines(input: string): string[] {
+  return input
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item, index, arr) => arr.indexOf(item) === index)
+    .slice(0, 6);
+}
+
 export const VendorProfileCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -10,13 +19,16 @@ export const VendorProfileCreatePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState<VendorProfileDraft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [imageEditor, setImageEditor] = useState('');
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
       const nextDraft = await generateVendorProfileDraft(form);
-      setDraft({ ...nextDraft, contact_email: form.contactEmail.trim() || nextDraft.contact_email });
+      const next = { ...nextDraft, contact_email: form.contactEmail.trim() || nextDraft.contact_email };
+      setDraft(next);
+      setImageEditor([next.hero_image_url, ...next.image_urls].filter(Boolean).join('\n'));
       toast('Vendor draft generated.', 'success');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Could not generate vendor draft.', 'error');
@@ -68,8 +80,26 @@ export const VendorProfileCreatePage: React.FC = () => {
             <textarea value={draft.about} onChange={(e) => setDraft((prev) => prev ? { ...prev, about: e.target.value } : prev)} className="min-h-[132px] w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-[#4b3a2c] leading-7 outline-none" />
             <input value={draft.slug} onChange={(e) => setDraft((prev) => prev ? { ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') } : prev)} placeholder="vendor-page-slug" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
             <input type="email" value={draft.contact_email ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, contact_email: e.target.value || null } : prev)} placeholder="Contact email for direct inquiry CTA" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Images (first line becomes hero)</p>
+              <textarea
+                value={imageEditor}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  setImageEditor(nextValue);
+                  const images = normalizeImageLines(nextValue);
+                  setDraft((prev) => prev ? {
+                    ...prev,
+                    hero_image_url: images[0] ?? null,
+                    image_urls: images.slice(1),
+                  } : prev);
+                }}
+                placeholder="One image URL per line"
+                className="min-h-[120px] w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none"
+              />
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {(draft.image_urls || []).slice(0, 6).map((image: string) => (
+              {[draft.hero_image_url, ...(draft.image_urls || [])].filter((image): image is string => Boolean(image)).slice(0, 6).map((image) => (
                 <img key={image} src={image} alt={draft.vendor_name} className="aspect-square w-full rounded-2xl object-cover bg-[#f3eadf]" />
               ))}
             </div>

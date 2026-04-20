@@ -35,6 +35,14 @@ function extractInstagramHandle(url: string | null): string | null {
   }
 }
 
+function titleCase(input: string): string {
+  return input
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
 function extractDomainLabel(url: string | null): string | null {
   if (!url) return null;
   try {
@@ -103,11 +111,15 @@ Deno.serve(async (req) => {
     if (!vendorName || typeof vendorName !== 'string') {
       return new Response(JSON.stringify({ error: 'vendorName is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    if (!instagramUrl && !websiteUrl) {
+      return new Response(JSON.stringify({ error: 'Add at least an Instagram URL or website URL.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     const normalizedWebsite = normalizeUrl(websiteUrl);
     const normalizedInstagram = normalizeUrl(instagramUrl);
     const instagramHandle = extractInstagramHandle(normalizedInstagram);
     const websiteLabel = extractDomainLabel(normalizedWebsite);
+    const sourceLabel = instagramHandle ? `@${instagramHandle}` : websiteLabel ? titleCase(websiteLabel) : 'public source';
 
     let websiteTitle: string | null = null;
     let websiteDescription: string | null = null;
@@ -143,10 +155,10 @@ Deno.serve(async (req) => {
     const about = websiteDescription?.trim()
       ? websiteDescription.trim().slice(0, 220)
       : instagramHandle
-        ? `${vendorName} is a wedding vendor featured here from public Instagram details so couples can quickly get the essentials in one clean place. Reach out directly to learn more about availability, style, and fit.`
+        ? `${vendorName} is a wedding vendor surfaced from public Instagram details. This page keeps the strongest images, core links, and a direct inquiry path in one simple place so couples can get oriented fast.`
         : websiteLabel
-          ? `${vendorName} is a wedding vendor profile generated from public web details from ${websiteLabel}, keeping the key images, links, and contact path in one fast page.`
-          : `${vendorName} is a wedding vendor profile generated from public web details so couples can quickly get the essentials in one clean place.`;
+          ? `${vendorName} is a wedding vendor profile generated from public web details from ${titleCase(websiteLabel)}. It keeps the key images, source links, and inquiry path in one clean page for quick couple review.`
+          : `${vendorName} is a wedding vendor profile generated from public source details so couples can quickly get the essentials in one clean place.`;
 
     const websiteShot = screenshotUrl(normalizedWebsite);
     const instagramShot = screenshotUrl(normalizedInstagram);
@@ -175,6 +187,9 @@ Deno.serve(async (req) => {
       website_url: normalizedWebsite,
       contact_email: null,
       source_payload: {
+        sourceLabel,
+        instagramHandle,
+        websiteLabel,
         websiteTitle,
         websiteDescription,
         websiteImage,
