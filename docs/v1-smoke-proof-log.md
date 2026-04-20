@@ -264,12 +264,14 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: Messaging still exposed scheduled-send execution controls to non-compose roles. Running due sends, sending scheduled campaigns now, and moving scheduled campaigns back to draft are now gated by compose permission in both the UI and handler paths.
 - Concrete finish gap found and fixed: Coordinator Mode still relied too heavily on UI disable states for day-of alerts and Q&A creation. Handler-level guards now block unauthorized alert sending/scheduling and guest-question creation for weaker collaborator roles.
 - Concrete finish gap found and fixed: Planning write paths still trusted tab-level disable states too much. Task, budget, and vendor create/update/delete handlers now hard-stop based on the collaborator’s actual planning permissions, including total-budget updates and milestone generation.
+- Concrete finish gap found and fixed: Guests bulk follow-up handlers still trusted menu/button disable states too much. Read-only collaborator roles can no longer trigger thank-you updates, clear all check-ins, or send bulk/due reminders through handler paths.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
 - `npm run build` passes after the Messaging scheduled-send permission fix.
 - `npm run build` passes after the Coordinator Mode permission fix.
 - `npm run build` passes after the Planning handler permission fix.
+- `npm run build` passes after the Guests bulk-action permission fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Finish-lane read right now

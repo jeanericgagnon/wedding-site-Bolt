@@ -1210,6 +1210,10 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleMarkAllDueThankYous = async () => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot update thank-you status.', 'info');
+      return;
+    }
     if (!weddingSiteId || isDemoMode) return;
     const ids = guests.filter((g) => dueThankYouGuestIds.has(g.id)).map((g) => g.id);
     if (ids.length === 0) {
@@ -1232,6 +1236,10 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleClearAllCheckIns = async () => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot clear guest check-ins.', 'info');
+      return;
+    }
     if (!weddingSiteId || isDemoMode) return;
     const checkedInCount = guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length;
     if (checkedInCount === 0) {
@@ -1539,6 +1547,10 @@ export const DashboardGuests: React.FC = () => {
   };
 
 const handleSendBulkInvitations = async () => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot send guest reminders from this view.', 'info');
+      return;
+    }
     if (reminderCandidates.length === 0) {
       toast('No reminder recipients in this filtered view.', 'error');
       return;
@@ -1618,6 +1630,10 @@ Proceed with send?`)) return;
   };
 
   const handleSendDueRemindersNow = async () => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot send due reminders.', 'info');
+      return;
+    }
     if (dueReminderCandidatesGlobal.length === 0) {
       toast('No guests are currently due for reminders.', 'error');
       return;
