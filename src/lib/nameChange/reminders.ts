@@ -3,6 +3,57 @@ import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminde
 
 const REMINDER_STALE_AFTER_MS = 1000 * 60 * 60 * 72;
 
+type NameChangeCoreStepReminderConfig = {
+  id: string;
+  label: string;
+  standardOffsetDays: number;
+  expeditedOffsetDays: number;
+  standardUrgency: NameChangeReminderSuggestion['urgency'];
+  expeditedUrgency: NameChangeReminderSuggestion['urgency'];
+  reason: string;
+  includeWhen?: (plan: NameChangePlan) => boolean;
+};
+
+const CORE_STEP_REMINDER_CONFIGS: Record<string, NameChangeCoreStepReminderConfig> = {
+  'federal-ssa': {
+    id: 'reminder-ssa-followup',
+    label: 'Check SSA name change progress',
+    standardOffsetDays: 3,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'medium' as const,
+    expeditedUrgency: 'high' as const,
+    reason: 'SSA is the anchor for the federal-first path, so an early follow-up helps keep the rest of the workflow from drifting.',
+  },
+  'state-dmv': {
+    id: 'reminder-dmv-followup',
+    label: 'Check California DMV name change progress',
+    standardOffsetDays: 5,
+    expeditedOffsetDays: 2,
+    standardUrgency: 'medium' as const,
+    expeditedUrgency: 'high' as const,
+    reason: 'California DMV progress is the main state identity hinge for downstream account updates.',
+  },
+  'federal-passport': {
+    id: 'reminder-passport-followup',
+    label: 'Check passport name-match progress',
+    standardOffsetDays: 4,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'medium' as const,
+    expeditedUrgency: 'high' as const,
+    reason: 'Travel-facing identity usually needs an early follow-up once SSA or DMV is moving.',
+    includeWhen: (plan: NameChangePlan) => plan.profile.passportNeedsUpdate,
+  },
+  'institutions-rollout': {
+    id: 'reminder-institutions-rollout',
+    label: 'Check downstream institution rollout progress',
+    standardOffsetDays: 10,
+    expeditedOffsetDays: 6,
+    standardUrgency: 'medium' as const,
+    expeditedUrgency: 'medium' as const,
+    reason: 'Once the core identity path is moving, the long tail of banks, insurance, utilities, and other accounts is where name-change workflows usually stall.',
+  },
+};
+
 function urgencyFromOffset(days: number): NameChangeReminderSuggestion['urgency'] {
   if (days <= 2) return 'high';
   if (days <= 7) return 'medium';
@@ -33,34 +84,18 @@ function adjustReminderSuggestionForStepState(
 export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameChangeReminderSuggestion[] {
   const suggestions: NameChangeReminderSuggestion[] = [];
 
-  suggestions.push({
-    id: 'reminder-ssa-followup',
-    label: 'Check SSA name change progress',
-    suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? 1 : 3,
-    reason: 'SSA is the anchor for the federal-first path, so an early follow-up helps keep the rest of the workflow from drifting.',
-    dependsOnStepId: 'federal-ssa',
-    urgency: plan.profile.urgencyLevel === 'expedited' ? 'high' : 'medium',
-  });
+  Object.entries(CORE_STEP_REMINDER_CONFIGS).forEach(([stepId, config]) => {
+    if (config.includeWhen && !config.includeWhen(plan)) return;
 
-  suggestions.push({
-    id: 'reminder-dmv-followup',
-    label: 'Check California DMV name change progress',
-    suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? 2 : 5,
-    reason: 'California DMV progress is the main state identity hinge for downstream account updates.',
-    dependsOnStepId: 'state-dmv',
-    urgency: plan.profile.urgencyLevel === 'expedited' ? 'high' : 'medium',
-  });
-
-  if (plan.profile.passportNeedsUpdate) {
     suggestions.push({
-      id: 'reminder-passport-followup',
-      label: 'Check passport name-match progress',
-      suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? 1 : 4,
-      reason: 'Travel-facing identity usually needs an early follow-up once SSA or DMV is moving.',
-      dependsOnStepId: 'federal-passport',
-      urgency: plan.profile.urgencyLevel === 'expedited' ? 'high' : 'medium',
+      id: config.id,
+      label: config.label,
+      suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? config.expeditedOffsetDays : config.standardOffsetDays,
+      reason: config.reason,
+      dependsOnStepId: stepId,
+      urgency: plan.profile.urgencyLevel === 'expedited' ? config.expeditedUrgency : config.standardUrgency,
     });
-  }
+  });
 
   NAME_CHANGE_INSTITUTION_LIBRARY.forEach((institution) => {
     const matchingStep = plan.steps.find((step) => step.id === `institution-${institution.key}`);

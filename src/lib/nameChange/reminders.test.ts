@@ -62,6 +62,9 @@ describe('name change reminder suggestions', () => {
     expect(reminders.find((reminder) => reminder.id === 'reminder-dmv-followup')).toMatchObject({
       dependsOnStepId: 'state-dmv',
     });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-institutions-rollout')).toMatchObject({
+      dependsOnStepId: 'institutions-rollout',
+    });
     expect(reminders.map((reminder) => reminder.suggestedOffsetDays)).toEqual([...reminders.map((reminder) => reminder.suggestedOffsetDays)].sort((a, b) => a - b));
     expect(reminders.some((reminder) => reminder.id === 'reminder-irs-employer')).toBe(true);
     expect(reminders.some((reminder) => reminder.id === 'reminder-banks')).toBe(true);
@@ -82,6 +85,10 @@ describe('name change reminder suggestions', () => {
     expect(reminders.find((reminder) => reminder.id === 'reminder-dmv-followup')).toMatchObject({
       suggestedOffsetDays: 2,
       urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-institutions-rollout')).toMatchObject({
+      suggestedOffsetDays: 6,
+      urgency: 'medium',
     });
   });
 
