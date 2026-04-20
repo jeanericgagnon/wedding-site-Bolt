@@ -158,11 +158,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
       try {
         if (isDemoMode) {
           if (!mounted) return;
+          const now = new Date().toISOString();
+          setSiteId('demo-site');
+          setActiveSiteRole('owner');
+          setCoordinatorRole('owner');
           setGuests([
-            { id: '1', first_name: 'Alex', last_name: 'Rivera', name: 'Alex Rivera', rsvp_status: 'confirmed', checked_in_at: new Date().toISOString() },
+            { id: '1', first_name: 'Alex', last_name: 'Rivera', name: 'Alex Rivera', rsvp_status: 'confirmed', checked_in_at: now },
             { id: '2', first_name: 'Sam', last_name: 'Lee', name: 'Sam Lee', rsvp_status: 'pending', checked_in_at: null },
           ]);
-          setEvents([{ id: 'e1', event_name: 'Ceremony', start_time: new Date().toISOString() }]);
+          setEvents([{ id: 'e1', event_name: 'Ceremony', start_time: now }]);
           setEventGuestIds({ e1: new Set(['1', '2']) });
           return;
         }
