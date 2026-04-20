@@ -391,6 +391,17 @@ export interface NameChangeExecutionTargetDefinition {
   recommendedFormCode: string;
   prerequisiteRules: NameChangeExecutionPrerequisiteRule[];
   autofillTargetFields: string[];
+  checklistSpecs: Array<{
+    key: string;
+    label: string;
+    kind: 'requirement' | 'field_presence' | 'document_support';
+    requirementKey?: string;
+    targetField?: string;
+    documentKinds?: NameChangeDocumentKind[];
+    missingReason: string;
+    attentionReason?: string;
+    satisfiedReason: string;
+  }>;
 }
 
 export interface NameChangeMarriageCertificateExtraction {
