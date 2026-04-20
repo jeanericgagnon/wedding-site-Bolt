@@ -515,6 +515,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   React.useEffect(() => {
     setScheduleInput(initialScheduleInput);
   }, [initialScheduleInput, message.id]);
+  const scheduleInputIsPast = scheduleInput ? isPastScheduledTime(new Date(scheduleInput).toISOString()) : false;
   const messageDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id);
   const failedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'failed');
   const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
@@ -619,12 +620,15 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                     onChange={(e) => setScheduleInput(e.target.value)}
                     className="w-full px-3 py-2.5 border border-border rounded-lg bg-white text-sm text-text-primary"
                   />
+                  {scheduleInputIsPast && (
+                    <p className="mt-2 text-[11px] text-warning">Pick a future time here. If you want it to go now, use “Send scheduled now” instead.</p>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={rescheduling || !scheduleInput}
+                    disabled={rescheduling || !scheduleInput || scheduleInputIsPast}
                     onClick={async () => {
                       setRescheduling(true);
                       try {
@@ -1674,6 +1678,11 @@ export const DashboardMessages: React.FC = () => {
   }
 
   async function handleRescheduleMessage(message: Message, scheduledFor: string) {
+    if (isPastScheduledTime(scheduledFor)) {
+      toast('Pick a future time to reschedule. Use send now if you want it to go immediately.', 'error');
+      return;
+    }
+
     if (isDemoMode) {
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
