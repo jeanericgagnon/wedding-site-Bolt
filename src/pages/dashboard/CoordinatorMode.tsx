@@ -52,6 +52,9 @@ import { shouldResetCoordinatorManualOverride } from '../../lib/coordinatorManua
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
+import { getCoordinatorAlertOverrideLabel } from '../../lib/coordinatorAlertOverrideLabel';
+import { getCoordinatorAlertOverrideTargetLabel } from '../../lib/coordinatorAlertOverrideTargetLabel';
+import { getCoordinatorAlertOverrideCurrentLabel } from '../../lib/coordinatorAlertOverrideCurrentLabel';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -361,6 +364,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
     body: alertForm.body,
     audience: alertForm.audience,
   }), [preferredAlertSuggestion, alertForm.subject, alertForm.body, alertForm.audience]);
+  const alertOverrideLabel = useMemo(() => getCoordinatorAlertOverrideLabel({
+    aligned: alertTargetCue.aligned,
+    laneLabel: alertLaneLabel,
+  }), [alertTargetCue.aligned, alertLaneLabel]);
+  const alertOverrideTargetLabel = useMemo(() => getCoordinatorAlertOverrideTargetLabel(preferredAlertSuggestion), [preferredAlertSuggestion]);
+  const alertOverrideCurrentLabel = useMemo(() => getCoordinatorAlertOverrideCurrentLabel({
+    subject: alertForm.subject,
+    audienceLabel: alertSummary.audienceLabel,
+  }), [alertForm.subject, alertSummary.audienceLabel]);
 
   useEffect(() => {
     if (!preferredAlertSuggestion) return;
@@ -1245,14 +1257,23 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   </div>
                   <p className="text-[11px] font-medium text-text-primary">{alertTargetCue.title}</p>
                   <p className="text-[11px] text-text-secondary">{alertTargetCue.detail}</p>
-                  {!alertTargetCue.aligned && preferredAlertSuggestion && (
-                    <button
-                      type="button"
-                      onClick={() => setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion }))}
-                      className="inline-flex w-fit px-2.5 py-1 rounded-md border border-amber-300 bg-white text-[11px] font-medium text-amber-800"
-                    >
-                      Re-align to {preferredAlertSuggestion.label.toLowerCase()}
-                    </button>
+                  {!alertTargetCue.aligned && (
+                    <div className="space-y-2">
+                      {alertOverrideLabel && <p className="text-[11px] text-amber-800">{alertOverrideLabel}</p>}
+                      <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                        {alertOverrideTargetLabel && <p className="text-amber-800/80">{alertOverrideTargetLabel}</p>}
+                        {alertOverrideCurrentLabel && <p className="text-text-secondary">{alertOverrideCurrentLabel}</p>}
+                        {preferredAlertSuggestion && (
+                          <button
+                            type="button"
+                            onClick={() => setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion }))}
+                            className="inline-flex w-fit px-2.5 py-1 rounded-md border border-amber-300 bg-white text-[11px] font-medium text-amber-800"
+                          >
+                            Re-align to {preferredAlertSuggestion.label.toLowerCase()}
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   )}
                   <p className="text-[11px] text-text-secondary">{alertSummary.intentLabel} · {alertSummary.audienceLabel} · {alertSummary.recipientLabel}</p>
                   <p className="text-[11px] text-text-tertiary">{alertSummary.deliveryLabel}</p>
