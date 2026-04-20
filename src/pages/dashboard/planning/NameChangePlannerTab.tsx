@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sparkles } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
 import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmvFlow';
@@ -99,6 +100,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const requirementSnapshot = useMemo(() => evaluateNameChangeRequirements(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const autofillPrepSnapshot = useMemo(() => buildNameChangeAutofillPrepSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
+  const bankExecutionSnapshot = useMemo(() => buildNameChangeBankExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const dmvExecutionSnapshot = useMemo(() => buildNameChangeDmvExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const passportExecutionSnapshot = useMemo(() => buildNameChangePassportExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
@@ -633,6 +635,81 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
         </div>
       </Card>}
+
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Guided execution: banks / credit cards</h3>
+            <p className="text-sm text-text-secondary">Institutional execution slice for bank and card account updates once primary photo ID is moving.</p>
+          </div>
+          <span className={`rounded-full px-2 py-1 text-xs ${bankExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+            {bankExecutionSnapshot.ready ? 'ready for bank packet prep' : 'not ready'}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {bankExecutionSnapshot.checklist.map((item) => (
+            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                  {item.status}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <h4 className="text-sm font-semibold text-text-primary">Bank sequencing dependencies</h4>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {bankExecutionSnapshot.sequence.dependencies.map((dependency) => (
+              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
+                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                    {dependency.status}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {bankExecutionSnapshot.autofillFields.map((field) => (
+            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
+              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-text-primary">Bank packet snapshot</h4>
+              <p className="text-xs text-text-secondary">Structured downstream packet for bank and credit-card account updates.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {bankExecutionSnapshot.formPayload.summary.ready} ready · {bankExecutionSnapshot.formPayload.summary.missing} missing · {bankExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {bankExecutionSnapshot.formPayload.fields.map((field) => (
+              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
+                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
+                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <Card>

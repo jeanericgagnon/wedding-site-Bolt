@@ -1,10 +1,11 @@
+import { NAME_CHANGE_BANK_PACKET_CONTRACT } from './bankPacket';
 import { NAME_CHANGE_DMV_FORM_CONTRACT } from './dmvForm';
 import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -274,6 +275,84 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         documentKinds: ['social_security_card', 'current_drivers_license', 'current_passport'],
         missingReason: 'No employer-supporting identity document is represented in intake yet.',
         satisfiedReason: 'An employer-supporting identity document exists in intake.',
+      },
+    ],
+  },
+  banks: {
+    key: 'banks',
+    label: 'Banks and credit cards',
+    lane: 'state',
+    recommendedFormCode: NAME_CHANGE_BANK_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'banks',
+    prerequisiteRules: [
+      {
+        key: 'primary-photo-id-progress',
+        label: 'Primary photo ID underway before bank rollout',
+        required: true,
+        requiredStepId: 'state-dmv',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'Banks are usually easiest once your primary photo ID is moving or already updated.',
+        attentionReason: 'Primary photo ID is moving, which supports bank update follow-through.',
+        satisfiedReason: 'Primary photo ID is already moving or complete for bank update follow-through.',
+      },
+      {
+        key: 'passport-or-dmv-progress',
+        label: 'At least one travel / ID-facing record is moving',
+        required: false,
+        requiredStepId: 'federal-passport',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'No passport progress is recorded yet, so bank updates may rely only on DMV proof.',
+        attentionReason: 'Passport progress exists, which helps cross-check travel-facing identity records.',
+        satisfiedReason: 'Passport progress exists for cross-checking travel-facing identity records.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'legal.marriage_date',
+      'applicant.county',
+    ],
+    checklistSpecs: [
+      {
+        key: 'legal-proof-document',
+        label: 'Legal proof ready for bank packet',
+        kind: 'requirement',
+        requirementKey: 'legal-proof-document',
+        missingReason: 'Legal proof requirement not evaluated.',
+        satisfiedReason: 'Legal proof document is ready for bank packet prep.',
+      },
+      {
+        key: 'identity-document-coverage',
+        label: 'Identity document coverage',
+        kind: 'requirement',
+        requirementKey: 'identity-document-coverage',
+        missingReason: 'Identity coverage requirement not evaluated.',
+        satisfiedReason: 'Identity document coverage is ready for bank packet prep.',
+      },
+      {
+        key: 'current-legal-name',
+        label: 'Current legal name available for bank packet',
+        kind: 'field_presence',
+        targetField: 'applicant.current_first_name',
+        missingReason: 'Current legal name fields are still incomplete for bank packet prep.',
+        satisfiedReason: 'Current legal first and last name are available for bank packet prep.',
+      },
+      {
+        key: 'target-surname',
+        label: 'Target surname available for bank packet',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target last name is still missing for bank packet prep.',
+        satisfiedReason: 'Target last name is available for bank packet prep.',
+      },
+      {
+        key: 'bank-support-doc',
+        label: 'Bank-supporting document intake',
+        kind: 'document_support',
+        documentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+        missingReason: 'No bank-supporting ID/address document is represented in intake yet.',
+        satisfiedReason: 'A bank-supporting ID/address document exists in intake.',
       },
     ],
   },

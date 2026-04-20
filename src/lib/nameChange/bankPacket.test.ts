@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAME_CHANGE_FORM_BUILDERS } from './formRegistry';
+import { buildNameChangeBankPacketSnapshot } from './bankPacket';
 import type { NameChangeCaseInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -35,18 +35,10 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
   };
 }
 
-describe('name change form builder registry', () => {
-  it('dispatches SS-5 and DMV form builders through a shared registry', () => {
-    const banks = NAME_CHANGE_FORM_BUILDERS.banks(makeCase(), [], []);
-    const ss5 = NAME_CHANGE_FORM_BUILDERS.ss5(makeCase(), [], []);
-    const dmv = NAME_CHANGE_FORM_BUILDERS.dmv(makeCase(), [], []);
-    const passport = NAME_CHANGE_FORM_BUILDERS.passport(makeCase(), [], []);
-    const employer = NAME_CHANGE_FORM_BUILDERS.employer(makeCase(), [], []);
-
-    expect(banks.formCode).toBe('BANK-ACCOUNT-UPDATE-PACKET');
-    expect(ss5.formCode).toBe('SSA-SS5');
-    expect(dmv.formCode).toBe('CA-DL-44');
-    expect(passport.formCode).toBe('DS-82');
-    expect(employer.formCode).toBe('EMPLOYER-HR-PACKET');
+describe('name change bank packet snapshot', () => {
+  it('builds a structured bank update packet payload', () => {
+    const snapshot = buildNameChangeBankPacketSnapshot(makeCase(), [], []);
+    expect(snapshot.formCode).toBe('BANK-ACCOUNT-UPDATE-PACKET');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'accountHolder.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });
