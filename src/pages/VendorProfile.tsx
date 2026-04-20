@@ -58,6 +58,17 @@ export const VendorProfilePage: React.FC = () => {
   const tiktokUrl = profile ? readSourceLink(profile, 'tiktok_url') : null;
   const facebookUrl = profile ? readSourceLink(profile, 'facebook_url') : null;
   const youtubeUrl = profile ? readSourceLink(profile, 'youtube_url') : null;
+  const publicLinks = [
+    profile?.instagram_url ? { label: 'Instagram', href: profile.instagram_url, icon: <Instagram className="h-4 w-4" /> } : null,
+    pinterestUrl ? { label: 'Pinterest', href: pinterestUrl, icon: <ExternalLink className="h-4 w-4" /> } : null,
+    tiktokUrl ? { label: 'TikTok', href: tiktokUrl, icon: <ExternalLink className="h-4 w-4" /> } : null,
+    facebookUrl ? { label: 'Facebook', href: facebookUrl, icon: <ExternalLink className="h-4 w-4" /> } : null,
+    youtubeUrl ? { label: 'YouTube', href: youtubeUrl, icon: <ExternalLink className="h-4 w-4" /> } : null,
+    profile?.website_url ? { label: 'Website', href: profile.website_url, icon: <ExternalLink className="h-4 w-4" /> } : null,
+  ].filter((item): item is { label: string; href: string; icon: JSX.Element } => Boolean(item));
+  const hasGallery = galleryImages.length > 0;
+  const hasSingleImage = galleryImages.length === 1;
+  const hasTwoImages = galleryImages.length === 2;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,72 +125,55 @@ export const VendorProfilePage: React.FC = () => {
           </div>
         </section>
 
-        {galleryImages.length > 0 && (
+        {hasGallery && (
           <section className="space-y-4">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">Images</h2>
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-[1.25fr_0.75fr]">
+            <div className={hasSingleImage ? 'grid' : hasTwoImages ? 'grid gap-3 sm:gap-4 sm:grid-cols-2' : 'grid gap-3 sm:gap-4 sm:grid-cols-[1.25fr_0.75fr]'}>
               {featuredImage && (
                 <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_18px_40px_rgba(53,37,22,0.08)]">
-                  <img src={featuredImage} alt={`${profile.vendor_name} featured`} className="h-full w-full object-cover aspect-[4/5] sm:aspect-[4/4.4]" />
+                  <img src={featuredImage} alt={`${profile.vendor_name} featured`} className={`h-full w-full object-cover ${hasSingleImage ? 'aspect-[4/5] sm:aspect-[16/9]' : 'aspect-[4/5] sm:aspect-[4/4.4]'}`} />
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 auto-rows-fr">
-                {secondaryImages.map((image, index) => (
-                  <div key={`${image}-${index}`} className="overflow-hidden rounded-[24px] bg-white shadow-[0_18px_40px_rgba(53,37,22,0.08)]">
-                    <img src={image} alt={`${profile.vendor_name} ${index + 2}`} className="h-full w-full object-cover aspect-square" />
-                  </div>
-                ))}
-              </div>
+              {!hasSingleImage && (
+                <div className={`grid ${hasTwoImages ? 'grid-cols-1' : 'grid-cols-2'} gap-3 sm:gap-4 auto-rows-fr`}>
+                  {secondaryImages.map((image, index) => (
+                    <div key={`${image}-${index}`} className="overflow-hidden rounded-[24px] bg-white shadow-[0_18px_40px_rgba(53,37,22,0.08)]">
+                      <img src={image} alt={`${profile.vendor_name} ${index + 2}`} className="h-full w-full object-cover aspect-square" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          </section>
+        )}
+
+        {!hasGallery && (
+          <section className="rounded-[28px] border border-dashed border-[#d8c8b6] bg-white/70 p-6 sm:p-8 text-[#6f5843]">
+            <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">Images</h2>
+            <p className="mt-3 text-sm sm:text-base">Image gallery coming soon for this vendor. Use the links below to view more of their work.</p>
           </section>
         )}
 
         <section className="grid gap-8 sm:grid-cols-[1.15fr_0.85fr]">
           <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">About</h2>
-            <p className="text-base sm:text-lg leading-8 text-[#4b3a2c]">{profile.about}</p>
+            <p className="text-base sm:text-lg leading-8 text-[#4b3a2c]">{profile.about || `${profile.vendor_name} is a wedding vendor with a focused public profile page for quick review.`}</p>
           </div>
 
           <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">Links</h2>
-            <div className="space-y-3">
-              {profile.instagram_url && (
-                <a href={profile.instagram_url} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
-                  <span className="flex items-center gap-3"><Instagram className="h-4 w-4" /> Instagram</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
-              {pinterestUrl && (
-                <a href={pinterestUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
-                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> Pinterest</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
-              {tiktokUrl && (
-                <a href={tiktokUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
-                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> TikTok</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
-              {facebookUrl && (
-                <a href={facebookUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
-                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> Facebook</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
-              {youtubeUrl && (
-                <a href={youtubeUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
-                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> YouTube</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
-              {profile.website_url && (
-                <a href={profile.website_url} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
-                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> Website</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
-            </div>
+            {publicLinks.length > 0 ? (
+              <div className="space-y-3">
+                {publicLinks.map((link) => (
+                  <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
+                    <span className="flex items-center gap-3">{link.icon} {link.label}</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm sm:text-base text-[#6f5843]">Public links will appear here once they’re available for this vendor.</p>
+            )}
           </div>
         </section>
 
