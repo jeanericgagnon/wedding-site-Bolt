@@ -31,6 +31,12 @@ describe('name change execution targets', () => {
       recommendedFormCode: 'BANK-ACCOUNT-UPDATE-PACKET',
       formBuilderKey: 'banks',
     });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.insurance).toMatchObject({
+      key: 'insurance',
+      lane: 'state',
+      recommendedFormCode: 'INSURANCE-POLICY-UPDATE-PACKET',
+      formBuilderKey: 'insurance',
+    });
     expect(NAME_CHANGE_EXECUTION_TARGETS.dmv.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'federal-ssa',
       requiredStatuses: ['complete'],
@@ -44,6 +50,10 @@ describe('name change execution targets', () => {
       requiredStatuses: ['complete'],
     });
     expect(NAME_CHANGE_EXECUTION_TARGETS.banks.prerequisiteRules[0]).toMatchObject({
+      requiredStepId: 'state-dmv',
+      requiredStatuses: ['in_progress', 'complete'],
+    });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.insurance.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'state-dmv',
       requiredStatuses: ['in_progress', 'complete'],
     });

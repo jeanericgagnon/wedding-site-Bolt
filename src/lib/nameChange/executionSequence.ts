@@ -139,7 +139,8 @@ export function buildNameChangeExecutionSequenceSnapshot(
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ]
-      : [
+      : targetKey === 'banks'
+      ? [
         {
           key: 'legal-proof-document',
           label: 'Legal proof document ready',
@@ -164,6 +165,34 @@ export function buildNameChangeExecutionSequenceSnapshot(
           reason: intake.documents.some((document) => ['current_drivers_license', 'current_passport', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
             ? 'Financial identity/address support exists in intake.'
             : 'No financial identity/address support exists in intake yet.',
+        },
+        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
+      ]
+      : [
+        {
+          key: 'legal-proof-document',
+          label: 'Legal proof document ready',
+          required: true,
+          status: requirementStatusToDependencyStatus(legalProof?.status ?? 'missing'),
+          reason: legalProof?.reason ?? 'Legal proof requirement not evaluated.',
+        },
+        {
+          key: 'identity-document-coverage',
+          label: 'Identity document coverage',
+          required: true,
+          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
+          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
+        },
+        {
+          key: 'insurance-identity-support',
+          label: 'Insurance identity / address support exists',
+          required: false,
+          status: intake.documents.some((document) => ['current_drivers_license', 'current_passport', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
+            ? 'satisfied'
+            : 'attention',
+          reason: intake.documents.some((document) => ['current_drivers_license', 'current_passport', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
+            ? 'Insurance identity/address support exists in intake.'
+            : 'No insurance identity/address support exists in intake yet.',
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ];

@@ -1,6 +1,7 @@
 import { buildNameChangeBankPacketSnapshot } from './bankPacket';
 import { buildNameChangeDmvFormSnapshot } from './dmvForm';
 import { buildNameChangeEmployerPacketSnapshot } from './employerPacket';
+import { buildNameChangeInsurancePacketSnapshot } from './insurancePacket';
 import { buildNameChangePassportFormSnapshot } from './passportForm';
 import { buildNameChangeSs5FormSnapshot } from './ss5Form';
 import type {
@@ -19,6 +20,7 @@ export type NameChangeFormBuilder = (
 
 export const NAME_CHANGE_FORM_BUILDERS: Record<NameChangeFormBuilderKey, NameChangeFormBuilder> = {
   banks: buildNameChangeBankPacketSnapshot,
+  insurance: buildNameChangeInsurancePacketSnapshot,
   ss5: buildNameChangeSs5FormSnapshot,
   dmv: buildNameChangeDmvFormSnapshot,
   passport: buildNameChangePassportFormSnapshot,

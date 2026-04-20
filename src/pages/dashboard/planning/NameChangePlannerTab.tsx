@@ -7,6 +7,7 @@ import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/aut
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
 import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmvFlow';
 import { buildNameChangeEmployerExecutionSnapshot } from '../../../lib/nameChange/employerFlow';
+import { buildNameChangeInsuranceExecutionSnapshot } from '../../../lib/nameChange/insuranceFlow';
 import { buildNameChangePassportExecutionSnapshot } from '../../../lib/nameChange/passportFlow';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
 import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
@@ -101,6 +102,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const autofillPrepSnapshot = useMemo(() => buildNameChangeAutofillPrepSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const bankExecutionSnapshot = useMemo(() => buildNameChangeBankExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
+  const insuranceExecutionSnapshot = useMemo(() => buildNameChangeInsuranceExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const dmvExecutionSnapshot = useMemo(() => buildNameChangeDmvExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const passportExecutionSnapshot = useMemo(() => buildNameChangePassportExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
@@ -701,6 +703,81 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {bankExecutionSnapshot.formPayload.fields.map((field) => (
+              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
+                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
+                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Guided execution: insurance follow-through</h3>
+            <p className="text-sm text-text-secondary">Institutional execution slice for health, auto, renters, and life insurance once primary photo ID is moving.</p>
+          </div>
+          <span className={`rounded-full px-2 py-1 text-xs ${insuranceExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+            {insuranceExecutionSnapshot.ready ? 'ready for insurance packet prep' : 'not ready'}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {insuranceExecutionSnapshot.checklist.map((item) => (
+            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                  {item.status}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <h4 className="text-sm font-semibold text-text-primary">Insurance sequencing dependencies</h4>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {insuranceExecutionSnapshot.sequence.dependencies.map((dependency) => (
+              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
+                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                    {dependency.status}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {insuranceExecutionSnapshot.autofillFields.map((field) => (
+            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
+              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-text-primary">Insurance packet snapshot</h4>
+              <p className="text-xs text-text-secondary">Structured downstream packet for insurance policyholder updates.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {insuranceExecutionSnapshot.formPayload.summary.ready} ready · {insuranceExecutionSnapshot.formPayload.summary.missing} missing · {insuranceExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {insuranceExecutionSnapshot.formPayload.fields.map((field) => (
               <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
                 <p className="text-sm font-semibold text-text-primary">{field.label}</p>
                 <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>

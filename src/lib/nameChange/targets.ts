@@ -1,11 +1,12 @@
 import { NAME_CHANGE_BANK_PACKET_CONTRACT } from './bankPacket';
 import { NAME_CHANGE_DMV_FORM_CONTRACT } from './dmvForm';
 import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
+import { NAME_CHANGE_INSURANCE_PACKET_CONTRACT } from './insurancePacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -353,6 +354,84 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         documentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
         missingReason: 'No bank-supporting ID/address document is represented in intake yet.',
         satisfiedReason: 'A bank-supporting ID/address document exists in intake.',
+      },
+    ],
+  },
+  insurance: {
+    key: 'insurance',
+    label: 'Health, auto, renters, and life insurance',
+    lane: 'state',
+    recommendedFormCode: NAME_CHANGE_INSURANCE_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'insurance',
+    prerequisiteRules: [
+      {
+        key: 'primary-photo-id-progress',
+        label: 'Primary photo ID underway before insurance rollout',
+        required: true,
+        requiredStepId: 'state-dmv',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'Insurance updates usually go smoother once your primary photo ID is moving or already updated.',
+        attentionReason: 'Primary photo ID is moving, which supports insurance update follow-through.',
+        satisfiedReason: 'Primary photo ID is already moving or complete for insurance update follow-through.',
+      },
+      {
+        key: 'employer-or-bank-progress',
+        label: 'Another institutional lane is already moving',
+        required: false,
+        requiredStepId: 'institution-banks',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'No other institutional rollout step is moving yet, so insurance may be the first account-update lane to start.',
+        attentionReason: 'Another institutional lane is already moving, which helps normalize packet handling.',
+        satisfiedReason: 'Another institutional lane is already moving for packet normalization.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'legal.marriage_date',
+      'applicant.county',
+    ],
+    checklistSpecs: [
+      {
+        key: 'legal-proof-document',
+        label: 'Legal proof ready for insurance packet',
+        kind: 'requirement',
+        requirementKey: 'legal-proof-document',
+        missingReason: 'Legal proof requirement not evaluated.',
+        satisfiedReason: 'Legal proof document is ready for insurance packet prep.',
+      },
+      {
+        key: 'identity-document-coverage',
+        label: 'Identity document coverage',
+        kind: 'requirement',
+        requirementKey: 'identity-document-coverage',
+        missingReason: 'Identity coverage requirement not evaluated.',
+        satisfiedReason: 'Identity document coverage is ready for insurance packet prep.',
+      },
+      {
+        key: 'current-legal-name',
+        label: 'Current legal name available for insurance packet',
+        kind: 'field_presence',
+        targetField: 'applicant.current_first_name',
+        missingReason: 'Current legal name fields are still incomplete for insurance packet prep.',
+        satisfiedReason: 'Current legal first and last name are available for insurance packet prep.',
+      },
+      {
+        key: 'target-surname',
+        label: 'Target surname available for insurance packet',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target last name is still missing for insurance packet prep.',
+        satisfiedReason: 'Target last name is available for insurance packet prep.',
+      },
+      {
+        key: 'insurance-support-doc',
+        label: 'Insurance-supporting document intake',
+        kind: 'document_support',
+        documentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+        missingReason: 'No insurance-supporting ID/address document is represented in intake yet.',
+        satisfiedReason: 'An insurance-supporting ID/address document exists in intake.',
       },
     ],
   },
