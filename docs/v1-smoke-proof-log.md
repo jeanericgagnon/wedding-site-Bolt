@@ -288,6 +288,9 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the event-RSVP response-timestamp continuity fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
+## Highest-value next proof seam
+- Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.
+
 ## Finish-lane read right now
 - Public promise is much cleaner than before.
 - The repo is now closer to **truthful** than **proven**.

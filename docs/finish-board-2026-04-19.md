@@ -376,6 +376,7 @@ Things that do **not** count as done:
 - **Role-aware trust is still under-proven.** Planner/coordinator value is plausible, but not yet proven in one clear flow.
 - **Guest-state continuity is still under-proven.** Guests → RSVP → messages → seating still needs one coherent proof run.
 - **The product promise is cleaner now, but readiness is still more argued than demonstrated.**
+- **Next likely RSVP seam:** event invitation changes vs event-specific response state still need a real runtime proof pass through itinerary/seating reads.
 
 Primary proof artifact for this now exists at:
 - `docs/v1-smoke-proof-log.md`
