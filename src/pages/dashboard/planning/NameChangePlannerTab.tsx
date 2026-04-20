@@ -262,6 +262,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   onSave,
 }) => {
   const [showAdmin, setShowAdmin] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const stepCounts = useMemo(() => ({
     ready: plan.steps.filter((step) => step.status === 'ready').length,
     blocked: plan.steps.filter((step) => step.status === 'blocked').length,
@@ -596,6 +597,18 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     })
   ), [executionSections, reminderAttention]);
 
+  const isSectionCollapsed = (section: ExecutionSectionSummary): boolean => {
+    if (collapsedSections[section.key] !== undefined) return collapsedSections[section.key];
+    return section.blockedCount === 0 && section.attentionCount === 0;
+  };
+
+  const toggleSectionCollapsed = (sectionKey: string) => {
+    setCollapsedSections((current) => ({
+      ...current,
+      [sectionKey]: !(current[sectionKey] ?? false),
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
@@ -822,27 +835,33 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
       {executionSectionSummaries.map((section) => (
         <div key={section.key} className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">{section.title}</h3>
-            <p className="text-sm text-text-secondary">{section.description}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className={`rounded-full px-2 py-1 text-xs ${section.postureTone === 'danger' ? 'bg-danger/10 text-danger' : section.postureTone === 'warning' ? 'bg-warning/10 text-warning' : section.postureTone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
-                {section.postureLabel}
-              </span>
-              <span className="text-xs text-text-secondary">{section.postureDetail}</span>
-            </div>
-            <div className="mt-3 max-w-xl">
-              <div className="flex items-center justify-between gap-3 text-xs text-text-secondary">
-                <span>Section progress</span>
-                <span>{section.progressPercent}% · {section.progressLabel}</span>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">{section.title}</h3>
+              <p className="text-sm text-text-secondary">{section.description}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className={`rounded-full px-2 py-1 text-xs ${section.postureTone === 'danger' ? 'bg-danger/10 text-danger' : section.postureTone === 'warning' ? 'bg-warning/10 text-warning' : section.postureTone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
+                  {section.postureLabel}
+                </span>
+                <span className="text-xs text-text-secondary">{section.postureDetail}</span>
               </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-subtle">
-                <div
-                  className={`h-full rounded-full ${section.postureTone === 'danger' ? 'bg-danger' : section.postureTone === 'warning' ? 'bg-warning' : section.postureTone === 'primary' ? 'bg-primary' : 'bg-text-secondary'}`}
-                  style={{ width: `${section.progressPercent}%` }}
-                />
+              <div className="mt-3 max-w-xl">
+                <div className="flex items-center justify-between gap-3 text-xs text-text-secondary">
+                  <span>Section progress</span>
+                  <span>{section.progressPercent}% · {section.progressLabel}</span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-subtle">
+                  <div
+                    className={`h-full rounded-full ${section.postureTone === 'danger' ? 'bg-danger' : section.postureTone === 'warning' ? 'bg-warning' : section.postureTone === 'primary' ? 'bg-primary' : 'bg-text-secondary'}`}
+                    style={{ width: `${section.progressPercent}%` }}
+                  />
+                </div>
               </div>
             </div>
+
+            <Button size="sm" variant="outline" onClick={() => toggleSectionCollapsed(section.key)}>
+              {isSectionCollapsed(section) ? 'Expand section' : 'Collapse section'}
+            </Button>
           </div>
 
           {(section.reminderKeys.length > 0 || section.staleReminderKeys.length > 0) && (
@@ -924,11 +943,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="space-y-6">
-            {section.cards.map(({ key, ...card }) => (
-              <ExecutionSnapshotCard key={key} anchorId={`execution-card-${key}`} {...card} />
-            ))}
-          </div>
+          {!isSectionCollapsed(section) && (
+            <div className="space-y-6">
+              {section.cards.map(({ key, ...card }) => (
+                <ExecutionSnapshotCard key={key} anchorId={`execution-card-${key}`} {...card} />
+              ))}
+            </div>
+          )}
         </div>
       ))}
 
