@@ -1655,6 +1655,39 @@ export const DashboardMessages: React.FC = () => {
   async function handleRetry(message: Message) {
     setRetryingMessageId(message.id);
     try {
+      if (isDemoMode) {
+        const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+        const recipients = getRecipients(audience);
+        const deliveredCount = message.channel === 'sms'
+          ? recipients.filter((guest) => !!guest.phone).length
+          : recipients.filter((guest) => !!guest.email).length;
+        const skippedCount = Math.max(recipients.length - deliveredCount, 0);
+
+        setMessages((prev) => prev.map((item) => (
+          item.id === message.id
+            ? {
+                ...item,
+                status: skippedCount > 0 ? 'partial' : 'sent',
+                sent_at: new Date().toISOString(),
+                delivered_count: deliveredCount,
+                failed_count: 0,
+                recipient_count: recipients.length,
+                recipient_filter: {
+                  ...(item.recipient_filter ?? {}),
+                  recipient_count: recipients.length,
+                  reachable_count: deliveredCount,
+                  skipped_count: skippedCount,
+                },
+              }
+            : item
+        )));
+
+        toast(skippedCount > 0
+          ? `Retry finished in demo: delivered ${deliveredCount} • skipped ${skippedCount}.`
+          : `Retry finished in demo: delivered ${deliveredCount}.`, skippedCount > 0 ? 'info' : 'success');
+        return;
+      }
+
       const { error } = await supabase
         .from('messages')
         .update({ status: 'queued', sent_at: null, failed_count: 0, delivered_count: 0 })
