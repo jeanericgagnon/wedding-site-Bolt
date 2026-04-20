@@ -65,6 +65,8 @@ interface ExecutionSectionSummary {
   attentionCount: number;
   highestRiskCard: string;
   staleReminderOverlap: number;
+  reminderKeys: string[];
+  staleReminderKeys: string[];
 }
 
 const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
@@ -524,9 +526,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         return cardAttention > currentAttention ? card : current;
       }, null as ExecutionCardConfig | null)?.title ?? 'No major risk in this section';
       const relatedStepIds = EXECUTION_SECTION_STEP_IDS[section.key] ?? [];
-      const staleReminderOverlap = reminderAttention.filter((item) =>
-        item.isStale && relatedStepIds.includes(item.dependsOnStepId),
-      ).length;
+      const sectionReminderItems = reminderAttention.filter((item) => relatedStepIds.includes(item.dependsOnStepId));
+      const staleReminderKeys = sectionReminderItems.filter((item) => item.isStale).map((item) => item.reminderKey);
+      const reminderKeys = sectionReminderItems.map((item) => item.reminderKey);
+      const staleReminderOverlap = staleReminderKeys.length;
 
       return {
         ...section,
@@ -535,6 +538,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         attentionCount,
         highestRiskCard,
         staleReminderOverlap,
+        reminderKeys,
+        staleReminderKeys,
       };
     })
   ), [executionSections, reminderAttention]);
@@ -769,6 +774,35 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <h3 className="text-lg font-semibold text-text-primary">{section.title}</h3>
             <p className="text-sm text-text-secondary">{section.description}</p>
           </div>
+
+          {(section.reminderKeys.length > 0 || section.staleReminderKeys.length > 0) && (
+            <div className="flex flex-wrap gap-2">
+              {section.staleReminderKeys.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onRemindersChange(
+                    bulkUpdateNameChangeReminderStatus(effectiveReminders, section.staleReminderKeys, 'scheduled'),
+                    { action: 'schedule-stale' },
+                  )}
+                >
+                  Schedule {section.staleReminderKeys.length} stale reminder{section.staleReminderKeys.length === 1 ? '' : 's'}
+                </Button>
+              )}
+              {section.reminderKeys.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onRemindersChange(
+                    bulkUpdateNameChangeReminderStatus(effectiveReminders, section.reminderKeys, 'dismissed'),
+                    { action: 'bulk-update' },
+                  )}
+                >
+                  Dismiss {section.reminderKeys.length} section reminder{section.reminderKeys.length === 1 ? '' : 's'}
+                </Button>
+              )}
+            </div>
+          )}
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
