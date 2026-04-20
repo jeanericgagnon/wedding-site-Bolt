@@ -40,6 +40,14 @@ interface ExecutionCardConfig {
   snapshot: NameChangeTargetExecutionSnapshot;
 }
 
+interface ReminderPostureCardConfig {
+  key: string;
+  title: string;
+  value: string;
+  detail: string;
+  tone?: 'warning' | 'primary' | 'danger' | 'neutral';
+}
+
 interface Props {
   draft: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
@@ -180,6 +188,24 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
   </Card>
 );
 
+const ReminderPostureCard: React.FC<ReminderPostureCardConfig> = ({ title, value, detail, tone = 'neutral' }) => {
+  const toneClass = tone === 'danger'
+    ? 'border-danger/20 bg-danger/5'
+    : tone === 'warning'
+      ? 'border-warning/20 bg-warning/5'
+      : tone === 'primary'
+        ? 'border-primary/20 bg-primary/5'
+        : 'border-border-subtle bg-white/60';
+
+  return (
+    <div className={`rounded-xl border p-4 ${toneClass}`}>
+      <p className="text-xs uppercase tracking-wide text-text-tertiary">{title}</p>
+      <p className="mt-2 text-sm font-semibold text-text-primary">{value}</p>
+      <p className="mt-2 text-xs text-text-secondary">{detail}</p>
+    </div>
+  );
+};
+
 export const NameChangePlannerTab: React.FC<Props> = ({
   draft,
   documents,
@@ -224,6 +250,40 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
   }), [reminderAttention, plan.summary.hasRecentCompletion, plan.summary.hasRecentStart]);
+  const reminderPostureCards = useMemo<ReminderPostureCardConfig[]>(() => {
+    if (reminderAttention.length === 0) return [];
+
+    return [
+      {
+        key: 'risk-lane',
+        title: 'Dominant risk lane',
+        value: reminderAttentionSummary.dominantRiskLane,
+        detail: `${reminderAttentionSummary.critical} critical · ${reminderAttentionSummary.elevated} elevated · ${reminderAttentionSummary.normal} normal`,
+        tone: reminderAttentionSummary.critical > 0 ? 'danger' : reminderAttentionSummary.elevated > 0 ? 'warning' : 'neutral',
+      },
+      {
+        key: 'actionability',
+        title: 'Attention posture',
+        value: reminderAttentionSummary.attentionPosture,
+        detail: `${reminderAttentionSummary.actionableNow} actionable now · ${reminderAttentionSummary.blockedByUntouchedStep} blocked by untouched step`,
+        tone: reminderAttentionSummary.attentionPosture === 'blocked-heavy' ? 'warning' : 'primary',
+      },
+      {
+        key: 'stale',
+        title: 'Stale pressure',
+        value: `${reminderAttentionSummary.stale} stale`,
+        detail: `${reminderAttentionSummary.staleTodo} untouched stale · ${reminderAttentionSummary.staleInProgress} stale but moving`,
+        tone: reminderAttentionSummary.stale > 0 ? 'warning' : 'neutral',
+      },
+      {
+        key: 'aging',
+        title: 'Aging without execution',
+        value: reminderAttentionSummary.agingWithoutExecution ? 'yes' : 'no',
+        detail: `${reminderAttentionSummary.agingWithoutExecutionLane} · ${reminderAttentionSummary.agingWithoutExecutionPosture}`,
+        tone: reminderAttentionSummary.agingWithoutExecution ? 'warning' : 'neutral',
+      },
+    ];
+  }, [reminderAttention.length, reminderAttentionSummary]);
   const executionCards = useMemo<ExecutionCardConfig[]>(() => {
     const cards: ExecutionCardConfig[] = [
       {
@@ -843,24 +903,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Reminder attention needed</h3>
               <p className="text-sm text-text-secondary">Open reminders still tied to incomplete workflow steps.</p>
-              <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.stale} stale · {reminderAttentionSummary.highUrgency} high urgency</p>
-              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.staleTodo} untouched stale · {reminderAttentionSummary.staleInProgress} stale but moving</p>
-              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.critical} critical · {reminderAttentionSummary.elevated} elevated · {reminderAttentionSummary.normal} normal</p>
-              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.actionableNow} actionable now · {reminderAttentionSummary.blockedByUntouchedStep} blocked by untouched step</p>
-              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.actionablePriority} actionable priority · {reminderAttentionSummary.actionableNormal} actionable normal</p>
-              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.actionableAndStale} actionable + stale</p>
-              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.actionableStalePriority} stale actionable priority · {reminderAttentionSummary.actionableStaleNormal} stale actionable normal</p>
-              <p className="mt-1 text-xs text-text-secondary">Stale actionable posture: {reminderAttentionSummary.staleActionablePosture}</p>
-              <p className="mt-1 text-xs text-text-secondary">Actionable fresh posture: {reminderAttentionSummary.actionableFreshPosture}</p>
-              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.blockedAndStale} blocked + stale</p>
-              <p className="mt-1 text-xs text-text-secondary">{reminderAttentionSummary.blockedStalePriority} blocked stale priority · {reminderAttentionSummary.blockedStaleNormal} blocked stale normal</p>
-              <p className="mt-1 text-xs text-text-secondary">Blocked stale posture: {reminderAttentionSummary.blockedStalePosture}</p>
-              <p className="mt-1 text-xs text-text-secondary">Dominant risk lane: {reminderAttentionSummary.dominantRiskLane}</p>
-              <p className="mt-1 text-xs text-text-secondary">Attention posture: {reminderAttentionSummary.attentionPosture}</p>
-              <p className="mt-1 text-xs text-text-secondary">Stale priority: {reminderAttentionSummary.stalePriority}</p>
-              <p className="mt-1 text-xs text-text-secondary">Aging without execution: {reminderAttentionSummary.agingWithoutExecution ? 'yes' : 'no'}</p>
-              <p className="mt-1 text-xs text-text-secondary">Aging without execution lane: {reminderAttentionSummary.agingWithoutExecutionLane}</p>
-              <p className="mt-1 text-xs text-text-secondary">Aging without execution posture: {reminderAttentionSummary.agingWithoutExecutionPosture}</p>
+              <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.highUrgency} high urgency · {reminderAttentionSummary.actionablePriority} actionable priority · {reminderAttentionSummary.blockedAndStale} blocked + stale</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} attention item{reminderAttention.length === 1 ? '' : 's'}</span>
@@ -887,6 +930,30 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   Schedule stale
                 </Button>
               )}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {reminderPostureCards.map(({ key, ...card }) => (
+              <ReminderPostureCard key={key} {...card} />
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="rounded-xl border border-warning/20 bg-white/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Actionable split</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.actionablePriority} priority · {reminderAttentionSummary.actionableNormal} normal</p>
+              <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.actionableAndStale} actionable + stale · posture {reminderAttentionSummary.actionableFreshPosture}</p>
+            </div>
+            <div className="rounded-xl border border-warning/20 bg-white/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Stale actionable split</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.actionableStalePriority} priority · {reminderAttentionSummary.actionableStaleNormal} normal</p>
+              <p className="mt-2 text-xs text-text-secondary">Posture {reminderAttentionSummary.staleActionablePosture}</p>
+            </div>
+            <div className="rounded-xl border border-warning/20 bg-white/60 p-4">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Blocked stale split</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.blockedStalePriority} priority · {reminderAttentionSummary.blockedStaleNormal} normal</p>
+              <p className="mt-2 text-xs text-text-secondary">Posture {reminderAttentionSummary.blockedStalePosture} · stale priority {reminderAttentionSummary.stalePriority}</p>
             </div>
           </div>
 
