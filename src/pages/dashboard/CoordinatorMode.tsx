@@ -33,6 +33,7 @@ import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutr
 import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
 import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
 import { getCoordinatorCheckInBoardTargetId, getCoordinatorCheckInTargetState } from '../../lib/coordinatorCheckInTargetState';
+import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState } from '../../lib/coordinatorTimelineTargetState';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -378,6 +379,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [sortedGuests, checkInQuery, checkInFilter, checkInReviewOnly]);
   const checkInBoardTargetId = useMemo(() => getCoordinatorCheckInBoardTargetId(sortedGuests), [sortedGuests]);
   const checkInTargetState = useMemo(() => getCoordinatorCheckInTargetState({ boardTargetId: checkInBoardTargetId, activeGuestId }), [checkInBoardTargetId, activeGuestId]);
+  const timelineBoardTargetId = useMemo(() => getCoordinatorTimelineBoardTargetId({ liveEventId, upNextEventId }), [liveEventId, upNextEventId]);
+  const timelineTargetState = useMemo(() => getCoordinatorTimelineTargetState({ boardTargetId: timelineBoardTargetId, activeTimelineEventId }), [timelineBoardTargetId, activeTimelineEventId]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -777,7 +780,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4 space-y-4">
             <div>
-              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}</p>
+              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}{timelineTargetState.label ? ` · ${timelineTargetState.label}` : ''}</p>
               <div className="space-y-2">
                 {events.length === 0 ? (
                   <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
@@ -797,7 +800,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       <div key={e.id} className={`rounded-lg border px-3 py-2 ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}>
                         <div className="flex items-center justify-between gap-2">
                           <div>
-                            <p className="text-sm text-text-primary">{e.event_name}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm text-text-primary">{e.event_name}</p>
+                              {timelineBoardTargetId === e.id && (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] border ${timelineTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                                  {timelineTargetState.isBoardTargetActive ? 'Board event in progress' : isLive ? 'Board live event' : 'Board up-next event'}
+                                </span>
+                              )}
+                              {activeTimelineEventId === e.id && timelineBoardTargetId !== e.id && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] border border-primary/20 bg-primary/5 text-primary">
+                                  Working event
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-text-tertiary">{isLive ? 'Live now' : isUpNext ? 'Up next' : state === 'done' ? 'Completed' : 'Queued'}</p>
                           </div>
                           <select
