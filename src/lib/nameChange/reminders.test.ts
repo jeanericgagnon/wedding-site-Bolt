@@ -59,6 +59,7 @@ describe('name change reminder suggestions', () => {
     expect(reminders.map((reminder) => reminder.suggestedOffsetDays)).toEqual([...reminders.map((reminder) => reminder.suggestedOffsetDays)].sort((a, b) => a - b));
     expect(reminders.some((reminder) => reminder.id === 'reminder-irs-employer')).toBe(true);
     expect(reminders.some((reminder) => reminder.id === 'reminder-banks')).toBe(true);
+    expect(reminders.some((reminder) => reminder.id === 'reminder-medical-records')).toBe(true);
   });
 
   it('raises passport follow-up urgency when the case is expedited', () => {

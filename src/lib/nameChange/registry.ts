@@ -94,6 +94,17 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     reminderDaysAfterPrimaryId: 7,
   },
   {
+    key: 'medical-records',
+    label: 'Medical providers / insurance cards',
+    category: 'insurance',
+    launchPriority: 32,
+    triggers: ['all'],
+    notes: 'Update provider rosters, patient portals, and member-card records once your primary ID is moving.',
+    suggestedTiming: 'During the first 1-2 weeks after primary ID changes',
+    evidenceNeeded: ['Updated photo ID', 'Insurance card or portal details', 'Legal proof document'],
+    reminderDaysAfterPrimaryId: 8,
+  },
+  {
     key: 'utilities-housing',
     label: 'Utilities, lease, and landlord records',
     category: 'personal',
