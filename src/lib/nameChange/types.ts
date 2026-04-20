@@ -282,6 +282,39 @@ export interface NameChangeRequirementSnapshot {
   };
 }
 
+export interface NameChangeDocumentContractDefinition {
+  kind: NameChangeDocumentKind;
+  label: string;
+  requiredFor: Array<NameChangeLegalBasis | 'all'>;
+  preferredForAutofill: boolean;
+  extractionFields: NameChangeExtractionFieldKey[];
+  acceptedSignals: string[];
+}
+
+export interface NameChangeDocumentContractStatus {
+  kind: NameChangeDocumentKind;
+  label: string;
+  required: boolean;
+  preferredForAutofill: boolean;
+  intakeStatus: NameChangeDocumentInput['intake_status'];
+  storageMode: NameChangeDocumentInput['storage_mode'];
+  extractionFieldCount: number;
+  expectedExtractionFields: NameChangeExtractionFieldKey[];
+  capturedExtractionFields: NameChangeExtractionFieldKey[];
+  missingExtractionFields: NameChangeExtractionFieldKey[];
+}
+
+export interface NameChangeDocumentIntakeSnapshot {
+  canonicalCase: NameChangeCanonicalCase;
+  documents: NameChangeDocumentContractStatus[];
+  summary: {
+    requiredReady: number;
+    requiredMissing: number;
+    autofillReady: number;
+    extractionGaps: number;
+  };
+}
+
 export interface NameChangeReminderSuggestion {
   id: string;
   label: string;

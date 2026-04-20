@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sparkles } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
 import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
 import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
@@ -91,6 +92,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   }), [plan.steps]);
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const requirementSnapshot = useMemo(() => evaluateNameChangeRequirements(draft, documents, extractedFields), [draft, documents, extractedFields]);
+  const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
@@ -257,6 +259,36 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 </span>
               </div>
               <p className="mt-3 text-sm text-text-secondary">{result.reason}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Document intake contract</h3>
+            <p className="text-sm text-text-secondary">Real system slice for required documents, extraction expectations, and autofill-readiness prep.</p>
+          </div>
+          <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            {documentIntakeSnapshot.summary.requiredReady} required ready · {documentIntakeSnapshot.summary.requiredMissing} required missing · {documentIntakeSnapshot.summary.extractionGaps} extraction gaps
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {documentIntakeSnapshot.documents.map((document) => (
+            <div key={document.kind} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{document.label}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{document.required ? 'required' : 'optional'} · {document.preferredForAutofill ? 'autofill-preferred' : 'supporting'}</p>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-xs ${document.intakeStatus === 'reviewed' ? 'bg-success/10 text-success' : document.intakeStatus === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                  {document.intakeStatus}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">Captured fields: {document.capturedExtractionFields.length > 0 ? document.capturedExtractionFields.join(', ') : 'none yet'}</p>
+              <p className="mt-2 text-xs text-text-secondary">Missing extraction fields: {document.missingExtractionFields.length > 0 ? document.missingExtractionFields.join(', ') : 'none'}</p>
             </div>
           ))}
         </div>
