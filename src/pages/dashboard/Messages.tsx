@@ -1843,6 +1843,11 @@ export const DashboardMessages: React.FC = () => {
   }
 
   function applySavedTemplate(template: SavedComposerTemplate) {
+    const savedScheduleIsUsable = template.scheduleType === 'later'
+      && !!template.scheduleDate
+      && !!template.scheduleTime
+      && !isPastScheduledTime(`${template.scheduleDate}T${template.scheduleTime}:00`);
+
     setFormData((prev) => ({
       ...prev,
       campaignName: template.campaignName || template.name,
@@ -1851,11 +1856,13 @@ export const DashboardMessages: React.FC = () => {
       body: template.body,
       audience: template.audience,
       channel: template.channel,
-      scheduleType: template.scheduleType ?? 'now',
-      scheduleDate: template.scheduleDate ?? '',
-      scheduleTime: template.scheduleTime ?? '',
+      scheduleType: savedScheduleIsUsable ? 'later' : 'now',
+      scheduleDate: savedScheduleIsUsable ? (template.scheduleDate ?? '') : '',
+      scheduleTime: savedScheduleIsUsable ? (template.scheduleTime ?? '') : '',
     }));
-    toast(`Loaded template “${template.name}”.`, 'info');
+    toast(savedScheduleIsUsable
+      ? `Loaded template “${template.name}”.`
+      : `Loaded template “${template.name}” without its old send time.`, 'info');
   }
 
   function saveCurrentComposerAsTemplate() {
