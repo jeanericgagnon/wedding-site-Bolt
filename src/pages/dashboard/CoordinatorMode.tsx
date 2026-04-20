@@ -12,6 +12,7 @@ import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../l
 import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { buildCoordinatorPrimaryAction } from '../../lib/coordinatorPrimaryAction';
+import { resolveCoordinatorPrimaryActionTarget } from '../../lib/coordinatorPrimaryActionTarget';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
 import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinatorEscalationAction';
@@ -439,6 +440,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
     toast('Door issue moved into guest Q&A triage.', 'success');
   };
 
+
+
+  const runPrimaryAction = () => {
+    const target = resolveCoordinatorPrimaryActionTarget(primaryAction);
+    if (target.panelFocus === 'check-in') {
+      setCheckInFilter('arrivals');
+      setCheckInReviewOnly(target.reviewOnly);
+      setPanelFocus('check-in');
+      return;
+    }
+    if (target.panelFocus === 'qna') {
+      setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
+      setPanelFocus('qna');
+      return;
+    }
+    if (target.panelFocus === 'timeline') {
+      if (upNextEventId && canEditTimeline) {
+        runTimelineAction(upNextEventId, 'live');
+      } else {
+        setPanelFocus('timeline');
+      }
+    }
+  };
 
   const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {
     if (!nextState || !canEditTimeline) return;
