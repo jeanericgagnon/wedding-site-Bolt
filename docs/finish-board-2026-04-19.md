@@ -234,6 +234,7 @@ Things that do **not** count as done:
 - Coordinator Mode still relied on UI disable states for some alert/Q&A actions, which left handler-level permission trust weaker than it should be until corrected
 - Planning write paths still trusted tab-level disable states too much, which left task/budget/vendor mutation handlers weaker than they should be for a must-ship collaborator surface until corrected
 - Guests bulk follow-up actions still trusted menu/button disable states too much, which left bulk reminder/check-in/thank-you mutation paths weaker than they should be for a must-ship ops surface until corrected
+- Guests individual invitation/check-in/thank-you actions still trusted button disable states too much, which left direct handler paths weaker than they should be for a must-ship ops surface until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -423,6 +424,7 @@ Primary proof artifact for this now exists at:
 - Fixed Coordinator Mode handler guards so weaker collaborator roles can no longer send/schedule coordinator alerts or add guest questions just by reaching the action path.
 - Fixed Planning handler-layer permission gating so non-owner collaborator roles can no longer mutate tasks, budgets, vendors, milestone generation, or total budget outside their actual permission level.
 - Fixed Guests bulk-action handler gating so read-only collaborator roles can no longer trigger bulk reminders, thank-you updates, or clear-all check-in mutations just by reaching the action path.
+- Fixed Guests individual-action handler gating so read-only collaborator roles can no longer trigger invitation sends, check-in changes, or thank-you status updates just by reaching the action path.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

@@ -1192,6 +1192,10 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleMarkThankYouSent = async (guest: GuestWithRSVP) => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot update thank-you status.', 'info');
+      return;
+    }
     if (!weddingSiteId || isDemoMode) return;
     try {
       const current = (guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at;
@@ -1265,6 +1269,10 @@ export const DashboardGuests: React.FC = () => {
   const [lastCheckIn, setLastCheckIn] = useState<{ guestId: string; guestName: string; at: number } | null>(null);
 
   const handleToggleCheckIn = async (guest: GuestWithRSVP) => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot update guest check-in.', 'info');
+      return;
+    }
     if (!weddingSiteId || isDemoMode) {
       toast('Check-in is unavailable in demo mode.', 'error');
       return;
@@ -1309,6 +1317,10 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleSendInvitation = async (guest: GuestWithRSVP) => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot send guest invitations.', 'info');
+      return;
+    }
     if (!guest.email) {
       toast('This guest has no email address', 'error');
       return;
