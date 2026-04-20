@@ -315,6 +315,30 @@ export interface NameChangeDocumentIntakeSnapshot {
   };
 }
 
+export interface NameChangeAutofillFieldValue {
+  source: 'canonical_case' | 'extracted_field';
+  value: string | null;
+  confidence: 'high' | 'medium' | 'low';
+  sourceDocumentKind?: NameChangeDocumentKind;
+  sourceFieldKey?: NameChangeExtractionFieldKey;
+}
+
+export interface NameChangeAutofillFieldMapping {
+  targetField: string;
+  label: string;
+  value: NameChangeAutofillFieldValue;
+}
+
+export interface NameChangeAutofillPrepSnapshot {
+  canonicalCase: NameChangeCanonicalCase;
+  fields: NameChangeAutofillFieldMapping[];
+  summary: {
+    ready: number;
+    missing: number;
+    extractedBacked: number;
+  };
+}
+
 export interface NameChangeReminderSuggestion {
   id: string;
   label: string;

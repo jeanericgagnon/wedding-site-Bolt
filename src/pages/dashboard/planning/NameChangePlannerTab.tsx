@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sparkles } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
 import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
@@ -93,6 +94,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const requirementSnapshot = useMemo(() => evaluateNameChangeRequirements(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
+  const autofillPrepSnapshot = useMemo(() => buildNameChangeAutofillPrepSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
@@ -289,6 +291,36 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               </div>
               <p className="mt-3 text-sm text-text-secondary">Captured fields: {document.capturedExtractionFields.length > 0 ? document.capturedExtractionFields.join(', ') : 'none yet'}</p>
               <p className="mt-2 text-xs text-text-secondary">Missing extraction fields: {document.missingExtractionFields.length > 0 ? document.missingExtractionFields.join(', ') : 'none'}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Autofill prep snapshot</h3>
+            <p className="text-sm text-text-secondary">First real form/autofill-prep slice: canonical values plus extracted-field-backed candidates for downstream execution.</p>
+          </div>
+          <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            {autofillPrepSnapshot.summary.ready} ready · {autofillPrepSnapshot.summary.missing} missing · {autofillPrepSnapshot.summary.extractedBacked} extracted-backed
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {autofillPrepSnapshot.fields.map((field) => (
+            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{field.targetField}</p>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-xs ${field.value.confidence === 'high' ? 'bg-success/10 text-success' : field.value.confidence === 'medium' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                  {field.value.confidence}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-primary">{field.value.value ?? 'Missing'}</p>
+              <p className="mt-2 text-xs text-text-secondary">Source: {field.value.source}{field.value.sourceDocumentKind ? ` · ${field.value.sourceDocumentKind}` : ''}{field.value.sourceFieldKey ? ` · ${field.value.sourceFieldKey}` : ''}</p>
             </div>
           ))}
         </div>
