@@ -14,6 +14,12 @@ type NameChangeCoreStepReminderConfig = {
   includeWhen?: (plan: NameChangePlan) => boolean;
 };
 
+type NameChangeInstitutionReminderFamilyConfig = {
+  offsetAdjustmentDays?: number;
+  minimumUrgency?: NameChangeReminderSuggestion['urgency'];
+  reasonSuffix?: string;
+};
+
 const CORE_STEP_REMINDER_CONFIGS: Record<string, NameChangeCoreStepReminderConfig> = {
   'federal-ssa': {
     id: 'reminder-ssa-followup',
@@ -53,6 +59,36 @@ const CORE_STEP_REMINDER_CONFIGS: Record<string, NameChangeCoreStepReminderConfi
     reason: 'Once the core identity path is moving, the long tail of banks, insurance, utilities, and other accounts is where name-change workflows usually stall.',
   },
 };
+
+const INSTITUTION_REMINDER_FAMILY_CONFIGS: Record<string, NameChangeInstitutionReminderFamilyConfig> = {
+  employment: {
+    offsetAdjustmentDays: -1,
+    minimumUrgency: 'medium',
+    reasonSuffix: ' Employment-linked records tend to matter quickly once government identity updates begin to settle.',
+  },
+  insurance: {
+    minimumUrgency: 'medium',
+    reasonSuffix: ' Coverage, cards, and provider rosters are annoying to untangle later if they drift.',
+  },
+  financial: {
+    offsetAdjustmentDays: -1,
+    minimumUrgency: 'medium',
+    reasonSuffix: ' Financial accounts are one of the first downstream lanes where old/new-name mismatches get irritating fast.',
+  },
+  government: {
+    minimumUrgency: 'medium',
+    reasonSuffix: ' Government-adjacent record drift usually cascades into other admin work if it lags.',
+  },
+};
+
+function raiseUrgency(
+  current: NameChangeReminderSuggestion['urgency'],
+  minimum?: NameChangeReminderSuggestion['urgency'],
+): NameChangeReminderSuggestion['urgency'] {
+  const rank = { low: 0, medium: 1, high: 2 } as const;
+  if (!minimum) return current;
+  return rank[current] >= rank[minimum] ? current : minimum;
+}
 
 function urgencyFromOffset(days: number): NameChangeReminderSuggestion['urgency'] {
   if (days <= 2) return 'high';
@@ -100,14 +136,16 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
   NAME_CHANGE_INSTITUTION_LIBRARY.forEach((institution) => {
     const matchingStep = plan.steps.find((step) => step.id === `institution-${institution.key}`);
     if (!matchingStep) return;
+    const familyConfig = INSTITUTION_REMINDER_FAMILY_CONFIGS[institution.category] ?? null;
+    const suggestedOffsetDays = Math.max(1, institution.reminderDaysAfterPrimaryId + (familyConfig?.offsetAdjustmentDays ?? 0));
 
     suggestions.push({
       id: `reminder-${institution.key}`,
       label: `Follow up on ${institution.label}`,
-      suggestedOffsetDays: institution.reminderDaysAfterPrimaryId,
-      reason: institution.notes,
+      suggestedOffsetDays,
+      reason: `${institution.notes}${familyConfig?.reasonSuffix ?? ''}`,
       dependsOnStepId: matchingStep.id,
-      urgency: urgencyFromOffset(institution.reminderDaysAfterPrimaryId),
+      urgency: raiseUrgency(urgencyFromOffset(suggestedOffsetDays), familyConfig?.minimumUrgency),
     });
   });
 

@@ -134,10 +134,29 @@ describe('name change reminder suggestions', () => {
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-banks')).toMatchObject({
       status: 'pending',
       depends_on_step_id: 'institution-banks',
+      suggested_offset_days: 4,
+      urgency: 'medium',
     });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-ssa-followup')).toMatchObject({
       status: 'pending',
       depends_on_step_id: 'federal-ssa',
+    });
+  });
+
+  it('applies institution-family reminder tuning for downstream lanes', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput()));
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-irs-employer')).toMatchObject({
+      suggestedOffsetDays: 1,
+      urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-insurance')).toMatchObject({
+      suggestedOffsetDays: 7,
+      urgency: 'medium',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-voter-registration')).toMatchObject({
+      suggestedOffsetDays: 10,
+      urgency: 'medium',
     });
   });
 
