@@ -275,6 +275,10 @@ function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
   }
 }
 
+function normalizeSavedTemplateName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
 const COMPOSER_TEMPLATES: ComposerTemplate[] = [
   {
     key: 'blank',
@@ -1873,14 +1877,17 @@ export const DashboardMessages: React.FC = () => {
     const subject = formData.subject.trim();
     const body = formData.body.trim();
     const name = formData.campaignName.trim() || subject || selectedTemplate.label;
+    const normalizedName = normalizeSavedTemplateName(name);
 
     if (!subject && !body) {
       toast('Add a subject or message body before saving a reusable template.', 'error');
       return;
     }
 
+    const existingTemplate = savedTemplates.find((item) => normalizeSavedTemplateName(item.name) === normalizedName);
+
     const next: SavedComposerTemplate = {
-      id: `saved-template-${Date.now()}`,
+      id: existingTemplate?.id ?? `saved-template-${Date.now()}`,
       name,
       subject: formData.subject,
       body: formData.body,
@@ -1893,14 +1900,14 @@ export const DashboardMessages: React.FC = () => {
       createdAt: new Date().toISOString(),
     };
 
-    const updated = [next, ...savedTemplates.filter((item) => item.name !== next.name)].slice(0, 12);
+    const updated = [next, ...savedTemplates.filter((item) => normalizeSavedTemplateName(item.name) !== normalizedName)].slice(0, 12);
     const persisted = writeSavedComposerTemplates(updated);
     if (!persisted) {
       toast('Couldn’t save that reusable template on this device right now.', 'error');
       return;
     }
     setSavedTemplates(updated);
-    toast(`Saved reusable template “${name}”.`, 'success');
+    toast(`${existingTemplate ? 'Updated' : 'Saved'} reusable template “${name}”.`, 'success');
   }
 
   function deleteSavedTemplate(templateId: string) {
