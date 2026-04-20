@@ -39,6 +39,7 @@ import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSumm
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
 import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPriority';
 import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorCommandPriorityReason';
+import { getCoordinatorCommandPriorityTargetReason } from '../../lib/coordinatorCommandPriorityTargetReason';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -388,6 +389,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const timelineTargetState = useMemo(() => getCoordinatorTimelineTargetState({ boardTargetId: timelineBoardTargetId, activeTimelineEventId }), [timelineBoardTargetId, activeTimelineEventId]);
   const qnaBoardTargetId = useMemo(() => getFirstOpenCoordinatorQnaId(qnaItems), [qnaItems]);
   const qnaTargetState = useMemo(() => getCoordinatorQnaTargetState({ boardTargetId: qnaBoardTargetId, activeQnaId }), [qnaBoardTargetId, activeQnaId]);
+  const checkInTargetGuest = useMemo(() => sortedGuests.find((guest) => guest.id === checkInBoardTargetId) ?? null, [sortedGuests, checkInBoardTargetId]);
+  const timelineTargetEvent = useMemo(() => events.find((event) => event.id === timelineBoardTargetId) ?? null, [events, timelineBoardTargetId]);
+  const qnaTargetItem = useMemo(() => qnaItems.find((item) => item.id === qnaBoardTargetId) ?? null, [qnaItems, qnaBoardTargetId]);
   const commandSummaryItems = useMemo(() => buildCoordinatorCommandSummary({
     checkInLabel: checkInTargetState.label,
     timelineLabel: timelineTargetState.label,
@@ -408,6 +412,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     alertAligned: alertTargetCue.aligned,
     alertLaneLabel,
   }), [priorityCommandLabel, checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned, alertLaneLabel]);
+  const priorityCommandTargetReason = useMemo(() => getCoordinatorCommandPriorityTargetReason({
+    priority: priorityCommandLabel,
+    checkInTargetName: checkInTargetGuest?.name ?? null,
+    timelineTargetName: timelineTargetEvent?.event_name ?? null,
+    qnaTargetQuestion: qnaTargetItem?.question ?? null,
+  }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -753,7 +763,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <span className="text-[10px] font-medium text-text-primary">{item.label}</span>
                 {priorityCommandLabel === item.label && (
                   <span className="ml-1 rounded-full border border-primary/20 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-primary">
-                    Priority — {priorityCommandReason}
+                    Priority — {priorityCommandReason}{priorityCommandTargetReason ? ` ${priorityCommandTargetReason}` : ''}
                   </span>
                 )}
                 <span className="mx-1 text-[10px] text-text-tertiary">·</span>
