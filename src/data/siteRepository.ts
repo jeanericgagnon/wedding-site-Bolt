@@ -28,40 +28,64 @@ export const siteRepository = {
     const slug = normalizePublicSiteSlug(slugInput);
     if (!slug) return null;
 
+    const publicSiteSelect = [
+      'id',
+      'site_slug',
+      'site_url',
+      'is_published',
+      'site_json',
+      'published_json',
+      'couple_name_1',
+      'couple_name_2',
+      'wedding_date',
+      'venue_name',
+      'wedding_location',
+      'template_id',
+      'wedding_data',
+      'layout_config',
+      'default_language',
+      'privacy_mode',
+      'hide_from_search',
+      'site_password_hash',
+      'guest_access_token',
+    ].join(',');
+
     const bySlug = await supabase
       .from('wedding_sites')
-      .select('id, site_slug, site_url, is_published, site_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id, wedding_data, layout_config')
+      .select(publicSiteSelect)
       .eq('site_slug', slug)
       .maybeSingle();
 
     if (bySlug.error) throw bySlug.error;
-    if (bySlug.data) return bySlug.data as Record<string, unknown>;
+    if (bySlug.data) return bySlug.data as unknown as Record<string, unknown>;
 
     const urlCandidates = buildSiteUrlLookupCandidates(slug);
     for (const candidate of urlCandidates) {
       const bySiteUrl = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, site_url, is_published, site_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id, wedding_data, layout_config')
+        .select(publicSiteSelect)
         .eq('site_url', candidate)
         .maybeSingle();
 
       if (bySiteUrl.error) throw bySiteUrl.error;
-      if (bySiteUrl.data) return bySiteUrl.data as Record<string, unknown>;
+      if (bySiteUrl.data) return bySiteUrl.data as unknown as Record<string, unknown>;
     }
 
     // Last-pass fallback for legacy rows that stored full URLs with extra path/query/trailing slash.
     const fuzzy = await supabase
       .from('wedding_sites')
-      .select('id, site_slug, site_url, is_published, site_json, published_json, couple_name_1, couple_name_2, wedding_date, venue_name, wedding_location, template_id, wedding_data, layout_config')
+      .select(publicSiteSelect)
       .ilike('site_url', `%${slug}%`)
       .limit(20);
 
     if (fuzzy.error) throw fuzzy.error;
     const match = (fuzzy.data ?? []).find((row) => {
-      const candidate = normalizePublicSiteSlug(typeof row.site_url === 'string' ? row.site_url : null);
+      const rowRecord = row as unknown as Record<string, unknown>;
+      const siteUrl = typeof rowRecord.site_url === 'string' ? rowRecord.site_url : null;
+      const candidate = normalizePublicSiteSlug(siteUrl);
       return candidate === slug;
     });
-    if (match) return match as Record<string, unknown>;
+    if (match) return match as unknown as Record<string, unknown>;
 
     return null;
   },

@@ -250,6 +250,7 @@ Things that do **not** count as done:
 - Coordinator Mode's “Next arrivals” list was still mixing review-needed guests into the fast-path arrival cue, which weakened live day-of usefulness until corrected
 - Coordinator Mode's “Next arrivals” empty state could still claim everyone was checked in when review-needed guests were waiting, which weakened live board truth until corrected
 - Messaging retry still relied on button disable state instead of a handler-level permission wall, which left one more campaign-send action path weaker than it should be until corrected
+- public site lookup was not selecting privacy/access fields used by SiteView, which could silently degrade password/invite/search gating toward public defaults until corrected
 - the public site path could still fall back to section-based rendering during unpublished/private-preview access when preview JSON was missing, which risked showing a stale ambiguous launch state until corrected
 
 **Proof needed**
@@ -457,6 +458,7 @@ Primary proof artifact for this now exists at:
 - Fixed Coordinator Mode’s “Next arrivals” cue so it now shows only ready unchecked-in guests instead of mixing in review-needed arrivals.
 - Fixed Coordinator Mode’s “Next arrivals” empty-state copy so it now distinguishes between “no ready arrivals” and “everyone checked in.”
 - Fixed Messaging retry so non-compose roles can no longer reach failed/partial send retries through the handler path.
+- Fixed public site lookup so SiteView now receives the actual privacy/access fields it depends on instead of assuming public defaults when those fields were missing from the query.
 - Fixed public site fallback gating so section-based rendering only kicks in for published sites instead of leaking into unpublished/private-preview access.
 
 ## Why this batch mattered
