@@ -32,6 +32,7 @@ import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFo
 import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutralFocusTarget';
 import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
 import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
+import { getCoordinatorCheckInBoardTargetId, getCoordinatorCheckInTargetState } from '../../lib/coordinatorCheckInTargetState';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -375,6 +376,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const base = filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter);
     return checkInReviewOnly ? base.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch') : base;
   }, [sortedGuests, checkInQuery, checkInFilter, checkInReviewOnly]);
+  const checkInBoardTargetId = useMemo(() => getCoordinatorCheckInBoardTargetId(sortedGuests), [sortedGuests]);
+  const checkInTargetState = useMemo(() => getCoordinatorCheckInTargetState({ boardTargetId: checkInBoardTargetId, activeGuestId }), [checkInBoardTargetId, activeGuestId]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -706,7 +709,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-sm font-medium text-text-primary">Check-in queue</p>
                   <p className="text-[11px] text-text-tertiary">Search arrivals fast and keep the live line moving.</p>
                 </div>
-                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review{checkInReviewOnly ? ' · review mode' : ''}{activeGuestId ? ` · ${getCoordinatorActiveTargetLabel('guest')}` : ''}</p>
+                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review{checkInReviewOnly ? ' · review mode' : ''}{activeGuestId ? ` · ${getCoordinatorActiveTargetLabel('guest')}` : ''}{checkInTargetState.label ? ` · ${checkInTargetState.label}` : ''}</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
@@ -731,11 +734,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 return (
                   <div key={g.id} className={`flex items-center justify-between gap-3 px-4 py-2.5 ${activeGuestId === g.id ? 'bg-primary/5' : ''}`}>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium text-text-primary">{g.name}</p>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] border ${doorStatus === 'ready' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : doorStatus === 'watch' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-border bg-surface-subtle text-text-tertiary'}`}>
                           {getCoordinatorDoorStatusLabel(doorStatus)}
                         </span>
+                        {checkInBoardTargetId === g.id && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] border ${checkInTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+                            {checkInTargetState.isBoardTargetActive ? 'Board target in progress' : 'Board target'}
+                          </span>
+                        )}
+                        {activeGuestId === g.id && checkInBoardTargetId !== g.id && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] border border-primary/20 bg-primary/5 text-primary">
+                            Working guest
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-text-tertiary">{g.rsvp_status}{doorStatus === 'watch' ? ' · Flag before check-in' : ''}</p>
                     </div>
