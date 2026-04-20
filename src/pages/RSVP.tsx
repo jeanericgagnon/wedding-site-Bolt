@@ -272,6 +272,14 @@ export default function RSVP() {
     if (!token) return;
     setTokenAutoLoading(true);
     setSearchValue(token);
+    setGuest(null);
+    setExistingRsvp(null);
+    setAmbiguousGuests([]);
+    setRsvpDeadline(null);
+    setMusicPlaylistUrl(null);
+    setHouseholdGuests([]);
+    setApplyToHousehold(true);
+    setSelectedHouseholdGuestIds([]);
     (DEMO_MODE ? Promise.resolve({ data: demoLookup(token) as unknown, error: undefined as string | undefined }) : rsvpCall({ action: 'lookup', searchValue: token }))
       .then(({ data, error: err }) => {
         if (err || !data) {
