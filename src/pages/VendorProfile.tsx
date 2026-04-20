@@ -138,6 +138,14 @@ export const VendorProfilePage: React.FC = () => {
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#d8c4ad]">Contact / Inquire</h2>
             <p className="mt-3 text-base sm:text-lg text-[#efe4d8] max-w-2xl">Send a quick inquiry and keep the conversation moving without hunting for details.</p>
           </div>
+          {profile.contact_email && (
+            <a
+              href={`mailto:${profile.contact_email}?subject=${encodeURIComponent(`Inquiry for ${profile.vendor_name}`)}`}
+              className="inline-flex items-center justify-center rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15"
+            >
+              Email {profile.vendor_name}
+            </a>
+          )}
           {sent ? (
             <div className="rounded-2xl bg-white/10 px-4 py-4 text-sm text-[#f5e9db]">Inquiry sent. We saved your message for follow-up.</div>
           ) : (
