@@ -91,6 +91,36 @@ describe('name change reminder suggestions', () => {
     expect(reminders.some((reminder) => reminder.id === 'reminder-passport-followup')).toBe(false);
   });
 
+  it('suppresses reminders for steps already complete', () => {
+    const basePlan = buildNameChangePlan(makeInput());
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'federal-ssa' ? { ...step, executionStatus: 'complete' as const } : step,
+      ),
+    };
+
+    const reminders = buildNameChangeReminderSuggestions(plan);
+    expect(reminders.some((reminder) => reminder.id === 'reminder-ssa-followup')).toBe(false);
+  });
+
+  it('tightens reminder timing once a dependent step is already in progress', () => {
+    const basePlan = buildNameChangePlan(makeInput());
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'state-dmv' ? { ...step, executionStatus: 'in_progress' as const } : step,
+      ),
+    };
+
+    const reminder = buildNameChangeReminderSuggestions(plan).find((item) => item.id === 'reminder-dmv-followup');
+    expect(reminder).toMatchObject({
+      suggestedOffsetDays: 2,
+      urgency: 'medium',
+    });
+    expect(reminder?.reason).toContain('already in progress');
+  });
+
   it('maps reminder suggestions into persistence-ready inputs', () => {
     const plan = buildNameChangePlan(makeInput());
     const inputs = mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan));

@@ -9,6 +9,27 @@ function urgencyFromOffset(days: number): NameChangeReminderSuggestion['urgency'
   return 'low';
 }
 
+function adjustReminderSuggestionForStepState(
+  suggestion: NameChangeReminderSuggestion,
+  plan: NameChangePlan,
+): NameChangeReminderSuggestion | null {
+  const step = plan.steps.find((candidate) => candidate.id === suggestion.dependsOnStepId);
+  if (!step) return suggestion;
+  if (step.executionStatus === 'complete') return null;
+
+  if (step.executionStatus === 'in_progress') {
+    const suggestedOffsetDays = Math.max(1, Math.min(suggestion.suggestedOffsetDays, suggestion.urgency === 'low' ? 5 : 2));
+    return {
+      ...suggestion,
+      suggestedOffsetDays,
+      urgency: suggestion.urgency === 'low' ? 'medium' : suggestion.urgency,
+      reason: `${suggestion.reason} This step is already in progress, so the follow-up should stay tighter than a fresh todo item.`,
+    };
+  }
+
+  return suggestion;
+}
+
 export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameChangeReminderSuggestion[] {
   const suggestions: NameChangeReminderSuggestion[] = [];
 
@@ -55,7 +76,10 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
     });
   });
 
-  return suggestions.sort((a, b) => a.suggestedOffsetDays - b.suggestedOffsetDays || a.label.localeCompare(b.label));
+  return suggestions
+    .map((suggestion) => adjustReminderSuggestionForStepState(suggestion, plan))
+    .filter((suggestion): suggestion is NameChangeReminderSuggestion => suggestion !== null)
+    .sort((a, b) => a.suggestedOffsetDays - b.suggestedOffsetDays || a.label.localeCompare(b.label));
 }
 
 export function mapReminderSuggestionsToInputs(suggestions: NameChangeReminderSuggestion[]): NameChangeReminderInput[] {
