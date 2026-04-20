@@ -1081,7 +1081,9 @@ export const DashboardMessages: React.FC = () => {
       const { data, error } = await supabase
         .from('message_deliveries')
         .select('id, message_id, status, provider_message_id, error_message, attempted_at, delivered_at, recipient_email, recipient_name')
-        .in('message_id', messageIds);
+        .in('message_id', messageIds)
+        .order('attempted_at', { ascending: false })
+        .limit(500);
 
       if (error) {
         const msg = (error.message || '').toLowerCase();
