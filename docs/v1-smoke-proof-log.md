@@ -283,6 +283,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: Messaging retry still trusted button disable state instead of the handler path. Non-compose roles can no longer retry failed or partial campaign sends by reaching the retry action directly.
 - Concrete finish gap found and fixed: public site lookup was not selecting privacy/access fields that the public SiteView actually depends on. Password/invite-only/search-visibility/default-language gating now receives the real row fields instead of silently degrading toward public defaults.
 - Concrete finish gap found and fixed: the public site path could still fall back to section-based rendering even for unpublished/private-preview access when preview JSON was missing, which risked showing an ambiguous stale render path instead of the actual preview state. Section fallback is now gated to published sites only.
+- Concrete finish gap found and fixed: ambiguous RSVP guest selection still depended on a second token lookup and could drop already-known RSVP config if that follow-up lookup failed. Picked guests now retain the already-loaded deadline/questions/meal/household context instead of degrading to a weaker form state.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -308,6 +309,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the Messaging retry permission fix.
 - `npm run build` passes after the public site lookup field fix.
 - `npm run build` passes after the public preview fallback gating fix.
+- `npm run build` passes after the RSVP picked-guest fallback fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Highest-value next proof seam

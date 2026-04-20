@@ -252,6 +252,7 @@ Things that do **not** count as done:
 - Messaging retry still relied on button disable state instead of a handler-level permission wall, which left one more campaign-send action path weaker than it should be until corrected
 - public site lookup was not selecting privacy/access fields used by SiteView, which could silently degrade password/invite/search gating toward public defaults until corrected
 - the public site path could still fall back to section-based rendering during unpublished/private-preview access when preview JSON was missing, which risked showing a stale ambiguous launch state until corrected
+- ambiguous RSVP guest selection could still lose already-known RSVP config when the follow-up token lookup failed, which weakened guest-facing RSVP resilience until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -460,6 +461,7 @@ Primary proof artifact for this now exists at:
 - Fixed Messaging retry so non-compose roles can no longer reach failed/partial send retries through the handler path.
 - Fixed public site lookup so SiteView now receives the actual privacy/access fields it depends on instead of assuming public defaults when those fields were missing from the query.
 - Fixed public site fallback gating so section-based rendering only kicks in for published sites instead of leaking into unpublished/private-preview access.
+- Fixed RSVP picked-guest fallback so already-known deadline/question/meal/household context is preserved even when the follow-up lookup for a picked guest fails.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
