@@ -61,6 +61,12 @@ export default function EventRSVP() {
     if (token) {
       loadGuestAndEvents();
     } else {
+      setGuest(null);
+      setInvitations([]);
+      setSelectedEvent(null);
+      setSubmitError('');
+      setSubmitSuccess(false);
+      setHasEventRsvpSupport(null);
       setError('No invitation link found. Please use the link from your invitation email.');
       setLoading(false);
     }
