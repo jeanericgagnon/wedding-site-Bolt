@@ -118,6 +118,17 @@ function jsonResponse(status: number, body: Record<string, unknown>) {
   });
 }
 
+function isMissingDeliveriesTableError(error: { message?: string; details?: string; hint?: string; code?: string } | null | undefined): boolean {
+  const haystack = [error?.message, error?.details, error?.hint, error?.code]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes("message_deliveries")
+    || haystack.includes("does not exist")
+    || haystack.includes("schema cache")
+    || haystack.includes("42p01");
+}
+
 async function deliverMessage(opts: {
   adminClient: ReturnType<typeof createClient>;
   userId: string;
@@ -351,10 +362,14 @@ async function deliverMessage(opts: {
     delivered_at?: string;
   }> = [];
 
-  await adminClient
+  const clearDeliveriesResult = await adminClient
     .from("message_deliveries")
     .delete()
     .eq("message_id", messageId);
+  if (clearDeliveriesResult.error && !isMissingDeliveriesTableError(clearDeliveriesResult.error)) {
+    return { ok: false, status: 500, body: { error: clearDeliveriesResult.error.message } };
+  }
+  const canWriteDeliveryLog = !clearDeliveriesResult.error;
 
   for (const guest of skippedGuests) {
     const guestName = guest.first_name && guest.last_name
@@ -451,8 +466,11 @@ async function deliverMessage(opts: {
     await new Promise((r) => setTimeout(r, 50));
   }
 
-  if (deliveryInserts.length > 0) {
-    await adminClient.from("message_deliveries").insert(deliveryInserts);
+  if (deliveryInserts.length > 0 && canWriteDeliveryLog) {
+    const insertDeliveriesResult = await adminClient.from("message_deliveries").insert(deliveryInserts);
+    if (insertDeliveriesResult.error && !isMissingDeliveriesTableError(insertDeliveriesResult.error)) {
+      return { ok: false, status: 500, body: { error: insertDeliveriesResult.error.message } };
+    }
   }
 
   const skippedCount = skippedGuests.length;
