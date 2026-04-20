@@ -1155,14 +1155,14 @@ export const GuestPhotoSharing: React.FC = () => {
                 <Camera className="w-4 h-4 mr-1" />
                 {submitting ? 'Creating...' : 'Add bucket'}
               </Button>
-              {latestUploadUrl && (
-                <Button variant="outline" onClick={() => void copyText(latestUploadUrl, 'sheet-dashboard-link')} className="w-full sm:w-auto">
+              {uploadLanding && (
+                <Button variant="outline" onClick={() => void copyText(uploadLanding, 'sheet-dashboard-link')} className="w-full sm:w-auto">
                   <Copy className="w-4 h-4 mr-1" />
                   {copied === 'sheet-dashboard-link' ? 'Copied dashboard link' : 'Copy upload dashboard link'}
                 </Button>
               )}
-              {latestUploadUrl && (
-                <Button variant="outline" onClick={() => window.open(getBucketQrUrl(latestUploadUrl), '_blank')} className="w-full sm:w-auto">
+              {uploadLanding && (
+                <Button variant="outline" onClick={() => window.open(getBucketQrUrl(uploadLanding), '_blank')} className="w-full sm:w-auto">
                   QR for dashboard
                 </Button>
               )}
@@ -1207,8 +1207,14 @@ export const GuestPhotoSharing: React.FC = () => {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Upload dashboard</p>
                 <p className="mt-2 text-sm text-neutral-700">Guests should land on one clean place to upload, not hunt through your site.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => window.open(latestUploadUrl, '_blank')}>Open upload dashboard</Button>
-                  <Button size="sm" variant="outline" onClick={() => window.open(getBucketQrUrl(latestUploadUrl), '_blank')}>Open QR</Button>
+                  {uploadLanding ? (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => window.open(uploadLanding, '_blank')}>Open upload dashboard</Button>
+                      <Button size="sm" variant="outline" onClick={() => window.open(getBucketQrUrl(uploadLanding), '_blank')}>Open QR</Button>
+                    </>
+                  ) : (
+                    <p className="text-xs text-neutral-500">Guest upload dashboard is not ready until this site has a public slug.</p>
+                  )}
                 </div>
               </div>
             </div>
