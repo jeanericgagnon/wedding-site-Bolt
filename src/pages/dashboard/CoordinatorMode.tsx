@@ -376,7 +376,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [alertLog]);
 
 
-  const nextArrivals = useMemo(() => sortedGuests.filter((g) => !g.checked_in_at).slice(0, 5), [sortedGuests]);
+  const nextArrivals = useMemo(
+    () => sortedGuests.filter((g) => !g.checked_in_at && getCoordinatorDoorStatus(g) === 'ready').slice(0, 5),
+    [sortedGuests],
+  );
   const checkInWatchCount = useMemo(() => guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch').length, [guests]);
 
   const checkInQueue = useMemo(() => {
