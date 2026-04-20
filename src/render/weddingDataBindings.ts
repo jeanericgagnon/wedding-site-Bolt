@@ -220,7 +220,14 @@ function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Recor
   const venueAddress = primaryVenue?.address || '';
   const locationLine = [venueName, venueAddress].filter(Boolean).join(' · ');
   const hero = weddingData.media?.heroImageUrl || '';
-  const gallery = (weddingData.media?.gallery || []).map((g) => g.url).filter(Boolean);
+  const gallery = (weddingData.media?.gallery || []).filter((g) => Boolean(g.url?.trim()));
+  const galleryUrls = gallery.map((g) => g.url);
+  const galleryObjects = gallery.map((g, index) => ({
+    id: g.id || `gallery-${index}`,
+    url: g.url,
+    caption: g.caption || '',
+    alt: g.caption || '',
+  }));
 
   return {
     ...section.data,
@@ -246,9 +253,9 @@ function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Recor
     backgroundImage: section.data.backgroundImage ?? hero,
     image: section.data.image ?? hero,
     coverImage: section.data.coverImage ?? hero,
-    images: Array.isArray(section.data.images) && section.data.images.length ? section.data.images : gallery,
-    photos: Array.isArray(section.data.photos) && section.data.photos.length ? section.data.photos : gallery,
-    galleryImages: Array.isArray(section.data.galleryImages) && section.data.galleryImages.length ? section.data.galleryImages : gallery,
+    images: Array.isArray(section.data.images) && section.data.images.length ? section.data.images : galleryObjects,
+    photos: Array.isArray(section.data.photos) && section.data.photos.length ? section.data.photos : galleryUrls,
+    galleryImages: Array.isArray(section.data.galleryImages) && section.data.galleryImages.length ? section.data.galleryImages : galleryObjects,
 
     // Footer defaults
     copyrightText: section.data.copyrightText ?? (coupleName && weddingDate ? `${coupleName} · ${weddingDate}` : section.data.copyrightText),

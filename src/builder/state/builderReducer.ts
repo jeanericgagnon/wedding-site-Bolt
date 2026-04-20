@@ -416,6 +416,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         mediaLibraryOpen: true,
         mediaPickerTargetSectionId: action.payload?.sectionId ?? null,
         mediaPickerTargetField: action.payload?.targetField ?? null,
+        mediaPickerTargetSettingKey: action.payload?.targetSettingKey ?? null,
         mediaPickerTargetBlockPath: action.payload?.blockPath ?? null,
         mediaPickerTargetImageIndex: action.payload?.imageIndex ?? null,
       };
@@ -426,6 +427,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         mediaLibraryOpen: false,
         mediaPickerTargetSectionId: null,
         mediaPickerTargetField: null,
+        mediaPickerTargetSettingKey: null,
         mediaPickerTargetBlockPath: null,
         mediaPickerTargetImageIndex: null,
       };

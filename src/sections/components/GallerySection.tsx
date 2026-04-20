@@ -8,11 +8,54 @@ interface Props {
   instance: SectionInstance;
 }
 
-export const GallerySection: React.FC<Props> = ({ data, instance }) => {
-  const { media } = data;
-  const { settings } = instance;
+interface GalleryPhoto {
+  id: string;
+  url: string;
+  caption: string;
+  alt: string;
+}
 
-  if (media.gallery.length === 0) {
+function normalizeGalleryPhotos(data: WeddingDataV1, settings: SectionInstance['settings']): GalleryPhoto[] {
+  const rawSettingImages = Array.isArray(settings.images) ? settings.images : [];
+  const settingPhotos = rawSettingImages
+    .map((item, index) => {
+      if (typeof item === 'string') {
+        const url = item.trim();
+        return url ? { id: `settings-${index}`, url, caption: '', alt: '' } : null;
+      }
+
+      if (!item || typeof item !== 'object') return null;
+
+      const record = item as Record<string, unknown>;
+      const url = typeof record.url === 'string' ? record.url.trim() : '';
+      if (!url) return null;
+
+      return {
+        id: typeof record.id === 'string' && record.id ? record.id : `settings-${index}`,
+        url,
+        caption: typeof record.caption === 'string' ? record.caption : '',
+        alt: typeof record.alt === 'string' ? record.alt : '',
+      };
+    })
+    .filter((photo): photo is GalleryPhoto => Boolean(photo));
+
+  if (settingPhotos.length > 0) return settingPhotos;
+
+  return data.media.gallery
+    .filter((photo) => Boolean(photo.url?.trim()))
+    .map((photo, index) => ({
+      id: photo.id || `media-${index}`,
+      url: photo.url,
+      caption: photo.caption || '',
+      alt: photo.caption || '',
+    }));
+}
+
+export const GallerySection: React.FC<Props> = ({ data, instance }) => {
+  const { settings } = instance;
+  const photos = normalizeGalleryPhotos(data, settings);
+
+  if (photos.length === 0) {
     return (
       <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-4xl mx-auto text-center">
@@ -32,11 +75,11 @@ export const GallerySection: React.FC<Props> = ({ data, instance }) => {
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
         )}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-          {media.gallery.map(photo => (
+          {photos.map(photo => (
             <div key={photo.id} className="group aspect-square rounded-xl overflow-hidden border border-border/60 shadow-sm">
               <img
                 src={photo.url}
-                alt={photo.caption || 'Gallery photo'}
+                alt={photo.alt || photo.caption || 'Gallery photo'}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </div>
@@ -48,10 +91,10 @@ export const GallerySection: React.FC<Props> = ({ data, instance }) => {
 };
 
 export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
-  const { media } = data;
   const { settings } = instance;
+  const photos = normalizeGalleryPhotos(data, settings);
 
-  if (media.gallery.length === 0) {
+  if (photos.length === 0) {
     return (
       <section className="py-16 md:py-20 px-4 bg-background">
         <div className="max-w-4xl mx-auto text-center">
@@ -64,8 +107,8 @@ export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
     );
   }
 
-  const cols: typeof media.gallery[] = [[], [], []];
-  media.gallery.forEach((photo, i) => cols[i % 3].push(photo));
+  const cols: GalleryPhoto[][] = [[], [], []];
+  photos.forEach((photo, i) => cols[i % 3].push(photo));
 
   return (
     <section className="py-16 md:py-20 px-4 bg-background">
@@ -87,7 +130,7 @@ export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
                 >
                   <img
                     src={photo.url}
-                    alt={photo.caption || 'Gallery photo'}
+                    alt={photo.alt || photo.caption || 'Gallery photo'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />

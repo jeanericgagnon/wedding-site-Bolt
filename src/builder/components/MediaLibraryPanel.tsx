@@ -33,12 +33,23 @@ export const MediaLibraryPanel: React.FC = () => {
     const section = activePage?.sections.find(s => s.id === sectionId);
     if (!section) return;
 
+    const nextBindings = asset.id
+      ? {
+          ...section.bindings,
+          mediaAssetIds: Array.from(new Set([...(section.bindings.mediaAssetIds ?? []), asset.id])),
+        }
+      : section.bindings;
+
     if (state.mediaPickerTargetField === 'sideImage') {
       dispatch(builderActions.updateSection(pageId, sectionId, {
+        bindings: nextBindings,
         styleOverrides: { ...section.styleOverrides, sideImage: asset.url },
       }));
     } else if (state.mediaPickerTargetField === 'customBlock' && state.mediaPickerTargetBlockPath) {
       const { blockId, columnIndex, columnBlockId } = state.mediaPickerTargetBlockPath;
+      dispatch(builderActions.updateSection(pageId, sectionId, {
+        bindings: nextBindings,
+      }));
       dispatch(builderActions.updateCustomBlock(pageId, sectionId, blockId, { imageUrl: asset.url }, columnIndex, columnBlockId));
     } else if (state.mediaPickerTargetField === 'imageArray' && state.mediaPickerTargetImageIndex !== null) {
       const images = ((section.settings.images ?? []) as Array<Record<string, unknown>>).slice();
@@ -50,14 +61,23 @@ export const MediaLibraryPanel: React.FC = () => {
       }
       const { images: _removed, ...restSettings } = section.settings as Record<string, unknown>;
       dispatch(builderActions.updateSection(pageId, sectionId, {
+        bindings: nextBindings,
         settings: { ...restSettings, images },
       }));
     } else {
       const imageKey = state.mediaPickerTargetSettingKey || resolveImageSettingKey(section.type);
       dispatch(builderActions.updateSection(pageId, sectionId, {
+        bindings: nextBindings,
         settings: { ...section.settings, [imageKey]: asset.url },
       }));
     }
+
+    if (asset.id) {
+      void mediaService.attachAssetToSection(asset.id, sectionId).catch(() => {
+        dispatch(builderActions.setError('Image selected, but we could not link it back to this section in the media library.'));
+      });
+    }
+
     dispatch(builderActions.closeMediaLibrary());
   };
 

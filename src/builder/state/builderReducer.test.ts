@@ -286,6 +286,28 @@ describe('builderReducer — MEDIA actions', () => {
     const next = builderReducer(s, { type: 'REMOVE_MEDIA_ASSET', payload: 'a1' });
     expect(next.mediaAssets).toHaveLength(0);
   });
+
+  it('preserves the targeted image setting when opening the media picker', () => {
+    const s = makeState();
+    const next = builderReducer(s, {
+      type: 'OPEN_MEDIA_LIBRARY',
+      payload: { sectionId: 'section-1', targetField: 'settings', targetSettingKey: 'backgroundImage' },
+    });
+    expect(next.mediaLibraryOpen).toBe(true);
+    expect(next.mediaPickerTargetSectionId).toBe('section-1');
+    expect(next.mediaPickerTargetField).toBe('settings');
+    expect(next.mediaPickerTargetSettingKey).toBe('backgroundImage');
+  });
+
+  it('clears the targeted image setting when closing the media picker', () => {
+    const opened = builderReducer(makeState(), {
+      type: 'OPEN_MEDIA_LIBRARY',
+      payload: { sectionId: 'section-1', targetField: 'settings', targetSettingKey: 'backgroundImage' },
+    });
+    const next = builderReducer(opened, { type: 'CLOSE_MEDIA_LIBRARY' });
+    expect(next.mediaLibraryOpen).toBe(false);
+    expect(next.mediaPickerTargetSettingKey).toBeNull();
+  });
 });
 
 describe('builderReducer — default', () => {
