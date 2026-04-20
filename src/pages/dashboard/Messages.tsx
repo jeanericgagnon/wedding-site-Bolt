@@ -2103,6 +2103,7 @@ export const DashboardMessages: React.FC = () => {
           body: payload.body,
           sent_at: null,
           audience_filter: 'all',
+          recipient_count: guests.length,
           recipient_filter: payload.recipient_filter,
           scheduled_for: payload.scheduled_for,
           status: 'scheduled',
