@@ -181,6 +181,10 @@ export const DashboardPlanning: React.FC = () => {
   }
 
   const handleAddTask = useCallback(async (task: Partial<PlanningTask>) => {
+    if (!canEditPlanningTasks(planningRole)) {
+      toast('Your collaborator role cannot add planning tasks.', 'info');
+      return;
+    }
     if (!siteId) return;
     try {
       if (isDemoMode) {
@@ -209,18 +213,26 @@ export const DashboardPlanning: React.FC = () => {
     } catch {
       toast('Couldn’t add that task. Please try again.', 'error');
     }
-  }, [siteId, toast, isDemoMode]);
+  }, [siteId, toast, isDemoMode, planningRole]);
 
   const handleUpdateTask = useCallback(async (id: string, updates: Partial<PlanningTask>) => {
+    if (!canEditPlanningTasks(planningRole)) {
+      toast('Your collaborator role cannot edit planning tasks.', 'info');
+      return;
+    }
     try {
       if (!isDemoMode) await updateTask(id, updates);
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
     } catch {
       toast('Couldn’t update that task. Please try again.', 'error');
     }
-  }, [toast, isDemoMode]);
+  }, [toast, isDemoMode, planningRole]);
 
   const handleDeleteTask = useCallback(async (id: string) => {
+    if (!canEditPlanningTasks(planningRole)) {
+      toast('Your collaborator role cannot delete planning tasks.', 'info');
+      return;
+    }
     try {
       if (!isDemoMode) await deleteTask(id);
       setTasks(prev => prev.filter(t => t.id !== id));
@@ -228,9 +240,13 @@ export const DashboardPlanning: React.FC = () => {
     } catch {
       toast('Couldn’t remove that task. Please try again.', 'error');
     }
-  }, [toast, isDemoMode]);
+  }, [toast, isDemoMode, planningRole]);
 
   const handleCreateMilestones = useCallback(async () => {
+    if (!canEditPlanningTasks(planningRole)) {
+      toast('Your collaborator role cannot generate milestone tasks.', 'info');
+      return;
+    }
     if (!siteId || !weddingDate) return;
     try {
       const milestones = generateMilestoneTasks(siteId, weddingDate);
@@ -251,9 +267,13 @@ export const DashboardPlanning: React.FC = () => {
     } catch {
       toast('Couldn’t generate milestones right now. Please try again.', 'error');
     }
-  }, [siteId, weddingDate, toast, isDemoMode]);
+  }, [siteId, weddingDate, toast, isDemoMode, planningRole]);
 
   const handleAddBudgetItem = useCallback(async (item: Partial<PlanningBudgetItem>) => {
+    if (!canEditPlanningBudget(planningRole)) {
+      toast('Your collaborator role cannot add budget items.', 'info');
+      return;
+    }
     if (!siteId) return;
     try {
       const created = isDemoMode ? ({ id: `demo-budget-${Date.now()}`, wedding_site_id: siteId, category: item.category ?? 'General', item_name: item.item_name ?? 'New item', estimated_amount: item.estimated_amount ?? 0, actual_amount: item.actual_amount ?? 0, paid_amount: item.paid_amount ?? 0, due_date: item.due_date ?? null, vendor_id: null, notes: item.notes ?? '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as PlanningBudgetItem) : await createBudgetItem(siteId, item);
@@ -262,18 +282,26 @@ export const DashboardPlanning: React.FC = () => {
     } catch {
       toast('Couldn’t add that budget item. Please try again.', 'error');
     }
-  }, [siteId, toast, isDemoMode]);
+  }, [siteId, toast, isDemoMode, planningRole]);
 
   const handleUpdateBudgetItem = useCallback(async (id: string, updates: Partial<PlanningBudgetItem>) => {
+    if (!canEditPlanningBudget(planningRole)) {
+      toast('Your collaborator role cannot edit budget items.', 'info');
+      return;
+    }
     try {
       if (!isDemoMode) await updateBudgetItem(id, updates);
       setBudgetItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
     } catch {
       toast('Couldn’t update that budget item. Please try again.', 'error');
     }
-  }, [toast, isDemoMode]);
+  }, [toast, isDemoMode, planningRole]);
 
   const handleDeleteBudgetItem = useCallback(async (id: string) => {
+    if (!canEditPlanningBudget(planningRole)) {
+      toast('Your collaborator role cannot delete budget items.', 'info');
+      return;
+    }
     try {
       if (!isDemoMode) await deleteBudgetItem(id);
       setBudgetItems(prev => prev.filter(i => i.id !== id));
@@ -281,7 +309,7 @@ export const DashboardPlanning: React.FC = () => {
     } catch {
       toast('Couldn’t remove that budget item. Please try again.', 'error');
     }
-  }, [toast, isDemoMode]);
+  }, [toast, isDemoMode, planningRole]);
 
   const addVendorToBudget = useCallback(async (vendor: PlanningVendor) => {
     if (!siteId) return;
@@ -321,6 +349,10 @@ export const DashboardPlanning: React.FC = () => {
   }, [siteId, toast, isDemoMode]);
 
   const handleAddVendor = useCallback(async (vendor: Partial<PlanningVendor>) => {
+    if (!canEditPlanningVendors(planningRole)) {
+      toast('Your collaborator role cannot add vendors.', 'info');
+      return;
+    }
     if (!siteId) return;
     try {
       const created = isDemoMode ? ({ id: `demo-vendor-${Date.now()}`, wedding_site_id: siteId, vendor_type: vendor.vendor_type ?? 'Vendor', name: vendor.name ?? 'New vendor', contact_name: vendor.contact_name ?? '', email: vendor.email ?? '', phone: vendor.phone ?? '', website: vendor.website ?? '', contract_total: vendor.contract_total ?? 0, amount_paid: vendor.amount_paid ?? 0, balance_due: vendor.balance_due ?? 0, next_payment_due: vendor.next_payment_due ?? null, notes: vendor.notes ?? '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as PlanningVendor) : await createVendor(siteId, vendor);
@@ -330,9 +362,13 @@ export const DashboardPlanning: React.FC = () => {
     } catch {
       toast('Couldn’t add that vendor. Please try again.', 'error');
     }
-  }, [siteId, toast, isDemoMode]);
+  }, [siteId, toast, isDemoMode, planningRole]);
 
   const handleSaveTotalBudget = useCallback(async (value: number) => {
+    if (!canEditPlanningBudget(planningRole)) {
+      toast('Your collaborator role cannot update the total budget.', 'info');
+      return;
+    }
     if (!siteId) return;
     try {
       if (isDemoMode) {
@@ -376,18 +412,26 @@ export const DashboardPlanning: React.FC = () => {
     } catch {
       toast('Couldn’t update total budget. Please try again.', 'error');
     }
-  }, [siteId, toast, isDemoMode]);
+  }, [siteId, toast, isDemoMode, planningRole]);
 
   const handleUpdateVendor = useCallback(async (id: string, updates: Partial<PlanningVendor>) => {
+    if (!canEditPlanningVendors(planningRole)) {
+      toast('Your collaborator role cannot edit vendors.', 'info');
+      return;
+    }
     try {
       if (!isDemoMode) await updateVendor(id, updates);
       setVendors(prev => prev.map(v => v.id === id ? { ...v, ...updates } : v));
     } catch {
       toast('Couldn’t update that vendor. Please try again.', 'error');
     }
-  }, [toast, isDemoMode]);
+  }, [toast, isDemoMode, planningRole]);
 
   const handleDeleteVendor = useCallback(async (id: string) => {
+    if (!canEditPlanningVendors(planningRole)) {
+      toast('Your collaborator role cannot delete vendors.', 'info');
+      return;
+    }
     try {
       if (!isDemoMode) await deleteVendor(id);
       setVendors(prev => prev.filter(v => v.id !== id));
@@ -395,7 +439,7 @@ export const DashboardPlanning: React.FC = () => {
     } catch {
       toast('Couldn’t remove that vendor. Please try again.', 'error');
     }
-  }, [toast, isDemoMode]);
+  }, [toast, isDemoMode, planningRole]);
 
   const handleNameChangeDraft = useCallback((updates: Partial<NameChangeCaseInput>) => {
     setNameChangeDraft((prev) => {
