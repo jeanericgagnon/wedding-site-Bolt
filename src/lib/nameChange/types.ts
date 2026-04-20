@@ -339,6 +339,42 @@ export interface NameChangeAutofillPrepSnapshot {
   };
 }
 
+export interface NameChangeMarriageCertificateExtraction {
+  firstName: string | null;
+  lastName: string | null;
+  spouseLastName: string | null;
+  county: string | null;
+  issuanceDate: string | null;
+  certificateNumber: string | null;
+}
+
+export interface NameChangeCourtOrderExtraction {
+  firstName: string | null;
+  lastName: string | null;
+  courtOrderDate: string | null;
+}
+
+export interface NameChangePassportExtraction {
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
+  issuanceDate: string | null;
+}
+
+export interface NameChangeDriversLicenseExtraction {
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
+  issuanceDate: string | null;
+}
+
+export interface NameChangeExtractionContractSnapshot {
+  marriageCertificate: NameChangeMarriageCertificateExtraction;
+  courtOrder: NameChangeCourtOrderExtraction;
+  currentPassport: NameChangePassportExtraction;
+  currentDriversLicense: NameChangeDriversLicenseExtraction;
+}
+
 export interface NameChangeReminderSuggestion {
   id: string;
   label: string;
