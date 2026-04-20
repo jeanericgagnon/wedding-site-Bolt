@@ -1066,7 +1066,11 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
-    const messageIds = messages.slice(0, 50).map((m) => m.id);
+    const prioritizedMessageIds = viewingMessage
+      ? [viewingMessage.id, ...messages.filter((m) => m.id !== viewingMessage.id).slice(0, 49).map((m) => m.id)]
+      : messages.slice(0, 50).map((m) => m.id);
+
+    const messageIds = Array.from(new Set(prioritizedMessageIds));
     if (messageIds.length === 0) {
       setDeliveries([]);
       return;
@@ -1728,7 +1732,7 @@ export const DashboardMessages: React.FC = () => {
       }
     });
     return buckets;
-  }, [messages]);
+  }, [messages, viewingMessage]);
 
   async function handleRunDueScheduledMessages() {
     if (isDemoMode) {
