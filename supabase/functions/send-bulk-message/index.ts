@@ -497,7 +497,6 @@ async function deliverMessage(opts: {
       delivered_count: deliveredCount,
       failed_count: failedCount,
       recipient_count: allGuests.length,
-      recipient_filter: refreshedRecipientFilter,
     })
     .eq("id", messageId);
 
@@ -508,10 +507,14 @@ async function deliverMessage(opts: {
         status: finalStatus,
         sent_at: sentAt,
         recipient_count: allGuests.length,
-        recipient_filter: refreshedRecipientFilter,
       })
       .eq("id", messageId);
   }
+
+  await adminClient
+    .from("messages")
+    .update({ recipient_filter: refreshedRecipientFilter })
+    .eq("id", messageId);
 
   return {
     ok: true,
