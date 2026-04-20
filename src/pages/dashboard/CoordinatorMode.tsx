@@ -23,6 +23,7 @@ import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinato
 import { normalizeCoordinatorModeSessionState } from '../../lib/coordinatorModeSessionState';
 import { normalizeCoordinatorDraftState } from '../../lib/coordinatorDraftState';
 import { normalizeCoordinatorActiveWorkState } from '../../lib/coordinatorActiveWorkState';
+import { normalizeCoordinatorGuestWorkState } from '../../lib/coordinatorGuestWorkState';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
