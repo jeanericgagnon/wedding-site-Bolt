@@ -27,6 +27,7 @@ import { normalizeCoordinatorGuestWorkState } from '../../lib/coordinatorGuestWo
 import { normalizeCoordinatorCommandState } from '../../lib/coordinatorCommandState';
 import { getCoordinatorCommandModeLabel } from '../../lib/coordinatorCommandModeLabel';
 import { getCoordinatorCommandModeGuidance } from '../../lib/coordinatorCommandModeGuidance';
+import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -483,6 +484,22 @@ export const DashboardCoordinatorMode: React.FC = () => {
   };
 
 
+
+
+  const returnToBoard = () => {
+    const next = resolveCoordinatorReturnToBoardState({
+      hasDoorReview: guests.some((guest) => getCoordinatorDoorStatus(guest) === 'watch'),
+      hasOpenQna: qnaItems.some((item) => item.status === 'new'),
+      hasLiveEvent: events.some((event) => (timelineState[event.id] || 'up-next') === 'live'),
+    });
+    setCommandSource(next.commandSource);
+    setPanelFocus(next.panelFocus);
+    setCheckInFilter(next.checkInFilter);
+    setCheckInReviewOnly(next.checkInReviewOnly);
+    if (next.panelFocus === 'qna') {
+      setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
+    }
+  };
 
   const runPrimaryAction = () => {
     const target = resolveCoordinatorPrimaryActionTarget(primaryAction);
