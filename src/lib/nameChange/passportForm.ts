@@ -1,0 +1,38 @@
+import { buildNameChangeFormPayloadSnapshot, type NameChangeFormContractDefinition } from './formContract';
+import type {
+  NameChangeCaseInput,
+  NameChangeDocumentInput,
+  NameChangeExtractedFieldInput,
+  NameChangeFormPayloadSnapshot,
+} from './types';
+
+export const NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT: NameChangeFormContractDefinition = {
+  formCode: 'DS-82',
+  label: 'U.S. Passport Renewal Application',
+  fieldSpecs: [
+    { fieldKey: 'applicant.currentFirstName', label: 'Current first name', sourceTargetField: 'applicant.current_first_name' },
+    { fieldKey: 'applicant.currentMiddleName', label: 'Current middle name', sourceTargetField: 'applicant.current_middle_name', required: false },
+    { fieldKey: 'applicant.currentLastName', label: 'Current last name', sourceTargetField: 'applicant.current_last_name' },
+    { fieldKey: 'applicant.newLastName', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
+    { fieldKey: 'legal.marriageDate', label: 'Marriage date', sourceTargetField: 'legal.marriage_date' },
+    { fieldKey: 'identity.passportIssueDate', label: 'Passport issue date', sourceTargetField: 'identity.passport_issue_date', required: false },
+  ],
+};
+
+export const NAME_CHANGE_PASSPORT_APPLICATION_FORM_CONTRACT: NameChangeFormContractDefinition = {
+  formCode: 'DS-11',
+  label: 'Application for a U.S. Passport',
+  fieldSpecs: NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT.fieldSpecs,
+};
+
+export function buildNameChangePassportFormSnapshot(
+  profile: NameChangeCaseInput,
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+): NameChangeFormPayloadSnapshot {
+  const contract = profile.has_us_passport
+    ? NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT
+    : NAME_CHANGE_PASSPORT_APPLICATION_FORM_CONTRACT;
+
+  return buildNameChangeFormPayloadSnapshot(contract, profile, documents, extractedFields);
+}

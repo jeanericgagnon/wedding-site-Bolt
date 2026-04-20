@@ -39,8 +39,10 @@ describe('name change form builder registry', () => {
   it('dispatches SS-5 and DMV form builders through a shared registry', () => {
     const ss5 = NAME_CHANGE_FORM_BUILDERS.ss5(makeCase(), [], []);
     const dmv = NAME_CHANGE_FORM_BUILDERS.dmv(makeCase(), [], []);
+    const passport = NAME_CHANGE_FORM_BUILDERS.passport(makeCase(), [], []);
 
     expect(ss5.formCode).toBe('SSA-SS5');
     expect(dmv.formCode).toBe('CA-DL-44');
+    expect(passport.formCode).toBe('DS-82');
   });
 });

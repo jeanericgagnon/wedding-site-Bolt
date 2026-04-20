@@ -1,13 +1,15 @@
 import { NAME_CHANGE_DMV_FORM_CONTRACT } from './dmvForm';
+import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
     lane: 'federal',
     recommendedFormCode: NAME_CHANGE_SS5_FORM_CONTRACT.formCode,
+    formBuilderKey: 'ss5',
     prerequisiteRules: [],
     autofillTargetFields: [
       'applicant.current_first_name',
@@ -64,6 +66,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv', NameChangeExec
     label: 'California DMV',
     lane: 'state',
     recommendedFormCode: NAME_CHANGE_DMV_FORM_CONTRACT.formCode,
+    formBuilderKey: 'dmv',
     prerequisiteRules: [
       {
         key: 'federal-ssa-progress',
@@ -124,6 +127,75 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv', NameChangeExec
         documentKinds: ['current_drivers_license', 'proof_of_address'],
         missingReason: 'No California-facing ID/address support document is represented in intake yet.',
         satisfiedReason: 'A current California-facing ID or address document exists in intake.',
+      },
+    ],
+  },
+  passport: {
+    key: 'passport',
+    label: 'U.S. Passport',
+    lane: 'federal',
+    recommendedFormCode: NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT.formCode,
+    formBuilderKey: 'passport',
+    prerequisiteRules: [
+      {
+        key: 'federal-ssa-progress',
+        label: 'SSA underway before passport packet prep',
+        required: true,
+        requiredStepId: 'federal-ssa',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'Passport prep should wait until SSA is underway so the federal identity chain stays coherent.',
+        attentionReason: 'SSA is moving, so passport prep can follow without waiting for California DMV.',
+        satisfiedReason: 'SSA has already moved enough that passport prep can proceed.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_middle_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'legal.marriage_date',
+      'identity.passport_issue_date',
+    ],
+    checklistSpecs: [
+      {
+        key: 'legal-proof-document',
+        label: 'Legal proof ready for passport packet',
+        kind: 'requirement',
+        requirementKey: 'legal-proof-document',
+        missingReason: 'Legal proof requirement not evaluated.',
+        satisfiedReason: 'Legal proof document is ready for passport prep.',
+      },
+      {
+        key: 'identity-document-coverage',
+        label: 'Identity document coverage',
+        kind: 'requirement',
+        requirementKey: 'identity-document-coverage',
+        missingReason: 'Identity coverage requirement not evaluated.',
+        satisfiedReason: 'Identity document coverage is ready for passport prep.',
+      },
+      {
+        key: 'passport-timing-risk',
+        label: 'Passport timing risk reviewed',
+        kind: 'requirement',
+        requirementKey: 'passport-timing-risk',
+        missingReason: 'Passport timing review has not been evaluated yet.',
+        satisfiedReason: 'Passport timing risk has been reviewed.',
+      },
+      {
+        key: 'target-surname',
+        label: 'Target surname available for passport packet',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target last name is still missing for passport prep.',
+        satisfiedReason: 'Target last name is available for passport prep.',
+      },
+      {
+        key: 'passport-support-doc',
+        label: 'Passport-supporting document intake',
+        kind: 'document_support',
+        documentKinds: ['current_passport', 'birth_certificate', 'current_drivers_license'],
+        missingReason: 'No passport-supporting identity/citizenship document is represented in intake yet.',
+        satisfiedReason: 'A passport-supporting identity/citizenship document exists in intake.',
       },
     ],
   },

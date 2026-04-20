@@ -7,13 +7,14 @@ import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
+  NameChangeExecutionTargetKey,
   NameChangeExtractedFieldInput,
   NameChangePlan,
   NameChangeTargetExecutionSnapshot,
 } from './types';
 
 export function buildNameChangeTargetExecutionSnapshot(
-  targetKey: 'ssa' | 'dmv',
+  targetKey: NameChangeExecutionTargetKey,
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
@@ -31,7 +32,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     targetLabel: target.label,
     ready: gates.ready,
     blockers: gates.blockers,
-    recommendedFormCode: target.recommendedFormCode,
+    recommendedFormCode: formPayload.formCode || target.recommendedFormCode,
     autofillFields: autofill.fields.filter((field) => target.autofillTargetFields.includes(field.targetField)),
     formPayload,
     sequence,

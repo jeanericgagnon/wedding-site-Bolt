@@ -384,11 +384,15 @@ export interface NameChangeExecutionPrerequisiteRule {
   satisfiedReason: string;
 }
 
+export type NameChangeExecutionTargetKey = 'ssa' | 'dmv' | 'passport';
+export type NameChangeFormBuilderKey = 'ss5' | 'dmv' | 'passport';
+
 export interface NameChangeExecutionTargetDefinition {
-  key: 'ssa' | 'dmv';
+  key: NameChangeExecutionTargetKey;
   label: string;
   lane: 'federal' | 'state';
   recommendedFormCode: string;
+  formBuilderKey: NameChangeFormBuilderKey;
   prerequisiteRules: NameChangeExecutionPrerequisiteRule[];
   autofillTargetFields: string[];
   checklistSpecs: Array<{
@@ -401,6 +405,29 @@ export interface NameChangeExecutionTargetDefinition {
     missingReason: string;
     attentionReason?: string;
     satisfiedReason: string;
+  }>;
+}
+
+export interface NameChangeExecutionGateSnapshot {
+  ready: boolean;
+  blockers: string[];
+  attentionItems: string[];
+}
+
+export interface NameChangeTargetExecutionSnapshot {
+  targetKey: NameChangeExecutionTargetKey;
+  targetLabel: string;
+  ready: boolean;
+  blockers: string[];
+  recommendedFormCode: string;
+  autofillFields: NameChangeAutofillFieldMapping[];
+  formPayload: NameChangeFormPayloadSnapshot;
+  sequence: NameChangeExecutionSequenceSnapshot;
+  checklist: Array<{
+    key: string;
+    label: string;
+    status: 'ready' | 'missing' | 'attention';
+    reason: string;
   }>;
 }
 

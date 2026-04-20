@@ -86,4 +86,33 @@ describe('name change execution sequence snapshot', () => {
     const snapshot = buildNameChangeExecutionSequenceSnapshot('dmv', makeCase(), documents, [], plan);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
   });
+
+  it('marks passport sequencing ready once SSA is underway', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'federal-ssa' ? { ...step, executionStatus: 'in_progress' as const } : step,
+      ),
+    };
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('passport', makeCase(), documents, [], plan);
+    expect(snapshot.lane).toBe('federal');
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
+  });
 });

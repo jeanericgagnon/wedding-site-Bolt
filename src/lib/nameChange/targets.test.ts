@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 
 describe('name change execution targets', () => {
-  it('defines reusable SSA and DMV target declarations', () => {
+  it('defines reusable SSA, DMV, and passport target declarations', () => {
     expect(NAME_CHANGE_EXECUTION_TARGETS.ssa).toMatchObject({
       key: 'ssa',
       lane: 'federal',
@@ -13,9 +13,19 @@ describe('name change execution targets', () => {
       lane: 'state',
       recommendedFormCode: 'CA-DL-44',
     });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.passport).toMatchObject({
+      key: 'passport',
+      lane: 'federal',
+      recommendedFormCode: 'DS-82',
+      formBuilderKey: 'passport',
+    });
     expect(NAME_CHANGE_EXECUTION_TARGETS.dmv.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'federal-ssa',
       requiredStatuses: ['complete'],
+    });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.passport.prerequisiteRules[0]).toMatchObject({
+      requiredStepId: 'federal-ssa',
+      requiredStatuses: ['in_progress', 'complete'],
     });
   });
 });

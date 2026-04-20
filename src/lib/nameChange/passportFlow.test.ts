@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeDmvExecutionSnapshot } from './dmvFlow';
+import { buildNameChangePassportExecutionSnapshot } from './passportFlow';
 import { buildNameChangePlan } from './engine';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
@@ -36,8 +36,8 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
   };
 }
 
-describe('name change DMV execution snapshot', () => {
-  it('marks DMV execution ready when proof + county + support docs exist', () => {
+describe('name change passport execution snapshot', () => {
+  it('marks passport execution ready when legal proof, identity support, and SSA progress exist', () => {
     const documents: NameChangeDocumentInput[] = [
       {
         document_kind: 'marriage_certificate',
@@ -46,18 +46,18 @@ describe('name change DMV execution snapshot', () => {
         intake_status: 'reviewed',
       },
       {
-        document_kind: 'current_drivers_license',
-        display_name: 'Driver license',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
-        field_key: 'county',
-        field_label: 'County',
-        field_value_masked: 'San Diego',
-        source_type: 'manual',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
         is_verified: true,
       },
       {
@@ -68,26 +68,24 @@ describe('name change DMV execution snapshot', () => {
         is_verified: true,
       },
     ];
-
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields });
     const plan = {
       ...basePlan,
       steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
-        ? { ...step, executionStatus: 'complete' as const }
+        ? { ...step, executionStatus: 'in_progress' as const }
         : step),
     };
 
-    const snapshot = buildNameChangeDmvExecutionSnapshot(makeCase(), documents, extractedFields, plan);
+    const snapshot = buildNameChangePassportExecutionSnapshot(makeCase(), documents, extractedFields, plan);
     expect(snapshot.ready).toBe(true);
-    expect(snapshot.recommendedFormCode).toBe('CA-DL-44');
-    expect(snapshot.checklist.find((item) => item.label === 'Legal proof ready for DMV')).toMatchObject({ status: 'ready' });
+    expect(snapshot.recommendedFormCode).toBe('DS-82');
+    expect(snapshot.checklist.find((item) => item.label === 'Passport timing risk reviewed')).toMatchObject({ status: 'ready' });
   });
 
-  it('surfaces blockers when county context and core fields are missing', () => {
-    const snapshot = buildNameChangeDmvExecutionSnapshot(makeCase({ county_residence: null, current_first_name: '', current_last_name: '' }), [], []);
+  it('surfaces blockers when SSA has not started and citizenship is out of scope', () => {
+    const snapshot = buildNameChangePassportExecutionSnapshot(makeCase({ is_us_citizen: false }), [], []);
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.blockers.length).toBeGreaterThan(0);
-    expect(snapshot.checklist.find((item) => item.label === 'California county context available')).toMatchObject({ status: 'missing' });
-    expect(snapshot.checklist.find((item) => item.label === 'Current legal name available for DMV prep')).toMatchObject({ status: 'missing' });
+    expect(snapshot.blockers).toContain('Current modeled passport flow assumes U.S. citizenship eligibility.');
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'missing' });
   });
 });
