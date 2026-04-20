@@ -248,6 +248,7 @@ Things that do **not** count as done:
 - the Seating demo/proof path was still teaching a looser guest-level counter model than the hardened runtime path, which weakened confidence in event-scoped seating truth until corrected
 - itinerary pending counts were still derived from raw RSVP-row presence rather than explicit yes/no event responses, which could overstate event RSVP progress until corrected
 - Coordinator Mode's “Next arrivals” list was still mixing review-needed guests into the fast-path arrival cue, which weakened live day-of usefulness until corrected
+- Coordinator Mode's “Next arrivals” empty state could still claim everyone was checked in when review-needed guests were waiting, which weakened live board truth until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -452,6 +453,7 @@ Primary proof artifact for this now exists at:
 - Fixed the Seating demo/proof path so its counters track invited/attending/seated math more like the hardened runtime model instead of reinforcing a looser event-truth story.
 - Fixed itinerary pending-count math so unresolved event RSVP rows no longer count as “answered” just because a row exists; pending now reflects invitation count minus explicit yes/no responses.
 - Fixed Coordinator Mode’s “Next arrivals” cue so it now shows only ready unchecked-in guests instead of mixing in review-needed arrivals.
+- Fixed Coordinator Mode’s “Next arrivals” empty-state copy so it now distinguishes between “no ready arrivals” and “everyone checked in.”
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

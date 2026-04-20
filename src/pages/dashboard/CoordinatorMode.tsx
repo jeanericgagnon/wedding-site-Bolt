@@ -729,7 +729,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
               <p className="text-xs font-medium text-text-primary">Next arrivals</p>
               {nextArrivals.length === 0 ? (
-                <p className="mt-1 text-xs text-text-tertiary">Everyone currently in this view is already checked in.</p>
+                <p className="mt-1 text-xs text-text-tertiary">
+                  {sortedGuests.some((guest) => !guest.checked_in_at)
+                    ? 'No ready arrivals right now. Review-needed guests are still waiting in the queue.'
+                    : 'Everyone currently in this view is already checked in.'}
+                </p>
               ) : (
                 <div className="mt-2 space-y-1">
                   {nextArrivals.map((guest) => <p key={guest.id} className="text-xs text-text-secondary">• {guest.name} — {guest.rsvp_status}</p>)}
