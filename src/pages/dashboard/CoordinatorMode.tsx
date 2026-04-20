@@ -46,6 +46,7 @@ import { shouldResetCoordinatorCommandJumpLabel } from '../../lib/coordinatorCom
 import { shouldResetCoordinatorCommandJumpLabelForTargetChange } from '../../lib/coordinatorCommandJumpTargetReset';
 import { getCoordinatorManualOverrideLabel } from '../../lib/coordinatorManualOverrideLabel';
 import { getCoordinatorManualOverrideActionLabel } from '../../lib/coordinatorManualOverrideAction';
+import { getCoordinatorManualOverrideTargetLabel } from '../../lib/coordinatorManualOverrideTargetLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -433,6 +434,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
   const priorityCommandCta = useMemo(() => getCoordinatorCommandPriorityCta(priorityCommandLabel), [priorityCommandLabel]);
   const manualOverrideActionLabel = useMemo(() => getCoordinatorManualOverrideActionLabel(panelFocus), [panelFocus]);
+  const manualOverrideTargetLabel = useMemo(() => getCoordinatorManualOverrideTargetLabel({
+    panelFocus,
+    boardTargetName: panelFocus === 'check-in'
+      ? checkInTargetGuest?.name ?? null
+      : panelFocus === 'timeline'
+        ? timelineTargetEvent?.event_name ?? null
+        : panelFocus === 'qna'
+          ? qnaTargetItem?.question ?? null
+          : null,
+  }), [panelFocus, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -840,8 +851,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
               {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
               {!commandJumpLabel && manualOverrideLabel && (
-                <div className="flex items-center gap-2 text-[11px]">
+                <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <p className="text-amber-700">{manualOverrideLabel}</p>
+                  {manualOverrideTargetLabel && <p className="text-amber-800/80">{manualOverrideTargetLabel}</p>}
                   {manualOverrideActionLabel && (
                     <button
                       type="button"
